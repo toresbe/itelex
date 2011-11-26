@@ -294,7 +294,7 @@ char ONEWIRE_checkID( char * ID )
 {
 	char retval = ID_ERR;
 
-	if ( crc8(ID,7) == ID[7])
+	if ( crc8( ID , 7 ) == ID[7])
 		retval = LAST_DEVICE;
 		
 	return( retval );

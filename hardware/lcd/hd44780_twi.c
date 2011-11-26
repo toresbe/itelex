@@ -291,6 +291,29 @@ void HD44780_TWI_SendChar( char Data )
 	}
 }
 
+/* -----------------------------------------------------------------------------------------------------------*/
+/*! \brief Schaltet die Hintergrundbeleuchtung
+ * \param   value		Helligkeit von 0-255
+ * \return	NONE		None
+ */
+/* -----------------------------------------------------------------------------------------------------------*/ 
+void HD44780_TWI_Backlight( unsigned char value )
+{
+	if ( TWI_SendAddress( HD44780_TWI_ADDR , TWI_WRITE ) == TRUE )
+	{
+		if ( value != 0 )
+		{
+			HD44780_TWI_Byte |= ( 1 << HD44780_TWI_BL_PIN );        //  Backlight off
+		}
+		else
+		{
+			HD44780_TWI_Byte &= ~( 1 << HD44780_TWI_BL_PIN );        //  Backlight off
+		}
+		TWI_Write( HD44780_TWI_Byte );
+		TWI_SendStop();        
+	}
+}
+
 #endif
 
 /**

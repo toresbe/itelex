@@ -43,17 +43,20 @@
 	void LCD_sendchar( int num, char Data );
 	void LCD_setXY( int num, char XPos, char YPos );
 	void LCD_clrscreen( int num );
+	void LCD_backlight( int num, unsigned char value );
 
 	typedef void pLCD_init ( void );
 	typedef void pLCD_sendchar ( char Data );
 	typedef void pLCD_setXY ( char XPos, char YPos );
 	typedef void pLCD_clrscreen ( void );
+	typedef void pLCD_backlight ( unsigned char value );
 
 	typedef struct {
 		pLCD_init					* init;
 		pLCD_sendchar				* sendchar;
 		pLCD_clrscreen				* clrscreen;
 		pLCD_setXY					* setXY;
+		pLCD_backlight				* backlight;
 	} const LCD_NUM;
 
 #endif /* LCD_H */

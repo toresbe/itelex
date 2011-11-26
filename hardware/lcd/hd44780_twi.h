@@ -50,6 +50,7 @@
 	void HD44780_TWI_clrscreen( void );
 	void HD44780_TWI_setXY( char Xpos, char Ypos );
 	void HD44780_TWI_SendChar( char Data );
+	void HD44780_TWI_Backlight( unsigned char value );
 
 	#define		HD44780_TWI_ADDR				0x20
 	#define		HD44780_TWI_DATAMASK			0x0F

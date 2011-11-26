@@ -235,6 +235,10 @@ void DOGL128_sendChar( char Data )
 	}
 }
 
+void DOGL128_Blacklight( unsigned char value )
+{
+
+}
 #endif
 
 /**

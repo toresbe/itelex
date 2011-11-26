@@ -457,8 +457,9 @@ int GPIO_setPullUp( char PIN )
 	{
 #if defined(__AVR_XMEGA__)
 		char * port = (char *) &PORTA;
-		PORT_t * PORT = port + ( PIN >> 3 ) * 0x20;
-		PIN &= 0x7;
+		
+		PORT_t * PORT = (PORT_t*)port + ( PIN >> 3 ) * 0x20;
+		PIN &= 0x07;
 
 		*(&PORT->PIN0CTRL + PIN ) &= ~0x38;
 		*(&PORT->PIN0CTRL + PIN ) |= 0x18;
@@ -484,7 +485,7 @@ int GPIO_clearPullUp( char PIN )
 	{
 #if defined(__AVR_XMEGA__)
 		char * port = (char *) &PORTA;
-		PORT_t * PORT = port + ( PIN >> 3 ) * 0x20;
+		PORT_t * PORT = (PORT_t*)port + ( PIN >> 3 ) * 0x20;
 		PIN &= 0x7;
 
 		*(&PORT->PIN0CTRL + PIN ) &= ~0x38;

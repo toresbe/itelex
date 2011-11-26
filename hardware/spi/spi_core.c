@@ -100,11 +100,11 @@ void SPI_InitCore( void )
 
 void SPI_init( int SPI_ID )
 {
-#if defined(__AVR_XMEGA__)
 	if ( SPI_ID < SPI_BUSSES )
+#if defined(__AVR_XMEGA__)
 		xmega_spi_init( SPI_ID );
 #else
-	spi_bus[ SPI_ID ].INIT( );
+		spi_bus[ SPI_ID ].INIT( );
 #endif
 }
 
@@ -118,14 +118,14 @@ void SPI_init( int SPI_ID )
  */
 char SPI_ReadWrite( int SPI_ID, char Data )
 {
-#if defined(__AVR_XMEGA__)
 	if ( SPI_ID < SPI_BUSSES )
+#if defined(__AVR_XMEGA__)
 		return( xmega_spi_ReadWrite( SPI_ID, Data ) );
+#else
+		return( spi_bus[ SPI_ID ].ReadWrite( Data ) );	
+#endif
 	else
 		return( 0 );
-#else
-	return( spi_bus[ SPI_ID ].ReadWrite( Data ) );	
-#endif
 }
 
 /**
@@ -136,11 +136,11 @@ char SPI_ReadWrite( int SPI_ID, char Data )
  */
 void SPI_WriteBlock( int SPI_ID, char * buffer, int Datalenght )
 {
-#if defined(__AVR_XMEGA__)
 	if ( SPI_ID < SPI_BUSSES )
+#if defined(__AVR_XMEGA__)
 		xmega_spi_WriteBlock( SPI_ID, buffer, Datalenght );
 #else
-	spi_bus[ SPI_ID ].WriteBlock( buffer, Datalenght );	
+		spi_bus[ SPI_ID ].WriteBlock( buffer, Datalenght );	
 #endif
 }
 
@@ -153,11 +153,11 @@ void SPI_WriteBlock( int SPI_ID, char * buffer, int Datalenght )
  */
 void SPI_ReadBlock( int SPI_ID, char * buffer, int Datalenght )
 {
-#if defined(__AVR_XMEGA__)
 	if ( SPI_ID < SPI_BUSSES )
+#if defined(__AVR_XMEGA__)
 		xmega_spi_ReadBlock( SPI_ID, buffer, Datalenght );
 #else
-	spi_bus[ SPI_ID ].ReadBlock( buffer, Datalenght );		
+		spi_bus[ SPI_ID ].ReadBlock( buffer, Datalenght );		
 #endif
 }
 
@@ -174,7 +174,7 @@ void SPI_SetPrescaler( int SPI_ID, char Prescaler )
 	if ( SPI_ID < SPI_BUSSES )
 		xmega_spi_ReadBlock( SPI_ID, buffer, Datalenght );
 #else
-	spi_bus[ SPI_ID ].ReadBlock( buffer, Datalenght );		
+		spi_bus[ SPI_ID ].ReadBlock( buffer, Datalenght );		
 #endif
 */
 }

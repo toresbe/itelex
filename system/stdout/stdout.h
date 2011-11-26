@@ -53,6 +53,8 @@
 		#define STDIO_BUFFER 512
 	#elif defined(__AVR_ATmega1284P__)
 		#define STDIO_BUFFER 512
+	#elif defined(__AVR_ATxmega128A1__)
+		#define STDIO_BUFFER 512
 	#else
 		#define STDIO_BUFFER 32
 	#endif

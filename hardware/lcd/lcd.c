@@ -56,16 +56,16 @@
 
 	LCD_NUM lcd_num[ ] = {
 #if defined( HD44780 )
-		{ HD44780_init , HD44780_SendChar , HD44780_clrscreen , HD44780_setXY } ,
+		{ HD44780_init , HD44780_SendChar , HD44780_clrscreen , HD44780_setXY, HD44780_Backlight } ,
 #endif
 #if defined( HD44780_TWI )
-		{ HD44780_TWI_init , HD44780_TWI_SendChar , HD44780_TWI_clrscreen , HD44780_TWI_setXY } ,
+		{ HD44780_TWI_init , HD44780_TWI_SendChar , HD44780_TWI_clrscreen , HD44780_TWI_setXY, HD44780_TWI_Backlight } ,
 #endif
 #if defined( KS0073_TWI )
-		{ KS0073_TWI_init , KS0073_TWI_SendChar , KS0073_TWI_clrscreen , KS0073_TWI_setXY } ,
+		{ KS0073_TWI_init , KS0073_TWI_SendChar , KS0073_TWI_clrscreen , KS0073_TWI_setXY, KS0073_TWI_Backlight } ,
 #endif
 #if defined( DOGL128W6 )
-		{ DOGL128_init , DOGL128_sendChar , DOGL128_clrscreen , DOGL128_setXY } ,
+		{ DOGL128_init , DOGL128_sendChar , DOGL128_clrscreen , DOGL128_setXY, DOGL128_Blacklight } ,
 #endif
 	};
 
@@ -87,7 +87,7 @@ void LCD_init( int num )
  * \return	NONE		None
  */
 /* -----------------------------------------------------------------------------------------------------------*/ 
-void LCD_sendCHAR( int num, char Data )
+void LCD_sendchar( int num, char Data )
 {
 	lcd_num[ num ].sendchar( Data );
 }
@@ -114,6 +114,17 @@ void LCD_clrscreen( int num )
 void LCD_setXY( int num, char XPos, char YPos )
 {
 	lcd_num[ num ].setXY( XPos , YPos );
+}
+
+/* -----------------------------------------------------------------------------------------------------------*/
+/*! \brief Schaltet die Hintergrundbeleuchtung
+ * \param   value		Helligkeit von 0-255
+ * \return	NONE		None
+ */
+/* -----------------------------------------------------------------------------------------------------------*/ 
+void LCD_backlight( int num, unsigned char value )
+{
+	lcd_num[ num ].backlight( value );
 }
 
 #endif

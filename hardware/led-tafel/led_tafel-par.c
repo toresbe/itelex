@@ -32,7 +32,7 @@
 #include "system/stdout/stdout.h"
 #include "system/net/udp.h"
 #include "system/softreset/softreset.h"
-
+#include "util/delay.h"
 #include "config.h"
 
 #if defined(LEDTAFEL_PAR)
@@ -174,8 +174,8 @@ void LEDTAFEL_irq( void)
 		Line = 0 ;
 	}
 	
-	/*
-	for ( char i = 0 ; i < 5 ; i++ )
+/*
+	for ( char i = 0 ; i < 3 ; i++ )
 	{
 		LEDTAFEL_sendblock( Line );
 		Line++;
@@ -183,23 +183,19 @@ void LEDTAFEL_irq( void)
 			Line = 0;
 	}
 */
-
+	
 /*
-	 LEDTAFEL_sendblock( Line );
+	LEDTAFEL_sendblock( Line );
 	Line++;
 	if ( Line == LEDTAFEL_LINES )
+	if ( Line == 5 )
 		Line = 0;
 */
-	
 }
 
 /* -----------------------------------------------------------------------------------------------------------*/
 /*! Sendet einen Datenblock.
  * \param	line		Zeilennummer die uebertragen werden soll.
-// * \param	gfx_buffer	Pointer auf den Grafikpuffer der uebertragen werden soll.
-// * \param	gfx_len		Groesse des Puffers.
-// * \param	lum_buffer	Pointer auf den Lumpuffer der uebertragen werden soll.
-// * \param	lum_len		Groesse des Puffers.
  * \retval  int			TAFELSENDERR oder TAFELSENDOK
  *				     ___
  *	SEL			____/   \_____________________________________________________		(Master)
@@ -511,9 +507,6 @@ void LEDTAFEL_copy_screenlum( char * buffer, int xpos, int ypos, int xsize, int 
 /* -----------------------------------------------------------------------------------------------------------*/
 void LEDTAFEL_set_intensity( char value )
 {
-	if (value == 0)
-		value = 1;
-
 	memset ( LEDTAFEL_screenlum , value , LEDTAFEL_ROW * LEDTAFEL_LINES );
 }
 

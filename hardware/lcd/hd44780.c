@@ -390,6 +390,17 @@ void HD44780_SendChar( char Data )
 	}
 }
 
+/* -----------------------------------------------------------------------------------------------------------*/
+/*! \brief Schaltet die Hintergrundbeleuchtung
+ * \param   value		Helligkeit von 0-255
+ * \return	NONE		None
+ */
+/* -----------------------------------------------------------------------------------------------------------*/ 
+void HD44780_Backlight( unsigned char value )
+{
+    OCR0A = CMD;
+}
+
 #endif
 
 /**

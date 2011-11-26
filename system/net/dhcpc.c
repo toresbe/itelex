@@ -42,6 +42,7 @@
 #include "dhcpc.h"
 #include "ip.h"
 #include "udp.h"
+#include "endian.h"
 #include "ethernet.h"
 #include "system/clock/clock.h"
 
@@ -54,7 +55,6 @@
 #ifdef _DEBUG_
 	#include <avr/pgmspace.h>
 	#include <stdio.h>
-	#include "hardware/uart/uart.h"
 #endif
 
 /*!\brief DHCP-Client Funktion.
@@ -94,7 +94,7 @@ int DHCP_GetConfig( void )
 		
 		// DHCPC-Discover erzeugen und senden
 		#ifdef _DEBUG_
-			printf_P( PSTR("\r\nDHCP-Client: DISCOVER ->"));
+			printf_P( PSTR("DHCP-Client: DISCOVER -> "));
 		#endif
         //---------------------------------------------------------------------
         do
@@ -108,13 +108,13 @@ int DHCP_GetConfig( void )
 		//---------------------------------------------------------------------
 		{
 			#ifdef _DEBUG_
-				printf_P( PSTR(" ERROR -> Default Config\r\n"));
+				printf_P( PSTR("DHCP-Client: ERROR -> Default Config\r\n"));
 			#endif
 			myIP = SaveIP;
 			return( DHCPC_TIMEOUT );
 		}
 		#ifdef _DEBUG_
-			printf_P( PSTR(" OFFER -> REQUEST ->"));
+			printf_P( PSTR("DHCP_Client: OFFER -> "));
 		#endif
 		
 		// DHCPC-Request erzeugen und senden
@@ -128,7 +128,7 @@ int DHCP_GetConfig( void )
 		}
 		
 		#ifdef _DEBUG_
-			printf_P( PSTR(" ACK -> Config\r\n"));
+			printf_P( PSTR("DHCP_Client: ACK -> Config Ok\r\n"));
 		#endif
 		// Socket schliessen
 		UDP_CloseSocket( UDP_socket );
@@ -185,13 +185,17 @@ int DHCP_SendRequest( int SOCKET, char * DHCPbuffer, char * Configbuffer )
 				return( DHCPC_TIMEOUT );
 			}
 		}
-
         uint8_t retCode = DHCP_ParseOption( DHCPConfig, dhcpc->Options );
 		if( retCode != DHCP_ACK ) {
             printf_P( PSTR("DHCP msg type 53 value %u\r\n"), retCode );
 		    return( DHCPC_TIMEOUT );
 		}
-		
+
+#ifdef _DEBUG_
+		char IP_string[16];
+		iptostr( dhcpc->Your_IP.LONG, IP_string );
+		printf_P( PSTR("  CLIENT_IP gefunden %s\r\n"), IP_string );
+#endif
 		myIP = DHCPConfig->Client_IP.LONG;
 		Netmask = DHCPConfig->Subnetmask.LONG;
 		Gateway = DHCPConfig->Router_IP.LONG;
@@ -225,11 +229,6 @@ int DHCP_SendDiscover( int SOCKET, char * DHCPbuffer, char * Configbuffer )
 		DHCP_AddOption( Option_CLIENT_IDENTIFIER, 0, dhcpc->Options );
 		DHCP_AddOption( Option_OPTIONLIST, 0, dhcpc->Options );
 		
-
-		#ifdef _DEBUG_
-			printf_P( PSTR("Discover gesendet\r\n"));
-		#endif
-
 		UDP_SendPacket( SOCKET, DHCP_HEADER_LENGHT , DHCPbuffer);
 		
 		timer = CLOCK_RegisterCountdowntimer( );
@@ -257,6 +256,11 @@ int DHCP_SendDiscover( int SOCKET, char * DHCPbuffer, char * Configbuffer )
 		    return( DHCPC_TIMEOUT );
 		}
 
+#ifdef _DEBUG_
+		char IP_string[16];
+		iptostr( dhcpc->Your_IP.LONG, IP_string );
+		printf_P( PSTR("  CLIENT_IP gefunden %s\r\n"), IP_string );
+#endif
 		DHCPConfig->Client_IP.LONG = dhcpc->Your_IP.LONG;
 		
 		UDP_FreeBuffer( SOCKET );
@@ -352,6 +356,9 @@ uint8_t DHCP_ParseOption( void * Configbuffer, char * Optionfield )
 		struct DHCP_CONFIG * DHCPConfig;
 		DHCPConfig = ( struct DHCP_CONFIG *) Configbuffer;
 
+#ifdef _DEBUG_
+		char IP_string[16];
+#endif		
 		int OptionPointer = 0;
 		uint8_t DHCP_Message_Type = 0;
 		// suche Ende (0xff) vom Optionfeld mit letzten eintrag eintrag
@@ -366,15 +373,16 @@ uint8_t DHCP_ParseOption( void * Configbuffer, char * Optionfield )
 																OptionPointer = OptionPointer + Optionfield[ OptionPointer ];
 																OptionPointer++;
 																#ifdef _DEBUG_
-																	printf_P( PSTR("SUBNETMASK gefunden %08lX\r\n"), DHCPConfig->Subnetmask.LONG );
+																	iptostr( DHCPConfig->Subnetmask.LONG, IP_string );
+																	printf_P( PSTR("  SUBNETMASK gefunden %s\r\n"), IP_string );
 																#endif
 																break;
-
 					case Option_ROUTER:							memcpy( &DHCPConfig->Router_IP.LONG , &Optionfield[ OptionPointer + 1 ], 4);
 																OptionPointer = OptionPointer + Optionfield[ OptionPointer ];
 																OptionPointer++;
 																#ifdef _DEBUG_
-																	printf_P( PSTR("ROUTER gefunden %08lX\r\n"), DHCPConfig->Router_IP.LONG );
+																	iptostr( DHCPConfig->Router_IP.LONG, IP_string );
+																	printf_P( PSTR("  ROUTER gefunden %s\r\n"), IP_string );
 																#endif
 																break;
 
@@ -382,7 +390,8 @@ uint8_t DHCP_ParseOption( void * Configbuffer, char * Optionfield )
 																OptionPointer = OptionPointer + Optionfield[ OptionPointer ];
 																OptionPointer++;
 																#ifdef _DEBUG_
-																	printf_P( PSTR("DNS-Server gefunden %08lX\r\n"), DHCPConfig->DNS_IP.LONG );
+																	iptostr( DHCPConfig->DNS_IP.LONG, IP_string );
+																	printf_P( PSTR("  DNS-Server gefunden %s\r\n"), IP_string );
 																#endif
 																break;
 
@@ -390,7 +399,7 @@ uint8_t DHCP_ParseOption( void * Configbuffer, char * Optionfield )
 																OptionPointer = OptionPointer + Optionfield[ OptionPointer ];
 																OptionPointer++;
 																#ifdef _DEBUG_
-																	printf_P( PSTR("Leasetime gefunden %08lX\r\n"), DHCPConfig->Leasetime.LONG );
+																	printf_P( PSTR("  Leasetime gefunden %ldsec\r\n"), ntohl( DHCPConfig->Leasetime.LONG ) );
 																#endif
 																break;
 
@@ -398,7 +407,7 @@ uint8_t DHCP_ParseOption( void * Configbuffer, char * Optionfield )
 																OptionPointer = OptionPointer + Optionfield[ OptionPointer ];
 																OptionPointer++;
 																#ifdef _DEBUG_
-																	printf_P( PSTR("Server-ID gefunden %08lX\r\n"), DHCPConfig->Server_IP.LONG );
+																	printf_P( PSTR("  Server-ID gefunden %08lX\r\n"), DHCPConfig->Server_IP.LONG );
 																#endif
 																break;
 

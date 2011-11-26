@@ -23,10 +23,14 @@
 	#define UART_BAUD 9600L
 
 	// Define network config if DHCP fails these are the values that will be used as a fallback or when DHCP disable
-	#define MYIP			IPDOT( 192l, 168l,   1l, 142l )
+	#define MYIP			IPDOT( 172l,  23l,  42l, 192l )
 	#define NETMASK 		IPDOT( 255l, 255l, 255l,   0l )
-	#define GATEWAY			IPDOT( 192l, 168l,   1l, 250l )
-	#define DNSSERVER		IPDOT( 192l, 168l,   1l, 250l )
+	#define GATEWAY			IPDOT( 172l,  23l,  42l,   1l )
+	#define DNSSERVER		IPDOT( 172l,  23l,  42l,   1l )
+//	#define MYIP			IPDOT( 192l, 168l,   1l, 142l )
+//	#define NETMASK 		IPDOT( 255l, 255l, 255l,   0l )
+//	#define GATEWAY			IPDOT( 192l, 168l,   1l, 250l )
+//	#define DNSSERVER		IPDOT( 192l, 168l,   1l, 250l )
 
 	// enable the external SRAM-Interface
 	#define EXTMEM
@@ -47,6 +51,8 @@
 //	#define LEDTAFEL
 	#define LEDTAFEL_PAR
 
+//	#define MULTICAST
+
 	// aktiviert TCP
 	#define TCP
 	#ifdef TCP
@@ -63,7 +69,7 @@
 	
 	#ifdef UDP
 		// aktiviert DHCP, dazu muss UDP aktiv sein
-		#define DHCP
+//		#define DHCP
 		// Versucht bei einem Fehlversuch von DHCP die IP aus der Config zu lesen, sonst die in ip.c
 		#define READ_CONFIG
 		// aktiviert DNS, dazu muss UDP aktiv sein

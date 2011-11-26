@@ -48,6 +48,7 @@
 	void HD44780_clrscreen( void );
 	void HD44780_setXY( char Xpos, char Ypos );
 	void HD44780_SendChar( char Data );
+	void HD44780_Backlight( unsigned char value );
 
 #if defined(myAVR)
 	

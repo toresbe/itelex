@@ -56,6 +56,7 @@
 	void DOGL128_clrscreen( void );
 	void DOGL128_sendChar( char Data );
 	void DOGL128_setXY( char XPos, char YPos );
+	void DOGL128_Blacklight( unsigned char value );
 
 #endif /* _DOGL128W6_H */
 

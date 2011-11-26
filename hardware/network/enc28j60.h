@@ -39,13 +39,13 @@
 
 #elif defined(UPP)
 
-	#define ENC28J60_INT			6
+	#define ENC28J60_INT			7
 	#define SPIBUS					0
 	#define ENC28J60_CONTROL_PORT	PORTB
 	#define ENC28J60_CONTROL_DDR	DDRB
 	#define ENC28J60_CONTROL_CS		PB0
 
-// 	UUP auf dem OpenMCP emulieren
+// 	UPP auf dem OpenMCP emulieren
 // 	#define ENC28J60_INT			4
 // 	#define SPIBUS					1
 // 	#define ENC28J60_CONTROL_PORT	PORTE
@@ -354,13 +354,6 @@
 #define TXSTART_INIT	0x1800	// start TX buffer at 0
 #define RXSTART_INIT	0x0000	// give TX buffer space for one full ethernet frame (~1500 bytes)
 #define RXSTOP_INIT		0x17FE	// receive buffer gets the rest
-
-// Define maximum receivelenght
-#if defined(EXTMEM)
-	#define MAX_FRAMELEN	1518	// maximum ethernet frame length
-#else
-	#define MAX_FRAMELEN	600 // maximum ethernet frame length
-#endif
 
 
 // Functions

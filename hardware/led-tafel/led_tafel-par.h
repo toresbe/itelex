@@ -20,7 +20,7 @@
 	#define		DATA_PIN			PINF
 	#define		DATA_DDR			DDRF
 
-	#define 	TIMEOUTLOOP		32
+	#define 	TIMEOUTLOOP		64
 	#define		TAFELSENDERR	1
 	#define		TAFELSENDOK		0
 

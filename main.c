@@ -60,6 +60,8 @@
 #include "apps/modul_init.h"
 #include "system/thread/thread.h"
 
+#include "hardware/led-tafel/led_tafel-par.h"
+
 #include "hardware/led/led_core.h"
 
 #include "TxP/TxP.h"
@@ -95,6 +97,7 @@ void main( void )
 	
 	while(1)
 	{
+//		LEDTAFEL_irq();
 		THREAD_mainloop();
 	}
 }

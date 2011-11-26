@@ -68,7 +68,7 @@ static FILE mystdout = FDEV_SETUP_STREAM( STDOUT_Send_Byte , STDOUT_Get_Byte , _
 /*------------------------------------------------------------------------------------------------------------*/
 void STDOUT_INIT( void )
 {
-	stdout = stdin = &mystdout;
+	stderr = stdout = stdin = &mystdout;
 	streamout.TYPE = UNKNOWN;
 	streamout.BUFFER = BUFFER ;
 	streamout.BUFFER_POS = 0 ;
@@ -96,7 +96,7 @@ int STDOUT_Send_Byte ( char Byte, FILE * stream )
 						break;
 #endif
 #if defined(LCD)
-		case _LCD:		LCD_sendCHAR( streamout.DEVICE, Byte );
+		case _LCD:		LCD_sendchar( streamout.DEVICE, Byte );
 #endif
 #if defined(LEDTAFEL) || defined(LEDTAFEL_PAR)
 		case TAFEL:		LEDTAFEL_print_char_stdio( Byte );

@@ -47,7 +47,7 @@ void xmega_spi_init( int SPI_ID )
 	/* MISO as Input. */
 	port->DIR &= ~SPI_MISO_bm;
 
-//	spi->CTRL = SPI_CLK2X_bm | SPI_ENABLE_bm | SPI_MASTER_bm ;
+	spi->CTRL = SPI_CLK2X_bm | SPI_ENABLE_bm | SPI_MASTER_bm ;
 	spi->CTRL = SPI_ENABLE_bm | SPI_MASTER_bm ;
 }
 
@@ -73,13 +73,13 @@ void xmega_spi_WriteBlock( int SPI_ID, char * Block, int len )
 	char * spi_status = (char *) &spi->STATUS ;
 	char * spi_data = (char *) &spi->DATA ;
 	
-	int Counter = 0;
 	char data;
 	
 	// ersten Wert senden
-	*spi_data = Block[ Counter++ ];
+	*spi_data = *Block++;
+	len--;
 
-	while( Counter < len )
+	while( len )
 	{
 		// Wert schon mal in Register holen, schneller da der Wert jetzt in einem Register steht und nicht mehr aus dem RAM geholt werden muss
 		// nachdem das senden des vorherigen Wertes fertig ist,
@@ -89,9 +89,10 @@ void xmega_spi_WriteBlock( int SPI_ID, char * Block, int len )
 		// Wert aus Register senden
 		*spi_data = data;
 		// Counter erhöhen
-		Counter++;
+		len--;
 	}
 	while( !( *spi_status ) );
+
 	return;
 }
 
@@ -103,15 +104,14 @@ void xmega_spi_ReadBlock( int SPI_ID, char * Block, int len )
 	char * spi_status = (char *) &spi->STATUS ;
 	char * spi_data = (char *) &spi->DATA ;
 
-	int Counter = 0;
 	char data;
 	
 	// Dummy Wert senden
 	*spi_data = 0x00;
-	while( Counter < len )
+	
+	while( len )
 	{
-		// Counter erhöhen
-		Counter++;
+		len--;
 		// warten auf fertig
 		while( !( *spi_status ) );
 		// Dummy Wert senden
@@ -122,6 +122,7 @@ void xmega_spi_ReadBlock( int SPI_ID, char * Block, int len )
 		*Block++ = data;
 	}
 	while( !( *spi_status ) );
+
 	return;
 }
 
