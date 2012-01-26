@@ -100,7 +100,7 @@ void udp( int packet_lenght, char * ethernetbuffer )
 			if( UDP_sockettable[ socket ].UDPcallback != NULL )
 			{
 				// ruf mal die Callback auf und übergebe den Puffer und deren länge
-				UDP_sockettable[ socket ].UDPcallback( &ethernetbuffer[ Offset ], ntohs( UDP_packet->UDP_Datalenght ) );
+				UDP_sockettable[ socket ].UDPcallback( &ethernetbuffer[ Offset ], ntohs( UDP_packet->UDP_Datalenght ) - UDP_HEADER_LENGHT );
 				UDP_sockettable[ socket ].Socketstate = UDP_SOCKET_READY;
 				UDP_sockettable[ socket ].DestinationPort = 0 ;
 				UDP_sockettable[ socket ].DestinationIP = 0 ;
@@ -361,6 +361,7 @@ int UDP_GetSocketState( int socket )
 /* -----------------------------------------------------------------------------------------------------------*/
 int UDP_GetByteInBuffer( int socket )
 	{
+		
 		char temp;
 		int size=0;
 
@@ -371,7 +372,7 @@ int UDP_GetByteInBuffer( int socket )
 		cli();
 
 		size = UDP_sockettable[ socket ].Bufferfill;
-
+		
 		SREG = temp;
 		
 		return ( size );

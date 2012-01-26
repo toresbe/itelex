@@ -29,14 +29,6 @@
 unsigned char Enc28j60Bank;
 unsigned int NextPacketPtr;
 
-#if defined(__AVR_XMEGA__)
-	#define enc28j60_select()		ENC28J60_CONTROL_PORT.OUTCLR = ( 1<<ENC28J60_CONTROL_CS )
-	#define enc28j60_deselect()		ENC28J60_CONTROL_PORT.OUTSET = (1<<ENC28J60_CONTROL_CS)
-#else
-	#define enc28j60_select()		ENC28J60_CONTROL_PORT &= ~( 1<<ENC28J60_CONTROL_CS )
-	#define enc28j60_deselect()		ENC28J60_CONTROL_PORT |= (1<<ENC28J60_CONTROL_CS)
-#endif
-
 //*********************************************************************************************************
 //
 // Setzt die MAC-Adressse im Enc28j60
@@ -61,14 +53,17 @@ void nicSetMacAddress( char * MAC)
 //*********************************************************************************************************
 char enc28j60ReadOp( char op, char address)
 {
-
 	char temp_sreg;
 	temp_sreg = SREG;
 	cli();
 
 	unsigned char data;
 	// CS aktive setzen
-	enc28j60_select();
+#if defined(__AVR_XMEGA__)
+	ENC28J60_CONTROL_PORT.OUTCLR = ( 1<<ENC28J60_CONTROL_CS );
+#else
+	ENC28J60_CONTROL_PORT &= ~( 1<<ENC28J60_CONTROL_CS );
+#endif
 	// lesecomando schreiben
 	data = SPI_ReadWrite( SPIBUS, op | (address & ADDR_MASK) );
 	// dummy senden um ergebnis zu erhalten
@@ -78,8 +73,11 @@ char enc28j60ReadOp( char op, char address)
 		data = SPI_ReadWrite( SPIBUS, 0x00 );
 	// CS wieder freigeben
 	_delay_us( 1 );
-
-	enc28j60_deselect();
+#if defined(__AVR_XMEGA__)
+	ENC28J60_CONTROL_PORT.OUTSET = (1<<ENC28J60_CONTROL_CS);
+#else
+	ENC28J60_CONTROL_PORT |= (1<<ENC28J60_CONTROL_CS);
+#endif
 
 	SREG = temp_sreg;
 
@@ -98,15 +96,22 @@ void enc28j60WriteOp( char op, char address, char data)
 	cli();
 	
 	// CS aktive setzen
-	enc28j60_select();
+#if defined(__AVR_XMEGA__)
+	ENC28J60_CONTROL_PORT.OUTCLR = ( 1<<ENC28J60_CONTROL_CS );
+#else
+	ENC28J60_CONTROL_PORT &= ~( 1<<ENC28J60_CONTROL_CS );
+#endif
 	// schreibcomando senden
 	SPI_ReadWrite( SPIBUS, op | (address & ADDR_MASK) );
 	// daten senden
 	SPI_ReadWrite( SPIBUS, data );
 	// CS wieder freigeben
 	_delay_us( 1 );
-
-	enc28j60_deselect();
+#if defined(__AVR_XMEGA__)
+	ENC28J60_CONTROL_PORT.OUTSET = (1<<ENC28J60_CONTROL_CS);
+#else
+	ENC28J60_CONTROL_PORT |= (1<<ENC28J60_CONTROL_CS);
+#endif
 
 	SREG = temp_sreg;
 }
@@ -123,7 +128,11 @@ void enc28j60ReadBuffer( int len, char * data)
 	cli();
 
 	// assert CS
-	enc28j60_select();
+#if defined(__AVR_XMEGA__)
+	ENC28J60_CONTROL_PORT.OUTCLR = ( 1<<ENC28J60_CONTROL_CS );
+#else
+	ENC28J60_CONTROL_PORT &= ~( 1<<ENC28J60_CONTROL_CS );
+#endif
 	// issue read command
 	SPI_ReadWrite( SPIBUS, ENC28J60_READ_BUF_MEM );
 
@@ -136,8 +145,11 @@ void enc28j60ReadBuffer( int len, char * data)
 
 	// release CS
 	_delay_us( 1 );
-
-	enc28j60_deselect();
+#if defined(__AVR_XMEGA__)
+	ENC28J60_CONTROL_PORT.OUTSET = (1<<ENC28J60_CONTROL_CS);
+#else
+	ENC28J60_CONTROL_PORT |= (1<<ENC28J60_CONTROL_CS);
+#endif
 	
 	SREG = temp_sreg;
 }
@@ -154,24 +166,28 @@ void enc28j60WriteBuffer( int len, char * data)
 	cli();
 
 	// assert CS
-	enc28j60_select();
+#if defined(__AVR_XMEGA__)
+	ENC28J60_CONTROL_PORT.OUTCLR = ( 1<<ENC28J60_CONTROL_CS );
+#else
+	ENC28J60_CONTROL_PORT &= ~( 1<<ENC28J60_CONTROL_CS );
+#endif
 	
 	// issue write command
 	SPI_ReadWrite( SPIBUS, ENC28J60_WRITE_BUF_MEM );
 
-	SPI_WriteBlock( SPIBUS, data, len );
-
-/*	while(len--)
+//	SPI1_FastMem2Write( data, len );
+	while(len--)
 	{
 		// write data
 		SPI_ReadWrite( SPIBUS, *data++ );
-	}*/
-
+	}
 	// release CS
 	_delay_us( 1 );
-
-	enc28j60_deselect();
-
+#if defined(__AVR_XMEGA__)
+	ENC28J60_CONTROL_PORT.OUTSET = (1<<ENC28J60_CONTROL_CS);
+#else
+	ENC28J60_CONTROL_PORT |= (1<<ENC28J60_CONTROL_CS);
+#endif
 	SREG = temp_sreg;
 }
 
@@ -350,8 +366,6 @@ void enc28j60Init(void)
 	// do bank 2 stuff
 	// enable MAC receive
 	enc28j60Write(MACON1, MACON1_MARXEN|MACON1_TXPAUS|MACON1_RXPAUS);
-	enc28j60Write(EPAUSL, 1);
-	enc28j60Write(EPAUSH, 1);
 	// bring MAC out of reset
 	enc28j60Write(MACON2, 0x00);
 	// bring MAC out of reset
@@ -424,7 +438,7 @@ void enc28j60PacketSend( int len, char* packet)
 //
 //*********************************************************************************************************
 int enc28j60PacketReceiveLenght( void )
-{
+	{
 	int len;
 
 	enc28j60Write(ERDPTL, (NextPacketPtr));
@@ -433,7 +447,7 @@ int enc28j60PacketReceiveLenght( void )
 	// read the packet length
 	len  = enc28j60ReadOp(ENC28J60_READ_BUF_MEM, 0);
 	len |= enc28j60ReadOp(ENC28J60_READ_BUF_MEM, 0)<<8;
-		
+	
 	return( len );
 	}
 
@@ -445,22 +459,14 @@ int enc28j60PacketReceiveLenght( void )
 //*********************************************************************************************************
 int enc28j60PacketReceive( int maxlen, char * packet)
 {
-	int rxstat;
-// 	int rs,re;
+	int rxstat, rs,re;;
 	int len;
-	char pktcnt;
-	
-	pktcnt = enc28j60Read(EPKTCNT) ;
 
 	// check if a packet has been received and buffered
 	if( !(enc28j60Read(EIR) & EIR_PKTIF) )
-	{
-		if ( pktcnt == 0)
-		{
+		if (enc28j60Read(EPKTCNT) == 0)
 			return 0;
-		}
-	}
-	
+		
 	// Set the read pointer to the start of the received packet
 	enc28j60Write(ERDPTL, (NextPacketPtr));
 	enc28j60Write(ERDPTH, (NextPacketPtr)>>8);
@@ -482,16 +488,14 @@ int enc28j60PacketReceive( int maxlen, char * packet)
 	// When len bigger than maxlen, ignore the packet und read next packetptr
 	if ( len > maxlen ) 
 	{
-		enc28j60Write(ERXRDPTL, (NextPacketPtr) );
-		enc28j60Write(ERXRDPTH, (NextPacketPtr) >> 8 );
+		enc28j60Write(ERXRDPTL, (NextPacketPtr));
+		enc28j60Write(ERXRDPTH, (NextPacketPtr)>>8);
 		enc28j60WriteOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PKTDEC);
-
 		return(0);
 	}
 	// copy the packet from the receive buffer
 	enc28j60ReadBuffer(len, packet);
 	
-/*
 	// an implementation of Errata B1 Section #13
     rs = enc28j60Read(ERXSTH);
     rs <<= 8;
@@ -499,8 +503,7 @@ int enc28j60PacketReceive( int maxlen, char * packet)
     re = enc28j60Read(ERXNDH);
     re <<= 8;
     re |= enc28j60Read(ERXNDL);
-
-	if (NextPacketPtr - 1 < rs || NextPacketPtr - 1 > re)
+    if (NextPacketPtr - 1 < rs || NextPacketPtr - 1 > re)
     {
         enc28j60Write(ERXRDPTL, (re));
         enc28j60Write(ERXRDPTH, (re)>>8);
@@ -510,19 +513,7 @@ int enc28j60PacketReceive( int maxlen, char * packet)
         enc28j60Write(ERXRDPTL, (NextPacketPtr-1));
         enc28j60Write(ERXRDPTH, (NextPacketPtr-1)>>8);
     }
-*/
-	
-	if (((NextPacketPtr - 1) < RXSTART_INIT ) || ((NextPacketPtr - 1) > RXSTOP_INIT ))
-	{
-		enc28j60Write(ERXRDPTL, ( RXSTOP_INIT & 0xFF ) );
-		enc28j60Write(ERXRDPTH, ( RXSTOP_INIT ) >> 8 );
-	}
-	else
-	{
-		enc28j60Write(ERXRDPTL, (NextPacketPtr-1));
-		enc28j60Write(ERXRDPTH, (NextPacketPtr-1)>>8);
-	}
-	
+
 	// decrement the packet counter indicate we are done with this packet
 	enc28j60WriteOp(ENC28J60_BIT_FIELD_SET, ECON2, ECON2_PKTDEC);
 

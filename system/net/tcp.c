@@ -73,9 +73,8 @@
 unsigned int TXErrorCounter = 0 ;
 unsigned int RXErrorCounter = 0 ;
 
-struct TCP_SOCKET TCP_sockettable[MAX_TCP_CONNECTIONS];
-
-struct TCP_PORT TCP_porttable[MAX_LISTEN_PORTS];
+struct TCP_SOCKET TCP_sockettable[ MAX_TCP_CONNECTIONS ];
+struct TCP_PORT TCP_porttable[ MAX_LISTEN_PORTS ];
 
 unsigned int RXErrorOldSeq = 0;
 
@@ -219,6 +218,10 @@ void tcp( int packet_lenght, char * ethernetbuffer)
 				// mit der richtigen Windowsize
 				if ( CopyTCPdata2socketbuffer( socket, i , ethernetbuffer ) != SOCKET_ERROR )
 					TCP_sockettable[ socket ].AcknowledgeNumber = ntohl ( TCP_packet->TCP_SequenceNumber ) + i ;					
+
+				// Callback ausführen falls hinterlegt
+				if ( TCP_sockettable[ socket ].TCP_CallbackFunc != NULL )
+					TCP_sockettable[ socket ].TCP_CallbackFunc( socket );
 
 				// ACK senden
 				MakeTCPheader( socket, TCP_ACK_FLAG, 0 , ( MAX_RECIVEBUFFER_LENGHT - Get_Bytes_in_FIFO ( TCP_sockettable[ socket ].fifo ) ) , ethernetbuffer );
@@ -520,11 +523,23 @@ int GetSocket( char * ethernetbuffer )
 		TCP_sockettable[ socket ].SendetBytes = 0;
 		memcpy( TCP_sockettable[ socket ].MACadress, ETH_packet->ETH_sourceMac, 6 );
 		Flush_FIFO( TCP_sockettable[ socket ].fifo );
+		TCP_sockettable[ socket ].TCP_CallbackFunc = NULL;
 	}
 
 	return( socket );
 }
 
+void RegisterTCPCallBack( int socket , TCP_CALLBACK_FUNC pFunc )
+{
+	char sreg_temp;
+	sreg_temp = SREG;
+	cli();
+	
+	TCP_sockettable[ socket ].TCP_CallbackFunc = pFunc;	
+
+	SREG = sreg_temp;
+
+}
 /* -----------------------------------------------------------------------------------------------------------*/
 /*!\brief Baut einen TCP-header und berechnet den Pseudoheader und die Checksumme 
  *	Übergeben werden müssen die TCP_FLAGS, Datenlänge den Datensegments, die Windowsize, und der Pointer auf den Buffer

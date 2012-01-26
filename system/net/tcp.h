@@ -32,6 +32,9 @@
 	extern unsigned int RXErrorCounter;
 	extern unsigned int RXErrorUnsort;
 	extern unsigned int RXErrorOldSeq;
+
+	typedef void ( * TCP_CALLBACK_FUNC ) ( int socket );
+
 	void tcp_init( void );
 
 	void tcp( int packet_lenght, char *buffer);
@@ -47,6 +50,7 @@
 	void MakeTCPheader( int Socket, unsigned char TCP_flags, int Datalenght, unsigned int Windowsize, char *buffer );
 	
 	int RegisterTCPPort( unsigned int Port );
+	void RegisterTCPCallBack( int socket , TCP_CALLBACK_FUNC pFunc );
 	void UnRegisterTCPPort( unsigned int Port );
 	int CheckPortInList( unsigned int Port );
 	int CheckPortRequest( unsigned int Port );
@@ -138,6 +142,8 @@
 			volatile unsigned int Windowsize;					// 2 Byte
 			volatile unsigned int SendetBytes;					// 2 Byte
 			volatile unsigned int Timeoutcounter;				// 2 Byte
+			TCP_CALLBACK_FUNC TCP_CallbackFunc;
+
 #if defined(TCP_RTT)
 			volatile unsigned long TSval;
 			volatile unsigned long TSecr;
