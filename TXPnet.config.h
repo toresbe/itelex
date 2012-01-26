@@ -77,7 +77,7 @@
 
 		// aktiviert DynDNS
 		#ifdef DNS
-//			#define DYNDNS
+			#define DYNDNS
 		#endif
 
 		// aktiviert Twitter

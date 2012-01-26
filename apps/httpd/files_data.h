@@ -121,6 +121,15 @@ const char HtmlPageSystemData[] PROGMEM = {
 #if defined(HTTPSERVER_EEMEM)
 	"<a href=\"eemem.cgi\">EEmem</a><p>"
 #endif
+#if defined(HTTPSERVER_DYNDNS)
+	"<a href=\"dyndns.cgi\">DynDNS</a><p>"
+#endif
+#if defined(HTTPSERVER_TWITTER)
+	"<a href=\"twitter.cgi\">Twitter</a><p>"
+#endif
+#if defined(HTTPSERVER_CRON)
+	"<a href=\"cron.cgi\">cron</a><p>"
+#endif
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
