@@ -118,7 +118,7 @@
 				#define HTTPSERVER_EEMEM
 				// aktiviert reset per Webinterface
 				#if defined(SHELL)
-//					#define HTTPSERVER_CRON
+					#define HTTPSERVER_CRON
 				#endif
 				// aktiviert reset per Webinterface
 				#define HTTPSERVER_RESET

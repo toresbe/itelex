@@ -111,7 +111,7 @@ const char HtmlPageSystemData[] PROGMEM = {
 	"<BODY>"
 	"<h2>TxP2-Net - Das Internet-Interface zum TelexPhone</h2>"
 	"<h1>System-Menue</h1>"
-	"<a href=\"mainmenu.html\">zurueck</a><p>"
+	"<a href=\"index.html\">zurueck</a><p>"
 #if defined(HTTPSERVER_RESET)
 	"<a href=\"reset.cgi\">Reset</a><p>"
 #endif
