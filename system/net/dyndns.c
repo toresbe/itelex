@@ -53,6 +53,9 @@
 #include "system/clock/clock.h"
 
 #include "hardware/timer1/timer1.h"
+
+#define DYNDNS_DEBUG
+
  
 const char DYNDNSFILE[] PROGMEM = "/nic/update?hostname=%s";
 const char DYNDNSURL[] PROGMEM = "members.dyndns.org";
@@ -80,27 +83,48 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 	int SOCKET, Contentlenght, ResponseCode ;
 	long IP, publicIP;
 
+#if defined( DYNDNS_DEBUG )
+	printf_P(PSTR("DYNDNS Update Start\r\n"));
+#endif
+
 	// hole meine public IP
 	publicIP = DYNDNS_getPublicIP();
 	if ( publicIP == -1 ) return( DYNDNS_FAILED );
+
+#if defined( DYNDNS_DEBUG )
+	char IP_Str[16];
+	printf_P(PSTR("  my current ip is %s\r\n"), iptostr(publicIP, IP_Str));
+#endif
 	
 	// hole die IP der Domain
 	IP = DNS_ResolveName( domain );
 	if ( IP == -1 ) return( DYNDNS_FAILED );
 
+#if defined( DYNDNS_DEBUG )
+	printf_P(PSTR("  ip of %s is %s\r\n"), domain, iptostr(IP, IP_Str));
+#endif
+
 	// ist public IP und IP gleich, dann ist kein Update nÃ¶tig
 	if ( IP == publicIP ) return( DYNDNS_OK );
 	
+#if defined( DYNDNS_DEBUG )
+	printf_P(PSTR("  ...must update\r\n"));
+#endif
+
 	// DYNDNSURL auflÃ¶sen
 	IP = DNS_ResolveName_P( DYNDNSURL );
 	if ( IP == -1 )
 		return( DYNDNS_FAILED );
 	
+#if defined( DYNDNS_DEBUG )
+	printf_P(PSTR("  ip of DYNDNS is %s\r\n"), iptostr(IP, IP_Str));
+#endif
+
 	// zu DYNDNS verbinden
 	SOCKET = Connect2IP( IP, DYNDNSPORT );
 	if ( SOCKET == SOCKET_ERROR )
 		return( DYNDNS_FAILED );
-	
+
 	// STDOUT umbiegen auf die neue Verbingung und alt STDOUT sichern
 	STDOUT_save( &oldstream );
 	STDOUT_set( _TCP, SOCKET );

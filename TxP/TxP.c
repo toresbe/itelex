@@ -530,7 +530,18 @@ void txp_thread()
 				}
 			else
 				// Zeichen ist nicht darstellbar, also löschen
+				{
+				if (DebugMsg[0] == '\0') // noch leer
+					strcpy_P(DebugMsg, PSTR("?nicht druckbare Zeichen: "));
+				uint8_t l = strlen(DebugMsg);
+				if (DebugMsg[0] == '?' && l + 2 < DebugMsgMax)
+					{
+					DebugMsg[l] = SendeText[0];
+					DebugMsg[l+1] = '\0';
+					}
+
 				strcpy(SendeText, SendeText+1); // erstes Zeichen aus SendeText-Puffer löschen
+				}
 			}
 			
 		// empfangene Codes in Text wandeln
