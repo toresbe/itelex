@@ -85,7 +85,7 @@
 
 		#ifdef SHELL
 			// aktiviert den Telnet-Server, dazu muss TCP aktiv sein
-//			#define TELNETSERVER
+			#define TELNETSERVER
 		#endif
 
 		// aktiviert den HTTP-Server, dazu muss TCP aktiv sein
