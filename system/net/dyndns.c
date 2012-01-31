@@ -84,7 +84,7 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 	long IP, publicIP;
 
 #if defined( DYNDNS_DEBUG )
-	printf_P(PSTR("DYNDNS Update Start\r\n"));
+	printf_P(PSTR("DYNDNS update start\r\n"));
 #endif
 
 	// hole meine public IP
@@ -118,6 +118,7 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 	
 #if defined( DYNDNS_DEBUG )
 	printf_P(PSTR("  ip of DYNDNS is %s\r\n"), iptostr(IP, IP_Str));
+	printf_P(PSTR("  user:pw = %s\r\n"), userpw);
 #endif
 
 	// zu DYNDNS verbinden
@@ -145,6 +146,10 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 	ResponseCode = DYNDNS_pharseHTTPheader( SOCKET, &Contentlenght );
 		
 	CloseTCPSocket( SOCKET );
+
+#if defined( DYNDNS_DEBUG )
+	printf_P(PSTR("  ResponseCode = %d\r\n"), ResponseCode);
+#endif
 
 	if ( ResponseCode != 200 ) return ( DYNDNS_FAILED );
 	
