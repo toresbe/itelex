@@ -293,19 +293,33 @@ long DYNDNS_getPublicIP( void )
 	if ( ResponseCode != 200 )
 	{
 		CloseTCPSocket( SOCKET );
+#if defined( DYNDNS_DEBUG )
+		printf_P(PSTR("  DYNDNS_getPublicIP: ResponseCode = %d\r\n"), ResponseCode);
+#endif
 		return( DYNDNS_FAILED );
 	}
 	
+#if defined( DYNDNS_DEBUG )
+	printf_P(PSTR("  DYNDNS_getPublicIP: ResponseCode ok, Contentlenght = %d\r\n"), Contentlenght);
+#endif
+
 	// Wenn antwort Okay, Die Zeichen die der Server senden mÃ¶chte auslesen und IP herrausfiltern
+	IPstr[0] = '\0';
 	while( Contentlenght != 0 )
 	{
 		Data = GetByteFromSocketData ( SOCKET );
+		Contentlenght--;
 		
 		// Wenn ':' dann kommt die IP
 		if( Data == ':' )
 		{
+#if defined( DYNDNS_DEBUG )
+			printf_P(PSTR("  DYNDNS_getPublicIP: ':' found, Contentlenght = %d\r\n"), Contentlenght);
+#endif
 			// Dummyread, da erstes Zeichen nach dem ':' ein ' ' ist und nicht zur IP gehÃ¶rt
 			GetByteFromSocketData ( SOCKET );
+			Contentlenght--;
+
 			int i;
 
 			// IP speichern
@@ -318,8 +332,10 @@ long DYNDNS_getPublicIP( void )
 				IPstr[i+1] = '\0';
 			}
 		}
-		Contentlenght--;
 	}
+#if defined( DYNDNS_DEBUG )
+	printf_P(PSTR("  DYNDNS_getPublicIP: IPstr = %s\r\n"), IPstr);
+#endif
 	
 	// Verbindung beenden
 	CloseTCPSocket( SOCKET );

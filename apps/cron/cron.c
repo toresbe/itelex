@@ -153,12 +153,20 @@ void CRON_exec( int entry )
 
 	argc = CRON_pharseentry( string, argv );
 	
+#ifdef CRON_DEBUG
+	printf_P(PSTR("CRON: start %s\r\n"), argv[2]);
+#else
 	STDOUT_save( &oldstream );
 	STDOUT_set( NONE, 0 );
+#endif
 
 	SHELL_runcmdextern( argv[2] );
 
+#ifdef CRON_DEBUG
+	printf_P(PSTR("CRON: %s finished\r\n"), argv[2]);
+#else
 	STDOUT_restore( &oldstream );
+#endif
 }
 	
 /*------------------------------------------------------------------------------------------------------------*/
