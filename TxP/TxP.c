@@ -861,7 +861,8 @@ void txp_cgi_msg( void * pStruct )
 
 	printf_P( PSTR(	"<HTML>"
 					"<HEAD>"
-					"<meta http-equiv=\"expires\" content=\"0\">"));
+					"<meta http-equiv=\"expires\" content=\"0\">"
+					"<meta http-equiv=\"pragma\" content=\"no-cache\">"));
 					
 	if (Zustand == Laeuft || Zustand == Start)
 		{
