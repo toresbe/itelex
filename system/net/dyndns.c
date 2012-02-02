@@ -63,6 +63,7 @@ const char DYNDNSCHECKIPURL[] PROGMEM = "checkip.dyndns.org";
 const int  DYNDNSPORT = 80;
 
 const char DYNDNSHEADER_1[] PROGMEM =  "GET ";
+const char DYNDNSHEADER_2A[] PROGMEM =  " HTTP/1.0\r\n";
 const char DYNDNSHEADER_2[] PROGMEM =  " HTTP/1.0\r\nUser-Agent: Wget/1.11.4\r\nAccept: */*\r\nHost: ";
 const char DYNDNSHEADER_3[] PROGMEM =  "\r\nAuthorization: Basic %s\r\n\r\n";
 
@@ -298,9 +299,9 @@ long DYNDNS_getPublicIP( void )
 	// Request senden
 	printf_P( DYNDNSHEADER_1 );
     printf_P( PSTR("/") );
-    printf_P( DYNDNSHEADER_2 );
-	printf_P( DYNDNSURL );
-	printf_P( PSTR("\r\n\r\n"));
+    printf_P( DYNDNSHEADER_2A );
+	//printf_P( DYNDNSURL );
+	//printf_P( PSTR("\r\n\r\n"));
 	
 	// Gesicherte STDOUT wieder herstellen
 	STDOUT_restore( &oldstream );
