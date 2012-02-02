@@ -1,4 +1,4 @@
-/***************************************************************************/
+ö/***************************************************************************/
 //*            dyndns.c
 //*
 //*  Sat Sep 19 14:57:17 2009
@@ -69,8 +69,8 @@ const char DYNDNSHEADER_3[] PROGMEM =  "\r\nAuthorization: Basic %s\r\n\r\n";
 
 //****************************************************************************/
 /*!\brief Updatet auf die aktuelle Public IP.
- * \param userpw		Zeiger auf den String der Username und Password enthÃ¤lt.
- * \param domain		Zeiger auf den String der den Domainname enthÃ¤lt.
+ * \param userpw		Zeiger auf den String der Username und Password enthält.
+ * \param domain		Zeiger auf den String der den Domainname enthält.
  * \return				Erfolgreich oder nicht.
  * \retval 0			Erfolgreich gesendet.
  * \retval 1			Fehler beim senden.
@@ -105,14 +105,14 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 	printf_P(PSTR("  ip of %s is %s\r\n"), domain, iptostr(IP, IP_Str));
 #endif
 
-	// ist public IP und IP gleich, dann ist kein Update nÃ¶tig
+	// ist public IP und IP gleich, dann ist kein Update nötig
 	if ( IP == publicIP ) return( DYNDNS_OK );
 	
 #if defined( DYNDNS_DEBUG )
 	printf_P(PSTR("  ...must update\r\n"));
 #endif
 
-	// DYNDNSURL auflÃ¶sen
+	// DYNDNSURL auflösen
 	IP = DNS_ResolveName_P( DYNDNSURL );
 	if ( IP == -1 )
 		return( DYNDNS_FAILED );
@@ -161,7 +161,7 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Liest den HTTP-header.
  * \param	socket			Der TCP-Socket von wo die HTTP-header lesen werden soll und speichert Infos zum Stream.
- * \param	Contentlenght	Zeiger auf eine Variable vom Typ int die die lÃ¤nge der noch folgenden Daten Speichert.
+ * \param	Contentlenght	Zeiger auf eine Variable vom Typ int die die länge der noch folgenden Daten Speichert.
  * \return	REQUEST 		Der Returncode auf dem HTTP-header.
  */
 /*------------------------------------------------------------------------------------------------------------*/
@@ -270,7 +270,7 @@ int DYNDNS_pharseHTTPheader ( unsigned int socket, int * Contentlenght )
 
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Holt die Public IP.
- * \return	IP Die Ã¶ffentlich IP-Adresse.
+ * \return	IP Die öffentlich IP-Adresse.
  * \retval	-1 bei allen Fehlern.
  */
 /*------------------------------------------------------------------------------------------------------------*/
@@ -282,7 +282,7 @@ long DYNDNS_getPublicIP( void )
 	long IP;
 	int Contentlenght, ResponseCode, SOCKET ;
 		
-	// DYNDNSURL auflÃ¶sen
+	// DYNDNSURL auflösen
 	IP = DNS_ResolveName_P( DYNDNSCHECKIPURL );
 	if ( IP == -1 )
 		return( -1 );
@@ -323,7 +323,7 @@ long DYNDNS_getPublicIP( void )
 	printf_P(PSTR("  DYNDNS_getPublicIP: ResponseCode ok, Contentlenght = %d\r\n"), Contentlenght);
 #endif
 
-	// Wenn antwort Okay, Die Zeichen die der Server senden mÃ¶chte auslesen und IP herrausfiltern
+	// Wenn antwort Okay, Die Zeichen die der Server senden möchte auslesen und IP herrausfiltern
 	IPstr[0] = '\0';
 	while( Contentlenght != 0 )
 	{
@@ -336,7 +336,7 @@ long DYNDNS_getPublicIP( void )
 #if defined( DYNDNS_DEBUG )
 			printf_P(PSTR("  DYNDNS_getPublicIP: ':' found, Contentlenght = %d\r\n"), Contentlenght);
 #endif
-			// Dummyread, da erstes Zeichen nach dem ':' ein ' ' ist und nicht zur IP gehÃ¶rt
+			// Dummyread, da erstes Zeichen nach dem ':' ein ' ' ist und nicht zur IP gehört
 			GetByteFromSocketData ( SOCKET );
 			Contentlenght--;
 
