@@ -1,4 +1,4 @@
-ö/***************************************************************************/
+/***************************************************************************/
 //*            dyndns.c
 //*
 //*  Sat Sep 19 14:57:17 2009
@@ -63,7 +63,6 @@ const char DYNDNSCHECKIPURL[] PROGMEM = "checkip.dyndns.org";
 const int  DYNDNSPORT = 80;
 
 const char DYNDNSHEADER_1[] PROGMEM =  "GET ";
-const char DYNDNSHEADER_2A[] PROGMEM =  " HTTP/1.0\r\n";
 const char DYNDNSHEADER_2[] PROGMEM =  " HTTP/1.0\r\nUser-Agent: Wget/1.11.4\r\nAccept: */*\r\nHost: ";
 const char DYNDNSHEADER_3[] PROGMEM =  "\r\nAuthorization: Basic %s\r\n\r\n";
 
@@ -102,7 +101,7 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 	if ( IP == -1 ) return( DYNDNS_FAILED );
 
 #if defined( DYNDNS_DEBUG )
-	printf_P(PSTR("  ip of %s is %s\r\n"), domain, iptostr(IP, IP_Str));
+	printf_P(PSTR("  dns ip of %s is %s\r\n"), domain, iptostr(IP, IP_Str));
 #endif
 
 	// ist public IP und IP gleich, dann ist kein Update nötig
@@ -286,11 +285,19 @@ long DYNDNS_getPublicIP( void )
 	IP = DNS_ResolveName_P( DYNDNSCHECKIPURL );
 	if ( IP == -1 )
 		return( -1 );
+
+#if defined( DYNDNS_DEBUG )
+	printf_P(PSTR("  DYNDNS_getPublicIP: check-ip is %s\r\n"), iptostr(IP, IPstr));
+#endif
 		
 	// zu DYNDNS verbinden
 	SOCKET = Connect2IP( IP, DYNDNSPORT );
 	if ( SOCKET == -1 )
 		return( -1 );
+
+#if defined( DYNDNS_DEBUG )
+	printf_P(PSTR("  ...connected\r\n"));
+#endif
 	
 	// STDOUT umbiegen auf die neue Verbingung und alt STDOUT sichern
 	STDOUT_save( &oldstream );
@@ -299,13 +306,17 @@ long DYNDNS_getPublicIP( void )
 	// Request senden
 	printf_P( DYNDNSHEADER_1 );
     printf_P( PSTR("/") );
-    printf_P( DYNDNSHEADER_2A );
-	//printf_P( DYNDNSURL );
-	//printf_P( PSTR("\r\n\r\n"));
+    printf_P( DYNDNSHEADER_2 );
+	printf_P( DYNDNSURL );
+	printf_P( PSTR("\r\n\r\n"));
 	
 	// Gesicherte STDOUT wieder herstellen
 	STDOUT_restore( &oldstream );
 
+#if defined( DYNDNS_DEBUG )
+	printf_P(PSTR("  ...request sent\r\n"));
+#endif
+	
 	// Antwort auswerten
 	ResponseCode = DYNDNS_pharseHTTPheader( SOCKET, &Contentlenght );
 
