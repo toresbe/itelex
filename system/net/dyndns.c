@@ -189,6 +189,9 @@ int DYNDNS_pharseHTTPheader ( unsigned int socket, int * Contentlenght )
 			// Wenn Timeout erreicht, dann beenden
 			if ( CLOCK_GetCountdownTimer( HTTPtimer ) == 0 )
 			{
+#if defined( DYNDNS_DEBUG )
+				printf_P(PSTR("  DYNDNS_pharseHTTPheader: timeout 1\r\n"));
+#endif
 				CLOCK_ReleaseCountdownTimer( HTTPtimer );
 				return( -1 );
 			}
@@ -199,6 +202,9 @@ int DYNDNS_pharseHTTPheader ( unsigned int socket, int * Contentlenght )
 		
 		if ( CLOCK_GetCountdownTimer( HTTPtimer ) == 0 )
 		{
+#if defined( DYNDNS_DEBUG )
+			printf_P(PSTR("  DYNDNS_pharseHTTPheader: timeout 2\r\n"));
+#endif
 			CLOCK_ReleaseCountdownTimer( HTTPtimer );
 			return( -1 );
 		}
@@ -219,18 +225,30 @@ int DYNDNS_pharseHTTPheader ( unsigned int socket, int * Contentlenght )
 			// Zeilenende erreicht ? Wenn ja kieck mal was drinne ist
 			if ( Data == 0x0d )
 			{
+#if defined( DYNDNS_DEBUG )
+				printf_P(PSTR("  DYNDNS_pharseHTTPheader: CR received. Buffer = %s\r\n"), pharsebuffer);
+#endif
 				if ( !memcmp_P( &pharsebuffer[0] , PSTR("HTTP/1.") , 7 ) )
 				{
 					REQUEST = atoi( &pharsebuffer[9] );
+#if defined( DYNDNS_DEBUG )
+					printf_P(PSTR("  ... Request = %d\r\n"), REQUEST);
+#endif
 				}
 				else if ( !memcmp_P( &pharsebuffer[0] , PSTR("Content-Length: ") , 16 ) )
 				{
 					* Contentlenght = atoi( &pharsebuffer[16] );
+#if defined( DYNDNS_DEBUG )
+					printf_P(PSTR("  ... Contentlenght = %d\r\n"), *Contentlenght);
+#endif
 				}								
 
 				// War das eine Leerzeile? Wenn ja ist der HTTP-Header zu ende
 				if ( pharsebuffer[0] == '\0' )
 				{
+#if defined( DYNDNS_DEBUG )
+					printf_P(PSTR("  DYNDNS_pharseHTTPheader: blank line\r\n"));
+#endif
 					Data = GetByteFromSocketData ( socket );
 					break;
 				}
@@ -252,6 +270,7 @@ int DYNDNS_pharseHTTPheader ( unsigned int socket, int * Contentlenght )
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Holt die Public IP.
  * \return	IP Die Ã¶ffentlich IP-Adresse.
+ * \retval	-1 bei allen Fehlern.
  */
 /*------------------------------------------------------------------------------------------------------------*/
 long DYNDNS_getPublicIP( void )
@@ -265,12 +284,12 @@ long DYNDNS_getPublicIP( void )
 	// DYNDNSURL auflÃ¶sen
 	IP = DNS_ResolveName_P( DYNDNSCHECKIPURL );
 	if ( IP == -1 )
-		return( DYNDNS_FAILED );
+		return( -1 );
 		
 	// zu DYNDNS verbinden
 	SOCKET = Connect2IP( IP, DYNDNSPORT );
 	if ( SOCKET == -1 )
-		return( DYNDNS_FAILED );
+		return( -1 );
 	
 	// STDOUT umbiegen auf die neue Verbingung und alt STDOUT sichern
 	STDOUT_save( &oldstream );
@@ -296,7 +315,7 @@ long DYNDNS_getPublicIP( void )
 #if defined( DYNDNS_DEBUG )
 		printf_P(PSTR("  DYNDNS_getPublicIP: ResponseCode = %d\r\n"), ResponseCode);
 #endif
-		return( DYNDNS_FAILED );
+		return( -1 );
 	}
 	
 #if defined( DYNDNS_DEBUG )
