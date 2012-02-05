@@ -1093,7 +1093,7 @@ int GetSocketDataToFIFO( int Socket , int fifo, int bufferlen )
 /*------------------------------------------------------------------------------------------------------------*/	
 int GetSocketData( int Socket , int bufferlen, char *buffer)
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( SOCKET_ERROR );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS /* HACK || TCP_sockettable[Socket].ConnectionState != SOCKET_READY */ ) return( SOCKET_ERROR );
 	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 ) return ( 0 );
 
 	LockEthernet();
@@ -1151,7 +1151,7 @@ int FlushSocketData( int Socket )
 /*------------------------------------------------------------------------------------------------------------*/	
 int GetBytesInSocketData( int Socket )
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( SOCKET_ERROR );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS /* HACK || TCP_sockettable[Socket].ConnectionState != SOCKET_READY */ ) return( SOCKET_ERROR );
 
 	return( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) );
 }
@@ -1164,7 +1164,7 @@ int GetBytesInSocketData( int Socket )
 /*------------------------------------------------------------------------------------------------------------*/	
 char GetByteFromSocketData( int Socket )
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( 0 );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS /* HACK || TCP_sockettable[Socket].ConnectionState != SOCKET_READY */ ) return( 0 );
 
 	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 ) return ( 0 );
 

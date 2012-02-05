@@ -54,9 +54,9 @@
 
 #include "hardware/timer1/timer1.h"
 
-#define DYNDNS_DEBUG
+#include "hardware/led/led_core.h"
 
- 
+
 const char DYNDNSFILE[] PROGMEM = "/nic/update?hostname=%s";
 const char DYNDNSURL[] PROGMEM = "members.dyndns.org";
 const char DYNDNSCHECKIPURL[] PROGMEM = "checkip.dyndns.org";
@@ -85,6 +85,7 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 
 #if defined( DYNDNS_DEBUG )
 	printf_P(PSTR("DYNDNS update start\r\n"));
+	STDOUT_Flush();
 #endif
 
 	// hole meine public IP
@@ -94,6 +95,7 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 #if defined( DYNDNS_DEBUG )
 	char IP_Str[16];
 	printf_P(PSTR("  my current ip is %s\r\n"), iptostr(publicIP, IP_Str));
+	STDOUT_Flush();
 #endif
 	
 	// hole die IP der Domain
@@ -102,6 +104,7 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 
 #if defined( DYNDNS_DEBUG )
 	printf_P(PSTR("  dns ip of %s is %s\r\n"), domain, iptostr(IP, IP_Str));
+	STDOUT_Flush();
 #endif
 
 	// ist public IP und IP gleich, dann ist kein Update nötig
@@ -109,6 +112,7 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 	
 #if defined( DYNDNS_DEBUG )
 	printf_P(PSTR("  ...must update\r\n"));
+	STDOUT_Flush();
 #endif
 
 	// DYNDNSURL auflösen
@@ -119,6 +123,7 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 #if defined( DYNDNS_DEBUG )
 	printf_P(PSTR("  ip of DYNDNS is %s\r\n"), iptostr(IP, IP_Str));
 	printf_P(PSTR("  user:pw = %s\r\n"), userpw);
+	STDOUT_Flush();
 #endif
 
 	// zu DYNDNS verbinden
@@ -149,6 +154,7 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 
 #if defined( DYNDNS_DEBUG )
 	printf_P(PSTR("  ResponseCode = %d\r\n"), ResponseCode);
+	STDOUT_Flush();
 #endif
 
 	if ( ResponseCode != 200 ) return ( DYNDNS_FAILED );
@@ -184,13 +190,14 @@ int DYNDNS_pharseHTTPheader ( unsigned int socket, int * Contentlenght )
 	{
 
 		// sind Daten angekommen, oder Timeout schon erreicht ?
-		while ( GetBytesInSocketData( socket ) == 0 && CLOCK_GetCountdownTimer( HTTPtimer ) != 0)
+		while ( GetBytesInSocketData( socket ) <= 0 && CLOCK_GetCountdownTimer( HTTPtimer ) != 0)
 		{
 			// Wenn Timeout erreicht, dann beenden
 			if ( CLOCK_GetCountdownTimer( HTTPtimer ) == 0 )
 			{
 #if defined( DYNDNS_DEBUG )
 				printf_P(PSTR("  DYNDNS_pharseHTTPheader: timeout 1\r\n"));
+				STDOUT_Flush();
 #endif
 				CLOCK_ReleaseCountdownTimer( HTTPtimer );
 				return( -1 );
@@ -199,11 +206,12 @@ int DYNDNS_pharseHTTPheader ( unsigned int socket, int * Contentlenght )
 
 		// Neue Daten lesen
 		Data = GetByteFromSocketData ( socket );
-		
+
 		if ( CLOCK_GetCountdownTimer( HTTPtimer ) == 0 )
 		{
 #if defined( DYNDNS_DEBUG )
 			printf_P(PSTR("  DYNDNS_pharseHTTPheader: timeout 2\r\n"));
+			STDOUT_Flush();
 #endif
 			CLOCK_ReleaseCountdownTimer( HTTPtimer );
 			return( -1 );
@@ -227,12 +235,14 @@ int DYNDNS_pharseHTTPheader ( unsigned int socket, int * Contentlenght )
 			{
 #if defined( DYNDNS_DEBUG )
 				printf_P(PSTR("  DYNDNS_pharseHTTPheader: CR received. Buffer = %s\r\n"), pharsebuffer);
+				STDOUT_Flush();
 #endif
 				if ( !memcmp_P( &pharsebuffer[0] , PSTR("HTTP/1.") , 7 ) )
 				{
 					REQUEST = atoi( &pharsebuffer[9] );
 #if defined( DYNDNS_DEBUG )
 					printf_P(PSTR("  ... Request = %d\r\n"), REQUEST);
+					STDOUT_Flush();
 #endif
 				}
 				else if ( !memcmp_P( &pharsebuffer[0] , PSTR("Content-Length: ") , 16 ) )
@@ -240,6 +250,7 @@ int DYNDNS_pharseHTTPheader ( unsigned int socket, int * Contentlenght )
 					* Contentlenght = atoi( &pharsebuffer[16] );
 #if defined( DYNDNS_DEBUG )
 					printf_P(PSTR("  ... Contentlenght = %d\r\n"), *Contentlenght);
+					STDOUT_Flush();
 #endif
 				}								
 
@@ -248,6 +259,7 @@ int DYNDNS_pharseHTTPheader ( unsigned int socket, int * Contentlenght )
 				{
 #if defined( DYNDNS_DEBUG )
 					printf_P(PSTR("  DYNDNS_pharseHTTPheader: blank line\r\n"));
+					STDOUT_Flush();
 #endif
 					Data = GetByteFromSocketData ( socket );
 					break;
@@ -288,6 +300,7 @@ long DYNDNS_getPublicIP( void )
 
 #if defined( DYNDNS_DEBUG )
 	printf_P(PSTR("  DYNDNS_getPublicIP: check-ip is %s\r\n"), iptostr(IP, IPstr));
+	STDOUT_Flush();
 #endif
 		
 	// zu DYNDNS verbinden
@@ -297,7 +310,10 @@ long DYNDNS_getPublicIP( void )
 
 #if defined( DYNDNS_DEBUG )
 	printf_P(PSTR("  ...connected\r\n"));
+	printf_P(PSTR("  ... CheckSocketState = %d\r\n"), CheckSocketState(SOCKET));
+	STDOUT_Flush();
 #endif
+	LED_on(3); // blau
 	
 	// STDOUT umbiegen auf die neue Verbingung und alt STDOUT sichern
 	STDOUT_save( &oldstream );
@@ -313,19 +329,28 @@ long DYNDNS_getPublicIP( void )
 	// Gesicherte STDOUT wieder herstellen
 	STDOUT_restore( &oldstream );
 
+	LED_off(3); // blau
 #if defined( DYNDNS_DEBUG )
 	printf_P(PSTR("  ...request sent\r\n"));
+	printf_P(PSTR("  ... CheckSocketState = %d\r\n"), CheckSocketState(SOCKET));
+	STDOUT_Flush();
 #endif
 	
+	LED_on(2);
+
 	// Antwort auswerten
 	ResponseCode = DYNDNS_pharseHTTPheader( SOCKET, &Contentlenght );
+
+	LED_off(2);
 
 	// Wenn Antwort nicht okay, Exit
 	if ( ResponseCode != 200 )
 	{
 		CloseTCPSocket( SOCKET );
 #if defined( DYNDNS_DEBUG )
+		printf_P(PSTR("  ... CheckSocketState = %d\r\n"), CheckSocketState(SOCKET));
 		printf_P(PSTR("  DYNDNS_getPublicIP: ResponseCode = %d\r\n"), ResponseCode);
+		STDOUT_Flush();
 #endif
 		return( -1 );
 	}
@@ -346,6 +371,7 @@ long DYNDNS_getPublicIP( void )
 		{
 #if defined( DYNDNS_DEBUG )
 			printf_P(PSTR("  DYNDNS_getPublicIP: ':' found, Contentlenght = %d\r\n"), Contentlenght);
+			STDOUT_Flush();
 #endif
 			// Dummyread, da erstes Zeichen nach dem ':' ein ' ' ist und nicht zur IP gehört
 			GetByteFromSocketData ( SOCKET );
@@ -366,6 +392,7 @@ long DYNDNS_getPublicIP( void )
 	}
 #if defined( DYNDNS_DEBUG )
 	printf_P(PSTR("  DYNDNS_getPublicIP: IPstr = %s\r\n"), IPstr);
+	STDOUT_Flush();
 #endif
 	
 	// Verbindung beenden

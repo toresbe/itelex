@@ -151,4 +151,11 @@
 		#endif
 	#endif
 
+// Debugging:
+
+
+#define DYNDNS_DEBUG 1
+#define CRON_DEBUG 1
+
+
 #endif /* TXPNET_CONFIG_H */
