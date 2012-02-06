@@ -12,7 +12,9 @@
 ///	\par Uebersicht
 /// Aktiviert das externe RAM-Interface. Wenn die xram.h eingebunden wird, wird
 /// automatisch die Aktivierung in .init eingetragen und steht somit sofort zur
-/// VerfÃƒÂ¼gung.
+/// Verfügung.
+/// \date 30-03-2011: Fred Sonnenrein: Speichertest verbessert: Vollständiges 
+///       Füllen mit Pseudo-Zufallsmuster und Wieder-Auslesen.
 //****************************************************************************/
 /*
  *  This program is free software; you can redistribute it and/or modify
@@ -87,7 +89,8 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 	// externes RAM-Interface freigeben
 	XMCRA |= ( 1<<SRE );
 
-	// A16 freigeben, hÃƒÂ¤ngt an PD7, damit der RAM funktioniert, wenn dies nicht gemacht wird, ist A16 tristate und der RAM macht komische sachen :-)
+	// A16 freigeben, hängt an PD7, damit der RAM funktioniert, wenn dies nicht gemacht wird, ist A16 
+	// tristate und der RAM macht komische sachen :-)
 	DDRD |= ( 1<<PD7 );
 	PORTD &= ~( 1<<PD7 );
 #else

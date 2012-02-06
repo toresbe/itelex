@@ -1,4 +1,4 @@
-/***************************************************************************/
+﻿/***************************************************************************/
 //*            dyndns.c
 //*
 //*  Sat Sep 19 14:57:17 2009
@@ -27,6 +27,8 @@
  * \author Dirk Broßwick
  * \par Uebersicht
  *		Stellt Funktionen für das dyndns.org bereit.
+ * \date 04-02-2012: Fred Sonnenrein: DNYDNS_DEBUG, Rückgabewert von DYNDNS_getPublicIP
+  *      korrigiert.
  */
 
 //@{
@@ -53,8 +55,6 @@
 #include "system/clock/clock.h"
 
 #include "hardware/timer1/timer1.h"
-
-#include "hardware/led/led_core.h"
 
 
 const char DYNDNSFILE[] PROGMEM = "/nic/update?hostname=%s";
@@ -111,7 +111,7 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 	if ( IP == publicIP ) return( DYNDNS_OK );
 	
 #if defined( DYNDNS_DEBUG )
-	printf_P(PSTR("  ...must update\r\n"));
+	printf_P(PSTR("  ... must update\r\n"));
 	STDOUT_Flush();
 #endif
 
@@ -153,13 +153,13 @@ int DYNDNS_updateIP( char * userpw, char * domain )
 	CloseTCPSocket( SOCKET );
 
 #if defined( DYNDNS_DEBUG )
-	printf_P(PSTR("  ResponseCode = %d\r\n"), ResponseCode);
+	printf_P(PSTR("  ... ResponseCode = %d\r\n"), ResponseCode);
 	STDOUT_Flush();
 #endif
 
 	if ( ResponseCode != 200 ) return ( DYNDNS_FAILED );
 	
-	// und zurÃ¼ck
+	// und zurück
 	return( DYNDNS_OK );
 }
 
@@ -183,7 +183,7 @@ int DYNDNS_pharseHTTPheader ( unsigned int socket, int * Contentlenght )
 	
 	if ( HTTPtimer == CLOCK_FAILED ) return( -1 );
 	
-	// Timeout fÃ¼r pufferauffÃ¼llen setzen
+	// Timeout für pufferauffüllen setzen
 	CLOCK_SetCountdownTimer ( HTTPtimer, 1000, MSECOUND );
 
 	while( 1 )
@@ -309,12 +309,10 @@ long DYNDNS_getPublicIP( void )
 		return( -1 );
 
 #if defined( DYNDNS_DEBUG )
-	printf_P(PSTR("  ...connected\r\n"));
+	printf_P(PSTR("  ... connected\r\n"));
 	printf_P(PSTR("  ... CheckSocketState = %d\r\n"), CheckSocketState(SOCKET));
 	STDOUT_Flush();
 #endif
-	LED_on(3); // blau
-	
 	// STDOUT umbiegen auf die neue Verbingung und alt STDOUT sichern
 	STDOUT_save( &oldstream );
 	STDOUT_set( _TCP, SOCKET );
@@ -329,19 +327,14 @@ long DYNDNS_getPublicIP( void )
 	// Gesicherte STDOUT wieder herstellen
 	STDOUT_restore( &oldstream );
 
-	LED_off(3); // blau
 #if defined( DYNDNS_DEBUG )
-	printf_P(PSTR("  ...request sent\r\n"));
+	printf_P(PSTR("  ... request sent\r\n"));
 	printf_P(PSTR("  ... CheckSocketState = %d\r\n"), CheckSocketState(SOCKET));
 	STDOUT_Flush();
 #endif
 	
-	LED_on(2);
-
 	// Antwort auswerten
 	ResponseCode = DYNDNS_pharseHTTPheader( SOCKET, &Contentlenght );
-
-	LED_off(2);
 
 	// Wenn Antwort nicht okay, Exit
 	if ( ResponseCode != 200 )

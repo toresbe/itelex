@@ -28,6 +28,8 @@
 ///			TCP-Verbingung, so das die Sockets nicht ins leere laufen oder blockieren.
 /// \date   05-23-2009: DELAYED_ACK hinzugefügt, damit Windows damit klar kommt. Immer diese extra Wurst von Windows.
 /// \date   05-28-2009: So, ein bisschen Namenschaos beseitigt in den defines.
+/// \date	04-02-2012: Fred Sonnenrein: GetBytesInSocketData und GetByteFromSocketData 
+///         geändert, so dass kurze Pakete (z.B. bei Abfrage von checkip.dyndns.com) noch auslesbar sind.
 //****************************************************************************/
 /*
  *  This program is free software; you can redistribute it and/or modify
