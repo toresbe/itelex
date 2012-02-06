@@ -28,8 +28,9 @@
 ///			TCP-Verbingung, so das die Sockets nicht ins leere laufen oder blockieren.
 /// \date   05-23-2009: DELAYED_ACK hinzugefügt, damit Windows damit klar kommt. Immer diese extra Wurst von Windows.
 /// \date   05-28-2009: So, ein bisschen Namenschaos beseitigt in den defines.
-/// \date	04-02-2012: Fred Sonnenrein: GetBytesInSocketData und GetByteFromSocketData 
-///         geändert, so dass kurze Pakete (z.B. bei Abfrage von checkip.dyndns.com) noch auslesbar sind.
+/// \date	04-02-2012: Fred Sonnenrein: GetSocketDataToFIFO, GetSocketData, FlushSocketData, GetBytesInSocketData 
+///         und GetByteFromSocketData geändert, so dass kurze Pakete, die gleich ein Abbau der Verbindung verursachen 
+///         (z.B. bei Abfrage von checkip.dyndns.com) noch auslesbar sind.
 //****************************************************************************/
 /*
  *  This program is free software; you can redistribute it and/or modify
@@ -171,7 +172,7 @@ void tcp( int packet_lenght, char * ethernetbuffer)
 					TCP_sockettable[ socket ].SequenceNumber++; // SequenceNumber um 1 erhöhen, das gehört zur SYN-sequence dazu
 					TCP_sockettable[ socket ].ConnectionState = SOCKET_WAIT2SYNACK ; // State für den Socket auf WAIT2SYNACK und den den SYN abschließen zu können
 					TCP_sockettable[ socket ].SendState = SOCKET_READY2SEND ; // bereit zum senden
-					TCP_sockettable[ socket ].Timeoutcounter = 10;
+					TCP_sockettable[ socket ].Timeoutcounter = TimeOutCounter;
 				}
 				return;
 			}
@@ -515,7 +516,7 @@ int GetSocket( char * ethernetbuffer )
 		TCP_sockettable[ socket ].SequenceNumber =~ ntohl ( TCP_packet->TCP_SequenceNumber );
 		TCP_sockettable[ socket ].AcknowledgeNumber = ntohl ( TCP_packet->TCP_SequenceNumber );
 		TCP_sockettable[ socket ].SendState = SOCKET_READY2SEND;
-		TCP_sockettable[ socket ].Timeoutcounter = 10;
+		TCP_sockettable[ socket ].Timeoutcounter = TimeOutCounter;
 #if defined(TCP_RTT)
 		TCP_sockettable[ socket ].TSval = 0;
 		TCP_sockettable[ socket ].TSecr = ntohl(10);
@@ -1050,11 +1051,12 @@ int PutSocketData_RPE( int Socket, int Datalenght, char * Sendbuffer, char Mode 
  * \param	fifo		Fifo in den die Daten kopiert werden sollen.
  * \param	bufferlen	Anzahl der Bytes die kopiert werden soll.
  * \retval	Datalenght	Anzahl der kopierten Bytes oder -1 bei Fehler.
+ * \todo    Was passiert, wenn Get_FIFOrestsize ( fifo ) < bufferlen aber > 0 ?
  */
 /*------------------------------------------------------------------------------------------------------------*/	
 int GetSocketDataToFIFO( int Socket , int fifo, int bufferlen )
 	{
-		if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( SOCKET_ERROR );
+		if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( SOCKET_ERROR );
 		if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 ) return ( 0 );
 		
 		LockEthernet();
@@ -1065,7 +1067,7 @@ int GetSocketDataToFIFO( int Socket , int fifo, int bufferlen )
 		{
 			i = Get_FIFO_to_FIFO( TCP_sockettable[ Socket ].fifo , bufferlen, fifo );
 			// sende ein Windowupdate-Paket wenn buffer zu 7/8 frei ist
-			if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) < ( MAX_RECIVEBUFFER_LENGHT / 2 ) )
+			if ( TCP_sockettable[Socket].ConnectionState != SOCKET_READY && Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) < ( MAX_RECIVEBUFFER_LENGHT / 2 ) )
 			{
 				char ackbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ];
 
@@ -1095,7 +1097,7 @@ int GetSocketDataToFIFO( int Socket , int fifo, int bufferlen )
 /*------------------------------------------------------------------------------------------------------------*/	
 int GetSocketData( int Socket , int bufferlen, char *buffer)
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS /* HACK || TCP_sockettable[Socket].ConnectionState != SOCKET_READY */ ) return( SOCKET_ERROR );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( SOCKET_ERROR );
 	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 ) return ( 0 );
 
 	LockEthernet();
@@ -1117,7 +1119,7 @@ int GetSocketData( int Socket , int bufferlen, char *buffer)
 	}
 
 	// sende ein Windowupdate-Paket wenn buffer zu 3/4 frei ist
-	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) < ( MAX_RECIVEBUFFER_LENGHT / 2 ) )
+	if ( TCP_sockettable[Socket].ConnectionState == SOCKET_READY && Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) < ( MAX_RECIVEBUFFER_LENGHT / 2 ) )
 	{
 		char ackbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ];
 
@@ -1135,12 +1137,12 @@ int GetSocketData( int Socket , int bufferlen, char *buffer)
 /*-----------------------------------------------------------------------------------------------------------*/
 /*!\brief Löscht den Empfangspuffer
  * \param	Socket		Socketnummer von welchen der Puffer gelöscht werden soll.
- * \retval	Die Anzahl der kopierten Bytes.
+ * \retval	Die Anzahl der gelöschten Bytes.
  */
 /*------------------------------------------------------------------------------------------------------------*/	
 int FlushSocketData( int Socket )
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( SOCKET_ERROR );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( SOCKET_ERROR );
 
 	return( Flush_FIFO( TCP_sockettable[ Socket ].fifo ) );
 }
@@ -1153,7 +1155,7 @@ int FlushSocketData( int Socket )
 /*------------------------------------------------------------------------------------------------------------*/	
 int GetBytesInSocketData( int Socket )
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS /* HACK || TCP_sockettable[Socket].ConnectionState != SOCKET_READY */ ) return( SOCKET_ERROR );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( SOCKET_ERROR );
 
 	return( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) );
 }
@@ -1166,7 +1168,7 @@ int GetBytesInSocketData( int Socket )
 /*------------------------------------------------------------------------------------------------------------*/	
 char GetByteFromSocketData( int Socket )
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS /* HACK || TCP_sockettable[Socket].ConnectionState != SOCKET_READY */ ) return( 0 );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( 0 );
 
 	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 ) return ( 0 );
 
@@ -1176,7 +1178,7 @@ char GetByteFromSocketData( int Socket )
 
 	Data = Get_Byte_from_FIFO ( TCP_sockettable[ Socket ].fifo );
 	// Sendet ein Update wenn Buffer leer
-	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 )
+	if ( TCP_sockettable[Socket].ConnectionState == SOCKET_READY && Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 )
 	{
 		char ackbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ];
 		struct TCP_header *TCP_packet;		// TCP_struct anlegen
@@ -1237,7 +1239,7 @@ int Connect2IP( long IP, unsigned int Port )
 	TCP_sockettable[ Socket ].SequenceNumber =~ 0x12345678;
 	TCP_sockettable[ Socket ].AcknowledgeNumber = 0x0 ;
 	TCP_sockettable[ Socket ].SendState = SOCKET_READY2SEND;
-	TCP_sockettable[ Socket ].Timeoutcounter = 10;
+	TCP_sockettable[ Socket ].Timeoutcounter = TimeOutCounter;
 	Flush_FIFO ( TCP_sockettable[ Socket ].fifo );
 	TCP_sockettable[ Socket ].Windowsize = 0;
 	TCP_sockettable[ Socket ].SendetBytes = 0;		
