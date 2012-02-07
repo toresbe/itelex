@@ -151,10 +151,14 @@ void CRON_exec( int entry )
 
 	CRON_getentry( string, entry );
 
+#ifdef CRON_DEBUG
+	printf_P(PSTR("CRON #%d = %s\r\n"), entry, string);
+#endif
+	
 	argc = CRON_pharseentry( string, argv );
 	
 #ifdef CRON_DEBUG
-	printf_P(PSTR("CRON: start %s\r\n"), argv[2]);
+	printf_P(PSTR("CRON start %s\r\n"), argv[2]);
 #else
 	STDOUT_save( &oldstream );
 	STDOUT_set( NONE, 0 );

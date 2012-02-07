@@ -755,17 +755,10 @@ void txp_cgi_debug( void * pStruct )
 	
 	cgi_PrintHttpheaderStart();
 
-	printf_P(PSTR(
-		"<a href=\"txp-debug.cgi\">Aktualisieren</a><p>"
-		"EmpfText: ["
-		));
-
+	printf_P(PSTR("EmpfText: ["));
 	printf(EmpfText);
-	
 	printf_P(PSTR("]<br>SendeText: ["));
-
 	printf(SendeText);
-	
 	printf_P(PSTR("]<p>DebugMsg: %s<br>"), DebugMsg);
 	DebugMsg[0] = '\0';
 

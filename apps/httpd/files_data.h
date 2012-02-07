@@ -53,7 +53,7 @@ const char files1[] PROGMEM = "index.html";
 const char data1[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
-	"<TITLE>TxP2-Net - Das Internet-Interface zum TelexPhone</TITLE>"
+	"<TITLE>TxP2-Net - Das Internet-Interface zum TelexPhone 2</TITLE>"
 	"</HEAD>"
 	"<frameset rows=\"60,35,*"
 	#ifdef HTTPSERVER_STATS
@@ -62,7 +62,7 @@ const char data1[] PROGMEM = {
 	"\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
   	"<frame src=\"headline.html\" name=\"Navigation1\" scrolling=\"no\">"
   	"<frame src=\"mainmenu.html\" name=\"Navigation2\" scrolling=\"no\">"
-  	"<frame src=\"info.html\" name=\"main\" scrolling=\"no\">"
+  	"<frame src=\"info.html\" name=\"main\">"
 	#ifdef HTTPSERVER_STATS
   	"<frame src=\"stats.cgi\" name=\"update\" scrolling=\"no\">"
 	#endif
@@ -80,7 +80,6 @@ const char data2[] PROGMEM = {
 	"<HTML>"
 	"<BODY bgcolor=\"#006400\" text=\"#FFFAF0\">"// colors 6666ff__FFFFFF
 	"<h1>TxP2-Net - Das Internet-Interface zum TelexPhone</h1>"
-	"<h3>Auf Grundlage von OpenMCP</h3>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
@@ -143,9 +142,9 @@ const char data4[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"
 	"<a href=\"info.html\"target=\"main\">Informationen</a>"
-	" / <a href=\"txp-msg.cgi\"target=\"main\">Nachricht senden</a><p>"
-	" / <a href=\"txp-config.cgi\"target=\"main\">TxP-Einstellungen</a><p>"
-	" / <a href=\"txp-debug.cgi\"target=\"main\">Debug-Infos</a><p>"
+	" / <a href=\"txp-msg.cgi\"target=\"main\">Nachricht senden</a>"
+	" / <a href=\"txp-config.cgi\"target=\"main\">TxP-Einstellungen</a>"
+	" / <a href=\"txp-debug.cgi\"target=\"main\">Debug-Infos</a>"
 	#if defined(HTTPSERVER_STREAM)
 		" / <a href=\"stream.html\">Stream</a>"
 	#endif
@@ -225,7 +224,8 @@ const char data7[] PROGMEM = {
 	"\r\n"
 	"build on AVR-libc version: " __AVR_LIBC_VERSION_STRING__ "/" __AVR_LIBC_DATE_STRING__ " with avr-gcc "__VERSION__", Date: " __DATE__ " " __TIME__ " \r\n"
 	"\r\n"
-	"(c)2006-2012   Software: Fred Sonnenrein; based on OpenMCP by Dirk Brosswick (sharandac@snafu.de)\r\n"
+	"(c)2006-2012   Software: Fred Sonnenrein\r\n"
+	"based on OpenMCP by Dirk Brosswick\r\n"
 	"</pre></p>"
 	"</BODY>"
 	"</HTML>"
