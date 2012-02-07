@@ -756,9 +756,6 @@ void txp_cgi_debug( void * pStruct )
 	cgi_PrintHttpheaderStart();
 
 	printf_P(PSTR(
-		"<h2>Freds Telex-Phone-Interface</h2>"
-		"<h3>Grundlage: OpenMCP</h3>"
-		"<h1>TelexPhone Debug-Infos</h1>"
 		"<a href=\"txp-debug.cgi\">Aktualisieren</a><p>"
 		"EmpfText: ["
 		));
@@ -812,8 +809,6 @@ void txp_cgi_debug( void * pStruct )
 
 	printf_P(PSTR("<p>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , ByteCounter, PacketCounter, eth_state_error );
 
-	printf_P(PSTR("<p><a href=\"index.html\">Hauptseite</a><p>"));
-
 	cgi_PrintHttpheaderEnd();
 
 	LED_off(ROT); // HACK für Test
@@ -861,7 +856,7 @@ void txp_cgi_msg( void * pStruct )
 
 	printf_P( PSTR(	"<HTML>"
 					"<HEAD>"
-					"<meta http-equiv=\"expires\" content=\"0\">"
+					"<meta http-equiv=\"expires\" content=\"1\">"
 					"<meta http-equiv=\"pragma\" content=\"no-cache\">"));
 					
 	if (Zustand == Laeuft || Zustand == Start)
@@ -878,10 +873,7 @@ void txp_cgi_msg( void * pStruct )
 				  "<BODY>"));
 			
 	printf_P(PSTR(
-		"<h2>Freds Telex-Phone-Interface</h2>"
-		"<h3>Grundlage: OpenMCP</h3>"
-		"<h1>TelexPhone Nachricht</h1>"
-		"<a href=\"txp-msg.cgi\">Aktualisieren</a> <a href=\"index.html\">Hauptseite</a><p>"
+		"<a href=\"txp-msg.cgi\">Aktualisieren</a><p>"
 		"<form action=\"txp-msg.cgi\">"
 		));
 
@@ -950,10 +942,6 @@ void txp_cgi_config(void *pStruct)
 	if ( http_request->argc == 0 )
 		{
 		printf_P(PSTR(
-			"<h2>Freds Telex-Phone-Interface</h2>"
-			"<h3>Grundlage: OpenMCP</h3>"
-			"<h1>TelexPhone Einstellungen</h1>"
-			"<a href=\"index.html\">zur&uuml;ck zur Hauptseite</a><p>"
 			"<form action=\"txp-config.cgi\">"
 			"<table border=\"0\" cellpadding=\"5\" cellspacing=\"0\">"
 			));

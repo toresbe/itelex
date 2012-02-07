@@ -49,16 +49,171 @@
 
 	#include "config.h"
 
-const char HtmlPageIndexName[] PROGMEM = "index.html";
-const char HtmlPageIndexData[] PROGMEM = {
+const char files1[] PROGMEM = "index.html";
+const char data1[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
 	"<TITLE>TxP2-Net - Das Internet-Interface zum TelexPhone</TITLE>"
 	"</HEAD>"
-    "<BODY>"
-	"<h2>TxP2-Net - Das Internet-Interface zum TelexPhone</h2>"
-	"<h1>Hauptseite</h1>"
-	"<pre>"
+	"<frameset rows=\"60,35,*"
+	#ifdef HTTPSERVER_STATS
+		",40"
+	#endif
+	"\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
+  	"<frame src=\"headline.html\" name=\"Navigation1\" scrolling=\"no\">"
+  	"<frame src=\"mainmenu.html\" name=\"Navigation2\" scrolling=\"no\">"
+  	"<frame src=\"info.html\" name=\"main\" scrolling=\"no\">"
+	#ifdef HTTPSERVER_STATS
+  	"<frame src=\"stats.cgi\" name=\"update\" scrolling=\"no\">"
+	#endif
+  	"<noframes>"
+    "<body>"
+    "<p>Ihr Browser unterstützt keine Frames!</p>"
+    "</body>"
+  	"</noframes>"
+	"</frameset>"
+	"</HTML>"
+	"\r\n\r\n"	};
+
+const char files2[] PROGMEM = "headline.html";
+const char data2[] PROGMEM = {
+	"<HTML>"
+	"<BODY bgcolor=\"#006400\" text=\"#FFFAF0\">"// colors 6666ff__FFFFFF
+	"<h1>TxP2-Net - Das Internet-Interface zum TelexPhone</h1>"
+	"<h3>Auf Grundlage von OpenMCP</h3>"
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n"	};
+
+
+#ifdef HTTPSERVER_IO
+	const char files3[] PROGMEM = "io.html";
+	const char data3[] PROGMEM = {
+		"<HTML>"
+		"<HEAD>"
+		"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+		"</HEAD>"
+		"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"//8888FF und FFFFFF
+		"<a href=\"mainmenu.html\">zurueck</a>"
+		#if defined(HTTPSERVER_DIGITAL_IO)
+			" / <a href=\"dio_out.cgi\" target=\"main\">Digital Out</a> / <a href=\"dio_in.cgi\" target=\"main\">Digital In</a>"
+		#endif
+		#if defined(HTTPSERVER_ANALOG)
+			" / <a href=\"aio.cgi\" target=\"main\">Analog In</a>"
+		#endif
+		#if defined(HTTPSERVER_ONEWIRE)
+			" / <a href=\"onewire.cgi\" target=\"main\">1-Wire</a>"
+		#endif
+		#if defined(HTTPSERVER_TWI)
+			" / <a href=\"twi.cgi\" target=\"main\">TWI</a>"
+		#endif
+		#if defined(LEDTAFEL)
+			" / <a href=\"tafel.cgi\" target=\"main\">LED-Tafel</a>"
+		#endif
+		#if defined(IMPULSCOUNTER)
+			" / <a href=\"impuls.cgi\" target=\"main\">Impulsz&auml;hler</a>"
+		#endif
+		#if defined(TEMP_LOGGER)
+			" / <a href=\"templogger.html\">Templogger</a>"
+		#endif
+		"</BODY>"
+		"</HTML>"
+		"\r\n\r\n"	};
+#endif
+
+#if defined(HTTPSERVER_STREAM)
+const char files9[] PROGMEM = "stream.html";
+const char data9[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"//8888FF und FFFFFF
+	"<a href=\"mainmenu.html\">zurueck</a> / <a href=\"stream.cgi\" target=\"main\">Stream</a> / <a href=\"stream.cgi?info\" target=\"main\">Infos</a> / <a href=\"stream.cgi?config\" target=\"main\">Konfiguration</a>"
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n"	};
+#endif
+
+const char files4[] PROGMEM = "mainmenu.html";
+const char data4[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"
+	"<a href=\"info.html\"target=\"main\">Informationen</a>"
+	" / <a href=\"txp-msg.cgi\"target=\"main\">Nachricht senden</a><p>"
+	" / <a href=\"txp-config.cgi\"target=\"main\">TxP-Einstellungen</a><p>"
+	" / <a href=\"txp-debug.cgi\"target=\"main\">Debug-Infos</a><p>"
+	#if defined(HTTPSERVER_STREAM)
+		" / <a href=\"stream.html\">Stream</a>"
+	#endif
+	#ifdef HTTPSERVER_IO
+		" / <a href=\"io.html\">IO-Ports</a>"
+	#endif
+	#ifdef HTTPSERVER_NETCONFIG
+		" / <a href=\"network.html\">Netzwerk</a>"
+	#endif
+	#ifdef HTTPSERVER_SYSTEM
+		" / <a href=\"system.html\">System</a>"
+	#endif
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n"	};
+
+#ifdef HTTPSERVER_NETCONFIG
+const char files5[] PROGMEM = "network.html";
+const char data5[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"
+	"<a href=\"mainmenu.html\">zurueck</a> / <a href=\"network.cgi\" target=\"main\">Infos</a> / <a href=\"network.cgi?config\" target=\"main\">Konfiguration</a>"
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n"	};
+#endif
+
+#ifdef HTTPSERVER_SYSTEM
+const char files6[] PROGMEM = "system.html";
+const char data6[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"
+	"<a href=\"mainmenu.html\">zurueck</a> "
+#if defined(HTTPSERVER_RESET)
+	"/ <a href=\"reset.cgi\" target=\"main\">Reset</a>"
+#endif
+#if defined(HTTPSERVER_NTP)
+	" / <a href=\"ntp.cgi\" target=\"main\">NTP</a>"
+#endif
+#if defined(HTTPSERVER_DYNDNS)
+	" / <a href=\"dyndns.cgi\" target=\"main\">DynDNS</a>"
+#endif
+#if defined(HTTPSERVER_TWITTER)
+	" / <a href=\"twitter.cgi\" target=\"main\">Twitter</a>"
+#endif
+#if defined(HTTPSERVER_EEMEM)
+	" / <a href=\"eemem.cgi\" target=\"main\">EEmem</a>"
+#endif
+#if defined(HTTPSERVER_CRON)
+	" / <a href=\"cron.cgi\" target=\"main\">cron</a>"
+#endif
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n"	};
+#endif
+
+const char files7[] PROGMEM = "info.html";
+const char data7[] PROGMEM = {
+	"<HTML>"
+	"<BODY>"
+	"<pre><p>"
+	"  Welcome on\r\n"
 	"__________________________________________________________________________\r\n"
 	" OOOOO  OOOOO  O      OOOOO  O   O       OOOO   O   O   OOO   O   O  OOOOO \r\n"
 	"   O    O      O      O       O O        O   O  O   O  O   O  OO  O  O     \r\n"
@@ -66,83 +221,62 @@ const char HtmlPageIndexData[] PROGMEM = {
 	"   O    OOO    O      OOO      O    OOO  OOOO   OOOOO  O   O  O O O  OOO   \r\n"
 	"   O    O      O      O       O O        O      O   O  O   O  O  OO  O     \r\n"
 	"   O    OOOOO  OOOOO  OOOOO  O   O       O      O   O   OOO   O   O  OOOOO\r\n"
-	"__________________________________________________________________________</pre><p>"
-	"<a href=\"txp-msg.cgi\">Nachricht senden</a><p>"
-	"<a href=\"txp-config.cgi\">Einstellungen</a><p>"
-	"<a href=\"txp-debug.cgi\">Debug-Infos</a><p>"
-	#ifdef HTTPSERVER_NETCONFIG
-		"<a href=\"network.html\">Netzwerk</a><p>"
-	#endif
-	#ifdef HTTPSERVER_SYSTEM
-		"<a href=\"system.html\">System</a><p>"
-	#endif
-	"<h3>Grundlage: OpenMCP</h3>"
-	"Microwebserver build on AVR-libc version: " __AVR_LIBC_VERSION_STRING__ "/" __AVR_LIBC_DATE_STRING__ " with avr-gcc "__VERSION__", Date: " __DATE__ " " __TIME__ "</BODY>"
+	"__________________________________________________________________________\r\n"
+	"\r\n"
+	"build on AVR-libc version: " __AVR_LIBC_VERSION_STRING__ "/" __AVR_LIBC_DATE_STRING__ " with avr-gcc "__VERSION__", Date: " __DATE__ " " __TIME__ " \r\n"
+	"\r\n"
+	"(c)2006-2012   Software: Fred Sonnenrein; based on OpenMCP by Dirk Brosswick (sharandac@snafu.de)\r\n"
+	"</pre></p>"
+	"</BODY>"
 	"</HTML>"
-	"\r\n\r\n"	};
+	"\r\n"	};
 
+const char files8[] PROGMEM = "style.css";
+const char data8[] PROGMEM = {
+	"@charset \"ISO-8859-1\"\r\n"
+	"   a:link { text-decoration:none; font-weight:bold; color:#FFFFFF; }\r\n"
+	"   a:visited { text-decoration:none; font-weight:bold; color:#FFFFFF; }\r\n"
+	"   a:hover { text-decoration:none; font-weight:bold; background-color:#4169E1; }\r\n"
+	"   a:active { text-decoration:none; font-weight:bold; background-color:#FFFFFF; }\r\n"
+	"   a:focus { text-decoration:none; font-weight:bold; background-color:#DDA0DD; }\r\n"
+	"   pre { overflow: scroll; }\r\n" };
 
-
-#ifdef HTTPSERVER_NETCONFIG
-const char HtmlPageNetworkName[] PROGMEM = "network.html";
-const char HtmlPageNetworkData[] PROGMEM = {
+#if defined(TEMP_LOGGER)
+const char files10[] PROGMEM = "templogger.html";
+const char data10[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
-	"<TITLE>TxP2-Net - Das Internet-Interface zum TelexPhone</TITLE>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
-	"<BODY>"
-	"<h2>TxP2-Net - Das Internet-Interface zum TelexPhone</h2>"
-	"<h1>Netzwerk-Menue</h1>"
-	"<a href=\"network.cgi\">Netzwerk-Infos</a><p>"
-	"<a href=\"network.cgi?config\">Netzwerk-Konfiguration</a><p>"
-	"<a href=\"index.html\">Hauptseite</a><p>"
+	"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"
+	"<a href=\"io.html\">zurueck</a> "
+	" / <a href=\"templogger.cgi\" target=\"main\">Templogger</a>"
+	" / <a href=\"tempconfig.cgi\" target=\"main\">Config</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
 #endif
-
-#ifdef HTTPSERVER_SYSTEM
-const char HtmlPageSystemName[] PROGMEM = "system.html";
-const char HtmlPageSystemData[] PROGMEM = {
-	"<HTML>"
-	"<HEAD>"
-	"<TITLE>TxP2-Net - Das Internet-Interface zum TelexPhone</TITLE>"
-	"</HEAD>"
-	"<BODY>"
-	"<h2>TxP2-Net - Das Internet-Interface zum TelexPhone</h2>"
-	"<h1>System-Menue</h1>"
-	"<a href=\"index.html\">zurueck</a><p>"
-#if defined(HTTPSERVER_RESET)
-	"<a href=\"reset.cgi\">Reset</a><p>"
-#endif
-#if defined(HTTPSERVER_NTP)
-	"<a href=\"ntp.cgi\">NTP</a><p>"
-#endif
-#if defined(HTTPSERVER_EEMEM)
-	"<a href=\"eemem.cgi\">EEmem</a><p>"
-#endif
-#if defined(HTTPSERVER_DYNDNS)
-	"<a href=\"dyndns.cgi\">DynDNS</a><p>"
-#endif
-#if defined(HTTPSERVER_TWITTER)
-	"<a href=\"twitter.cgi\">Twitter</a><p>"
-#endif
-#if defined(HTTPSERVER_CRON)
-	"<a href=\"cron.cgi\">cron</a><p>"
-#endif
-	"</BODY>"
-	"</HTML>"
-	"\r\n\r\n"	};
-#endif
-
 
 FILES files[] = {
-	{ HtmlPageIndexName, HtmlPageIndexData, TEXT, sizeof( HtmlPageIndexData ) - 1 },
+	{ files1, data1, TEXT, sizeof( data1 ) - 1 },
+	{ files2, data2, TEXT, sizeof( data2 ) - 1 },
+#ifdef HTTPSERVER_IO
+	{ files3, data3, TEXT, sizeof( data3 ) - 1 },
+#endif
+	{ files4, data4, TEXT, sizeof( data4 ) - 1 },
 #ifdef HTTPSERVER_NETCONFIG
-	{ HtmlPageNetworkName, HtmlPageNetworkData, TEXT, sizeof( HtmlPageNetworkData ) - 1 },
+	{ files5, data5, TEXT, sizeof( data5 ) - 1 },
 #endif
 #ifdef HTTPSERVER_SYSTEM
-	{ HtmlPageSystemName, HtmlPageSystemData, TEXT, sizeof( HtmlPageSystemData ) - 1 },
+	{ files6, data6, TEXT, sizeof( data6 ) - 1 },
+#endif
+	{ files7, data7, TEXT, sizeof( data7 ) - 1 },
+	{ files8, data8, TEXT, sizeof( data8 ) - 1 },
+#if defined(HTTPSERVER_STREAM)
+	{ files9, data9, TEXT, sizeof( data9 ) - 1 },
+#endif
+#if defined(TEMP_LOGGER)
+	{ files10, data10, TEXT, sizeof( data10 ) - 1 },
 #endif
 	{ 0,0,0,0 }
 };
