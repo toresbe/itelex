@@ -129,7 +129,7 @@ SRC += apps/mp3-streamingclient/mp3-streaming.c apps/mp3-streamingclient/mp3-cli
 SRC += apps/can/can_eth_rep.c
 
 # Add user C source files here.
-SRC += TxP/TxP.c TxP/BusKomm.c TxP/FifoPuffer.c TxP/BaudotCode.c
+SRC += TxP/TxP.c ../TxP2/Gemeinsam/BusKomm.c ../TxP2/Gemeinsam/FifoPuffer.c ../TxP2/Gemeinsam/BaudotCode.c
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
@@ -163,7 +163,7 @@ DEBUG = dwarf-2
 #     Each directory must be seperated by a space.
 #     Use forward slashes for directory separators.
 #     For a directory that has spaces, enclose it in quotes.
-EXTRAINCDIRS = ../C-Libs
+EXTRAINCDIRS = ../C-Libs ../TxP2/Gemeinsam
 
 
 # Compiler flag to set the C Standard level.

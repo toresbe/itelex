@@ -167,7 +167,7 @@ int check_cgibin( void * pStruct )
 void cgi_PrintHttpheaderStart( void )
 {
 	printf_P( PSTR(	"<HTML>"
-					"<HEAD><meta http-equiv=\"expires\" content=\"0\">"
+					"<HEAD><meta http-equiv=\"expires\" content=\"1\">"
 					"<meta http-equiv=\"pragma\" content=\"no-cache\">"
 					"</HEAD>"
 					"<BODY>"));

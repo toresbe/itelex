@@ -54,10 +54,10 @@
 #include "hardware/timer0/timer0.h"
 
 #include "TxP/txp.h"
-#include "TxP/BusKomm.h"
-#include "TxP/TxP2-Defs.h"
-#include "TxP/FifoPuffer.h"
-#include "TxP/BaudotCode.h"
+#include "BusKomm.h"
+#include "TxP2-Defs.h"
+#include "FifoPuffer.h"
+#include "BaudotCode.h"
 
 
 // Aktueller Modus
@@ -810,22 +810,82 @@ void txp_cgi_debug( void * pStruct )
 	
 
 /*------------------------------------------------------------------------------------------------------------*/
-/*!\brief Das CGI-Interface für EIngabe von Nachrichten an das TelexPhone
+/*!\brief Das CGI-Interface für das Hauptfenster der Fernschreiber-Simulation
  * \param 	pStruct	Struktur auf den HTTP_Request
  * \return	NONE
  */
 /*------------------------------------------------------------------------------------------------------------*/
 
-void txp_cgi_msg( void * pStruct )
+void txp_cgi_msg_MainFrame( void * pStruct )
+	{
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+
+	cgi_PrintHttpheaderStart();
+	printf_P(PSTR(
+		"<frameset rows=\"*,60\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
+		"<frame src=\"txp-msg-out.cgi\" name=\"MsgOut\" >"
+		"<frame src=\"txp-msg-in.cgi\" name=\"MsgIn\" scrolling=\"no\">"
+		"<noframes>"
+		"<body>"
+		"<p>Ihr Browser unterstützt keine Frames!</p>"
+		"</body>"
+		"</noframes>"
+		"</frameset>"
+		"</HTML>"
+		"\r\n\r\n"	));
+	}
+	
+	
+/*------------------------------------------------------------------------------------------------------------*/
+/*!\brief Das CGI-Interface für das Ausgabefenster der Fernschreiber-Simulation
+ * \param 	pStruct	Struktur auf den HTTP_Request
+ * \return	NONE
+ */
+/*------------------------------------------------------------------------------------------------------------*/
+
+void txp_cgi_msg_Out( void * pStruct )
+	{
+	//struct HTTP_REQUEST * http_request;
+	//http_request = (struct HTTP_REQUEST *) pStruct;
+
+	printf_P( PSTR(	"<HTML>"
+					"<HEAD>"
+					"<meta http-equiv=\"expires\" content=\"1\">"
+					"<meta http-equiv=\"pragma\" content=\"no-cache\">"
+					"<meta http-equiv=\"refresh\" content=\"5; URL=txp-msg-out.cgi\">"
+					"</HEAD>"
+					"<BODY>" ));
+					
+	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
+		{
+		printf_P(PSTR("Druckspiegel:<br><pre>%s</pre>"), EmpfText);
+		if (SendeText[0] != '\0')
+			printf_P(PSTR("<i><pre>%s</pre></i>"), SendeText);
+		}
+	else
+		{
+		printf_P(PSTR("Texteingabe startet Fernschreiber"));
+		EmpfText[0] = '\0';
+		}
+	cgi_PrintHttpheaderEnd();
+	}
+
+
+/*------------------------------------------------------------------------------------------------------------*/
+/*!\brief Das CGI-Interface für das Eingabefenster der Fernschreiber-Simulation
+ * \param 	pStruct	Struktur auf den HTTP_Request
+ * \return	NONE
+ */
+/*------------------------------------------------------------------------------------------------------------*/
+
+void txp_cgi_msg_In( void * pStruct )
 	{
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 
 	bool DrucktextAufforderung;
-	enum { Aus, Start, Laeuft, Wartet } Zustand;
 
-	LED_on(ROT); // HACK für Test
-	
 	DrucktextAufforderung = (http_request->argc != 0) && PharseCheckName_P(http_request, PSTR("Eingabe"));
 
 	if (DrucktextAufforderung)
@@ -836,75 +896,14 @@ void txp_cgi_msg( void * pStruct )
 		EndgeraetEinschalten = true;
 		}
 
-	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
-		if (SendeText[0] != '\0')
-			Zustand = Laeuft;
-		else
-			Zustand = Wartet;
-	else
-		if (SendeText[0] != '\0' || EndgeraetEinschalten)
-			Zustand = Start;
-		else
-			Zustand = Aus;
-
-	printf_P( PSTR(	"<HTML>"
-					"<HEAD>"
-					"<meta http-equiv=\"expires\" content=\"1\">"
-					"<meta http-equiv=\"pragma\" content=\"no-cache\">"));
-					
-	if (Zustand == Laeuft || Zustand == Start)
-		{
-		uint8_t Sekunden = strlen(SendeText) / 5 + 2;
-		if (Zustand == Start)
-			Sekunden += 1;
-		if (Sekunden > 10)
-			Sekunden = 10;
-		printf_P(PSTR("<meta http-equiv=\"refresh\" content=\"%d; URL=txp-msg.cgi\">"), Sekunden);
-		}
-
-	printf_P(PSTR("</HEAD>"
-				  "<BODY>"));
-			
+	cgi_PrintHttpheaderStart();
 	printf_P(PSTR(
-		"<a href=\"txp-msg.cgi\">Aktualisieren</a><p>"
-		"<form action=\"txp-msg.cgi\">"
-		));
-
-	if (Zustand == Laeuft || Zustand == Wartet)
-		{
-		printf_P(PSTR("Druckspiegel:<br><pre>%s</pre>"), EmpfText);
-		}
-		
-	switch (Zustand)
-		{
-		case Aus: 
-			printf_P(PSTR("Texteingabe startet Fernschreiber"));
-			EmpfText[0] = '\0';
-			break;
-		case Start:
-			printf_P(PSTR("<i>Fernschreiber wird gestartet, bitte warten...</i>"));
-			EmpfText[0] = '\0';
-			break;
-		case Laeuft:
-			printf_P(PSTR("<i>Druck l&auml;uft noch, bitte warten...</i>"));
-			break;
-		case Wartet:
-			break;
-		}
-
-	if (Zustand == Aus || Zustand == Wartet)
-		{
-		printf_P(PSTR(
-			"<p>Eingabe: <input name=\"Eingabe\" type=\"text\" size=\"65\" value=\"\" maxlength=\"65\">"
-			"<input type=\"submit\" value=\" Absenden \"><p>"));
-		}
-		
-	printf_P(PSTR("</form>"));
-
+		"Eingabe: <input name=\"Eingabe\" type=\"text\" size=\"65\" value=\"\" maxlength=\"65\">"
+		"<input type=\"submit\" value=\" Absenden \">"
+		"<form action=\"txp-msg-in.cgi\">"
+		"<a href=\"txp-msg-out.cgi\" target=\"MsgOut\">Aktualisieren</a>"
+		"</form>"));
 	cgi_PrintHttpheaderEnd();
-
-	LED_off(ROT); // HACK für Test
-	
 	}
 	
 	
@@ -1085,7 +1084,9 @@ void txp_init()
 	if (!timer0_RegisterCallbackFunction(txp_timerEvent))
 		return;
 	
-	cgi_RegisterCGI( txp_cgi_msg, PSTR("txp-msg.cgi"));
+	cgi_RegisterCGI( txp_cgi_msg_MainFrame, PSTR("txp-msg.cgi"));
+	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
+	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("txp-msg-out.cgi"));
 	cgi_RegisterCGI( txp_cgi_config, PSTR("txp-config.cgi"));
 	cgi_RegisterCGI( txp_cgi_debug, PSTR("txp-debug.cgi"));
 
