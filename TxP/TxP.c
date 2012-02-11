@@ -821,10 +821,14 @@ void txp_cgi_msg_MainFrame( void * pStruct )
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 
-	cgi_PrintHttpheaderStart();
 	printf_P(PSTR(
+		"<HTML>"
+		"<HEAD>"
+		"<meta http-equiv=\"expires\" content=\"1\">"
+		"<meta http-equiv=\"pragma\" content=\"no-cache\">"
+		"</HEAD>"
 		"<frameset rows=\"*,60\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
-		"<frame src=\"txp-msg-out.cgi\" name=\"MsgOut\" >"
+		"<frame src=\"txp-msg-out.cgi\" name=\"MsgOut\" scrolling=\"auto\">"
 		"<frame src=\"txp-msg-in.cgi\" name=\"MsgIn\" scrolling=\"no\">"
 		"<noframes>"
 		"<body>"
@@ -898,9 +902,9 @@ void txp_cgi_msg_In( void * pStruct )
 
 	cgi_PrintHttpheaderStart();
 	printf_P(PSTR(
+		"<form action=\"txp-msg-in.cgi\">"
 		"Eingabe: <input name=\"Eingabe\" type=\"text\" size=\"65\" value=\"\" maxlength=\"65\">"
 		"<input type=\"submit\" value=\" Absenden \">"
-		"<form action=\"txp-msg-in.cgi\">"
 		"<a href=\"txp-msg-out.cgi\" target=\"MsgOut\">Aktualisieren</a>"
 		"</form>"));
 	cgi_PrintHttpheaderEnd();
