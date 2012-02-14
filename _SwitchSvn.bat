@@ -21,7 +21,7 @@ echo Fertig!
 goto Ende
 
 :Unklar
-echo Aktuelle SVN-Beziehung unklar, Verzeichnisse .svn* prüfen!
+echo Aktuelle SVN-Beziehung unklar, Verzeichnisse .svn* pruefen!
 
 :Ende
 pause
