@@ -123,9 +123,11 @@ void temp_json_thread( void )
 				retval = LOGGER_addDBentry( &temp_json.logger_entry , FILENAME );
 			}
 			// Datenbankeintrag erzeugt oder gelesen ?
+
+/* SON: Abgeschaltet, damit nicht jeden Tag eine neue Datei aufgemacht wird.
 			if ( retval == LOGGER_OK )
 			{
-					// letzer Eintrag von heute?
+				// letzer Eintrag von heute?
 				if ( ! ( temp_json.logger_entry.time.YY == nowtime.YY && temp_json.logger_entry.time.MM == nowtime.MM && temp_json.logger_entry.time.DD == nowtime.DD ) )
 				{
 #if defined( DEBUG )
@@ -140,6 +142,7 @@ void temp_json_thread( void )
 			else
 				printf_P(PSTR("Make new nano_DB %s failed.\r\n"), FILENAME );
 #endif
+*/				
 					
 			// alles Ok bis hier hin
 			if ( retval == LOGGER_OK )
