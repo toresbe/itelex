@@ -122,13 +122,22 @@ extern "C"
 		#define configure_power_up()				DDRD |= ( 1 << DDD7 )
 		#define power_up()							PORTD |= (1 << PD7 )
 
-	// TODO TXPnet
-
 	#else
 	
 		#error "None MMC-interface defined."
 
 	#endif
+
+#elif defined(TXPnet)
+
+	#define spi_bus_num 0
+	#define configure_pin_ss() 					DDRB |= (1 << DDB2)	
+	#define ss_PIN 								PB2
+	#define ss_PORT								PORTB
+	#define configure_pin_available() 			// nix	
+	#define configure_pin_available_pullup() 	// nix
+	#define get_pin_available() 				0
+	#define get_pin_locked() 					1
 
 #else
 

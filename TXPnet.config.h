@@ -36,6 +36,10 @@
 	// aktiviert EXTINT
 	#define EXTINT
 	// aktiviert PCint
+//	#define PC_INT
+	// aktiviert MMC
+	#define MMC
+	// aktiviert LED
 	#define LED
 	// aktiviert TWI
 //	#define TWI
@@ -91,6 +95,9 @@
 		// aktiviert den HTTP-Server, dazu muss TCP aktiv sein
 		#define HTTPSERVER
 		#ifdef HTTPSERVER
+			#if defined(MMC)// holt Dateien vom HTTP-Server nur von der MMC
+				//#define HTTP_FILES_FROM_MMC
+			#endif
 			// aktiviert das Streaminginterface
 			#if defined(VS10XX)
 				#define HTTPSERVER_STREAM

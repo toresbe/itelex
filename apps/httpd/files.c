@@ -55,7 +55,7 @@
  */
 
 #if defined(MMC)
-	#if defined(AVRNETIO) || defined(myAVR) || defined(ATXM2) 
+	#if defined(AVRNETIO) || defined(myAVR) || defined(ATXM2) || defined(TXPnet)
 		#include "system/filesystem/fat.h"
 		#include "system/filesystem/filesystem.h"
 	#else
@@ -244,8 +244,6 @@ int check_files( void * pStruct )
 #endif
 
 #ifdef HTTP_DEBUG
-	struct STDOUT oldstream;
-
 	STDOUT_save( &oldstream );
 	STDOUT_set( RS232, 0 );
 
