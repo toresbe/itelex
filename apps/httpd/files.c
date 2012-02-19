@@ -121,7 +121,18 @@ int check_files( void * pStruct )
 			STDOUT_Flush();
 
 			filesize = files[ i ].len;
-			PutSocketData_RPE( http_request->HTTP_SOCKET, files[ i ].len, ( void * ) files[ i ].files, FLASH );
+			PutSocketData_RPE( http_request->HTTP_SOCKET, filesize, ( void * ) files[ i ].files, FLASH );
+
+#ifdef HTTP_DEBUG
+			STDOUT_save( &oldstream );
+			STDOUT_set( RS232, 0 );
+
+			printf_P( PSTR("( %ld Byte uebertragen (FLASH)\r\n") , filesize );
+	
+			STDOUT_Flush();
+			STDOUT_restore( &oldstream );
+#endif
+
 			return( 1 );
 		}
 	}
@@ -247,7 +258,7 @@ int check_files( void * pStruct )
 	STDOUT_save( &oldstream );
 	STDOUT_set( RS232, 0 );
 
-	printf_P( PSTR("( %ld Byte übertragen\r\n") , filesize );
+	printf_P( PSTR("( %ld Byte uebertragen (SD)\r\n") , filesize );
 	
 	STDOUT_Flush();
 	STDOUT_restore( &oldstream );
