@@ -622,7 +622,7 @@ void txp_thread()
 	// keine alte Verbindung offen?
 	if (Telnet_Socket == NO_SOCKET_USED)
 		{ 	
-		// auf neue Verbindung testen
+		// auf neue Verbindungsanfrage testen
 		Telnet_Socket = CheckPortRequest(TELNET_ASCII_TXP_PORT);
 		if (Telnet_Socket != NO_SOCKET_USED)
 			{	
@@ -634,8 +634,8 @@ void txp_thread()
 			}
 		}
 	
-	// checken, ob noch offen ist
-	if (CheckSocketState(Telnet_Socket) == SOCKET_NOT_USE)
+	// soll offene Verbindung geschlossen werden?
+	if (Telnet_Socket != NO_SOCKET_USED && CheckSocketState(Telnet_Socket) == SOCKET_NOT_USE)
 		{
 		printf_P(PSTR( "Telnet-Ascii-Verbindung getrennt\r\n" ));
 		CloseTCPSocket(Telnet_Socket);
