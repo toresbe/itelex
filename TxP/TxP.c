@@ -42,6 +42,7 @@
 
 #include "hardware/led/led_core.h"
 
+#include "system/net/ip.h"
 #include "system/net/tcp.h"
 #include "system/net/ethernet.h"
 #include "system/thread/thread.h"
@@ -77,9 +78,10 @@ static enum
 
 	
 static bool EndgeraetEinschalten;
-	//!< Anforderung zum Einschalten des Fernschreibers
+	//!< Anforderung zum Einschalten des Fernschreibers \todo in Modus verpacken.
 
-#define TELNET_ASCII_TXP_PORT 134
+#define TXP_ASCII_PORT 134
+#define TXP_PACKET_PORT 133
 	
 	
 // BusVerbPartner ist in BusKomm.h enthalten
@@ -149,8 +151,12 @@ static char SendeText[SendeTextMax];
 	//!< Puffer für zu sendenden Text (Netz -> Endgerät), mit Null abgeschlossen
 
 
-static int Telnet_Socket;
-	//!< Handle für ASCII-Telnet
+static int AsciiSocket;
+	//!< Handle für ASCII-Verbindungen eingehend.
+
+static int TxpSocket;
+	//!< Handle für Txp-Packet-Verbindungen eingehend.
+
 
 static uint8_t Hauptstelle; 
 	//!< Bus-Adresse für den nächsten kommenden Ruf, wird bei FesteHauptstelle = false auf die
@@ -502,6 +508,24 @@ void txp_thread()
 					PufferInit(&SendePuffer);
 					PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
 					EndgeraetEinschalten = true;
+
+					// Todo sinnvoll verbinden.
+					long IP = IPDOT(192l,168l,178l,32l);
+					AsciiSocket = Connect2IP( IP, 23 ); // << HACK, richtig wäre TXP_ASCII_PORT );
+					if (AsciiSocket == -1 )
+						{
+#if (TXP_DEBUG >= 1)
+						printf_P(PSTR("TxP: Verbindung Ascii ausgehend versagt\r\n" ));
+#endif
+						AsciiSocket = NO_SOCKET_USED;
+						}
+					else
+						{
+#if (TXP_DEBUG >= 1)
+						printf_P(PSTR("TxP: Verbindung Ascii ausgehend hergestellt\r\n" ));
+#endif
+						}
+					
 					}
 				else
 					FalschCodeEmpfangen(BusQuittEin);
@@ -522,6 +546,17 @@ void txp_thread()
 					SET_BIT_Status(StatBit_Frei);
 					SET_BIT_Status(StatBit_LeitungKennung);
 					}
+					
+				// alle Ports schließen...
+				if (AsciiSocket != SOCKET_NOT_USE)
+					{
+#if (TXP_DEBUG >= 1)
+					printf_P(PSTR("TxP: Verbindung Ascii wird geschlossen\r\n" ));
+#endif
+					CloseTCPSocket(AsciiSocket);
+					AsciiSocket = SOCKET_NOT_USE;
+					}
+					
 				LED_off(GELB);
 				LED_off(GRUEN);
 				LED_off(BLAU);
@@ -689,11 +724,14 @@ void txp_thread()
 	// ==========================================================================
 
 	// keine alte Verbindung offen?
-	if (Telnet_Socket == NO_SOCKET_USED)
+	if (AsciiSocket == NO_SOCKET_USED)
 		{ 	
 		// auf neue Verbindungsanfrage testen
-		Telnet_Socket = CheckPortRequest(TELNET_ASCII_TXP_PORT);
-		if (Telnet_Socket != NO_SOCKET_USED)
+		AsciiSocket = CheckPortRequest(TXP_ASCII_PORT);
+		
+		//! TODO prüfen, was bei bestehender ausgehender ASCII-Verbindung und gleichzeitigem Versuch einer ankommenden Verbindung passiert.
+		
+		if (AsciiSocket != NO_SOCKET_USED)
 			{
 			if (Modus == ModRuhe)
 				{	
@@ -707,26 +745,26 @@ void txp_thread()
 				{	
 				// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
 				printf_P(PSTR("Telnet-Ascii-Verbindung abgewiesen\r\n" ));
-				CloseTCPSocket(Telnet_Socket);
-				Telnet_Socket = NO_SOCKET_USED;
+				CloseTCPSocket(AsciiSocket);
+				AsciiSocket = NO_SOCKET_USED;
 				}
 			}
 		}
 	
 	// soll offene Verbindung geschlossen werden?
-	if (Telnet_Socket != NO_SOCKET_USED && CheckSocketState(Telnet_Socket) == SOCKET_NOT_USE)
+	if (AsciiSocket != NO_SOCKET_USED && CheckSocketState(AsciiSocket) == SOCKET_NOT_USE)
 		{
 		printf_P(PSTR( "Telnet-Ascii-Verbindung getrennt\r\n" ));
-		CloseTCPSocket(Telnet_Socket);
-		Telnet_Socket = NO_SOCKET_USED;
+		CloseTCPSocket(AsciiSocket);
+		AsciiSocket = NO_SOCKET_USED;
 		DatumDruckenUndAusschalten();
 		}
 
 	// Auf neue Daten zum drucken testen
 	// ---------------------------------
-	if (Telnet_Socket != NO_SOCKET_USED)
+	if (AsciiSocket != NO_SOCKET_USED)
 		{
-		int InCount = GetBytesInSocketData(Telnet_Socket);
+		int InCount = GetBytesInSocketData(AsciiSocket);
 		bool Read = true;
 		if (InCount > 0)
 			{
@@ -737,7 +775,7 @@ void txp_thread()
 				
 			if (Read)
 				{
-				int Res = GetSocketData(Telnet_Socket, InCount, SendeText + AltLen);
+				int Res = GetSocketData(AsciiSocket, InCount, SendeText + AltLen);
 				if (Res > 0)
 					{
 					SendeText[AltLen + Res] = '\0';
@@ -746,8 +784,8 @@ void txp_thread()
 						{
 						// Socket schließen
 						printf_P(PSTR("Telnet-Ascii-Verbindung Beenden\r\n") );
-						CloseTCPSocket(Telnet_Socket);
-						Telnet_Socket = NO_SOCKET_USED;
+						CloseTCPSocket(AsciiSocket);
+						AsciiSocket = NO_SOCKET_USED;
 						DatumDruckenUndAusschalten();
 						}
 					}
@@ -761,13 +799,13 @@ void txp_thread()
 		// vom Endgerät empfangene Daten ggf. ins Netz senden
 		if (strlen(EmpfText) > 10 || (EmpfText[0] != '\0' && RuheZaehler >= 2 * 50))
 			{
-			int Res = PutSocketData_RPE(Telnet_Socket, strlen(EmpfText), EmpfText, RAM);
+			int Res = PutSocketData_RPE(AsciiSocket, strlen(EmpfText), EmpfText, RAM);
 			if (Res > 0)
 				{
 				strcpy(EmpfText, EmpfText + Res);
 				}
 			} // if es gibt was zu senden
-		} // if Telnet_Socket != NO_SOCKET_USED
+		} // if AsciiSocket != NO_SOCKET_USED
 		
 	} // txp_thread
 
@@ -1165,8 +1203,10 @@ void txp_init()
 	cgi_RegisterCGI( txp_cgi_config, PSTR("txp-config.cgi"));
 	cgi_RegisterCGI( txp_cgi_debug, PSTR("txp-debug.cgi"));
 
-	Telnet_Socket = NO_SOCKET_USED;
-	RegisterTCPPort(TELNET_ASCII_TXP_PORT);
+	AsciiSocket = NO_SOCKET_USED;
+	TxpSocket = NO_SOCKET_USED;
+	
+	RegisterTCPPort(TXP_ASCII_PORT);
 	
 	Timer0Cnt_Min = 255;
 	Timer0Cnt_Max = 0;
