@@ -1,0 +1,4724 @@
+Terminal log file
+Date: 22.02.2012 - 18:40:49
+-----------------------------------------------
+OpenMCP ...18:41:38.828> 
+UART Initialisiert18:41:38.828> 
+STDOUT Initialisiert18:41:38.890> 
+CLOCK Initialisiert18:41:38.890> 
+LED_core Initialisiert18:41:38.953> 
+Config Initialisiert18:41:39.140> 
+EXTINT Initialisiert18:41:39.203> 
+MMC/SD Initialisiert18:41:39.203> 
+Filesystem Initialisiert18:41:39.265> 
+SHELL Initialisiert18:41:39.265> 
+THREAD Initialisiert18:41:39.265> 
+ENC28j60 (Rev.: 6) initialisiert ( HW-Add: 00:22:f9:01:4e:ce ) Fullduplex: Link ready18:41:39.765> 
+-+-> ARP initialisiert18:41:39.765> 
+ |-> UDP (Tornado-engine) initialisiert18:41:39.828> 
+ |-> TCP (Hurrican-engine) initialisiert18:41:39.890> 
+ |-> Versuche DHCP-Config zu holen. DHCP-Config geholt18:41:41.390> 
+ |   IP     : 192.168.178.3018:41:41.390> 
+ |   Netmask: 255.255.255.018:41:41.453> 
+ |   Gateway: 192.168.178.118:41:41.453> 
+ |   DNS    : 192.168.178.118:41:41.515> 
+ |-> NTP-Server Zeit aktualisieren: Zeit: 18:43:00.6718:41:41.578> 
+HTTP-Server Port 80.18:41:42.265> 
+Telnet-Server Port 23.18:41:42.328> 
+TelexPhone Port 134.18:41:43.453> 
+TxP: Reservierung intern / gehend von 3118:41:53.703> 
+TxP: Einschaltkommando intern / gehend18:41:53.765> 
+TxP: Wahlziffer 8 intern / gehend18:41:55.078> 
+TxP: Verbindung Ascii ausgehend hergestellt18:41:55.140> 
+TxP: sende ASCII an Telnet-Verbindung: U (1/1)18:41:55.640> 
+TxP: sende ASCII an Telnet-Verbindung: nd, los geh (11/11)18:41:57.640> 
+TxP: sende ASCII an Telnet-Verbindung: t's... (hel (11/11)18:41:59.953> 
+TxP: sende ASCII an Telnet-Verbindung: p hilft :-) (11/11)18:42:01.828> 
+TxP: sende ASCII an Telnet-Verbindung: )18:42:02.890> 
+  (4/4)18:42:02.890> 
+TxP: sende ASCII an Telnet-Verbindung:   (1/1)18:42:02.953> 
+TxP: sende ASCII an Telnet-Verbindung: h (1/1)18:42:05.640> 
+TxP: sende ASCII an Telnet-Verbindung: e (1/1)18:42:06.078> 
+TxP: sende ASCII an Telnet-Verbindung: lp (2/2)18:42:06.828> 
+TxP: sende ASCII an Telnet-Verbindung: 18:42:08.265>  (1/1)18:42:08.265> 
+TxP: sende ASCII an Telnet-Verbindung:   (1/1)18:42:08.328> 
+TxP: sende ASCII an Telnet-Verbindung: help (4/4)18:42:14.640> 
+TxP: sende ASCII an Telnet-Verbindung: 18:42:15.015>  (1/1)18:42:15.015> 
+TxP: sende ASCII an Telnet-Verbindung:   (1/1)18:42:15.078> 
+TxP: sende ASCII an Telnet-Verbindung: 
+ (1/1)18:42:17.078> 
+TxP: sende ASCII an Telnet-Verbindung: 18:42:18.703> help18:42:18.703>  (6/6)18:42:18.703> 
+TxP: sende ASCII an Telnet-Verbindung:   (1/1)18:42:18.765> 
+TxP: sende ASCII an Telnet-Verbindung: Commands:18:42:20.578> 
+ (11/11)18:42:20.578> 
+TxP: sende ASCII an Telnet-Verbindung: 18:42:22.390> 
+arp18:42:22.390> 
+stat (11/11)18:42:22.390> 
+TxP: sende ASCII an Telnet-Verbindung: s18:42:24.078> 
+ifconfig (11/11)18:42:24.078> 
+TxP: sende ASCII an Telnet-Verbindung: 18:42:25.765> 
+eemem18:42:25.765> 
+re (11/11)18:42:25.765> 
+TxP: sende ASCII an Telnet-Verbindung: set18:42:27.453> 
+ntp18:42:27.453> 
+d (11/11)18:42:27.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:29.140> 
+gpioout (11/-1)18:42:35.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:35.265> 
+gpioout18:42:35.265>  (12/-1)18:42:35.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:35.328> 
+gpioout18:42:35.328> 
+18:42:35.328>  (14/-1)18:42:35.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:35.390> 
+gpioout18:42:35.390> 
+18:42:35.390> 
+ (15/-1)18:42:35.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:35.453> 
+gpioout18:42:35.453> 
+18:42:35.453> 
+ (15/-1)18:42:35.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:35.515> 
+gpioout18:42:35.515> 
+18:42:35.515> 
+ (15/-1)18:42:35.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:35.578> 
+gpioout18:42:35.578> 
+18:42:35.578> 
+ (15/-1)18:42:35.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:35.640> 
+gpioout18:42:35.640> 
+18:42:35.640> 
+ (15/-1)18:42:35.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:35.703> 
+gpioout18:42:35.703> 
+18:42:35.703> 
+t (16/-1)18:42:35.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:35.765> 
+gpioout18:42:35.765> 
+18:42:35.765> 
+t (16/-1)18:42:35.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:35.828> 
+gpioout18:42:35.828> 
+18:42:35.828> 
+t (16/-1)18:42:35.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:35.890> 
+gpioout18:42:35.890> 
+18:42:35.890> 
+t (16/-1)18:42:35.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:35.953> 
+gpioout18:42:36.015> 
+18:42:36.015> 
+tez (18/-1)18:42:36.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.015> 
+gpioout18:42:36.078> 
+18:42:36.078> 
+tez (18/-1)18:42:36.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.140> 
+gpioout18:42:36.140> 
+18:42:36.140> 
+tezm (19/-1)18:42:36.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.203> 
+gpioout18:42:36.203> 
+18:42:36.203> 
+tezm (19/-1)18:42:36.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.265> 
+gpioout18:42:36.265> 
+18:42:36.265> 
+tezmp (20/-1)18:42:36.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.328> 
+gpioout18:42:36.328> 
+18:42:36.328> 
+tezmp (20/-1)18:42:36.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.390> 
+gpioout18:42:36.390> 
+18:42:36.390> 
+tezmp18:42:36.390>  (21/-1)18:42:36.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.453> 
+gpioout18:42:36.453> 
+18:42:36.515> 
+tezmp18:42:36.515>  (21/-1)18:42:36.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.515> 
+gpioout18:42:36.578> 
+18:42:36.578> 
+tezmp18:42:36.578> 
+ (22/-1)18:42:36.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.640> 
+gpioout18:42:36.640> 
+18:42:36.640> 
+tezmp18:42:36.640> 
+ (22/-1)18:42:36.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.703> 
+gpioout18:42:36.703> 
+18:42:36.703> 
+tezmp18:42:36.703> 
+ (22/-1)18:42:36.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.765> 
+gpioout18:42:36.765> 
+18:42:36.765> 
+tezmp18:42:36.765> 
+  (23/-1)18:42:36.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.828> 
+gpioout18:42:36.828> 
+18:42:36.828> 
+tezmp18:42:36.890> 
+  (23/-1)18:42:36.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:36.890> 
+gpioout18:42:36.953> 
+18:42:36.953> 
+tezmp18:42:36.953> 
+  (23/-1)18:42:36.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.015> 
+gpioout18:42:37.015> 
+18:42:37.015> 
+tezmp18:42:37.015> 
+   (24/-1)18:42:37.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.078> 
+gpioout18:42:37.078> 
+18:42:37.078> 
+tezmp18:42:37.078> 
+   (24/-1)18:42:37.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.140> 
+gpioout18:42:37.140> 
+18:42:37.140> 
+tezmp18:42:37.140> 
+    (25/-1)18:42:37.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.203> 
+gpioout18:42:37.203> 
+18:42:37.203> 
+tezmp18:42:37.265> 
+   I (26/-1)18:42:37.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.265> 
+gpioout18:42:37.328> 
+18:42:37.328> 
+tezmp18:42:37.328> 
+   I (26/-1)18:42:37.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.390> 
+gpioout18:42:37.390> 
+18:42:37.390> 
+tezmp18:42:37.390> 
+   IP (27/-1)18:42:37.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.453> 
+gpioout18:42:37.453> 
+18:42:37.453> 
+tezmp18:42:37.453> 
+   IP (27/-1)18:42:37.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.515> 
+gpioout18:42:37.515> 
+18:42:37.515> 
+tezmp18:42:37.578> 
+   IP/ (28/-1)18:42:37.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.578> 
+gpioout18:42:37.640> 
+18:42:37.640> 
+tezmp18:42:37.640> 
+   IP/ (28/-1)18:42:37.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.703> 
+gpioout18:42:37.703> 
+18:42:37.703> 
+tezmp18:42:37.703> 
+   IP/ (28/-1)18:42:37.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.765> 
+gpioout18:42:37.765> 
+18:42:37.765> 
+tezmp18:42:37.765> 
+   IP/M (29/-1)18:42:37.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.828> 
+gpioout18:42:37.890> 
+18:42:37.890> 
+tezmp18:42:37.890> 
+   IP/M (29/-1)18:42:37.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:37.953> 
+gpioout18:42:37.953> 
+18:42:37.953> 
+tezmp18:42:37.953> 
+   IP/M (29/-1)18:42:37.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:38.015> 
+gpioout18:42:38.015> 
+18:42:38.015> 
+tezmp18:42:38.015> 
+   IP/M (29/-1)18:42:38.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:38.078> 
+gpioout18:42:38.078> 
+18:42:38.078> 
+tezmp18:42:38.140> 
+   IP/MA (30/-1)18:42:38.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:38.203> 
+gpioout18:42:38.203> 
+18:42:38.203> 
+tezmp18:42:38.203> 
+   IP/MA (30/-1)18:42:38.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:38.265> 
+gpioout18:42:38.265> 
+18:42:38.265> 
+tezmp18:42:38.265> 
+   IP/MAC (31/-1)18:42:38.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:38.328> 
+gpioout18:42:38.328> 
+18:42:38.328> 
+tezmp18:42:38.390> 
+   IP/MAC (31/-1)18:42:38.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:38.453> 
+gpioout18:42:38.453> 
+18:42:38.453> 
+tezmp18:42:38.453> 
+   IP/MAC/ (32/-1)18:42:38.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:38.515> 
+gpioout18:42:38.515> 
+18:42:38.515> 
+tezmp18:42:38.515> 
+   IP/MAC/ (32/-1)18:42:38.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:38.578> 
+gpioout18:42:38.578> 
+18:42:38.578> 
+tezmp18:42:38.640> 
+   IP/MAC/ (32/-1)18:42:38.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:38.703> 
+gpioout18:42:38.703> 
+18:42:38.703> 
+tezmp18:42:38.703> 
+   IP/MAC/T (33/-1)18:42:38.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:38.765> 
+gpioout18:42:38.765> 
+18:42:38.765> 
+tezmp18:42:38.765> 
+   IP/MAC/T (33/-1)18:42:38.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:38.828> 
+gpioout18:42:38.828> 
+18:42:38.890> 
+tezmp18:42:38.890> 
+   IP/MAC/T (33/-1)18:42:38.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:38.953> 
+gpioout18:42:38.953> 
+18:42:38.953> 
+tezmp18:42:38.953> 
+   IP/MAC/T (33/-1)18:42:38.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:39.015> 
+gpioout18:42:39.015> 
+18:42:39.015> 
+tezmp18:42:39.015> 
+   IP/MAC/TT (34/-1)18:42:39.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:39.078> 
+gpioout18:42:39.140> 
+18:42:39.140> 
+tezmp18:42:39.140> 
+   IP/MAC/TT (34/-1)18:42:39.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:39.203> 
+gpioout18:42:39.203> 
+18:42:39.203> 
+tezmp18:42:39.203> 
+   IP/MAC/TTL (35/-1)18:42:39.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:39.265> 
+gpioout18:42:39.265> 
+18:42:39.265> 
+tezmp18:42:39.328> 
+   IP/MAC/TTL (35/-1)18:42:39.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:39.390> 
+gpioout18:42:39.390> 
+18:42:39.390> 
+tezmp18:42:39.390> 
+   IP/MAC/TTL18:42:39.390>  (36/-1)18:42:39.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:39.453> 
+gpioout18:42:39.453> 
+18:42:39.453> 
+tezmp18:42:39.453> 
+   IP/MAC/TTL18:42:39.515> 
+ (37/-1)18:42:39.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:39.578> 
+gpioout18:42:39.578> 
+18:42:39.578> 
+tezmp18:42:39.578> 
+   IP/MAC/TTL18:42:39.578> 
+ (37/-1)18:42:39.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:39.640> 
+gpioout18:42:39.640> 
+18:42:39.640> 
+tezmp18:42:39.640> 
+   IP/MAC/TTL18:42:39.703> 
+ (37/-1)18:42:39.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:39.703> 
+gpioout18:42:39.765> 
+18:42:39.765> 
+tezmp18:42:39.765> 
+   IP/MAC/TTL18:42:39.765> 
+  (38/-1)18:42:39.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:39.828> 
+gpioout18:42:39.828> 
+18:42:39.828> 
+tezmp18:42:39.828> 
+   IP/MAC/TTL18:42:39.828> 
+ E (39/-1)18:42:39.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:39.890> 
+gpioout18:42:39.890> 
+18:42:39.890> 
+tezmp18:42:39.953> 
+   IP/MAC/TTL18:42:39.953> 
+ Et (40/-1)18:42:39.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:40.015> 
+gpioout18:42:40.015> 
+18:42:40.015> 
+tezmp18:42:40.015> 
+   IP/MAC/TTL18:42:40.015> 
+ Et (40/-1)18:42:40.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:40.078> 
+gpioout18:42:40.078> 
+18:42:40.078> 
+tezmp18:42:40.140> 
+   IP/MAC/TTL18:42:40.140> 
+ Eth (41/-1)18:42:40.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:40.203> 
+gpioout18:42:40.203> 
+18:42:40.203> 
+tezmp18:42:40.203> 
+   IP/MAC/TTL18:42:40.203> 
+ Eth (41/-1)18:42:40.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:40.265> 
+gpioout18:42:40.265> 
+18:42:40.265> 
+tezmp18:42:40.265> 
+   IP/MAC/TTL18:42:40.328> 
+ Ethe (42/-1)18:42:40.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:40.390> 
+gpioout18:42:40.390> 
+18:42:40.390> 
+tezmp18:42:40.390> 
+   IP/MAC/TTL18:42:40.390> 
+ Ether (43/-1)18:42:40.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:40.453> 
+gpioout18:42:40.453> 
+18:42:40.453> 
+tezmp18:42:40.515> 
+   IP/MAC/TTL18:42:40.515> 
+ Ether (43/-1)18:42:40.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:40.578> 
+gpioout18:42:40.578> 
+18:42:40.578> 
+tezmp18:42:40.578> 
+   IP/MAC/TTL18:42:40.578> 
+ Ethern (44/-1)18:42:40.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:40.640> 
+gpioout18:42:40.640> 
+18:42:40.640> 
+tezmp18:42:40.703> 
+   IP/MAC/TTL18:42:40.703> 
+ Ethern (44/-1)18:42:40.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:40.765> 
+gpioout18:42:40.765> 
+18:42:40.765> 
+tezmp18:42:40.765> 
+   IP/MAC/TTL18:42:40.765> 
+ Etherne (45/-1)18:42:40.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:40.828> 
+gpioout18:42:40.890> 
+18:42:40.890> 
+tezmp18:42:40.890> 
+   IP/MAC/TTL18:42:40.890> 
+ Ethernet (46/-1)18:42:40.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:40.953> 
+gpioout18:42:40.953> 
+18:42:40.953> 
+tezmp18:42:40.953> 
+   IP/MAC/TTL18:42:41.015> 
+ Ethernet (46/-1)18:42:41.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:41.078> 
+gpioout18:42:41.078> 
+18:42:41.078> 
+tezmp18:42:41.078> 
+   IP/MAC/TTL18:42:41.078> 
+ Ethernet: (47/-1)18:42:41.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:41.140> 
+gpioout18:42:41.140> 
+18:42:41.140> 
+tezmp18:42:41.140> 
+   IP/MAC/TTL18:42:41.203> 
+ Ethernet: (47/-1)18:42:41.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:41.265> 
+gpioout18:42:41.265> 
+18:42:41.265> 
+tezmp18:42:41.265> 
+   IP/MAC/TTL18:42:41.265> 
+ Ethernet: (47/-1)18:42:41.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:41.328> 
+gpioout18:42:41.390> 
+18:42:41.390> 
+tezmp18:42:41.390> 
+   IP/MAC/TTL18:42:41.390> 
+ Ethernet:  (48/-1)18:42:41.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:41.453> 
+gpioout18:42:41.453> 
+18:42:41.453> 
+tezmp18:42:41.453> 
+   IP/MAC/TTL18:42:41.515> 
+ Ethernet: 2 (49/-1)18:42:41.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:41.578> 
+gpioout18:42:41.578> 
+18:42:41.578> 
+tezmp18:42:41.578> 
+   IP/MAC/TTL18:42:41.578> 
+ Ethernet: 2 (49/-1)18:42:41.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:41.640> 
+gpioout18:42:41.640> 
+18:42:41.640> 
+tezmp18:42:41.703> 
+   IP/MAC/TTL18:42:41.703> 
+ Ethernet: 27 (50/-1)18:42:41.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:41.765> 
+gpioout18:42:41.765> 
+18:42:41.765> 
+tezmp18:42:41.765> 
+   IP/MAC/TTL18:42:41.765> 
+ Ethernet: 276 (51/-1)18:42:41.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:41.890> 
+gpioout18:42:41.890> 
+18:42:41.890> 
+tezmp18:42:41.890> 
+   IP/MAC/TTL18:42:41.890> 
+ Ethernet: 276 (51/-1)18:42:41.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:41.953> 
+gpioout18:42:41.953> 
+18:42:42.015> 
+tezmp18:42:42.015> 
+   IP/MAC/TTL18:42:42.015> 
+ Ethernet: 2765 (52/-1)18:42:42.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:42.078> 
+gpioout18:42:42.078> 
+18:42:42.078> 
+tezmp18:42:42.078> 
+   IP/MAC/TTL18:42:42.140> 
+ Ethernet: 27650 (53/-1)18:42:42.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:42.203> 
+gpioout18:42:42.203> 
+18:42:42.203> 
+tezmp18:42:42.203> 
+   IP/MAC/TTL18:42:42.203> 
+ Ethernet: 27650 (53/-1)18:42:42.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:42.265> 
+gpioout18:42:42.265> 
+18:42:42.328> 
+tezmp18:42:42.328> 
+   IP/MAC/TTL18:42:42.328> 
+ Ethernet: 276503 (54/-1)18:42:42.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:42.390> 
+gpioout18:42:42.390> 
+18:42:42.390> 
+tezmp18:42:42.390> 
+   IP/MAC/TTL18:42:42.453> 
+ Ethernet: 276503  (55/-1)18:42:42.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:42.515> 
+gpioout18:42:42.515> 
+18:42:42.515> 
+tezmp18:42:42.515> 
+   IP/MAC/TTL18:42:42.515> 
+ Ethernet: 276503  (55/-1)18:42:42.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:42.578> 
+gpioout18:42:42.640> 
+18:42:42.640> 
+tezmp18:42:42.640> 
+   IP/MAC/TTL18:42:42.640> 
+ Ethernet: 276503 B (56/-1)18:42:42.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:42.703> 
+gpioout18:42:42.703> 
+18:42:42.703> 
+tezmp18:42:42.765> 
+   IP/MAC/TTL18:42:42.765> 
+ Ethernet: 276503 B (56/-1)18:42:42.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:42.828> 
+gpioout18:42:42.828> 
+18:42:42.828> 
+tezmp18:42:42.828> 
+   IP/MAC/TTL18:42:42.890> 
+ Ethernet: 276503 By (57/-1)18:42:42.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:42.953> 
+gpioout18:42:42.953> 
+18:42:42.953> 
+tezmp18:42:42.953> 
+   IP/MAC/TTL18:42:42.953> 
+ Ethernet: 276503 By (57/-1)18:42:43.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:43.078> 
+gpioout18:42:43.078> 
+18:42:43.078> 
+tezmp18:42:43.078> 
+   IP/MAC/TTL18:42:43.078> 
+ Ethernet: 276503 Byt (58/-1)18:42:43.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:43.140> 
+gpioout18:42:43.140> 
+18:42:43.203> 
+tezmp18:42:43.203> 
+   IP/MAC/TTL18:42:43.203> 
+ Ethernet: 276503 Byte (59/-1)18:42:43.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:43.265> 
+gpioout18:42:43.265> 
+18:42:43.265> 
+tezmp18:42:43.265> 
+   IP/MAC/TTL18:42:43.328> 
+ Ethernet: 276503 Byte (59/-1)18:42:43.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:43.390> 
+gpioout18:42:43.390> 
+18:42:43.390> 
+tezmp18:42:43.390> 
+   IP/MAC/TTL18:42:43.390> 
+ Ethernet: 276503 Bytes (60/-1)18:42:43.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:43.515> 
+gpioout18:42:43.515> 
+18:42:43.515> 
+tezmp18:42:43.515> 
+   IP/MAC/TTL18:42:43.515> 
+ Ethernet: 276503 Bytes  (61/-1)18:42:43.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:43.640> 
+gpioout18:42:43.640> 
+18:42:43.640> 
+tezmp18:42:43.640> 
+   IP/MAC/TTL18:42:43.640> 
+ Ethernet: 276503 Bytes i (62/-1)18:42:43.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:43.703> 
+gpioout18:42:43.765> 
+18:42:43.765> 
+tezmp18:42:43.765> 
+   IP/MAC/TTL18:42:43.765> 
+ Ethernet: 276503 Bytes i (62/-1)18:42:43.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:43.828> 
+gpioout18:42:43.828> 
+18:42:43.828> 
+tezmp18:42:43.890> 
+   IP/MAC/TTL18:42:43.890> 
+ Ethernet: 276503 Bytes in (63/-1)18:42:43.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:43.953> 
+gpioout18:42:43.953> 
+18:42:43.953> 
+tezmp18:42:43.953> 
+   IP/MAC/TTL18:42:44.015> 
+ Ethernet: 276503 Bytes in  (64/-1)18:42:44.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:44.078> 
+gpioout18:42:44.078> 
+18:42:44.078> 
+tezmp18:42:44.078> 
+   IP/MAC/TTL18:42:44.140> 
+ Ethernet: 276503 Bytes in 3 (65/-1)18:42:44.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:44.203> 
+gpioout18:42:44.203> 
+18:42:44.203> 
+tezmp18:42:44.203> 
+   IP/MAC/TTL18:42:44.203> 
+ Ethernet: 276503 Bytes in 3 (65/-1)18:42:44.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:44.328> 
+gpioout18:42:44.328> 
+18:42:44.328> 
+tezmp18:42:44.328> 
+   IP/MAC/TTL18:42:44.328> 
+ Ethernet: 276503 Bytes in 3 (65/-1)18:42:44.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:44.453> 
+gpioout18:42:44.453> 
+18:42:44.453> 
+tezmp18:42:44.453> 
+   IP/MAC/TTL18:42:44.453> 
+ Ethernet: 276503 Bytes in 34 (66/-1)18:42:44.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:44.578> 
+gpioout18:42:44.578> 
+18:42:44.578> 
+tezmp18:42:44.578> 
+   IP/MAC/TTL18:42:44.578> 
+ Ethernet: 276503 Bytes in 344 (67/-1)18:42:44.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:44.640> 
+gpioout18:42:44.703> 
+18:42:44.703> 
+tezmp18:42:44.703> 
+   IP/MAC/TTL18:42:44.703> 
+ Ethernet: 276503 Bytes in 3448 (68/-1)18:42:44.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:44.765> 
+gpioout18:42:44.828> 
+18:42:44.828> 
+tezmp18:42:44.828> 
+   IP/MAC/TTL18:42:44.828> 
+ Ethernet: 276503 Bytes in 3448 (68/-1)18:42:44.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:44.890> 
+gpioout18:42:44.953> 
+18:42:44.953> 
+tezmp18:42:44.953> 
+   IP/MAC/TTL18:42:44.953> 
+ Ethernet: 276503 Bytes in 3448  (69/-1)18:42:45.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:45.015> 
+gpioout18:42:45.015> 
+18:42:45.078> 
+tezmp18:42:45.078> 
+   IP/MAC/TTL18:42:45.078> 
+ Ethernet: 276503 Bytes in 3448 P (70/-1)18:42:45.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:45.140> 
+gpioout18:42:45.140> 
+18:42:45.140> 
+tezmp18:42:45.203> 
+   IP/MAC/TTL18:42:45.203> 
+ Ethernet: 276503 Bytes in 3448 P (70/-1)18:42:45.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:45.265> 
+gpioout18:42:45.265> 
+18:42:45.265> 
+tezmp18:42:45.328> 
+   IP/MAC/TTL18:42:45.328> 
+ Ethernet: 276503 Bytes in 3448 Pa (71/-1)18:42:45.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:45.390> 
+gpioout18:42:45.390> 
+18:42:45.390> 
+tezmp18:42:45.453> 
+   IP/MAC/TTL18:42:45.453> 
+ Ethernet: 276503 Bytes in 3448 Pa (71/-1)18:42:45.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:45.515> 
+gpioout18:42:45.515> 
+18:42:45.515> 
+tezmp18:42:45.578> 
+   IP/MAC/TTL18:42:45.578> 
+ Ethernet: 276503 Bytes in 3448 Pac (72/-1)18:42:45.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:45.640> 
+gpioout18:42:45.640> 
+18:42:45.640> 
+tezmp18:42:45.703> 
+   IP/MAC/TTL18:42:45.703> 
+ Ethernet: 276503 Bytes in 3448 Pack (73/-1)18:42:45.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:45.765> 
+gpioout18:42:45.765> 
+18:42:45.828> 
+tezmp18:42:45.828> 
+   IP/MAC/TTL18:42:45.828> 
+ Ethernet: 276503 Bytes in 3448 Packe (74/-1)18:42:45.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:45.890> 
+gpioout18:42:45.953> 
+18:42:45.953> 
+tezmp18:42:45.953> 
+   IP/MAC/TTL18:42:45.953> 
+ Ethernet: 276503 Bytes in 3448 Packet (75/-1)18:42:46.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:46.015> 
+gpioout18:42:46.078> 
+18:42:46.078> 
+tezmp18:42:46.078> 
+   IP/MAC/TTL18:42:46.078> 
+ Ethernet: 276503 Bytes in 3448 Packete (76/-1)18:42:46.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:46.203> 
+gpioout18:42:46.203> 
+18:42:46.203> 
+tezmp18:42:46.203> 
+   IP/MAC/TTL18:42:46.203> 
+ Ethernet: 276503 Bytes in 3448 Packete (76/-1)18:42:46.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:46.328> 
+gpioout18:42:46.328> 
+18:42:46.328> 
+tezmp18:42:46.328> 
+   IP/MAC/TTL18:42:46.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten (77/-1)18:42:46.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:46.453> 
+gpioout18:42:46.453> 
+18:42:46.453> 
+tezmp18:42:46.453> 
+   IP/MAC/TTL18:42:46.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten  (78/-1)18:42:46.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:46.578> 
+gpioout18:42:46.578> 
+18:42:46.578> 
+tezmp18:42:46.578> 
+   IP/MAC/TTL18:42:46.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten L (79/-1)18:42:46.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:46.703> 
+gpioout18:42:46.703> 
+18:42:46.703> 
+tezmp18:42:46.703> 
+   IP/MAC/TTL18:42:46.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten Lo (80/-1)18:42:46.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:46.828> 
+gpioout18:42:46.828> 
+18:42:46.828> 
+tezmp18:42:46.828> 
+   IP/MAC/TTL18:42:46.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten Loc (81/-1)18:42:46.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:46.953> 
+gpioout18:42:46.953> 
+18:42:46.953> 
+tezmp18:42:47.015> 
+   IP/MAC/TTL18:42:47.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten Lock (82/-1)18:42:47.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:47.078> 
+gpioout18:42:47.140> 
+18:42:47.140> 
+tezmp18:42:47.140> 
+   IP/MAC/TTL18:42:47.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockE (83/-1)18:42:47.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:47.265> 
+gpioout18:42:47.265> 
+18:42:47.265> 
+tezmp18:42:47.265> 
+   IP/MAC/TTL18:42:47.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockE (83/-1)18:42:47.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:47.390> 
+gpioout18:42:47.390> 
+18:42:47.390> 
+tezmp18:42:47.390> 
+   IP/MAC/TTL18:42:47.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockEr (84/-1)18:42:47.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:47.515> 
+gpioout18:42:47.515> 
+18:42:47.515> 
+tezmp18:42:47.515> 
+   IP/MAC/TTL18:42:47.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErr (85/-1)18:42:47.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:47.640> 
+gpioout18:42:47.640> 
+18:42:47.703> 
+tezmp18:42:47.703> 
+   IP/MAC/TTL18:42:47.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErro (86/-1)18:42:47.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:47.828> 
+gpioout18:42:47.828> 
+18:42:47.828> 
+tezmp18:42:47.828> 
+   IP/MAC/TTL18:42:47.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockError (87/-1)18:42:47.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:47.953> 
+gpioout18:42:47.953> 
+18:42:47.953> 
+tezmp18:42:47.953> 
+   IP/MAC/TTL18:42:47.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors (88/-1)18:42:48.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:48.078> 
+gpioout18:42:48.078> 
+18:42:48.078> 
+tezmp18:42:48.078> 
+   IP/MAC/TTL18:42:48.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors  (89/-1)18:42:48.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:48.203> 
+gpioout18:42:48.265> 
+18:42:48.265> 
+tezmp18:42:48.265> 
+   IP/MAC/TTL18:42:48.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 0 (90/-1)18:42:48.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:48.390> 
+gpioout18:42:48.390> 
+18:42:48.390> 
+tezmp18:42:48.390> 
+   IP/MAC/TTL18:42:48.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 0 (90/-1)18:42:48.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:48.515> 
+gpioout18:42:48.515> 
+18:42:48.515> 
+tezmp18:42:48.515> 
+   IP/MAC/TTL18:42:48.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:48.578>  (91/-1)18:42:48.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:48.640> 
+gpioout18:42:48.703> 
+18:42:48.703> 
+tezmp18:42:48.703> 
+   IP/MAC/TTL18:42:48.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:48.765> 
+ (92/-1)18:42:48.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:48.828> 
+gpioout18:42:48.828> 
+18:42:48.828> 
+tezmp18:42:48.828> 
+   IP/MAC/TTL18:42:48.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:48.890> 
+T (93/-1)18:42:48.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:48.953> 
+gpioout18:42:48.953> 
+18:42:48.953> 
+tezmp18:42:48.953> 
+   IP/MAC/TTL18:42:49.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:49.078> 
+T (93/-1)18:42:49.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:49.078> 
+gpioout18:42:49.140> 
+18:42:49.140> 
+tezmp18:42:49.140> 
+   IP/MAC/TTL18:42:49.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:49.203> 
+TC (94/-1)18:42:49.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:49.265> 
+gpioout18:42:49.265> 
+18:42:49.265> 
+tezmp18:42:49.265> 
+   IP/MAC/TTL18:42:49.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:49.328> 
+TCP (95/-1)18:42:49.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:49.390> 
+gpioout18:42:49.390> 
+18:42:49.390> 
+tezmp18:42:49.390> 
+   IP/MAC/TTL18:42:49.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:49.515> 
+TCP (95/-1)18:42:49.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:49.578> 
+gpioout18:42:49.578> 
+18:42:49.578> 
+tezmp18:42:49.578> 
+   IP/MAC/TTL18:42:49.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:49.640> 
+TCP- (96/-1)18:42:49.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:49.703> 
+gpioout18:42:49.703> 
+18:42:49.703> 
+tezmp18:42:49.703> 
+   IP/MAC/TTL18:42:49.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:49.765> 
+TCP- (96/-1)18:42:49.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:49.828> 
+gpioout18:42:49.890> 
+18:42:49.890> 
+tezmp18:42:49.890> 
+   IP/MAC/TTL18:42:49.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:49.953> 
+TCP-T (97/-1)18:42:49.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:50.015> 
+gpioout18:42:50.015> 
+18:42:50.015> 
+tezmp18:42:50.015> 
+   IP/MAC/TTL18:42:50.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:50.078> 
+TCP-T (97/-1)18:42:50.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:50.140> 
+gpioout18:42:50.140> 
+18:42:50.140> 
+tezmp18:42:50.203> 
+   IP/MAC/TTL18:42:50.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:50.265> 
+TCP-TX (98/-1)18:42:50.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:50.328> 
+gpioout18:42:50.328> 
+18:42:50.328> 
+tezmp18:42:50.328> 
+   IP/MAC/TTL18:42:50.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:50.390> 
+TCP-TX  (99/-1)18:42:50.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:50.453> 
+gpioout18:42:50.453> 
+18:42:50.453> 
+tezmp18:42:50.515> 
+   IP/MAC/TTL18:42:50.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:50.578> 
+TCP-TX E (100/-1)18:42:50.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:50.640> 
+gpioout18:42:50.640> 
+18:42:50.640> 
+tezmp18:42:50.640> 
+   IP/MAC/TTL18:42:50.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:50.703> 
+TCP-TX Er (101/-1)18:42:50.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:50.765> 
+gpioout18:42:50.765> 
+18:42:50.765> 
+tezmp18:42:50.765> 
+   IP/MAC/TTL18:42:50.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:50.890> 
+TCP-TX Err (102/-1)18:42:50.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:50.953> 
+gpioout18:42:50.953> 
+18:42:50.953> 
+tezmp18:42:50.953> 
+   IP/MAC/TTL18:42:50.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:51.015> 
+TCP-TX Erro (103/-1)18:42:51.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:51.078> 
+gpioout18:42:51.078> 
+18:42:51.078> 
+tezmp18:42:51.140> 
+   IP/MAC/TTL18:42:51.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:51.203> 
+TCP-TX Error (104/-1)18:42:51.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:51.265> 
+gpioout18:42:51.265> 
+18:42:51.265> 
+tezmp18:42:51.265> 
+   IP/MAC/TTL18:42:51.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:51.328> 
+TCP-TX Errors (105/-1)18:42:51.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:51.390> 
+gpioout18:42:51.453> 
+18:42:51.453> 
+tezmp18:42:51.453> 
+   IP/MAC/TTL18:42:51.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:51.515> 
+TCP-TX Errors: (106/-1)18:42:51.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:51.578> 
+gpioout18:42:51.578> 
+18:42:51.578> 
+tezmp18:42:51.578> 
+   IP/MAC/TTL18:42:51.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:51.640> 
+TCP-TX Errors:  (107/-1)18:42:51.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:51.765> 
+gpioout18:42:51.765> 
+18:42:51.765> 
+tezmp18:42:51.765> 
+   IP/MAC/TTL18:42:51.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:51.828> 
+TCP-TX Errors: 0 (108/-1)18:42:51.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:51.890> 
+gpioout18:42:51.890> 
+18:42:51.890> 
+tezmp18:42:51.953> 
+   IP/MAC/TTL18:42:51.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:52.015> 
+TCP-TX Errors: 0  (109/-1)18:42:52.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:52.078> 
+gpioout18:42:52.078> 
+18:42:52.078> 
+tezmp18:42:52.078> 
+   IP/MAC/TTL18:42:52.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:52.140> 
+TCP-TX Errors: 0 T (110/-1)18:42:52.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:52.203> 
+gpioout18:42:52.265> 
+18:42:52.265> 
+tezmp18:42:52.265> 
+   IP/MAC/TTL18:42:52.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:52.328> 
+TCP-TX Errors: 0 T (110/-1)18:42:52.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:52.390> 
+gpioout18:42:52.390> 
+18:42:52.390> 
+tezmp18:42:52.453> 
+   IP/MAC/TTL18:42:52.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:52.515> 
+TCP-TX Errors: 0 TC (111/-1)18:42:52.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:52.578> 
+gpioout18:42:52.578> 
+18:42:52.578> 
+tezmp18:42:52.578> 
+   IP/MAC/TTL18:42:52.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:52.640> 
+TCP-TX Errors: 0 TCP (112/-1)18:42:52.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:52.765> 
+gpioout18:42:52.765> 
+18:42:52.765> 
+tezmp18:42:52.765> 
+   IP/MAC/TTL18:42:52.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:52.828> 
+TCP-TX Errors: 0 TCP- (113/-1)18:42:52.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:52.890> 
+gpioout18:42:52.890> 
+18:42:52.953> 
+tezmp18:42:52.953> 
+   IP/MAC/TTL18:42:52.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:53.015> 
+TCP-TX Errors: 0 TCP- (113/-1)18:42:53.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:53.078> 
+gpioout18:42:53.078> 
+18:42:53.078> 
+tezmp18:42:53.078> 
+   IP/MAC/TTL18:42:53.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:53.203> 
+TCP-TX Errors: 0 TCP-R (114/-1)18:42:53.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:53.265> 
+gpioout18:42:53.265> 
+18:42:53.265> 
+tezmp18:42:53.265> 
+   IP/MAC/TTL18:42:53.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:53.328> 
+TCP-TX Errors: 0 TCP-R (114/-1)18:42:53.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:53.453> 
+gpioout18:42:53.453> 
+18:42:53.453> 
+tezmp18:42:53.453> 
+   IP/MAC/TTL18:42:53.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:53.515> 
+TCP-TX Errors: 0 TCP-RX (115/-1)18:42:53.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:53.578> 
+gpioout18:42:53.578> 
+18:42:53.578> 
+tezmp18:42:53.578> 
+   IP/MAC/TTL18:42:53.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:53.703> 
+TCP-TX Errors: 0 TCP-RX  (116/-1)18:42:53.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:53.765> 
+gpioout18:42:53.765> 
+18:42:53.765> 
+tezmp18:42:53.765> 
+   IP/MAC/TTL18:42:53.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:53.828> 
+TCP-TX Errors: 0 TCP-RX E (117/-1)18:42:53.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:53.953> 
+gpioout18:42:53.953> 
+18:42:53.953> 
+tezmp18:42:53.953> 
+   IP/MAC/TTL18:42:53.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:54.015> 
+TCP-TX Errors: 0 TCP-RX Er (118/-1)18:42:54.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:54.140> 
+gpioout18:42:54.140> 
+18:42:54.140> 
+tezmp18:42:54.140> 
+   IP/MAC/TTL18:42:54.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:54.203> 
+TCP-TX Errors: 0 TCP-RX Err (119/-1)18:42:54.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:54.265> 
+gpioout18:42:54.265> 
+18:42:54.265> 
+tezmp18:42:54.328> 
+   IP/MAC/TTL18:42:54.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:54.390> 
+TCP-TX Errors: 0 TCP-RX Erro (120/-1)18:42:54.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:54.453> 
+gpioout18:42:54.453> 
+18:42:54.453> 
+tezmp18:42:54.453> 
+   IP/MAC/TTL18:42:54.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:54.578> 
+TCP-TX Errors: 0 TCP-RX Error (121/-1)18:42:54.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:54.640> 
+gpioout18:42:54.640> 
+18:42:54.640> 
+tezmp18:42:54.640> 
+   IP/MAC/TTL18:42:54.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:54.765> 
+TCP-TX Errors: 0 TCP-RX Errors (122/-1)18:42:54.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:54.828> 
+gpioout18:42:54.828> 
+18:42:54.828> 
+tezmp18:42:54.828> 
+   IP/MAC/TTL18:42:54.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:54.890> 
+TCP-TX Errors: 0 TCP-RX Errors: (123/-1)18:42:54.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:55.015> 
+gpioout18:42:55.015> 
+18:42:55.015> 
+tezmp18:42:55.015> 
+   IP/MAC/TTL18:42:55.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:55.078> 
+TCP-TX Errors: 0 TCP-RX Errors:  (124/-1)18:42:55.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:55.203> 
+gpioout18:42:55.203> 
+18:42:55.203> 
+tezmp18:42:55.203> 
+   IP/MAC/TTL18:42:55.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:55.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (125/-1)18:42:55.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:55.390> 
+gpioout18:42:55.390> 
+18:42:55.390> 
+tezmp18:42:55.390> 
+   IP/MAC/TTL18:42:55.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:55.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0  (126/-1)18:42:55.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:55.515> 
+gpioout18:42:55.578> 
+18:42:55.578> 
+tezmp18:42:55.578> 
+   IP/MAC/TTL18:42:55.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:55.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 ( (127/-1)18:42:55.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:55.703> 
+gpioout18:42:55.765> 
+18:42:55.765> 
+tezmp18:42:55.765> 
+   IP/MAC/TTL18:42:55.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:55.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (u (128/-1)18:42:55.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:55.890> 
+gpioout18:42:55.953> 
+18:42:55.953> 
+tezmp18:42:55.953> 
+   IP/MAC/TTL18:42:55.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:56.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (un (129/-1)18:42:56.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:56.078> 
+gpioout18:42:56.140> 
+18:42:56.140> 
+tezmp18:42:56.140> 
+   IP/MAC/TTL18:42:56.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:56.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (uns (130/-1)18:42:56.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:56.265> 
+gpioout18:42:56.328> 
+18:42:56.328> 
+tezmp18:42:56.328> 
+   IP/MAC/TTL18:42:56.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:56.390> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unso (131/-1)18:42:56.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:56.453> 
+gpioout18:42:56.453> 
+18:42:56.515> 
+tezmp18:42:56.515> 
+   IP/MAC/TTL18:42:56.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:56.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsor (132/-1)18:42:56.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:56.640> 
+gpioout18:42:56.703> 
+18:42:56.703> 
+tezmp18:42:56.703> 
+   IP/MAC/TTL18:42:56.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:56.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsort (133/-1)18:42:56.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:56.828> 
+gpioout18:42:56.890> 
+18:42:56.890> 
+tezmp18:42:56.890> 
+   IP/MAC/TTL18:42:56.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:56.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorte (134/-1)18:42:57.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:57.078> 
+gpioout18:42:57.078> 
+18:42:57.078> 
+tezmp18:42:57.078> 
+   IP/MAC/TTL18:42:57.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:57.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted (135/-1)18:42:57.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:57.265> 
+gpioout18:42:57.265> 
+18:42:57.265> 
+tezmp18:42:57.265> 
+   IP/MAC/TTL18:42:57.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:57.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted  (136/-1)18:42:57.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:57.453> 
+gpioout18:42:57.453> 
+18:42:57.453> 
+tezmp18:42:57.453> 
+   IP/MAC/TTL18:42:57.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:57.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0 (137/-1)18:42:57.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:57.640> 
+gpioout18:42:57.640> 
+18:42:57.640> 
+tezmp18:42:57.640> 
+   IP/MAC/TTL18:42:57.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:57.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, (138/-1)18:42:57.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:57.828> 
+gpioout18:42:57.828> 
+18:42:57.828> 
+tezmp18:42:57.828> 
+   IP/MAC/TTL18:42:57.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:57.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0,  (139/-1)18:42:57.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:58.015> 
+gpioout18:42:58.015> 
+18:42:58.015> 
+tezmp18:42:58.015> 
+   IP/MAC/TTL18:42:58.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:58.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, o (140/-1)18:42:58.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:58.203> 
+gpioout18:42:58.203> 
+18:42:58.203> 
+tezmp18:42:58.265> 
+   IP/MAC/TTL18:42:58.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:58.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, ol (141/-1)18:42:58.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:58.390> 
+gpioout18:42:58.453> 
+18:42:58.453> 
+tezmp18:42:58.453> 
+   IP/MAC/TTL18:42:58.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:58.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, old (142/-1)18:42:58.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:58.640> 
+gpioout18:42:58.640> 
+18:42:58.640> 
+tezmp18:42:58.640> 
+   IP/MAC/TTL18:42:58.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:58.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, olds (143/-1)18:42:58.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:58.828> 
+gpioout18:42:58.828> 
+18:42:58.828> 
+tezmp18:42:58.828> 
+   IP/MAC/TTL18:42:58.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:58.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldse (144/-1)18:42:58.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:59.015> 
+gpioout18:42:59.015> 
+18:42:59.015> 
+tezmp18:42:59.015> 
+   IP/MAC/TTL18:42:59.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:59.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq (145/-1)18:42:59.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:59.203> 
+gpioout18:42:59.203> 
+18:42:59.203> 
+tezmp18:42:59.265> 
+   IP/MAC/TTL18:42:59.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:59.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq  (146/-1)18:42:59.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:59.453> 
+gpioout18:42:59.453> 
+18:42:59.453> 
+tezmp18:42:59.453> 
+   IP/MAC/TTL18:42:59.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:59.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0 (147/-1)18:42:59.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:59.640> 
+gpioout18:42:59.640> 
+18:42:59.640> 
+tezmp18:42:59.640> 
+   IP/MAC/TTL18:42:59.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:59.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0) (148/-1)18:42:59.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:42:59.828> 
+gpioout18:42:59.828> 
+18:42:59.828> 
+tezmp18:42:59.828> 
+   IP/MAC/TTL18:42:59.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:42:59.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:00.015>  (149/-1)18:43:00.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:00.015> 
+gpioout18:43:00.078> 
+18:43:00.078> 
+tezmp18:43:00.078> 
+   IP/MAC/TTL18:43:00.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:00.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:00.203> 
+ (150/-1)18:43:00.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:00.265> 
+gpioout18:43:00.265> 
+18:43:00.265> 
+tezmp18:43:00.265> 
+   IP/MAC/TTL18:43:00.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:00.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:00.390> 
+18:43:00.390>  (151/-1)18:43:00.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:00.453> 
+gpioout18:43:00.453> 
+18:43:00.453> 
+tezmp18:43:00.453> 
+   IP/MAC/TTL18:43:00.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:00.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:00.640> 
+18:43:00.640> 
+ (152/-1)18:43:00.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:00.640> 
+gpioout18:43:00.703> 
+18:43:00.703> 
+tezmp18:43:00.703> 
+   IP/MAC/TTL18:43:00.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:00.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:00.828> 
+18:43:00.828> 
+E (153/-1)18:43:00.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:00.890> 
+gpioout18:43:00.890> 
+18:43:00.890> 
+tezmp18:43:00.890> 
+   IP/MAC/TTL18:43:00.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:00.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:01.015> 
+18:43:01.015> 
+EN (154/-1)18:43:01.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:01.078> 
+gpioout18:43:01.078> 
+18:43:01.078> 
+tezmp18:43:01.078> 
+   IP/MAC/TTL18:43:01.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:01.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:01.265> 
+18:43:01.265> 
+ENC (155/-1)18:43:01.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:01.328> 
+gpioout18:43:01.328> 
+18:43:01.328> 
+tezmp18:43:01.328> 
+   IP/MAC/TTL18:43:01.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:01.390> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:01.453> 
+18:43:01.453> 
+ENC2 (156/-1)18:43:01.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:01.515> 
+gpioout18:43:01.515> 
+18:43:01.515> 
+tezmp18:43:01.515> 
+   IP/MAC/TTL18:43:01.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:01.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:01.703> 
+18:43:01.703> 
+ENC28 (157/-1)18:43:01.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:01.703> 
+gpioout18:43:01.765> 
+18:43:01.765> 
+tezmp18:43:01.765> 
+   IP/MAC/TTL18:43:01.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:01.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:01.890> 
+18:43:01.890> 
+ENC28J (158/-1)18:43:01.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:01.953> 
+gpioout18:43:01.953> 
+18:43:01.953> 
+tezmp18:43:01.953> 
+   IP/MAC/TTL18:43:01.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:02.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:02.078> 
+18:43:02.078> 
+ENC28J6 (159/-1)18:43:02.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:02.140> 
+gpioout18:43:02.203> 
+18:43:02.203> 
+tezmp18:43:02.203> 
+   IP/MAC/TTL18:43:02.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:02.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:02.328> 
+18:43:02.328> 
+ENC28J6 (159/-1)18:43:02.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:02.390> 
+gpioout18:43:02.390> 
+18:43:02.390> 
+tezmp18:43:02.390> 
+   IP/MAC/TTL18:43:02.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:02.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:02.515> 
+18:43:02.515> 
+ENC28J60 (160/-1)18:43:02.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:02.578> 
+gpioout18:43:02.640> 
+18:43:02.640> 
+tezmp18:43:02.640> 
+   IP/MAC/TTL18:43:02.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:02.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:02.765> 
+18:43:02.765> 
+ENC28J60: (161/-1)18:43:02.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:02.828> 
+gpioout18:43:02.828> 
+18:43:02.828> 
+tezmp18:43:02.828> 
+   IP/MAC/TTL18:43:02.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:02.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:02.953> 
+18:43:02.953> 
+ENC28J60:18:43:03.015>  (162/-1)18:43:03.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:03.078> 
+gpioout18:43:03.078> 
+18:43:03.078> 
+tezmp18:43:03.078> 
+   IP/MAC/TTL18:43:03.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:03.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:03.203> 
+18:43:03.203> 
+ENC28J60:18:43:03.203> 
+ (163/-1)18:43:03.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:03.265> 
+gpioout18:43:03.265> 
+18:43:03.265> 
+tezmp18:43:03.265> 
+   IP/MAC/TTL18:43:03.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:03.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:03.390> 
+18:43:03.390> 
+ENC28J60:18:43:03.453> 
+R (164/-1)18:43:03.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:03.515> 
+gpioout18:43:03.515> 
+18:43:03.515> 
+tezmp18:43:03.515> 
+   IP/MAC/TTL18:43:03.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:03.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:03.640> 
+18:43:03.640> 
+ENC28J60:18:43:03.640> 
+Re (165/-1)18:43:03.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:03.703> 
+gpioout18:43:03.703> 
+18:43:03.703> 
+tezmp18:43:03.703> 
+   IP/MAC/TTL18:43:03.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:03.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:03.890> 
+18:43:03.890> 
+ENC28J60:18:43:03.890> 
+Reg (166/-1)18:43:03.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:03.953> 
+gpioout18:43:03.953> 
+18:43:03.953> 
+tezmp18:43:03.953> 
+   IP/MAC/TTL18:43:03.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:04.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:04.078> 
+18:43:04.078> 
+ENC28J60:18:43:04.078> 
+Reg. (167/-1)18:43:04.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:04.140> 
+gpioout18:43:04.140> 
+18:43:04.140> 
+tezmp18:43:04.203> 
+   IP/MAC/TTL18:43:04.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:04.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:04.328> 
+18:43:04.328> 
+ENC28J60:18:43:04.328> 
+Reg.  (168/-1)18:43:04.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:04.390> 
+gpioout18:43:04.390> 
+18:43:04.390> 
+tezmp18:43:04.390> 
+   IP/MAC/TTL18:43:04.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:04.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:04.515> 
+18:43:04.515> 
+ENC28J60:18:43:04.578> 
+Reg.   (169/-1)18:43:04.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:04.640> 
+gpioout18:43:04.640> 
+18:43:04.640> 
+tezmp18:43:04.640> 
+   IP/MAC/TTL18:43:04.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:04.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:04.765> 
+18:43:04.765> 
+ENC28J60:18:43:04.765> 
+Reg.    (170/-1)18:43:04.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:04.828> 
+gpioout18:43:04.828> 
+18:43:04.890> 
+tezmp18:43:04.890> 
+   IP/MAC/TTL18:43:04.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:04.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:05.015> 
+18:43:05.015> 
+ENC28J60:18:43:05.015> 
+Reg.     (171/-1)18:43:05.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:05.078> 
+gpioout18:43:05.078> 
+18:43:05.078> 
+tezmp18:43:05.078> 
+   IP/MAC/TTL18:43:05.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:05.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:05.203> 
+18:43:05.203> 
+ENC28J60:18:43:05.265> 
+Reg.     (171/-1)18:43:05.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:05.328> 
+gpioout18:43:05.328> 
+18:43:05.328> 
+tezmp18:43:05.328> 
+   IP/MAC/TTL18:43:05.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:05.390> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:05.453> 
+18:43:05.453> 
+ENC28J60:18:43:05.453> 
+Reg.      (172/-1)18:43:05.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:05.515> 
+gpioout18:43:05.515> 
+18:43:05.578> 
+tezmp18:43:05.578> 
+   IP/MAC/TTL18:43:05.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:05.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:05.703> 
+18:43:05.703> 
+ENC28J60:18:43:05.703> 
+Reg.     W (173/-1)18:43:05.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:05.765> 
+gpioout18:43:05.765> 
+18:43:05.765> 
+tezmp18:43:05.765> 
+   IP/MAC/TTL18:43:05.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:05.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:05.890> 
+18:43:05.953> 
+ENC28J60:18:43:05.953> 
+Reg.     We (174/-1)18:43:05.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:06.015> 
+gpioout18:43:06.015> 
+18:43:06.015> 
+tezmp18:43:06.015> 
+   IP/MAC/TTL18:43:06.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:06.078> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:06.140> 
+18:43:06.140> 
+ENC28J60:18:43:06.140> 
+Reg.     Wer (175/-1)18:43:06.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:06.203> 
+gpioout18:43:06.265> 
+18:43:06.265> 
+tezmp18:43:06.265> 
+   IP/MAC/TTL18:43:06.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:06.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:06.390> 
+18:43:06.390> 
+ENC28J60:18:43:06.390> 
+Reg.     Wert (176/-1)18:43:06.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:06.453> 
+gpioout18:43:06.453> 
+18:43:06.453> 
+tezmp18:43:06.515> 
+   IP/MAC/TTL18:43:06.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:06.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:06.640> 
+18:43:06.640> 
+ENC28J60:18:43:06.640> 
+Reg.     Wert18:43:06.640>  (177/-1)18:43:06.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:06.703> 
+gpioout18:43:06.703> 
+18:43:06.703> 
+tezmp18:43:06.703> 
+   IP/MAC/TTL18:43:06.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:06.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:06.828> 
+18:43:06.828> 
+ENC28J60:18:43:06.890> 
+Reg.     Wert18:43:06.890> 
+ (178/-1)18:43:06.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:06.953> 
+gpioout18:43:06.953> 
+18:43:06.953> 
+tezmp18:43:06.953> 
+   IP/MAC/TTL18:43:06.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:07.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:07.078> 
+18:43:07.078> 
+ENC28J60:18:43:07.078> 
+Reg.     Wert18:43:07.140> 
+- (179/-1)18:43:07.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:07.203> 
+gpioout18:43:07.203> 
+18:43:07.203> 
+tezmp18:43:07.203> 
+   IP/MAC/TTL18:43:07.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:07.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:07.328> 
+18:43:07.328> 
+ENC28J60:18:43:07.328> 
+Reg.     Wert18:43:07.390> 
+-- (180/-1)18:43:07.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:07.453> 
+gpioout18:43:07.453> 
+18:43:07.453> 
+tezmp18:43:07.453> 
+   IP/MAC/TTL18:43:07.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:07.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:07.578> 
+18:43:07.578> 
+ENC28J60:18:43:07.578> 
+Reg.     Wert18:43:07.578> 
+--- (181/-1)18:43:07.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:07.640> 
+gpioout18:43:07.703> 
+18:43:07.703> 
+tezmp18:43:07.703> 
+   IP/MAC/TTL18:43:07.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:07.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:07.828> 
+18:43:07.828> 
+ENC28J60:18:43:07.828> 
+Reg.     Wert18:43:07.828> 
+---- (182/-1)18:43:07.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:07.890> 
+gpioout18:43:07.890> 
+18:43:07.890> 
+tezmp18:43:07.953> 
+   IP/MAC/TTL18:43:07.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:08.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:08.078> 
+18:43:08.078> 
+ENC28J60:18:43:08.078> 
+Reg.     Wert18:43:08.078> 
+----- (183/-1)18:43:08.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:08.140> 
+gpioout18:43:08.140> 
+18:43:08.140> 
+tezmp18:43:08.140> 
+   IP/MAC/TTL18:43:08.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:08.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:08.265> 
+18:43:08.265> 
+ENC28J60:18:43:08.328> 
+Reg.     Wert18:43:08.328> 
+------ (184/-1)18:43:08.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:08.390> 
+gpioout18:43:08.390> 
+18:43:08.390> 
+tezmp18:43:08.390> 
+   IP/MAC/TTL18:43:08.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:08.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:08.515> 
+18:43:08.515> 
+ENC28J60:18:43:08.578> 
+Reg.     Wert18:43:08.578> 
+------- (185/-1)18:43:08.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:08.640> 
+gpioout18:43:08.640> 
+18:43:08.640> 
+tezmp18:43:08.640> 
+   IP/MAC/TTL18:43:08.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:08.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:08.765> 
+18:43:08.765> 
+ENC28J60:18:43:08.765> 
+Reg.     Wert18:43:08.828> 
+-------- (186/-1)18:43:08.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:08.890> 
+gpioout18:43:08.890> 
+18:43:08.890> 
+tezmp18:43:08.890> 
+   IP/MAC/TTL18:43:08.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:08.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:09.015> 
+18:43:09.015> 
+ENC28J60:18:43:09.015> 
+Reg.     Wert18:43:09.078> 
+--------+ (187/-1)18:43:09.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:09.140> 
+gpioout18:43:09.140> 
+18:43:09.140> 
+tezmp18:43:09.140> 
+   IP/MAC/TTL18:43:09.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:09.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:09.265> 
+18:43:09.265> 
+ENC28J60:18:43:09.265> 
+Reg.     Wert18:43:09.328> 
+--------+- (188/-1)18:43:09.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:09.390> 
+gpioout18:43:09.390> 
+18:43:09.390> 
+tezmp18:43:09.390> 
+   IP/MAC/TTL18:43:09.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:09.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:09.515> 
+18:43:09.515> 
+ENC28J60:18:43:09.515> 
+Reg.     Wert18:43:09.578> 
+--------+-- (189/-1)18:43:09.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:09.640> 
+gpioout18:43:09.640> 
+18:43:09.640> 
+tezmp18:43:09.640> 
+   IP/MAC/TTL18:43:09.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:09.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:09.765> 
+18:43:09.765> 
+ENC28J60:18:43:09.765> 
+Reg.     Wert18:43:09.828> 
+--------+--- (190/-1)18:43:09.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:09.890> 
+gpioout18:43:09.890> 
+18:43:09.890> 
+tezmp18:43:09.890> 
+   IP/MAC/TTL18:43:09.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:09.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:10.015> 
+18:43:10.015> 
+ENC28J60:18:43:10.015> 
+Reg.     Wert18:43:10.078> 
+--------+---- (191/-1)18:43:10.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:10.140> 
+gpioout18:43:10.140> 
+18:43:10.140> 
+tezmp18:43:10.140> 
+   IP/MAC/TTL18:43:10.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:10.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:10.265> 
+18:43:10.265> 
+ENC28J60:18:43:10.265> 
+Reg.     Wert18:43:10.328> 
+--------+----- (192/-1)18:43:10.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:10.390> 
+gpioout18:43:10.390> 
+18:43:10.390> 
+tezmp18:43:10.390> 
+   IP/MAC/TTL18:43:10.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:10.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:10.515> 
+18:43:10.515> 
+ENC28J60:18:43:10.515> 
+Reg.     Wert18:43:10.578> 
+--------+------ (193/-1)18:43:10.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:10.640> 
+gpioout18:43:10.640> 
+18:43:10.640> 
+tezmp18:43:10.640> 
+   IP/MAC/TTL18:43:10.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:10.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:10.765> 
+18:43:10.765> 
+ENC28J60:18:43:10.765> 
+Reg.     Wert18:43:10.828> 
+--------+------- (194/-1)18:43:10.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:10.890> 
+gpioout18:43:10.890> 
+18:43:10.890> 
+tezmp18:43:10.890> 
+   IP/MAC/TTL18:43:10.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:10.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:11.015> 
+18:43:11.015> 
+ENC28J60:18:43:11.015> 
+Reg.     Wert18:43:11.078> 
+--------+-------- (195/-1)18:43:11.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:11.140> 
+gpioout18:43:11.140> 
+18:43:11.140> 
+tezmp18:43:11.140> 
+   IP/MAC/TTL18:43:11.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:11.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:11.265> 
+18:43:11.265> 
+ENC28J60:18:43:11.328> 
+Reg.     Wert18:43:11.328> 
+--------+--------18:43:11.328>  (196/-1)18:43:11.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:11.390> 
+gpioout18:43:11.390> 
+18:43:11.390> 
+tezmp18:43:11.390> 
+   IP/MAC/TTL18:43:11.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:11.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:11.515> 
+18:43:11.515> 
+ENC28J60:18:43:11.578> 
+Reg.     Wert18:43:11.578> 
+--------+--------18:43:11.578> 
+ (197/-1)18:43:11.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:11.640> 
+gpioout18:43:11.640> 
+18:43:11.640> 
+tezmp18:43:11.640> 
+   IP/MAC/TTL18:43:11.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:11.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:11.828> 
+18:43:11.828> 
+ENC28J60:18:43:11.828> 
+Reg.     Wert18:43:11.828> 
+--------+--------18:43:11.828> 
+R (198/-1)18:43:11.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:11.890> 
+gpioout18:43:11.890> 
+18:43:11.890> 
+tezmp18:43:11.953> 
+   IP/MAC/TTL18:43:11.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:12.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:12.078> 
+18:43:12.078> 
+ENC28J60:18:43:12.078> 
+Reg.     Wert18:43:12.078> 
+--------+--------18:43:12.078> 
+Re (199/-1)18:43:12.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:12.140> 
+gpioout18:43:12.203> 
+18:43:12.203> 
+tezmp18:43:12.203> 
+   IP/MAC/TTL18:43:12.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:12.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:12.328> 
+18:43:12.328> 
+ENC28J60:18:43:12.328> 
+Reg.     Wert18:43:12.328> 
+--------+--------18:43:12.390> 
+Rev (200/-1)18:43:12.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:12.453> 
+gpioout18:43:12.453> 
+18:43:12.453> 
+tezmp18:43:12.453> 
+   IP/MAC/TTL18:43:12.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:12.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:12.578> 
+18:43:12.578> 
+ENC28J60:18:43:12.578> 
+Reg.     Wert18:43:12.578> 
+--------+--------18:43:12.640> 
+Rev. (201/-1)18:43:12.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:12.703> 
+gpioout18:43:12.703> 
+18:43:12.703> 
+tezmp18:43:12.703> 
+   IP/MAC/TTL18:43:12.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:12.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:12.828> 
+18:43:12.828> 
+ENC28J60:18:43:12.828> 
+Reg.     Wert18:43:12.890> 
+--------+--------18:43:12.890> 
+Rev.I (202/-1)18:43:12.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:12.953> 
+gpioout18:43:12.953> 
+18:43:12.953> 
+tezmp18:43:12.953> 
+   IP/MAC/TTL18:43:12.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:13.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:13.078> 
+18:43:13.078> 
+ENC28J60:18:43:13.140> 
+Reg.     Wert18:43:13.140> 
+--------+--------18:43:13.140> 
+Rev.ID (203/-1)18:43:13.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:13.203> 
+gpioout18:43:13.203> 
+18:43:13.203> 
+tezmp18:43:13.203> 
+   IP/MAC/TTL18:43:13.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:13.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:13.390> 
+18:43:13.390> 
+ENC28J60:18:43:13.390> 
+Reg.     Wert18:43:13.390> 
+--------+--------18:43:13.390> 
+Rev.ID  (204/-1)18:43:13.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:13.453> 
+gpioout18:43:13.453> 
+18:43:13.515> 
+tezmp18:43:13.515> 
+   IP/MAC/TTL18:43:13.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:13.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:13.640> 
+18:43:13.640> 
+ENC28J60:18:43:13.640> 
+Reg.     Wert18:43:13.640> 
+--------+--------18:43:13.640> 
+Rev.ID   (205/-1)18:43:13.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:13.765> 
+gpioout18:43:13.765> 
+18:43:13.765> 
+tezmp18:43:13.765> 
+   IP/MAC/TTL18:43:13.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:13.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:13.890> 
+18:43:13.890> 
+ENC28J60:18:43:13.890> 
+Reg.     Wert18:43:13.890> 
+--------+--------18:43:13.953> 
+Rev.ID   (205/-1)18:43:13.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:14.015> 
+gpioout18:43:14.015> 
+18:43:14.015> 
+tezmp18:43:14.015> 
+   IP/MAC/TTL18:43:14.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:14.078> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:14.140> 
+18:43:14.140> 
+ENC28J60:18:43:14.140> 
+Reg.     Wert18:43:14.203> 
+--------+--------18:43:14.203> 
+Rev.ID    (206/-1)18:43:14.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:14.265> 
+gpioout18:43:14.265> 
+18:43:14.265> 
+tezmp18:43:14.265> 
+   IP/MAC/TTL18:43:14.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:14.390> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:14.390> 
+18:43:14.390> 
+ENC28J60:18:43:14.453> 
+Reg.     Wert18:43:14.453> 
+--------+--------18:43:14.453> 
+Rev.ID     (207/-1)18:43:14.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:14.515> 
+gpioout18:43:14.515> 
+18:43:14.515> 
+tezmp18:43:14.578> 
+   IP/MAC/TTL18:43:14.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:14.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:14.703> 
+18:43:14.703> 
+ENC28J60:18:43:14.703> 
+Reg.     Wert18:43:14.703> 
+--------+--------18:43:14.765> 
+Rev.ID      (208/-1)18:43:14.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:14.828> 
+gpioout18:43:14.828> 
+18:43:14.828> 
+tezmp18:43:14.828> 
+   IP/MAC/TTL18:43:14.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:14.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:14.953> 
+18:43:14.953> 
+ENC28J60:18:43:14.953> 
+Reg.     Wert18:43:15.015> 
+--------+--------18:43:15.015> 
+Rev.ID     0 (209/-1)18:43:15.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:15.078> 
+gpioout18:43:15.078> 
+18:43:15.078> 
+tezmp18:43:15.078> 
+   IP/MAC/TTL18:43:15.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:15.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:15.203> 
+18:43:15.203> 
+ENC28J60:18:43:15.265> 
+Reg.     Wert18:43:15.265> 
+--------+--------18:43:15.265> 
+Rev.ID     0x (210/-1)18:43:15.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:15.328> 
+gpioout18:43:15.328> 
+18:43:15.328> 
+tezmp18:43:15.328> 
+   IP/MAC/TTL18:43:15.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:15.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:15.515> 
+18:43:15.515> 
+ENC28J60:18:43:15.515> 
+Reg.     Wert18:43:15.515> 
+--------+--------18:43:15.515> 
+Rev.ID     0x0 (211/-1)18:43:15.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:15.640> 
+gpioout18:43:15.640> 
+18:43:15.640> 
+tezmp18:43:15.640> 
+   IP/MAC/TTL18:43:15.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:15.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:15.765> 
+18:43:15.765> 
+ENC28J60:18:43:15.765> 
+Reg.     Wert18:43:15.828> 
+--------+--------18:43:15.828> 
+Rev.ID     0x06 (212/-1)18:43:15.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:15.890> 
+gpioout18:43:15.890> 
+18:43:15.890> 
+tezmp18:43:15.890> 
+   IP/MAC/TTL18:43:15.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:15.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:16.015> 
+18:43:16.015> 
+ENC28J60:18:43:16.078> 
+Reg.     Wert18:43:16.078> 
+--------+--------18:43:16.078> 
+Rev.ID     0x0618:43:16.078>  (213/-1)18:43:16.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:16.140> 
+gpioout18:43:16.203> 
+18:43:16.203> 
+tezmp18:43:16.203> 
+   IP/MAC/TTL18:43:16.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:16.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:16.328> 
+18:43:16.328> 
+ENC28J60:18:43:16.328> 
+Reg.     Wert18:43:16.328> 
+--------+--------18:43:16.390> 
+Rev.ID     0x0618:43:16.390> 
+ (214/-1)18:43:16.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:16.453> 
+gpioout18:43:16.453> 
+18:43:16.453> 
+tezmp18:43:16.453> 
+   IP/MAC/TTL18:43:16.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:16.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:16.578> 
+18:43:16.578> 
+ENC28J60:18:43:16.578> 
+Reg.     Wert18:43:16.640> 
+--------+--------18:43:16.640> 
+Rev.ID     0x0618:43:16.640> 
+P (215/-1)18:43:16.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:16.703> 
+gpioout18:43:16.703> 
+18:43:16.703> 
+tezmp18:43:16.703> 
+   IP/MAC/TTL18:43:16.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:16.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:16.890> 
+18:43:16.890> 
+ENC28J60:18:43:16.890> 
+Reg.     Wert18:43:16.890> 
+--------+--------18:43:16.890> 
+Rev.ID     0x0618:43:16.953> 
+PH (216/-1)18:43:16.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:17.015> 
+gpioout18:43:17.015> 
+18:43:17.015> 
+tezmp18:43:17.015> 
+   IP/MAC/TTL18:43:17.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:17.078> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:17.140> 
+18:43:17.140> 
+ENC28J60:18:43:17.140> 
+Reg.     Wert18:43:17.203> 
+--------+--------18:43:17.203> 
+Rev.ID     0x0618:43:17.203> 
+PHS (217/-1)18:43:17.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:17.265> 
+gpioout18:43:17.265> 
+18:43:17.265> 
+tezmp18:43:17.265> 
+   IP/MAC/TTL18:43:17.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:17.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:17.390> 
+18:43:17.390> 
+ENC28J60:18:43:17.453> 
+Reg.     Wert18:43:17.453> 
+--------+--------18:43:17.453> 
+Rev.ID     0x0618:43:17.453> 
+PHST (218/-1)18:43:17.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:17.515> 
+gpioout18:43:17.578> 
+18:43:17.578> 
+tezmp18:43:17.578> 
+   IP/MAC/TTL18:43:17.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:17.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:17.703> 
+18:43:17.703> 
+ENC28J60:18:43:17.703> 
+Reg.     Wert18:43:17.703> 
+--------+--------18:43:17.765> 
+Rev.ID     0x0618:43:17.765> 
+PHSTA (219/-1)18:43:17.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:17.828> 
+gpioout18:43:17.828> 
+18:43:17.828> 
+tezmp18:43:17.828> 
+   IP/MAC/TTL18:43:17.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:17.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:17.953> 
+18:43:17.953> 
+ENC28J60:18:43:18.015> 
+Reg.     Wert18:43:18.015> 
+--------+--------18:43:18.015> 
+Rev.ID     0x0618:43:18.015> 
+PHSTAT (220/-1)18:43:18.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:18.078> 
+gpioout18:43:18.140> 
+18:43:18.140> 
+tezmp18:43:18.140> 
+   IP/MAC/TTL18:43:18.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:18.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:18.265> 
+18:43:18.265> 
+ENC28J60:18:43:18.265> 
+Reg.     Wert18:43:18.265> 
+--------+--------18:43:18.328> 
+Rev.ID     0x0618:43:18.328> 
+PHSTAT1 (221/-1)18:43:18.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:18.390> 
+gpioout18:43:18.390> 
+18:43:18.390> 
+tezmp18:43:18.390> 
+   IP/MAC/TTL18:43:18.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:18.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:18.515> 
+18:43:18.515> 
+ENC28J60:18:43:18.578> 
+Reg.     Wert18:43:18.578> 
+--------+--------18:43:18.578> 
+Rev.ID     0x0618:43:18.578> 
+PHSTAT1  (222/-1)18:43:18.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:18.640> 
+gpioout18:43:18.703> 
+18:43:18.703> 
+tezmp18:43:18.703> 
+   IP/MAC/TTL18:43:18.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:18.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:18.828> 
+18:43:18.828> 
+ENC28J60:18:43:18.828> 
+Reg.     Wert18:43:18.828> 
+--------+--------18:43:18.890> 
+Rev.ID     0x0618:43:18.890> 
+PHSTAT1  (222/-1)18:43:18.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:18.953> 
+gpioout18:43:18.953> 
+18:43:18.953> 
+tezmp18:43:18.953> 
+   IP/MAC/TTL18:43:19.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:19.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:19.078> 
+18:43:19.078> 
+ENC28J60:18:43:19.140> 
+Reg.     Wert18:43:19.140> 
+--------+--------18:43:19.140> 
+Rev.ID     0x0618:43:19.140> 
+PHSTAT1   (223/-1)18:43:19.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:19.265> 
+gpioout18:43:19.265> 
+18:43:19.265> 
+tezmp18:43:19.265> 
+   IP/MAC/TTL18:43:19.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:19.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:19.390> 
+18:43:19.390> 
+ENC28J60:18:43:19.390> 
+Reg.     Wert18:43:19.390> 
+--------+--------18:43:19.453> 
+Rev.ID     0x0618:43:19.453> 
+PHSTAT1  0 (224/-1)18:43:19.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:19.515> 
+gpioout18:43:19.515> 
+18:43:19.515> 
+tezmp18:43:19.515> 
+   IP/MAC/TTL18:43:19.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:19.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:19.703> 
+18:43:19.703> 
+ENC28J60:18:43:19.703> 
+Reg.     Wert18:43:19.703> 
+--------+--------18:43:19.703> 
+Rev.ID     0x0618:43:19.765> 
+PHSTAT1  0x (225/-1)18:43:19.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:19.828> 
+gpioout18:43:19.828> 
+18:43:19.828> 
+tezmp18:43:19.828> 
+   IP/MAC/TTL18:43:19.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:19.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:19.953> 
+18:43:19.953> 
+ENC28J60:18:43:19.953> 
+Reg.     Wert18:43:19.953> 
+--------+--------18:43:20.015> 
+Rev.ID     0x0618:43:20.015> 
+PHSTAT1  0x1 (226/-1)18:43:20.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:20.078> 
+gpioout18:43:20.078> 
+18:43:20.078> 
+tezmp18:43:20.078> 
+   IP/MAC/TTL18:43:20.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:20.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:20.265> 
+18:43:20.265> 
+ENC28J60:18:43:20.265> 
+Reg.     Wert18:43:20.265> 
+--------+--------18:43:20.265> 
+Rev.ID     0x0618:43:20.328> 
+PHSTAT1  0x18 (227/-1)18:43:20.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:20.390> 
+gpioout18:43:20.390> 
+18:43:20.390> 
+tezmp18:43:20.390> 
+   IP/MAC/TTL18:43:20.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:20.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:20.515> 
+18:43:20.515> 
+ENC28J60:18:43:20.578> 
+Reg.     Wert18:43:20.578> 
+--------+--------18:43:20.578> 
+Rev.ID     0x0618:43:20.578> 
+PHSTAT1  0x180 (228/-1)18:43:20.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:20.703> 
+gpioout18:43:20.703> 
+18:43:20.703> 
+tezmp18:43:20.703> 
+   IP/MAC/TTL18:43:20.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:20.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:20.828> 
+18:43:20.828> 
+ENC28J60:18:43:20.828> 
+Reg.     Wert18:43:20.828> 
+--------+--------18:43:20.890> 
+Rev.ID     0x0618:43:20.890> 
+PHSTAT1  0x1804 (229/-1)18:43:20.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:20.953> 
+gpioout18:43:20.953> 
+18:43:20.953> 
+tezmp18:43:20.953> 
+   IP/MAC/TTL18:43:21.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:21.078> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:21.140> 
+18:43:21.140> 
+ENC28J60:18:43:21.140> 
+Reg.     Wert18:43:21.140> 
+--------+--------18:43:21.140> 
+Rev.ID     0x0618:43:21.203> 
+PHSTAT1  0x180418:43:21.203>  (230/-1)18:43:21.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:21.265> 
+gpioout18:43:21.265> 
+18:43:21.265> 
+tezmp18:43:21.265> 
+   IP/MAC/TTL18:43:21.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:21.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:21.390> 
+18:43:21.390> 
+ENC28J60:18:43:21.390> 
+Reg.     Wert18:43:21.453> 
+--------+--------18:43:21.453> 
+Rev.ID     0x0618:43:21.453> 
+PHSTAT1  0x180418:43:21.515> 
+ (231/-1)18:43:21.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:21.578> 
+gpioout18:43:21.578> 
+18:43:21.578> 
+tezmp18:43:21.578> 
+   IP/MAC/TTL18:43:21.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:21.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:21.703> 
+18:43:21.703> 
+ENC28J60:18:43:21.703> 
+Reg.     Wert18:43:21.703> 
+--------+--------18:43:21.765> 
+Rev.ID     0x0618:43:21.765> 
+PHSTAT1  0x180418:43:21.765> 
+P (232/-1)18:43:21.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:21.828> 
+gpioout18:43:21.828> 
+18:43:21.828> 
+tezmp18:43:21.828> 
+   IP/MAC/TTL18:43:21.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:21.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:22.015> 
+18:43:22.015> 
+ENC28J60:18:43:22.015> 
+Reg.     Wert18:43:22.015> 
+--------+--------18:43:22.015> 
+Rev.ID     0x0618:43:22.078> 
+PHSTAT1  0x180418:43:22.078> 
+PH (233/-1)18:43:22.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:22.140> 
+gpioout18:43:22.140> 
+18:43:22.140> 
+tezmp18:43:22.140> 
+   IP/MAC/TTL18:43:22.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:22.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:22.265> 
+18:43:22.265> 
+ENC28J60:18:43:22.265> 
+Reg.     Wert18:43:22.328> 
+--------+--------18:43:22.328> 
+Rev.ID     0x0618:43:22.328> 
+PHSTAT1  0x180418:43:22.390> 
+PHS (234/-1)18:43:22.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:22.453> 
+gpioout18:43:22.453> 
+18:43:22.453> 
+tezmp18:43:22.453> 
+   IP/MAC/TTL18:43:22.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:22.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:22.578> 
+18:43:22.578> 
+ENC28J60:18:43:22.578> 
+Reg.     Wert18:43:22.578> 
+--------+--------18:43:22.640> 
+Rev.ID     0x0618:43:22.640> 
+PHSTAT1  0x180418:43:22.640> 
+PHST (235/-1)18:43:22.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:22.703> 
+gpioout18:43:22.703> 
+18:43:22.765> 
+tezmp18:43:22.765> 
+   IP/MAC/TTL18:43:22.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:22.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:22.890> 
+18:43:22.890> 
+ENC28J60:18:43:22.890> 
+Reg.     Wert18:43:22.890> 
+--------+--------18:43:22.890> 
+Rev.ID     0x0618:43:22.953> 
+PHSTAT1  0x180418:43:22.953> 
+PHSTA (236/-1)18:43:22.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:23.015> 
+gpioout18:43:23.015> 
+18:43:23.015> 
+tezmp18:43:23.015> 
+   IP/MAC/TTL18:43:23.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:23.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:23.140> 
+18:43:23.203> 
+ENC28J60:18:43:23.203> 
+Reg.     Wert18:43:23.203> 
+--------+--------18:43:23.203> 
+Rev.ID     0x0618:43:23.265> 
+PHSTAT1  0x180418:43:23.265> 
+PHSTAT (237/-1)18:43:23.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:23.328> 
+gpioout18:43:23.328> 
+18:43:23.328> 
+tezmp18:43:23.328> 
+   IP/MAC/TTL18:43:23.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:23.390> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:23.453> 
+18:43:23.453> 
+ENC28J60:18:43:23.515> 
+Reg.     Wert18:43:23.515> 
+--------+--------18:43:23.515> 
+Rev.ID     0x0618:43:23.515> 
+PHSTAT1  0x180418:43:23.578> 
+PHSTAT2 (238/-1)18:43:23.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:23.640> 
+gpioout18:43:23.640> 
+18:43:23.640> 
+tezmp18:43:23.640> 
+   IP/MAC/TTL18:43:23.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:23.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:23.765> 
+18:43:23.765> 
+ENC28J60:18:43:23.765> 
+Reg.     Wert18:43:23.828> 
+--------+--------18:43:23.828> 
+Rev.ID     0x0618:43:23.828> 
+PHSTAT1  0x180418:43:23.828> 
+PHSTAT2  (239/-1)18:43:23.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:23.890> 
+gpioout18:43:23.953> 
+18:43:23.953> 
+tezmp18:43:23.953> 
+   IP/MAC/TTL18:43:23.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:24.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:24.078> 
+18:43:24.078> 
+ENC28J60:18:43:24.078> 
+Reg.     Wert18:43:24.078> 
+--------+--------18:43:24.140> 
+Rev.ID     0x0618:43:24.140> 
+PHSTAT1  0x180418:43:24.140> 
+PHSTAT2  (239/-1)18:43:24.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:24.203> 
+gpioout18:43:24.203> 
+18:43:24.265> 
+tezmp18:43:24.265> 
+   IP/MAC/TTL18:43:24.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:24.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:24.390> 
+18:43:24.390> 
+ENC28J60:18:43:24.390> 
+Reg.     Wert18:43:24.390> 
+--------+--------18:43:24.390> 
+Rev.ID     0x0618:43:24.453> 
+PHSTAT1  0x180418:43:24.453> 
+PHSTAT2   (240/-1)18:43:24.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:24.515> 
+gpioout18:43:24.515> 
+18:43:24.515> 
+tezmp18:43:24.515> 
+   IP/MAC/TTL18:43:24.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:24.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:24.703> 
+18:43:24.703> 
+ENC28J60:18:43:24.703> 
+Reg.     Wert18:43:24.703> 
+--------+--------18:43:24.703> 
+Rev.ID     0x0618:43:24.765> 
+PHSTAT1  0x180418:43:24.765> 
+PHSTAT2  0 (241/-1)18:43:24.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:24.828> 
+gpioout18:43:24.828> 
+18:43:24.828> 
+tezmp18:43:24.828> 
+   IP/MAC/TTL18:43:24.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:24.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:24.953> 
+18:43:24.953> 
+ENC28J60:18:43:25.015> 
+Reg.     Wert18:43:25.015> 
+--------+--------18:43:25.015> 
+Rev.ID     0x0618:43:25.015> 
+PHSTAT1  0x180418:43:25.078> 
+PHSTAT2  0x (242/-1)18:43:25.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:25.140> 
+gpioout18:43:25.140> 
+18:43:25.140> 
+tezmp18:43:25.140> 
+   IP/MAC/TTL18:43:25.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:25.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:25.265> 
+18:43:25.265> 
+ENC28J60:18:43:25.265> 
+Reg.     Wert18:43:25.328> 
+--------+--------18:43:25.328> 
+Rev.ID     0x0618:43:25.328> 
+PHSTAT1  0x180418:43:25.390> 
+PHSTAT2  0x0 (243/-1)18:43:25.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:25.453> 
+gpioout18:43:25.453> 
+18:43:25.453> 
+tezmp18:43:25.453> 
+   IP/MAC/TTL18:43:25.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:25.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:25.578> 
+18:43:25.578> 
+ENC28J60:18:43:25.578> 
+Reg.     Wert18:43:25.640> 
+--------+--------18:43:25.640> 
+Rev.ID     0x0618:43:25.640> 
+PHSTAT1  0x180418:43:25.640> 
+PHSTAT2  0x04 (244/-1)18:43:25.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:25.765> 
+gpioout18:43:25.765> 
+18:43:25.765> 
+tezmp18:43:25.765> 
+   IP/MAC/TTL18:43:25.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:25.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:25.890> 
+18:43:25.890> 
+ENC28J60:18:43:25.890> 
+Reg.     Wert18:43:25.890> 
+--------+--------18:43:25.953> 
+Rev.ID     0x0618:43:25.953> 
+PHSTAT1  0x180418:43:25.953> 
+PHSTAT2  0x040 (245/-1)18:43:26.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:26.078> 
+gpioout18:43:26.078> 
+18:43:26.078> 
+tezmp18:43:26.078> 
+   IP/MAC/TTL18:43:26.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:26.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:26.203> 
+18:43:26.203> 
+ENC28J60:18:43:26.203> 
+Reg.     Wert18:43:26.203> 
+--------+--------18:43:26.265> 
+Rev.ID     0x0618:43:26.265> 
+PHSTAT1  0x180418:43:26.265> 
+PHSTAT2  0x0400 (246/-1)18:43:26.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:26.328> 
+gpioout18:43:26.390> 
+18:43:26.390> 
+tezmp18:43:26.390> 
+   IP/MAC/TTL18:43:26.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:26.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:26.515> 
+18:43:26.515> 
+ENC28J60:18:43:26.515> 
+Reg.     Wert18:43:26.515> 
+--------+--------18:43:26.578> 
+Rev.ID     0x0618:43:26.578> 
+PHSTAT1  0x180418:43:26.578> 
+PHSTAT2  0x040018:43:26.578>  (247/-1)18:43:26.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:26.640> 
+gpioout18:43:26.703> 
+18:43:26.703> 
+tezmp18:43:26.703> 
+   IP/MAC/TTL18:43:26.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:26.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:26.828> 
+18:43:26.828> 
+ENC28J60:18:43:26.828> 
+Reg.     Wert18:43:26.828> 
+--------+--------18:43:26.890> 
+Rev.ID     0x0618:43:26.890> 
+PHSTAT1  0x180418:43:26.890> 
+PHSTAT2  0x040018:43:26.890> 
+ (248/-1)18:43:26.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:26.953> 
+gpioout18:43:26.953> 
+18:43:26.953> 
+tezmp18:43:27.015> 
+   IP/MAC/TTL18:43:27.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:27.078> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:27.140> 
+18:43:27.140> 
+ENC28J60:18:43:27.140> 
+Reg.     Wert18:43:27.140> 
+--------+--------18:43:27.140> 
+Rev.ID     0x0618:43:27.203> 
+PHSTAT1  0x180418:43:27.203> 
+PHSTAT2  0x040018:43:27.203> 
+ (248/-1)18:43:27.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:27.265> 
+gpioout18:43:27.265> 
+18:43:27.265> 
+tezmp18:43:27.265> 
+   IP/MAC/TTL18:43:27.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:27.390> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:27.453> 
+18:43:27.453> 
+ENC28J60:18:43:27.453> 
+Reg.     Wert18:43:27.453> 
+--------+--------18:43:27.453> 
+Rev.ID     0x0618:43:27.515> 
+PHSTAT1  0x180418:43:27.515> 
+PHSTAT2  0x040018:43:27.515> 
+  (249/-1)18:43:27.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:27.578> 
+gpioout18:43:27.578> 
+18:43:27.578> 
+tezmp18:43:27.640> 
+   IP/MAC/TTL18:43:27.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:27.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:27.765> 
+18:43:27.765> 
+ENC28J60:18:43:27.765> 
+Reg.     Wert18:43:27.765> 
+--------+--------18:43:27.765> 
+Rev.ID     0x0618:43:27.828> 
+PHSTAT1  0x180418:43:27.828> 
+PHSTAT2  0x040018:43:27.828> 
+ I (250/-1)18:43:27.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:27.890> 
+gpioout18:43:27.890> 
+18:43:27.890> 
+tezmp18:43:27.890> 
+   IP/MAC/TTL18:43:27.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:28.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:28.078> 
+18:43:28.078> 
+ENC28J60:18:43:28.078> 
+Reg.     Wert18:43:28.078> 
+--------+--------18:43:28.078> 
+Rev.ID     0x0618:43:28.140> 
+PHSTAT1  0x180418:43:28.140> 
+PHSTAT2  0x040018:43:28.140> 
+ IP (251/-1)18:43:28.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:28.203> 
+gpioout18:43:28.203> 
+18:43:28.203> 
+tezmp18:43:28.265> 
+   IP/MAC/TTL18:43:28.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:28.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:28.390> 
+18:43:28.390> 
+ENC28J60:18:43:28.390> 
+Reg.     Wert18:43:28.390> 
+--------+--------18:43:28.390> 
+Rev.ID     0x0618:43:28.453> 
+PHSTAT1  0x180418:43:28.453> 
+PHSTAT2  0x040018:43:28.453> 
+ IP: (252/-1)18:43:28.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:28.515> 
+gpioout18:43:28.515> 
+18:43:28.515> 
+tezmp18:43:28.578> 
+   IP/MAC/TTL18:43:28.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:28.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:28.703> 
+18:43:28.703> 
+ENC28J60:18:43:28.703> 
+Reg.     Wert18:43:28.703> 
+--------+--------18:43:28.765> 
+Rev.ID     0x0618:43:28.765> 
+PHSTAT1  0x180418:43:28.765> 
+PHSTAT2  0x040018:43:28.765> 
+ IP:1 (253/-1)18:43:28.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:28.828> 
+gpioout18:43:28.828> 
+18:43:28.890> 
+tezmp18:43:28.890> 
+   IP/MAC/TTL18:43:28.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:28.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:29.015> 
+18:43:29.015> 
+ENC28J60:18:43:29.015> 
+Reg.     Wert18:43:29.015> 
+--------+--------18:43:29.015> 
+Rev.ID     0x0618:43:29.078> 
+PHSTAT1  0x180418:43:29.078> 
+PHSTAT2  0x040018:43:29.078> 
+ IP:19 (254/-1)18:43:29.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:29.140> 
+gpioout18:43:29.140> 
+18:43:29.203> 
+tezmp18:43:29.203> 
+   IP/MAC/TTL18:43:29.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:29.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:29.328> 
+18:43:29.328> 
+ENC28J60:18:43:29.328> 
+Reg.     Wert18:43:29.328> 
+--------+--------18:43:29.328> 
+Rev.ID     0x0618:43:29.390> 
+PHSTAT1  0x180418:43:29.390> 
+PHSTAT2  0x040018:43:29.390> 
+ IP:192 (255/-1)18:43:29.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:29.453> 
+gpioout18:43:29.515> 
+18:43:29.515> 
+tezmp18:43:29.515> 
+   IP/MAC/TTL18:43:29.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:29.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:29.640> 
+18:43:29.640> 
+ENC28J60:18:43:29.640> 
+Reg.     Wert18:43:29.640> 
+--------+--------18:43:29.703> 
+Rev.ID     0x0618:43:29.703> 
+PHSTAT1  0x180418:43:29.703> 
+PHSTAT2  0x040018:43:29.703> 
+ IP:192. (256/-1)18:43:29.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:29.828> 
+gpioout18:43:29.828> 
+18:43:29.828> 
+tezmp18:43:29.828> 
+   IP/MAC/TTL18:43:29.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:29.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:29.953> 
+18:43:29.953> 
+ENC28J60:18:43:29.953> 
+Reg.     Wert18:43:29.953> 
+--------+--------18:43:30.015> 
+Rev.ID     0x0618:43:30.015> 
+PHSTAT1  0x180418:43:30.015> 
+PHSTAT2  0x040018:43:30.078> 
+ IP:192.1 (257/-1)18:43:30.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:30.140> 
+gpioout18:43:30.140> 
+18:43:30.140> 
+tezmp18:43:30.140> 
+   IP/MAC/TTL18:43:30.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:30.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:30.265> 
+18:43:30.265> 
+ENC28J60:18:43:30.265> 
+Reg.     Wert18:43:30.328> 
+--------+--------18:43:30.328> 
+Rev.ID     0x0618:43:30.328> 
+PHSTAT1  0x180418:43:30.328> 
+PHSTAT2  0x040018:43:30.390> 
+ IP:192.16 (258/-1)18:43:30.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:30.453> 
+gpioout18:43:30.453> 
+18:43:30.453> 
+tezmp18:43:30.453> 
+   IP/MAC/TTL18:43:30.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:30.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:30.578> 
+18:43:30.578> 
+ENC28J60:18:43:30.578> 
+Reg.     Wert18:43:30.640> 
+--------+--------18:43:30.640> 
+Rev.ID     0x0618:43:30.640> 
+PHSTAT1  0x180418:43:30.703> 
+PHSTAT2  0x040018:43:30.703> 
+ IP:192.168 (259/-1)18:43:30.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:30.765> 
+gpioout18:43:30.765> 
+18:43:30.765> 
+tezmp18:43:30.765> 
+   IP/MAC/TTL18:43:30.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:30.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:30.890> 
+18:43:30.890> 
+ENC28J60:18:43:30.953> 
+Reg.     Wert18:43:30.953> 
+--------+--------18:43:30.953> 
+Rev.ID     0x0618:43:30.953> 
+PHSTAT1  0x180418:43:31.015> 
+PHSTAT2  0x040018:43:31.015> 
+ IP:192.168. (260/-1)18:43:31.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:31.078> 
+gpioout18:43:31.078> 
+18:43:31.078> 
+tezmp18:43:31.078> 
+   IP/MAC/TTL18:43:31.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:31.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:31.203> 
+18:43:31.203> 
+ENC28J60:18:43:31.265> 
+Reg.     Wert18:43:31.265> 
+--------+--------18:43:31.265> 
+Rev.ID     0x0618:43:31.328> 
+PHSTAT1  0x180418:43:31.328> 
+PHSTAT2  0x040018:43:31.328> 
+ IP:192.168.1 (261/-1)18:43:31.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:31.390> 
+gpioout18:43:31.390> 
+18:43:31.390> 
+tezmp18:43:31.390> 
+   IP/MAC/TTL18:43:31.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:31.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:31.578> 
+18:43:31.578> 
+ENC28J60:18:43:31.578> 
+Reg.     Wert18:43:31.578> 
+--------+--------18:43:31.578> 
+Rev.ID     0x0618:43:31.640> 
+PHSTAT1  0x180418:43:31.640> 
+PHSTAT2  0x040018:43:31.640> 
+ IP:192.168.17 (262/-1)18:43:31.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:31.703> 
+gpioout18:43:31.765> 
+18:43:31.765> 
+tezmp18:43:31.765> 
+   IP/MAC/TTL18:43:31.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:31.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:31.890> 
+18:43:31.890> 
+ENC28J60:18:43:31.890> 
+Reg.     Wert18:43:31.890> 
+--------+--------18:43:31.953> 
+Rev.ID     0x0618:43:31.953> 
+PHSTAT1  0x180418:43:31.953> 
+PHSTAT2  0x040018:43:31.953> 
+ IP:192.168.178 (263/-1)18:43:32.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:32.078> 
+gpioout18:43:32.078> 
+18:43:32.078> 
+tezmp18:43:32.078> 
+   IP/MAC/TTL18:43:32.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:32.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:32.203> 
+18:43:32.203> 
+ENC28J60:18:43:32.203> 
+Reg.     Wert18:43:32.265> 
+--------+--------18:43:32.265> 
+Rev.ID     0x0618:43:32.265> 
+PHSTAT1  0x180418:43:32.265> 
+PHSTAT2  0x040018:43:32.328> 
+ IP:192.168.178. (264/-1)18:43:32.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:32.390> 
+gpioout18:43:32.390> 
+18:43:32.390> 
+tezmp18:43:32.390> 
+   IP/MAC/TTL18:43:32.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:32.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:32.515> 
+18:43:32.515> 
+ENC28J60:18:43:32.515> 
+Reg.     Wert18:43:32.578> 
+--------+--------18:43:32.578> 
+Rev.ID     0x0618:43:32.578> 
+PHSTAT1  0x180418:43:32.640> 
+PHSTAT2  0x040018:43:32.640> 
+ IP:192.168.178.3 (265/-1)18:43:32.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:32.703> 
+gpioout18:43:32.703> 
+18:43:32.703> 
+tezmp18:43:32.703> 
+   IP/MAC/TTL18:43:32.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:32.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:32.890> 
+18:43:32.890> 
+ENC28J60:18:43:32.890> 
+Reg.     Wert18:43:32.890> 
+--------+--------18:43:32.890> 
+Rev.ID     0x0618:43:32.953> 
+PHSTAT1  0x180418:43:32.953> 
+PHSTAT2  0x040018:43:32.953> 
+ IP:192.168.178.32 (266/-1)18:43:33.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:33.015> 
+gpioout18:43:33.015> 
+18:43:33.015> 
+tezmp18:43:33.078> 
+   IP/MAC/TTL18:43:33.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:33.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:33.203> 
+18:43:33.203> 
+ENC28J60:18:43:33.203> 
+Reg.     Wert18:43:33.203> 
+--------+--------18:43:33.265> 
+Rev.ID     0x0618:43:33.265> 
+PHSTAT1  0x180418:43:33.265> 
+PHSTAT2  0x040018:43:33.265> 
+ IP:192.168.178.3218:43:33.328>  (267/-1)18:43:33.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:33.390> 
+gpioout18:43:33.390> 
+18:43:33.390> 
+tezmp18:43:33.390> 
+   IP/MAC/TTL18:43:33.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:33.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:33.515> 
+18:43:33.515> 
+ENC28J60:18:43:33.515> 
+Reg.     Wert18:43:33.515> 
+--------+--------18:43:33.578> 
+Rev.ID     0x0618:43:33.578> 
+PHSTAT1  0x180418:43:33.578> 
+PHSTAT2  0x040018:43:33.640> 
+ IP:192.168.178.3218:43:33.640> 
+ (268/-1)18:43:33.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:33.703> 
+gpioout18:43:33.703> 
+18:43:33.703> 
+tezmp18:43:33.703> 
+   IP/MAC/TTL18:43:33.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:33.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:33.828> 
+18:43:33.828> 
+ENC28J60:18:43:33.828> 
+Reg.     Wert18:43:33.890> 
+--------+--------18:43:33.890> 
+Rev.ID     0x0618:43:33.890> 
+PHSTAT1  0x180418:43:33.953> 
+PHSTAT2  0x040018:43:33.953> 
+ IP:192.168.178.3218:43:33.953> 
+N (269/-1)18:43:33.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:34.015> 
+gpioout18:43:34.015> 
+18:43:34.015> 
+tezmp18:43:34.078> 
+   IP/MAC/TTL18:43:34.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:34.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:34.203> 
+18:43:34.203> 
+ENC28J60:18:43:34.203> 
+Reg.     Wert18:43:34.203> 
+--------+--------18:43:34.203> 
+Rev.ID     0x0618:43:34.265> 
+PHSTAT1  0x180418:43:34.265> 
+PHSTAT2  0x040018:43:34.265> 
+ IP:192.168.178.3218:43:34.328> 
+Ne (270/-1)18:43:34.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:34.328> 
+gpioout18:43:34.390> 
+18:43:34.390> 
+tezmp18:43:34.390> 
+   IP/MAC/TTL18:43:34.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:34.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:34.515> 
+18:43:34.515> 
+ENC28J60:18:43:34.515> 
+Reg.     Wert18:43:34.515> 
+--------+--------18:43:34.578> 
+Rev.ID     0x0618:43:34.578> 
+PHSTAT1  0x180418:43:34.578> 
+PHSTAT2  0x040018:43:34.640> 
+ IP:192.168.178.3218:43:34.640> 
+Net (271/-1)18:43:34.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:34.703> 
+gpioout18:43:34.703> 
+18:43:34.703> 
+tezmp18:43:34.703> 
+   IP/MAC/TTL18:43:34.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:34.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:34.828> 
+18:43:34.828> 
+ENC28J60:18:43:34.828> 
+Reg.     Wert18:43:34.890> 
+--------+--------18:43:34.890> 
+Rev.ID     0x0618:43:34.890> 
+PHSTAT1  0x180418:43:34.953> 
+PHSTAT2  0x040018:43:34.953> 
+ IP:192.168.178.3218:43:34.953> 
+Netm (272/-1)18:43:34.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:35.015> 
+gpioout18:43:35.015> 
+18:43:35.015> 
+tezmp18:43:35.078> 
+   IP/MAC/TTL18:43:35.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:35.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:35.203> 
+18:43:35.203> 
+ENC28J60:18:43:35.203> 
+Reg.     Wert18:43:35.203> 
+--------+--------18:43:35.203> 
+Rev.ID     0x0618:43:35.265> 
+PHSTAT1  0x180418:43:35.265> 
+PHSTAT2  0x040018:43:35.265> 
+ IP:192.168.178.3218:43:35.328> 
+Netma (273/-1)18:43:35.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:35.390> 
+gpioout18:43:35.390> 
+18:43:35.390> 
+tezmp18:43:35.390> 
+   IP/MAC/TTL18:43:35.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:35.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:35.515> 
+18:43:35.515> 
+ENC28J60:18:43:35.515> 
+Reg.     Wert18:43:35.578> 
+--------+--------18:43:35.578> 
+Rev.ID     0x0618:43:35.578> 
+PHSTAT1  0x180418:43:35.578> 
+PHSTAT2  0x040018:43:35.640> 
+ IP:192.168.178.3218:43:35.640> 
+Netmas (274/-1)18:43:35.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:35.703> 
+gpioout18:43:35.703> 
+18:43:35.703> 
+tezmp18:43:35.703> 
+   IP/MAC/TTL18:43:35.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:35.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:35.828> 
+18:43:35.828> 
+ENC28J60:18:43:35.890> 
+Reg.     Wert18:43:35.890> 
+--------+--------18:43:35.890> 
+Rev.ID     0x0618:43:35.953> 
+PHSTAT1  0x180418:43:35.953> 
+PHSTAT2  0x040018:43:35.953> 
+ IP:192.168.178.3218:43:35.953> 
+Netmask (275/-1)18:43:36.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:36.015> 
+gpioout18:43:36.078> 
+18:43:36.078> 
+tezmp18:43:36.078> 
+   IP/MAC/TTL18:43:36.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:36.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:36.203> 
+18:43:36.203> 
+ENC28J60:18:43:36.203> 
+Reg.     Wert18:43:36.203> 
+--------+--------18:43:36.265> 
+Rev.ID     0x0618:43:36.265> 
+PHSTAT1  0x180418:43:36.265> 
+PHSTAT2  0x040018:43:36.265> 
+ IP:192.168.178.3218:43:36.328> 
+Netmask: (276/-1)18:43:36.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:36.390> 
+gpioout18:43:36.390> 
+18:43:36.390> 
+tezmp18:43:36.390> 
+   IP/MAC/TTL18:43:36.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:36.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:36.515> 
+18:43:36.515> 
+ENC28J60:18:43:36.515> 
+Reg.     Wert18:43:36.578> 
+--------+--------18:43:36.578> 
+Rev.ID     0x0618:43:36.578> 
+PHSTAT1  0x180418:43:36.640> 
+PHSTAT2  0x040018:43:36.640> 
+ IP:192.168.178.3218:43:36.640> 
+Netmask:2 (277/-1)18:43:36.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:36.703> 
+gpioout18:43:36.703> 
+18:43:36.703> 
+tezmp18:43:36.765> 
+   IP/MAC/TTL18:43:36.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:36.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:36.890> 
+18:43:36.890> 
+ENC28J60:18:43:36.890> 
+Reg.     Wert18:43:36.890> 
+--------+--------18:43:36.890> 
+Rev.ID     0x0618:43:36.953> 
+PHSTAT1  0x180418:43:36.953> 
+PHSTAT2  0x040018:43:36.953> 
+ IP:192.168.178.3218:43:37.015> 
+Netmask:25 (278/-1)18:43:37.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:37.078> 
+gpioout18:43:37.078> 
+18:43:37.078> 
+tezmp18:43:37.078> 
+   IP/MAC/TTL18:43:37.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:37.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:37.203> 
+18:43:37.203> 
+ENC28J60:18:43:37.203> 
+Reg.     Wert18:43:37.265> 
+--------+--------18:43:37.265> 
+Rev.ID     0x0618:43:37.265> 
+PHSTAT1  0x180418:43:37.265> 
+PHSTAT2  0x040018:43:37.328> 
+ IP:192.168.178.3218:43:37.328> 
+Netmask:255 (279/-1)18:43:37.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:37.390> 
+gpioout18:43:37.390> 
+18:43:37.390> 
+tezmp18:43:37.390> 
+   IP/MAC/TTL18:43:37.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:37.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:37.578> 
+18:43:37.578> 
+ENC28J60:18:43:37.578> 
+Reg.     Wert18:43:37.578> 
+--------+--------18:43:37.578> 
+Rev.ID     0x0618:43:37.640> 
+PHSTAT1  0x180418:43:37.640> 
+PHSTAT2  0x040018:43:37.640> 
+ IP:192.168.178.3218:43:37.703> 
+Netmask:255. (280/-1)18:43:37.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:37.765> 
+gpioout18:43:37.765> 
+18:43:37.765> 
+tezmp18:43:37.765> 
+   IP/MAC/TTL18:43:37.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:37.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:37.890> 
+18:43:37.890> 
+ENC28J60:18:43:37.890> 
+Reg.     Wert18:43:37.953> 
+--------+--------18:43:37.953> 
+Rev.ID     0x0618:43:37.953> 
+PHSTAT1  0x180418:43:38.015> 
+PHSTAT2  0x040018:43:38.015> 
+ IP:192.168.178.3218:43:38.015> 
+Netmask:255.2 (281/-1)18:43:38.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:38.078> 
+gpioout18:43:38.078> 
+18:43:38.078> 
+tezmp18:43:38.140> 
+   IP/MAC/TTL18:43:38.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:38.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:38.265> 
+18:43:38.265> 
+ENC28J60:18:43:38.265> 
+Reg.     Wert18:43:38.265> 
+--------+--------18:43:38.265> 
+Rev.ID     0x0618:43:38.328> 
+PHSTAT1  0x180418:43:38.328> 
+PHSTAT2  0x040018:43:38.328> 
+ IP:192.168.178.3218:43:38.390> 
+Netmask:255.25 (282/-1)18:43:38.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:38.453> 
+gpioout18:43:38.453> 
+18:43:38.453> 
+tezmp18:43:38.453> 
+   IP/MAC/TTL18:43:38.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:38.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:38.578> 
+18:43:38.578> 
+ENC28J60:18:43:38.578> 
+Reg.     Wert18:43:38.640> 
+--------+--------18:43:38.640> 
+Rev.ID     0x0618:43:38.640> 
+PHSTAT1  0x180418:43:38.640> 
+PHSTAT2  0x040018:43:38.703> 
+ IP:192.168.178.3218:43:38.703> 
+Netmask:255.255 (283/-1)18:43:38.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:38.765> 
+gpioout18:43:38.765> 
+18:43:38.765> 
+tezmp18:43:38.828> 
+   IP/MAC/TTL18:43:38.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:38.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:38.953> 
+18:43:38.953> 
+ENC28J60:18:43:38.953> 
+Reg.     Wert18:43:38.953> 
+--------+--------18:43:38.953> 
+Rev.ID     0x0618:43:39.015> 
+PHSTAT1  0x180418:43:39.015> 
+PHSTAT2  0x040018:43:39.015> 
+ IP:192.168.178.3218:43:39.078> 
+Netmask:255.255. (284/-1)18:43:39.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:39.140> 
+gpioout18:43:39.140> 
+18:43:39.140> 
+tezmp18:43:39.140> 
+   IP/MAC/TTL18:43:39.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:39.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:39.265> 
+18:43:39.265> 
+ENC28J60:18:43:39.265> 
+Reg.     Wert18:43:39.328> 
+--------+--------18:43:39.328> 
+Rev.ID     0x0618:43:39.328> 
+PHSTAT1  0x180418:43:39.390> 
+PHSTAT2  0x040018:43:39.390> 
+ IP:192.168.178.3218:43:39.390> 
+Netmask:255.255.2 (285/-1)18:43:39.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:39.453> 
+gpioout18:43:39.453> 
+18:43:39.515> 
+tezmp18:43:39.515> 
+   IP/MAC/TTL18:43:39.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:39.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:39.640> 
+18:43:39.640> 
+ENC28J60:18:43:39.640> 
+Reg.     Wert18:43:39.640> 
+--------+--------18:43:39.703> 
+Rev.ID     0x0618:43:39.703> 
+PHSTAT1  0x180418:43:39.703> 
+PHSTAT2  0x040018:43:39.703> 
+ IP:192.168.178.3218:43:39.765> 
+Netmask:255.255.25 (286/-1)18:43:39.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:39.828> 
+gpioout18:43:39.828> 
+18:43:39.828> 
+tezmp18:43:39.828> 
+   IP/MAC/TTL18:43:39.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:39.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:39.953> 
+18:43:39.953> 
+ENC28J60:18:43:40.015> 
+Reg.     Wert18:43:40.015> 
+--------+--------18:43:40.015> 
+Rev.ID     0x0618:43:40.078> 
+PHSTAT1  0x180418:43:40.078> 
+PHSTAT2  0x040018:43:40.078> 
+ IP:192.168.178.3218:43:40.078> 
+Netmask:255.255.255 (287/-1)18:43:40.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:40.203> 
+gpioout18:43:40.203> 
+18:43:40.203> 
+tezmp18:43:40.203> 
+   IP/MAC/TTL18:43:40.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:40.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:40.328> 
+18:43:40.328> 
+ENC28J60:18:43:40.328> 
+Reg.     Wert18:43:40.328> 
+--------+--------18:43:40.390> 
+Rev.ID     0x0618:43:40.390> 
+PHSTAT1  0x180418:43:40.390> 
+PHSTAT2  0x040018:43:40.453> 
+ IP:192.168.178.3218:43:40.453> 
+Netmask:255.255.255. (288/-1)18:43:40.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:40.515> 
+gpioout18:43:40.515> 
+18:43:40.515> 
+tezmp18:43:40.578> 
+   IP/MAC/TTL18:43:40.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:40.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:40.703> 
+18:43:40.703> 
+ENC28J60:18:43:40.703> 
+Reg.     Wert18:43:40.703> 
+--------+--------18:43:40.703> 
+Rev.ID     0x0618:43:40.765> 
+PHSTAT1  0x180418:43:40.765> 
+PHSTAT2  0x040018:43:40.765> 
+ IP:192.168.178.3218:43:40.828> 
+Netmask:255.255.255.0 (289/-1)18:43:40.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:40.890> 
+gpioout18:43:40.890> 
+18:43:40.890> 
+tezmp18:43:40.890> 
+   IP/MAC/TTL18:43:40.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:40.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:41.015> 
+18:43:41.015> 
+ENC28J60:18:43:41.015> 
+Reg.     Wert18:43:41.078> 
+--------+--------18:43:41.078> 
+Rev.ID     0x0618:43:41.078> 
+PHSTAT1  0x180418:43:41.140> 
+PHSTAT2  0x040018:43:41.140> 
+ IP:192.168.178.3218:43:41.140> 
+Netmask:255.255.255.018:43:41.203>  (290/-1)18:43:41.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:43.640> 
+gpioout18:43:43.640> 
+18:43:43.640> 
+tezmp18:43:43.703> 
+   IP/MAC/TTL18:43:43.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:43.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:43.828> 
+18:43:43.828> 
+ENC28J60:18:43:43.828> 
+Reg.     Wert18:43:43.828> 
+--------+--------18:43:43.828> 
+Rev.ID     0x0618:43:43.890> 
+PHSTAT1  0x180418:43:43.890> 
+PHSTAT2  0x040018:43:43.890> 
+ IP:192.168.178.3218:43:43.953> 
+Netmask:255.255.255.018:43:43.953> 
+ (291/-1)18:43:43.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:44.015> 
+gpioout18:43:44.015> 
+18:43:44.015> 
+tezmp18:43:44.015> 
+   IP/MAC/TTL18:43:44.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:44.078> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:44.140> 
+18:43:44.140> 
+ENC28J60:18:43:44.203> 
+Reg.     Wert18:43:44.203> 
+--------+--------18:43:44.203> 
+Rev.ID     0x0618:43:44.203> 
+PHSTAT1  0x180418:43:44.265> 
+PHSTAT2  0x040018:43:44.265> 
+ IP:192.168.178.3218:43:44.265> 
+Netmask:255.255.255.018:43:44.328> 
+G (292/-1)18:43:44.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:44.390> 
+gpioout18:43:44.390> 
+18:43:44.390> 
+tezmp18:43:44.390> 
+   IP/MAC/TTL18:43:44.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:44.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:44.515> 
+18:43:44.515> 
+ENC28J60:18:43:44.515> 
+Reg.     Wert18:43:44.578> 
+--------+--------18:43:44.578> 
+Rev.ID     0x0618:43:44.578> 
+PHSTAT1  0x180418:43:44.578> 
+PHSTAT2  0x040018:43:44.640> 
+ IP:192.168.178.3218:43:44.640> 
+Netmask:255.255.255.018:43:44.640> 
+Ga (293/-1)18:43:44.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:44.703> 
+gpioout18:43:44.703> 
+18:43:44.703> 
+tezmp18:43:44.765> 
+   IP/MAC/TTL18:43:44.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:44.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:44.890> 
+18:43:44.890> 
+ENC28J60:18:43:44.890> 
+Reg.     Wert18:43:44.890> 
+--------+--------18:43:44.953> 
+Rev.ID     0x0618:43:44.953> 
+PHSTAT1  0x180418:43:44.953> 
+PHSTAT2  0x040018:43:44.953> 
+ IP:192.168.178.3218:43:45.015> 
+Netmask:255.255.255.018:43:45.015> 
+Gat (294/-1)18:43:45.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:45.078> 
+gpioout18:43:45.078> 
+18:43:45.078> 
+tezmp18:43:45.078> 
+   IP/MAC/TTL18:43:45.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:45.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:45.203> 
+18:43:45.203> 
+ENC28J60:18:43:45.265> 
+Reg.     Wert18:43:45.265> 
+--------+--------18:43:45.265> 
+Rev.ID     0x0618:43:45.265> 
+PHSTAT1  0x180418:43:45.328> 
+PHSTAT2  0x040018:43:45.328> 
+ IP:192.168.178.3218:43:45.328> 
+Netmask:255.255.255.018:43:45.390> 
+Gate (295/-1)18:43:45.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:45.453> 
+gpioout18:43:45.453> 
+18:43:45.453> 
+tezmp18:43:45.453> 
+   IP/MAC/TTL18:43:45.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:45.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:45.578> 
+18:43:45.578> 
+ENC28J60:18:43:45.578> 
+Reg.     Wert18:43:45.640> 
+--------+--------18:43:45.640> 
+Rev.ID     0x0618:43:45.640> 
+PHSTAT1  0x180418:43:45.640> 
+PHSTAT2  0x040018:43:45.703> 
+ IP:192.168.178.3218:43:45.703> 
+Netmask:255.255.255.018:43:45.765> 
+Gatew (296/-1)18:43:45.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:45.765> 
+gpioout18:43:45.828> 
+18:43:45.828> 
+tezmp18:43:45.828> 
+   IP/MAC/TTL18:43:45.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:45.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:45.953> 
+18:43:45.953> 
+ENC28J60:18:43:45.953> 
+Reg.     Wert18:43:45.953> 
+--------+--------18:43:46.015> 
+Rev.ID     0x0618:43:46.015> 
+PHSTAT1  0x180418:43:46.015> 
+PHSTAT2  0x040018:43:46.078> 
+ IP:192.168.178.3218:43:46.078> 
+Netmask:255.255.255.018:43:46.078> 
+Gatewa (297/-1)18:43:46.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:46.140> 
+gpioout18:43:46.140> 
+18:43:46.140> 
+tezmp18:43:46.203> 
+   IP/MAC/TTL18:43:46.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:46.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:46.328> 
+18:43:46.328> 
+ENC28J60:18:43:46.328> 
+Reg.     Wert18:43:46.328> 
+--------+--------18:43:46.390> 
+Rev.ID     0x0618:43:46.390> 
+PHSTAT1  0x180418:43:46.390> 
+PHSTAT2  0x040018:43:46.390> 
+ IP:192.168.178.3218:43:46.453> 
+Netmask:255.255.255.018:43:46.453> 
+Gateway (298/-1)18:43:46.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:46.515> 
+gpioout18:43:46.515> 
+18:43:46.515> 
+tezmp18:43:46.515> 
+   IP/MAC/TTL18:43:46.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:46.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:46.640> 
+18:43:46.703> 
+ENC28J60:18:43:46.703> 
+Reg.     Wert18:43:46.703> 
+--------+--------18:43:46.703> 
+Rev.ID     0x0618:43:46.765> 
+PHSTAT1  0x180418:43:46.765> 
+PHSTAT2  0x040018:43:46.765> 
+ IP:192.168.178.3218:43:46.765> 
+Netmask:255.255.255.018:43:46.828> 
+Gateway: (299/-1)18:43:46.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:46.890> 
+gpioout18:43:46.890> 
+18:43:46.890> 
+tezmp18:43:46.890> 
+   IP/MAC/TTL18:43:46.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:46.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:47.015> 
+18:43:47.015> 
+ENC28J60:18:43:47.078> 
+Reg.     Wert18:43:47.078> 
+--------+--------18:43:47.078> 
+Rev.ID     0x0618:43:47.078> 
+PHSTAT1  0x180418:43:47.140> 
+PHSTAT2  0x040018:43:47.140> 
+ IP:192.168.178.3218:43:47.140> 
+Netmask:255.255.255.018:43:47.203> 
+Gateway:1 (300/-1)18:43:47.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:47.265> 
+gpioout18:43:47.265> 
+18:43:47.265> 
+tezmp18:43:47.265> 
+   IP/MAC/TTL18:43:47.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:47.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:47.390> 
+18:43:47.390> 
+ENC28J60:18:43:47.390> 
+Reg.     Wert18:43:47.453> 
+--------+--------18:43:47.453> 
+Rev.ID     0x0618:43:47.453> 
+PHSTAT1  0x180418:43:47.453> 
+PHSTAT2  0x040018:43:47.515> 
+ IP:192.168.178.3218:43:47.515> 
+Netmask:255.255.255.018:43:47.515> 
+Gateway:19 (301/-1)18:43:47.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:47.578> 
+gpioout18:43:47.640> 
+18:43:47.640> 
+tezmp18:43:47.640> 
+   IP/MAC/TTL18:43:47.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:47.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:47.765> 
+18:43:47.765> 
+ENC28J60:18:43:47.765> 
+Reg.     Wert18:43:47.765> 
+--------+--------18:43:47.828> 
+Rev.ID     0x0618:43:47.828> 
+PHSTAT1  0x180418:43:47.828> 
+PHSTAT2  0x040018:43:47.890> 
+ IP:192.168.178.3218:43:47.890> 
+Netmask:255.255.255.018:43:47.890> 
+Gateway:192 (302/-1)18:43:47.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:47.953> 
+gpioout18:43:48.015> 
+18:43:48.015> 
+tezmp18:43:48.015> 
+   IP/MAC/TTL18:43:48.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:48.078> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:48.140> 
+18:43:48.140> 
+ENC28J60:18:43:48.140> 
+Reg.     Wert18:43:48.140> 
+--------+--------18:43:48.203> 
+Rev.ID     0x0618:43:48.203> 
+PHSTAT1  0x180418:43:48.203> 
+PHSTAT2  0x040018:43:48.203> 
+ IP:192.168.178.3218:43:48.265> 
+Netmask:255.255.255.018:43:48.265> 
+Gateway:192. (303/-1)18:43:48.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:48.328> 
+gpioout18:43:48.328> 
+18:43:48.328> 
+tezmp18:43:48.390> 
+   IP/MAC/TTL18:43:48.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:48.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:48.515> 
+18:43:48.515> 
+ENC28J60:18:43:48.515> 
+Reg.     Wert18:43:48.515> 
+--------+--------18:43:48.578> 
+Rev.ID     0x0618:43:48.578> 
+PHSTAT1  0x180418:43:48.578> 
+PHSTAT2  0x040018:43:48.578> 
+ IP:192.168.178.3218:43:48.640> 
+Netmask:255.255.255.018:43:48.640> 
+Gateway:192.1 (304/-1)18:43:48.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:48.703> 
+gpioout18:43:48.703> 
+18:43:48.703> 
+tezmp18:43:48.703> 
+   IP/MAC/TTL18:43:48.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:48.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:48.890> 
+18:43:48.890> 
+ENC28J60:18:43:48.890> 
+Reg.     Wert18:43:48.890> 
+--------+--------18:43:48.890> 
+Rev.ID     0x0618:43:48.953> 
+PHSTAT1  0x180418:43:48.953> 
+PHSTAT2  0x040018:43:48.953> 
+ IP:192.168.178.3218:43:49.015> 
+Netmask:255.255.255.018:43:49.015> 
+Gateway:192.16 (305/-1)18:43:49.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:49.078> 
+gpioout18:43:49.078> 
+18:43:49.078> 
+tezmp18:43:49.078> 
+   IP/MAC/TTL18:43:49.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:49.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:49.203> 
+18:43:49.265> 
+ENC28J60:18:43:49.265> 
+Reg.     Wert18:43:49.265> 
+--------+--------18:43:49.265> 
+Rev.ID     0x0618:43:49.328> 
+PHSTAT1  0x180418:43:49.328> 
+PHSTAT2  0x040018:43:49.328> 
+ IP:192.168.178.3218:43:49.328> 
+Netmask:255.255.255.018:43:49.390> 
+Gateway:192.168 (306/-1)18:43:49.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:49.453> 
+gpioout18:43:49.453> 
+18:43:49.453> 
+tezmp18:43:49.453> 
+   IP/MAC/TTL18:43:49.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:49.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:49.578> 
+18:43:49.578> 
+ENC28J60:18:43:49.640> 
+Reg.     Wert18:43:49.640> 
+--------+--------18:43:49.640> 
+Rev.ID     0x0618:43:49.703> 
+PHSTAT1  0x180418:43:49.703> 
+PHSTAT2  0x040018:43:49.703> 
+ IP:192.168.178.3218:43:49.703> 
+Netmask:255.255.255.018:43:49.765> 
+Gateway:192.168. (307/-1)18:43:49.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:49.828> 
+gpioout18:43:49.828> 
+18:43:49.828> 
+tezmp18:43:49.828> 
+   IP/MAC/TTL18:43:49.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:49.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:49.953> 
+18:43:49.953> 
+ENC28J60:18:43:50.015> 
+Reg.     Wert18:43:50.015> 
+--------+--------18:43:50.015> 
+Rev.ID     0x0618:43:50.015> 
+PHSTAT1  0x180418:43:50.078> 
+PHSTAT2  0x040018:43:50.078> 
+ IP:192.168.178.3218:43:50.078> 
+Netmask:255.255.255.018:43:50.140> 
+Gateway:192.168.1 (308/-1)18:43:50.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:50.203> 
+gpioout18:43:50.203> 
+18:43:50.203> 
+tezmp18:43:50.203> 
+   IP/MAC/TTL18:43:50.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:50.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:50.328> 
+18:43:50.328> 
+ENC28J60:18:43:50.390> 
+Reg.     Wert18:43:50.390> 
+--------+--------18:43:50.390> 
+Rev.ID     0x0618:43:50.390> 
+PHSTAT1  0x180418:43:50.453> 
+PHSTAT2  0x040018:43:50.453> 
+ IP:192.168.178.3218:43:50.453> 
+Netmask:255.255.255.018:43:50.515> 
+Gateway:192.168.17 (309/-1)18:43:50.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:50.578> 
+gpioout18:43:50.578> 
+18:43:50.578> 
+tezmp18:43:50.578> 
+   IP/MAC/TTL18:43:50.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:50.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:50.703> 
+18:43:50.703> 
+ENC28J60:18:43:50.765> 
+Reg.     Wert18:43:50.765> 
+--------+--------18:43:50.765> 
+Rev.ID     0x0618:43:50.765> 
+PHSTAT1  0x180418:43:50.828> 
+PHSTAT2  0x040018:43:50.828> 
+ IP:192.168.178.3218:43:50.828> 
+Netmask:255.255.255.018:43:50.890> 
+Gateway:192.168.178 (310/-1)18:43:50.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:50.953> 
+gpioout18:43:50.953> 
+18:43:50.953> 
+tezmp18:43:50.953> 
+   IP/MAC/TTL18:43:50.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:51.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:51.078> 
+18:43:51.078> 
+ENC28J60:18:43:51.140> 
+Reg.     Wert18:43:51.140> 
+--------+--------18:43:51.140> 
+Rev.ID     0x0618:43:51.140> 
+PHSTAT1  0x180418:43:51.203> 
+PHSTAT2  0x040018:43:51.203> 
+ IP:192.168.178.3218:43:51.203> 
+Netmask:255.255.255.018:43:51.265> 
+Gateway:192.168.178. (311/-1)18:43:51.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:51.328> 
+gpioout18:43:51.328> 
+18:43:51.328> 
+tezmp18:43:51.328> 
+   IP/MAC/TTL18:43:51.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:51.390> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:51.453> 
+18:43:51.453> 
+ENC28J60:18:43:51.515> 
+Reg.     Wert18:43:51.515> 
+--------+--------18:43:51.515> 
+Rev.ID     0x0618:43:51.515> 
+PHSTAT1  0x180418:43:51.578> 
+PHSTAT2  0x040018:43:51.578> 
+ IP:192.168.178.3218:43:51.578> 
+Netmask:255.255.255.018:43:51.640> 
+Gateway:192.168.178.1 (312/-1)18:43:51.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:51.703> 
+gpioout18:43:51.703> 
+18:43:51.703> 
+tezmp18:43:51.703> 
+   IP/MAC/TTL18:43:51.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:51.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:51.828> 
+18:43:51.828> 
+ENC28J60:18:43:51.890> 
+Reg.     Wert18:43:51.890> 
+--------+--------18:43:51.890> 
+Rev.ID     0x0618:43:51.890> 
+PHSTAT1  0x180418:43:51.953> 
+PHSTAT2  0x040018:43:51.953> 
+ IP:192.168.178.3218:43:51.953> 
+Netmask:255.255.255.018:43:52.015> 
+Gateway:192.168.178.118:43:52.015>  (313/-1)18:43:52.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:52.078> 
+gpioout18:43:52.078> 
+18:43:52.078> 
+tezmp18:43:52.078> 
+   IP/MAC/TTL18:43:52.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:52.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:52.203> 
+18:43:52.203> 
+ENC28J60:18:43:52.265> 
+Reg.     Wert18:43:52.265> 
+--------+--------18:43:52.265> 
+Rev.ID     0x0618:43:52.265> 
+PHSTAT1  0x180418:43:52.328> 
+PHSTAT2  0x040018:43:52.328> 
+ IP:192.168.178.3218:43:52.328> 
+Netmask:255.255.255.018:43:52.390> 
+Gateway:192.168.178.118:43:52.390> 
+ (314/-1)18:43:52.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:52.453> 
+gpioout18:43:52.453> 
+18:43:52.453> 
+tezmp18:43:52.453> 
+   IP/MAC/TTL18:43:52.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:52.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:52.578> 
+18:43:52.578> 
+ENC28J60:18:43:52.640> 
+Reg.     Wert18:43:52.640> 
+--------+--------18:43:52.640> 
+Rev.ID     0x0618:43:52.640> 
+PHSTAT1  0x180418:43:52.703> 
+PHSTAT2  0x040018:43:52.703> 
+ IP:192.168.178.3218:43:52.703> 
+Netmask:255.255.255.018:43:52.765> 
+Gateway:192.168.178.118:43:52.765> 
+D (315/-1)18:43:52.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:52.828> 
+gpioout18:43:52.828> 
+18:43:52.828> 
+tezmp18:43:52.828> 
+   IP/MAC/TTL18:43:52.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:52.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:52.953> 
+18:43:52.953> 
+ENC28J60:18:43:53.015> 
+Reg.     Wert18:43:53.015> 
+--------+--------18:43:53.015> 
+Rev.ID     0x0618:43:53.078> 
+PHSTAT1  0x180418:43:53.078> 
+PHSTAT2  0x040018:43:53.078> 
+ IP:192.168.178.3218:43:53.078> 
+Netmask:255.255.255.018:43:53.140> 
+Gateway:192.168.178.118:43:53.140> 
+DN (316/-1)18:43:53.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:53.203> 
+gpioout18:43:53.203> 
+18:43:53.203> 
+tezmp18:43:53.203> 
+   IP/MAC/TTL18:43:53.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:53.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:53.390> 
+18:43:53.390> 
+ENC28J60:18:43:53.390> 
+Reg.     Wert18:43:53.390> 
+--------+--------18:43:53.390> 
+Rev.ID     0x0618:43:53.453> 
+PHSTAT1  0x180418:43:53.453> 
+PHSTAT2  0x040018:43:53.453> 
+ IP:192.168.178.3218:43:53.515> 
+Netmask:255.255.255.018:43:53.515> 
+Gateway:192.168.178.118:43:53.515> 
+DNS (317/-1)18:43:53.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:53.578> 
+gpioout18:43:53.578> 
+18:43:53.578> 
+tezmp18:43:53.640> 
+   IP/MAC/TTL18:43:53.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:53.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:53.765> 
+18:43:53.765> 
+ENC28J60:18:43:53.765> 
+Reg.     Wert18:43:53.765> 
+--------+--------18:43:53.828> 
+Rev.ID     0x0618:43:53.828> 
+PHSTAT1  0x180418:43:53.828> 
+PHSTAT2  0x040018:43:53.828> 
+ IP:192.168.178.3218:43:53.890> 
+Netmask:255.255.255.018:43:53.890> 
+Gateway:192.168.178.118:43:53.890> 
+DNS: (318/-1)18:43:53.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:53.953> 
+gpioout18:43:54.015> 
+18:43:54.015> 
+tezmp18:43:54.015> 
+   IP/MAC/TTL18:43:54.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:54.078> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:54.140> 
+18:43:54.140> 
+ENC28J60:18:43:54.140> 
+Reg.     Wert18:43:54.140> 
+--------+--------18:43:54.203> 
+Rev.ID     0x0618:43:54.203> 
+PHSTAT1  0x180418:43:54.203> 
+PHSTAT2  0x040018:43:54.203> 
+ IP:192.168.178.3218:43:54.265> 
+Netmask:255.255.255.018:43:54.265> 
+Gateway:192.168.178.118:43:54.328> 
+DNS:1 (319/-1)18:43:54.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:54.390> 
+gpioout18:43:54.390> 
+18:43:54.390> 
+tezmp18:43:54.390> 
+   IP/MAC/TTL18:43:54.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:54.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:54.515> 
+18:43:54.515> 
+ENC28J60:18:43:54.515> 
+Reg.     Wert18:43:54.515> 
+--------+--------18:43:54.578> 
+Rev.ID     0x0618:43:54.578> 
+PHSTAT1  0x180418:43:54.578> 
+PHSTAT2  0x040018:43:54.640> 
+ IP:192.168.178.3218:43:54.640> 
+Netmask:255.255.255.018:43:54.640> 
+Gateway:192.168.178.118:43:54.703> 
+DNS:19 (320/-1)18:43:54.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:54.765> 
+gpioout18:43:54.765> 
+18:43:54.765> 
+tezmp18:43:54.765> 
+   IP/MAC/TTL18:43:54.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:54.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:54.890> 
+18:43:54.890> 
+ENC28J60:18:43:54.890> 
+Reg.     Wert18:43:54.953> 
+--------+--------18:43:54.953> 
+Rev.ID     0x0618:43:54.953> 
+PHSTAT1  0x180418:43:54.953> 
+PHSTAT2  0x040018:43:55.015> 
+ IP:192.168.178.3218:43:55.015> 
+Netmask:255.255.255.018:43:55.015> 
+Gateway:192.168.178.118:43:55.078> 
+DNS:192 (321/-1)18:43:55.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:55.140> 
+gpioout18:43:55.140> 
+18:43:55.140> 
+tezmp18:43:55.140> 
+   IP/MAC/TTL18:43:55.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:55.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:55.265> 
+18:43:55.265> 
+ENC28J60:18:43:55.265> 
+Reg.     Wert18:43:55.328> 
+--------+--------18:43:55.328> 
+Rev.ID     0x0618:43:55.328> 
+PHSTAT1  0x180418:43:55.390> 
+PHSTAT2  0x040018:43:55.390> 
+ IP:192.168.178.3218:43:55.390> 
+Netmask:255.255.255.018:43:55.453> 
+Gateway:192.168.178.118:43:55.453> 
+DNS:192. (322/-1)18:43:55.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:55.515> 
+gpioout18:43:55.515> 
+18:43:55.515> 
+tezmp18:43:55.515> 
+   IP/MAC/TTL18:43:55.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:55.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:55.640> 
+18:43:55.640> 
+ENC28J60:18:43:55.703> 
+Reg.     Wert18:43:55.703> 
+--------+--------18:43:55.703> 
+Rev.ID     0x0618:43:55.765> 
+PHSTAT1  0x180418:43:55.765> 
+PHSTAT2  0x040018:43:55.765> 
+ IP:192.168.178.3218:43:55.765> 
+Netmask:255.255.255.018:43:55.828> 
+Gateway:192.168.178.118:43:55.828> 
+DNS:192.1 (323/-1)18:43:55.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:55.890> 
+gpioout18:43:55.890> 
+18:43:55.890> 
+tezmp18:43:55.953> 
+   IP/MAC/TTL18:43:55.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:56.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:56.078> 
+18:43:56.078> 
+ENC28J60:18:43:56.078> 
+Reg.     Wert18:43:56.078> 
+--------+--------18:43:56.078> 
+Rev.ID     0x0618:43:56.140> 
+PHSTAT1  0x180418:43:56.140> 
+PHSTAT2  0x040018:43:56.140> 
+ IP:192.168.178.3218:43:56.203> 
+Netmask:255.255.255.018:43:56.203> 
+Gateway:192.168.178.118:43:56.203> 
+DNS:192.16 (324/-1)18:43:56.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:56.265> 
+gpioout18:43:56.328> 
+18:43:56.328> 
+tezmp18:43:56.328> 
+   IP/MAC/TTL18:43:56.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:56.390> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:56.453> 
+18:43:56.453> 
+ENC28J60:18:43:56.453> 
+Reg.     Wert18:43:56.453> 
+--------+--------18:43:56.515> 
+Rev.ID     0x0618:43:56.515> 
+PHSTAT1  0x180418:43:56.515> 
+PHSTAT2  0x040018:43:56.578> 
+ IP:192.168.178.3218:43:56.578> 
+Netmask:255.255.255.018:43:56.578> 
+Gateway:192.168.178.118:43:56.640> 
+DNS:192.168 (325/-1)18:43:56.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:56.703> 
+gpioout18:43:56.703> 
+18:43:56.703> 
+tezmp18:43:56.703> 
+   IP/MAC/TTL18:43:56.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:56.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:56.828> 
+18:43:56.828> 
+ENC28J60:18:43:56.828> 
+Reg.     Wert18:43:56.890> 
+--------+--------18:43:56.890> 
+Rev.ID     0x0618:43:56.890> 
+PHSTAT1  0x180418:43:56.890> 
+PHSTAT2  0x040018:43:56.953> 
+ IP:192.168.178.3218:43:56.953> 
+Netmask:255.255.255.018:43:56.953> 
+Gateway:192.168.178.118:43:57.015> 
+DNS:192.168. (326/-1)18:43:57.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:57.078> 
+gpioout18:43:57.078> 
+18:43:57.078> 
+tezmp18:43:57.078> 
+   IP/MAC/TTL18:43:57.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:57.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:57.203> 
+18:43:57.203> 
+ENC28J60:18:43:57.265> 
+Reg.     Wert18:43:57.265> 
+--------+--------18:43:57.265> 
+Rev.ID     0x0618:43:57.265> 
+PHSTAT1  0x180418:43:57.328> 
+PHSTAT2  0x040018:43:57.328> 
+ IP:192.168.178.3218:43:57.328> 
+Netmask:255.255.255.018:43:57.390> 
+Gateway:192.168.178.118:43:57.390> 
+DNS:192.168.1 (327/-1)18:43:57.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:57.453> 
+gpioout18:43:57.453> 
+18:43:57.453> 
+tezmp18:43:57.453> 
+   IP/MAC/TTL18:43:57.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:57.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:57.640> 
+18:43:57.640> 
+ENC28J60:18:43:57.640> 
+Reg.     Wert18:43:57.640> 
+--------+--------18:43:57.640> 
+Rev.ID     0x0618:43:57.703> 
+PHSTAT1  0x180418:43:57.703> 
+PHSTAT2  0x040018:43:57.703> 
+ IP:192.168.178.3218:43:57.765> 
+Netmask:255.255.255.018:43:57.765> 
+Gateway:192.168.178.118:43:57.765> 
+DNS:192.168.17 (328/-1)18:43:57.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:57.828> 
+gpioout18:43:57.890> 
+18:43:57.890> 
+tezmp18:43:57.890> 
+   IP/MAC/TTL18:43:57.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:57.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:58.015> 
+18:43:58.015> 
+ENC28J60:18:43:58.015> 
+Reg.     Wert18:43:58.015> 
+--------+--------18:43:58.078> 
+Rev.ID     0x0618:43:58.078> 
+PHSTAT1  0x180418:43:58.078> 
+PHSTAT2  0x040018:43:58.140> 
+ IP:192.168.178.3218:43:58.140> 
+Netmask:255.255.255.018:43:58.140> 
+Gateway:192.168.178.118:43:58.203> 
+DNS:192.168.178 (329/-1)18:43:58.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:58.265> 
+gpioout18:43:58.265> 
+18:43:58.265> 
+tezmp18:43:58.265> 
+   IP/MAC/TTL18:43:58.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:58.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:58.390> 
+18:43:58.390> 
+ENC28J60:18:43:58.453> 
+Reg.     Wert18:43:58.453> 
+--------+--------18:43:58.453> 
+Rev.ID     0x0618:43:58.453> 
+PHSTAT1  0x180418:43:58.515> 
+PHSTAT2  0x040018:43:58.515> 
+ IP:192.168.178.3218:43:58.515> 
+Netmask:255.255.255.018:43:58.578> 
+Gateway:192.168.178.118:43:58.578> 
+DNS:192.168.178. (330/-1)18:43:58.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:58.640> 
+gpioout18:43:58.640> 
+18:43:58.640> 
+tezmp18:43:58.640> 
+   IP/MAC/TTL18:43:58.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:58.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:58.828> 
+18:43:58.828> 
+ENC28J60:18:43:58.828> 
+Reg.     Wert18:43:58.828> 
+--------+--------18:43:58.828> 
+Rev.ID     0x0618:43:58.890> 
+PHSTAT1  0x180418:43:58.890> 
+PHSTAT2  0x040018:43:58.890> 
+ IP:192.168.178.3218:43:58.953> 
+Netmask:255.255.255.018:43:58.953> 
+Gateway:192.168.178.118:43:58.953> 
+DNS:192.168.178.1 (331/-1)18:43:59.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:59.078> 
+gpioout18:43:59.078> 
+18:43:59.078> 
+tezmp18:43:59.078> 
+   IP/MAC/TTL18:43:59.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:59.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:59.203> 
+18:43:59.203> 
+ENC28J60:18:43:59.203> 
+Reg.     Wert18:43:59.203> 
+--------+--------18:43:59.265> 
+Rev.ID     0x0618:43:59.265> 
+PHSTAT1  0x180418:43:59.265> 
+PHSTAT2  0x040018:43:59.265> 
+ IP:192.168.178.3218:43:59.328> 
+Netmask:255.255.255.018:43:59.328> 
+Gateway:192.168.178.118:43:59.390> 
+DNS:192.168.178.118:43:59.390>  (332/-1)18:43:59.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:59.453> 
+gpioout18:43:59.453> 
+18:43:59.453> 
+tezmp18:43:59.453> 
+   IP/MAC/TTL18:43:59.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:59.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:43:59.578> 
+18:43:59.578> 
+ENC28J60:18:43:59.578> 
+Reg.     Wert18:43:59.640> 
+--------+--------18:43:59.640> 
+Rev.ID     0x0618:43:59.640> 
+PHSTAT1  0x180418:43:59.703> 
+PHSTAT2  0x040018:43:59.703> 
+ IP:192.168.178.3218:43:59.703> 
+Netmask:255.255.255.018:43:59.765> 
+Gateway:192.168.178.118:43:59.765> 
+DNS:192.168.178.118:43:59.765> 
+ (333/-1)18:43:59.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:43:59.828> 
+gpioout18:43:59.828> 
+18:43:59.828> 
+tezmp18:43:59.890> 
+   IP/MAC/TTL18:43:59.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:43:59.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:00.015> 
+18:44:00.015> 
+ENC28J60:18:44:00.015> 
+Reg.     Wert18:44:00.015> 
+--------+--------18:44:00.015> 
+Rev.ID     0x0618:44:00.078> 
+PHSTAT1  0x180418:44:00.078> 
+PHSTAT2  0x040018:44:00.078> 
+ IP:192.168.178.3218:44:00.140> 
+Netmask:255.255.255.018:44:00.140> 
+Gateway:192.168.178.118:44:00.140> 
+DNS:192.168.178.118:44:00.203> 
+18:44:00.203>  (334/-1)18:44:00.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:00.265> 
+gpioout18:44:00.265> 
+18:44:00.265> 
+tezmp18:44:00.265> 
+   IP/MAC/TTL18:44:00.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:00.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:00.390> 
+18:44:00.390> 
+ENC28J60:18:44:00.390> 
+Reg.     Wert18:44:00.390> 
+--------+--------18:44:00.453> 
+Rev.ID     0x0618:44:00.453> 
+PHSTAT1  0x180418:44:00.453> 
+PHSTAT2  0x040018:44:00.515> 
+ IP:192.168.178.3218:44:00.515> 
+Netmask:255.255.255.018:44:00.515> 
+Gateway:192.168.178.118:44:00.578> 
+DNS:192.168.178.118:44:00.578> 
+18:44:00.578> 
+ (335/-1)18:44:00.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:00.640> 
+gpioout18:44:00.640> 
+18:44:00.640> 
+tezmp18:44:00.640> 
+   IP/MAC/TTL18:44:00.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:00.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:00.765> 
+18:44:00.765> 
+ENC28J60:18:44:00.828> 
+Reg.     Wert18:44:00.828> 
+--------+--------18:44:00.828> 
+Rev.ID     0x0618:44:00.890> 
+PHSTAT1  0x180418:44:00.890> 
+PHSTAT2  0x040018:44:00.890> 
+ IP:192.168.178.3218:44:00.890> 
+Netmask:255.255.255.018:44:00.953> 
+Gateway:192.168.178.118:44:00.953> 
+DNS:192.168.178.118:44:01.015> 
+18:44:01.015> 
+H (336/-1)18:44:01.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:01.015> 
+gpioout18:44:01.078> 
+18:44:01.078> 
+tezmp18:44:01.078> 
+   IP/MAC/TTL18:44:01.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:01.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:01.203> 
+18:44:01.203> 
+ENC28J60:18:44:01.203> 
+Reg.     Wert18:44:01.203> 
+--------+--------18:44:01.265> 
+Rev.ID     0x0618:44:01.265> 
+PHSTAT1  0x180418:44:01.265> 
+PHSTAT2  0x040018:44:01.265> 
+ IP:192.168.178.3218:44:01.328> 
+Netmask:255.255.255.018:44:01.328> 
+Gateway:192.168.178.118:44:01.390> 
+DNS:192.168.178.118:44:01.390> 
+18:44:01.390> 
+HW (337/-1)18:44:01.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:01.453> 
+gpioout18:44:01.453> 
+18:44:01.453> 
+tezmp18:44:01.453> 
+   IP/MAC/TTL18:44:01.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:01.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:01.578> 
+18:44:01.578> 
+ENC28J60:18:44:01.578> 
+Reg.     Wert18:44:01.640> 
+--------+--------18:44:01.640> 
+Rev.ID     0x0618:44:01.640> 
+PHSTAT1  0x180418:44:01.703> 
+PHSTAT2  0x040018:44:01.703> 
+ IP:192.168.178.3218:44:01.703> 
+Netmask:255.255.255.018:44:01.765> 
+Gateway:192.168.178.118:44:01.765> 
+DNS:192.168.178.118:44:01.765> 
+18:44:01.765> 
+HW- (338/-1)18:44:01.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:01.828> 
+gpioout18:44:01.828> 
+18:44:01.828> 
+tezmp18:44:01.890> 
+   IP/MAC/TTL18:44:01.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:01.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:02.015> 
+18:44:02.015> 
+ENC28J60:18:44:02.015> 
+Reg.     Wert18:44:02.015> 
+--------+--------18:44:02.078> 
+Rev.ID     0x0618:44:02.078> 
+PHSTAT1  0x180418:44:02.078> 
+PHSTAT2  0x040018:44:02.078> 
+ IP:192.168.178.3218:44:02.140> 
+Netmask:255.255.255.018:44:02.140> 
+Gateway:192.168.178.118:44:02.140> 
+DNS:192.168.178.118:44:02.203> 
+18:44:02.203> 
+HW-A (339/-1)18:44:02.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:02.265> 
+gpioout18:44:02.265> 
+18:44:02.265> 
+tezmp18:44:02.265> 
+   IP/MAC/TTL18:44:02.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:02.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:02.390> 
+18:44:02.390> 
+ENC28J60:18:44:02.390> 
+Reg.     Wert18:44:02.453> 
+--------+--------18:44:02.453> 
+Rev.ID     0x0618:44:02.453> 
+PHSTAT1  0x180418:44:02.515> 
+PHSTAT2  0x040018:44:02.515> 
+ IP:192.168.178.3218:44:02.515> 
+Netmask:255.255.255.018:44:02.578> 
+Gateway:192.168.178.118:44:02.578> 
+DNS:192.168.178.118:44:02.578> 
+18:44:02.578> 
+HW-Ad (340/-1)18:44:02.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:02.640> 
+gpioout18:44:02.640> 
+18:44:02.640> 
+tezmp18:44:02.703> 
+   IP/MAC/TTL18:44:02.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:02.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:02.828> 
+18:44:02.828> 
+ENC28J60:18:44:02.828> 
+Reg.     Wert18:44:02.828> 
+--------+--------18:44:02.828> 
+Rev.ID     0x0618:44:02.890> 
+PHSTAT1  0x180418:44:02.890> 
+PHSTAT2  0x040018:44:02.890> 
+ IP:192.168.178.3218:44:02.953> 
+Netmask:255.255.255.018:44:02.953> 
+Gateway:192.168.178.118:44:02.953> 
+DNS:192.168.178.118:44:03.015> 
+18:44:03.015> 
+HW-Adr (341/-1)18:44:03.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:03.078> 
+gpioout18:44:03.078> 
+18:44:03.078> 
+tezmp18:44:03.078> 
+   IP/MAC/TTL18:44:03.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:03.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:03.203> 
+18:44:03.203> 
+ENC28J60:18:44:03.203> 
+Reg.     Wert18:44:03.265> 
+--------+--------18:44:03.265> 
+Rev.ID     0x0618:44:03.265> 
+PHSTAT1  0x180418:44:03.328> 
+PHSTAT2  0x040018:44:03.328> 
+ IP:192.168.178.3218:44:03.328> 
+Netmask:255.255.255.018:44:03.390> 
+Gateway:192.168.178.118:44:03.390> 
+DNS:192.168.178.118:44:03.390> 
+18:44:03.390> 
+HW-Adr: (342/-1)18:44:03.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:03.453> 
+gpioout18:44:03.453> 
+18:44:03.453> 
+tezmp18:44:03.515> 
+   IP/MAC/TTL18:44:03.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:03.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:03.640> 
+18:44:03.640> 
+ENC28J60:18:44:03.640> 
+Reg.     Wert18:44:03.640> 
+--------+--------18:44:03.703> 
+Rev.ID     0x0618:44:03.703> 
+PHSTAT1  0x180418:44:03.703> 
+PHSTAT2  0x040018:44:03.703> 
+ IP:192.168.178.3218:44:03.765> 
+Netmask:255.255.255.018:44:03.765> 
+Gateway:192.168.178.118:44:03.765> 
+DNS:192.168.178.118:44:03.828> 
+18:44:03.828> 
+HW-Adr:  (343/-1)18:44:03.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:03.890> 
+gpioout18:44:03.890> 
+18:44:03.890> 
+tezmp18:44:03.890> 
+   IP/MAC/TTL18:44:03.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:03.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:04.015> 
+18:44:04.015> 
+ENC28J60:18:44:04.015> 
+Reg.     Wert18:44:04.078> 
+--------+--------18:44:04.078> 
+Rev.ID     0x0618:44:04.078> 
+PHSTAT1  0x180418:44:04.140> 
+PHSTAT2  0x040018:44:04.140> 
+ IP:192.168.178.3218:44:04.140> 
+Netmask:255.255.255.018:44:04.203> 
+Gateway:192.168.178.118:44:04.203> 
+DNS:192.168.178.118:44:04.203> 
+18:44:04.203> 
+HW-Adr: 0 (344/-1)18:44:04.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:04.265> 
+gpioout18:44:04.265> 
+18:44:04.328> 
+tezmp18:44:04.328> 
+   IP/MAC/TTL18:44:04.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:04.390> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:04.453> 
+18:44:04.453> 
+ENC28J60:18:44:04.453> 
+Reg.     Wert18:44:04.453> 
+--------+--------18:44:04.515> 
+Rev.ID     0x0618:44:04.515> 
+PHSTAT1  0x180418:44:04.515> 
+PHSTAT2  0x040018:44:04.515> 
+ IP:192.168.178.3218:44:04.578> 
+Netmask:255.255.255.018:44:04.578> 
+Gateway:192.168.178.118:44:04.640> 
+DNS:192.168.178.118:44:04.640> 
+18:44:04.640> 
+HW-Adr: 00 (345/-1)18:44:04.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:04.703> 
+gpioout18:44:04.703> 
+18:44:04.703> 
+tezmp18:44:04.703> 
+   IP/MAC/TTL18:44:04.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:04.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:04.828> 
+18:44:04.828> 
+ENC28J60:18:44:04.890> 
+Reg.     Wert18:44:04.890> 
+--------+--------18:44:04.890> 
+Rev.ID     0x0618:44:04.890> 
+PHSTAT1  0x180418:44:04.953> 
+PHSTAT2  0x040018:44:04.953> 
+ IP:192.168.178.3218:44:04.953> 
+Netmask:255.255.255.018:44:05.015> 
+Gateway:192.168.178.118:44:05.015> 
+DNS:192.168.178.118:44:05.015> 
+18:44:05.015> 
+HW-Adr: 00: (346/-1)18:44:05.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:05.140> 
+gpioout18:44:05.140> 
+18:44:05.140> 
+tezmp18:44:05.140> 
+   IP/MAC/TTL18:44:05.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:05.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:05.265> 
+18:44:05.265> 
+ENC28J60:18:44:05.265> 
+Reg.     Wert18:44:05.265> 
+--------+--------18:44:05.328> 
+Rev.ID     0x0618:44:05.328> 
+PHSTAT1  0x180418:44:05.328> 
+PHSTAT2  0x040018:44:05.390> 
+ IP:192.168.178.3218:44:05.390> 
+Netmask:255.255.255.018:44:05.390> 
+Gateway:192.168.178.118:44:05.453> 
+DNS:192.168.178.118:44:05.453> 
+18:44:05.453> 
+HW-Adr: 00:2 (347/-1)18:44:05.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:05.515> 
+gpioout18:44:05.515> 
+18:44:05.515> 
+tezmp18:44:05.515> 
+   IP/MAC/TTL18:44:05.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:05.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:05.703> 
+18:44:05.703> 
+ENC28J60:18:44:05.703> 
+Reg.     Wert18:44:05.703> 
+--------+--------18:44:05.703> 
+Rev.ID     0x0618:44:05.765> 
+PHSTAT1  0x180418:44:05.765> 
+PHSTAT2  0x040018:44:05.765> 
+ IP:192.168.178.3218:44:05.828> 
+Netmask:255.255.255.018:44:05.828> 
+Gateway:192.168.178.118:44:05.828> 
+DNS:192.168.178.118:44:05.890> 
+18:44:05.890> 
+HW-Adr: 00:22 (348/-1)18:44:05.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:05.953> 
+gpioout18:44:05.953> 
+18:44:05.953> 
+tezmp18:44:05.953> 
+   IP/MAC/TTL18:44:05.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:06.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:06.078> 
+18:44:06.078> 
+ENC28J60:18:44:06.078> 
+Reg.     Wert18:44:06.140> 
+--------+--------18:44:06.140> 
+Rev.ID     0x0618:44:06.140> 
+PHSTAT1  0x180418:44:06.203> 
+PHSTAT2  0x040018:44:06.203> 
+ IP:192.168.178.3218:44:06.203> 
+Netmask:255.255.255.018:44:06.203> 
+Gateway:192.168.178.118:44:06.265> 
+DNS:192.168.178.118:44:06.265> 
+18:44:06.265> 
+HW-Adr: 00:22: (349/-1)18:44:06.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:06.328> 
+gpioout18:44:06.390> 
+18:44:06.390> 
+tezmp18:44:06.390> 
+   IP/MAC/TTL18:44:06.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:06.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:06.515> 
+18:44:06.515> 
+ENC28J60:18:44:06.515> 
+Reg.     Wert18:44:06.515> 
+--------+--------18:44:06.578> 
+Rev.ID     0x0618:44:06.578> 
+PHSTAT1  0x180418:44:06.578> 
+PHSTAT2  0x040018:44:06.578> 
+ IP:192.168.178.3218:44:06.640> 
+Netmask:255.255.255.018:44:06.640> 
+Gateway:192.168.178.118:44:06.703> 
+DNS:192.168.178.118:44:06.703> 
+18:44:06.703> 
+HW-Adr: 00:22:f (350/-1)18:44:06.703> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:06.765> 
+gpioout18:44:06.765> 
+18:44:06.765> 
+tezmp18:44:06.765> 
+   IP/MAC/TTL18:44:06.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:06.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:06.953> 
+18:44:06.953> 
+ENC28J60:18:44:06.953> 
+Reg.     Wert18:44:06.953> 
+--------+--------18:44:06.953> 
+Rev.ID     0x0618:44:07.015> 
+PHSTAT1  0x180418:44:07.015> 
+PHSTAT2  0x040018:44:07.015> 
+ IP:192.168.178.3218:44:07.015> 
+Netmask:255.255.255.018:44:07.078> 
+Gateway:192.168.178.118:44:07.078> 
+DNS:192.168.178.118:44:07.140> 
+18:44:07.140> 
+HW-Adr: 00:22:f9 (351/-1)18:44:07.140> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:07.203> 
+gpioout18:44:07.203> 
+18:44:07.203> 
+tezmp18:44:07.203> 
+   IP/MAC/TTL18:44:07.203> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:07.265> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:07.328> 
+18:44:07.328> 
+ENC28J60:18:44:07.328> 
+Reg.     Wert18:44:07.390> 
+--------+--------18:44:07.390> 
+Rev.ID     0x0618:44:07.390> 
+PHSTAT1  0x180418:44:07.453> 
+PHSTAT2  0x040018:44:07.453> 
+ IP:192.168.178.3218:44:07.453> 
+Netmask:255.255.255.018:44:07.453> 
+Gateway:192.168.178.118:44:07.515> 
+DNS:192.168.178.118:44:07.515> 
+18:44:07.515> 
+HW-Adr: 00:22:f9: (352/-1)18:44:07.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:07.578> 
+gpioout18:44:07.640> 
+18:44:07.640> 
+tezmp18:44:07.640> 
+   IP/MAC/TTL18:44:07.640> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:07.703> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:07.765> 
+18:44:07.765> 
+ENC28J60:18:44:07.765> 
+Reg.     Wert18:44:07.765> 
+--------+--------18:44:07.828> 
+Rev.ID     0x0618:44:07.828> 
+PHSTAT1  0x180418:44:07.828> 
+PHSTAT2  0x040018:44:07.828> 
+ IP:192.168.178.3218:44:07.890> 
+Netmask:255.255.255.018:44:07.890> 
+Gateway:192.168.178.118:44:07.953> 
+DNS:192.168.178.118:44:07.953> 
+18:44:07.953> 
+HW-Adr: 00:22:f9:0 (353/-1)18:44:07.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:08.015> 
+gpioout18:44:08.015> 
+18:44:08.015> 
+tezmp18:44:08.015> 
+   IP/MAC/TTL18:44:08.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:08.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:08.203> 
+18:44:08.203> 
+ENC28J60:18:44:08.203> 
+Reg.     Wert18:44:08.203> 
+--------+--------18:44:08.203> 
+Rev.ID     0x0618:44:08.265> 
+PHSTAT1  0x180418:44:08.265> 
+PHSTAT2  0x040018:44:08.265> 
+ IP:192.168.178.3218:44:08.328> 
+Netmask:255.255.255.018:44:08.328> 
+Gateway:192.168.178.118:44:08.328> 
+DNS:192.168.178.118:44:08.390> 
+18:44:08.390> 
+HW-Adr: 00:22:f9:01 (354/-1)18:44:08.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:08.453> 
+gpioout18:44:08.453> 
+18:44:08.453> 
+tezmp18:44:08.453> 
+   IP/MAC/TTL18:44:08.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:08.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:08.578> 
+18:44:08.578> 
+ENC28J60:18:44:08.640> 
+Reg.     Wert18:44:08.640> 
+--------+--------18:44:08.640> 
+Rev.ID     0x0618:44:08.640> 
+PHSTAT1  0x180418:44:08.703> 
+PHSTAT2  0x040018:44:08.703> 
+ IP:192.168.178.3218:44:08.703> 
+Netmask:255.255.255.018:44:08.765> 
+Gateway:192.168.178.118:44:08.765> 
+DNS:192.168.178.118:44:08.765> 
+18:44:08.765> 
+HW-Adr: 00:22:f9:01: (355/-1)18:44:08.828> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:08.890> 
+gpioout18:44:08.890> 
+18:44:08.890> 
+tezmp18:44:08.890> 
+   IP/MAC/TTL18:44:08.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:08.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:09.015> 
+18:44:09.015> 
+ENC28J60:18:44:09.015> 
+Reg.     Wert18:44:09.015> 
+--------+--------18:44:09.078> 
+Rev.ID     0x0618:44:09.078> 
+PHSTAT1  0x180418:44:09.078> 
+PHSTAT2  0x040018:44:09.140> 
+ IP:192.168.178.3218:44:09.140> 
+Netmask:255.255.255.018:44:09.140> 
+Gateway:192.168.178.118:44:09.203> 
+DNS:192.168.178.118:44:09.203> 
+18:44:09.203> 
+HW-Adr: 00:22:f9:01:4 (356/-1)18:44:09.265> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:09.265> 
+gpioout18:44:09.265> 
+18:44:09.265> 
+tezmp18:44:09.328> 
+   IP/MAC/TTL18:44:09.328> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:09.390> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:09.453> 
+18:44:09.453> 
+ENC28J60:18:44:09.453> 
+Reg.     Wert18:44:09.453> 
+--------+--------18:44:09.515> 
+Rev.ID     0x0618:44:09.515> 
+PHSTAT1  0x180418:44:09.515> 
+PHSTAT2  0x040018:44:09.515> 
+ IP:192.168.178.3218:44:09.578> 
+Netmask:255.255.255.018:44:09.578> 
+Gateway:192.168.178.118:44:09.640> 
+DNS:192.168.178.118:44:09.640> 
+18:44:09.640> 
+HW-Adr: 00:22:f9:01:4d (357/-1)18:44:09.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:09.703> 
+gpioout18:44:09.703> 
+18:44:09.703> 
+tezmp18:44:09.703> 
+   IP/MAC/TTL18:44:09.765> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:09.828> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:09.890> 
+18:44:09.890> 
+ENC28J60:18:44:09.890> 
+Reg.     Wert18:44:09.890> 
+--------+--------18:44:09.890> 
+Rev.ID     0x0618:44:09.953> 
+PHSTAT1  0x180418:44:09.953> 
+PHSTAT2  0x040018:44:09.953> 
+ IP:192.168.178.3218:44:10.015> 
+Netmask:255.255.255.018:44:10.015> 
+Gateway:192.168.178.118:44:10.015> 
+DNS:192.168.178.118:44:10.078> 
+18:44:10.078> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:10.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:10.140> 
+gpioout18:44:10.140> 
+18:44:10.140> 
+tezmp18:44:10.140> 
+   IP/MAC/TTL18:44:10.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:10.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:10.265> 
+18:44:10.265> 
+ENC28J60:18:44:10.328> 
+Reg.     Wert18:44:10.328> 
+--------+--------18:44:10.328> 
+Rev.ID     0x0618:44:10.328> 
+PHSTAT1  0x180418:44:10.390> 
+PHSTAT2  0x040018:44:10.390> 
+ IP:192.168.178.3218:44:10.390> 
+Netmask:255.255.255.018:44:10.453> 
+Gateway:192.168.178.118:44:10.453> 
+DNS:192.168.178.118:44:10.453> 
+18:44:10.453> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:10.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:10.578> 
+gpioout18:44:10.578> 
+18:44:10.578> 
+tezmp18:44:10.578> 
+   IP/MAC/TTL18:44:10.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:10.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:10.703> 
+18:44:10.703> 
+ENC28J60:18:44:10.703> 
+Reg.     Wert18:44:10.765> 
+--------+--------18:44:10.765> 
+Rev.ID     0x0618:44:10.765> 
+PHSTAT1  0x180418:44:10.765> 
+PHSTAT2  0x040018:44:10.828> 
+ IP:192.168.178.3218:44:10.828> 
+Netmask:255.255.255.018:44:10.828> 
+Gateway:192.168.178.118:44:10.890> 
+DNS:192.168.178.118:44:10.890> 
+18:44:10.890> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:10.953> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:10.953> 
+gpioout18:44:11.015> 
+18:44:11.015> 
+tezmp18:44:11.015> 
+   IP/MAC/TTL18:44:11.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:11.078> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:11.140> 
+18:44:11.140> 
+ENC28J60:18:44:11.140> 
+Reg.     Wert18:44:11.140> 
+--------+--------18:44:11.203> 
+Rev.ID     0x0618:44:11.203> 
+PHSTAT1  0x180418:44:11.203> 
+PHSTAT2  0x040018:44:11.203> 
+ IP:192.168.178.3218:44:11.265> 
+Netmask:255.255.255.018:44:11.265> 
+Gateway:192.168.178.118:44:11.328> 
+DNS:192.168.178.118:44:11.328> 
+18:44:11.328> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:11.390> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:11.390> 
+gpioout18:44:11.390> 
+18:44:11.390> 
+tezmp18:44:11.453> 
+   IP/MAC/TTL18:44:11.453> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:11.515> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:11.578> 
+18:44:11.578> 
+ENC28J60:18:44:11.578> 
+Reg.     Wert18:44:11.578> 
+--------+--------18:44:11.578> 
+Rev.ID     0x0618:44:11.640> 
+PHSTAT1  0x180418:44:11.640> 
+PHSTAT2  0x040018:44:11.640> 
+ IP:192.168.178.3218:44:11.703> 
+Netmask:255.255.255.018:44:11.703> 
+Gateway:192.168.178.118:44:11.703> 
+DNS:192.168.178.118:44:11.765> 
+18:44:11.765> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:11.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:11.828> 
+gpioout18:44:11.828> 
+18:44:11.828> 
+tezmp18:44:11.828> 
+   IP/MAC/TTL18:44:11.890> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:11.953> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:11.953> 
+18:44:11.953> 
+ENC28J60:18:44:12.015> 
+Reg.     Wert18:44:12.015> 
+--------+--------18:44:12.015> 
+Rev.ID     0x0618:44:12.078> 
+PHSTAT1  0x180418:44:12.078> 
+PHSTAT2  0x040018:44:12.078> 
+ IP:192.168.178.3218:44:12.078> 
+Netmask:255.255.255.018:44:12.140> 
+Gateway:192.168.178.118:44:12.140> 
+DNS:192.168.178.118:44:12.203> 
+18:44:12.203> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:12.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:12.265> 
+gpioout18:44:12.265> 
+18:44:12.265> 
+tezmp18:44:12.265> 
+   IP/MAC/TTL18:44:12.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:12.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:12.390> 
+18:44:12.390> 
+ENC28J60:18:44:12.453> 
+Reg.     Wert18:44:12.453> 
+--------+--------18:44:12.453> 
+Rev.ID     0x0618:44:12.453> 
+PHSTAT1  0x180418:44:12.515> 
+PHSTAT2  0x040018:44:12.515> 
+ IP:192.168.178.3218:44:12.515> 
+Netmask:255.255.255.018:44:12.578> 
+Gateway:192.168.178.118:44:12.578> 
+DNS:192.168.178.118:44:12.578> 
+18:44:12.578> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:12.640> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:12.703> 
+gpioout18:44:12.703> 
+18:44:12.703> 
+tezmp18:44:12.703> 
+   IP/MAC/TTL18:44:12.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:12.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:12.828> 
+18:44:12.828> 
+ENC28J60:18:44:12.828> 
+Reg.     Wert18:44:12.890> 
+--------+--------18:44:12.890> 
+Rev.ID     0x0618:44:12.890> 
+PHSTAT1  0x180418:44:12.890> 
+PHSTAT2  0x040018:44:12.953> 
+ IP:192.168.178.3218:44:12.953> 
+Netmask:255.255.255.018:44:12.953> 
+Gateway:192.168.178.118:44:13.015> 
+DNS:192.168.178.118:44:13.015> 
+18:44:13.015> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:13.078> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:13.078> 
+gpioout18:44:13.140> 
+18:44:13.140> 
+tezmp18:44:13.140> 
+   IP/MAC/TTL18:44:13.140> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:13.203> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:13.265> 
+18:44:13.265> 
+ENC28J60:18:44:13.265> 
+Reg.     Wert18:44:13.265> 
+--------+--------18:44:13.328> 
+Rev.ID     0x0618:44:13.328> 
+PHSTAT1  0x180418:44:13.328> 
+PHSTAT2  0x040018:44:13.328> 
+ IP:192.168.178.3218:44:13.390> 
+Netmask:255.255.255.018:44:13.390> 
+Gateway:192.168.178.118:44:13.453> 
+DNS:192.168.178.118:44:13.453> 
+18:44:13.453> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:13.515> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:13.515> 
+gpioout18:44:13.515> 
+18:44:13.515> 
+tezmp18:44:13.515> 
+   IP/MAC/TTL18:44:13.578> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:13.640> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:13.703> 
+18:44:13.703> 
+ENC28J60:18:44:13.703> 
+Reg.     Wert18:44:13.703> 
+--------+--------18:44:13.703> 
+Rev.ID     0x0618:44:13.765> 
+PHSTAT1  0x180418:44:13.765> 
+PHSTAT2  0x040018:44:13.765> 
+ IP:192.168.178.3218:44:13.828> 
+Netmask:255.255.255.018:44:13.828> 
+Gateway:192.168.178.118:44:13.828> 
+DNS:192.168.178.118:44:13.890> 
+18:44:13.890> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:13.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:13.953> 
+gpioout18:44:13.953> 
+18:44:13.953> 
+tezmp18:44:13.953> 
+   IP/MAC/TTL18:44:14.015> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:14.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:14.078> 
+18:44:14.078> 
+ENC28J60:18:44:14.140> 
+Reg.     Wert18:44:14.140> 
+--------+--------18:44:14.140> 
+Rev.ID     0x0618:44:14.140> 
+PHSTAT1  0x180418:44:14.203> 
+PHSTAT2  0x040018:44:14.203> 
+ IP:192.168.178.3218:44:14.203> 
+Netmask:255.255.255.018:44:14.265> 
+Gateway:192.168.178.118:44:14.265> 
+DNS:192.168.178.118:44:14.265> 
+18:44:14.265> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:14.328> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:14.390> 
+gpioout18:44:14.390> 
+18:44:14.390> 
+tezmp18:44:14.390> 
+   IP/MAC/TTL18:44:14.390> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:14.453> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:14.515> 
+18:44:14.515> 
+ENC28J60:18:44:14.515> 
+Reg.     Wert18:44:14.578> 
+--------+--------18:44:14.578> 
+Rev.ID     0x0618:44:14.578> 
+PHSTAT1  0x180418:44:14.640> 
+PHSTAT2  0x040018:44:14.640> 
+ IP:192.168.178.3218:44:14.640> 
+Netmask:255.255.255.018:44:14.703> 
+Gateway:192.168.178.118:44:14.703> 
+DNS:192.168.178.118:44:14.703> 
+18:44:14.703> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:14.765> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:14.828> 
+gpioout18:44:14.828> 
+18:44:14.828> 
+tezmp18:44:14.828> 
+   IP/MAC/TTL18:44:14.828> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:14.890> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:14.953> 
+18:44:14.953> 
+ENC28J60:18:44:14.953> 
+Reg.     Wert18:44:15.015> 
+--------+--------18:44:15.015> 
+Rev.ID     0x0618:44:15.015> 
+PHSTAT1  0x180418:44:15.015> 
+PHSTAT2  0x040018:44:15.078> 
+ IP:192.168.178.3218:44:15.078> 
+Netmask:255.255.255.018:44:15.078> 
+Gateway:192.168.178.118:44:15.140> 
+DNS:192.168.178.118:44:15.140> 
+18:44:15.140> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:15.203> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:15.203> 
+gpioout18:44:15.265> 
+18:44:15.265> 
+tezmp18:44:15.265> 
+   IP/MAC/TTL18:44:15.265> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:15.328> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:15.390> 
+18:44:15.390> 
+ENC28J60:18:44:15.390> 
+Reg.     Wert18:44:15.390> 
+--------+--------18:44:15.453> 
+Rev.ID     0x0618:44:15.453> 
+PHSTAT1  0x180418:44:15.453> 
+PHSTAT2  0x040018:44:15.453> 
+ IP:192.168.178.3218:44:15.515> 
+Netmask:255.255.255.018:44:15.515> 
+Gateway:192.168.178.118:44:15.578> 
+DNS:192.168.178.118:44:15.578> 
+18:44:15.578> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:15.578> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:15.640> 
+gpioout18:44:15.640> 
+18:44:15.640> 
+tezmp18:44:15.640> 
+   IP/MAC/TTL18:44:15.703> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:15.765> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:15.828> 
+18:44:15.828> 
+ENC28J60:18:44:15.828> 
+Reg.     Wert18:44:15.828> 
+--------+--------18:44:15.828> 
+Rev.ID     0x0618:44:15.890> 
+PHSTAT1  0x180418:44:15.890> 
+PHSTAT2  0x040018:44:15.890> 
+ IP:192.168.178.3218:44:15.953> 
+Netmask:255.255.255.018:44:15.953> 
+Gateway:192.168.178.118:44:15.953> 
+DNS:192.168.178.118:44:16.015> 
+18:44:16.015> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:16.015> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:16.078> 
+gpioout18:44:16.078> 
+18:44:16.078> 
+tezmp18:44:16.078> 
+   IP/MAC/TTL18:44:16.078> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:16.140> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:16.203> 
+18:44:16.203> 
+ENC28J60:18:44:16.265> 
+Reg.     Wert18:44:16.265> 
+--------+--------18:44:16.265> 
+Rev.ID     0x0618:44:16.265> 
+PHSTAT1  0x180418:44:16.328> 
+PHSTAT2  0x040018:44:16.328> 
+ IP:192.168.178.3218:44:16.328> 
+Netmask:255.255.255.018:44:16.390> 
+Gateway:192.168.178.118:44:16.390> 
+DNS:192.168.178.118:44:16.390> 
+18:44:16.390> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:16.453> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:16.515> 
+gpioout18:44:16.515> 
+18:44:16.515> 
+tezmp18:44:16.515> 
+   IP/MAC/TTL18:44:16.515> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:16.578> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:16.640> 
+18:44:16.640> 
+ENC28J60:18:44:16.640> 
+Reg.     Wert18:44:16.703> 
+--------+--------18:44:16.703> 
+Rev.ID     0x0618:44:16.703> 
+PHSTAT1  0x180418:44:16.703> 
+PHSTAT2  0x040018:44:16.765> 
+ IP:192.168.178.3218:44:16.765> 
+Netmask:255.255.255.018:44:16.828> 
+Gateway:192.168.178.118:44:16.828> 
+DNS:192.168.178.118:44:16.828> 
+18:44:16.828> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:16.890> 
+TxP: sende ASCII an Telnet-Verbindung: ns18:44:16.953> 
+gpioout18:44:16.953> 
+18:44:16.953> 
+tezmp18:44:16.953> 
+   IP/MAC/TTL18:44:16.953> 
+ Ethernet: 276503 Bytes in 3448 Packeten LockErrors 018:44:17.015> 
+TCP-TX Errors: 0 TCP-RX Errors: 0 (unsorted 0, oldseq 0)18:44:17.078> 
+18:44:17.078> 
+ENC28J60:18:44:17.078> 
+Reg.     Wert18:44:17.078> 
+--------+--------18:44:17.140> 
+Rev.ID     0x0618:44:17.140> 
+PHSTAT1  0x180418:44:17.140> 
+PHSTAT2  0x040018:44:17.203> 
+ IP:192.168.178.3218:44:17.203> 
+Netmask:255.255.255.018:44:17.203> 
+Gateway:192.168.178.118:44:17.265> 
+DNS:192.168.178.118:44:17.265> 
+18:44:17.265> 
+HW-Adr: 00:22:f9:01:4d: (358/-1)18:44:17.328> 
+TxP: Ausschaltung intern18:44:17.328> 
+TxP: Verbindung Ascii wird geschlossen18:44:17.390> 

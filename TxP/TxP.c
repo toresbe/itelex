@@ -525,7 +525,7 @@ void txp_thread()
 						printf_P(PSTR("TxP: Verbindung Ascii ausgehend hergestellt\r\n" ));
 #endif
 						}
-					
+					Modus = ModGehendVerbunden;
 					}
 				else
 					FalschCodeEmpfangen(BusQuittEin);
@@ -539,7 +539,6 @@ void txp_thread()
 				if (Modus != ModRuhe)
 					{
 					BusSenden(BusQuittSchluss);
-					Modus = ModRuhe;
 					CLR_BIT_Status(StatBit_AngerufenBelegt);
 					CLR_BIT_Status(StatBit_FsBefBetrieb);
 					CLR_BIT_Status(StatBit_FsMeldBetrieb);
@@ -548,15 +547,16 @@ void txp_thread()
 					}
 					
 				// alle Ports schließen...
-				if (AsciiSocket != SOCKET_NOT_USE)
+				if (AsciiSocket != NO_SOCKET_USED)
 					{
 #if (TXP_DEBUG >= 1)
 					printf_P(PSTR("TxP: Verbindung Ascii wird geschlossen\r\n" ));
 #endif
 					CloseTCPSocket(AsciiSocket);
-					AsciiSocket = SOCKET_NOT_USE;
+					AsciiSocket = NO_SOCKET_USED;
 					}
 					
+				Modus = ModRuhe;
 				LED_off(GELB);
 				LED_off(GRUEN);
 				LED_off(BLAU);
@@ -752,7 +752,7 @@ void txp_thread()
 		}
 	
 	// soll offene Verbindung geschlossen werden?
-	if (AsciiSocket != NO_SOCKET_USED && CheckSocketState(AsciiSocket) == SOCKET_NOT_USE)
+	if (Modus == ModKommendVerbunden && AsciiSocket != NO_SOCKET_USED && CheckSocketState(AsciiSocket) == SOCKET_NOT_USE)
 		{
 		printf_P(PSTR( "Telnet-Ascii-Verbindung getrennt\r\n" ));
 		CloseTCPSocket(AsciiSocket);
@@ -799,11 +799,17 @@ void txp_thread()
 		// vom Endgerät empfangene Daten ggf. ins Netz senden
 		if (strlen(EmpfText) > 10 || (EmpfText[0] != '\0' && RuheZaehler >= 2 * 50))
 			{
+#if (TXP_DEBUG >= 1)
+			printf_P(PSTR("TxP: sende ASCII an Telnet-Verbindung: %s (%d" ), EmpfText, strlen(EmpfText));
+#endif
 			int Res = PutSocketData_RPE(AsciiSocket, strlen(EmpfText), EmpfText, RAM);
 			if (Res > 0)
 				{
 				strcpy(EmpfText, EmpfText + Res);
 				}
+#if (TXP_DEBUG >= 1)
+			printf_P(PSTR("/%d)\r\n" ), Res);
+#endif
 			} // if es gibt was zu senden
 		} // if AsciiSocket != NO_SOCKET_USED
 		
