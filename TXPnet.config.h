@@ -158,14 +158,16 @@
 		#endif
 	#endif
 
-// Debugging:
 
+// Debugging:
 
 //#define DYNDNS_DEBUG 1
 //#define CRON_DEBUG 1
 //#define HTTP_DEBUG 1
 //#define NTP_DEBUG 1
 //#define DEBUG 1 // wirkt an verschiedenen Stellen: Logger.c, 
-#define _DEBUG_ 1 // wirkt an verschiedenen Stellen: Dhcpc.c, ethernet.c, tcp.c, udp.c
+//#define _DEBUG_ 1 // wirkt an verschiedenen Stellen: Dhcpc.c, ethernet.c, tcp.c, udp.c
+#define TXP_DEBUG 1
+
 
 #endif /* TXPNET_CONFIG_H */

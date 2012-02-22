@@ -398,6 +398,8 @@ void txp_thread()
 	char z[2];
 
 	TxpThreadCount++;
+
+	LED_toggle(ROT); // HACK Test der Aufrufpausen von txp_thread
 	
 	// Auf TWI-Bus empfangene Codes auswerten
 	// --------------------------------------
@@ -625,12 +627,22 @@ void txp_thread()
 		// auf neue Verbindungsanfrage testen
 		Telnet_Socket = CheckPortRequest(TELNET_ASCII_TXP_PORT);
 		if (Telnet_Socket != NO_SOCKET_USED)
-			{	
-			// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
-			printf_P(PSTR("Telnet-Ascii-Verbindung hergestellt\r\n" ));
-			SendeText[0] = '\0';
-			EmpfText[0] = '\0';
-			EndgeraetEinschalten = true;
+			{
+			if (Modus == ModRuhe)
+				{	
+				// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
+				printf_P(PSTR("Telnet-Ascii-Verbindung hergestellt\r\n" ));
+				SendeText[0] = '\0';
+				EmpfText[0] = '\0';
+				EndgeraetEinschalten = true;
+				}
+			else
+				{	
+				// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
+				printf_P(PSTR("Telnet-Ascii-Verbindung abgewiesen\r\n" ));
+				CloseTCPSocket(Telnet_Socket);
+				Telnet_Socket = NO_SOCKET_USED;
+				}
 			}
 		}
 	
@@ -751,8 +763,6 @@ void txp_cgi_debug( void * pStruct )
 
 	uint8_t i;
 
-	LED_on(ROT); // HACK für Test
-	
 	cgi_PrintHttpheaderStart();
 
 	printf_P(PSTR("EmpfText: ["));
@@ -804,8 +814,6 @@ void txp_cgi_debug( void * pStruct )
 
 	cgi_PrintHttpheaderEnd();
 
-	LED_off(ROT); // HACK für Test
-	
 	}
 	
 
@@ -931,8 +939,6 @@ void txp_cgi_config(void *pStruct)
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	char Buf[35];
 	
-	LED_on(ROT); // HACK für Test
-	
 	cgi_PrintHttpheaderStart();
 
 	if ( http_request->argc == 0 )
@@ -1031,8 +1037,6 @@ void txp_cgi_config(void *pStruct)
 		}
 		
 	cgi_PrintHttpheaderEnd();
-
-	LED_off(ROT); // HACK für Test
 
 	}
 	
