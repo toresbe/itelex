@@ -55,7 +55,7 @@ const char data1[] PROGMEM = {
 	"<HEAD>"
 	"<TITLE>TxP2-Net - Das Internet-Interface zum TelexPhone 2</TITLE>"
 	"</HEAD>"
-	"<frameset rows=\"60,35,*"
+	"<frameset rows=\"84,35,*"
 	#ifdef HTTPSERVER_STATS
 		",40"
 	#endif
@@ -78,13 +78,24 @@ const char data1[] PROGMEM = {
 const char files2[] PROGMEM = "headline.html";
 const char data2[] PROGMEM = {
 	"<HTML>"
-	"<BODY bgcolor=\"#006400\" text=\"#FFFAF0\">"// colors 6666ff__FFFFFF
-	"<h1>TxP2-Net - Das Internet-Interface zum TelexPhone</h1>"
+	"<BODY text=\"#000000\" style=\"background-image:url(lochstreifen-hg.png)\">"
+	"<h1>TxP2-Net - Das Internet-Interface zum TelexPhone</h1>" //! TODO: Diesen Text größer
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
 
 
+#define byte char // nur für den Lochstreifen jetzt...
+	
+PROGMEM
+#include "lochstreifen-hg.h"
+
+#undef byte
+
+
+PROGMEM const char lochstr_hg_filename[] = "io.html";
+	
+	
 #ifdef HTTPSERVER_IO
 	const char files3[] PROGMEM = "io.html";
 	const char data3[] PROGMEM = {
@@ -279,6 +290,7 @@ FILES files[] = {
 #if defined(TEMP_LOGGER)
 	{ files10, data10, TEXT, sizeof( data10 ) - 1 },
 #endif
+	{ lochstr_hg_filename, lochstreifen_hg, JPEG, sizeof( lochstreifen_hg ) - 1 },
 	{ 0,0,0,0 }
 };
 #endif
