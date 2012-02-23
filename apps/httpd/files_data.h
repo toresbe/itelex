@@ -290,7 +290,7 @@ FILES files[] = {
 #if defined(TEMP_LOGGER)
 	{ files10, data10, TEXT, sizeof( data10 ) - 1 },
 #endif
-	{ lochstr_hg_filename, lochstreifen_hg, PNG, sizeof( lochstreifen_hg ) - 1 },
+	{ lochstr_hg_filename, lochstreifen_hg, PNG, sizeof( lochstreifen_hg ) },
 	{ 0,0,0,0 }
 };
 #endif

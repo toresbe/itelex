@@ -614,7 +614,7 @@ void txp_thread()
 					{
 					z[0] = SendeText[0];
 					z[1] = '\0';
-					strcat(EmpfText, z); // Eigenecho
+					// strcat(EmpfText, z); // Eigenecho
 					strcpy(SendeText, SendeText+1); // erstes Zeichen aus SendeText-Puffer löschen
 					}
 				}
@@ -817,6 +817,7 @@ void txp_thread()
 
 
 //! Liest den String s aus in die Durchwahl-Tabelle.
+//--------------------------------------------------
 //! \return Anzahl der korrekt gelesenen Einträge
 static uint8_t DurchwahlTabelleDekodieren(char *s)
 	{
