@@ -410,16 +410,14 @@ static uint32_t TxpThreadCount;
 
 //! Der TelexPhone-client an sich.
 //------------------------------------------------------------------------------------------------------------
-/*! Er wird zyklisch aufgerufen und hat folgende Aufgaben:
- * \par Steuerbefehle vom TWI-Bus annehmen und interpretieren.
- * \par Nachschauen, ob eine Verbindung auf den registrierten Port eingegangen ist. Wenn ja 
- * holt er sich die Socketnummer der Verbindung und speichert diese.
- * \par Wenn eine Verbindung zustande gekommen ist wird diese wiederrum zyklisch nach neuen Daten abgefragt und entsprechend
- * reagiert.
- * \param 	NONE
- * \return	NONE
- */
-/*------------------------------------------------------------------------------------------------------------*/	
+//! Er wird zyklisch aufgerufen und hat folgende Aufgaben:
+//! \par Steuerbefehle vom TWI-Bus annehmen und interpretieren.
+//! \par Nachschauen, ob eine Verbindung auf den registrierten Port eingegangen ist. Wenn ja 
+//! holt er sich die Socketnummer der Verbindung und speichert diese.
+//! \par Wenn eine Verbindung zustande gekommen ist wird diese wiederrum zyklisch nach neuen Daten abgefragt und entsprechend
+//! reagiert.
+//! \param 	NONE
+//! \return	NONE
 
 void txp_thread()
 	{
@@ -815,6 +813,7 @@ void txp_thread()
 		
 	} // txp_thread
 
+// ================================================================================	
 
 //! Liest den String s aus in die Durchwahl-Tabelle.
 //--------------------------------------------------
