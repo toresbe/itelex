@@ -63,25 +63,29 @@
 
 // Aktueller Modus
 
-static enum
+typedef enum
 	{
 	ModRuhe = 0, // nichts läuft
-	ModKommendWarteReservOK = 1, // Kommend = vom Netz zum internen Anschluss
-	ModKommendWarteEinQuitt = 2,
-	ModKommendVerbunden = 7, 
-	ModGehendReserv = 8, // Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
-	ModGehendWaehlen = 9,
-	ModGehendEinKdoEmpf = 10, // Einschaltkommando ist angekommen, Warte auf Quittung vom Anrufer
-	ModGehendVerbunden = 11,
-	ModWarteAusQuitt = 15
-	} Modus;
+	// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
+	ModGehendReserv = 1, 
+	ModGehendWaehlen = 2,
+	// nicht benötigt ModGehendVerbindungHerstellen = 3, // Einschaltkommando ist angekommen, Warte auf Quittung vom Anrufer
+	ModGehendVerbunden = 4,
+	// Kommend = vom Netz zum internen Anschluss
+	ModKommendVerbVorstufe = 11, // es wird erst mal abgewartet, was aus der ankommenden Verbindung wird.
+	ModKommendWarteReservOK = 12, //!< Warte auf Gelegenheit zum Senden des Einschaltbefehls an das Endgerät
+	ModKommendWarteEinQuitt = 13, //!< Warte auf Einschalt-Quittung des Endgeräts
+	ModKommendVerbunden = 14, 
+	ModWarteAusQuitt = 9
+	} TModus;
+	
+
+//! Aktueller Modus. Sollte nur durch ModusWechsel geändert werden.	
+static TModus Modus;
 
 	
-static bool EndgeraetEinschalten;
-	//!< Anforderung zum Einschalten des Fernschreibers \todo in Modus verpacken.
-
-#define TXP_ASCII_PORT 134
-#define TXP_PACKET_PORT 133
+//! Der TCP-Port für die TelexPhone-Kommunikation
+#define TXP_PORT 134
 	
 	
 // BusVerbPartner ist in BusKomm.h enthalten
@@ -141,21 +145,22 @@ volatile TPuffer SendePuffer;
 volatile TPuffer EmpfPuffer; 
 	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Endgerät -> Netz
 	
-enum { EmpfTextMax = 400, SendeTextMax = 70 } ;
-	//!< Puffergrößen für Textpuffer.
+enum { HtmlEmpfTextMax = 100, HtmlSendeTextMax = 400 } ;
+	//!< Puffergrößen für Textpuffer bei HTML-Kommunikation
 
-static char EmpfText[EmpfTextMax];
-	//!< Puffer für dekodierten Text (Endgerät -> Netz), mit Null abgeschlossen
+static char HtmlEmpfText[HtmlEmpfTextMax];
+	//!< Puffer für zu druckenden Text (Netz -> Endgerät), mit Null abgeschlossen
 
-static char SendeText[SendeTextMax];
-	//!< Puffer für zu sendenden Text (Netz -> Endgerät), mit Null abgeschlossen
+static char HtmlSendeText[HtmlSendeTextMax];
+	//!< Puffer für zu Anzuzeigenden Text (Endgerät -> Netz), mit Null abgeschlossen
 
 
-static int AsciiSocket;
-	//!< Handle für ASCII-Verbindungen eingehend.
+static int TxpInSocket;
+	//!< Handle für eingehende Txp-Verbindungen.
 
-static int TxpSocket;
-	//!< Handle für Txp-Packet-Verbindungen eingehend.
+	
+static int TxpOutSocket;
+	//!< Handle für ausgehende Txp-Verbindungen.
 
 
 static uint8_t Hauptstelle; 
@@ -204,11 +209,6 @@ volatile static uint32_t Timer0CallbackCount;
 void txp_timerEvent(void)
 	{
 	uint8_t t0c = TCNT0;
-	if (t0c < Timer0Cnt_Min)
-		Timer0Cnt_Min = t0c;
-	if (t0c > Timer0Cnt_Max)
-		Timer0Cnt_Max = t0c;
-
 	Timer0CallbackCount++;
 
 	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
@@ -216,6 +216,12 @@ void txp_timerEvent(void)
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
 		RuheZaehler++; // wird aber vielleicht gleich wieder auf Null gestellt
 
+		if (t0c < Timer0Cnt_Min)
+			Timer0Cnt_Min = t0c;
+		if (t0c > Timer0Cnt_Max)
+			Timer0Cnt_Max = t0c;
+		// Statistik über den Zeitverzug...
+		
 		if (SerUmEmpfBitNr != SerUmEmpfWarte && SerUmEmpfBitNr != SerUmEmpfFertig)
 			{ // Empfang läuft
 			if (--SerUmTickZaehlerEmpf <= 2)
@@ -279,8 +285,8 @@ void txp_timerEvent(void)
 						// neue Anordnung in SerUmSendDaten: Bit 7 = Start-Bit = 0, Bit 6..2 = Datenbits, Bit 1/0 = Stop-Bit = 1
 					SerUmTickZaehlerSend = 0;
 					SerUmSendBitNr = 2;
-					} // SerUmSendBitNr == 1
-				else if (SerUmSendBitNr == 0 && !PufferLeer(&SendePuffer))
+					} // SerUmSendBitNr == SerUmSendStart
+				else if (SerUmSendBitNr == SerUmSendWarte && !PufferLeer(&SendePuffer))
 					{
 					SerUmSendDaten = PufferAusg(&SendePuffer);
 					SerUmSendBitNr = SerUmSendStart;
@@ -315,6 +321,7 @@ void txp_timerEvent(void)
 			SendeMark = true;
 			LebenszeichenZaehler = 2; // sofort Wiederholungszeichen senden
 			LED_off(BLAU);
+			SET_BIT_Status(StatBit_FsBefEin);
 			}
 		else if (!NeuMark && SendeMark)
 			{
@@ -322,6 +329,7 @@ void txp_timerEvent(void)
 			SendeMark = false;
 			LebenszeichenZaehler = 2; // sofort Wiederholungszeichen senden
 			LED_on(BLAU);
+			CLR_BIT_Status(StatBit_FsBefEin);
 			}
 		else
 			{ // kein Sendepegel-Wechsel
@@ -340,15 +348,21 @@ void txp_timerEvent(void)
 
 		// Status-Anzeige
 		if (BusEmpfMark)
+			{
+			SET_BIT_Status(StatBit_FsMeldEin);
 			if (Modus == ModKommendVerbunden)
 				LED_off(GELB);
 			else
 				LED_off(GRUEN);
+			}
 		else
+			{
+			CLR_BIT_Status(StatBit_FsMeldEin);
 			if (Modus == ModKommendVerbunden)
 				LED_on(GELB);
 			else
 				LED_on(GRUEN);
+			}
 		} // if IstVerbunden
 
 	else if (Modus != ModRuhe && Modus != ModWarteAusQuitt)
@@ -386,8 +400,10 @@ static void FalschCodeEmpfangen(uint8_t Code)
 //! Druckt am verbundenen Fernschreiber Datum und Uhrzeit des Anrufs
 //-------------------------------------------------------------------
 //! \todo bewirkt manchmal Endlosschleifen -> Ausschaltzwang einbauen.	
+//! \todo ganze Funktion vorläufig deaktiviert.
 static void DatumDruckenUndAusschalten()
 	{
+/*	
 	if (!EndgeraetEinschalten)
 		return;
 
@@ -395,27 +411,179 @@ static void DatumDruckenUndAusschalten()
 	// Zeit holen
 	CLOCK_GetTime(&Time);
 	
-	char *p = SendeText;
-	while (*p != '\0' && p < SendeText + SendeTextMax - 50) // 50 ist die Länge des Datum-Strings
+	char *p = HtmlEmpfText;
+	while (*p != '\0' && p < HtmlEmpfText + HtmlEmpfTextMax - 50) // 50 ist die Länge des Datum-Strings
 		p++;
 
 	sprintf_P(p, PSTR("\r\n\ndatum: %02u.%02u.%04u  uhrzeit: %02d:%02d:%02d\r\n\n"),
 			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 	EndgeraetEinschalten = false;
+*/	
 	}
 	
+
+//! Bewirkt Moduswechsel.
+//-----------------------
+//! Erledigt auch folgende Aufgaben:
+//! \par - LED-Anzeigen aktualisieren
+//! \par - Status (für TWI-Abfrage) aktualisieren
+//! \par - Puffer-Initialisierung
+static void ModusWechsel(TModus neu)
+	{
+	if (neu == Modus)
+		return;
+		
+	switch (neu)
+		{
+		case ModRuhe: // nichts läuft
+			CLR_BIT_Status(StatBit_Verbunden);
+			CLR_BIT_Status(StatBit_AngerufenBelegt);
+			CLR_BIT_Status(StatBit_FsBefBetrieb);
+			CLR_BIT_Status(StatBit_FsMeldBetrieb);
+			CLR_BIT_Status(StatBit_FsBefEin);
+			CLR_BIT_Status(StatBit_FsMeldEin);
+			SET_BIT_Status(StatBit_Frei);
+			SET_BIT_Status(StatBit_LeitungKennung);
+			LED_off(GELB);
+			LED_off(GRUEN);
+			LED_off(BLAU);
+			break;
+	
+		// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
+		case ModGehendReserv:
+			CLR_BIT_Status(StatBit_Frei);
+			CLR_BIT_Status(StatBit_LeitungKennung);
+			CLR_BIT_Status(StatBit_Verbunden);
+			SET_BIT_Status(StatBit_FsMeldBetrieb);
+			SET_BIT_Status(StatBit_FsMeldEin);
+			CLR_BIT_Status(StatBit_FsBefBetrieb);
+			CLR_BIT_Status(StatBit_FsBefEin);
+			CLR_BIT_Status(StatBit_AngerufenBelegt);
+			LED_on(GELB);
+			LED_off(GRUEN);
+			LED_off(BLAU);
+			PufferInit(&SendePuffer);
+			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			break;
+	
+		case ModGehendWaehlen:
+			// derzeit keine Änderung erforderlich
+			break;
+	
+/* nicht benötigt
+		case ModGehendVerbindungHerstellen: // Einschaltkommando ist angekommen, Warte auf Quittung vom Anrufer
+			BusEmpfMark = true;
+			SendeMark = true;
+			break;
+*/
+	
+		case ModGehendVerbunden:
+			SET_BIT_Status(StatBit_Verbunden);
+			SET_BIT_Status(StatBit_FsMeldBetrieb);
+			SET_BIT_Status(StatBit_FsMeldEin);
+			SET_BIT_Status(StatBit_FsBefBetrieb);
+			SET_BIT_Status(StatBit_FsBefEin);
+			LED_on(GELB);
+			LED_off(GRUEN);
+			LED_off(BLAU);
+			break;
+	
+		// Kommend = vom Netz zum internen Anschluss
+		case ModKommendVerbVorstufe: // es wird erst mal abgewartet, was aus der ankommenden Verbindung wird.
+			// trotzdem sofort abgehende Verbindungen sperren.
+			//! \todo prüfen, ob sofortige Sperre sinnvoll ist oder erst bei wirklichem Verbindungsaufbau.
+			CLR_BIT_Status(StatBit_Frei);
+			CLR_BIT_Status(StatBit_LeitungKennung);
+			CLR_BIT_Status(StatBit_Verbunden);
+			CLR_BIT_Status(StatBit_FsMeldBetrieb);
+			CLR_BIT_Status(StatBit_FsMeldEin);
+			CLR_BIT_Status(StatBit_FsBefBetrieb);
+			CLR_BIT_Status(StatBit_FsBefEin);
+			SET_BIT_Status(StatBit_AngerufenBelegt);
+			LED_off(GELB);
+			LED_on(GRUEN);
+			LED_off(BLAU);
+			PufferInit(&SendePuffer);
+			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			break;
+	
+		case ModKommendWarteReservOK: //!< Warte auf Gelegenheit zum Senden des Einschaltbefehls an das Endgerät
+			// derzeit keine Änderung erforderlich
+			break;
+	
+		case ModKommendWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
+			SET_BIT_Status(StatBit_FsBefBetrieb);
+			SET_BIT_Status(StatBit_FsBefEin);
+			break;
+	
+		case ModKommendVerbunden: 
+			SET_BIT_Status(StatBit_FsMeldBetrieb);
+			SET_BIT_Status(StatBit_FsMeldEin);
+			SET_BIT_Status(StatBit_Verbunden);
+			BusEmpfMark = true;
+			SendeMark = true;
+			break;
+	
+		case ModWarteAusQuitt:
+			CLR_BIT_Status(StatBit_FsBefBetrieb);
+			CLR_BIT_Status(StatBit_FsBefEin);
+			CLR_BIT_Status(StatBit_Verbunden);
+			break;
+
+		default:
+			return; // nix wird geändert
+		} // switch neu
+
+	Modus = neu; // jetzt wird der neue Modus wirklich aktiv.
+	}
+	
+	
+//! Kommende TCP-Verbindung schließen
+static void CloseTxpInSocket()
+	{
+	if (TxpInSocket != NO_SOCKET_USED)
+		{ 
+#if (TXP_DEBUG >= 1)
+		printf_P(PSTR("TxP: Verbindung Ascii wird geschlossen\r\n" ));
+#endif
+		//! \TODO ggf. Abbaumeldung?????
+		CloseTCPSocket(TxpInSocket);
+		TxpInSocket = NO_SOCKET_USED;
+		}
+	}
+
+
+//! Gehende TCP-Verbindung schließen
+static void CloseTxpOutSocket()
+	{
+	if (TxpOutSocket != NO_SOCKET_USED)
+		{ 
+#if (TXP_DEBUG >= 1)
+		printf_P(PSTR("TxP: Verbindung Ascii wird geschlossen\r\n" ));
+#endif
+		//! \TODO ggf. Abbaumeldung?????
+		CloseTCPSocket(TxpOutSocket);
+		TxpOutSocket = NO_SOCKET_USED;
+		}
+	}
+					
+
+
 	
 //! Nur für debugging.	
 static uint32_t TxpThreadCount; 
 
+
 //! Der TelexPhone-client an sich.
 //------------------------------------------------------------------------------------------------------------
-//! Er wird zyklisch aufgerufen und hat folgende Aufgaben:
-//! \par Steuerbefehle vom TWI-Bus annehmen und interpretieren.
-//! \par Nachschauen, ob eine Verbindung auf den registrierten Port eingegangen ist. Wenn ja 
+//! Diese Funktion wird zyklisch aufgerufen und hat folgende Aufgaben:
+//! \par - Steuerbefehle vom TWI-Bus annehmen und interpretieren.
+//! \par - Nachschauen, ob eine Verbindung auf den registrierten Port eingegangen ist. Wenn ja 
 //! holt er sich die Socketnummer der Verbindung und speichert diese.
-//! \par Wenn eine Verbindung zustande gekommen ist wird diese wiederrum zyklisch nach neuen Daten abgefragt und entsprechend
+//! \par - Wenn eine Verbindung zustande gekommen ist wird diese wiederrum zyklisch nach neuen Daten abgefragt und entsprechend
 //! reagiert.
+//! \par Eine Übersicht der Gesamtfunktion ist in der Datei AblaeufeVerbindung.xls dargestellt.
+//! Die dort enthaltenen ID sind hier mit ID#xxx referenziert.
 //! \param 	NONE
 //! \return	NONE
 
@@ -440,15 +608,11 @@ void txp_thread()
 				printf_P(PSTR("TxP: Reservierung intern / gehend von %d\r\n" ), Code);
 #endif
 				if (Modus == ModRuhe)
-					{
-					Modus = ModGehendReserv;
+					{ // ID#101 *********************************************
+					ModusWechsel(ModGehendReserv);
 					BusVerbPartner = Code << 1; 
 					if (!FesteHauptstelle)
 						Hauptstelle = BusVerbPartner;
-					CLR_BIT_Status(StatBit_Frei);
-					CLR_BIT_Status(StatBit_LeitungKennung);
-					SET_BIT_Status(StatBit_AngerufenBelegt);
-					LED_on(GELB);
 					}
 				else
 					FalschCodeEmpfangen(Code);
@@ -459,9 +623,9 @@ void txp_thread()
 				printf_P(PSTR("TxP: Einschaltkommando intern / gehend\r\n" ));
 #endif
 				if (Modus == ModGehendReserv)
-					{
+					{ // ID#211 ********************************************
 					BusSenden(BusKdoWahlFreigabe);
-					Modus = ModGehendWaehlen;
+					ModusWechsel(ModGehendWaehlen);
 					}
 				else
 					FalschCodeEmpfangen(Code);
@@ -472,14 +636,8 @@ void txp_thread()
 				printf_P(PSTR("TxP: Einschaltquittung intern / kommend\r\n" ));
 #endif
 				if (Modus == ModKommendWarteEinQuitt)
-					{
-					Modus = ModKommendVerbunden;
-					BusEmpfMark = true;
-					SendeMark = true;
-					PufferInit(&SendePuffer);
-					PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
-					EndgeraetEinschalten = true;
-					LED_on(GRUEN);
+					{ // ID#331 ********************************************
+					ModusWechsel(ModKommendVerbunden);
 					}
 				else
 					FalschCodeEmpfangen(BusQuittEin);
@@ -498,89 +656,66 @@ void txp_thread()
 				printf_P(PSTR("TxP: Wahlziffer %d intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
 #endif
 				if (Modus == ModGehendWaehlen)
-					{
-					// Todo Ziffern auswerten
-					BusSenden(BusQuittEin);
-					BusEmpfMark = true;
-					SendeMark = true;
-					PufferInit(&SendePuffer);
-					PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
-					EndgeraetEinschalten = true;
+					{ // ID#222 ********************************************
+					// Todo Ziffern auswerten // ID#221 ********************************************
 
 					// Todo sinnvoll verbinden.
 					long IP = IPDOT(192l,168l,178l,32l);
-					AsciiSocket = Connect2IP( IP, 23 ); // << HACK, richtig wäre TXP_ASCII_PORT );
-					if (AsciiSocket == -1 )
-						{
+					TxpOutSocket = Connect2IP( IP, 23 ); // << HACK, richtig wäre TXP_PORT );
+					if (TxpOutSocket == -1 )
+						{ // ID#223 ********************************************
+						// Verbindung konnte nicht aufgebaut werden
+						BusSenden(BusKdoSchluss);
 #if (TXP_DEBUG >= 1)
 						printf_P(PSTR("TxP: Verbindung Ascii ausgehend versagt\r\n" ));
 #endif
-						AsciiSocket = NO_SOCKET_USED;
+						TxpOutSocket = NO_SOCKET_USED;
+						ModusWechsel(ModWarteAusQuitt);
 						}
 					else
-						{
+						{ // ID#222 ********************************************
+						BusSenden(BusQuittEin);
 #if (TXP_DEBUG >= 1)
 						printf_P(PSTR("TxP: Verbindung Ascii ausgehend hergestellt\r\n" ));
 #endif
+						ModusWechsel(ModGehendVerbunden);
 						}
-					Modus = ModGehendVerbunden;
 					}
 				else
 					FalschCodeEmpfangen(BusQuittEin);
 				break;
 				
+			case BusQuittSchluss:
 			case BusKdoSchluss:
 #if (TXP_DEBUG >= 1)
-				printf_P(PSTR("TxP: Ausschaltung intern\r\n" ));
-#endif
-				EndgeraetEinschalten = false;
-				if (Modus != ModRuhe)
-					{
-					BusSenden(BusQuittSchluss);
-					CLR_BIT_Status(StatBit_AngerufenBelegt);
-					CLR_BIT_Status(StatBit_FsBefBetrieb);
-					CLR_BIT_Status(StatBit_FsMeldBetrieb);
-					SET_BIT_Status(StatBit_Frei);
-					SET_BIT_Status(StatBit_LeitungKennung);
-					}
-					
-				// alle Ports schließen...
-				if (AsciiSocket != NO_SOCKET_USED)
-					{
-#if (TXP_DEBUG >= 1)
-					printf_P(PSTR("TxP: Verbindung Ascii wird geschlossen\r\n" ));
-#endif
-					CloseTCPSocket(AsciiSocket);
-					AsciiSocket = NO_SOCKET_USED;
-					}
-					
-				Modus = ModRuhe;
-				LED_off(GELB);
-				LED_off(GRUEN);
-				LED_off(BLAU);
-				break;
-					
-			case BusQuittSchluss:
-#if (TXP_DEBUG >= 1)
-				printf_P(PSTR("TxP: Ausschaltung quittiert\r\n" ));
+				if (Code == BusQuittSchluss)
+					printf_P(PSTR("TxP: Ausschaltung quittiert\r\n" ));
+				else
+					printf_P(PSTR("TxP: Ausschaltung intern\r\n" ));
 #endif
 				if (Modus != ModWarteAusQuitt)
 					{
 					strcpy_P(DebugMsg, PSTR("Schlussquittung ohne Aufforderung"));
-					//! TODO Ausschalten etc., Fehler melden
 					FalschCodeEmpfangen(Code);
 					}
-				Modus = ModRuhe;
-				CLR_BIT_Status(StatBit_AngerufenBelegt);
-				CLR_BIT_Status(StatBit_FsBefBetrieb);
-				CLR_BIT_Status(StatBit_FsMeldBetrieb);
-				SET_BIT_Status(StatBit_Frei);
-				SET_BIT_Status(StatBit_LeitungKennung);
-				LED_off(GELB);
-				LED_off(GRUEN);
-				LED_off(BLAU);
+
+				// ID#212 ********************************************
+				// ID#224 ********************************************
+				if (Modus != ModRuhe && Code == BusKdoSchluss)
+					BusSenden(BusQuittSchluss);
+					
+				// ausgehende Ports schließen...
+				//#241 ***************************************************				
+				CloseTxpOutSocket();
+				
+				// eingehende Ports schließen...
+				//#341 ***************************************************
+				CloseTxpInSocket();
+				
+				// ID#411 ********************************************
+				ModusWechsel(ModRuhe);
 				break;
-			
+
 			default:
 				FalschCodeEmpfangen(Code);
 				break;
@@ -588,64 +723,37 @@ void txp_thread()
 			} // switch Code
 		} // if GetEmpfByte
 
+	if (Modus == ModKommendWarteReservOK && BusAuftrag == Fertig)
+		{
+		if (BusErgebnis == Ok)
+			{ // ID#321 ********************************************
+#if (TXP_DEBUG >= 1)
+			printf_P(PSTR("TxP: Einschaltung extern -> Einschaltung intern\r\n" ));
+#endif
+			BusSenden(BusKdoEin);
+			ModusWechsel(ModKommendWarteEinQuitt);
+			}
+		else
+			{ // ID#322 ********************************************
+#if (TXP_DEBUG >= 1)
+			printf_P(PSTR("TxP: Einschaltung extern -> intern VERSAGT\r\n" ));
+#endif
+			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
+			CloseTxpInSocket(); // Out kann nicht geöffnet sein.
+			ModusWechsel(ModRuhe);
+			}
+		}
+
 	// ======================================================================
 	// Umwandlung ASCII - Baudot und zurück
 	// ======================================================================
 		
 	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
 		{
-		// zu druckenden Text umwandeln
-		// ---------------------------
-		if (SendeText[0] != '\0' && PufferLeer(&SendePuffer))
-			{
-			uint8_t Code1, Code2;
-			
-			if (SendeText[0] == '@') 
-				{ // Kennungsgeber besonders behandeln...
-				SendeText[0] = CodeChrWerDa; 
-				SendeText[1] = '\0'; // keine weiteren Zeichen bearbeiten
-				}
-			
-			if (ZeichenZuCode2(SendeText[0], (char*) &SendePuffer.BuZiMode, &Code1, &Code2))
-				{ // Zeichen erfolgreich in Baudot-Code umgesetzt
-				if (PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2)))
-					{
-					z[0] = SendeText[0];
-					z[1] = '\0';
-					// strcat(EmpfText, z); // Eigenecho
-					strcpy(SendeText, SendeText+1); // erstes Zeichen aus SendeText-Puffer löschen
-					}
-				}
-			else
-				// Zeichen ist nicht darstellbar, also löschen
-				{
-				if (DebugMsg[0] == '\0') // noch leer
-					strcpy_P(DebugMsg, PSTR("?nicht druckbare Zeichen: "));
-				uint8_t l = strlen(DebugMsg);
-				if (DebugMsg[0] == '?' && l + 2 < DebugMsgMax)
-					{
-					DebugMsg[l] = SendeText[0];
-					DebugMsg[l+1] = '\0';
-					}
+TODO hier gehts weiter.
 
-				strcpy(SendeText, SendeText+1); // erstes Zeichen aus SendeText-Puffer löschen
-				}
-			}
-			
-		// empfangene Codes in Text wandeln
-		// --------------------------------
-		if (!PufferLeer(&EmpfPuffer))
-			{
-			if (strlen(EmpfText) > EmpfTextMax - 2)
-				strcpy(EmpfText, EmpfText+1); // erstes Zeichen aus EmpfangsText-Puffer löschen
-			z[0] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
-			if (z[0] != '\0')
-				{
-				z[1] = '\0';
-				strcat(EmpfText, z);
-				}
-			}
 		} // if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
+
 		
 	// ======================================================================
 	// Temporär: Bei eintreffendem Text Endgerät anschalten (eigentlich nur für HTML.
@@ -663,39 +771,13 @@ void txp_thread()
 		Modus = ModKommendWarteReservOK;
 		}
 
-	if (Modus == ModKommendWarteReservOK && BusAuftrag == Fertig)
-		{
-		if (BusErgebnis == Ok)
-			{
-#if (TXP_DEBUG >= 1)
-			printf_P(PSTR("TxP: Einschaltung extern -> Einschaltung intern\r\n" ));
-#endif
-			BusSenden(BusKdoEin);
-			Modus = ModKommendWarteEinQuitt;
-			}
-		else
-			{
-#if (TXP_DEBUG >= 1)
-			printf_P(PSTR("TxP: Einschaltung extern -> intern VERSAGT\r\n" ));
-#endif
-			SendeText[0] = '\0'; 
-			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
-			SET_BIT_Status(StatBit_Frei);
-			SET_BIT_Status(StatBit_LeitungKennung);
-			Modus = ModRuhe;
-			EndgeraetEinschalten = false;
-			LED_off(GELB);
-			LED_off(GRUEN);
-			}
-		}
-
 	if (Modus == ModKommendVerbunden && RuheZaehler > 30 * 500)
 		DatumDruckenUndAusschalten();
 		
 	if (!EndgeraetEinschalten 
 		&& RuheZaehler > 500 / 2 
 		&& (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
-		&& SendeText[0] == '\0'
+		&& HtmlEmpfText[0] == '\0'
 		&& PufferLeer(&SendePuffer))
 		{
 #if (TXP_DEBUG >= 1)
@@ -722,68 +804,69 @@ void txp_thread()
 	// ==========================================================================
 
 	// keine alte Verbindung offen?
-	if (AsciiSocket == NO_SOCKET_USED)
+	if (TxpInSocket == NO_SOCKET_USED)
 		{ 	
 		// auf neue Verbindungsanfrage testen
-		AsciiSocket = CheckPortRequest(TXP_ASCII_PORT);
+		TxpInSocket = CheckPortRequest(TXP_PORT);
 		
 		//! TODO prüfen, was bei bestehender ausgehender ASCII-Verbindung und gleichzeitigem Versuch einer ankommenden Verbindung passiert.
+		// --> Antwort: Beide Verbindungen stören sich nicht!
 		
-		if (AsciiSocket != NO_SOCKET_USED)
+		if (TxpInSocket != NO_SOCKET_USED)
 			{
 			if (Modus == ModRuhe)
 				{	
 				// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
-				printf_P(PSTR("Telnet-Ascii-Verbindung hergestellt\r\n" ));
-				SendeText[0] = '\0';
-				EmpfText[0] = '\0';
+				printf_P(PSTR("Txp-Verbindung kommend hergestellt\r\n" ));
+				HtmlEmpfText[0] = '\0';
+				HtmlSendeText[0] = '\0';
 				EndgeraetEinschalten = true;
 				}
 			else
 				{	
-				// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
-				printf_P(PSTR("Telnet-Ascii-Verbindung abgewiesen\r\n" ));
-				CloseTCPSocket(AsciiSocket);
-				AsciiSocket = NO_SOCKET_USED;
+				//! \TODO Wenn nein, Blockiermeldung senden
+				printf_P(PSTR("Txp-Verbindung kommend abgewiesen\r\n" ));
+				CloseTCPSocket(TxpInSocket);
+				TxpInSocket = NO_SOCKET_USED;
 				}
 			}
 		}
 	
 	// soll offene Verbindung geschlossen werden?
-	if (Modus == ModKommendVerbunden && AsciiSocket != NO_SOCKET_USED && CheckSocketState(AsciiSocket) == SOCKET_NOT_USE)
+	if (Modus == ModKommendVerbunden && TxpInSocket != NO_SOCKET_USED && CheckSocketState(TxpInSocket) == SOCKET_NOT_USE)
 		{
-		printf_P(PSTR( "Telnet-Ascii-Verbindung getrennt\r\n" ));
-		CloseTCPSocket(AsciiSocket);
-		AsciiSocket = NO_SOCKET_USED;
+		printf_P(PSTR( "Txp-Verbindung kommend getrennt\r\n" ));
+		CloseTCPSocket(TxpInSocket);
+		TxpInSocket = NO_SOCKET_USED;
 		DatumDruckenUndAusschalten();
 		}
 
 	// Auf neue Daten zum drucken testen
 	// ---------------------------------
-	if (AsciiSocket != NO_SOCKET_USED)
+	if (TxpInSocket != NO_SOCKET_USED)
 		{
-		int InCount = GetBytesInSocketData(AsciiSocket);
+		int InCount = GetBytesInSocketData(TxpInSocket);
 		bool Read = true;
 		if (InCount > 0)
 			{
-			int AltLen = strlen(SendeText);
+			int AltLen = strlen(HtmlEmpfText);
 			
-			if (InCount > SendeTextMax - AltLen - 2)
-				InCount = SendeTextMax - AltLen - 2;
+			if (InCount > HtmlEmpfTextMax - AltLen - 2)
+				InCount = HtmlEmpfTextMax - AltLen - 2;
 				
 			if (Read)
 				{
-				int Res = GetSocketData(AsciiSocket, InCount, SendeText + AltLen);
+				int Res = GetSocketData(TxpInSocket, InCount, HtmlEmpfText + AltLen);
 				if (Res > 0)
 					{
-					SendeText[AltLen + Res] = '\0';
+					HtmlEmpfText[AltLen + Res] = '\0';
 					EndgeraetEinschalten = true;
-					if (strncmp_P(SendeText + AltLen, PSTR("+++"), 3) == 0) 
+					if (strncmp_P(HtmlEmpfText + AltLen, PSTR("+++"), 3) == 0) 
 						{
 						// Socket schließen
 						printf_P(PSTR("Telnet-Ascii-Verbindung Beenden\r\n") );
-						CloseTCPSocket(AsciiSocket);
-						AsciiSocket = NO_SOCKET_USED;
+						CloseTCPSocket(TxpInSocket);
+						TxpInSocket = NO_SOCKET_USED;
 						DatumDruckenUndAusschalten();
 						}
 					}
@@ -795,15 +878,15 @@ void txp_thread()
 			} // if (InCount > 0)
 		
 		// vom Endgerät empfangene Daten ggf. ins Netz senden
-		if (strlen(EmpfText) > 10 || (EmpfText[0] != '\0' && RuheZaehler >= 2 * 50))
+		if (strlen(HtmlSendeText) > 10 || (HtmlSendeText[0] != '\0' && RuheZaehler >= 2 * 50))
 			{
 #if (TXP_DEBUG >= 1)
-			printf_P(PSTR("TxP: sende ASCII an Telnet-Verbindung: %s (%d" ), EmpfText, strlen(EmpfText));
+			printf_P(PSTR("TxP: sende ASCII an Telnet-Verbindung: %s (%d" ), HtmlSendeText, strlen(HtmlSendeText));
 #endif
-			int Res = PutSocketData_RPE(AsciiSocket, strlen(EmpfText), EmpfText, RAM);
+			int Res = PutSocketData_RPE(TxpInSocket, strlen(HtmlSendeText), HtmlSendeText, RAM);
 			if (Res > 0)
 				{
-				strcpy(EmpfText, EmpfText + Res);
+				strcpy(HtmlSendeText, HtmlSendeText + Res);
 				}
 #if (TXP_DEBUG >= 1)
 			printf_P(PSTR("/%d)\r\n" ), Res);
@@ -813,7 +896,75 @@ void txp_thread()
 		
 	} // txp_thread
 
+	
+
+	
 // ================================================================================	
+/* RESTE
+
+		// zu druckenden Text umwandeln
+		// ---------------------------
+		if (HtmlEmpfText[0] != '\0' && PufferLeer(&SendePuffer))
+			{
+			uint8_t Code1, Code2;
+			
+			if (HtmlEmpfText[0] == '@') 
+				{ // Kennungsgeber besonders behandeln...
+				HtmlEmpfText[0] = CodeChrWerDa; 
+				HtmlEmpfText[1] = '\0'; // keine weiteren Zeichen bearbeiten
+				}
+			
+			if (ZeichenZuCode2(HtmlEmpfText[0], (char*) &SendePuffer.BuZiMode, &Code1, &Code2))
+				{ // Zeichen erfolgreich in Baudot-Code umgesetzt
+				if (PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2)))
+					{
+					z[0] = HtmlEmpfText[0];
+					z[1] = '\0';
+					strcat(HtmlSendeText, z); // Eigenecho
+					strcpy(HtmlEmpfText, HtmlEmpfText+1); // erstes Zeichen aus HtmlEmpfText-Puffer löschen
+					}
+				}
+			else
+				// Zeichen ist nicht darstellbar, also löschen
+				{
+				if (DebugMsg[0] == '\0') // noch leer
+					strcpy_P(DebugMsg, PSTR("?nicht druckbare Zeichen: "));
+				uint8_t l = strlen(DebugMsg);
+				if (DebugMsg[0] == '?' && l + 2 < DebugMsgMax)
+					{
+					DebugMsg[l] = HtmlEmpfText[0];
+					DebugMsg[l+1] = '\0';
+					}
+
+				strcpy(HtmlEmpfText, HtmlEmpfText+1); // erstes Zeichen aus HtmlEmpfText-Puffer löschen
+				}
+			}
+			
+
+
+			
+			
+		// empfangene Codes in Text wandeln
+		// --------------------------------
+		if (!PufferLeer(&EmpfPuffer))
+			{
+			if (strlen(HtmlSendeText) > HtmlSendeTextMax - 2)
+				strcpy(HtmlSendeText, HtmlSendeText+1); // erstes Zeichen aus EmpfangsText-Puffer löschen
+			z[0] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+			if (z[0] != '\0')
+				{
+				z[1] = '\0';
+				strcat(HtmlSendeText, z);
+				}
+			}
+
+
+
+			
+
+*/
+
+
 
 //! Liest den String s aus in die Durchwahl-Tabelle.
 //--------------------------------------------------
@@ -876,10 +1027,10 @@ void txp_cgi_debug( void * pStruct )
 
 	cgi_PrintHttpheaderStart();
 
-	printf_P(PSTR("EmpfText: ["));
-	printf(EmpfText);
-	printf_P(PSTR("]<br>SendeText: ["));
-	printf(SendeText);
+	printf_P(PSTR("HtmlSendeText: ["));
+	printf(HtmlSendeText);
+	printf_P(PSTR("]<br>HtmlEmpfText: ["));
+	printf(HtmlEmpfText);
 	printf_P(PSTR("]<p>DebugMsg: %s<br>"), DebugMsg);
 	DebugMsg[0] = '\0';
 
@@ -982,14 +1133,14 @@ void txp_cgi_msg_Out( void * pStruct )
 					
 	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
 		{
-		printf_P(PSTR("Druckspiegel:<br><pre>%s</pre>"), EmpfText);
-		if (SendeText[0] != '\0')
-			printf_P(PSTR("<i><pre>%s</pre></i>"), SendeText);
+		printf_P(PSTR("Druckspiegel:<br><pre>%s</pre>"), HtmlSendeText);
+		if (HtmlEmpfText[0] != '\0')
+			printf_P(PSTR("<i><pre>%s</pre></i>"), HtmlEmpfText);
 		}
 	else
 		{
 		printf_P(PSTR("Texteingabe startet Fernschreiber"));
-		EmpfText[0] = '\0';
+		HtmlSendeText[0] = '\0';
 		}
 	cgi_PrintHttpheaderEnd();
 	}
@@ -1013,9 +1164,9 @@ void txp_cgi_msg_In( void * pStruct )
 
 	if (DrucktextAufforderung)
 		{
-		strncat(SendeText, http_request->argvalue[PharseGetValue_P(http_request, PSTR("Eingabe"))], SendeTextMax - strlen(SendeText) - 3);
-		SendeText[SendeTextMax-3] = '\0';
-		strcat_P(SendeText, PSTR("\r\n"));
+		strncat(HtmlEmpfText, http_request->argvalue[PharseGetValue_P(http_request, PSTR("Eingabe"))], HtmlEmpfTextMax - strlen(HtmlEmpfText) - 3);
+		HtmlEmpfText[HtmlEmpfTextMax-3] = '\0';
+		strcat_P(HtmlEmpfText, PSTR("\r\n"));
 		EndgeraetEinschalten = true;
 		}
 
@@ -1168,8 +1319,8 @@ void txp_init()
 	PufferInit(&SendePuffer);
 	PufferInit(&EmpfPuffer);
 	
-	SendeText[0] = '\0';
-	EmpfText[0] = '\0';
+	HtmlEmpfText[0] = '\0';
+	HtmlSendeText[0] = '\0';
 	DebugMsg[0] = '\0';
 	
 	// EEPROM auslesen
@@ -1209,10 +1360,10 @@ void txp_init()
 	cgi_RegisterCGI( txp_cgi_config, PSTR("txp-config.cgi"));
 	cgi_RegisterCGI( txp_cgi_debug, PSTR("txp-debug.cgi"));
 
-	AsciiSocket = NO_SOCKET_USED;
-	TxpSocket = NO_SOCKET_USED;
+	TxpOutSocket = NO_SOCKET_USED;
+	TxpInSocket = NO_SOCKET_USED;
 	
-	RegisterTCPPort(TXP_ASCII_PORT);
+	RegisterTCPPort(TXP_PORT);
 	
 	Timer0Cnt_Min = 255;
 	Timer0Cnt_Max = 0;
