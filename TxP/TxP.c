@@ -157,7 +157,6 @@ static char HtmlSendeText[HtmlSendeTextMax];
 
 static int TxpInSocket;
 	//!< Handle für eingehende Txp-Verbindungen.
-
 	
 static int TxpOutSocket;
 	//!< Handle für ausgehende Txp-Verbindungen.
@@ -670,7 +669,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			{
 #if (TXP_DEBUG >= 1)
 			SockBuf[OutI] = '\0';
-			printf_P(PSTR("TxP: sende ASCII an TCP-Verbindung: %s (%d" ), HtmlSendeText, strlen(HtmlSendeText));
+			printf_P(PSTR("TxP: sende ASCII an TCP-Verbindung: %s (%d" ), SockBuf, OutI);
 #endif
 			int Res = PutSocketData_RPE(*Socket, OutI, SockBuf, RAM);
 #if (TXP_DEBUG >= 1)
@@ -820,14 +819,14 @@ void txp_thread()
 					BusSenden(BusQuittSchluss);
 					
 				// ausgehende Ports schließen...
-				// ID#241 ***************************************************				
+				// ID#241 ********************************************			
 				CloseTxpOutSocket();
 				
 				// eingehende Ports schließen...
-				// ID#341 ***************************************************
+				// ID#341 ********************************************
 				CloseTxpInSocket();
 				
-				// ID#411 ID#104 ********************************************
+				// ID#411 ID#104 *************************************
 				ModusWechsel(ModRuhe);
 				break;
 
@@ -873,7 +872,7 @@ void txp_thread()
 		{
 		SocketBearbeiten(&TxpInSocket, false);
 		if (ModKommendVerbVorstufe && !PufferLeer(&SendePuffer))
-			{ // ID#311 *******************************************************
+			{ // ID#311 ***************************************
 			BusSenden(BusEigenAdresse >> 1);
 			ModusWechsel(ModKommendWarteReservOK);
 			}
@@ -904,6 +903,7 @@ void txp_thread()
 			else
 				{ // ID#213 ID#225 ***************************************************
 				//! \TODO Wenn nein, Blockiermeldung senden
+				PutSocketData_RPE(TxpInSocket, 6, PSTR("NEIN\r\n"), FLASH);				
 				printf_P(PSTR("Txp-Verbindung kommend abgewiesen\r\n" ));
 				CloseTCPSocket(TxpInSocket);
 				TxpInSocket = NO_SOCKET_USED;
@@ -1070,9 +1070,9 @@ void txp_cgi_debug( void * pStruct )
 
 #define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %d"), Var)
 
-	PRINTVAL(Timer0Cnt_Min);
-	PRINTVAL(Timer0Cnt_Max);
-	PRINTVAL(Timer0Callback_Max);
+	PRINTVAL(Timer0Cnt_Min); Timer0Cnt_Min = 255;
+	PRINTVAL(Timer0Cnt_Max); Timer0Cnt_Max = 0;
+	PRINTVAL(Timer0Callback_Max); Timer0Callback_Max = 0;
 
 	PRINTVAL(Modus);
 	PRINTVAL(Status); // bezüglich TxP-Funktionalität (ist auf TWI-Bus sichtbar)
