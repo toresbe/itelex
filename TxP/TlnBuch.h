@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
-enum { TlnAdresseMax = 40 } ; //!< maximale Länge der Verbindungsadresse
+enum { TlnAdresseMax = 40 } ; //!< maximale LÃ¤nge der Verbindungsadresse
 
 typedef enum 
 	{
@@ -16,13 +16,13 @@ typedef enum
 	
 typedef struct
 	{
-	uint32_t Nummer; //!< Die Rufnummer, darf keine führenden Nullen enthalten
+	uint32_t Nummer; //!< Die Rufnummer, darf keine fÃ¼hrenden Nullen enthalten
 	TTlnAdresseArt AdrArt; //!< Was bedeutet die folgende Adresse
 	char Adresse[TlnAdresseMax]; //!< URL, IP, eMail, ...
 	uint32_t IPAdr; //!< bei eindeutiger IP-Adresse
 	uint16_t Port; //!< bei abweichendem Port
 	uint8_t Durchwahl; //!< interne Durchwahl bei "Nebenstellenanlagen"
-	uint32_t Datum; //!< letzte Änderung der Adresse
+	uint32_t Datum; //!< letzte Ã„nderung der Adresse
 	} TTlnDaten;
 	
 	
