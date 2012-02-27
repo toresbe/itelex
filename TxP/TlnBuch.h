@@ -30,5 +30,7 @@ extern bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln);
 
 extern bool TlnHinzufuegen(TTlnDaten *Tln);	
 
+extern void TlnBuchInit();
+
 
 #endif //ndef __TLNBUCH_H__

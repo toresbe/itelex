@@ -54,7 +54,8 @@
 
 #include "hardware/timer0/timer0.h"
 
-#include "TxP/txp.h"
+#include "TxP/TxP.h"
+#include "TxP/TlnBuch.h"
 #include "BusKomm.h"
 #include "TxP2-Defs.h"
 #include "FifoPuffer.h"
@@ -122,7 +123,7 @@ volatile uint8_t SerUmSendDaten;
 //! Flag, ob aktuell Mark an die interne Gegenstelle gesendet wurde oder nicht.
 volatile bool SendeMark;
 
-
+// Konstanten für SerUmSendBitNr und SerUmEmpfBitNr
 enum { SerUmEmpfWarte = 0, SerUmEmpfFertig = 8, SerUmSendWarte = 0, SerUmSendStart = 1 } ;
 
 // Allgemein: 
@@ -157,6 +158,7 @@ static char HtmlSendeText[HtmlSendeTextMax];
 
 static int TxpInSocket;
 	//!< Handle für eingehende Txp-Verbindungen.
+	
 enum { SocketInBufMax = 2500 } ; //!< Größe des TCP-Empfangspuffers
 
 static uint16_t SocketInBufUsed; //!< Benutzter Teil des TCP-Empfangspuffers
@@ -184,6 +186,13 @@ static bool FesteHauptstelle;
 static uint8_t DurchwahlTabelle[9];
 	//!< Liste der Nebenstellen-Nummern bei kommenden Rufen mit Durchwahl
 
+static uint32_t Wahlnummer; 
+	//!< Momentan gewählte Nummer
+	
+static uint8_t Wahlziffern; 
+	//!< Anzahl gewählter Ziffern
+	
+	
 enum { DebugMsgMax = 100 } ;
 
 static char DebugMsg[DebugMsgMax];
@@ -478,6 +487,8 @@ static void ModusWechsel(TModus neu)
 			break;
 	
 		case ModGehendWaehlen:
+			Wahlnummer = 0;
+			Wahlziffern = 0;
 			// derzeit keine Änderung erforderlich
 			break;
 	
@@ -824,32 +835,60 @@ void txp_thread()
 				printf_P(PSTR("TxP: Wahlziffer %d intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
 #endif
 				if (Modus == ModGehendWaehlen)
-					{ // ID#222 ********************************************
-					// Todo Ziffern auswerten // ID#221 ********************************************
-
-					// Todo sinnvoll verbinden.
-					long IP = IPDOT(192l,168l,178l,32l);
-					TxpOutSocket = Connect2IP( IP, 23 ); // << HACK, richtig wäre TXP_PORT );
-					if (TxpOutSocket == -1 )
-						{ // ID#223 ********************************************
-						// Verbindung konnte nicht aufgebaut werden
-						BusSenden(BusKdoSchluss);
-#if (TXP_DEBUG >= 1)
-						printf_P(PSTR("TxP: Verbindung Ascii ausgehend versagt\r\n" ));
-#endif
-						TxpOutSocket = NO_SOCKET_USED;
-						ModusWechsel(ModWarteSchlussQuitt);
-						}
-					else
+					{
+					TTlnDaten TD;
+					
+					// ID#221 ********************************************
+					Wahlnummer = 10 * Wahlnummer + (Code - BusKdoWahlziffer0);
+					Wahlziffern++;
+					
+					if (TlnSuche(Wahlnummer, false, &TD))
 						{ // ID#222 ********************************************
-						BusSenden(BusQuittEin);
+						switch (TD.AdrArt)
+							{
+							case TxpIP:
 #if (TXP_DEBUG >= 1)
-						printf_P(PSTR("TxP: Verbindung Ascii ausgehend hergestellt\r\n" ));
+								printf_P(PSTR("TxP: Teilnehmer %ld gefunden: %lx\r\n" ), TD.Nummer, TD.IPAdr);
 #endif
-						ModusWechsel(ModGehendVerbunden);
-						SocketBufInit();
-						}
-					}
+								TxpOutSocket = Connect2IP(TD.IPAdr, TD.Port);
+								break;
+								
+							case TxpUrl:
+								//! \todo Url auswerten
+#if (TXP_DEBUG >= 1)
+								printf_P(PSTR("TxP: Teilnehmer %ld gefunden: %s\r\n" ), TD.Nummer, TD.Adresse);
+#endif
+								TxpOutSocket = -1;
+								break;
+								
+							default:
+#if (TXP_DEBUG >= 1)
+								printf_P(PSTR("TxP: Teilnehmer %ld gefunden: GELOESCHT\r\n" ), TD.Nummer, TD.Adresse);
+#endif
+								TxpOutSocket = -1;
+							}
+						
+						if (TxpOutSocket == -1 )
+							{ // ID#223 ********************************************
+							// Verbindung konnte nicht aufgebaut werden
+							BusSenden(BusKdoSchluss);
+#if (TXP_DEBUG >= 1)
+							printf_P(PSTR("TxP: Verbindung Ascii ausgehend versagt\r\n" ));
+#endif
+							TxpOutSocket = NO_SOCKET_USED;
+							ModusWechsel(ModWarteSchlussQuitt);
+							}
+						else
+							{ 
+							BusSenden(BusQuittEin);
+#if (TXP_DEBUG >= 1)
+							printf_P(PSTR("TxP: Verbindung Ascii ausgehend hergestellt\r\n" ));
+#endif
+							ModusWechsel(ModGehendVerbunden);
+							SocketBufInit();
+							}
+						} // gewählte Nummer war vollständig
+					} // if Modus == ModGehendWaehlen
 				else
 					FalschCodeEmpfangen(BusQuittEin);
 				break;
@@ -1406,6 +1445,8 @@ void txp_init()
 	PufferInit(&SendePuffer);
 	PufferInit(&EmpfPuffer);
 	SocketBufInit();
+
+	TlnBuchInit();
 	
 	HtmlEmpfText[0] = '\0';
 	HtmlSendeText[0] = '\0';
