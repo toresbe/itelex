@@ -157,11 +157,23 @@ static char HtmlSendeText[HtmlSendeTextMax];
 
 static int TxpInSocket;
 	//!< Handle für eingehende Txp-Verbindungen.
+enum { SocketInBufMax = 2500 } ; //!< Größe des TCP-Empfangspuffers
+
+static uint16_t SocketInBufUsed; //!< Benutzter Teil des TCP-Empfangspuffers
+
+static char SocketInBuf[SocketInBufMax]; //!< TCP-Empfangspuffer
+
 	
 static int TxpOutSocket;
 	//!< Handle für ausgehende Txp-Verbindungen.
 
+enum { SocketOutBufMax = 2500 } ; //!< Größe des TCP-Sendepuffers
 
+static uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
+
+static char SocketOutBuf[SocketOutBufMax]; //!< TCP-Sendepuffer
+
+	
 static uint8_t Hauptstelle; 
 	//!< Bus-Adresse für den nächsten kommenden Ruf, wird bei FesteHauptstelle = false auf die
 	//!< Adresse des letzten Anrufers gesetzt
@@ -537,6 +549,14 @@ static void ModusWechsel(TModus neu)
 	}
 	
 	
+//! TCP-Puffer initialisieren
+static void SocketBufInit()
+	{
+	SocketInBufUsed = 0;
+	SocketOutBufUsed = 0;
+	}
+	
+	
 //! Kommende TCP-Verbindung schließen
 static void CloseTxpInSocket()
 	{
@@ -604,14 +624,14 @@ static void SchreibeZeichenInSendePuffer(char c)
 
 //! Socket bearbeiten.
 //---------------------------------------------------------------------------
-//! \par - Empfangene Daten in den SendePuffer (zum Endgerät) schreiben.
-//! \par - Daten des Empfangspuffers ggf. senden
+//! \par - Empfangene Daten in den Socket-Empfangspuffer schreiben
+//! \par - Daten vom Socket-Empfangspuffer übersetzen in den SendePuffer (zum Endgerät).
+//! \par - Daten des Empfangspuffers (Endgerät) in den Socket-Sendepuffer übersetzen
+//! \par - Daten des Socket-Sendepuffers ggf. senden
 //! \par - Schlusszeichen bearbeiten
+
 static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	{
-	enum { SockBufSize = 64 } ;
-	static char SockBuf[SockBufSize];
-	
 	if (*Socket == NO_SOCKET_USED)
 		return;
 		
@@ -631,55 +651,89 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		return;
 		}
 
-	// Auf neue Daten zum drucken testen
+	// Auf neue Daten testen
 	// ---------------------------------
 	int InCount = GetBytesInSocketData(*Socket);
-	if (InCount > 0)
-		{ // ID#246 ID#344 ********************************************************
-		//! \todo Unterscheiden binär / text --> erst mal nur Text
-		if (InCount > SockBufSize)
-			InCount = SockBufSize;
-
-		int Res = GetSocketData(*Socket, InCount, SockBuf);
+	
+	if (SocketInBufUsed + InCount > SocketInBufMax)
+		InCount = SocketInBufMax - SocketInBufUsed;
+		
+	if (InCount > 0) 
+		{
+		int Res = GetSocketData(*Socket, InCount, SocketInBuf + SocketInBufUsed);
 		if (Res > 0)
+			SocketInBufUsed += Res;
+		}
+		
+	// Daten des Socket-Empfangspuffer interpretieren
+	// ----------------------------------------------
+	if (SocketInBufUsed > 0)
+		{ // ID#246 ID#344 ********************************************************
+		uint8_t i = 0;
+		while (i < SocketInBufUsed)
 			{
-			for (uint8_t i = 0 ; i < Res ; i++)
+			//! \todo Unterscheiden binär / text --> erst mal nur Text
+			if (!PufferVoll(&SendePuffer))
+				SchreibeZeichenInSendePuffer(SocketInBuf[i]);
+			else 
+				break;
+			if (SocketInBuf[i] == '@')
 				{
-				SchreibeZeichenInSendePuffer(SockBuf[i]);
-				if (SockBuf[i] == '@')
-					break;
+				i = SocketInBufUsed; //! \TODO auf Ende der Asscii-Daten suchen
+				break;
 				}
+			i++;
 			}
+			
+		// verarbeiteten Teil des Empfangspuffers löschen
+		if (i < SocketInBufUsed)
+			{
+			memmove(SocketInBuf, SocketInBuf + i, SocketInBufUsed - i);
+			SocketInBufUsed -= i;
+			}
+		else
+			SocketInBufUsed = 0;
+			
 		} // if GetBytesInSocketData > 0
 	
-	// vom Endgerät empfangene Daten ggf. ins Netz senden
+	// vom Endgerät empfangene Daten übersetzen
 	// --------------------------------------------------
 	InCount = PufferAnzahl(&EmpfPuffer);
 	if (InCount > 10 || (InCount > 0 && RuheZaehler >= 2 * 50))
 		{ // ID#244 ID#344 ***************************************************************
 		//! \todo Unterscheiden sende ASCII / Baudot
-		uint8_t OutI = 0;
-		while (!PufferLeer(&EmpfPuffer) && OutI < SockBufSize - 1)
+		while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3)
 			{
-			SockBuf[OutI] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
-			if (SockBuf[OutI] != '\0')
-				OutI++;
+			SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+			if (SocketOutBuf[SocketOutBufUsed] != '\0')
+				SocketOutBufUsed++;
 			}		
-		if (OutI > 0)
+		}
+		
+	// Daten ggf. ins Netz senden
+	// --------------------------------------------------
+	if (SocketOutBufUsed > 0) //! \todo && !HaltSocketOut
+		{
+#if (TXP_DEBUG >= 1)
+		if (SocketOutBufUsed < SocketOutBufMax-1)
+			SocketOutBuf[SocketOutBufUsed] = '\0';
+		printf_P(PSTR("TxP: sende ASCII an TCP-Verbindung: %s (%d" ), SocketOutBuf, SocketOutBufUsed);
+#endif
+		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
+#if (TXP_DEBUG >= 1)
+		printf_P(PSTR("/%d)\r\n" ), Res);
+#endif
+		if (Res <= 0)
 			{
-#if (TXP_DEBUG >= 1)
-			SockBuf[OutI] = '\0';
-			printf_P(PSTR("TxP: sende ASCII an TCP-Verbindung: %s (%d" ), SockBuf, OutI);
-#endif
-			int Res = PutSocketData_RPE(*Socket, OutI, SockBuf, RAM);
-#if (TXP_DEBUG >= 1)
-			printf_P(PSTR("/%d)\r\n" ), Res);
-#endif
-			if (Res <= 0)
-				{
-				//! \todo Fehlerbehandlung
-				}
+			//! \todo Fehlerbehandlung
 			}
+		else if (Res < SocketOutBufUsed)
+			{
+			memmove(SocketOutBuf, SocketOutBuf + Res, SocketOutBufUsed - Res);
+			SocketOutBufUsed -= Res;
+			}
+		else
+			SocketOutBufUsed = 0;
 		} // if es gibt was zu senden
 	
 	} // SocketBearbeiten()
@@ -793,6 +847,7 @@ void txp_thread()
 						printf_P(PSTR("TxP: Verbindung Ascii ausgehend hergestellt\r\n" ));
 #endif
 						ModusWechsel(ModGehendVerbunden);
+						SocketBufInit();
 						}
 					}
 				else
@@ -899,6 +954,7 @@ void txp_thread()
 				printf_P(PSTR("Txp-Verbindung kommend hergestellt\r\n" ));
 				BusVerbPartner = Hauptstelle; //! \TODO auch andere suchen
 				ModusWechsel(ModKommendVerbVorstufe);
+				SocketBufInit();
 				}
 			else
 				{ // ID#213 ID#225 ***************************************************
@@ -1349,6 +1405,7 @@ void txp_init()
 
 	PufferInit(&SendePuffer);
 	PufferInit(&EmpfPuffer);
+	SocketBufInit();
 	
 	HtmlEmpfText[0] = '\0';
 	HtmlSendeText[0] = '\0';
