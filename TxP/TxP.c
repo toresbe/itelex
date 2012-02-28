@@ -1224,9 +1224,10 @@ void txp_thread()
 			HtmlSendeText[i+1] = '\0';
 			}
 
-		if (RuheZaehler > 500 / 2 
+		if (RuheZaehler > 30 * 500
 			&& HtmlEmpfText[0] == '\0'
-			&& PufferLeer(&SendePuffer))
+			&& PufferLeer(&SendePuffer)
+			&& PufferLeer(&EmpfPuffer) )
 			{
 #if (TXP_DEBUG >= 1)
 			printf_P(PSTR("TxP: Ausschaltung intern\r\n" ));
@@ -1417,7 +1418,7 @@ void txp_cgi_msg_Out( void * pStruct )
 		if (HtmlEmpfText[0] != '\0')
 			printf_P(PSTR("<i><pre>%s</pre></i>"), HtmlEmpfText);
 		}
-	else (Modus == ModRuhe)
+	else if (Modus == ModRuhe)
 		{
 		printf_P(PSTR("Texteingabe startet Fernschreiber"));
 		HtmlSendeText[0] = '\0';
@@ -1597,7 +1598,7 @@ void txp_cgi_main( void * pStruct )
 
 	cgi_PrintHttpheaderStart();
 	printf_P(PSTR(
-		"<a href=\"mainmenu.html\"> zur&uulm;ck</a>"
+		"<a href=\"mainmenu.html\"> zur&uuml;ck</a>"
 		" / <a href=\"txp-msg.cgi\" target=\"main\">Nachricht senden</a>"
 		" / <a href=\"txp-tlnverz.cgi\" target=\"main\">Teilnehmer-Verzeichnis</a>"
 		" / <a href=\"txp-config.cgi\" target=\"main\">TxP-Einstellungen</a>"
