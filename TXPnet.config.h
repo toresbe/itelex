@@ -75,6 +75,9 @@
 		#define NTP
 	#endif
 
+	// aktiviert TelexPhone
+	#define TELEXPHONE
+	
 	#define SHELL
 
 	#ifdef TCP

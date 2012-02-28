@@ -114,6 +114,8 @@
 	#if defined(EXTMEM)
 		#if defined(LEDTAFEL)
 			#define MAX_RECIVEBUFFER_LENGHT 	1024*1
+		#elif defined(TELEXPHONE)
+			#define MAX_RECIVEBUFFER_LENGHT 	1024*2
 		#else
 			#define MAX_RECIVEBUFFER_LENGHT 	1024*4
 		#endif

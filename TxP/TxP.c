@@ -23,6 +23,8 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
+
+ 
  
 //@{
 #include <avr/pgmspace.h>
@@ -32,10 +34,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <bool.h>
 
 #include "config.h"
 
-#include <bool.h>
+#ifdef TELEXPHONE
 
 // #include "defports.h"
 // #include "bits.h"
@@ -45,6 +48,7 @@
 #include "system/net/ip.h"
 #include "system/net/tcp.h"
 #include "system/net/ethernet.h"
+#include "system/net/dns.h"
 #include "system/thread/thread.h"
 #include "system/config/eeconfig.h"
 #include "system/clock/clock.h"
@@ -81,13 +85,23 @@ typedef enum
 	} TModus;
 	
 
+
+	
 //! Aktueller Modus. Sollte nur durch ModusWechsel geändert werden.	
 static TModus Modus;
 
 	
-//! Der TCP-Port für die TelexPhone-Kommunikation
-#define TXP_PORT 134
-	
+// Die Datem auf dem TXP-Port haben folgende Struktur:
+// - ASCII-Zeichen einschl. WR (CR) und ZL (LF) werden "pur" übertragen.
+// - Ansonsten werden Datenblöcke übertragen, die stets aus folgenden Teilen bestehen:
+//   * ein Byte Kommandocode (siehe die folgenden Konstanten mit TXPC_*)
+//   * ein Byte Länge folgender Daten (kann 0 sein).
+//   * zugehörige Daten
+
+#define TXPC_NULL '\000' //!< Füllzeichen
+#define TXPC_DURCHWAHL '\001' //!< Datenblock enthält ein Byte Durchwahl
+#define TXPC_BAUDOT_DATA '\002' //!< Datenblock mit puren Baudot-Codes
+
 	
 // BusVerbPartner ist in BusKomm.h enthalten
 
@@ -175,7 +189,12 @@ static uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
 
 static char SocketOutBuf[SocketOutBufMax]; //!< TCP-Sendepuffer
 
+static bool SocketModeAscii; 
+	//!< true, wenn die Daten als ASCII und nicht als Baudot-Daten übertragen werden.
 	
+static uint8_t Durchwahl;
+	//!< wenn != 0 wurde eine konkrete Nebenstelle gewählt.
+		
 static uint8_t Hauptstelle; 
 	//!< Bus-Adresse für den nächsten kommenden Ruf, wird bei FesteHauptstelle = false auf die
 	//!< Adresse des letzten Anrufers gesetzt
@@ -484,6 +503,7 @@ static void ModusWechsel(TModus neu)
 			LED_off(BLAU);
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			SocketModeAscii = false;
 			break;
 	
 		case ModGehendWaehlen:
@@ -527,6 +547,8 @@ static void ModusWechsel(TModus neu)
 			LED_off(BLAU);
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			SocketModeAscii = false;
+			Durchwahl = 0;
 			break;
 	
 		case ModKommendWarteReservOK: //!< Warte auf Gelegenheit zum Senden des Einschaltbefehls an das Endgerät
@@ -683,17 +705,60 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		uint8_t i = 0;
 		while (i < SocketInBufUsed)
 			{
-			//! \todo Unterscheiden binär / text --> erst mal nur Text
-			if (!PufferVoll(&SendePuffer))
-				SchreibeZeichenInSendePuffer(SocketInBuf[i]);
-			else 
-				break;
-			if (SocketInBuf[i] == '@')
-				{
-				i = SocketInBufUsed; //! \TODO auf Ende der Asscii-Daten suchen
-				break;
+			char c = SocketInBuf[i];
+			
+			// im Folgenden KEIN switch verwenden wegen break!
+			if (c == '\r' || c == '\n' || (c >= ' ' && c <= '~'))
+				{ // ein ASCII-Zeichen
+				SocketModeAscii = true;
+				if (!PufferVoll(&SendePuffer))
+					{
+					SchreibeZeichenInSendePuffer(SocketInBuf[i]);
+					i++;
+					}
+				else 
+					break;
+				if (SocketInBuf[i] == '@')
+					{
+					i = SocketInBufUsed; //! \TODO auf Ende der Ascii-Daten suchen
+					break;
+					}
+				} // ASCII-Zeichen oder WR oder ZL
+				
+			else if (c == TXPC_NULL)
+				{ // ignorieren
+				i++;
 				}
-			i++;
+				
+			else if (c == TXPC_DURCHWAHL)
+				{
+				Durchwahl = SocketInBuf[i+2];
+				i += 2 + (uint8_t) SocketInBuf[i+1];
+				}
+				
+			else if (c == TXPC_BAUDOT_DATA)
+				{ // Baudot-Daten
+				SocketModeAscii = false;
+				uint8_t len = SocketInBuf[i+1];
+				if (i + 2 + len <= SocketInBufUsed && PufferAnzahl(&SendePuffer) + len < MaxPuffer)
+					{ // Baudot-Code-Block ist vollständig UND noch entsprechend Platz im Sendepuffer
+					i += 2; // Code und Länge überspringen
+					while (len > 0)
+						{
+						PufferSpeich(&SendePuffer, SocketInBuf[i]);
+						i++;
+						len--;
+						} // umkopieren
+					}
+				else
+					break; // Daten können momentan nicht verarbeitet werden.
+				}
+				
+			else 
+				{ // unbekannter Code --> ignorieren EINSCHLIEßLICH Daten
+				i += 2 + (uint8_t) SocketInBuf[i+1];
+				}
+				
 			}
 			
 		// verarbeiteten Teil des Empfangspuffers löschen
@@ -712,13 +777,31 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	InCount = PufferAnzahl(&EmpfPuffer);
 	if (InCount > 10 || (InCount > 0 && RuheZaehler >= 2 * 50))
 		{ // ID#244 ID#344 ***************************************************************
-		//! \todo Unterscheiden sende ASCII / Baudot
-		while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3)
+		if (SocketModeAscii)
 			{
-			SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
-			if (SocketOutBuf[SocketOutBufUsed] != '\0')
+			while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3)
+				{
+				SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+				if (SocketOutBuf[SocketOutBufUsed] != '\0')
+					SocketOutBufUsed++;
+				}
+			} // if SocketModeAscii
+		else
+			{ // Baudot-Datenblock senden
+			uint8_t len = PufferAnzahl(&EmpfPuffer);
+			if (len > SocketOutBufMax - 3 - SocketOutBufUsed)
+				len = SocketOutBufMax - 3 - SocketOutBufUsed;
+			SocketOutBuf[SocketOutBufUsed] = TXPC_BAUDOT_DATA;
+			SocketOutBufUsed++;
+			SocketOutBuf[SocketOutBufUsed] = len;
+			SocketOutBufUsed++;
+			while (len > 0)
+				{
+				SocketOutBuf[SocketOutBufUsed] = PufferAusg(&EmpfPuffer);
 				SocketOutBufUsed++;
-			}		
+				len--;
+				}
+			} // else !SocketModeAscii
 		}
 		
 	// Daten ggf. ins Netz senden
@@ -726,9 +809,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	if (SocketOutBufUsed > 0) //! \todo && !HaltSocketOut
 		{
 #if (TXP_DEBUG >= 1)
-		if (SocketOutBufUsed < SocketOutBufMax-1)
-			SocketOutBuf[SocketOutBufUsed] = '\0';
-		printf_P(PSTR("TxP: sende ASCII an TCP-Verbindung: %s (%d" ), SocketOutBuf, SocketOutBufUsed);
+		printf_P(PSTR("TxP: sende TCP-Verbindung: %d" ), SocketOutBufUsed);
 #endif
 		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
 #if (TXP_DEBUG >= 1)
@@ -854,11 +935,22 @@ void txp_thread()
 								break;
 								
 							case TxpUrl:
-								//! \todo Url auswerten
+								TD.IPAdr = DNS_ResolveName(TD.Adresse); 
+									// TP.IPAdr wird 'missbraucht' aber nicht gespeichert
+								if ( TD.IPAdr != -1 )
+									{
 #if (TXP_DEBUG >= 1)
-								printf_P(PSTR("TxP: Teilnehmer %ld gefunden: %s\r\n" ), TD.Nummer, TD.Adresse);
+									printf_P(PSTR("TxP: Teilnehmer %ld gefunden: %s = %lx.\r\n" ), TD.Nummer, TD.Adresse, TD.IPAdr);
 #endif
-								TxpOutSocket = -1;
+									TxpOutSocket = Connect2IP(TD.IPAdr, TD.Port);
+									}
+								else
+									{
+#if (TXP_DEBUG >= 1)
+									printf_P(PSTR("TxP: Teilnehmer %ld gefunden, keine IP zu %s gefunden.\r\n" ), TD.Nummer, TD.Adresse);
+#endif
+									TxpOutSocket = -1;
+									}
 								break;
 								
 							default:
@@ -983,7 +1075,6 @@ void txp_thread()
 		TxpInSocket = CheckPortRequest(TXP_PORT);
 		
 		//! TODO prüfen, was bei bestehender ausgehender ASCII-Verbindung und gleichzeitigem Versuch einer ankommenden Verbindung passiert.
-		// --> Antwort: Beide Verbindungen stören sich nicht!
 		
 		if (TxpInSocket != NO_SOCKET_USED)
 			{
@@ -1507,5 +1598,8 @@ void txp_init()
 
 	}
 
+	
+#endif //def TELEXPHONE
 
 //@}
+

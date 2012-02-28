@@ -25,16 +25,23 @@
 //@{
 #ifndef _TXP_H_
 	#define _TXP_H_
+	
+	#include "config.h"
 
+	#ifdef TELEXPHONE
+	
 	#include <avr/pgmspace.h>  
 	// #include <bool.h>
 	#include "system/shell/shell.h"
 	#include "config.h"
 
+	//! Der TCP-Port für die TelexPhone-Kommunikation
 	#define TXP_PORT 134
 	
 	void txp_init( void );
 	void txp_thread( void );
 
+	#endif //def TELEXPHONE
+	
 #endif /* _TXP_H_ */
 //@}

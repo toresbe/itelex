@@ -5,7 +5,9 @@
 
 #include "TlnBuch.h"
 
-enum { TlnBuchMemMax = 10000 } ; //!< Größe des Teilnehmerverzeichnisses in Bytes
+#ifdef TELEXPHONE
+
+enum { TlnBuchMemMax = 30000 } ; //!< Größe des Teilnehmerverzeichnisses in Bytes
 
 
 //! Speicher des Teilnehmerverzeichnisses.
@@ -71,7 +73,7 @@ static void TlnEintragen(TTlnDaten *Tln, char *BuchP)
 			break;
 			
 		case TxpIP:
-			*((uint32_t *) p) = Tln->IPAdr;				p += 4;
+			*((long *) p) = Tln->IPAdr;					p += 4;
 			*((uint16_t *) p) = Tln->Port;				p += 2;
 			*((uint8_t *) p) = Tln->Durchwahl;			p += 1;
 			break;
@@ -106,7 +108,7 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 			break;
 			
 		case TxpIP:
-			Tln->IPAdr = *((uint32_t *) p);				p += 4;
+			Tln->IPAdr = *((long *) p);					p += 4;
 			Tln->Port = *((uint16_t *) p);				p += 2;
 			Tln->Durchwahl = *((uint8_t *) p);			p += 1;
 			break;
@@ -222,8 +224,12 @@ void TlnBuchInit()
 	TlnBuchMemUsed = 0;
 	
 	// HACK Test
-	TlnBuchTesteintrag(123, "sonnibs.no-ip.org", 0, 23);
-	TlnBuchTesteintrag(32, 0, IPDOT(192l,168l,178l,32l), 23);
+	TlnBuchTesteintrag(123, "sonnibs.no-ip.org", 0, 134);
+	TlnBuchTesteintrag(124, "sonnibs.no-ip.org", 0, 135);
+	TlnBuchTesteintrag(234, 0, IPDOT(192l,168l,178l,30l), 134);
+	TlnBuchTesteintrag(235, 0, IPDOT(192l,168l,178l,38l), 134);
+	TlnBuchTesteintrag(3333, 0, IPDOT(192l,168l,178l,32l), 23);
 	}
 	
 	
+#endif //def TELEXPHONE
