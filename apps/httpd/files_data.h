@@ -153,9 +153,9 @@ const char data4[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"
 	"<a href=\"info.html\"target=\"main\">Informationen</a>"
-	" / <a href=\"txp-msg.cgi\"target=\"main\">Nachricht senden</a>"
-	" / <a href=\"txp-config.cgi\"target=\"main\">TxP-Einstellungen</a>"
-	" / <a href=\"txp-debug.cgi\"target=\"main\">Debug-Infos</a>"
+	#if defined(TELEXPHONE)
+	" / <a href=\"txp-mainmenu.cgi\">TelexPhone</a>"
+	#endif
 	#if defined(HTTPSERVER_STREAM)
 		" / <a href=\"stream.html\">Stream</a>"
 	#endif

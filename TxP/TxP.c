@@ -81,11 +81,14 @@ typedef enum
 	ModKommendWarteReservOK = 12, //!< Warte auf Gelegenheit zum Senden des Einschaltbefehls an das Endgerät
 	ModKommendWarteEinQuitt = 13, //!< Warte auf Einschalt-Quittung des Endgeräts
 	ModKommendVerbunden = 14, 
-	ModWarteSchlussQuitt = 9
+	ModWarteSchlussQuitt = 9,
+	
+	// Über HTML-Seite eingegebener Verbindungswunsch
+	ModHtmlWarteReservOK = 21, //!< Warte auf Gelegenheit zum Senden des Einschaltbefehls an das Endgerät
+	ModHtmlWarteEinQuitt = 22, //!< Warte auf Einschalt-Quittung des Endgeräts
+	ModHtmlVerbunden = 23, 
 	} TModus;
 	
-
-
 	
 //! Aktueller Modus. Sollte nur durch ModusWechsel geändert werden.	
 static TModus Modus;
@@ -250,7 +253,7 @@ void txp_timerEvent(void)
 	uint8_t t0c = TCNT0;
 	Timer0CallbackCount++;
 
-	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
+	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden || Modus == ModHtmlVerbunden)
 		{ // ist Verbunden, also Pegel senden und empfangen
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
 		RuheZaehler++; // wird aber vielleicht gleich wieder auf Null gestellt
@@ -389,18 +392,18 @@ void txp_timerEvent(void)
 		if (BusEmpfMark)
 			{
 			SET_BIT_Status(StatBit_FsMeldEin);
-			if (Modus == ModKommendVerbunden)
-				LED_off(GELB);
-			else
+			if (Modus == ModGehendVerbunden)
 				LED_off(GRUEN);
+			else
+				LED_off(GELB);
 			}
 		else
 			{
 			CLR_BIT_Status(StatBit_FsMeldEin);
-			if (Modus == ModKommendVerbunden)
-				LED_on(GELB);
-			else
+			if (Modus == ModGehendVerbunden)
 				LED_on(GRUEN);
+			else
+				LED_on(GELB);
 			}
 		} // if IstVerbunden
 
@@ -572,6 +575,36 @@ static void ModusWechsel(TModus neu)
 			CLR_BIT_Status(StatBit_FsBefBetrieb);
 			CLR_BIT_Status(StatBit_FsBefEin);
 			CLR_BIT_Status(StatBit_Verbunden);
+			break;
+
+		// Html = Auf HTML-Seite eingegebener Text
+		case ModHtmlWarteReservOK:
+			CLR_BIT_Status(StatBit_Frei);
+			CLR_BIT_Status(StatBit_LeitungKennung);
+			CLR_BIT_Status(StatBit_Verbunden);
+			CLR_BIT_Status(StatBit_FsMeldBetrieb);
+			CLR_BIT_Status(StatBit_FsMeldEin);
+			CLR_BIT_Status(StatBit_FsBefBetrieb);
+			CLR_BIT_Status(StatBit_FsBefEin);
+			SET_BIT_Status(StatBit_AngerufenBelegt);
+			LED_off(GELB);
+			LED_on(GRUEN);
+			LED_off(BLAU);
+			PufferInit(&SendePuffer);
+			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			break;
+	
+		case ModHtmlWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
+			SET_BIT_Status(StatBit_FsBefBetrieb);
+			SET_BIT_Status(StatBit_FsBefEin);
+			break;
+	
+		case ModHtmlVerbunden: 
+			SET_BIT_Status(StatBit_FsMeldBetrieb);
+			SET_BIT_Status(StatBit_FsMeldEin);
+			SET_BIT_Status(StatBit_Verbunden);
+			BusEmpfMark = true;
+			SendeMark = true;
 			break;
 
 		default:
@@ -899,8 +932,15 @@ void txp_thread()
 					{ // ID#331 ********************************************
 					ModusWechsel(ModKommendVerbunden);
 					}
+
+				else if (Modus == ModHtmlWarteEinQuitt)
+					{ 
+					ModusWechsel(ModHtmlVerbunden);
+					}
+				
 				else
 					FalschCodeEmpfangen(BusQuittEin);
+					
 				break;
 
 			case BusKdoWahlFreigabe:
@@ -1012,6 +1052,10 @@ void txp_thread()
 				// ID#341 ********************************************
 				CloseTxpInSocket();
 				
+				// Html-Puffer löschen
+				if (Modus == ModHtmlVerbunden)
+					HtmlEmpfText[0] = '\0'; // damit es keine neue Einschaltung gibt.
+					
 				// ID#411 ID#104 *************************************
 				ModusWechsel(ModRuhe);
 				break;
@@ -1040,6 +1084,27 @@ void txp_thread()
 #endif
 			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
 			CloseTxpInSocket(); // Out kann nicht geöffnet sein.
+			ModusWechsel(ModRuhe);
+			}
+		}
+
+	if (Modus == ModHtmlWarteReservOK && BusAuftrag == Fertig)
+		{
+		if (BusErgebnis == Ok)
+			{ 
+#if (TXP_DEBUG >= 1)
+			printf_P(PSTR("TxP: HTML-Eingabe -> Einschaltung intern\r\n" ));
+#endif
+			BusSenden(BusKdoEin);
+			ModusWechsel(ModHtmlWarteEinQuitt);
+			}
+		else
+			{ 
+#if (TXP_DEBUG >= 1)
+			printf_P(PSTR("TxP: HTML-Eingabe -> intern VERSAGT\r\n" ));
+#endif
+			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
+			HtmlEmpfText[0] = '\0'; // damit es keine neue Einschaltung gibt.
 			ModusWechsel(ModRuhe);
 			}
 		}
@@ -1097,14 +1162,20 @@ void txp_thread()
 			}
 		}
 
-	LED_off(ROT); // HACK Test der Aufrufpausen von txp_thread
+	// ==========================================================================
+	// Html-Eingabe?
+	// ==========================================================================
+
+	if (Modus == ModRuhe && HtmlEmpfText[0] != '\0')
+		{
+		printf_P(PSTR("HTML-Eingabe erfolgt\r\n" ));
+		BusVerbPartner = Hauptstelle; //! \TODO auch andere suchen
+		BusSenden(BusEigenAdresse >> 1);
+		ModusWechsel(ModHtmlWarteReservOK);
+		}
 		
-	} // txp_thread
-	
-
-// ================================================================================	
-/* RESTE
-
+	if (Modus == ModHtmlVerbunden)
+		{
 		// zu druckenden Text umwandeln
 		// ---------------------------
 		if (HtmlEmpfText[0] != '\0' && PufferLeer(&SendePuffer))
@@ -1121,6 +1192,7 @@ void txp_thread()
 				{ // Zeichen erfolgreich in Baudot-Code umgesetzt
 				if (PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2)))
 					{
+					char z[2];
 					z[0] = HtmlEmpfText[0];
 					z[1] = '\0';
 					strcat(HtmlSendeText, z); // Eigenecho
@@ -1141,50 +1213,38 @@ void txp_thread()
 
 				strcpy(HtmlEmpfText, HtmlEmpfText+1); // erstes Zeichen aus HtmlEmpfText-Puffer löschen
 				}
+			} // HtmlEmpfText nicht leer und SendePuffer leer
+			
+		while (!PufferLeer(&EmpfPuffer))
+			{
+			if (strlen(HtmlSendeText) >= HtmlSendeTextMax - 20)
+				memmove(HtmlSendeText, HtmlSendeText + 20, HtmlSendeTextMax - 20);
+			int i = strlen(HtmlSendeText);
+			HtmlSendeText[i] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+			HtmlSendeText[i+1] = '\0';
 			}
-			
 
-
-			
-			
-		// empfangene Codes in Text wandeln
-		// --------------------------------
-
-
-
-	if (EndgeraetEinschalten && Modus == ModRuhe)
-		{
+		if (RuheZaehler > 500 / 2 
+			&& HtmlEmpfText[0] == '\0'
+			&& PufferLeer(&SendePuffer))
+			{
 #if (TXP_DEBUG >= 1)
-		printf_P(PSTR("TxP: Einschaltung extern -> Reservierung intern\r\n" ));
+			printf_P(PSTR("TxP: Ausschaltung intern\r\n" ));
 #endif
-		CLR_BIT_Status(StatBit_Frei);
-		CLR_BIT_Status(StatBit_LeitungKennung);
-		CLR_BIT_Status(StatBit_AngerufenBelegt);
-		}
+			BusSenden(BusKdoSchluss);
+			ModusWechsel(ModWarteSchlussQuitt);
+			RuheZaehler = 0;
+			} // Abschaltung nach XXX Sekunden
 
-	if (Modus == ModKommendVerbunden && RuheZaehler > 30 * 500)
-		DatumDruckenUndAusschalten();
+		} // if Modus == ModHtmlVerbunden
 		
-	if (!EndgeraetEinschalten 
-		&& RuheZaehler > 500 / 2 
-		&& (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
-		&& HtmlEmpfText[0] == '\0'
-		&& PufferLeer(&SendePuffer))
-		{
-#if (TXP_DEBUG >= 1)
-		printf_P(PSTR("TxP: Ausschaltung intern\r\n" ));
-#endif
-		BusSenden(BusKdoSchluss);
-		Modus = ModWarteSchlussQuitt;
-		RuheZaehler = 0;
-		}
-		
+	LED_off(ROT); // HACK Test der Aufrufpausen von txp_thread
+	
+	} // txp_thread
+	
+
+// ================================================================================	
 			
-			
-
-*/
-
-
 
 //! Liest den String s aus in die Durchwahl-Tabelle.
 //--------------------------------------------------
@@ -1351,17 +1411,22 @@ void txp_cgi_msg_Out( void * pStruct )
 					"</HEAD>"
 					"<BODY>" ));
 					
-	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
+	if (Modus == ModHtmlVerbunden)
 		{
 		printf_P(PSTR("Druckspiegel:<br><pre>%s</pre>"), HtmlSendeText);
 		if (HtmlEmpfText[0] != '\0')
 			printf_P(PSTR("<i><pre>%s</pre></i>"), HtmlEmpfText);
 		}
-	else
+	else (Modus == ModRuhe)
 		{
 		printf_P(PSTR("Texteingabe startet Fernschreiber"));
 		HtmlSendeText[0] = '\0';
 		}
+	else
+		{
+		printf_P(PSTR("Interface ist belegt, bitte warten."));
+		}
+
 	cgi_PrintHttpheaderEnd();
 	}
 
@@ -1521,6 +1586,26 @@ void txp_cgi_config(void *pStruct)
 
 	}
 	
+	
+
+//! Erzeugt das Telexphone-Hauptmenü
+	
+void txp_cgi_main( void * pStruct )
+	{
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+
+	cgi_PrintHttpheaderStart();
+	printf_P(PSTR(
+		"<a href=\"mainmenu.html\"> zur&uulm;ck</a>"
+		" / <a href=\"txp-msg.cgi\" target=\"main\">Nachricht senden</a>"
+		" / <a href=\"txp-tlnverz.cgi\" target=\"main\">Teilnehmer-Verzeichnis</a>"
+		" / <a href=\"txp-config.cgi\" target=\"main\">TxP-Einstellungen</a>"
+		" / <a href=\"txp-debug.cgi\" target=\"main\">Debug-Infos</a>"
+		));
+	cgi_PrintHttpheaderEnd();
+	}
+	
 
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Initialisiert den TelexPhone-clinet und registriert den Port auf welchen dieser lauschen soll.
@@ -1574,6 +1659,7 @@ void txp_init()
 	if (!timer0_RegisterCallbackFunction(txp_timerEvent))
 		return;
 	
+	cgi_RegisterCGI( txp_cgi_main, PSTR("txp-mainmenu.cgi"));
 	cgi_RegisterCGI( txp_cgi_msg_MainFrame, PSTR("txp-msg.cgi"));
 	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
 	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("txp-msg-out.cgi"));
