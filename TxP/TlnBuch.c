@@ -9,6 +9,7 @@
 #include "apps/httpd/httpd2.h"
 #include "apps/httpd/httpd2_pharse.h"
 
+#include "TxP.h"
 #include "TlnBuch.h"
 
 #ifdef TELEXPHONE
@@ -261,6 +262,12 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	char Buf[35];
 	TTlnDaten TD;
+
+	static PROGMEM const char EditPN[] = "edit";
+	static PROGMEM const char EditNewPN[] = "editnew";
+	static PROGMEM const char DeletePN[] = "delete";
+	static PROGMEM const char UpdatePN[] = "update";
+	static PROGMEM const char AddPN[] = "add";
 	
 	cgi_PrintHttpheaderStart();
 
@@ -269,13 +276,13 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		printf_P(PSTR(
 			"<form action=\"txp-tlnverz.cgi\">"
 			"<h3>Teilnehmerverzeichnis</h3>"
-			"<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\">"
+			"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 			"<tr>"
    			"<td align=\"right\">Nummer</td>" // Nummer
 			"<td align=\"left\">Adresse</td>" // Adresse
 			"<td align=\"center\">Port</td>" // Port
 			"<td align=\"center\">Durchwahl</td>" // Durchwahl
-			"<td align=\"center\">Aktion</td>" // in dieser Spalte sind die Buttons
+			"<td align=\"left\">Aktion</td>" // in dieser Spalte sind die Buttons
 			"</tr>"			
 			));
 			
@@ -304,24 +311,78 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 								"<td><a href=\"txp-tlnverz.cgi?edit=%ld\" style=\"text-decoration:none\"><input type=\"button\" value=\"&Auml;ndern\" class=\"actionBtn\"></a></td>"
   								"</tr>"), TD.Nummer, Buf, TD.Port, TD.Durchwahl, TD.Nummer);
 				}
-			printf_P(PSTR( "</table>" ));
+			printf_P(PSTR( "<tr><td></td><td></td><td></td><td></td>"
+						   "<td><a href=\"txp-tlnverz.cgi?editnew\" style=\"text-decoration:none\"><input type=\"button\" value=\"Hinzuf&uuml;gen\" class=\"actionBtn\"></a></td>"
+						   "</table></form>") );
 			} // Teilnehmerverzeichnis nicht leer
 		else
 			{
-			printf_P(PSTR( "</table>Noch keine Eintr&auml;ge vorhanden<p>" ));
+			printf_P(PSTR( "</table>Noch keine Eintr&auml;ge vorhanden<p>"
+						   "<a href=\"txp-tlnverz.cgi?editnew\" style=\"text-decoration:none\"><input type=\"button\" value=\"Hinzuf&uuml;gen\" class=\"actionBtn\"></a>" ));
 			}
 
-		printf_P(PSTR( "<a href=\"txp-tlnverz.cgi?editnew\" style=\"text-decoration:none\"><input type=\"button\" value=\"Hinzuf&uuml;gen\" class=\"actionBtn\"></a></form>") );
 		} // argc == 0
-	else if (PharseCheckName_P(http_request, PSTR("editnew")) || PharseCheckName_P(http_request, PSTR("edit")))
+	else if (PharseCheckName_P(http_request, EditNewPN) || PharseCheckName_P(http_request, EditPN))
 		{ // Ändern ODER Neu --> Eingabeformular anzeigen und ggf. füllen.
-		printf_P(PSTR("TODO Eingabeformular"));
+		TD.Nummer = 0;
+		TD.Adresse[0] = '\0';
+		TD.AdrArt = TxpUrl;
+		TD.Port = TXP_PORT;
+		TD.Durchwahl = 0;
+		if (PharseCheckName_P(http_request, EditPN))
+			{
+			TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, EditPN)]);
+			TlnSuche(TD.Nummer, true, &TD);
+			}
+			
+		printf_P(PSTR(
+			"<form action=\"txp-tlnverz.cgi\">"
+			"<table border=\"0\" cellpadding=\"5\" cellspacing=\"0\">"
+			));
+
+		printf_P( PSTR(	"<tr>"
+						"<td align=\"right\">Nummer:</td>"
+						"<td><input name=\"nummer\" type=\"text\" size=\"10\" value=\"%ld\" maxlength=\"10\"></td>"
+						"</tr>"), TD.Nummer);
+
+		if (TD.AdrArt == TxpIP)
+			iptostr(TD.IPAdr, TD.Adresse);
+		printf_P( PSTR(	"<tr>"
+						"<td align=\"right\">Adresse:</td>"
+						"<td><input name=\"adresse\" type=\"text\" size=\"25\" value=\"%s\" maxlength=\"%d\"></td>"
+						"</tr>"), TD.Adresse, TlnAdresseMax-1);
+
+		printf_P( PSTR(	"<tr>"
+						"<td align=\"right\">Port:</td>"
+						"<td><input name=\"port\" type=\"text\" size=\"3\" value=\"%d\" maxlength=\"3\"></td>"
+						"</tr>"), TD.Port);
+
+		printf_P( PSTR(	"<tr>"
+						"<td align=\"right\">Durchwahl:</td>"
+						"<td><input name=\"durchwahl\" type=\"text\" size=\"3\" value=\"%d\" maxlength=\"3\"></td>"
+						"</tr>"), TD.Durchwahl);
+						
+/* Reserve
+		printf_P( PSTR( "<tr>"
+					   	"<td align=\"right\">Port:</td>"
+					    "<td><input name=\"port\" type=\"checkbox\" value=\"1\" " )); 
+		if (FesteHauptstelle)
+			printf_P( PSTR("checked"));
+		printf_P( PSTR(	"></td>"
+  						"</tr>") );
+*/		
+		printf_P(PSTR( "<tr>"
+						"<td></td><td><input type=\"submit\" value=\" Einstellung &Uuml;bernehmen \"></td>"
+  						"</tr>"
+					   	"</table>"
+						"</form>") );
+
 		}
-	else if (PharseCheckName_P(http_request, PSTR("delete")))
+	else if (PharseCheckName_P(http_request, DeletePN))
 		{ // löschen
 		printf_P(PSTR("TODO Löschen"));
 		}
-	else if (PharseCheckName_P(http_request, PSTR("add")) || PharseCheckName_P(http_request, PSTR("update")))
+	else if (PharseCheckName_P(http_request, AddPN) || PharseCheckName_P(http_request, UpdatePN))
 		{ // neuen Einfügen oder geänderten Aktualisieren
 		static PROGMEM const char NummerPN[] = "nummer";
 		static PROGMEM const char AdressePN[] = "adresse";
@@ -363,6 +424,9 @@ void TlnBuchInit()
 	TlnBuchTesteintrag(234, 0, IPDOT(192l,168l,178l,30l), 134);
 	TlnBuchTesteintrag(235, 0, IPDOT(192l,168l,178l,38l), 134);
 	TlnBuchTesteintrag(3333, 0, IPDOT(192l,168l,178l,32l), 23);
+
+	cgi_RegisterCGI( TlnBuch_Anzeige_CGI, PSTR("txp-tlnverz.cgi"));
+	
 	}
 	
 
