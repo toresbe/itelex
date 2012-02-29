@@ -1,13 +1,19 @@
+#include <avr/pgmspace.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "system/net/ip.h"
+
+#include "apps/httpd/cgibin/cgi-bin.h"
+#include "apps/httpd/httpd2.h"
+#include "apps/httpd/httpd2_pharse.h"
 
 #include "TlnBuch.h"
 
 #ifdef TELEXPHONE
 
-enum { TlnBuchMemMax = 30000 } ; //!< Größe des Teilnehmerverzeichnisses in Bytes
+enum { TlnBuchMemMax = 30000UL } ; //!< Größe des Teilnehmerverzeichnisses in Bytes
 
 
 //! Speicher des Teilnehmerverzeichnisses.
@@ -22,12 +28,11 @@ enum { TlnBuchMemMax = 30000 } ; //!< Größe des Teilnehmerverzeichnisses in By
 //! \par 2 Byte Port
 //! \par 1 Byte Durchwahl (0 bei keine Durchwahl).
 
+
 static char TlnBuch[TlnBuchMemMax];
 
 
 static uint16_t TlnBuchMemUsed; //!< Ende des genutzten Bereichs in TlnBuch.
-
-
 
 
 //! Ermittelt die Größe eines Teilnehmereintrags.
@@ -53,12 +58,11 @@ static uint8_t TlnEintragGroesse(TTlnDaten *Tln)
 //! Füllt die Daten in TlnBuch.
 static void TlnEintragen(TTlnDaten *Tln, char *BuchP)
 	{
-	uint8_t *SizeP;
 	void *p;
 	
 	p = BuchP;
 	*((uint32_t *) p) = Tln->Nummer; 					p += 4;
-	SizeP = p; 											p += 1;
+	*((uint8_t *) p) = TlnEintragGroesse(Tln);			p += 1;
 	*((uint8_t *) p) = (uint8_t) Tln->AdrArt;			p += 1;
 	*((uint32_t *) p) = Tln->Datum; 					p += 4;
 	switch (Tln->AdrArt)
@@ -82,8 +86,9 @@ static void TlnEintragen(TTlnDaten *Tln, char *BuchP)
 			*((uint8_t *) (p-5)) = (uint8_t) Geloescht; // nachträglich auf gelöscht ändern
 			break;
 		}
-		
-	*SizeP = ((char *) p) - BuchP;
+
+	//! \todo Check, ob p-BuchP == TlnEintragGroesse
+	
 	} // TlnEintragen
 	
 	
@@ -197,7 +202,37 @@ bool TlnHinzufuegen(TTlnDaten *Tln)
 	}
 
 
-void TlnBuchTesteintrag(uint32_t nr, char *url, long ip, uint16_t port)
+//! Zeiger für TlnListerStart und TlnListerNaechster.
+//---------------------------------------------------
+//! Zeigt auf nächsten Eintrag, der durch TlnListerNaechster geliefert wird.
+static char *ListerP = TlnBuch;
+
+
+//! Startet die sequentielle Abfrage aller Teilnehmereinträge.
+//------------------------------------------------------------
+//! \retval true wenn es mindestens einen Eintrag gibt.
+bool TlnListerStart()
+	{
+	ListerP = TlnBuch;
+	return ListerP < TlnBuch + TlnBuchMemUsed;
+	}
+	
+
+//! Sequentielle Abfrage aller Teilnehmereinträge.
+//------------------------------------------------------------
+//! \param[out] Tln gefundener Eintrag.
+//! \retval true wenn ein weiterer Eintrag gefunden wurde.
+bool TlnListerNaechster(TTlnDaten *Tln)
+	{
+	if (ListerP >= TlnBuch + TlnBuchMemUsed)
+		return false;
+	TlnLesen(Tln, ListerP);
+	ListerP += *((uint8_t *) (ListerP+4));
+	return true;
+	}
+
+	
+static void TlnBuchTesteintrag(uint32_t nr, char *url, long aip, uint16_t port)
 	{
 	TTlnDaten TD;
 
@@ -205,7 +240,7 @@ void TlnBuchTesteintrag(uint32_t nr, char *url, long ip, uint16_t port)
 	if (url == NULL)
 		{
 		TD.AdrArt = TxpIP; 
-		TD.IPAdr = ip;
+		TD.IPAdr = aip;
 		}
 	else
 		{
@@ -219,6 +254,105 @@ void TlnBuchTesteintrag(uint32_t nr, char *url, long ip, uint16_t port)
 	}
 	
 
+//! CGI-Funktion für die Anzeige des Teilnehmerverzeichnisses.
+void TlnBuch_Anzeige_CGI(void *pStruct)
+	{
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+	char Buf[35];
+	TTlnDaten TD;
+	
+	cgi_PrintHttpheaderStart();
+
+	if ( http_request->argc == 0 )
+		{ // Startseite = Liste
+		printf_P(PSTR(
+			"<form action=\"txp-tlnverz.cgi\">"
+			"<h3>Teilnehmerverzeichnis</h3>"
+			"<table border=\"1\" cellpadding=\"5\" cellspacing=\"0\">"
+			"<tr>"
+   			"<td align=\"right\">Nummer</td>" // Nummer
+			"<td align=\"left\">Adresse</td>" // Adresse
+			"<td align=\"center\">Port</td>" // Port
+			"<td align=\"center\">Durchwahl</td>" // Durchwahl
+			"<td align=\"center\">Aktion</td>" // in dieser Spalte sind die Buttons
+			"</tr>"			
+			));
+			
+		if (TlnListerStart())
+			{
+			while (TlnListerNaechster(&TD))
+				{
+				switch (TD.AdrArt)
+					{
+					case TxpUrl:
+						strcpy(Buf, TD.Adresse);
+						break;
+					case TxpIP:
+						iptostr(TD.IPAdr, Buf);
+						break;
+					default:
+						strcpy_P(Buf, PSTR("gel&ouml;scht"));
+						break;
+					}
+					
+				printf_P( PSTR(	"<tr>"
+					   			"<td align=\"right\">%ld</td>" // Nummer
+					   			"<td align=\"left\">%s</td>" // Adresse
+					   			"<td align=\"center\">%d</td>" // Port
+					   			"<td align=\"center\">%d</td>" // Durchwahl
+								"<td><a href=\"txp-tlnverz.cgi?edit=%ld\" style=\"text-decoration:none\"><input type=\"button\" value=\"&Auml;ndern\" class=\"actionBtn\"></a></td>"
+  								"</tr>"), TD.Nummer, Buf, TD.Port, TD.Durchwahl, TD.Nummer);
+				}
+			printf_P(PSTR( "</table>" ));
+			} // Teilnehmerverzeichnis nicht leer
+		else
+			{
+			printf_P(PSTR( "</table>Noch keine Eintr&auml;ge vorhanden<p>" ));
+			}
+
+		printf_P(PSTR( "<a href=\"txp-tlnverz.cgi?editnew\" style=\"text-decoration:none\"><input type=\"button\" value=\"Hinzuf&uuml;gen\" class=\"actionBtn\"></a></form>") );
+		} // argc == 0
+	else if (PharseCheckName_P(http_request, PSTR("editnew")) || PharseCheckName_P(http_request, PSTR("edit")))
+		{ // Ändern ODER Neu --> Eingabeformular anzeigen und ggf. füllen.
+		printf_P(PSTR("TODO Eingabeformular"));
+		}
+	else if (PharseCheckName_P(http_request, PSTR("delete")))
+		{ // löschen
+		printf_P(PSTR("TODO Löschen"));
+		}
+	else if (PharseCheckName_P(http_request, PSTR("add")) || PharseCheckName_P(http_request, PSTR("update")))
+		{ // neuen Einfügen oder geänderten Aktualisieren
+		static PROGMEM const char NummerPN[] = "nummer";
+		static PROGMEM const char AdressePN[] = "adresse";
+		
+		if (PharseCheckName_P(http_request, NummerPN))
+			{
+			TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, NummerPN)]);
+			strncpy(TD.Adresse, http_request->argvalue[PharseGetValue_P(http_request, AdressePN)], TlnAdresseMax-1);
+			TD.Adresse[TlnAdresseMax-1] = '\0'; // sicherheitshalber abhacken.
+			TD.IPAdr = strtoip(TD.Adresse);
+			printf_P(PSTR("Nummer: %ld<br>IP: %lx<br>Adresse: %s"), TD.Nummer, TD.IPAdr, TD.Adresse);
+			// TODO weiter auswerten.
+			}
+		else
+			{
+			printf_P(PSTR("Keine gültige Nummer angegeben"));
+			}
+		}
+	else
+		{ // nicht erkannt
+		printf_P(PSTR("Fehler: ungueltiger CGI-Aufruf: %s"), http_request->HTTP_LINEBUFFER);
+		}
+		
+	cgi_PrintHttpheaderEnd();
+
+	}
+	
+	
+	
+//! Initialisiert die Liste der Teilnehmereinträge.
+//------------------------------------------------------------
 void TlnBuchInit()
 	{
 	TlnBuchMemUsed = 0;
@@ -231,5 +365,6 @@ void TlnBuchInit()
 	TlnBuchTesteintrag(3333, 0, IPDOT(192l,168l,178l,32l), 23);
 	}
 	
+
 	
 #endif //def TELEXPHONE

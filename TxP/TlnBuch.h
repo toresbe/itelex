@@ -34,6 +34,10 @@ extern bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln);
 
 extern bool TlnHinzufuegen(TTlnDaten *Tln);	
 
+extern bool TlnListerStart();
+
+extern bool TlnListerNaechster(TTlnDaten *Tln);	
+
 extern void TlnBuchInit();
 
 #endif //def TELEXPHONE
