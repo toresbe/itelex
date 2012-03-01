@@ -268,6 +268,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	static PROGMEM const char DeletePN[] = "delete";
 	static PROGMEM const char UpdatePN[] = "update";
 	static PROGMEM const char AddPN[] = "add";
+	static PROGMEM const char NummerPN[] = "nummer";
+	static PROGMEM const char AdressePN[] = "adresse";
 	
 	cgi_PrintHttpheaderStart();
 
@@ -382,24 +384,14 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		{ // löschen
 		printf_P(PSTR("TODO Löschen"));
 		}
-	else if (PharseCheckName_P(http_request, AddPN) || PharseCheckName_P(http_request, UpdatePN))
+	else if (PharseCheckName_P(http_request, NummerPN))
 		{ // neuen Einfügen oder geänderten Aktualisieren
-		static PROGMEM const char NummerPN[] = "nummer";
-		static PROGMEM const char AdressePN[] = "adresse";
-		
-		if (PharseCheckName_P(http_request, NummerPN))
-			{
-			TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, NummerPN)]);
-			strncpy(TD.Adresse, http_request->argvalue[PharseGetValue_P(http_request, AdressePN)], TlnAdresseMax-1);
-			TD.Adresse[TlnAdresseMax-1] = '\0'; // sicherheitshalber abhacken.
-			TD.IPAdr = strtoip(TD.Adresse);
-			printf_P(PSTR("Nummer: %ld<br>IP: %lx<br>Adresse: %s"), TD.Nummer, TD.IPAdr, TD.Adresse);
-			// TODO weiter auswerten.
-			}
-		else
-			{
-			printf_P(PSTR("Keine gültige Nummer angegeben"));
-			}
+		TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, NummerPN)]);
+		strncpy(TD.Adresse, http_request->argvalue[PharseGetValue_P(http_request, AdressePN)], TlnAdresseMax-1);
+		TD.Adresse[TlnAdresseMax-1] = '\0'; // sicherheitshalber abhacken.
+		TD.IPAdr = strtoip(TD.Adresse);
+		printf_P(PSTR("Nummer: %ld<br>IP: %lx<br>Adresse: %s"), TD.Nummer, TD.IPAdr, TD.Adresse);
+		// TODO weiter auswerten.
 		}
 	else
 		{ // nicht erkannt
