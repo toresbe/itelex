@@ -78,15 +78,13 @@ typedef enum
 	ModGehendVerbunden = 4,
 	// Kommend = vom Netz zum internen Anschluss
 	ModKommendVerbVorstufe = 11, // es wird erst mal abgewartet, was aus der ankommenden Verbindung wird.
-	ModKommendWarteReservOK = 12, //!< Warte auf Gelegenheit zum Senden des Einschaltbefehls an das Endgerät
-	ModKommendWarteEinQuitt = 13, //!< Warte auf Einschalt-Quittung des Endgeräts
-	ModKommendVerbunden = 14, 
+	ModKommendWarteEinQuitt = 12, //!< Warte auf Einschalt-Quittung des Endgeräts
+	ModKommendVerbunden = 13, 
 	ModWarteSchlussQuitt = 9,
 	
 	// Über HTML-Seite eingegebener Verbindungswunsch
-	ModHtmlWarteReservOK = 21, //!< Warte auf Gelegenheit zum Senden des Einschaltbefehls an das Endgerät
-	ModHtmlWarteEinQuitt = 22, //!< Warte auf Einschalt-Quittung des Endgeräts
-	ModHtmlVerbunden = 23, 
+	ModHtmlWarteEinQuitt = 21, //!< Warte auf Einschalt-Quittung des Endgeräts
+	ModHtmlVerbunden = 22, 
 	} TModus;
 	
 	
@@ -204,6 +202,11 @@ static uint8_t Hauptstelle;
 
 static bool FesteHauptstelle;
 	//!< Wenn true, werden kommende Verbindungen immer auf die gleiche Endstelle gesendet
+	//!< werden sollen.
+
+static bool AlternativSucheBeiBesetzt;
+	//!< Wenn true, werden bei besetzter Hauptstelle andere Endgeräte probiert.
+
 
 static uint8_t DurchwahlTabelle[9];
 	//!< Liste der Nebenstellen-Nummern bei kommenden Rufen mit Durchwahl
@@ -439,13 +442,13 @@ static void FalschCodeEmpfangen(uint8_t Code)
 	}
 
 
+/*	
 //! Druckt am verbundenen Fernschreiber Datum und Uhrzeit des Anrufs
 //-------------------------------------------------------------------
 //! \todo bewirkt manchmal Endlosschleifen -> Ausschaltzwang einbauen.	
 //! \todo ganze Funktion vorläufig deaktiviert.
 static void DatumDruckenUndAusschalten()
 	{
-/*	
 	if (!EndgeraetEinschalten)
 		return;
 
@@ -460,8 +463,8 @@ static void DatumDruckenUndAusschalten()
 	sprintf_P(p, PSTR("\r\n\ndatum: %02u.%02u.%04u  uhrzeit: %02d:%02d:%02d\r\n\n"),
 			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 	EndgeraetEinschalten = false;
-*/	
 	}
+*/	
 	
 
 //! Bewirkt Moduswechsel.
@@ -554,10 +557,6 @@ static void ModusWechsel(TModus neu)
 			Durchwahl = 0;
 			break;
 	
-		case ModKommendWarteReservOK: //!< Warte auf Gelegenheit zum Senden des Einschaltbefehls an das Endgerät
-			// derzeit keine Änderung erforderlich
-			break;
-	
 		case ModKommendWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
 			SET_BIT_Status(StatBit_FsBefBetrieb);
 			SET_BIT_Status(StatBit_FsBefEin);
@@ -578,25 +577,20 @@ static void ModusWechsel(TModus neu)
 			break;
 
 		// Html = Auf HTML-Seite eingegebener Text
-		case ModHtmlWarteReservOK:
+		case ModHtmlWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
 			CLR_BIT_Status(StatBit_Frei);
 			CLR_BIT_Status(StatBit_LeitungKennung);
 			CLR_BIT_Status(StatBit_Verbunden);
 			CLR_BIT_Status(StatBit_FsMeldBetrieb);
 			CLR_BIT_Status(StatBit_FsMeldEin);
-			CLR_BIT_Status(StatBit_FsBefBetrieb);
-			CLR_BIT_Status(StatBit_FsBefEin);
+			SET_BIT_Status(StatBit_FsBefBetrieb);
+			SET_BIT_Status(StatBit_FsBefEin);
 			SET_BIT_Status(StatBit_AngerufenBelegt);
 			LED_off(GELB);
 			LED_on(GRUEN);
 			LED_off(BLAU);
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
-			break;
-	
-		case ModHtmlWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
-			SET_BIT_Status(StatBit_FsBefBetrieb);
-			SET_BIT_Status(StatBit_FsBefEin);
 			break;
 	
 		case ModHtmlVerbunden: 
@@ -687,6 +681,93 @@ static void SchreibeZeichenInSendePuffer(char c)
 		} // kein Werda
 	}
 			
+			
+//! Bei kommenden Verbindungen aller Art (TelexPhone, HTML) passenden internen 
+//! Empfänger ermitteln und anwählen.
+//-----------------------------------------------------------------------------			
+//! Setzt als Ergebnis BusVerbPartner. 
+//! \param aDurchwahl Bevorzugstes Endgerät lokal. 0 bei keiner Bevorzugung.
+//! \retval true Ein Endgerät gefunden und erfolgreich Reserviert.
+//! \retval false Intern alle in Frage kommenden Endgeräte besetzt.
+static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
+	{
+	int16_t Stat;
+	uint8_t TestVerbParter = 0;
+	
+	// zuerst Durchwahl prüfen...
+	if (aDurchwahl * 2 >= BusAdrMin && aDurchwahl * 2 <= BusAdrEndgeraetMax)
+		{
+		TestVerbParter = aDurchwahl * 2;
+		Stat = GetStatus(TestVerbParter);
+		if (Stat >= 0 && !BIT_IS_SET(Stat, StatBit_LeitungKennung))
+			// Gerät ist auf jeden Fall vorhanden und geeignet
+			if (BIT_IS_SET(Stat, StatBit_Frei))
+				; // alles gut
+			else
+				{ // besetzt
+				BusVerbPartner = 0;
+				return false;
+				}
+		else 
+			TestVerbParter = 0; // Hauptstelle suchen
+		}
+
+	if (TestVerbParter == 0)
+		{ // keine Durchwahl oder Durchwahl ungeeignet...
+		// Hauptstelle prüfen:
+		if (Hauptstelle == 0)
+			Hauptstelle = BusAdrMin;
+
+		TestVerbParter = Hauptstelle;
+		
+		while (true) // Abbruch in der Schleife
+			{
+			Stat = GetStatus(TestVerbParter);
+			if (Stat >= 0 
+				&& BIT_IS_SET(Stat, StatBit_Frei) 
+				&& !BIT_IS_SET(Stat, StatBit_LeitungKennung)
+				&& !BIT_IS_SET(Stat, StatBit_SpezialGeraetKennung))
+				break; // gefunden, Hurra!
+				
+			if (!AlternativSucheBeiBesetzt)
+				{ // es soll kein anderer angerufen werden
+				BusVerbPartner = 0;
+				return false;
+				}
+				
+			// nächsten probieren
+			TestVerbParter += 2;
+			
+			if (TestVerbParter > BusAdrEndgeraetMax)
+				// Ende der Liste --> also von vorn.
+				TestVerbParter = BusAdrMin;
+				
+			if (TestVerbParter == Hauptstelle)
+				// da wurde mal angefangen, also alle ein mal probiert...
+				{
+				BusVerbPartner = 0;
+				return false;
+				}
+				
+			// wdt_reset();
+			
+			} // while true
+		} // Keine Durchwahl oder Durchwahl ungeeignet
+		
+	BusVerbPartner = TestVerbParter;
+
+	BusSenden(BusEigenAdresse >> 1);
+	BusWarteFertig();
+	
+	bool Res = (BusErgebnis == Ok);
+	
+	BusErgebnis = Ok; // um spätere Probleme zu vermeiden
+	BusAuftrag = Nichts;
+
+	return Res;
+	
+	} // KommendInternAnwaehlen()
+	
 
 //! Socket bearbeiten.
 //---------------------------------------------------------------------------
@@ -1067,48 +1148,6 @@ void txp_thread()
 			} // switch Code
 		} // if GetEmpfByte
 
-	if (Modus == ModKommendWarteReservOK && BusAuftrag == Fertig)
-		{
-		if (BusErgebnis == Ok)
-			{ // ID#321 ********************************************
-#if (TXP_DEBUG >= 1)
-			printf_P(PSTR("TxP: Einschaltung extern -> Einschaltung intern\r\n" ));
-#endif
-			BusSenden(BusKdoEin);
-			ModusWechsel(ModKommendWarteEinQuitt);
-			}
-		else
-			{ // ID#322 ********************************************
-#if (TXP_DEBUG >= 1)
-			printf_P(PSTR("TxP: Einschaltung extern -> intern VERSAGT\r\n" ));
-#endif
-			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
-			CloseTxpInSocket(); // Out kann nicht geöffnet sein.
-			ModusWechsel(ModRuhe);
-			}
-		}
-
-	if (Modus == ModHtmlWarteReservOK && BusAuftrag == Fertig)
-		{
-		if (BusErgebnis == Ok)
-			{ 
-#if (TXP_DEBUG >= 1)
-			printf_P(PSTR("TxP: HTML-Eingabe -> Einschaltung intern\r\n" ));
-#endif
-			BusSenden(BusKdoEin);
-			ModusWechsel(ModHtmlWarteEinQuitt);
-			}
-		else
-			{ 
-#if (TXP_DEBUG >= 1)
-			printf_P(PSTR("TxP: HTML-Eingabe -> intern VERSAGT\r\n" ));
-#endif
-			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
-			HtmlEmpfText[0] = '\0'; // damit es keine neue Einschaltung gibt.
-			ModusWechsel(ModRuhe);
-			}
-		}
-
 	// ======================================================================
 	// Socket Empfang und Sendung
 	// ======================================================================
@@ -1123,10 +1162,25 @@ void txp_thread()
 		{
 		SocketBearbeiten(&TxpInSocket, false);
 		if (ModKommendVerbVorstufe && !PufferLeer(&SendePuffer))
-			{ // ID#311 ***************************************
-			BusSenden(BusEigenAdresse >> 1);
-			ModusWechsel(ModKommendWarteReservOK);
-			}
+			{ // ID#311/315 ***************************************
+			if (KommendInternAnwaehlen(Durchwahl)) 
+				{ // ID#311 ********************************************
+#if (TXP_DEBUG >= 1)
+				printf_P(PSTR("TxP: Einschaltung extern -> Einschaltung intern\r\n" ));
+#endif
+				BusSenden(BusKdoEin);
+				ModusWechsel(ModKommendWarteEinQuitt);
+				}
+			else
+				{ // ID#315 ********************************************
+#if (TXP_DEBUG >= 1)
+				printf_P(PSTR("TxP: Einschaltung extern -> intern VERSAGT\r\n" ));
+#endif
+				strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
+				CloseTxpInSocket(); // Out kann nicht geöffnet sein.
+				ModusWechsel(ModRuhe);
+				}
+			} // if (ModKommendVerbVorstufe && !PufferLeer(&SendePuffer))
 		}
 			
 	// ==========================================================================
@@ -1147,7 +1201,7 @@ void txp_thread()
 				{ // ID#102 *************************************************
 				// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
 				printf_P(PSTR("Txp-Verbindung kommend hergestellt\r\n" ));
-				BusVerbPartner = Hauptstelle; //! \TODO auch andere suchen
+				BusVerbPartner = Hauptstelle;
 				ModusWechsel(ModKommendVerbVorstufe);
 				SocketBufInit();
 				}
@@ -1169,10 +1223,25 @@ void txp_thread()
 	if (Modus == ModRuhe && HtmlEmpfText[0] != '\0')
 		{
 		printf_P(PSTR("HTML-Eingabe erfolgt\r\n" ));
-		BusVerbPartner = Hauptstelle; //! \TODO auch andere suchen
-		BusSenden(BusEigenAdresse >> 1);
-		ModusWechsel(ModHtmlWarteReservOK);
-		}
+
+		if (KommendInternAnwaehlen(0)) // keine Durchwahl
+			{ 
+#if (TXP_DEBUG >= 1)
+			printf_P(PSTR("TxP: HTML-Eingabe -> Einschaltung intern\r\n" ));
+#endif
+			BusSenden(BusKdoEin);
+			ModusWechsel(ModHtmlWarteEinQuitt);
+			}
+		else
+			{ 
+#if (TXP_DEBUG >= 1)
+			printf_P(PSTR("TxP: HTML-Eingabe -> intern VERSAGT\r\n" ));
+#endif
+			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
+			HtmlEmpfText[0] = '\0'; // damit es keine neue Einschaltung gibt.
+			ModusWechsel(ModRuhe);
+			}
+		} // if ModRuhe && Text per HTML empfangen
 		
 	if (Modus == ModHtmlVerbunden)
 		{
@@ -1474,10 +1543,11 @@ void txp_cgi_msg_In( void * pStruct )
 /*------------------------------------------------------------------------------------------------------------*/
 
 
-const char Hauptstelle_P[] PROGMEM = "HAUPTSTELLE";
-const char EigeneNummer_P[] PROGMEM = "EIGENENUMMER";
-const char FesteHst_P[] PROGMEM = "FESTEHPST";
-const char DurchwahlTabelle_P[] PROGMEM = "DURCHWAHLTAB";
+const PROGMEM char Hauptstelle_P[] = "HAUPTSTELLE";
+const PROGMEM char EigeneNummer_P[] = "EIGENENUMMER";
+const PROGMEM char FesteHst_P[] = "FESTEHPST";
+const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
+const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
 
  
 void txp_cgi_config(void *pStruct)
@@ -1512,7 +1582,15 @@ void txp_cgi_config(void *pStruct)
 			printf_P( PSTR("checked"));
 		printf_P( PSTR(	"></td>"
   						"</tr>") );
-		
+
+		printf_P( PSTR( "<tr>"
+					   	"<td align=\"right\">Alternativ-Suche bei besetzt:</td>"
+					    "<td><input name=\"ALTERNBEIBES\" type=\"checkbox\" value=\"1\" " )); 
+		if (AlternativSucheBeiBesetzt)
+			printf_P( PSTR("checked"));
+		printf_P( PSTR(	"></td>"
+  						"</tr>") );
+						
 		readConfig_P(DurchwahlTabelle_P, Buf);
 
 		printf_P( PSTR(	"<tr>"
@@ -1568,6 +1646,19 @@ void txp_cgi_config(void *pStruct)
 			}
 		changeConfig_P(FesteHst_P, Buf);
 		printf_P(PSTR("<br>Feste Hauptstelle: %d"), FesteHauptstelle);
+		
+		if (PharseCheckName_P(http_request, AlternBeiBes_P))
+			{
+			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, AlternBeiBes_P)], 2);
+			AlternativSucheBeiBesetzt = atoi(Buf) != 0; 
+			}
+		else
+			{
+			AlternativSucheBeiBesetzt = false;
+			Buf[0] = '0', Buf[1] = '\0';
+			}
+		changeConfig_P(AlternBeiBes_P, Buf);
+		printf_P(PSTR("<br>Alternativ-Suche bei Besetzt: %d"), AlternativSucheBeiBesetzt);
 		
 		if (PharseCheckName_P(http_request, DurchwahlTabelle_P))
 			{
@@ -1641,6 +1732,11 @@ void txp_init()
 		FesteHauptstelle = atoi(Buf) != 0;
 	else
 		FesteHauptstelle = false;
+
+	if (readConfig_P(AlternBeiBes_P, Buf) == 1)
+		AlternativSucheBeiBesetzt = atoi(Buf) != 0;
+	else
+		AlternativSucheBeiBesetzt = true;
 
 	if (readConfig_P(Hauptstelle_P, Buf) == 1)
 		Hauptstelle = atoi(Buf) << 1;

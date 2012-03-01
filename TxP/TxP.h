@@ -31,7 +31,6 @@
 	#ifdef TELEXPHONE
 	
 	#include <avr/pgmspace.h>  
-	// #include <bool.h>
 	#include "system/shell/shell.h"
 	#include "config.h"
 
