@@ -282,11 +282,12 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			"<h3>Teilnehmerverzeichnis</h3>"
 			"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 			"<tr>"
-   			"<td align=\"right\">Nummer</td>" // Nummer
-			"<td align=\"left\">Adresse</td>" // Adresse
-			"<td align=\"center\">Port</td>" // Port
-			"<td align=\"center\">Durchwahl</td>" // Durchwahl
-			"<td align=\"left\">Aktion</td>" // in dieser Spalte sind die Buttons
+   			"<th align=\"right\">Nummer</th>" // Nummer
+   			"<th align=\"left\">Typ</th>" // Typ
+			"<th align=\"left\">Adresse</th>" // Adresse
+			"<th align=\"center\">Port</th>" // Port
+			"<th align=\"center\">Durchwahl</th>" // Durchwahl
+			"<th align=\"left\">Aktion</th>" // in dieser Spalte sind die Buttons
 			"</tr>"			
 			));
 			
@@ -315,13 +316,13 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P( PSTR(	"<tr>"
 					   			"<td align=\"right\">%ld</td>" // Nummer
 								"<td align=\"left\">%s</td>" // Art
-					   			"<td align=\"left\">%s</td>" // Adresse
+					   			"<td align=\"left\">%s&#160;</td>" // Adresse
 					   			"<td align=\"center\">%d</td>" // Port
 					   			"<td align=\"center\">%d</td>" // Durchwahl
 								"<td><a href=\"txp-tlnverz.cgi?edit=%ld\" style=\"text-decoration:none\"><input type=\"button\" value=\"&Auml;ndern\" class=\"actionBtn\"></a></td>"
   								"</tr>"), TD.Nummer, ArtStr, Buf, TD.Port, TD.Durchwahl, TD.Nummer);
 				}
-			printf_P(PSTR( "<tr><td></td><td></td><td></td><td></td><td></td>"
+			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
 						   "<td><a href=\"txp-tlnverz.cgi?edit=0\" style=\"text-decoration:none\"><input type=\"button\" value=\"Hinzuf&uuml;gen\" class=\"actionBtn\"></a></td>"
 						   "</table></form>") );
 			} // Teilnehmerverzeichnis nicht leer
@@ -498,7 +499,7 @@ void TlnBuchInit()
 	TlnBuchTesteintrag(124, "sonnibs.no-ip.org", 0, 135);
 	TlnBuchTesteintrag(234, 0, IPDOT(192l,168l,178l,30l), 134);
 	TlnBuchTesteintrag(235, 0, IPDOT(192l,168l,178l,38l), 134);
-	TlnBuchTesteintrag(3333, 0, IPDOT(192l,168l,178l,32l), 23);
+	TlnBuchTesteintrag(3333, 0, IPDOT(192l,168l,178l,32l), 23); //*/
 
 	cgi_RegisterCGI( TlnBuch_Anzeige_CGI, PSTR("txp-tlnverz.cgi"));
 	
