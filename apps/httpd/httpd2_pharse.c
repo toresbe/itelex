@@ -259,7 +259,7 @@ void PharseRequest( void * pStruct )
 	}
 
 	// Einzelne Datan in Namen und Inhalt zerlegen Teil 2.
-	for ( i = 0 ; i <= http_request->argc ; i++ )
+	for ( i = 0 ; i < http_request->argc ; i++ )
 	{
 		Data = http_request->argname[ i ];
 		http_request->argvalue[ i ] = Data;
@@ -270,6 +270,8 @@ void PharseRequest( void * pStruct )
 				*Data = '\0';
 				Data++;
 				http_request->argvalue[ i ] = Data;
+				if ( *Data == '\0' )
+					break; // dann war das Argument leer.
 			}
 			
 			if ( *Data == '+' )

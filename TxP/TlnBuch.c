@@ -199,6 +199,7 @@ bool TlnHinzufuegen(TTlnDaten *Tln)
 		if (TlnBuchMemUsed + NeuGr - AltGr >= TlnBuchMemMax)
 			return false;
 		memmove(p + NeuGr, p + AltGr, TlnBuchMemUsed - (p - TlnBuch) - AltGr);
+		TlnBuchMemUsed += NeuGr - AltGr;
 		}
 	TlnEintragen(Tln, p);
 	return true;
