@@ -147,13 +147,17 @@ volatile static uint8_t SerUmTickZaehlerEmpf; //!< Zähler der Einzel-Ticks beim
 
 volatile static uint8_t SerUmTickZaehlerSend; //!< Zähler der Einzel-Ticks beim Senden
 
-volatile static uint16_t LebenszeichenZaehler; 
-	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen.
+volatile static uint16_t TwiLebenszeichenZaehler; 
+	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf dem TWI-Bus.
 	//!< wird während der Verbindung missbraucht zum Zählen der Takte bis zur Pegelwiederholung.
 	
 volatile static uint16_t RuheZaehler;
 	//!< Zählt Ticks in denen nix passiert. Wird bei Datenempfang und Sendung und 
 	//!< Verbindungsaufbau auf Null gesetzt
+	
+volatile static uint16_t SocketLebenszeichenZaehler;
+	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf der TCP-Verbindung.
+
 	
 volatile TPuffer SendePuffer; 
 	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Netz -> Endgerät
@@ -217,7 +221,11 @@ static uint32_t Wahlnummer;
 static uint8_t Wahlziffern; 
 	//!< Anzahl gewählter Ziffern
 	
-	
+
+//! Sollfrequenz des Aufrufs von txp_timerEvent()
+enum { TxpTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
+
+
 enum { DebugMsgMax = 100 } ;
 
 static char DebugMsg[DebugMsgMax];
@@ -255,6 +263,9 @@ void txp_timerEvent(void)
 	{
 	uint8_t t0c = TCNT0;
 	Timer0CallbackCount++;
+	
+	if (SocketLebenszeichenZaehler > 0)
+		SocketLebenszeichenZaehler--;
 
 	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden || Modus == ModHtmlVerbunden)
 		{ // ist Verbunden, also Pegel senden und empfangen
@@ -364,7 +375,7 @@ void txp_timerEvent(void)
 			{
 			BusSenden(BusKdoMark);
 			SendeMark = true;
-			LebenszeichenZaehler = 2; // sofort Wiederholungszeichen senden
+			TwiLebenszeichenZaehler = 2; // sofort Wiederholungszeichen senden
 			LED_off(BLAU);
 			SET_BIT_Status(StatBit_FsBefEin);
 			}
@@ -372,21 +383,21 @@ void txp_timerEvent(void)
 			{
 			BusSenden(BusKdoSpace);
 			SendeMark = false;
-			LebenszeichenZaehler = 2; // sofort Wiederholungszeichen senden
+			TwiLebenszeichenZaehler = 2; // sofort Wiederholungszeichen senden
 			LED_on(BLAU);
 			CLR_BIT_Status(StatBit_FsBefEin);
 			}
 		else
 			{ // kein Sendepegel-Wechsel
 			// Lebenszeichen = Aktuellen Pegel regelmäßig senden
-			if (LebenszeichenZaehler > 0)
-				LebenszeichenZaehler--;
+			if (TwiLebenszeichenZaehler > 0)
+				TwiLebenszeichenZaehler--;
 			else
 				{ // Lebenszeichen wenn möglich senden
 				if ((BusAuftrag == Nichts || BusAuftrag == Fertig) && BusFrei)
 					{
 					BusSenden(SendeMark ? BusKdoMarkWdh : BusKdoSpaceWdh);
-					LebenszeichenZaehler = 255;
+					TwiLebenszeichenZaehler = TxpTimerFreq * 5/10; // alle 0,5 Sekunden
 					}
 				}
 			} // kein Sendepegel-Wechsel
@@ -412,14 +423,14 @@ void txp_timerEvent(void)
 
 	else if (Modus != ModRuhe && Modus != ModWarteSchlussQuitt)
 		{ // Lebenszeichen regelmäßig senden
-		if (LebenszeichenZaehler > 0)
-			LebenszeichenZaehler--;
+		if (TwiLebenszeichenZaehler > 0)
+			TwiLebenszeichenZaehler--;
 		else
 			{ // Lebenszeichen wenn möglich senden
 			if ((BusAuftrag == Nichts || BusAuftrag == Fertig) && BusFrei)
 				{
 				BusSenden(BusLebenszeichen);
-				LebenszeichenZaehler = 255;
+				TwiLebenszeichenZaehler = TxpTimerFreq * 5/10; // alle 0,5 Sekunden
 				}
 			}
 		} // if Modus != Ruhe
@@ -614,6 +625,7 @@ static void SocketBufInit()
 	{
 	SocketInBufUsed = 0;
 	SocketOutBufUsed = 0;
+	SocketLebenszeichenZaehler = 4 * TxpTimerFreq;
 	}
 	
 	
@@ -889,7 +901,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	// vom Endgerät empfangene Daten übersetzen
 	// --------------------------------------------------
 	InCount = PufferAnzahl(&EmpfPuffer);
-	if (InCount > 10 || (InCount > 0 && RuheZaehler >= 2 * 50))
+	if (InCount > 10 || (InCount > 0 && RuheZaehler >= TxpTimerFreq * 3/10)) // 3 Sekunden Tipp-Pause
 		{ // ID#244 ID#344 ***************************************************************
 		if (SocketModeAscii)
 			{
@@ -918,6 +930,15 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			} // else !SocketModeAscii
 		}
 		
+	// ggf Lebenszeichen erzeugen
+	// --------------------------
+	if (SocketLebenszeichenZaehler == 0 && SocketOutBufUsed == 0)
+		{
+		SocketOutBuf[0] = '\0';
+		SocketOutBuf[1] = '\0';
+		SocketOutBufUsed = 2;
+		}
+		
 	// Daten ggf. ins Netz senden
 	// --------------------------------------------------
 	if (SocketOutBufUsed > 0) //! \todo && !HaltSocketOut
@@ -926,6 +947,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		printf_P(PSTR("TxP: sende TCP-Verbindung: %d" ), SocketOutBufUsed);
 #endif
 		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
+		SocketLebenszeichenZaehler = 4 * TxpTimerFreq; // alle 4 Sekunden ein Lebenszeichen
 #if (TXP_DEBUG >= 1)
 		printf_P(PSTR("/%d)\r\n" ), Res);
 #endif
@@ -1293,7 +1315,7 @@ void txp_thread()
 			HtmlSendeText[i+1] = '\0';
 			}
 
-		if (RuheZaehler > 30 * 500
+		if (RuheZaehler > 30 * TxpTimerFreq // 30 Sekunden
 			&& HtmlEmpfText[0] == '\0'
 			&& PufferLeer(&SendePuffer)
 			&& PufferLeer(&EmpfPuffer) )
@@ -1415,12 +1437,12 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(SerUmSendBitNr);
 	PRINTVAL(SerUmSendDaten);
 	PRINTVAL(SendeMark);
-	PRINTVAL(LebenszeichenZaehler); 
+	PRINTVAL(TwiLebenszeichenZaehler); 
 
 	PRINTVAL(FalscherCode); FalscherCode = 0;
 	PRINTVAL(TwiIsrCount); TwiIsrCount = 0;
-	PRINTVAL(Timer0CallbackCount / 500); //Timer0CallbackCount = 0;
-	PRINTVAL(TxpThreadCount / 500); //TxpThreadCount = 0;
+	PRINTVAL(Timer0CallbackCount / TxpTimerFreq); //Timer0CallbackCount = 0;
+	PRINTVAL(TxpThreadCount / TxpTimerFreq); //TxpThreadCount = 0;
 
 	printf_P(PSTR("<p>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , ByteCounter, PacketCounter, eth_state_error );
 
@@ -1687,13 +1709,20 @@ void txp_cgi_main( void * pStruct )
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 
-	cgi_PrintHttpheaderStart();
 	printf_P(PSTR(
-		"<a href=\"mainmenu.html\"> zur&uuml;ck</a>"
+		"<HTML>"
+		"<HEAD>"
+		"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+		"</HEAD>"
+		"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"
+		"<a href=\"mainmenu.html\">zur&uuml;ck</a>"
 		" / <a href=\"txp-msg.cgi\" target=\"main\">Nachricht senden</a>"
 		" / <a href=\"txp-tlnverz.cgi\" target=\"main\">Teilnehmer-Verzeichnis</a>"
 		" / <a href=\"txp-config.cgi\" target=\"main\">TxP-Einstellungen</a>"
 		" / <a href=\"txp-debug.cgi\" target=\"main\">Debug-Infos</a>"
+		"</BODY>"
+		"</HTML>"
+		"\r\n\r\n"
 		));
 	cgi_PrintHttpheaderEnd();
 	}
@@ -1752,7 +1781,7 @@ void txp_init()
 
 	TwiInit();
 
-	timer0_init(50 * 10); // 50 Baud mit 10 Takten je Bit
+	timer0_init(TxpTimerFreq); 
 	if (!timer0_RegisterCallbackFunction(txp_timerEvent))
 		return;
 	

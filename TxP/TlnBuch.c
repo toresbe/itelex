@@ -86,10 +86,12 @@ static void TlnEintragen(TTlnDaten *Tln, char *BuchP)
 		
 		default:
 			*((uint8_t *) (p-5)) = (uint8_t) Geloescht; // nachträglich auf gelöscht ändern
+			Tln->AdrArt = Geloescht;
 			break;
 		}
 
-	//! \todo Check, ob p-BuchP == TlnEintragGroesse
+	while (((char*)p - BuchP) != TlnEintragGroesse(Tln))
+		; // Endlosschleife zur Fehlererkennung.
 	
 	} // TlnEintragen
 	
@@ -433,7 +435,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			switch (TD.AdrArt)
 				{
 				case Geloescht:
-					printf_P(PSTR("<br>gel&oml;scht<br>"));
+					printf_P(PSTR("<br>gel&ouml;scht<br>"));
 					break;
 				case TxpIP:
 					iptostr(TD.IPAdr, TD.Adresse);
