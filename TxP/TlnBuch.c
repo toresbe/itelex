@@ -166,7 +166,8 @@ bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln)
 		{
 		if (Tln != NULL)
 			TlnLesen(Tln, p);
-		return AuchGeloescht || ((TTlnAdresseArt) *((uint8_t *) p)) != Geloescht;
+		return AuchGeloescht 
+				|| (((TTlnAdresseArt) *((uint8_t *) (p+5))) != Geloescht);
 		}
 	else
 		return false;
@@ -456,7 +457,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				{ // einen neuen Lösch-Eintrag anzulegen ist doof
 				printf_P(PSTR("<b>keine &Auml;nderung</b><br>"));
 				}
-			else if (TD.Nummer != AltNummer && TlnSuche(TD.Nummer, true, NULL))
+			else if (TD.Nummer != AltNummer && TlnSuche(TD.Nummer, false, NULL))
 				{
 				printf_P(PSTR("<b>Nummer ist bereits vergeben, &Auml;nderung nicht gespeichert</b><br>"));
 				}
