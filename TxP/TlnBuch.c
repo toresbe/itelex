@@ -141,7 +141,7 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 		case AsciiUrl:
 			strcpy(Tln->Adresse, p);					p += strlen(Tln->Adresse)+1;
 			Tln->Port = *((uint16_t *) p);				p += 2;
-			Tln->Durchwahl 0;
+			Tln->Durchwahl = 0;
 			break;
 			
 		case AsciiIP:
@@ -303,6 +303,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	static PROGMEM const char AdressePN[] = "adresse";
 	static PROGMEM const char PortPN[] = "port";
 	static PROGMEM const char DurchwahlPN[] = "durchwahl";
+	static PROGMEM const char TypPN[] = "type";
+	static PROGMEM const char TypAsciiPN[] = "Ascii";
+	static PROGMEM const char TypTxpPN[] = "TelexPhone";
 	
 	cgi_PrintHttpheaderStart();
 
@@ -397,7 +400,21 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						"<td><input name=\"altnummer\" type=\"hidden\" value=\"%ld\"></td>"
 						"</tr>"), TD.Nummer, TD.Nummer);
 
-		if (TD.AdrArt == TxpIP)
+		switch (TD.AdrArt)
+			{
+			case TxpIP:
+			case TxpUrl: 	strcpy_P(Buf, PSTR("TelexPhone")); break;
+			case AsciiIP:
+			case AsciiUrl: 	strcpy_P(Buf, PSTR("Ascii")); break;
+			default: 		Buf[0] = '\0'; break;
+			}
+		printf_P( PSTR(	"<tr>"
+						"<td align=\"right\">Typ:</td>"
+						"<td><select name=\"type\" size=\"1\" value=\"%s\">"
+						"<option>TelexPhone</option><option>Ascii</option>" // Strings müssen zu TypAsciiPN und TypTxpPN passen
+						"</select></td>"), Buf);
+						
+		if (TD.AdrArt == TxpIP || TD.AdrArt == AsciiIP)
 			iptostr(TD.IPAdr, TD.Adresse);
 		printf_P( PSTR(	"<tr>"
 						"<td align=\"right\">Adresse:</td>"
@@ -445,6 +462,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			TD.AdrArt = Geloescht;
 		else
 			{
+			//! \todo type auswerten.
 			TD.IPAdr = strtoip(TD.Adresse);
 			if (TD.IPAdr == 0)
 				TD.AdrArt = TxpUrl;
