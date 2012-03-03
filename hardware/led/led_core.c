@@ -41,9 +41,9 @@
 
 #if defined(OpenMCP)
 
-#define		LED_INVERT
-const char LED_DATA[] PROGMEM = { PORTD_4 , PORTD_5 , PORTD_6 };
-	
+	#define		LED_INVERT
+	const char LED_DATA[] PROGMEM = { PORTD_4 , PORTD_5 , PORTD_6 };
+
 #elif defined(AVRNETIO)
 
 	const char LED_DATA[] PROGMEM = { PORTD_2 , PORTD_4 , PORTD_6 };

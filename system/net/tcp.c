@@ -70,7 +70,7 @@
 // #define _DEBUG_
 
 #ifdef _DEBUG_
-	#include "hardware/uart/uart_core.h"
+	#include "hardware/uart/uart.h"
 #endif
 
 unsigned int TXErrorCounter = 0 ;

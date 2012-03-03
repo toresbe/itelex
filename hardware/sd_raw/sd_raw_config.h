@@ -97,7 +97,7 @@ extern "C"
 #elif defined(AVRNETIO)
 	#if defined(AVRNETIO_ADDON)
 
-		#define spi_bus_num 						0
+		#define spi_bus_num 0
 		#define configure_pin_ss() 					DDRB |= (1 << DDD3)	
 		#define ss_PIN 								PB3
 		#define ss_PORT								PORTB
@@ -108,7 +108,7 @@ extern "C"
 	
 	#elif defined(NONE_ADDON)
 
-		#define spi_bus_num 						1
+		#define spi_bus_num 1
 		#define configure_pin_ss() 					DDRD |= (1 << DDD3)	
 		#define ss_PIN 								PD3
 		#define ss_PORT								PORTD
