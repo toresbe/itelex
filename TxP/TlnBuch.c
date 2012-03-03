@@ -51,6 +51,12 @@ static uint8_t TlnEintragGroesse(TTlnDaten *Tln)
 		case TxpIP:
 			return 4 + 1 + 1 + 4 + 4 + 2 + 1;
 		
+		case AsciiUrl:
+			return 4 + 1 + 1 + 4 + strlen(Tln->Adresse)+1 + 2;
+			
+		case AsciiIP:
+			return 4 + 1 + 1 + 4 + 4 + 2;
+		
 		default:
 			return 255;
 		}
@@ -82,6 +88,16 @@ static void TlnEintragen(TTlnDaten *Tln, char *BuchP)
 			*((long *) p) = Tln->IPAdr;					p += 4;
 			*((uint16_t *) p) = Tln->Port;				p += 2;
 			*((uint8_t *) p) = Tln->Durchwahl;			p += 1;
+			break;
+		
+		case AsciiUrl:
+			strcpy(p, Tln->Adresse);					p += strlen(Tln->Adresse)+1;
+			*((uint16_t *) p) = Tln->Port;				p += 2;
+			break;
+			
+		case AsciiIP:
+			*((long *) p) = Tln->IPAdr;					p += 4;
+			*((uint16_t *) p) = Tln->Port;				p += 2;
 			break;
 		
 		default:
@@ -120,6 +136,18 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 			Tln->IPAdr = *((long *) p);					p += 4;
 			Tln->Port = *((uint16_t *) p);				p += 2;
 			Tln->Durchwahl = *((uint8_t *) p);			p += 1;
+			break;
+		
+		case AsciiUrl:
+			strcpy(Tln->Adresse, p);					p += strlen(Tln->Adresse)+1;
+			Tln->Port = *((uint16_t *) p);				p += 2;
+			Tln->Durchwahl 0;
+			break;
+			
+		case AsciiIP:
+			Tln->IPAdr = *((long *) p);					p += 4;
+			Tln->Port = *((uint16_t *) p);				p += 2;
+			Tln->Durchwahl = 0;
 			break;
 		
 		default:
@@ -313,6 +341,19 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					   		"<td align=\"center\">%d</td>" // Durchwahl
 							), TD.Adresse, TD.Port, TD.Durchwahl);
 						break;
+
+					case AsciiIP:
+						iptostr(TD.IPAdr, TD.Adresse);
+						// weiter mit TxpUrl!
+					case AsciiUrl:
+						printf_P(PSTR(
+							"<td align=\"left\">Ascii</td>"
+							"<td align=\"left\">%s</td>" // Adresse
+							"<td align=\"center\">%d</td>" // Port
+					   		"<td>&#160;</td>" // Durchwahl
+							), TD.Adresse, TD.Port, TD.Durchwahl);
+						break;
+
 					default:
 						printf_P(PSTR("<td align=\"left\">gel&ouml;scht</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"));
 						break;
@@ -441,6 +482,15 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					break;
 				case TxpUrl:
 					printf_P(PSTR("<br>TelexPhone: Url %s Port %d Durchwahl %d<br>"), 
+						TD.Adresse, TD.Port, TD.Durchwahl);
+					break;
+				case AsciiIP:
+					iptostr(TD.IPAdr, TD.Adresse);
+					printf_P(PSTR("<br>Ascii: IP %s Port %d Durchwahl %d<br>"), 
+						TD.Adresse, TD.Port, TD.Durchwahl);
+					break;
+				case AsciiUrl:
+					printf_P(PSTR("<br>Ascii: Url %s Port %d Durchwahl %d<br>"), 
 						TD.Adresse, TD.Port, TD.Durchwahl);
 					break;
 				default:

@@ -15,7 +15,9 @@ typedef enum
 	{
 	Geloescht = 0,
 	TxpUrl = 1,
-	TxpIP = 2
+	TxpIP = 2,
+	AsciiUrl = 3, //!< Telnet-ähnlich
+	AsciiIP = 4
 	} TTlnAdresseArt;
 	
 typedef struct

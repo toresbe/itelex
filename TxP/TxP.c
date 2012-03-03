@@ -100,7 +100,7 @@ static TModus Modus;
 //   * zugehörige Daten
 
 #define TXPC_NULL '\000' //!< Füllzeichen
-#define TXPC_DURCHWAHL '\001' //!< Datenblock enthält ein Byte Durchwahl
+#define TXPC_DURCHWAHL '\001' //!< Datenblock enthält ein Byte Durchwahl \todo Durchwahl abgehend noch nicht implementiert
 #define TXPC_BAUDOT_DATA '\002' //!< Datenblock mit puren Baudot-Codes
 
 	
@@ -1080,6 +1080,7 @@ void txp_thread()
 						switch (TD.AdrArt)
 							{
 							case TxpIP:
+							case AsciiIP:
 #if (TXP_DEBUG >= 1)
 								printf_P(PSTR("TxP: Teilnehmer %ld gefunden: %lx\r\n" ), TD.Nummer, TD.IPAdr);
 #endif
@@ -1087,6 +1088,7 @@ void txp_thread()
 								break;
 								
 							case TxpUrl:
+							case AsciiUrl:
 								TD.IPAdr = DNS_ResolveName(TD.Adresse); 
 									// TP.IPAdr wird 'missbraucht' aber nicht gespeichert
 								if ( TD.IPAdr != -1 )
@@ -1130,6 +1132,7 @@ void txp_thread()
 #endif
 							ModusWechsel(ModGehendVerbunden);
 							SocketBufInit();
+							SocketModeAscii = (TD.AdrArt == AsciiIP || TD.AdrArt == AsciiUrl);
 							}
 						} // gewählte Nummer war vollständig
 					} // if Modus == ModGehendWaehlen
