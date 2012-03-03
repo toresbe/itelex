@@ -275,7 +275,6 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	static PROGMEM const char AdressePN[] = "adresse";
 	static PROGMEM const char PortPN[] = "port";
 	static PROGMEM const char DurchwahlPN[] = "durchwahl";
-	static PROGMEM const char TelexPhonePN[] = "TelexPhone";
 	
 	cgi_PrintHttpheaderStart();
 
@@ -299,32 +298,29 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			{
 			while (TlnListerNaechster(&TD))
 				{
-				char ArtStr[20];
-				
+				printf_P(PSTR("<tr><td align=\"right\">%ld</td>"), TD.Nummer); // Nummer
+
 				switch (TD.AdrArt)
 					{
-					case TxpUrl:
-						strcpy_P(ArtStr, TelexPhonePN);
-						strcpy(Buf, TD.Adresse);
-						break;
 					case TxpIP:
-						strcpy_P(ArtStr, TelexPhonePN);
-						iptostr(TD.IPAdr, Buf);
+						iptostr(TD.IPAdr, TD.Adresse);
+						// weiter mit TxpUrl!
+					case TxpUrl:
+						printf_P(PSTR(
+							"<td align=\"left\">TelexPhone</td>"
+							"<td align=\"left\">%s</td>" // Adresse
+							"<td align=\"center\">%d</td>" // Port
+					   		"<td align=\"center\">%d</td>" // Durchwahl
+							), TD.Adresse, TD.Port, TD.Durchwahl);
 						break;
 					default:
-						strcpy_P(ArtStr, PSTR("gel&ouml;scht"));
-						Buf[0] = '\0';
+						printf_P(PSTR("<td align=\"left\">gel&ouml;scht</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"));
 						break;
 					}
 					
-				printf_P( PSTR(	"<tr>"
-					   			"<td align=\"right\">%ld</td>" // Nummer
-								"<td align=\"left\">%s</td>" // Art
-					   			"<td align=\"left\">%s&#160;</td>" // Adresse
-					   			"<td align=\"center\">%d</td>" // Port
-					   			"<td align=\"center\">%d</td>" // Durchwahl
-								"<td><a href=\"txp-tlnverz.cgi?edit=%ld\" style=\"text-decoration:none\"><input type=\"button\" value=\"&Auml;ndern\" class=\"actionBtn\"></a></td>"
-  								"</tr>"), TD.Nummer, ArtStr, Buf, TD.Port, TD.Durchwahl, TD.Nummer);
+				printf_P(PSTR(
+					"<td><a href=\"txp-tlnverz.cgi?edit=%ld\" style=\"text-decoration:none\">"
+					"<input type=\"button\" value=\"&Auml;ndern\" class=\"actionBtn\"></a></td></tr>"), TD.Nummer);
 				}
 			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
 						   "<td><a href=\"txp-tlnverz.cgi?edit=0\" style=\"text-decoration:none\"><input type=\"button\" value=\"Hinzuf&uuml;gen\" class=\"actionBtn\"></a></td>"

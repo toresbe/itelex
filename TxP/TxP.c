@@ -158,6 +158,9 @@ volatile static uint16_t RuheZaehler;
 volatile static uint16_t SocketLebenszeichenZaehler;
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf der TCP-Verbindung.
 
+volatile static uint8_t TxpThreadCheckCount;
+	//!< Prüft, ob die Funktion void txp_thread() ausreichend häufig aufgerufen wird.
+
 	
 volatile TPuffer SendePuffer; 
 	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Netz -> Endgerät
@@ -266,6 +269,11 @@ void txp_timerEvent(void)
 	
 	if (SocketLebenszeichenZaehler > 0)
 		SocketLebenszeichenZaehler--;
+		
+	if (TxpThreadCheckCount > 0)
+		TxpThreadCheckCount--;
+	else
+		LED_on(ROT);
 
 	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden || Modus == ModHtmlVerbunden)
 		{ // ist Verbunden, also Pegel senden und empfangen
@@ -990,7 +998,8 @@ void txp_thread()
 
 	TxpThreadCount++;
 
-	LED_on(ROT); // HACK Test der Aufrufpausen von txp_thread
+	TxpThreadCheckCount = 5;
+	LED_off(ROT); // HACK Test der Aufrufpausen von txp_thread
 	
 	// ======================================================================
 	// Auf TWI-Bus empfangene Codes auswerten
@@ -1329,9 +1338,7 @@ void txp_thread()
 			} // Abschaltung nach XXX Sekunden
 
 		} // if Modus == ModHtmlVerbunden
-		
-	LED_off(ROT); // HACK Test der Aufrufpausen von txp_thread
-	
+
 	} // txp_thread
 	
 
