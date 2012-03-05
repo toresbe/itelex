@@ -219,17 +219,34 @@ int check_files( void * pStruct )
 
 					STDOUT_Flush();
 					
-					while( 1 )
+					filesize = 0;
+					
+					while ( 1 )
 	                {
 						if( ( CheckSocketState( http_request->HTTP_SOCKET ) <= SOCKET_NOT_USE ) )
 						{
 							http_request->HTTP_SOCKET = SOCKET_ERROR;
 							http_request->STATE = DISCONNECT;
 							returnvalue = -1;
+#ifdef HTTP_DEBUG
+							STDOUT_save( &oldstream );
+							STDOUT_set( RS232, 0 );
+							printf_P(PSTR("HTTP socket closed by client\r\n"));
+							STDOUT_Flush();
+							STDOUT_restore( &oldstream );
+#endif
 							break;
 						}
 
 						size = fat_read_file(fd, (unsigned char *) buffer, sizeof( buffer ));
+
+#ifdef HTTP_DEBUG
+						STDOUT_save( &oldstream );
+						STDOUT_set( RS232, 0 );
+						printf_P(PSTR("read block from SD (%d) "), size);
+						STDOUT_Flush();
+						STDOUT_restore( &oldstream );
+#endif
 						
 						if ( size == -1 || size == 0 )
 						{
@@ -237,7 +254,7 @@ int check_files( void * pStruct )
 							break;
 						}
 						
-						PutSocketData_RPE( http_request->HTTP_SOCKET, size , buffer , RAM );
+						filesize += PutSocketData_RPE( http_request->HTTP_SOCKET, size , buffer , RAM );
 
 						if ( size < MAX_TCP_Datalenght )
 						{
@@ -250,18 +267,17 @@ int check_files( void * pStruct )
 			}
 		}
 		fat_close_dir ( dd );
-	}
-
-#endif
 
 #ifdef HTTP_DEBUG
-	STDOUT_save( &oldstream );
-	STDOUT_set( RS232, 0 );
+		STDOUT_save( &oldstream );
+		STDOUT_set( RS232, 0 );
+		printf_P( PSTR("( %ld Byte uebertragen (SD)\r\n") , filesize );
+		STDOUT_Flush();
+		STDOUT_restore( &oldstream );
+#endif
 
-	printf_P( PSTR("( %ld Byte uebertragen (SD)\r\n") , filesize );
-	
-	STDOUT_Flush();
-	STDOUT_restore( &oldstream );
+	}
+
 #endif
 
 	return( returnvalue );
