@@ -58,6 +58,7 @@
 
 #include "hardware/timer0/timer0.h"
 
+#include "CgiFormTools.h"
 #include "TxP/TxP.h"
 #include "TxP/TlnBuch.h"
 #include "BusKomm.h"
@@ -102,7 +103,7 @@ static TModus Modus;
 #define TXPC_NULL '\000' //!< Füllzeichen
 #define TXPC_DURCHWAHL '\001' //!< Datenblock enthält ein Byte Durchwahl \todo Durchwahl abgehend noch nicht implementiert
 #define TXPC_BAUDOT_DATA '\002' //!< Datenblock mit puren Baudot-Codes
-
+#define TXPC_START '\005' //!< Rückmeldung vom Angerufenen dass Empfangsbereit
 	
 // BusVerbPartner ist in BusKomm.h enthalten
 
@@ -888,6 +889,16 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 					break; // Daten können momentan nicht verarbeitet werden.
 				}
 				
+			else if (c == TXPC_START)
+				{ // ID#227 Teil 1 **************************************************
+				PufferSpeich(&SendePuffer, TtyCodeSPC); 
+					//! \todo vielleicht fällt mir hier noch was besseres ein. 
+					//! Grund ist, dass durch das Zeichen im Puffer die Einschaltung der 
+					//! eigenen Endstelle erwirkt werden soll.
+					
+				i += 2 + (uint8_t) SocketInBuf[i+1];
+				}
+				
 			else 
 				{ // unbekannter Code --> ignorieren EINSCHLIEßLICH Daten
 				i += 2 + (uint8_t) SocketInBuf[i+1];
@@ -942,8 +953,8 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	// --------------------------
 	if (SocketLebenszeichenZaehler == 0 && SocketOutBufUsed == 0)
 		{
-		SocketOutBuf[0] = '\0';
-		SocketOutBuf[1] = '\0';
+		SocketOutBuf[0] = TXPC_NULL;
+		SocketOutBuf[1] = 0;
 		SocketOutBufUsed = 2;
 		}
 		
@@ -1043,6 +1054,13 @@ void txp_thread()
 				if (Modus == ModKommendWarteEinQuitt)
 					{ // ID#331 ********************************************
 					ModusWechsel(ModKommendVerbunden);
+					if (!SocketModeAscii)
+						{ // also Txp-Protokoll
+						SocketOutBuf[SocketOutBufUsed] = TXPC_START;
+						SocketOutBufUsed++;
+						SocketOutBuf[SocketOutBufUsed] = 0;
+						SocketOutBufUsed++;
+						}
 					}
 
 				else if (Modus == ModHtmlWarteEinQuitt)
@@ -1067,7 +1085,7 @@ void txp_thread()
 #if (TXP_DEBUG >= 1)
 				printf_P(PSTR("TxP: Wahlziffer %d intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
 #endif
-				if (Modus == ModGehendWaehlen)
+				if (Modus == ModGehendWaehlen && TxpOutSocket == NO_SOCKET_USED)
 					{
 					TTlnDaten TD;
 					
@@ -1119,20 +1137,33 @@ void txp_thread()
 							// Verbindung konnte nicht aufgebaut werden
 							BusSenden(BusKdoSchluss);
 #if (TXP_DEBUG >= 1)
-							printf_P(PSTR("TxP: Verbindung Ascii ausgehend versagt\r\n" ));
+							printf_P(PSTR("TxP: Verbindung ausgehend versagt\r\n" ));
 #endif
 							TxpOutSocket = NO_SOCKET_USED;
 							ModusWechsel(ModWarteSchlussQuitt);
 							}
-						else
-							{ 
+						else if (TD.AdrArt == AsciiUrl || TD.AdrArt == AsciiIP)
+							{ // ID#226 *********************************************
 							BusSenden(BusQuittEin);
 #if (TXP_DEBUG >= 1)
 							printf_P(PSTR("TxP: Verbindung Ascii ausgehend hergestellt\r\n" ));
 #endif
 							ModusWechsel(ModGehendVerbunden);
 							SocketBufInit();
-							SocketModeAscii = (TD.AdrArt == AsciiIP || TD.AdrArt == AsciiUrl);
+							SocketModeAscii = true;
+							}
+						else // TxpUrl oder TxpIP
+							{ // ID#222 ********************************************
+#if (TXP_DEBUG >= 1)
+							printf_P(PSTR("TxP: Verbindung TelexPhone ausgehend begonnen\r\n" ));
+#endif
+							SocketBufInit();
+							SocketModeAscii = true;
+							
+							SocketOutBuf[0] = TXPC_DURCHWAHL;
+							SocketOutBuf[1] = 1;
+							SocketOutBuf[2] = TD.Durchwahl;
+							SocketOutBufUsed = 3;
 							}
 						} // gewählte Nummer war vollständig
 					} // if Modus == ModGehendWaehlen
@@ -1189,8 +1220,19 @@ void txp_thread()
 	if (Modus == ModKommendVerbunden)
 		SocketBearbeiten(&TxpInSocket, true);
 		
-	if (Modus == ModGehendVerbunden)
+	if (Modus == ModGehendVerbunden || Modus == ModGehendWaehlen)
+		{
 		SocketBearbeiten(&TxpOutSocket, true);
+		if (Modus == ModGehendWaehlen && !PufferLeer(&SendePuffer))
+			{ // es wurden Daten empfangen, also schnellstens Endgerät anschmeißen
+			// ID#227 Teil 2 *******************************************************
+#if (TXP_DEBUG >= 1)
+			printf_P(PSTR("TxP: Angerufener hat geantwortet -> Einschaltung intern\r\n" ));
+#endif
+			BusSenden(BusQuittEin);
+			ModusWechsel(ModGehendVerbunden);
+			}
+		}
 
 	if (Modus == ModKommendVerbVorstufe)
 		{
@@ -1592,49 +1634,21 @@ void txp_cgi_config(void *pStruct)
 
 	if ( http_request->argc == 0 )
 		{
-		printf_P(PSTR(
-			"<form action=\"txp-config.cgi\">"
-			"<table border=\"0\" cellpadding=\"5\" cellspacing=\"0\">"
-			));
+		CgiFormStartTabbed_P(PSTR("txp-config.cgi"));
 
-		printf_P( PSTR(	"<tr>"
-						"<td align=\"right\">Eigene Nummer:</td>"
-						"<td><input name=\"EIGENENUMMER\" type=\"text\" size=\"2\" value=\"%d\" maxlength=\"2\"></td>"
-						"</tr>"), BusEigenAdresse >> 1);
+		CgiFormInputFieldLong_P(PSTR("Eigene Nummer:"), EigeneNummer_P, 2, BusEigenAdresse >> 1);
 
-		printf_P( PSTR(	"<tr>"
-						"<td align=\"right\">Hauptstelle:</td>"
-						"<td><input name=\"HAUPTSTELLE\" type=\"text\" size=\"2\" value=\"%d\" maxlength=\"2\"></td>"
-						"</tr>"), Hauptstelle >> 1);
-						
-		printf_P( PSTR( "<tr>"
-					   	"<td align=\"right\">feste Hauptstelle:</td>"
-					    "<td><input name=\"FESTEHPST\" type=\"checkbox\" value=\"1\" " )); 
-		if (FesteHauptstelle)
-			printf_P( PSTR("checked"));
-		printf_P( PSTR(	"></td>"
-  						"</tr>") );
+		CgiFormInputFieldLong_P(PSTR("Hauptstelle:"), Hauptstelle_P, 2, Hauptstelle >> 1);
 
-		printf_P( PSTR( "<tr>"
-					   	"<td align=\"right\">Alternativ-Suche bei besetzt:</td>"
-					    "<td><input name=\"ALTERNBEIBES\" type=\"checkbox\" value=\"1\" " )); 
-		if (AlternativSucheBeiBesetzt)
-			printf_P( PSTR("checked"));
-		printf_P( PSTR(	"></td>"
-  						"</tr>") );
+		CgiFormCheckbox_P(PSTR("feste Hauptstelle:"), FesteHst_P, FesteHauptstelle);
+
+		CgiFormCheckbox_P(PSTR("Alternativ-Suche bei besetzt:"), AlternBeiBes_P, AlternativSucheBeiBesetzt);
 						
 		readConfig_P(DurchwahlTabelle_P, Buf);
 
-		printf_P( PSTR(	"<tr>"
-						"<td align=\"right\">Durchwahlen:<br>(mit Komma trennen)</td>"
-						"<td><input name=\"DURCHWAHLTAB\" type=\"text\" size=\"30\" value=\"%s\" maxlength=\"30\"></td>"
-						"</tr>"), Buf);
+		CgiFormInputFieldText_P(PSTR("Durchwahlen:<br>(mit Komma trennen)"), DurchwahlTabelle_P, 30, Buf);
 
-		printf_P(PSTR( "<tr>"
-						"<td><input type=\"submit\" value=\" Einstellung &Uuml;bernehmen \"></td>"
-  						"</tr>"
-					   	"</table>"
-						"</form>") );
+		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
 		}
 	else // argc > 0
 		{

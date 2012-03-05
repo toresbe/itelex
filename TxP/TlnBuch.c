@@ -13,6 +13,8 @@
 #include "TxP.h"
 #include "TlnBuch.h"
 
+#include "CgiFormTools.h"
+
 #ifdef TELEXPHONE
 
 enum { TlnBuchMemMax = 30000UL } ; //!< Größe des Teilnehmerverzeichnisses in Bytes
@@ -267,23 +269,16 @@ bool TlnListerNaechster(TTlnDaten *Tln)
 	}
 
 	
-static void TlnBuchTesteintrag(uint32_t nr, char *url, long aip, uint16_t port)
+static void TlnBuchTesteintrag(uint32_t nr, TTlnAdresseArt art, char *url, long aip, uint16_t port, uint8_t dw)
 	{
 	TTlnDaten TD;
 
 	TD.Nummer = nr;
-	if (url == NULL)
-		{
-		TD.AdrArt = TxpIP; 
-		TD.IPAdr = aip;
-		}
-	else
-		{
-		TD.AdrArt = TxpUrl;
-		strcpy(TD.Adresse, url);
-		}
+	TD.AdrArt = art; 
+	TD.IPAdr = aip;
+	strcpy(TD.Adresse, url);
 	TD.Port = port;
-	TD.Durchwahl = 0;
+	TD.Durchwahl = dw;
 	TD.Datum = 0;
 	TlnHinzufuegen(&TD);
 	}
@@ -294,18 +289,18 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	{
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
-	char Buf[35];
 	TTlnDaten TD;
 
-	static PROGMEM const char EditPN[] = "edit";
-	static PROGMEM const char NummerPN[] = "nummer";
-	static PROGMEM const char AltNummerPN[] = "altnummer";
-	static PROGMEM const char AdressePN[] = "adresse";
-	static PROGMEM const char PortPN[] = "port";
-	static PROGMEM const char DurchwahlPN[] = "durchwahl";
-	static PROGMEM const char TypPN[] = "type";
-	static PROGMEM const char TypAsciiPN[] = "Ascii";
-	static PROGMEM const char TypTxpPN[] = "TelexPhone";
+	static PROGMEM const char Edit_P[] = "edit";
+	static PROGMEM const char Nummer_P[] = "nummer";
+	static PROGMEM const char AltNummer_P[] = "altnummer";
+	static PROGMEM const char Adresse_P[] = "adresse";
+	static PROGMEM const char Port_P[] = "port";
+	static PROGMEM const char Durchwahl_P[] = "durchwahl";
+	static PROGMEM const char Typ_P[] = "type";
+	static PROGMEM const char TypGeloescht_P[] = "gel&ouml;scht";
+	static PROGMEM const char TypAscii_P[] = "Ascii";
+	static PROGMEM const char TypTxp_P[] = "TelexPhone";
 	
 	cgi_PrintHttpheaderStart();
 
@@ -347,7 +342,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 					case AsciiIP:
 						iptostr(TD.IPAdr, TD.Adresse);
-						// weiter mit TxpUrl!
+						// weiter mit AsciiUrl!
 					case AsciiUrl:
 						printf_P(PSTR(
 							"<td align=\"left\">Ascii</td>"
@@ -363,24 +358,24 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					}
 					
 				printf_P(PSTR(
-					"<td><a href=\"txp-tlnverz.cgi?edit=%ld\" style=\"text-decoration:none\">"
-					"<input type=\"button\" value=\"&Auml;ndern\" class=\"actionBtn\"></a></td></tr>"), TD.Nummer);
+					"<td><a href=\"txp-tlnverz.cgi?edit=%ld\">"
+					"<input type=\"button\" value=\"&Auml;ndern\"</a></td></tr>"), TD.Nummer);
 				}
 			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
-						   "<td><a href=\"txp-tlnverz.cgi?edit=0\" style=\"text-decoration:none\"><input type=\"button\" value=\"Hinzuf&uuml;gen\" class=\"actionBtn\"></a></td>"
+						   "<td><a href=\"txp-tlnverz.cgi?edit=0\"><input type=\"button\" value=\"Hinzuf&uuml;gen\"</a></td>"
 						   "</table></form>") );
 			} // Teilnehmerverzeichnis nicht leer
 		else
 			{
 			printf_P(PSTR( "</table>Noch keine Eintr&auml;ge vorhanden<p>"
-						   "<a href=\"txp-tlnverz.cgi?edit=0\" style=\"text-decoration:none\"><input type=\"button\" value=\"Hinzuf&uuml;gen\" class=\"actionBtn\"></a>" ));
+						   "<a href=\"txp-tlnverz.cgi?edit=0\"><input type=\"button\" value=\"Hinzuf&uuml;gen\" class=\"actionBtn\"></a></form>" ));
 			}
 
 		} // argc == 0 --> gesamte Liste ausgeben
 		
-	else if (PharseCheckName_P(http_request, EditPN))
+	else if (PharseCheckName_P(http_request, Edit_P))
 		{ // Ändern ODER Neu --> Eingabeformular anzeigen und ggf. füllen.
-		TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, EditPN)]);
+		TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Edit_P)]);
 		if (TD.Nummer == 0 || !TlnSuche(TD.Nummer, true, &TD))
 			{ // neuen oder nicht gefundenen Eintrag initialisieren.
 			TD.Adresse[0] = '\0';
@@ -388,98 +383,50 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			TD.Port = TXP_PORT;
 			TD.Durchwahl = 0;
 			}
-			
-		printf_P(PSTR(
-			"<form action=\"txp-tlnverz.cgi\">"
-			"<table border=\"0\" cellpadding=\"5\" cellspacing=\"0\">"
-			));
 
-		printf_P( PSTR(	"<tr>"
-						"<td align=\"right\">Nummer:</td>"
-						"<td><input name=\"nummer\" type=\"text\" size=\"10\" value=\"%ld\" maxlength=\"10\"></td>"
-						"<td><input name=\"altnummer\" type=\"hidden\" value=\"%ld\"></td>"
-						"</tr>"), TD.Nummer, TD.Nummer);
+		CgiFormStartTabbed_P(PSTR("txp-tlnverz.cgi"));
 
+		CgiFormInputFieldLong_P(PSTR("Nummer:"), Nummer_P, 10, TD.Nummer);
+
+		printf_P(PSTR("<input name=\"altnummer\" type=\"hidden\" value=\"%ld\">"), TD.Nummer);
+		
+		const char *TypSelList[] = { TypGeloescht_P, TypTxp_P, TypAscii_P } ;
+		uint8_t TypSelNr;
 		switch (TD.AdrArt)
 			{
 			case TxpIP:
-			case TxpUrl: 	strcpy_P(Buf, PSTR("TelexPhone")); break;
+			case TxpUrl: 	TypSelNr = 1; break;
 			case AsciiIP:
-			case AsciiUrl: 	strcpy_P(Buf, PSTR("Ascii")); break;
-			default: 		Buf[0] = '\0'; break;
+			case AsciiUrl: 	TypSelNr = 2; break;
+			default: 		TypSelNr = 0; break;
 			}
-		printf_P( PSTR(	"<tr>"
-						"<td align=\"right\">Typ:</td>"
-						"<td><select name=\"type\" size=\"1\" value=\"%s\">"
-						"<option>TelexPhone</option><option>Ascii</option>" // Strings müssen zu TypAsciiPN und TypTxpPN passen
-						"</select></td>"), Buf);
-						
+		CgiFormDropdown_P(PSTR("Typ:"), Typ_P, 3, TypSelList, TypSelNr);
+		
 		if (TD.AdrArt == TxpIP || TD.AdrArt == AsciiIP)
 			iptostr(TD.IPAdr, TD.Adresse);
-		printf_P( PSTR(	"<tr>"
-						"<td align=\"right\">Adresse:</td>"
-						"<td><input name=\"adresse\" type=\"text\" size=\"30\" value=\"%s\" maxlength=\"%d\"></td>"
-						"</tr>"), TD.Adresse, TlnAdresseMax-1);
-
-		printf_P( PSTR(	"<tr>"
-						"<td align=\"right\">Port:</td>"
-						"<td><input name=\"port\" type=\"text\" size=\"5\" value=\"%d\" maxlength=\"5\"></td>"
-						"</tr>"), TD.Port);
-
-		printf_P( PSTR(	"<tr>"
-						"<td align=\"right\">Durchwahl:</td>"
-						"<td><input name=\"durchwahl\" type=\"text\" size=\"3\" value=\"%d\" maxlength=\"3\"></td>"
-						"</tr>"), TD.Durchwahl);
-						
-/* Reserve
-		printf_P( PSTR( "<tr>"
-					   	"<td align=\"right\">Port:</td>"
-					    "<td><input name=\"port\" type=\"checkbox\" value=\"1\" " )); 
-		if (FesteHauptstelle)
-			printf_P( PSTR("checked"));
-		printf_P( PSTR(	"></td>"
-  						"</tr>") );
-*/		
-		printf_P(PSTR( "<tr><td></td><td><input type=\"submit\" value=\"" ));
+		CgiFormInputFieldText_P(PSTR("Adresse:"), Adresse_P, TlnAdresseMax-1, TD.Adresse);
+		CgiFormInputFieldLong_P(PSTR("Port:"), Port_P, 5, TD.Port);
+		CgiFormInputFieldLong_P(PSTR("Durchwahl:"), Durchwahl_P, 3, TD.Durchwahl);
 		if (TD.Nummer == 0)
-			printf_P(PSTR("Hinzuf&uuml;gen"));
+			CgiFormFinish_P(PSTR("Hinzuf&uuml;gen"));
 		else
-			printf_P(PSTR("&Auml;ndern"));
-		printf_P(PSTR("\"></td>"
-  						"</tr>"
-					   	"</table>"
-						"</form>") );
+			CgiFormFinish_P(PSTR("&Auml;ndern"));
 		} // Ändern oder Neu
 
-	else if (PharseCheckName_P(http_request, NummerPN))
+	else if (PharseCheckName_P(http_request, Nummer_P))
 		{ // neuen Einfügen oder geänderten Aktualisieren
-		uint32_t AltNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, AltNummerPN)]);
-		TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, NummerPN)]);
-		strncpy(TD.Adresse, http_request->argvalue[PharseGetValue_P(http_request, AdressePN)], TlnAdresseMax-1);
+		bool Ok = true; // nur wenn gesetzt, wird auch gespeichert
+		uint32_t AltNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, AltNummer_P)]);
+		TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Nummer_P)]);
+		char TypStr[20];
+		strncpy(TypStr, http_request->argvalue[PharseGetValue_P(http_request, Typ_P)], sizeof(TypStr));
+		strncpy(TD.Adresse, http_request->argvalue[PharseGetValue_P(http_request, Adresse_P)], TlnAdresseMax-1);
 		TD.Adresse[TlnAdresseMax-1] = '\0'; // sicherheitshalber abhacken.
-		if (TD.Adresse[0] == '\0')
-			// Leere Adresse --> löschen
-			TD.AdrArt = Geloescht;
-		else
-			{
-			//! \todo type auswerten.
-			TD.IPAdr = strtoip(TD.Adresse);
-			if (TD.IPAdr == 0)
-				TD.AdrArt = TxpUrl;
-			else
-				TD.AdrArt = TxpIP;
-			}
-		TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, PortPN)]);
-		TD.Durchwahl = atoi(http_request->argvalue[PharseGetValue_P(http_request, DurchwahlPN)]);
-		
-		struct TIME CurTime;
-		CLOCK_GetTime(&CurTime);
-		TD.Datum = CurTime.time;
-		
-		// Bestätigungs-Meldung
+
 		if (TD.Nummer == 0)
 			{
 			printf_P(PSTR("<b>Teilnehmernummer 0 nicht erlaubt!</b><br>"));
+			Ok = false;
 			}
 		else
 			{
@@ -488,44 +435,78 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P(PSTR("hinzuf&uuml;gen"));
 			else if (AltNummer != TD.Nummer)
 				printf_P(PSTR("ehem. %ld"), AltNummer);
-			switch (TD.AdrArt)
+			printf_P(PSTR("<br>"));
+			}
+		
+		if (TD.Adresse[0] == '\0' || strcmp_P(TypStr, TypGeloescht_P) == 0)
+			// Leere Adresse --> löschen
+			{
+			TD.AdrArt = Geloescht;
+			printf_P(PSTR("gel&ouml;scht<br>"));
+			}
+		else
+			{
+			TD.IPAdr = strtoip(TD.Adresse);
+			if (strcmp_P(TypStr, TypTxp_P) == 0)
 				{
-				case Geloescht:
-					printf_P(PSTR("<br>gel&ouml;scht<br>"));
-					break;
-				case TxpIP:
-					iptostr(TD.IPAdr, TD.Adresse);
-					printf_P(PSTR("<br>TelexPhone: IP %s Port %d Durchwahl %d<br>"), 
-						TD.Adresse, TD.Port, TD.Durchwahl);
-					break;
-				case TxpUrl:
-					printf_P(PSTR("<br>TelexPhone: Url %s Port %d Durchwahl %d<br>"), 
-						TD.Adresse, TD.Port, TD.Durchwahl);
-					break;
-				case AsciiIP:
-					iptostr(TD.IPAdr, TD.Adresse);
-					printf_P(PSTR("<br>Ascii: IP %s Port %d Durchwahl %d<br>"), 
-						TD.Adresse, TD.Port, TD.Durchwahl);
-					break;
-				case AsciiUrl:
-					printf_P(PSTR("<br>Ascii: Url %s Port %d Durchwahl %d<br>"), 
-						TD.Adresse, TD.Port, TD.Durchwahl);
-					break;
-				default:
-					printf_P(PSTR("<br>TYP UNBEKANNT<br>"));
-					TD.AdrArt = Geloescht;
-					break;
+				if (TD.IPAdr == 0)
+					{
+					TD.AdrArt = TxpUrl;
+					printf_P(PSTR("TelexPhone: Url %s "), TD.Adresse);
+					}
+				else
+					{
+					TD.AdrArt = TxpIP;
+					iptostr(TD.IPAdr, TD.Adresse); // und wieder zurück wandeln
+					printf_P(PSTR("TelexPhone: IP %s "), TD.Adresse);
+					}
+				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
+				TD.Durchwahl = atoi(http_request->argvalue[PharseGetValue_P(http_request, Durchwahl_P)]);
+				printf_P(PSTR("Port %d Durchwahl %d<br>"), TD.Port, TD.Durchwahl);
 				}
-				
-			if (TD.AdrArt == Geloescht && AltNummer == 0)
-				{ // einen neuen Lösch-Eintrag anzulegen ist doof
-				printf_P(PSTR("<b>keine &Auml;nderung</b><br>"));
-				}
-			else if (TD.Nummer != AltNummer && TlnSuche(TD.Nummer, false, NULL))
+			else if (strcmp_P(TypStr, TypAscii_P) == 0)
 				{
-				printf_P(PSTR("<b>Nummer ist bereits vergeben, &Auml;nderung nicht gespeichert</b><br>"));
+				if (TD.IPAdr == 0)
+					{
+					TD.AdrArt = AsciiUrl;
+					printf_P(PSTR("Ascii: Url %s "), TD.Adresse);
+					}
+				else
+					{
+					TD.AdrArt = AsciiIP;
+					iptostr(TD.IPAdr, TD.Adresse); // und wieder zurück wandeln
+					printf_P(PSTR("Ascii: IP %s "), TD.Adresse);
+					}
+				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
+				TD.Durchwahl = 0;
+				printf_P(PSTR("Port %d<br>"), TD.Port);
 				}
-			else if (TlnHinzufuegen(&TD))
+			else
+				{
+				printf_P(PSTR("<b>Unbekannter Typ!</b><br>"));
+				Ok = false;
+				}
+			}
+
+		if (Ok && TD.AdrArt == Geloescht && AltNummer == 0)
+			{ // einen neuen Lösch-Eintrag anzulegen ist doof
+			printf_P(PSTR("<b>keine &Auml;nderung</b><br>"));
+			Ok = false;
+			}
+			
+		if (Ok && TD.Nummer != AltNummer && TlnSuche(TD.Nummer, false, NULL))
+			{
+			printf_P(PSTR("<b>Nummer ist bereits vergeben, &Auml;nderung nicht gespeichert</b><br>"));
+			Ok = false;
+			}
+			
+		if (Ok)
+			{ // speichern oder löschen
+			struct TIME CurTime;
+			CLOCK_GetTime(&CurTime);
+			TD.Datum = CurTime.time;
+			
+			if (TlnHinzufuegen(&TD))
 				{
 				printf_P(PSTR("Eintrag gespeichert<br>"));
 				if (TD.Nummer != AltNummer && AltNummer != 0)
@@ -542,9 +523,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				{ // TlnHinzufuegen() == false
 				printf_P(PSTR("<b>Teilnehmerliste voll, Eintrag nicht gespeichert</b><br>"));
 				}
-			} // else TD.Nummer != 0
+			} // if Ok
+			
 		printf_P(PSTR("<br>Zur&uuml;ck zum <a href=\"txp-tlnverz.cgi\">Teilnehmer-Verzeichnis</a>"));
-		}
+		} // if (PharseCheckName_P(http_request, Nummer_P)) ; also neuen Einfügen oder geänderten Aktualisieren
 	else
 		{ // nicht erkannt
 		printf_P(PSTR("Fehler: ungueltiger CGI-Aufruf: %s"), http_request->HTTP_LINEBUFFER);
@@ -554,8 +536,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 	}
 	
-	
-	
+		
 //! Initialisiert die Liste der Teilnehmereinträge.
 //------------------------------------------------------------
 void TlnBuchInit()
@@ -563,11 +544,13 @@ void TlnBuchInit()
 	TlnBuchMemUsed = 0;
 	
 	// HACK Test
-	TlnBuchTesteintrag(123, "sonnibs.no-ip.org", 0, 134);
-	TlnBuchTesteintrag(124, "sonnibs.no-ip.org", 0, 135);
-	TlnBuchTesteintrag(234, 0, IPDOT(192l,168l,178l,30l), 134);
-	TlnBuchTesteintrag(235, 0, IPDOT(192l,168l,178l,38l), 134);
-	TlnBuchTesteintrag(3333, 0, IPDOT(192l,168l,178l,32l), 23); //*/
+	TlnBuchTesteintrag(123, TxpUrl, "sonnibs.no-ip.org", 0, 134, 0);
+	TlnBuchTesteintrag(124, TxpUrl, "sonnibs.no-ip.org", 0, 135, 0);
+	TlnBuchTesteintrag(234, TxpIP, 0, IPDOT(192l,168l,178l,30l), 134, 0);
+	TlnBuchTesteintrag(235, TxpIP, 0, IPDOT(192l,168l,178l,38l), 134, 0);
+	TlnBuchTesteintrag(294, AsciiIP, 0, IPDOT(192l,168l,178l,30l), 134, 0);
+	TlnBuchTesteintrag(295, AsciiIP, 0, IPDOT(192l,168l,178l,38l), 134, 0);
+	TlnBuchTesteintrag(3333, AsciiIP, 0, IPDOT(192l,168l,178l,32l), 23, 0); //*/
 
 	cgi_RegisterCGI( TlnBuch_Anzeige_CGI, PSTR("txp-tlnverz.cgi"));
 	

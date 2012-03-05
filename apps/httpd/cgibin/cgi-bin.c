@@ -154,6 +154,7 @@ int check_cgibin( void * pStruct )
 		{
 			printf_P( PSTR(		"HTTP/1.0 200 Document follows\r\n"
 								"Content-Type: text/html\r\n"
+								"Cache-Control: no-cache\r\n"
 								"Connection: close\r\n"
 								"\r\n"));
 			cgi_table[ i ].dyncgi_function( http_request );
@@ -167,8 +168,10 @@ int check_cgibin( void * pStruct )
 void cgi_PrintHttpheaderStart( void )
 {
 	printf_P( PSTR(	"<HTML>"
-					"<HEAD><meta http-equiv=\"expires\" content=\"1\">"
-					"<meta http-equiv=\"pragma\" content=\"no-cache\">"
+					"<HEAD>"
+					//"<meta http-equiv=\"expires\" content=\"1\">"
+					//"<meta http-equiv=\"pragma\" content=\"no-cache\">"
+					//"<meta http-equiv=\"cache-control\" content=\"no-cache\">"
 					"</HEAD>"
 					"<BODY>"));
 }
