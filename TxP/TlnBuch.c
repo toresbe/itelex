@@ -357,18 +357,16 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						break;
 					}
 					
-				printf_P(PSTR(
-					"<td><a href=\"txp-tlnverz.cgi?edit=%ld\">"
-					"<input type=\"button\" value=\"&Auml;ndern\"</a></td></tr>"), TD.Nummer);
+				printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">&Auml;ndern</a></td></tr>"), TD.Nummer);
 				}
 			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
-						   "<td><a href=\"txp-tlnverz.cgi?edit=0\"><input type=\"button\" value=\"Hinzuf&uuml;gen\"</a></td>"
+						   "<td><a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></td>"
 						   "</table></form>") );
 			} // Teilnehmerverzeichnis nicht leer
 		else
 			{
 			printf_P(PSTR( "</table>Noch keine Eintr&auml;ge vorhanden<p>"
-						   "<a href=\"txp-tlnverz.cgi?edit=0\"><input type=\"button\" value=\"Hinzuf&uuml;gen\" class=\"actionBtn\"></a></form>" ));
+						   "<a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></form>" ));
 			}
 
 		} // argc == 0 --> gesamte Liste ausgeben

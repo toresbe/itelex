@@ -829,6 +829,12 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	if (InCount > 0) 
 		{
 		int Res = GetSocketData(*Socket, InCount, SocketInBuf + SocketInBufUsed);
+#if (TXP_DEBUG >= 1)
+		printf_P(PSTR("TxP: TCP-Verbindung Empfang: (%d/%d)" ), InCount, Res);
+		for (uint16_t i = 0 ; i < Res ; i++)
+			printf_P(PSTR(" %02x"), SocketInBuf[SocketInBufUsed + i]);
+		printf_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
+#endif
 		if (Res > 0)
 			SocketInBufUsed += Res;
 		}
@@ -963,12 +969,14 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	if (SocketOutBufUsed > 0) //! \todo && !HaltSocketOut
 		{
 #if (TXP_DEBUG >= 1)
-		printf_P(PSTR("TxP: sende TCP-Verbindung: %d" ), SocketOutBufUsed);
+		printf_P(PSTR("TxP: sende TCP-Verbindung: (%d)" ), SocketOutBufUsed);
+		for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
+			printf_P(PSTR(" %02x"), SocketOutBuf[i]);
 #endif
 		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
 		SocketLebenszeichenZaehler = 4 * TxpTimerFreq; // alle 4 Sekunden ein Lebenszeichen
 #if (TXP_DEBUG >= 1)
-		printf_P(PSTR("/%d)\r\n" ), Res);
+		printf_P(PSTR(" -> %d\r\n" ), Res);
 #endif
 		if (Res <= 0)
 			{
