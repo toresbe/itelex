@@ -272,7 +272,7 @@ STDOUT_restore( &oldstream );
 #ifdef HTTP_DEBUG
 						STDOUT_save( &oldstream );
 						STDOUT_set( RS232, 0 );
-						printf_P(PSTR("read block from SD (%d) "), size);
+						printf_P(PSTR(" %d"), size);
 						STDOUT_Flush();
 						STDOUT_restore( &oldstream );
 #endif

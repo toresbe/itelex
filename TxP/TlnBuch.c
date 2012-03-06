@@ -411,29 +411,42 @@ int TlnBuchSpeichereAufExternEeprom()
 			{
 			lo = EeAdr & 0xFF;
 			hi = EeAdr >> 8;
-					
-			if (!SwTwiStart()
-				|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false) || !Ack
-				|| !SwTwiSendByte(hi, &Ack, false) || !Ack
+
+			// Öffnen kann schiefgehen, solange vorheriger Schreibprozess noch läuft
+			do 
+				{
+				if (!SwTwiStart()
+					|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false))
+					{
+					SwTwiStop(false);
+					return -3;
+					}
+				if (!Ack)
+					SwTwiStop(false);
+				} while (!Ack);
+				
+			if (!SwTwiSendByte(hi, &Ack, false) || !Ack
 				|| !SwTwiSendByte(lo, &Ack, false) || !Ack)
 				{
 				SwTwiStop(false);
-				return -3;
+				return -4;
 				}
+				
 			EeOpen = true;
-			}
+			} // if !EeOpen
 
 		if (!SwTwiSendByte(TlnBuch[TbAdr], &Ack, false))
 			{
 			SwTwiStop(false);
-			return -4;
+			return -5;
 			}
+			
 		EeAdr++;
 		
 		if ((EeAdr & (EePageSize-1)) == 0)
 			{ // Block abschließen
 			if (!SwTwiStop(false))
-				return -5;
+				return -6;
 			EeOpen = false;
 			}
 		}
@@ -441,7 +454,7 @@ int TlnBuchSpeichereAufExternEeprom()
 	if (EeOpen)
 		{
 		if (!SwTwiStop(false))
-			return -6;
+			return -7;
 		}
 		
 	return EeAdr;
