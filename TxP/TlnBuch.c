@@ -12,6 +12,7 @@
 
 #include "TxP.h"
 #include "TlnBuch.h"
+#include "SwTwi.h"
 
 #include "CgiFormTools.h"
 
@@ -269,21 +270,186 @@ bool TlnListerNaechster(TTlnDaten *Tln)
 	}
 
 	
-static void TlnBuchTesteintrag(uint32_t nr, TTlnAdresseArt art, char *url, long aip, uint16_t port, uint8_t dw)
+	//! Errechnet aus dem aktuellen Wert von TlnBuchMemUsed einen prüfwert,
+//! um die Integrität des externen EEPROM zu testen.
+//---------------------------------------------------------------------
+//! Im externen EEPROM sind beide Werte ganz am Anfang abgelegt.
+uint16_t MemUsedPruefwert()
 	{
-	TTlnDaten TD;
-
-	TD.Nummer = nr;
-	TD.AdrArt = art; 
-	TD.IPAdr = aip;
-	strcpy(TD.Adresse, url);
-	TD.Port = port;
-	TD.Durchwahl = dw;
-	TD.Datum = 0;
-	TlnHinzufuegen(&TD);
+	return (TlnBuchMemUsed ^ 0x5AA5) << 1; 
 	}
 	
+	
+#define XEEPROM_TWI_ADR 0xA0
 
+	
+//! Lädt das Teilnehmer-Verzeichnis aus dem externen EEPROM
+//------------------------------------------------------------
+int TlnBuchLadeVonExternEeprom()
+	{
+	bool Ack;
+	uint8_t lo, hi;
+
+	TlnBuchMemUsed = 0;
+	
+	// Eeprom Lesevorgang initialisieren --> Adresse schreiben
+	if (!SwTwiStart()
+		|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false) || !Ack
+		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack
+		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack)
+		{
+		SwTwiStop(false);
+		return -1;
+		}
+
+	if (!SwTwiStop(false))
+		return -2;
+		
+	// Gespeicherte Anzahl Byte laden
+	if (!SwTwiStart()
+		|| !SwTwiSendByte(XEEPROM_TWI_ADR+1, &Ack, false) || !Ack // +1 = read
+		|| !SwTwiReadByte(&lo, true, false)
+		|| !SwTwiReadByte(&hi, true, false))
+		{
+		SwTwiStop(false);
+		return -3;
+		}
+		
+	TlnBuchMemUsed = (hi << 8) | lo;
+	
+	// Prüfwert lesen
+	if (!SwTwiReadByte(&lo, true, false)
+		|| !SwTwiReadByte(&hi, true, false))
+		{
+		TlnBuchMemUsed = 0;
+		SwTwiStop(false);
+		return -4;
+		}
+		
+	if (((hi << 8) | lo) != MemUsedPruefwert())
+		{
+		TlnBuchMemUsed = 0;
+		SwTwiStop(false);
+		return -5;
+		}
+		
+	if (TlnBuchMemUsed == 0)
+		{ // nichts weiter zu lesen
+		SwTwiReadByte(&lo, false, false); // dummy
+		SwTwiStop(false);
+		return 0;
+		}
+		
+	// Speicher scheint ok, also geht's jetzt ans lesen...
+	uint16_t TbAdr;
+
+	for (TbAdr = 0 ; TbAdr < TlnBuchMemUsed - 1 ; TbAdr++) // -1, da das letzte Byte mit Ack = false zu lesen ist
+		{
+		if (!SwTwiReadByte((uint8_t*) &TlnBuch[TbAdr], true, false))
+			{
+			SwTwiStop(false);
+			TlnBuchMemUsed = 0;
+			return -6;
+			}
+		}
+		
+	if (!SwTwiReadByte((uint8_t*) &TlnBuch[TbAdr], false, false))
+		{
+		SwTwiStop(false);
+		TlnBuchMemUsed = 0;
+		return -7;
+		}
+		
+	SwTwiStop(false);
+	return TlnBuchMemUsed;
+	}
+			
+			
+//! Speichert das Teilnehmer-Verzeichnis auf dem externen EEPROM
+//------------------------------------------------------------
+int TlnBuchSpeichereAufExternEeprom()
+	{
+	bool Ack;
+	uint8_t lo, hi;
+	uint16_t EeAdr;
+	uint16_t TbAdr;
+	bool EeOpen;
+	enum { EePageSize = 64 } ;
+
+	// Eeprom Speichervorgang initialisieren --> Adresse schreiben, Länge schreiben
+	lo = TlnBuchMemUsed & 0xFF;
+	hi = TlnBuchMemUsed >> 8;
+	
+	if (!SwTwiStart()
+		|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false) || !Ack
+		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack
+		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack
+		|| !SwTwiSendByte(lo, &Ack, false) || !Ack
+		|| !SwTwiSendByte(hi, &Ack, false) || !Ack)
+		{
+		SwTwiStop(false);
+		return -1;
+		}
+
+	lo = MemUsedPruefwert() & 0xFF;
+	hi = MemUsedPruefwert() >> 8;
+	
+	// Prüfwert schreiben
+	if (!SwTwiSendByte(lo, &Ack, false) || !Ack
+		|| !SwTwiSendByte(hi, &Ack, false) || !Ack)
+		{
+		SwTwiStop(false);
+		return -2;
+		}
+		
+	EeAdr = 4;
+	EeOpen = true;
+		
+	for (TbAdr = 0 ; TbAdr < TlnBuchMemUsed ; TbAdr++)
+		{
+		if (!EeOpen)
+			{
+			lo = EeAdr & 0xFF;
+			hi = EeAdr >> 8;
+					
+			if (!SwTwiStart()
+				|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false) || !Ack
+				|| !SwTwiSendByte(hi, &Ack, false) || !Ack
+				|| !SwTwiSendByte(lo, &Ack, false) || !Ack)
+				{
+				SwTwiStop(false);
+				return -3;
+				}
+			EeOpen = true;
+			}
+
+		if (!SwTwiSendByte(TlnBuch[TbAdr], &Ack, false))
+			{
+			SwTwiStop(false);
+			return -4;
+			}
+		EeAdr++;
+		
+		if ((EeAdr & (EePageSize-1)) == 0)
+			{ // Block abschließen
+			if (!SwTwiStop(false))
+				return -5;
+			EeOpen = false;
+			}
+		}
+		
+	if (EeOpen)
+		{
+		if (!SwTwiStop(false))
+			return -6;
+		}
+		
+	return EeAdr;
+	}
+
+	
+
+	
 //! CGI-Funktion für die Anzeige des Teilnehmerverzeichnisses.
 void TlnBuch_Anzeige_CGI(void *pStruct)
 	{
@@ -301,6 +467,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	static PROGMEM const char TypGeloescht_P[] = "gel&ouml;scht";
 	static PROGMEM const char TypAscii_P[] = "Ascii";
 	static PROGMEM const char TypTxp_P[] = "TelexPhone";
+	static PROGMEM const char Save_P[] = "save";
 	
 	cgi_PrintHttpheaderStart();
 
@@ -361,7 +528,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				}
 			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
 						   "<td><a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></td>"
-						   "</table></form>") );
+						   "</table><a href=\"txp-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a></form>") );
 			} // Teilnehmerverzeichnis nicht leer
 		else
 			{
@@ -525,6 +692,17 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			
 		printf_P(PSTR("<br>Zur&uuml;ck zum <a href=\"txp-tlnverz.cgi\">Teilnehmer-Verzeichnis</a>"));
 		} // if (PharseCheckName_P(http_request, Nummer_P)) ; also neuen Einfügen oder geänderten Aktualisieren
+		
+	else if (PharseCheckName_P(http_request, Save_P))
+		{ // auf externem Eeprom speichern
+		uint16_t Res = TlnBuchSpeichereAufExternEeprom();
+		if (Res < 0)
+			printf_P(PSTR("<b>Fehler beim Speichern (Codes %d/%d)</b>"), Res, SwTwiLetzterFehler);
+		else
+			printf_P(PSTR("Erfolgreich gespeichert (%d Bytes)"), Res);
+			
+		}
+		
 	else
 		{ // nicht erkannt
 		printf_P(PSTR("Fehler: ungueltiger CGI-Aufruf: %s"), http_request->HTTP_LINEBUFFER);
@@ -534,22 +712,45 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 	}
 	
-		
+
+static void TlnBuchTesteintrag(uint32_t nr, TTlnAdresseArt art, char *url, long aip, uint16_t port, uint8_t dw)
+	{
+	TTlnDaten TD;
+
+	TD.Nummer = nr;
+	TD.AdrArt = art; 
+	TD.IPAdr = aip;
+	strcpy(TD.Adresse, url);
+	TD.Port = port;
+	TD.Durchwahl = dw;
+	TD.Datum = 0;
+	TlnHinzufuegen(&TD);
+	}
+	
+
 //! Initialisiert die Liste der Teilnehmereinträge.
 //------------------------------------------------------------
 void TlnBuchInit()
 	{
 	TlnBuchMemUsed = 0;
 	
-	// HACK Test
-	TlnBuchTesteintrag(123, TxpUrl, "sonnibs.no-ip.org", 0, 134, 0);
-	TlnBuchTesteintrag(124, TxpUrl, "sonnibs.no-ip.org", 0, 135, 0);
-	TlnBuchTesteintrag(234, TxpIP, 0, IPDOT(192l,168l,178l,30l), 134, 0);
-	TlnBuchTesteintrag(235, TxpIP, 0, IPDOT(192l,168l,178l,38l), 134, 0);
-	TlnBuchTesteintrag(294, AsciiIP, 0, IPDOT(192l,168l,178l,30l), 134, 0);
-	TlnBuchTesteintrag(295, AsciiIP, 0, IPDOT(192l,168l,178l,38l), 134, 0);
-	TlnBuchTesteintrag(3333, AsciiIP, 0, IPDOT(192l,168l,178l,32l), 23, 0); //*/
-
+	uint16_t Res = TlnBuchLadeVonExternEeprom();
+	
+	if (Res < 0)
+		{
+		// HACK Test
+		char Buf[40];
+		sprintf_P(Buf, PSTR("Eeprom Ladefehler %d %d"), Res, SwTwiLetzterFehler);
+		TlnBuchTesteintrag(666, TxpUrl, Buf, 0, 0, 0);
+		TlnBuchTesteintrag(123, TxpUrl, "sonnibs.no-ip.org", 0, 134, 0);
+		TlnBuchTesteintrag(124, TxpUrl, "sonnibs.no-ip.org", 0, 135, 0);
+		TlnBuchTesteintrag(234, TxpIP, 0, IPDOT(192l,168l,178l,30l), 134, 0);
+		TlnBuchTesteintrag(235, TxpIP, 0, IPDOT(192l,168l,178l,38l), 134, 0);
+		TlnBuchTesteintrag(294, AsciiIP, 0, IPDOT(192l,168l,178l,30l), 134, 0);
+		TlnBuchTesteintrag(295, AsciiIP, 0, IPDOT(192l,168l,178l,38l), 134, 0);
+		TlnBuchTesteintrag(3333, AsciiIP, 0, IPDOT(192l,168l,178l,32l), 23, 0); //*/
+		}
+		
 	cgi_RegisterCGI( TlnBuch_Anzeige_CGI, PSTR("txp-tlnverz.cgi"));
 	
 	}

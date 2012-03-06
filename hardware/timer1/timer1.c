@@ -68,7 +68,7 @@ void timer1_init( unsigned int Hz, unsigned int timedrift )
 #else
 	
 	// Timer0 einstellungen setzen
-	TCCR1B = ( 1<<WGM12 ) | ( 0<<CS12 ) | ( 1<<CS11 ) | ( 0<<CS10 ); // CTC mode setzen, Prescaler 1024
+	TCCR1B = ( 1<<WGM12 ) | ( 0<<CS12 ) | ( 1<<CS11 ) | ( 0<<CS10 ); // CTC mode setzen, Prescaler 8
 	OCR1A  = ( F_CPU / ( 8 * Hz ) ) - timedrift ; // 100Hz bei 16MHz
 	TIMSK1 = ( 1<<OCIE1A );  // Compare Match A Interupt freigegben
 

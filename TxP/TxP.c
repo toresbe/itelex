@@ -78,9 +78,13 @@ typedef enum
 	// nicht benötigt ModGehendVerbindungHerstellen = 3, // Einschaltkommando ist angekommen, Warte auf Quittung vom Anrufer
 	ModGehendVerbunden = 4,
 	// Kommend = vom Netz zum internen Anschluss
-	ModKommendVerbVorstufe = 11, // es wird erst mal abgewartet, was aus der ankommenden Verbindung wird.
-	ModKommendWarteEinQuitt = 12, //!< Warte auf Einschalt-Quittung des Endgeräts
-	ModKommendVerbunden = 13, 
+	ModKommendVerbVorstufe = 11, 
+		//!< es wird erst mal abgewartet, was aus der ankommenden Verbindung wird.
+	ModKommendEinschalten = 12, 
+		//!< Es wurden Daten oder ein Einschaltkommando (Durchwahl) empfangen.
+	ModKommendWarteEinQuitt = 13, 
+		//!< Warte auf Einschalt-Quittung des Endgeräts
+	ModKommendVerbunden = 14, 
 	ModWarteSchlussQuitt = 9,
 	
 	// Über HTML-Seite eingegebener Verbindungswunsch
@@ -179,8 +183,12 @@ static char HtmlSendeText[HtmlSendeTextMax];
 	//!< Puffer für zu Anzuzeigenden Text (Endgerät -> Netz), mit Null abgeschlossen
 
 
-static int TxpInSocket;
-	//!< Handle für eingehende Txp-Verbindungen.
+static int TxpServerSocket;
+	//!< Handle für eingehende Txp-Verbindungen ("Server")
+	
+static int TxpClientSocket;
+	//!< Handle für ausgehende Txp-Verbindungen ("Client")
+
 	
 enum { SocketInBufMax = 2500 } ; //!< Größe des TCP-Empfangspuffers
 
@@ -189,9 +197,6 @@ static uint16_t SocketInBufUsed; //!< Benutzter Teil des TCP-Empfangspuffers
 static char SocketInBuf[SocketInBufMax]; //!< TCP-Empfangspuffer
 
 	
-static int TxpOutSocket;
-	//!< Handle für ausgehende Txp-Verbindungen.
-
 enum { SocketOutBufMax = 2500 } ; //!< Größe des TCP-Sendepuffers
 
 static uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
@@ -576,7 +581,12 @@ static void ModusWechsel(TModus neu)
 			SocketModeAscii = false;
 			Durchwahl = 0;
 			break;
-	
+
+		case ModKommendEinschalten:
+			SET_BIT_Status(StatBit_FsBefBetrieb);
+			SET_BIT_Status(StatBit_FsBefEin);
+			break;
+		
 		case ModKommendWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
 			SET_BIT_Status(StatBit_FsBefBetrieb);
 			SET_BIT_Status(StatBit_FsBefEin);
@@ -639,31 +649,31 @@ static void SocketBufInit()
 	
 	
 //! Kommende TCP-Verbindung schließen
-static void CloseTxpInSocket()
+static void CloseTxpServerSocket()
 	{
-	if (TxpInSocket != NO_SOCKET_USED)
+	if (TxpServerSocket != NO_SOCKET_USED)
 		{ 
 #if (TXP_DEBUG >= 1)
-		printf_P(PSTR("TxP: Verbindung Ascii wird geschlossen\r\n" ));
+		printf_P(PSTR("TxP: Server-Socket (eingehend) wird geschlossen\r\n" ));
 #endif
 		//! \TODO ggf. Abbaumeldung?????
-		CloseTCPSocket(TxpInSocket);
-		TxpInSocket = NO_SOCKET_USED;
+		CloseTCPSocket(TxpServerSocket);
+		TxpServerSocket = NO_SOCKET_USED;
 		}
 	}
 
 
 //! Gehende TCP-Verbindung schließen
-static void CloseTxpOutSocket()
+static void CloseTxpClientSocket()
 	{
-	if (TxpOutSocket != NO_SOCKET_USED)
+	if (TxpClientSocket != NO_SOCKET_USED)
 		{ 
 #if (TXP_DEBUG >= 1)
-		printf_P(PSTR("TxP: Verbindung Ascii wird geschlossen\r\n" ));
+		printf_P(PSTR("TxP: Client-Socket (ausgehend) wird geschlossen\r\n" ));
 #endif
 		//! \TODO ggf. Abbaumeldung?????
-		CloseTCPSocket(TxpOutSocket);
-		TxpOutSocket = NO_SOCKET_USED;
+		CloseTCPSocket(TxpClientSocket);
+		TxpClientSocket = NO_SOCKET_USED;
 		}
 	}
 		
@@ -806,7 +816,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	// soll offene Verbindung geschlossen werden?
 	if (CheckSocketState(*Socket) == SOCKET_NOT_USE)
 		{ // ID#242 ID#342 ID#314 ************************************************
-		printf_P(PSTR( "Txp-Verbindung getrennt\r\n" ));
+		printf_P(PSTR("Txp: Socket wurde von Gegenstelle geschlossen\r\n" ));
 		CloseTCPSocket(*Socket);
 		*Socket = NO_SOCKET_USED;
 		if (IstVerbunden)
@@ -830,7 +840,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		{
 		int Res = GetSocketData(*Socket, InCount, SocketInBuf + SocketInBufUsed);
 #if (TXP_DEBUG >= 1)
-		printf_P(PSTR("TxP: TCP-Verbindung Empfang: (%d/%d)" ), InCount, Res);
+		printf_P(PSTR("TxP: Socket Empfang: (%d/%d)" ), InCount, Res);
 		for (uint16_t i = 0 ; i < Res ; i++)
 			printf_P(PSTR(" %02x"), SocketInBuf[SocketInBufUsed + i]);
 		printf_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
@@ -864,6 +874,9 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 					i = SocketInBufUsed; //! \TODO auf Ende der Ascii-Daten suchen
 					break;
 					}
+				if (Modus == ModKommendVerbVorstufe)
+					// ID#311 *******************************************************
+					ModusWechsel(ModKommendEinschalten);
 				} // ASCII-Zeichen oder WR oder ZL
 				
 			else if (c == TXPC_NULL)
@@ -872,8 +885,12 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				}
 				
 			else if (c == TXPC_DURCHWAHL)
-				{
-				Durchwahl = SocketInBuf[i+2];
+				{ // ID#312 **************************************************************
+				if (Modus == ModKommendVerbVorstufe)
+					{
+					Durchwahl = SocketInBuf[i+2];
+					ModusWechsel(ModKommendEinschalten);
+					}
 				i += 2 + (uint8_t) SocketInBuf[i+1];
 				}
 				
@@ -896,12 +913,17 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				}
 				
 			else if (c == TXPC_START)
-				{ // ID#227 Teil 1 **************************************************
-				PufferSpeich(&SendePuffer, TtyCodeSPC); 
-					//! \todo vielleicht fällt mir hier noch was besseres ein. 
-					//! Grund ist, dass durch das Zeichen im Puffer die Einschaltung der 
-					//! eigenen Endstelle erwirkt werden soll.
-					
+				{ 
+				if (Modus == ModKommendVerbVorstufe)
+					{ // ID#312 **************************************************
+					BusSenden(BusKdoEin);
+					ModusWechsel(ModGehendVerbunden);
+					}
+				else if (Modus == ModGehendWaehlen)
+					{ // ID#227 **************************************************
+					BusSenden(BusQuittEin);
+					ModusWechsel(ModGehendVerbunden);
+					}
 				i += 2 + (uint8_t) SocketInBuf[i+1];
 				}
 				
@@ -969,14 +991,14 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	if (SocketOutBufUsed > 0) //! \todo && !HaltSocketOut
 		{
 #if (TXP_DEBUG >= 1)
-		printf_P(PSTR("TxP: sende TCP-Verbindung: (%d)" ), SocketOutBufUsed);
+		printf_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
 		for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
 			printf_P(PSTR(" %02x"), SocketOutBuf[i]);
 #endif
 		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
 		SocketLebenszeichenZaehler = 4 * TxpTimerFreq; // alle 4 Sekunden ein Lebenszeichen
 #if (TXP_DEBUG >= 1)
-		printf_P(PSTR(" -> %d\r\n" ), Res);
+		printf_P(PSTR(" --> Res %d\r\n" ), Res);
 #endif
 		if (Res <= 0)
 			{
@@ -1029,7 +1051,7 @@ void txp_thread()
 			{
 			case 1 ... BusKdoVerbAufnahme:
 #if (TXP_DEBUG >= 1)
-				printf_P(PSTR("TxP: Reservierung intern / gehend von %d\r\n" ), Code);
+				printf_P(PSTR("TxP: TWI Reservierung intern / gehend von %d\r\n" ), Code);
 #endif
 				if (Modus == ModRuhe)
 					{ // ID#101 *********************************************
@@ -1044,7 +1066,7 @@ void txp_thread()
 				
 			case BusKdoEin:
 #if (TXP_DEBUG >= 1)
-				printf_P(PSTR("TxP: Einschaltkommando intern / gehend\r\n" ));
+				printf_P(PSTR("TxP: TWI Einschaltkommando intern / gehend\r\n" ));
 #endif
 				if (Modus == ModGehendReserv)
 					{ // ID#211 ********************************************
@@ -1057,7 +1079,7 @@ void txp_thread()
 				
 			case BusQuittEin:
 #if (TXP_DEBUG >= 1)
-				printf_P(PSTR("TxP: Einschaltquittung intern / kommend\r\n" ));
+				printf_P(PSTR("TxP: TWI Einschaltquittung intern / kommend\r\n" ));
 #endif
 				if (Modus == ModKommendWarteEinQuitt)
 					{ // ID#331 ********************************************
@@ -1084,16 +1106,16 @@ void txp_thread()
 			case BusKdoWahlFreigabe:
 				// dies ist eine Leitungsschnittstelle, die kann nicht wählen.
 #if (TXP_DEBUG >= 1)
-				printf_P(PSTR("TxP: Wahlaufforderung intern / kommend???\r\n" ));
+				printf_P(PSTR("TxP: TWI Wahlaufforderung intern / kommend???\r\n" ));
 #endif
 				FalschCodeEmpfangen(BusQuittEin);
 				break;
 				
 			case BusKdoWahlziffer0 ... BusKdoWahlziffer9:
 #if (TXP_DEBUG >= 1)
-				printf_P(PSTR("TxP: Wahlziffer %d intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
+				printf_P(PSTR("TxP: TWI Wahlziffer %d intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
 #endif
-				if (Modus == ModGehendWaehlen && TxpOutSocket == NO_SOCKET_USED)
+				if (Modus == ModGehendWaehlen && TxpClientSocket == NO_SOCKET_USED)
 					{
 					TTlnDaten TD;
 					
@@ -1110,7 +1132,7 @@ void txp_thread()
 #if (TXP_DEBUG >= 1)
 								printf_P(PSTR("TxP: Teilnehmer %ld gefunden: %lx\r\n" ), TD.Nummer, TD.IPAdr);
 #endif
-								TxpOutSocket = Connect2IP(TD.IPAdr, TD.Port);
+								TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
 								break;
 								
 							case TxpUrl:
@@ -1122,14 +1144,14 @@ void txp_thread()
 #if (TXP_DEBUG >= 1)
 									printf_P(PSTR("TxP: Teilnehmer %ld gefunden: %s = %lx.\r\n" ), TD.Nummer, TD.Adresse, TD.IPAdr);
 #endif
-									TxpOutSocket = Connect2IP(TD.IPAdr, TD.Port);
+									TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
 									}
 								else
 									{
 #if (TXP_DEBUG >= 1)
 									printf_P(PSTR("TxP: Teilnehmer %ld gefunden, keine IP zu %s gefunden.\r\n" ), TD.Nummer, TD.Adresse);
 #endif
-									TxpOutSocket = -1;
+									TxpClientSocket = -1;
 									}
 								break;
 								
@@ -1137,24 +1159,24 @@ void txp_thread()
 #if (TXP_DEBUG >= 1)
 								printf_P(PSTR("TxP: Teilnehmer %ld gefunden: GELOESCHT\r\n" ), TD.Nummer, TD.Adresse);
 #endif
-								TxpOutSocket = -1;
+								TxpClientSocket = -1;
 							}
 						
-						if (TxpOutSocket == -1 )
+						if (TxpClientSocket == -1 )
 							{ // ID#223 ********************************************
 							// Verbindung konnte nicht aufgebaut werden
 							BusSenden(BusKdoSchluss);
 #if (TXP_DEBUG >= 1)
-							printf_P(PSTR("TxP: Verbindung ausgehend versagt\r\n" ));
+							printf_P(PSTR("TxP: Client-Socket konnte nicht geöffnet werden\r\n" ));
 #endif
-							TxpOutSocket = NO_SOCKET_USED;
+							TxpClientSocket = NO_SOCKET_USED;
 							ModusWechsel(ModWarteSchlussQuitt);
 							}
 						else if (TD.AdrArt == AsciiUrl || TD.AdrArt == AsciiIP)
 							{ // ID#226 *********************************************
 							BusSenden(BusQuittEin);
 #if (TXP_DEBUG >= 1)
-							printf_P(PSTR("TxP: Verbindung Ascii ausgehend hergestellt\r\n" ));
+							printf_P(PSTR("TxP: Client-Socket Ascii erfolgreich geöffnet -> Einschalt-Quittung an TWI\r\n" ));
 #endif
 							ModusWechsel(ModGehendVerbunden);
 							SocketBufInit();
@@ -1163,10 +1185,10 @@ void txp_thread()
 						else // TxpUrl oder TxpIP
 							{ // ID#222 ********************************************
 #if (TXP_DEBUG >= 1)
-							printf_P(PSTR("TxP: Verbindung TelexPhone ausgehend begonnen\r\n" ));
+							printf_P(PSTR("TxP: Client-Socket Txp erfolgreich geöffnet -> sende Durchwahl %d\r\n"), TD.Durchwahl);
 #endif
 							SocketBufInit();
-							SocketModeAscii = true;
+							SocketModeAscii = false;
 							
 							SocketOutBuf[0] = TXPC_DURCHWAHL;
 							SocketOutBuf[1] = 1;
@@ -1183,9 +1205,9 @@ void txp_thread()
 			case BusKdoSchluss:
 #if (TXP_DEBUG >= 1)
 				if (Code == BusQuittSchluss)
-					printf_P(PSTR("TxP: Ausschaltung quittiert\r\n" ));
+					printf_P(PSTR("TxP: TWI Ausschaltung quittiert\r\n" ));
 				else
-					printf_P(PSTR("TxP: Ausschaltung intern\r\n" ));
+					printf_P(PSTR("TxP: TWI Ausschaltung intern\r\n" ));
 #endif
 				if (Modus != ModWarteSchlussQuitt)
 					{
@@ -1200,11 +1222,11 @@ void txp_thread()
 					
 				// ausgehende Ports schließen...
 				// ID#241 ********************************************			
-				CloseTxpOutSocket();
+				CloseTxpClientSocket();
 				
 				// eingehende Ports schließen...
 				// ID#341 ********************************************
-				CloseTxpInSocket();
+				CloseTxpServerSocket();
 				
 				// Html-Puffer löschen
 				if (Modus == ModHtmlVerbunden)
@@ -1226,11 +1248,11 @@ void txp_thread()
 	// ======================================================================
 		
 	if (Modus == ModKommendVerbunden)
-		SocketBearbeiten(&TxpInSocket, true);
+		SocketBearbeiten(&TxpServerSocket, true);
 		
 	if (Modus == ModGehendVerbunden || Modus == ModGehendWaehlen)
 		{
-		SocketBearbeiten(&TxpOutSocket, true);
+		SocketBearbeiten(&TxpClientSocket, true);
 		if (Modus == ModGehendWaehlen && !PufferLeer(&SendePuffer))
 			{ // es wurden Daten empfangen, also schnellstens Endgerät anschmeißen
 			// ID#227 Teil 2 *******************************************************
@@ -1242,29 +1264,29 @@ void txp_thread()
 			}
 		}
 
-	if (Modus == ModKommendVerbVorstufe)
+	if (Modus == ModKommendVerbVorstufe || Modus == ModKommendEinschalten)
 		{
-		SocketBearbeiten(&TxpInSocket, false);
-		if (ModKommendVerbVorstufe && !PufferLeer(&SendePuffer))
-			{ // ID#311/315 ***************************************
+		SocketBearbeiten(&TxpServerSocket, false);
+		if (Modus == ModKommendEinschalten)
+			{ 
 			if (KommendInternAnwaehlen(Durchwahl)) 
-				{ // ID#311 ********************************************
+				{ // ID#321 ********************************************
 #if (TXP_DEBUG >= 1)
-				printf_P(PSTR("TxP: Einschaltung extern -> Einschaltung intern\r\n" ));
+				printf_P(PSTR("TxP: Anwahl intern an %d erfolgt\r\n"), Durchwahl);
 #endif
 				BusSenden(BusKdoEin);
 				ModusWechsel(ModKommendWarteEinQuitt);
 				}
 			else
-				{ // ID#315 ********************************************
+				{ // ID#322 ********************************************
 #if (TXP_DEBUG >= 1)
-				printf_P(PSTR("TxP: Einschaltung extern -> intern VERSAGT\r\n" ));
+				printf_P(PSTR("TxP: Anwahl intern an %d VERSAGT\r\n"), Durchwahl);
 #endif
 				strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
-				CloseTxpInSocket(); // Out kann nicht geöffnet sein.
+				CloseTxpServerSocket(); // Client kann nicht geöffnet sein.
 				ModusWechsel(ModRuhe);
 				}
-			} // if (ModKommendVerbVorstufe && !PufferLeer(&SendePuffer))
+			} // if Modus == ModKommendEinschalten
 		}
 			
 	// ==========================================================================
@@ -1272,19 +1294,21 @@ void txp_thread()
 	// ==========================================================================
 
 	// keine alte Verbindung offen?
-	if (TxpInSocket == NO_SOCKET_USED)
+	if (TxpServerSocket == NO_SOCKET_USED)
 		{ 	
 		// auf neue Verbindungsanfrage testen
-		TxpInSocket = CheckPortRequest(TXP_PORT);
+		TxpServerSocket = CheckPortRequest(TXP_PORT);
 		
-		//! TODO prüfen, was bei bestehender ausgehender ASCII-Verbindung und gleichzeitigem Versuch einer ankommenden Verbindung passiert.
+		//! \TODO prüfen, was bei bestehender ausgehender ASCII-Verbindung und gleichzeitigem Versuch einer ankommenden Verbindung passiert.
 		
-		if (TxpInSocket != NO_SOCKET_USED)
+		if (TxpServerSocket != NO_SOCKET_USED)
 			{
 			if (Modus == ModRuhe)
 				{ // ID#102 *************************************************
 				// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
-				printf_P(PSTR("Txp-Verbindung kommend hergestellt\r\n" ));
+#if (TXP_DEBUG >= 1)
+				printf_P(PSTR("TxP: Server-Socket geöffnet\r\n" ));
+#endif
 				BusVerbPartner = Hauptstelle;
 				ModusWechsel(ModKommendVerbVorstufe);
 				SocketBufInit();
@@ -1292,10 +1316,12 @@ void txp_thread()
 			else
 				{ // ID#213 ID#225 ***************************************************
 				//! \TODO Wenn nein, Blockiermeldung senden
-				PutSocketData_RPE(TxpInSocket, 6, PSTR("NEIN\r\n"), FLASH);				
-				printf_P(PSTR("Txp-Verbindung kommend abgewiesen\r\n" ));
-				CloseTCPSocket(TxpInSocket);
-				TxpInSocket = NO_SOCKET_USED;
+				PutSocketData_RPE(TxpServerSocket, 6, PSTR("NEIN\r\n"), FLASH);				
+#if (TXP_DEBUG >= 1)
+				printf_P(PSTR("TxP: Server-Socket Anfrage ABGEWIESEN\r\n" ));
+#endif
+				CloseTCPSocket(TxpServerSocket);
+				TxpServerSocket = NO_SOCKET_USED;
 				}
 			}
 		}
@@ -1306,8 +1332,6 @@ void txp_thread()
 
 	if (Modus == ModRuhe && HtmlEmpfText[0] != '\0')
 		{
-		printf_P(PSTR("HTML-Eingabe erfolgt\r\n" ));
-
 		if (KommendInternAnwaehlen(0)) // keine Durchwahl
 			{ 
 #if (TXP_DEBUG >= 1)
@@ -1383,12 +1407,12 @@ void txp_thread()
 			&& PufferLeer(&EmpfPuffer) )
 			{
 #if (TXP_DEBUG >= 1)
-			printf_P(PSTR("TxP: Ausschaltung intern\r\n" ));
+			printf_P(PSTR("TxP: HTML-Ruhe --> Ausschaltung intern\r\n" ));
 #endif
 			BusSenden(BusKdoSchluss);
 			ModusWechsel(ModWarteSchlussQuitt);
 			RuheZaehler = 0;
-			} // Abschaltung nach XXX Sekunden
+			} // Abschaltung nach 30 Sekunden
 
 		} // if Modus == ModHtmlVerbunden
 
@@ -1824,8 +1848,8 @@ void txp_init()
 	cgi_RegisterCGI( txp_cgi_config, PSTR("txp-config.cgi"));
 	cgi_RegisterCGI( txp_cgi_debug, PSTR("txp-debug.cgi"));
 
-	TxpOutSocket = NO_SOCKET_USED;
-	TxpInSocket = NO_SOCKET_USED;
+	TxpClientSocket = NO_SOCKET_USED;
+	TxpServerSocket = NO_SOCKET_USED;
 	
 	RegisterTCPPort(TXP_PORT);
 	
