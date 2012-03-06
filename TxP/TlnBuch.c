@@ -468,6 +468,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	static PROGMEM const char TypAscii_P[] = "Ascii";
 	static PROGMEM const char TypTxp_P[] = "TelexPhone";
 	static PROGMEM const char Save_P[] = "save";
+	static PROGMEM const char Clear_P[] = "clear";
+	static PROGMEM const char Load_P[] = "load";
 	
 	cgi_PrintHttpheaderStart();
 
@@ -528,7 +530,11 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				}
 			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
 						   "<td><a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></td>"
-						   "</table><a href=\"txp-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a></form>") );
+						   "</table>"
+						   "<a href=\"txp-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a>"
+						   "<a href=\"txp-tlnverz.cgi?load\">alle &Auml;nderungen verwerfen</a>"
+						   "<a href=\"txp-tlnverz.cgi?clear\">komplett l&ouml;schen</a>"
+						   "</form>") );
 			} // Teilnehmerverzeichnis nicht leer
 		else
 			{
@@ -695,12 +701,28 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		
 	else if (PharseCheckName_P(http_request, Save_P))
 		{ // auf externem Eeprom speichern
-		uint16_t Res = TlnBuchSpeichereAufExternEeprom();
+		int Res = TlnBuchSpeichereAufExternEeprom();
 		if (Res < 0)
 			printf_P(PSTR("<b>Fehler beim Speichern (Codes %d/%d)</b>"), Res, SwTwiLetzterFehler);
 		else
 			printf_P(PSTR("Erfolgreich gespeichert (%d Bytes)"), Res);
 			
+		}
+		
+	else if (PharseCheckName_P(http_request, Load_P))
+		{ // von externem Eeprom laden
+		int Res = TlnBuchLadeVonExternEeprom();
+		if (Res < 0)
+			printf_P(PSTR("<b>Fehler beim Laden (Codes %d/%d)</b>"), Res, SwTwiLetzterFehler);
+		else
+			printf_P(PSTR("Erfolgreich geladen (%d Bytes)"), Res);
+			
+		}
+		
+	else if (PharseCheckName_P(http_request, Clear_P))
+		{ // komplett löschen
+		printf_P(PSTR("komplett gel&ouml;scht"));
+		TlnBuchMemUsed = 0;
 		}
 		
 	else
@@ -734,14 +756,14 @@ void TlnBuchInit()
 	{
 	TlnBuchMemUsed = 0;
 	
-	uint16_t Res = TlnBuchLadeVonExternEeprom();
+	int Res = TlnBuchLadeVonExternEeprom();
 	
 	if (Res < 0)
 		{
 		// HACK Test
 		char Buf[40];
 		sprintf_P(Buf, PSTR("Eeprom Ladefehler %d %d"), Res, SwTwiLetzterFehler);
-		TlnBuchTesteintrag(666, TxpUrl, Buf, 0, 0, 0);
+		TlnBuchTesteintrag(666, TxpUrl, Buf, 0, 134, 0);
 		TlnBuchTesteintrag(123, TxpUrl, "sonnibs.no-ip.org", 0, 134, 0);
 		TlnBuchTesteintrag(124, TxpUrl, "sonnibs.no-ip.org", 0, 135, 0);
 		TlnBuchTesteintrag(234, TxpIP, 0, IPDOT(192l,168l,178l,30l), 134, 0);
