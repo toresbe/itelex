@@ -23,6 +23,7 @@ typedef enum
 typedef struct
 	{
 	uint32_t Nummer; //!< Die Rufnummer, darf keine führenden Nullen enthalten
+	uint16_t Flags; //!< Boolsche werte. Siehe TlnFlag_*
 	TTlnAdresseArt AdrArt; //!< Was bedeutet die folgende Adresse
 	char Adresse[TlnAdresseMax]; //!< URL, IP, eMail, ...
 	long IPAdr; //!< bei eindeutiger IP-Adresse
@@ -30,6 +31,9 @@ typedef struct
 	uint8_t Durchwahl; //!< interne Durchwahl bei "Nebenstellenanlagen"
 	uint32_t Datum; //!< letzte Änderung der Adresse
 	} TTlnDaten;
+	
+	
+enum { TlnFlag_Lokal = 1 } ; //!< Diese Nummer wird nicht mit anderen Teilnehmern synchronisiert (TODO).
 	
 	
 extern bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln);

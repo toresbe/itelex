@@ -158,7 +158,8 @@ volatile static uint16_t TwiLebenszeichenZaehler;
 	
 volatile static uint16_t RuheZaehler;
 	//!< Zählt Ticks in denen nix passiert. Wird bei Datenempfang und Sendung und 
-	//!< Verbindungsaufbau auf Null gesetzt
+	//!< Verbindungsaufbau auf Null gesetzt. Wird auch für Timeout beim Warten auf 
+	//!< die Ausschalt-Quittung benutzt.
 	
 volatile static uint16_t SocketLebenszeichenZaehler;
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf der TCP-Verbindung.
@@ -604,6 +605,7 @@ static void ModusWechsel(TModus neu)
 			CLR_BIT_Status(StatBit_FsBefBetrieb);
 			CLR_BIT_Status(StatBit_FsBefEin);
 			CLR_BIT_Status(StatBit_Verbunden);
+			RuheZaehler = 0;
 			break;
 
 		// Html = Auf HTML-Seite eingegebener Text
@@ -852,7 +854,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	// Daten des Socket-Empfangspuffer interpretieren
 	// ----------------------------------------------
 	if (SocketInBufUsed > 0)
-		{ // ID#246 ID#344 ********************************************************
+		{ 
 		uint8_t i = 0;
 		while (i < SocketInBufUsed)
 			{
@@ -861,6 +863,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			// im Folgenden KEIN switch verwenden wegen break!
 			if (c == '\r' || c == '\n' || (c >= ' ' && c <= '~'))
 				{ // ein ASCII-Zeichen
+				// ID#246 ID#344 *****************************************************
 				SocketModeAscii = true;
 				if (!PufferVoll(&SendePuffer))
 					{
@@ -895,7 +898,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				}
 				
 			else if (c == TXPC_BAUDOT_DATA)
-				{ // Baudot-Daten
+				{ // ID#243 ID#343 ***********************************************************
 				SocketModeAscii = false;
 				uint8_t len = SocketInBuf[i+1];
 				if (i + 2 + len <= SocketInBufUsed && PufferAnzahl(&SendePuffer) + len < MaxPuffer)
@@ -929,6 +932,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				
 			else 
 				{ // unbekannter Code --> ignorieren EINSCHLIEßLICH Daten
+				// ID#245 ID#313 ID#346 ********************************************************
 				i += 2 + (uint8_t) SocketInBuf[i+1];
 				}
 				
@@ -948,7 +952,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	// vom Endgerät empfangene Daten übersetzen
 	// --------------------------------------------------
 	InCount = PufferAnzahl(&EmpfPuffer);
-	if (InCount > 10 || (InCount > 0 && RuheZaehler >= TxpTimerFreq * 3/10)) // 3 Sekunden Tipp-Pause
+	if (InCount > 10 || (InCount > 0 && RuheZaehler >= TxpTimerFreq * 3/10)) // 0,3 Sekunden Tipp-Pause
 		{ // ID#244 ID#344 ***************************************************************
 		if (SocketModeAscii)
 			{
@@ -1246,7 +1250,7 @@ void txp_thread()
 	// ======================================================================
 	// Socket Empfang und Sendung
 	// ======================================================================
-		
+
 	if (Modus == ModKommendVerbunden)
 		SocketBearbeiten(&TxpServerSocket, true);
 		
@@ -1326,6 +1330,19 @@ void txp_thread()
 			}
 		}
 
+	// ==========================================================================
+	// Timeouts?
+	// ==========================================================================
+
+	if (Modus == ModWarteSchlussQuitt && RuheZaehler > 3 * TxpTimerFreq)
+		{ // 3 Sekunden keine Schlussquittung empfangen
+#if (TXP_DEBUG >= 1)
+		printf_P(PSTR("TxP: Timeout beim Warten auf die Schlussquittung\r\n" ));
+#endif
+		ModusWechsel(ModRuhe);
+		}
+		
+		
 	// ==========================================================================
 	// Html-Eingabe?
 	// ==========================================================================
