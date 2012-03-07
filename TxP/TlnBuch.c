@@ -467,15 +467,28 @@ int TlnBuchSpeichereAufExternEeprom()
 		{
 		if (!SwTwiStop(false))
 			return -6;
+		EeOpen = false;
 		}
 		
 	// jetzt die wirkliche Größe schreiben
 	uint16_t pruef = MemUsedPruefwert(EeAdr - 4); 
 		// - 4, da die anfänglichen Einträge (Größe, Prüfwert) mit drin sind.
 
-	if (!SwTwiStart()
-		|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false) || !Ack
-		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack // Zugriffs-Adresse EEPROM
+	// Öffnen kann schiefgehen, solange vorheriger Schreibprozess noch läuft
+	do 
+		{
+		if (!SwTwiStart()
+			|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false))
+			{
+			SwTwiStop(false);
+			return -7;
+			}
+		if (!Ack) // vorheriger Schreibprozess nicht abgeschlossen, daher stellt sich externes Eeprom "tot".
+			SwTwiStop(false);
+		//! \todo Timeout
+		} while (!Ack);
+		
+	if (!SwTwiSendByte(0x00, &Ack, false) || !Ack // Zugriffs-Adresse EEPROM
 		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack 
 		|| !SwTwiSendByte(EeAdr & 0xFF, &Ack, false) || !Ack // wirkliche Länge
 		|| !SwTwiSendByte(EeAdr >> 8, &Ack, false) || !Ack
@@ -483,11 +496,11 @@ int TlnBuchSpeichereAufExternEeprom()
 		|| !SwTwiSendByte(pruef >> 8, &Ack, false) || !Ack)
 		{
 		SwTwiStop(false);
-		return -7;
+		return -8;
 		}
 
 	if (!SwTwiStop(false))
-		return -8;
+		return -9;
 		
 	return EeAdr;
 	}
@@ -827,9 +840,9 @@ void TlnBuchInit()
 		TlnBuchTesteintrag(666, TxpUrl, Buf, 0, 134, 0);
 		TlnBuchTesteintrag(123, TxpUrl, "sonnibs.no-ip.org", 0, 134, 0);
 		TlnBuchTesteintrag(124, TxpUrl, "sonnibs.no-ip.org", 0, 135, 0);
-		TlnBuchTesteintrag(234, TxpIP, 0, IPDOT(192l,168l,178l,30l), 134, 0);
+		TlnBuchTesteintrag(234, TxpIP, 0, IPDOT(192l,168l,178l,39l), 134, 0);
 		TlnBuchTesteintrag(235, TxpIP, 0, IPDOT(192l,168l,178l,38l), 134, 0);
-		TlnBuchTesteintrag(294, AsciiIP, 0, IPDOT(192l,168l,178l,30l), 134, 0);
+		TlnBuchTesteintrag(294, AsciiIP, 0, IPDOT(192l,168l,178l,39l), 134, 0);
 		TlnBuchTesteintrag(295, AsciiIP, 0, IPDOT(192l,168l,178l,38l), 134, 0);
 		TlnBuchTesteintrag(3333, AsciiIP, 0, IPDOT(192l,168l,178l,32l), 23, 0); //*/
 		}

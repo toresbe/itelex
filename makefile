@@ -332,8 +332,7 @@ endif
 #    EXTMEMOPTS = -Wl,--section-start,.data=0x804000,--defsym=__heap_end=0x80ffff
 # endif
 ifeq ($(HARDWARE),TXPnet)
-#TEST    EXTMEMOPTS = -Wl,--section-start,.data=0x802200,--defsym=__heap_end=0x80ffff
-    EXTMEMOPTS = -Wl,--section-start,.data=0x801200,--defsym=__heap_end=0x80ffff
+    EXTMEMOPTS = -Wl,--section-start,.data=0x802200,--defsym=__heap_end=0x80ffff
 endif
 
 #---------------- Linker Options ----------------
