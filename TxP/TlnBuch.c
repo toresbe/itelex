@@ -304,22 +304,20 @@ int TlnBuchLadeVonExternEeprom()
 	if (!SwTwiStart()
 		|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false) || !Ack
 		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack
-		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack)
+		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack
+		|| !SwTwiStop(false))
 		{
-		SwTwiStop(false);
+		SwTwiForceStop();
 		return -__LINE__;
 		}
 
-	if (!SwTwiStop(false))
-		return -__LINE__;
-		
 	// Gespeicherte Anzahl Byte laden
 	if (!SwTwiStart()
 		|| !SwTwiSendByte(XEEPROM_TWI_ADR+1, &Ack, false) || !Ack // +1 = read
 		|| !SwTwiReadByte(&lo, true, false)
 		|| !SwTwiReadByte(&hi, true, false))
 		{
-		SwTwiStop(false);
+		SwTwiForceStop();
 		return -__LINE__;
 		}
 		
@@ -329,7 +327,7 @@ int TlnBuchLadeVonExternEeprom()
 	if (!SwTwiReadByte(&lo, true, false)
 		|| !SwTwiReadByte(&hi, true, false))
 		{
-		SwTwiStop(false);
+		SwTwiForceStop();
 		return -__LINE__;
 		}
 		
@@ -354,7 +352,7 @@ int TlnBuchLadeVonExternEeprom()
 		{
 		if (!SwTwiReadByte((uint8_t*) &TlnBuch[TbAdr], true, false))
 			{
-			SwTwiStop(false);
+			SwTwiForceStop();
 			TlnBuchMemUsed = 0;
 			return -__LINE__;
 			}
@@ -362,7 +360,7 @@ int TlnBuchLadeVonExternEeprom()
 		
 	if (!SwTwiReadByte((uint8_t*) &TlnBuch[TbAdr], false, false))
 		{
-		SwTwiStop(false);
+		SwTwiForceStop();
 		TlnBuchMemUsed = 0;
 		return -__LINE__;
 		}
@@ -396,7 +394,7 @@ int TlnBuchSpeichereAufExternEeprom()
 		|| !SwTwiSendByte(0xFF, &Ack, false) || !Ack // Dummy-Prüfwert
 		|| !SwTwiSendByte(0xFF, &Ack, false) || !Ack)
 		{
-		SwTwiStop(false);
+		SwTwiForceStop();
 		return -__LINE__;
 		}
 
@@ -418,7 +416,7 @@ int TlnBuchSpeichereAufExternEeprom()
 						if (!SwTwiStart()
 							|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false))
 							{
-							SwTwiStop(false);
+							SwTwiForceStop();
 							return -__LINE__;
 							}
 							
@@ -435,7 +433,7 @@ int TlnBuchSpeichereAufExternEeprom()
 					if (!SwTwiSendByte(EeAdr >> 8, &Ack, false) || !Ack
 						|| !SwTwiSendByte(EeAdr & 0xFF, &Ack, false) || !Ack)
 						{
-						SwTwiStop(false);
+						SwTwiForceStop();
 						return -__LINE__;
 						}
 						
@@ -445,7 +443,7 @@ int TlnBuchSpeichereAufExternEeprom()
 				// Das Datenbyte ins externe Eeprom schreiben
 				if (!SwTwiSendByte(TlnBuch[TbAdr], &Ack, false))
 					{
-					SwTwiStop(false);
+					SwTwiForceStop();
 					return -__LINE__;
 					}
 					
@@ -455,7 +453,10 @@ int TlnBuchSpeichereAufExternEeprom()
 				if ((EeAdr & (EePageSize-1)) == 0)
 					{ // Block abschließen, da sonst 'Rollover'
 					if (!SwTwiStop(false))
+						{
+						SwTwiForceStop();
 						return -__LINE__;
+						}
 					EeOpen = false;
 					}
 				} // for i; Ein Byte speichern
@@ -470,7 +471,10 @@ int TlnBuchSpeichereAufExternEeprom()
 	if (EeOpen)
 		{
 		if (!SwTwiStop(false))
+			{
+			SwTwiForceStop();
 			return -__LINE__;
+			}
 		EeOpen = false;
 		}
 		
@@ -484,7 +488,7 @@ int TlnBuchSpeichereAufExternEeprom()
 		if (!SwTwiStart()
 			|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false))
 			{
-			SwTwiStop(false);
+			SwTwiForceStop();
 			return -__LINE__;
 			}
 		if (Ack)
@@ -504,12 +508,15 @@ int TlnBuchSpeichereAufExternEeprom()
 		|| !SwTwiSendByte(pruef & 0xFF, &Ack, false) || !Ack // prüfwert
 		|| !SwTwiSendByte(pruef >> 8, &Ack, false) || !Ack)
 		{
-		SwTwiStop(false);
+		SwTwiForceStop();
 		return -__LINE__;
 		}
 
 	if (!SwTwiStop(false))
+		{
+		SwTwiForceStop();		
 		return -__LINE__;
+		}
 		
 	return EeAdr;
 	}

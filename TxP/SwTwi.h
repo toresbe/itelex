@@ -12,6 +12,8 @@ extern bool SwTwiStart();
 
 extern bool SwTwiStop(bool ExitWhenWaitstate);
 
+extern void SwTwiForceStop();
+
 extern bool SwTwiSendByte(uint8_t x, bool* Ack, bool ExitWhenWaitstate);
 
 extern bool SwTwiReadByte(uint8_t* x, bool Ack, bool ExitWhenWaitstate);

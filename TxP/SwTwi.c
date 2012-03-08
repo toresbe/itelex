@@ -36,7 +36,7 @@ inline void SDAinit() { CLR_BIT(PORTG, 3); CLR_BIT(DDRG, 3); } // SDA in (normal
 inline void SCLset0() {	SET_BIT(DDRG, 4); }
 inline void SCLset1() {	CLR_BIT(DDRG, 4); }
 inline bool SCLget() { return BIT_IS_SET(PING, 4); }
-inline void SCLinit() { CLR_BIT(PORTG, 3); CLR_BIT(DDRG, 3); } // SCL in (normal)
+inline void SCLinit() { CLR_BIT(PORTG, 4); CLR_BIT(DDRG, 4); } // SCL in (normal)
 
 
 static uint8_t CheckLongTimer()
@@ -373,6 +373,51 @@ bool SwTwiStop(bool ExitWhenWaitstate)
 	}
 
 
+//! Gibt im Falle einer Störung alles wieder frei.
+void SwTwiForceStop()
+	{
+	SCLset0();
+
+	// 1 Halbtakt
+	timer1_wait(2 * TaktViertel);
+		
+	SDAset1();
+
+	// 1 Halbtakt
+	timer1_wait(2 * TaktViertel);
+	
+	uint8_t Bits = 0;
+	for (uint8_t EinsBits = 0 ; EinsBits <= 10 && Bits < 255 ; EinsBits++, Bits++)
+		{
+		SCLset0();
+		// 1 Halbtakt
+		timer1_wait(2 * TaktViertel);
+
+		SCLset1();
+		// 1 Halbtakt
+		timer1_wait(2 * TaktViertel);
+
+		if (!SDAget())
+			EinsBits = 0;
+		}
+		
+	SDAset0();
+
+	// 1 Volltakt
+	timer1_wait(4 * TaktViertel);
+	
+	SCLset1();
+
+	// 1 Volltakt
+	timer1_wait(4 * TaktViertel);
+	
+	SDAset1();
+
+	// 1 Volltakt
+	timer1_wait(4 * TaktViertel);
+	} // SwTwiForceStop()
+	
+
 bool SwTwiSendByte(uint8_t x, bool* Ack, bool ExitWhenWaitstate)
 	{
 	if (!SendBit((x & 0x80) != 0, ExitWhenWaitstate))
@@ -589,8 +634,8 @@ void i2cTest()
 	}
 
 #endif //def GELOESCHT	
-	
-	
+
+
 void SwTwiInit()
 	{
 	//SwTwiModus = Wartend;
@@ -613,5 +658,7 @@ void SwTwiInit()
 
 	Mikrosek = TIMER1FREQ / 1000000 + 2;
 
+	SwTwiForceStop();
+	
 	}
 	
