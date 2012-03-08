@@ -1810,6 +1810,8 @@ void txp_cgi_main( void * pStruct )
 
 void txp_init()
 	{
+	init_Taste();
+	
 	SeriellUmsetzInit();
 
 	PufferInit(&SendePuffer);

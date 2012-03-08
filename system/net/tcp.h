@@ -181,7 +181,7 @@
 	#define TCP_HEADER_LENGTH 	36
 
 	#if defined(EXTMEM)
-		#define MAX_TCP_Datalenght 	1452
+		#define MAX_TCP_Datalenght 	1024 // HAck Fred 1452
 	#elif defined(__AVR_ATmega1284P__)
 		#define MAX_TCP_Datalenght 	512
 	#elif defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__)

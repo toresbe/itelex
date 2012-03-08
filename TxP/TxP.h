@@ -34,6 +34,10 @@
 	#include "system/shell/shell.h"
 	#include "config.h"
 
+	#include "Defports.h"
+	
+	DEFPORTINPULL(Taste, B, 3);
+	
 	//! Der TCP-Port für die TelexPhone-Kommunikation
 	#define TXP_PORT 134
 	
