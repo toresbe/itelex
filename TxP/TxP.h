@@ -38,12 +38,21 @@
 	
 	DEFPORTINPULL(Taste, B, 3);
 	
+	typedef enum { 
+		NichtGedr, //!< nicht gedrückt.
+		Kurz, //!< kurz gedrückt ( < 0,8 Sekunden)
+		Lang  //!< lang gedrückt ( > 0,8 Sekunden)
+		} TTastendruck; //!< Art des Tastendrucks
+
 	//! Der TCP-Port für die TelexPhone-Kommunikation
 	#define TXP_PORT 134
 	
-	void txp_init( void );
-	void txp_thread( void );
-
+	extern void txp_init( void );
+	extern void txp_thread( void );
+	extern TTastendruck Tastendruck;
+	extern bool WarteTaste();
+	
+	
 	#endif //def TELEXPHONE
 	
 #endif /* _TXP_H_ */

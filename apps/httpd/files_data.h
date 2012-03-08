@@ -78,18 +78,21 @@ const char data1[] PROGMEM = {
 const char files2[] PROGMEM = "headline.html";
 const char data2[] PROGMEM = {
 	"<HTML>"
-	"<BODY text=\"#000000\" style=\"background-image:url(lochstreifen-hg.png)\">"
-	"<h1>TxP2-Net - Das Internet-Interface zum TelexPhone</h1>" //! TODO: Diesen Text größer
+	"<BODY text=\"#0000C0\" style=\"background-image:url(lochstreifen-hg.png)\">"
+	"<span style=\"font: bold 40px 'Courier',monospace; \"><b>"
+	"TxP2-Net - Das Internet-Interface zum TelexPhone"
+	"</b></span>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
 
 
 #define byte char // nur für den Lochstreifen jetzt...
-	
-PROGMEM
+#define unsigned PROGMEM // nur für den Lochstreifen jetzt... 	
+
 #include "lochstreifen-hg.h"
 
+#undef unsigned
 #undef byte
 
 
@@ -290,7 +293,7 @@ FILES files[] = {
 #if defined(TEMP_LOGGER)
 	{ files10, data10, TEXT, sizeof( data10 ) - 1 },
 #endif
-//	{ lochstr_hg_filename, lochstreifen_hg, PNG, sizeof( lochstreifen_hg ) },
+	{ lochstr_hg_filename, lochstreifen_hg, PNG, sizeof( lochstreifen_hg ) },
 	{ 0,0,0,0 }
 };
 #endif

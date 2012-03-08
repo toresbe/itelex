@@ -23,7 +23,7 @@ TSwTwiFehler SwTwiLetzterFehler;
 
 //nicht benuztzt... static uint8_t AktByte;
 
-volatile uint8_t LongTimer; //! \todo Ersetzen, da dieser nicht mehr läuft. Wird zur "Blockierungs-Erkennung" genutzt.
+static uint8_t LongTimer; 
 
 
 // Ports: SDA auf PORTG3, SCL auf PORTG4
@@ -39,6 +39,16 @@ inline bool SCLget() { return BIT_IS_SET(PING, 4); }
 inline void SCLinit() { CLR_BIT(PORTG, 3); CLR_BIT(DDRG, 3); } // SCL in (normal)
 
 
+static uint8_t CheckLongTimer()
+	{
+	static int LastTimer1Val;
+	int Timer1Akt = timer1_getcounter();
+	if (Timer1Akt < LastTimer1Val) // es war ein Überlauf eingetreten
+		LongTimer++;
+	LastTimer1Val = Timer1Akt;
+	return LongTimer;
+	}
+	
 
 static bool SendBit(bool val, bool ExitWhenWaitstate)
 // Rückgabe: true, wenn nicht verfälscht...
@@ -87,7 +97,7 @@ static bool SendBit(bool val, bool ExitWhenWaitstate)
 		if (ExitWhenWaitstate)
 			{
 			InWaitstate = true;
-			if (LongTimer > 100)
+			if (CheckLongTimer() > 100) // 1 Sekunde
 				{
 				SwTwiLetzterFehler = Blockiert;
 				SDAset1(); // SCL ist schon 1
@@ -97,7 +107,7 @@ static bool SendBit(bool val, bool ExitWhenWaitstate)
 		else
 			while (!SCLget())
 				{
-				if (LongTimer > 100)
+				if (CheckLongTimer() > 100) // 1 Sekunde
 					{
 					SwTwiLetzterFehler = Blockiert;
 					return false;
@@ -154,14 +164,14 @@ static bool ReadBit(bool* val, bool ExitWhenWaitstate)
 		if (ExitWhenWaitstate)
 			{
 			InWaitstate = true;
-			if (LongTimer > 100)
+			if (CheckLongTimer() > 100) // 1 Sekunde
 				SwTwiLetzterFehler = Blockiert;
 			return false;
 			}
 		else
 			while (!SCLget())
 				{
-				if (LongTimer > 100)
+				if (CheckLongTimer() > 100) // 1 Sekunde
 					{
 					SwTwiLetzterFehler = Blockiert;
 					return false;
@@ -239,7 +249,7 @@ bool SwTwiStart()
 
 		while (!SCLget())
 			{
-			if (LongTimer > 100)
+			if (CheckLongTimer() > 100) // 1 Sekunde
 				{
 				SwTwiLetzterFehler = Blockiert;
 				return false;
@@ -320,14 +330,14 @@ bool SwTwiStop(bool ExitWhenWaitstate)
 		if (ExitWhenWaitstate)
 			{
 			InWaitstate = true;
-			if (LongTimer > 100)
+			if (CheckLongTimer() > 100) // 1 Sekunde
 				SwTwiLetzterFehler = Blockiert;
 			return false;
 			}
 		else
 			while (!SCLget())
 				{
-				if (LongTimer > 100)
+				if (CheckLongTimer() > 100) // 1 Sekunde
 					{
 					SwTwiLetzterFehler = Blockiert;
 					return false;
@@ -349,7 +359,7 @@ bool SwTwiStop(bool ExitWhenWaitstate)
 	// SDA prüfen
 	while (!SDAget())
 		{
-		if (LongTimer > 100)
+		if (CheckLongTimer() > 100) // 1 Sekunde
 			{
 			SwTwiLetzterFehler = Blockiert;
 			return false;

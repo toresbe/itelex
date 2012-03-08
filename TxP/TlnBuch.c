@@ -297,10 +297,9 @@ uint16_t MemUsedPruefwert(uint16_t groesse)
 int TlnBuchLadeVonExternEeprom()
 	{
 	bool Ack;
+	uint16_t NeuGr;
 	uint8_t lo, hi;
 
-	TlnBuchMemUsed = 0;
-	
 	// Eeprom Lesevorgang initialisieren --> Adresse schreiben
 	if (!SwTwiStart()
 		|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false) || !Ack
@@ -308,11 +307,11 @@ int TlnBuchLadeVonExternEeprom()
 		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack)
 		{
 		SwTwiStop(false);
-		return -1;
+		return -__LINE__;
 		}
 
 	if (!SwTwiStop(false))
-		return -2;
+		return -__LINE__;
 		
 	// Gespeicherte Anzahl Byte laden
 	if (!SwTwiStart()
@@ -321,28 +320,26 @@ int TlnBuchLadeVonExternEeprom()
 		|| !SwTwiReadByte(&hi, true, false))
 		{
 		SwTwiStop(false);
-		return -3;
+		return -__LINE__;
 		}
 		
-	TlnBuchMemUsed = (hi << 8) | lo;
+	NeuGr = (hi << 8) | lo;
 	
 	// Prüfwert lesen
 	if (!SwTwiReadByte(&lo, true, false)
 		|| !SwTwiReadByte(&hi, true, false))
 		{
-		TlnBuchMemUsed = 0;
 		SwTwiStop(false);
-		return -4;
+		return -__LINE__;
 		}
 		
-	if (((hi << 8) | lo) != MemUsedPruefwert(TlnBuchMemUsed))
+	if (((hi << 8) | lo) != MemUsedPruefwert(NeuGr))
 		{
-		TlnBuchMemUsed = 0;
 		SwTwiStop(false);
-		return -5;
+		return -__LINE__;
 		}
-		
-	if (TlnBuchMemUsed == 0)
+
+	if (NeuGr == 0)
 		{ // nichts weiter zu lesen
 		SwTwiReadByte(&lo, false, false); // dummy
 		SwTwiStop(false);
@@ -350,6 +347,7 @@ int TlnBuchLadeVonExternEeprom()
 		}
 		
 	// Speicher scheint ok, also geht's jetzt ans lesen...
+	TlnBuchMemUsed = NeuGr;
 	uint16_t TbAdr;
 
 	for (TbAdr = 0 ; TbAdr < TlnBuchMemUsed - 1 ; TbAdr++) // -1, da das letzte Byte mit Ack = false zu lesen ist
@@ -358,7 +356,7 @@ int TlnBuchLadeVonExternEeprom()
 			{
 			SwTwiStop(false);
 			TlnBuchMemUsed = 0;
-			return -6;
+			return -__LINE__;
 			}
 		}
 		
@@ -366,7 +364,7 @@ int TlnBuchLadeVonExternEeprom()
 		{
 		SwTwiStop(false);
 		TlnBuchMemUsed = 0;
-		return -7;
+		return -__LINE__;
 		}
 		
 	SwTwiStop(false);
@@ -381,6 +379,7 @@ int TlnBuchSpeichereAufExternEeprom()
 	bool Ack;
 	uint16_t EeAdr;
 	uint16_t TbAdr;
+	uint16_t TryCount;
 	uint8_t i;
 	bool EeOpen;
 	TTlnDaten TD;
@@ -398,7 +397,7 @@ int TlnBuchSpeichereAufExternEeprom()
 		|| !SwTwiSendByte(0xFF, &Ack, false) || !Ack)
 		{
 		SwTwiStop(false);
-		return -1;
+		return -__LINE__;
 		}
 
 	EeAdr = 4;
@@ -414,25 +413,30 @@ int TlnBuchSpeichereAufExternEeprom()
 				if (!EeOpen)
 					{ // vorheriger Schreibvorgang abgeschlossen, neuen beginnen
 					// Öffnen kann schiefgehen, solange vorheriger Schreibprozess noch läuft
-					do 
+					for (TryCount = 0 ; TryCount < 10000 ; TryCount++)
 						{
 						if (!SwTwiStart()
 							|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false))
 							{
 							SwTwiStop(false);
-							return -2;
+							return -__LINE__;
 							}
-						if (!Ack) // vorheriger Schreibprozess nicht abgeschlossen, daher stellt sich externes Eeprom "tot".
-							SwTwiStop(false);
-						//! \todo Timeout
-						} while (!Ack);
+							
+						if (Ack) 
+							break;
+						else
+							SwTwiStop(false); // vorheriger Schreibprozess nicht abgeschlossen, daher stellt sich externes Eeprom "tot".
+						}						
+						
+					if (!Ack) // Abbruch durch TryCount
+						return -__LINE__;
 						
 					// Zugriffsadresse senden
 					if (!SwTwiSendByte(EeAdr >> 8, &Ack, false) || !Ack
 						|| !SwTwiSendByte(EeAdr & 0xFF, &Ack, false) || !Ack)
 						{
 						SwTwiStop(false);
-						return -3;
+						return -__LINE__;
 						}
 						
 					EeOpen = true;
@@ -442,7 +446,7 @@ int TlnBuchSpeichereAufExternEeprom()
 				if (!SwTwiSendByte(TlnBuch[TbAdr], &Ack, false))
 					{
 					SwTwiStop(false);
-					return -4;
+					return -__LINE__;
 					}
 					
 				EeAdr++;
@@ -451,7 +455,7 @@ int TlnBuchSpeichereAufExternEeprom()
 				if ((EeAdr & (EePageSize-1)) == 0)
 					{ // Block abschließen, da sonst 'Rollover'
 					if (!SwTwiStop(false))
-						return -5;
+						return -__LINE__;
 					EeOpen = false;
 					}
 				} // for i; Ein Byte speichern
@@ -466,7 +470,7 @@ int TlnBuchSpeichereAufExternEeprom()
 	if (EeOpen)
 		{
 		if (!SwTwiStop(false))
-			return -6;
+			return -__LINE__;
 		EeOpen = false;
 		}
 		
@@ -475,18 +479,23 @@ int TlnBuchSpeichereAufExternEeprom()
 		// - 4, da die anfänglichen Einträge (Größe, Prüfwert) mit drin sind.
 
 	// Öffnen kann schiefgehen, solange vorheriger Schreibprozess noch läuft
-	do 
+	for (TryCount = 0 ; TryCount < 10000 ; TryCount++)
 		{
 		if (!SwTwiStart()
 			|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false))
 			{
 			SwTwiStop(false);
-			return -7;
+			return -__LINE__;
 			}
-		if (!Ack) // vorheriger Schreibprozess nicht abgeschlossen, daher stellt sich externes Eeprom "tot".
+		if (Ack)
+			break;
+		else
+			// vorheriger Schreibprozess nicht abgeschlossen, daher stellt sich externes Eeprom "tot".
 			SwTwiStop(false);
-		//! \todo Timeout
-		} while (!Ack);
+		} 
+
+	if (!Ack) // Abbruch durch TryCount
+		return -__LINE__;
 		
 	if (!SwTwiSendByte(0x00, &Ack, false) || !Ack // Zugriffs-Adresse EEPROM
 		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack 
@@ -496,11 +505,11 @@ int TlnBuchSpeichereAufExternEeprom()
 		|| !SwTwiSendByte(pruef >> 8, &Ack, false) || !Ack)
 		{
 		SwTwiStop(false);
-		return -8;
+		return -__LINE__;
 		}
 
 	if (!SwTwiStop(false))
-		return -9;
+		return -__LINE__;
 		
 	return EeAdr;
 	}
@@ -828,6 +837,8 @@ static void TlnBuchTesteintrag(uint32_t nr, TTlnAdresseArt art, char *url, long 
 //------------------------------------------------------------
 void TlnBuchInit()
 	{
+	SwTwiInit();
+	
 	TlnBuchMemUsed = 0;
 	
 	if (get_Taste()) // high vom Pullup -> Taste nicht gedrückt

@@ -85,11 +85,13 @@ typedef enum
 	ModKommendWarteEinQuitt = 13, 
 		//!< Warte auf Einschalt-Quittung des Endgeräts
 	ModKommendVerbunden = 14, 
-	ModWarteSchlussQuitt = 9,
+	ModWarteSchlussQuitt = 19,
 	
 	// Über HTML-Seite eingegebener Verbindungswunsch
 	ModHtmlWarteEinQuitt = 21, //!< Warte auf Einschalt-Quittung des Endgeräts
 	ModHtmlVerbunden = 22, 
+	
+	ModDeaktiviert = 31 //!< Durch Tastendruck ausgeschaltet.
 	} TModus;
 	
 	
@@ -105,7 +107,7 @@ static TModus Modus;
 //   * zugehörige Daten
 
 #define TXPC_NULL '\000' //!< Füllzeichen
-#define TXPC_DURCHWAHL '\001' //!< Datenblock enthält ein Byte Durchwahl \todo Durchwahl abgehend noch nicht implementiert
+#define TXPC_DURCHWAHL '\001' //!< Datenblock enthält ein Byte Durchwahl 
 #define TXPC_BAUDOT_DATA '\002' //!< Datenblock mit puren Baudot-Codes
 #define TXPC_START '\005' //!< Rückmeldung vom Angerufenen dass Empfangsbereit
 	
@@ -206,6 +208,11 @@ static char SocketOutBuf[SocketOutBufMax]; //!< TCP-Sendepuffer
 
 static bool SocketModeAscii; 
 	//!< true, wenn die Daten als ASCII und nicht als Baudot-Daten übertragen werden.
+
+static bool SendenBeschleunigen;
+	//!< wird auf true gesetzt, wenn der Puffer überzulaufen droht.
+	//!< bewirkt, dass das generierte Stop-Bit von 1,5 auf 1,3 verkürzt wird. 
+	//!< Das ist eine Beschleunigung um 7,5/7,3 ca. 3%.
 	
 static uint8_t Durchwahl;
 	//!< wenn != 0 wurde eine konkrete Nebenstelle gewählt.
@@ -241,7 +248,9 @@ enum { DebugMsgMax = 100 } ;
 static char DebugMsg[DebugMsgMax];
 	//!< String für außergewöhnliche Fälle
 	
+TTastendruck Tastendruck;
 
+	
 // LEDs
 // ----	
 #define ROT 0
@@ -370,7 +379,7 @@ void txp_timerEvent(void)
 			if (SerUmSendBitNr == 8) // Stop-Bit läuft
 				{
 				NeuMark = true;
-				if (++SerUmTickZaehlerSend >= 15)
+				if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 13 : 15))
 					SerUmSendBitNr = SerUmSendWarte; // fertig für die nächsten Daten
 				}
 			else
@@ -450,6 +459,63 @@ void txp_timerEvent(void)
 			}
 		} // if Modus != Ruhe
 
+	// Taste prüfen und auswerten
+	// -------------------------------
+	static enum { TasteAus, TasteEin, TasteSperr } TasteZustandIntern;
+		// Speichert den letzten Zustand der Taste.
+	static uint8_t TasteZaehler;
+
+	switch (TasteZustandIntern)
+		{
+		case TasteAus:
+			if (!get_Taste()) // Gedrückt = LOW!
+				{
+				if (++TasteZaehler > 5) // 50 Millisekunden
+					{ // ausreichend lang gedrückt
+					TasteZustandIntern = TasteEin;
+					TasteZaehler = 0;
+					}
+				}
+			else
+				{
+				TasteZaehler = 0;
+				}
+			break;
+
+		case TasteEin: 
+			if (!get_Taste()) // Gedrückt = LOW!
+				{
+				if (++TasteZaehler > TxpTimerFreq * 8/10) // 0,8 Sekunden
+					{ // lang gedrückt
+					TasteZustandIntern = TasteSperr;
+					Tastendruck = Lang;
+					}
+				}
+			else
+				{ // Taste wieder früh losgelassen
+				TasteZustandIntern = TasteAus;
+				Tastendruck = Kurz;
+				}
+			break;
+
+		case TasteSperr:
+			if (!get_Taste()) // Gedrückt = LOW!
+				{
+				// immer noch gedrückt...
+				}
+			else
+				{ 
+				TasteZustandIntern = TasteAus;
+				}
+			break;
+
+		default:
+			TasteZustandIntern = TasteSperr;
+			Tastendruck = NichtGedr;
+			break;
+			
+		} // switch (TasteZustandIntern)
+	
 	t0c = TCNT0 - t0c;
 	if (t0c > Timer0Callback_Max)
 		Timer0Callback_Max = t0c;
@@ -471,8 +537,6 @@ static void FalschCodeEmpfangen(uint8_t Code)
 /*	
 //! Druckt am verbundenen Fernschreiber Datum und Uhrzeit des Anrufs
 //-------------------------------------------------------------------
-//! \todo bewirkt manchmal Endlosschleifen -> Ausschaltzwang einbauen.	
-//! \todo ganze Funktion vorläufig deaktiviert.
 static void DatumDruckenUndAusschalten()
 	{
 	if (!EndgeraetEinschalten)
@@ -535,6 +599,7 @@ static void ModusWechsel(TModus neu)
 			LED_off(BLAU);
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			SendenBeschleunigen = false;
 			SocketModeAscii = false;
 			break;
 	
@@ -565,7 +630,6 @@ static void ModusWechsel(TModus neu)
 		// Kommend = vom Netz zum internen Anschluss
 		case ModKommendVerbVorstufe: // es wird erst mal abgewartet, was aus der ankommenden Verbindung wird.
 			// trotzdem sofort abgehende Verbindungen sperren.
-			//! \todo prüfen, ob sofortige Sperre sinnvoll ist oder erst bei wirklichem Verbindungsaufbau.
 			CLR_BIT_Status(StatBit_Frei);
 			CLR_BIT_Status(StatBit_LeitungKennung);
 			CLR_BIT_Status(StatBit_Verbunden);
@@ -580,6 +644,7 @@ static void ModusWechsel(TModus neu)
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
 			SocketModeAscii = false;
+			SendenBeschleunigen	= false;
 			Durchwahl = 0;
 			break;
 
@@ -591,6 +656,7 @@ static void ModusWechsel(TModus neu)
 		case ModKommendWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
 			SET_BIT_Status(StatBit_FsBefBetrieb);
 			SET_BIT_Status(StatBit_FsBefEin);
+			RuheZaehler = 0;
 			break;
 	
 		case ModKommendVerbunden: 
@@ -623,6 +689,7 @@ static void ModusWechsel(TModus neu)
 			LED_off(BLAU);
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			SendenBeschleunigen = false;
 			break;
 	
 		case ModHtmlVerbunden: 
@@ -910,9 +977,15 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 						i++;
 						len--;
 						} // umkopieren
+						
+					if (SendenBeschleunigen && PufferAnzahl(&SendePuffer) < MaxPuffer / 2)
+						SendenBeschleunigen = false;
 					}
 				else
+					{
+					SendenBeschleunigen = true;
 					break; // Daten können momentan nicht verarbeitet werden.
+					}
 				}
 				
 			else if (c == TXPC_START)
@@ -1049,6 +1122,7 @@ void txp_thread()
 	// ======================================================================
 	// Auf TWI-Bus empfangene Codes auswerten
 	// ======================================================================
+
 	if (GetEmpfByte(&Code))
 		{
 		switch (Code)
@@ -1336,13 +1410,25 @@ void txp_thread()
 
 	if (Modus == ModWarteSchlussQuitt && RuheZaehler > 3 * TxpTimerFreq)
 		{ // 3 Sekunden keine Schlussquittung empfangen
+		// ID#412 ****************************************************************
 #if (TXP_DEBUG >= 1)
 		printf_P(PSTR("TxP: Timeout beim Warten auf die Schlussquittung\r\n" ));
 #endif
 		ModusWechsel(ModRuhe);
 		}
 		
+	if (Modus == ModKommendWarteEinQuitt && RuheZaehler > 3 * TxpTimerFreq)
+		{ // 3 Sekunden keine Einschalt-Quittung empfangen
+		// ID#332 ***************************************************************
+#if (TXP_DEBUG >= 1)
+		printf_P(PSTR("TxP: Timeout beim Warten auf die Einschaltquittung\r\n" ));
+#endif
+		BusSenden(BusKdoSchluss);
+		CloseTxpServerSocket();
+		ModusWechsel(ModWarteSchlussQuitt);
+		}
 		
+	
 	// ==========================================================================
 	// Html-Eingabe?
 	// ==========================================================================
