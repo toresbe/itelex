@@ -529,7 +529,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	static PROGMEM const char Port_P[] = "port";
 	static PROGMEM const char Durchwahl_P[] = "durchwahl";
 	static PROGMEM const char Typ_P[] = "type";
-	static PROGMEM const char TypGeloescht_P[] = "gel&ouml;scht";
+	static PROGMEM const char TypGeloescht_P[] = "geloescht";
 	static PROGMEM const char TypAscii_P[] = "Ascii";
 	static PROGMEM const char TypTxp_P[] = "TelexPhone";
 	static PROGMEM const char Lokal_P[] = "local";

@@ -55,7 +55,7 @@ const char data1[] PROGMEM = {
 	"<HEAD>"
 	"<TITLE>TxP2-Net - Das Internet-Interface zum TelexPhone 2</TITLE>"
 	"</HEAD>"
-	"<frameset rows=\"84,35,*"
+	"<frameset rows=\"63,35,*"
 	#ifdef HTTPSERVER_STATS
 		",40"
 	#endif
@@ -79,7 +79,7 @@ const char files2[] PROGMEM = "headline.html";
 const char data2[] PROGMEM = {
 	"<HTML>"
 	"<BODY text=\"#0000C0\" style=\"background-image:url(lochstreifen-hg.png)\">"
-	"<span style=\"font: bold 40px 'Courier',monospace; \"><b>"
+	"<span style=\"font: bold 40px 'Courier New',monospace; \"><b>"
 	"TxP2-Net - Das Internet-Interface zum TelexPhone"
 	"</b></span>"
 	"</BODY>"

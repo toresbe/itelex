@@ -601,6 +601,8 @@ void SwTwiInit()
 	
 	SDAinit();
 	SCLinit();
+	SDAset1();
+	SCLset1();
 
 #define TIMER1FREQ (F_CPU / 8) // ist in timer1.c - timer1_init festgelegt.
 
