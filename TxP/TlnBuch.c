@@ -291,7 +291,37 @@ uint16_t MemUsedPruefwert(uint16_t groesse)
 	
 #define XEEPROM_TWI_ADR 0xA0
 
+
+//! Öffnet das externe Eeprom.
+//----------------------------
+//! Solange ein Schreibvorgang läuft, stellt sich das IC 24C256 tot.
+//! Daher mehrere öffnungsversuche.
+//! \param TwiAddr anzusprechende Adresse inkl. R/W-Bit.
+//! \retval 1 ok
+//! \retval 0 niemand da
+//! \retval -1 Fehler
+static int ExternEepromOeffnen(uint8_t TwiAddr)
+	{
+	for (uint16_t TryCount = 0 ; TryCount < 10000 ; TryCount++)
+		{
+		bool Ack = true;
+		if (!SwTwiStart()
+			|| !SwTwiSendByte(TwiAddr, &Ack, false))
+			{
+			SwTwiForceStop();
+			return -1;
+			}
+			
+		if (Ack) 
+			return 1;
+		else
+			SwTwiStop(false); // vorheriger Schreibprozess nicht abgeschlossen, daher stellt sich externes Eeprom "tot".
+		}						
+		
+	return 0;
+	}
 	
+
 //! Lädt das Teilnehmer-Verzeichnis aus dem externen EEPROM
 //------------------------------------------------------------
 int TlnBuchLadeVonExternEeprom()
@@ -299,11 +329,14 @@ int TlnBuchLadeVonExternEeprom()
 	bool Ack;
 	uint16_t NeuGr;
 	uint8_t lo, hi;
+	int Res;
 
 	// Eeprom Lesevorgang initialisieren --> Adresse schreiben
-	if (!SwTwiStart()
-		|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false) || !Ack
-		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack
+	Res = ExternEepromOeffnen(XEEPROM_TWI_ADR);
+	if (Res < 0)
+		return -__LINE__ + Res;
+
+	if (!SwTwiSendByte(0x00, &Ack, false) || !Ack
 		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack
 		|| !SwTwiStop(false))
 		{
@@ -311,10 +344,12 @@ int TlnBuchLadeVonExternEeprom()
 		return -__LINE__;
 		}
 
+	Res = ExternEepromOeffnen(XEEPROM_TWI_ADR+1); // +1 = read
+	if (Res < 0)
+		return -__LINE__ + Res;
+
 	// Gespeicherte Anzahl Byte laden
-	if (!SwTwiStart()
-		|| !SwTwiSendByte(XEEPROM_TWI_ADR+1, &Ack, false) || !Ack // +1 = read
-		|| !SwTwiReadByte(&lo, true, false)
+	if (!SwTwiReadByte(&lo, true, false)
 		|| !SwTwiReadByte(&hi, true, false))
 		{
 		SwTwiForceStop();
@@ -377,17 +412,19 @@ int TlnBuchSpeichereAufExternEeprom()
 	bool Ack;
 	uint16_t EeAdr;
 	uint16_t TbAdr;
-	uint16_t TryCount;
+	int Res;
 	uint8_t i;
 	bool EeOpen;
 	TTlnDaten TD;
 	
 	enum { EePageSize = 64 } ;
 
+	Res = ExternEepromOeffnen(XEEPROM_TWI_ADR);
+	if (Res < 0)
+		return -__LINE__ + Res;
+		
 	// Eeprom Speichervorgang initialisieren --> Adresse schreiben, Dummy-Länge 0 schreiben, Dummy-Prüfwert FF schreiben.
-	if (!SwTwiStart()
-		|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false) || !Ack
-		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack // Zugriffs-Adresse EEPROM
+	if (!SwTwiSendByte(0x00, &Ack, false) || !Ack // Zugriffs-Adresse EEPROM
 		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack 
 		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack // Dummy-Länge
 		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack
@@ -410,25 +447,10 @@ int TlnBuchSpeichereAufExternEeprom()
 				{ // Ein Byte speichern
 				if (!EeOpen)
 					{ // vorheriger Schreibvorgang abgeschlossen, neuen beginnen
-					// Öffnen kann schiefgehen, solange vorheriger Schreibprozess noch läuft
-					for (TryCount = 0 ; TryCount < 10000 ; TryCount++)
-						{
-						if (!SwTwiStart()
-							|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false))
-							{
-							SwTwiForceStop();
-							return -__LINE__;
-							}
-							
-						if (Ack) 
-							break;
-						else
-							SwTwiStop(false); // vorheriger Schreibprozess nicht abgeschlossen, daher stellt sich externes Eeprom "tot".
-						}						
-						
-					if (!Ack) // Abbruch durch TryCount
-						return -__LINE__;
-						
+					Res = ExternEepromOeffnen(XEEPROM_TWI_ADR);
+					if (Res < 0)
+						return -__LINE__ + Res;
+
 					// Zugriffsadresse senden
 					if (!SwTwiSendByte(EeAdr >> 8, &Ack, false) || !Ack
 						|| !SwTwiSendByte(EeAdr & 0xFF, &Ack, false) || !Ack)
@@ -478,30 +500,16 @@ int TlnBuchSpeichereAufExternEeprom()
 		EeOpen = false;
 		}
 		
+	// jetzt die wirkliche Größe schreiben
+
 	EeAdr -= 4; // - 4, da die anfänglichen Einträge (Größe, Prüfwert) mit drin sind.
 	uint16_t pruef = MemUsedPruefwert(EeAdr); 
 
-	// jetzt die wirkliche Größe schreiben
-
 	// Öffnen kann schiefgehen, solange vorheriger Schreibprozess noch läuft
-	for (TryCount = 0 ; TryCount < 10000 ; TryCount++)
-		{
-		if (!SwTwiStart()
-			|| !SwTwiSendByte(XEEPROM_TWI_ADR, &Ack, false))
-			{
-			SwTwiForceStop();
-			return -__LINE__;
-			}
-		if (Ack)
-			break;
-		else
-			// vorheriger Schreibprozess nicht abgeschlossen, daher stellt sich externes Eeprom "tot".
-			SwTwiStop(false);
-		} 
+	Res = ExternEepromOeffnen(XEEPROM_TWI_ADR);
+	if (Res < 0)
+		return -__LINE__ + Res;
 
-	if (!Ack) // Abbruch durch TryCount
-		return -__LINE__;
-		
 	if (!SwTwiSendByte(0x00, &Ack, false) || !Ack // Zugriffs-Adresse EEPROM
 		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack 
 		|| !SwTwiSendByte(EeAdr & 0xFF, &Ack, false) || !Ack // wirkliche Länge

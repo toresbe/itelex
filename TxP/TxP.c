@@ -109,6 +109,7 @@ static TModus Modus;
 #define TXPC_NULL '\000' //!< Füllzeichen
 #define TXPC_DURCHWAHL '\001' //!< Datenblock enthält ein Byte Durchwahl 
 #define TXPC_BAUDOT_DATA '\002' //!< Datenblock mit puren Baudot-Codes
+#define TXPC_STOP '\004' //!< Es können noch Daten angehängt werden.
 #define TXPC_START '\005' //!< Rückmeldung vom Angerufenen dass Empfangsbereit
 	
 // BusVerbPartner ist in BusKomm.h enthalten
@@ -379,7 +380,8 @@ void txp_timerEvent(void)
 			if (SerUmSendBitNr == 8) // Stop-Bit läuft
 				{
 				NeuMark = true;
-				if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 13 : 15))
+//				if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 13 : 15))
+				if (++SerUmTickZaehlerSend >= ((!get_Taste() || SendenBeschleunigen) ? 13 : 15)) // HACK Test wegen Auswirkung des schnellen Sendens....
 					SerUmSendBitNr = SerUmSendWarte; // fertig für die nächsten Daten
 				}
 			else
@@ -826,7 +828,7 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 			if (Stat >= 0 
 				&& BIT_IS_SET(Stat, StatBit_Frei) 
 				&& !BIT_IS_SET(Stat, StatBit_LeitungKennung)
-				&& !BIT_IS_SET(Stat, StatBit_SpezialGeraetKennung))
+				&& (!BIT_IS_SET(Stat, StatBit_SpezialGeraetKennung) || (TestVerbParter == Hauptstelle)))
 				break; // gefunden, Hurra!
 				
 			if (!AlternativSucheBeiBesetzt)
@@ -1117,7 +1119,7 @@ void txp_thread()
 	TxpThreadCount++;
 
 	TxpThreadCheckCount = 5;
-	LED_off(ROT); // HACK Test der Aufrufpausen von txp_thread
+	LED_off(ROT); 
 	
 	// ======================================================================
 	// Auf TWI-Bus empfangene Codes auswerten
@@ -1393,8 +1395,7 @@ void txp_thread()
 				}
 			else
 				{ // ID#213 ID#225 ***************************************************
-				//! \TODO Wenn nein, Blockiermeldung senden
-				PutSocketData_RPE(TxpServerSocket, 6, PSTR("NEIN\r\n"), FLASH);				
+				PutSocketData_RPE(TxpServerSocket, 6, PSTR("\004\006\STOP\r\n"), FLASH); // 004 = TXPC_STOP
 #if (TXP_DEBUG >= 1)
 				printf_P(PSTR("TxP: Server-Socket Anfrage ABGEWIESEN\r\n" ));
 #endif
@@ -1428,7 +1429,30 @@ void txp_thread()
 		ModusWechsel(ModWarteSchlussQuitt);
 		}
 		
-	
+
+	// ==========================================================================
+	// Tastendruck?
+	// ==========================================================================
+
+	if (Tastendruck != NichtGedr)
+		{
+		switch (Modus)
+			{
+			case ModRuhe:
+				// ID#103 ********************************************************
+				ModusWechsel(ModDeaktiviert);
+				break;
+				
+			case ModDeaktiviert:
+				// ID#511 ********************************************************
+				ModusWechsel(ModRuhe);
+				break;
+				
+			} // switch Modus
+			
+		Tastendruck = NichtGedr
+		}
+		
 	// ==========================================================================
 	// Html-Eingabe?
 	// ==========================================================================
@@ -1638,37 +1662,6 @@ void txp_cgi_debug( void * pStruct )
 	}
 	
 
-/*------------------------------------------------------------------------------------------------------------*/
-/*!\brief Das CGI-Interface für das Hauptfenster der Fernschreiber-Simulation
- * \param 	pStruct	Struktur auf den HTTP_Request
- * \return	NONE
- */
-/*------------------------------------------------------------------------------------------------------------*/
-
-void txp_cgi_msg_MainFrame( void * pStruct )
-	{
-	struct HTTP_REQUEST * http_request;
-	http_request = (struct HTTP_REQUEST *) pStruct;
-
-	printf_P(PSTR(
-		"<HTML>"
-		"<HEAD>"
-		"<meta http-equiv=\"expires\" content=\"1\">"
-		"<meta http-equiv=\"pragma\" content=\"no-cache\">"
-		"</HEAD>"
-		"<frameset rows=\"*,60\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
-		"<frame src=\"txp-msg-out.cgi\" name=\"MsgOut\" scrolling=\"auto\">"
-		"<frame src=\"txp-msg-in.cgi\" name=\"MsgIn\" scrolling=\"no\">"
-		"<noframes>"
-		"<body>"
-		"<p>Ihr Browser unterstützt keine Frames!</p>"
-		"</body>"
-		"</noframes>"
-		"</frameset>"
-		"</HTML>"
-		"\r\n\r\n"	));
-	}
-	
 	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface für das Ausgabefenster der Fernschreiber-Simulation
@@ -1861,32 +1854,6 @@ void txp_cgi_config(void *pStruct)
 	
 	
 
-//! Erzeugt das Telexphone-Hauptmenü
-	
-void txp_cgi_main( void * pStruct )
-	{
-	struct HTTP_REQUEST * http_request;
-	http_request = (struct HTTP_REQUEST *) pStruct;
-
-	printf_P(PSTR(
-		"<HTML>"
-		"<HEAD>"
-		"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
-		"</HEAD>"
-		"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"
-		"<a href=\"mainmenu.html\">zur&uuml;ck</a>"
-		" / <a href=\"txp-msg.cgi\" target=\"main\">Nachricht senden</a>"
-		" / <a href=\"txp-tlnverz.cgi\" target=\"main\">Teilnehmer-Verzeichnis</a>"
-		" / <a href=\"txp-config.cgi\" target=\"main\">TxP-Einstellungen</a>"
-		" / <a href=\"txp-debug.cgi\" target=\"main\">Debug-Infos</a>"
-		"</BODY>"
-		"</HTML>"
-		"\r\n\r\n"
-		));
-	cgi_PrintHttpheaderEnd();
-	}
-	
-
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Initialisiert den TelexPhone-clinet und registriert den Port auf welchen dieser lauschen soll.
  * \param 	NONE
@@ -1946,8 +1913,6 @@ void txp_init()
 	if (!timer0_RegisterCallbackFunction(txp_timerEvent))
 		return;
 	
-	cgi_RegisterCGI( txp_cgi_main, PSTR("txp-mainmenu.cgi"));
-	cgi_RegisterCGI( txp_cgi_msg_MainFrame, PSTR("txp-msg.cgi"));
 	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
 	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("txp-msg-out.cgi"));
 	cgi_RegisterCGI( txp_cgi_config, PSTR("txp-config.cgi"));

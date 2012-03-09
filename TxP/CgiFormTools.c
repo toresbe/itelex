@@ -48,10 +48,10 @@ void CgiFormStartTabbed_P(const char *FormName)
 	}
 	
 
-//! Einleitungsteil für alle Eingabefelder
+//! Einleitungsteil fÃ¼r alle Eingabefelder
 //--------------------------------------------------------------------
-//! \param FieldText Beschriftung des Feldes für den Anwender (im PROGMEM)
-//! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
+//! \param FieldText Beschriftung des Feldes fÃ¼r den Anwender (im PROGMEM)
+//! \param FieldLabel Name des Feldes fÃ¼r die Auswertung (im PROGMEM)
 void CgiFormFieldIntro_P(const char *FieldText, const char *FieldLabel)
 	{
 	printf_P(PSTR("<tr><td align=\"right\">"));
@@ -60,11 +60,11 @@ void CgiFormFieldIntro_P(const char *FieldText, const char *FieldLabel)
 	printf_P(FieldLabel);
 	}
 
-//! Eingabefeld für Zahlen in einem mit Tabelle strukturieten CGI-Eingabeformular
+//! Eingabefeld fÃ¼r Zahlen in einem mit Tabelle strukturieten CGI-Eingabeformular
 //--------------------------------------------------------------------
-//! \param FieldText Beschriftung des Feldes für den Anwender (im PROGMEM)
-//! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
-//! \param Size Eingabegröße des Feldes ( = Stellenzahl)
+//! \param FieldText Beschriftung des Feldes fÃ¼r den Anwender (im PROGMEM)
+//! \param FieldLabel Name des Feldes fÃ¼r die Auswertung (im PROGMEM)
+//! \param Size EingabegrÃ¶ÃŸe des Feldes ( = Stellenzahl)
 //! \param Value Initialier Wert des Feldes
 void CgiFormInputFieldLong_P(const char *FieldText, const char *FieldLabel, int Size, long Value)
 	{
@@ -73,11 +73,11 @@ void CgiFormInputFieldLong_P(const char *FieldText, const char *FieldLabel, int 
 	}
 
 
-//! Eingabefeld für Texte in einem mit Tabelle strukturieten CGI-Eingabeformular
+//! Eingabefeld fÃ¼r Texte in einem mit Tabelle strukturieten CGI-Eingabeformular
 //--------------------------------------------------------------------
-//! \param FieldText Beschriftung des Feldes für den Anwender (im PROGMEM)
-//! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
-//! \param Size Eingabegröße des Feldes ( = Zeichenzahl)
+//! \param FieldText Beschriftung des Feldes fÃ¼r den Anwender (im PROGMEM)
+//! \param FieldLabel Name des Feldes fÃ¼r die Auswertung (im PROGMEM)
+//! \param Size EingabegrÃ¶ÃŸe des Feldes ( = Zeichenzahl)
 //! \param Value Initialier Wert des Feldes
 void CgiFormInputFieldText_P(const char *FieldText, const char *FieldLabel, int Size, char *Value)
 	{
@@ -88,8 +88,8 @@ void CgiFormInputFieldText_P(const char *FieldText, const char *FieldLabel, int 
 
 //! Eingabe-Schaltfeld in einem mit Tabelle strukturieten CGI-Eingabeformular
 //--------------------------------------------------------------------
-//! \param FieldText Beschriftung des Feldes für den Anwender (im PROGMEM)
-//! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
+//! \param FieldText Beschriftung des Feldes fÃ¼r den Anwender (im PROGMEM)
+//! \param FieldLabel Name des Feldes fÃ¼r die Auswertung (im PROGMEM)
 //! \param Value Initialier Wert des Feldes
 void CgiFormCheckbox_P(const char *FieldText, const char *FieldLabel, bool Value)
 	{
@@ -103,9 +103,9 @@ void CgiFormCheckbox_P(const char *FieldText, const char *FieldLabel, bool Value
 
 //! Auswahllisten-Feld in einem mit Tabelle strukturieten CGI-Eingabeformular
 //--------------------------------------------------------------------
-//! \param FieldText Beschriftung des Feldes für den Anwender (im PROGMEM)
-//! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
-//! \param NItems Anzahl der Wahlmöglichkeiten
+//! \param FieldText Beschriftung des Feldes fÃ¼r den Anwender (im PROGMEM)
+//! \param FieldLabel Name des Feldes fÃ¼r die Auswertung (im PROGMEM)
+//! \param NItems Anzahl der WahlmÃ¶glichkeiten
 //! \param ItemList Feld der Texte (im PROGMEM)
 //! \param Value Aktuelles Feld
 void CgiFormDropdown_P(const char *FieldText, const char *FieldLabel, uint8_t NItems, const char **ItemList, uint8_t Value)
@@ -131,7 +131,7 @@ void CgiFormDropdown_P(const char *FieldText, const char *FieldLabel, uint8_t NI
 						
 //! Abschicken-Button in einem mit Tabelle strukturieten CGI-Eingabeformular
 //--------------------------------------------------------------------
-//! \param ButtonText Beschriftung des Feldes für den Anwender (im PROGMEM)
+//! \param ButtonText Beschriftung des Feldes fÃ¼r den Anwender (im PROGMEM)
 void CgiFormFinish_P(const char *ButtonText)
 	{
 	printf_P(PSTR("<tr><td></td><td><input type=\"submit\" value=\""));

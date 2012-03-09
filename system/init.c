@@ -123,7 +123,7 @@ void init( void )
 	STDOUT_INIT ();
 	STDOUT_set( RS232, 0);
 
-	printf_P( PSTR("OpenMCP ...\r\n"));
+	printf_P( PSTR("TelexPhoneNet...\r\n"));
 
 	// Uart einrichten
 	printf_P( PSTR("UART"));
@@ -132,8 +132,6 @@ void init( void )
 	// Standart Out einrichten
 	printf_P( PSTR("STDOUT"));
 	printf_P( config_ok );
-
-	LED_on(3); //HACK
 
 	// Clock starten
 	CLOCK_init();

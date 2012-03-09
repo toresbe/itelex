@@ -86,17 +86,14 @@ const char data2[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n"	};
 
+	
+const char PROGMEM lochstr_hg_filename[] = "lochstreifen-hg.png";
 
 #define byte char // nur für den Lochstreifen jetzt...
 #define unsigned PROGMEM // nur für den Lochstreifen jetzt... 	
-
 #include "lochstreifen-hg.h"
-
 #undef unsigned
 #undef byte
-
-
-PROGMEM const char lochstr_hg_filename[] = "lochstreifen-hg.png";
 	
 	
 #ifdef HTTPSERVER_IO
@@ -106,7 +103,7 @@ PROGMEM const char lochstr_hg_filename[] = "lochstreifen-hg.png";
 		"<HEAD>"
 		"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 		"</HEAD>"
-		"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"//8888FF und FFFFFF
+		"<BODY bgcolor=\"#C0FFC0\">" 
 		"<a href=\"mainmenu.html\">zurueck</a>"
 		#if defined(HTTPSERVER_DIGITAL_IO)
 			" / <a href=\"dio_out.cgi\" target=\"main\">Digital Out</a> / <a href=\"dio_in.cgi\" target=\"main\">Digital In</a>"
@@ -141,7 +138,7 @@ const char data9[] PROGMEM = {
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
-	"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"//8888FF und FFFFFF
+	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"mainmenu.html\">zurueck</a> / <a href=\"stream.cgi\" target=\"main\">Stream</a> / <a href=\"stream.cgi?info\" target=\"main\">Infos</a> / <a href=\"stream.cgi?config\" target=\"main\">Konfiguration</a>"
 	"</BODY>"
 	"</HTML>"
@@ -154,10 +151,10 @@ const char data4[] PROGMEM = {
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
-	"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"
+	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"info.html\"target=\"main\">Informationen</a>"
 	#if defined(TELEXPHONE)
-	" / <a href=\"txp-mainmenu.cgi\">TelexPhone</a>"
+	" / <a href=\"txp-menu.html\">TelexPhone</a>"
 	#endif
 	#if defined(HTTPSERVER_STREAM)
 		" / <a href=\"stream.html\">Stream</a>"
@@ -182,7 +179,7 @@ const char data5[] PROGMEM = {
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
-	"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"
+	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"mainmenu.html\">zurueck</a> / <a href=\"network.cgi\" target=\"main\">Infos</a> / <a href=\"network.cgi?config\" target=\"main\">Konfiguration</a>"
 	"</BODY>"
 	"</HTML>"
@@ -196,7 +193,7 @@ const char data6[] PROGMEM = {
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
-	"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"
+	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"mainmenu.html\">zurueck</a> "
 #if defined(HTTPSERVER_RESET)
 	"/ <a href=\"reset.cgi\" target=\"main\">Reset</a>"
@@ -249,11 +246,11 @@ const char data7[] PROGMEM = {
 const char files8[] PROGMEM = "style.css";
 const char data8[] PROGMEM = {
 	"@charset \"ISO-8859-1\"\r\n"
-	"   a:link { text-decoration:none; font-weight:bold; color:#FFFFFF; }\r\n"
-	"   a:visited { text-decoration:none; font-weight:bold; color:#FFFFFF; }\r\n"
-	"   a:hover { text-decoration:none; font-weight:bold; background-color:#4169E1; }\r\n"
-	"   a:active { text-decoration:none; font-weight:bold; background-color:#FFFFFF; }\r\n"
-	"   a:focus { text-decoration:none; font-weight:bold; background-color:#DDA0DD; }\r\n"
+	"   a:link { text-decoration:none; font-weight:bold; color:#0000A0; } \r\n"
+	"   a:visited { text-decoration:none; font-weight:bold; color:#A000A0; } \r\n"
+	"   a:hover { text-decoration:none; font-weight:bold; background-color:#FFCCCC; } \r\n"
+	"   a:active { text-decoration:none; font-weight:bold; background-color:#FFFFCC; } \r\n"
+	"   a:focus { text-decoration:none; font-weight:bold; background-color:#CCCCFF; } \r\n"
 	"   pre { overflow: scroll; }\r\n" };
 
 #if defined(TEMP_LOGGER)
@@ -263,7 +260,7 @@ const char data10[] PROGMEM = {
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
-	"<BODY bgcolor=\"#228B22\" text=\"#FFFFFF\">"
+	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"io.html\">zurueck</a> "
 	" / <a href=\"templogger.cgi\" target=\"main\">Templogger</a>"
 	" / <a href=\"tempconfig.cgi\" target=\"main\">Config</a>"
@@ -271,6 +268,43 @@ const char data10[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n"	};
 #endif
+
+#if defined(TELEXPHONE)
+
+const char files11[] PROGMEM = "txp-menu.html";
+const char data11[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"mainmenu.html\">zur&uuml;ck</a>"
+	" / <a href=\"txp-msg.html\" target=\"main\">Nachricht senden</a>"
+	" / <a href=\"txp-tlnverz.cgi\" target=\"main\">Teilnehmer-Verzeichnis</a>"
+	" / <a href=\"txp-config.cgi\" target=\"main\">TxP-Einstellungen</a>"
+	" / <a href=\"txp-debug.cgi\" target=\"main\">Debug-Infos</a>"
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n" } ;
+
+const char files12[] PROGMEM = "txp-msg.html";
+const char data12[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"</HEAD>"
+	"<frameset rows=\"*,60\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
+	"<frame src=\"txp-msg-out.cgi\" name=\"MsgOut\" scrolling=\"auto\">"
+	"<frame src=\"txp-msg-in.cgi\" name=\"MsgIn\" scrolling=\"no\">"
+	"<noframes>"
+	"<body>"
+	"<p>Ihr Browser unterstützt keine Frames!</p>"
+	"</body>"
+	"</noframes>"
+	"</frameset>"
+	"</HTML>"
+	"\r\n\r\n" } ;
+		
+#endif //def TELEXPHONE
 
 FILES files[] = {
 	{ files1, data1, TEXT, sizeof( data1 ) - 1 },
@@ -292,6 +326,10 @@ FILES files[] = {
 #endif
 #if defined(TEMP_LOGGER)
 	{ files10, data10, TEXT, sizeof( data10 ) - 1 },
+#endif
+#if defined(TELEXPHONE)
+	{ files11, data11, TEXT, sizeof( data11 ) - 1 },
+	{ files12, data12, TEXT, sizeof( data12 ) - 1 },
 #endif
 	{ lochstr_hg_filename, lochstreifen_hg, PNG, sizeof( lochstreifen_hg ) },
 	{ 0,0,0,0 }
