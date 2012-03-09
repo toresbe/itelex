@@ -246,7 +246,7 @@ enum { TxpTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit
 
 enum { DebugMsgMax = 100 } ;
 
-static char DebugMsg[DebugMsgMax];
+char DebugMsg[DebugMsgMax];
 	//!< String für außergewöhnliche Fälle
 	
 TTastendruck Tastendruck;
@@ -1247,7 +1247,7 @@ void txp_thread()
 							// Verbindung konnte nicht aufgebaut werden
 							BusSenden(BusKdoSchluss);
 #if (TXP_DEBUG >= 1)
-							printf_P(PSTR("TxP: Client-Socket konnte nicht geöffnet werden\r\n" ));
+							printf_P(PSTR("TxP: Client-Socket konnte nicht geoeffnet werden\r\n" ));
 #endif
 							TxpClientSocket = NO_SOCKET_USED;
 							ModusWechsel(ModWarteSchlussQuitt);
@@ -1256,7 +1256,7 @@ void txp_thread()
 							{ // ID#226 *********************************************
 							BusSenden(BusQuittEin);
 #if (TXP_DEBUG >= 1)
-							printf_P(PSTR("TxP: Client-Socket Ascii erfolgreich geöffnet -> Einschalt-Quittung an TWI\r\n" ));
+							printf_P(PSTR("TxP: Client-Socket Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
 #endif
 							ModusWechsel(ModGehendVerbunden);
 							SocketBufInit();
@@ -1265,7 +1265,7 @@ void txp_thread()
 						else // TxpUrl oder TxpIP
 							{ // ID#222 ********************************************
 #if (TXP_DEBUG >= 1)
-							printf_P(PSTR("TxP: Client-Socket Txp erfolgreich geöffnet -> sende Durchwahl %d\r\n"), TD.Durchwahl);
+							printf_P(PSTR("TxP: Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %d\r\n"), TD.Durchwahl);
 #endif
 							SocketBufInit();
 							SocketModeAscii = false;
@@ -1362,7 +1362,7 @@ void txp_thread()
 #if (TXP_DEBUG >= 1)
 				printf_P(PSTR("TxP: Anwahl intern an %d VERSAGT\r\n"), Durchwahl);
 #endif
-				strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
+				strcpy_P(DebugMsg, PSTR("Reservierung f�r Einschaltung konnte nicht versand werden"));
 				CloseTxpServerSocket(); // Client kann nicht geöffnet sein.
 				ModusWechsel(ModRuhe);
 				}
@@ -1379,7 +1379,7 @@ void txp_thread()
 		// auf neue Verbindungsanfrage testen
 		TxpServerSocket = CheckPortRequest(TXP_PORT);
 		
-		//! \TODO prüfen, was bei bestehender ausgehender ASCII-Verbindung und gleichzeitigem Versuch einer ankommenden Verbindung passiert.
+		//! \todo zweiten eingehenden Anruf behandeln!
 		
 		if (TxpServerSocket != NO_SOCKET_USED)
 			{
@@ -1387,7 +1387,7 @@ void txp_thread()
 				{ // ID#102 *************************************************
 				// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
 #if (TXP_DEBUG >= 1)
-				printf_P(PSTR("TxP: Server-Socket geöffnet\r\n" ));
+				printf_P(PSTR("TxP: Server-Socket geoeffnet\r\n" ));
 #endif
 				BusVerbPartner = Hauptstelle;
 				ModusWechsel(ModKommendVerbVorstufe);
@@ -1395,7 +1395,7 @@ void txp_thread()
 				}
 			else
 				{ // ID#213 ID#225 ***************************************************
-				PutSocketData_RPE(TxpServerSocket, 6, PSTR("\004\006\STOP\r\n"), FLASH); // 004 = TXPC_STOP
+				PutSocketData_RPE(TxpServerSocket, 6, PSTR("\004\006STOP\r\n"), FLASH); // 004 = TXPC_STOP
 #if (TXP_DEBUG >= 1)
 				printf_P(PSTR("TxP: Server-Socket Anfrage ABGEWIESEN\r\n" ));
 #endif
@@ -1447,10 +1447,13 @@ void txp_thread()
 				// ID#511 ********************************************************
 				ModusWechsel(ModRuhe);
 				break;
-				
+
+			default:
+				break;
+								
 			} // switch Modus
 			
-		Tastendruck = NichtGedr
+		Tastendruck = NichtGedr;
 		}
 		
 	// ==========================================================================

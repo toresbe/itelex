@@ -833,6 +833,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	}
 	
 
+/*
 static void TlnBuchTesteintrag(uint32_t nr, TTlnAdresseArt art, char *url, long aip, uint16_t port, uint8_t dw)
 	{
 	TTlnDaten TD;
@@ -847,6 +848,7 @@ static void TlnBuchTesteintrag(uint32_t nr, TTlnAdresseArt art, char *url, long 
 	TD.Flags = 0;
 	TlnHinzufuegen(&TD);
 	}
+*/
 	
 
 //! Initialisiert die Liste der Teilnehmereinträge.
@@ -860,21 +862,9 @@ void TlnBuchInit()
 	if (get_Taste()) // high vom Pullup -> Taste nicht gedrückt
 		{
 		int Res = TlnBuchLadeVonExternEeprom();
-		
+		extern char DebugMsg[];
 		if (Res < 0)
-			{
-			// HACK Test
-			char Buf[40];
-			sprintf_P(Buf, PSTR("Eeprom Ladefehler %d / %d"), Res, SwTwiLetzterFehler);
-			TlnBuchTesteintrag(666, TxpUrl, Buf, 0, 134, 0);
-			TlnBuchTesteintrag(123, TxpUrl, "sonnibs.no-ip.org", 0, 134, 0);
-			TlnBuchTesteintrag(124, TxpUrl, "sonnibs.no-ip.org", 0, 135, 0);
-			TlnBuchTesteintrag(234, TxpIP, 0, IPDOT(192l,168l,178l,39l), 134, 0);
-			TlnBuchTesteintrag(235, TxpIP, 0, IPDOT(192l,168l,178l,38l), 134, 0);
-			TlnBuchTesteintrag(294, AsciiIP, 0, IPDOT(192l,168l,178l,39l), 134, 0);
-			TlnBuchTesteintrag(295, AsciiIP, 0, IPDOT(192l,168l,178l,38l), 134, 0);
-			TlnBuchTesteintrag(3333, AsciiIP, 0, IPDOT(192l,168l,178l,32l), 23, 0); //*/
-			}
+			sprintf_P(DebugMsg, PSTR("Eeprom Ladefehler %d / %d"), Res, SwTwiLetzterFehler);
 		} // if get_Taste()
 		
 	cgi_RegisterCGI( TlnBuch_Anzeige_CGI, PSTR("txp-tlnverz.cgi"));

@@ -79,7 +79,7 @@ const char files2[] PROGMEM = "headline.html";
 const char data2[] PROGMEM = {
 	"<HTML>"
 	"<BODY text=\"#0000C0\" style=\"background-image:url(lochstreifen-hg.png)\">"
-	"<span style=\"font: bold 40px 'Courier New',monospace; \"><b>"
+	"<span style=\"font: bold 40px 'Courier New','Lucida Console',monospace; \"><b>"
 	"TxP2-Net - Das Internet-Interface zum TelexPhone"
 	"</b></span>"
 	"</BODY>"
