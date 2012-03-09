@@ -478,9 +478,10 @@ int TlnBuchSpeichereAufExternEeprom()
 		EeOpen = false;
 		}
 		
+	EeAdr -= 4; // - 4, da die anfänglichen Einträge (Größe, Prüfwert) mit drin sind.
+	uint16_t pruef = MemUsedPruefwert(EeAdr); 
+
 	// jetzt die wirkliche Größe schreiben
-	uint16_t pruef = MemUsedPruefwert(EeAdr - 4); 
-		// - 4, da die anfänglichen Einträge (Größe, Prüfwert) mit drin sind.
 
 	// Öffnen kann schiefgehen, solange vorheriger Schreibprozess noch läuft
 	for (TryCount = 0 ; TryCount < 10000 ; TryCount++)
