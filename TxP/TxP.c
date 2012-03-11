@@ -599,8 +599,11 @@ static void ModusWechsel(TModus neu)
 			LED_on(GELB);
 			LED_off(GRUEN);
 			LED_off(BLAU);
+			BusEmpfMark = true;
+			SendeMark = true;
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			SeriellUmsetzInit();
 			SendenBeschleunigen = false;
 			SocketModeAscii = false;
 			break;
@@ -624,6 +627,8 @@ static void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_FsMeldEin);
 			SET_BIT_Status(StatBit_FsBefBetrieb);
 			SET_BIT_Status(StatBit_FsBefEin);
+			BusEmpfMark = true;
+			SendeMark = true;
 			LED_on(GELB);
 			LED_off(GRUEN);
 			LED_off(BLAU);
@@ -643,8 +648,11 @@ static void ModusWechsel(TModus neu)
 			LED_off(GELB);
 			LED_on(GRUEN);
 			LED_off(BLAU);
+			BusEmpfMark = true;
+			SendeMark = true;
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			SeriellUmsetzInit();
 			SocketModeAscii = false;
 			SendenBeschleunigen	= false;
 			Durchwahl = 0;
@@ -691,6 +699,7 @@ static void ModusWechsel(TModus neu)
 			LED_off(BLAU);
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			SeriellUmsetzInit();
 			SendenBeschleunigen = false;
 			break;
 	
@@ -702,6 +711,20 @@ static void ModusWechsel(TModus neu)
 			SendeMark = true;
 			break;
 
+		case ModDeaktiviert:
+			CLR_BIT_Status(StatBit_Frei);
+			CLR_BIT_Status(StatBit_LeitungKennung);
+			CLR_BIT_Status(StatBit_Verbunden);
+			CLR_BIT_Status(StatBit_FsMeldBetrieb);
+			CLR_BIT_Status(StatBit_FsMeldEin);
+			CLR_BIT_Status(StatBit_FsBefBetrieb);
+			CLR_BIT_Status(StatBit_FsBefEin);
+			CLR_BIT_Status(StatBit_AngerufenBelegt);
+			LED_off(GELB);
+			LED_off(GRUEN);
+			LED_on(BLAU);
+			break;
+		
 		default:
 			return; // nix wird geändert
 		} // switch neu
@@ -1289,7 +1312,7 @@ void txp_thread()
 				else
 					printf_P(PSTR("TxP: TWI Ausschaltung intern\r\n" ));
 #endif
-				if (Modus != ModWarteSchlussQuitt)
+				if (BusQuittSchluss && Modus != ModWarteSchlussQuitt)
 					{
 					strcpy_P(DebugMsg, PSTR("Schlussquittung ohne Aufforderung"));
 					FalschCodeEmpfangen(Code);
@@ -1373,35 +1396,28 @@ void txp_thread()
 	// Neuer Anruf vom Ethernet?
 	// ==========================================================================
 
-	// keine alte Verbindung offen?
-	if (TxpServerSocket == NO_SOCKET_USED)
-		{ 	
-		// auf neue Verbindungsanfrage testen
-		TxpServerSocket = CheckPortRequest(TXP_PORT);
-		
-		//! \todo zweiten eingehenden Anruf behandeln!
-		
-		if (TxpServerSocket != NO_SOCKET_USED)
-			{
-			if (Modus == ModRuhe)
-				{ // ID#102 *************************************************
-				// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
+	// auf neue Verbindungsanfrage testen
+	int NewServerSocket = CheckPortRequest(TXP_PORT);
+	if (NewServerSocket != NO_SOCKET_USED)
+		{
+		if (Modus == ModRuhe && TxpServerSocket == NO_SOCKET_USED)
+			{ // ID#102 *************************************************
+			// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
+			TxpServerSocket = NewServerSocket;
 #if (TXP_DEBUG >= 1)
-				printf_P(PSTR("TxP: Server-Socket geoeffnet\r\n" ));
+			printf_P(PSTR("TxP: Server-Socket geoeffnet\r\n" ));
 #endif
-				BusVerbPartner = Hauptstelle;
-				ModusWechsel(ModKommendVerbVorstufe);
-				SocketBufInit();
-				}
-			else
-				{ // ID#213 ID#225 ***************************************************
-				PutSocketData_RPE(TxpServerSocket, 6, PSTR("\004\006STOP\r\n"), FLASH); // 004 = TXPC_STOP
+			BusVerbPartner = Hauptstelle;
+			ModusWechsel(ModKommendVerbVorstufe);
+			SocketBufInit();
+			}
+		else
+			{ // ID#213 ID#225 ***************************************************
+			PutSocketData_RPE(NewServerSocket, 7, PSTR("\004\005occ\r\n"), FLASH); // 004 = TXPC_STOP
 #if (TXP_DEBUG >= 1)
-				printf_P(PSTR("TxP: Server-Socket Anfrage ABGEWIESEN\r\n" ));
+			printf_P(PSTR("TxP: Server-Socket Anfrage ABGEWIESEN\r\n" ));
 #endif
-				CloseTCPSocket(TxpServerSocket);
-				TxpServerSocket = NO_SOCKET_USED;
-				}
+			CloseTCPSocket(NewServerSocket);
 			}
 		}
 
@@ -1630,16 +1646,11 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(Status); // bezüglich TxP-Funktionalität (ist auf TWI-Bus sichtbar)
 
 	PRINTVAL(BusEmpfMark);
-
+	PRINTVAL(SerUmTickZaehlerEmpf);
 	PRINTVAL(SerUmEmpfBitNr); 
-
+	PRINTVAL(SerUmEmpfMarkZaehl);
 	PRINTVAL(SerUmEmpfDaten);
 	PRINTVAL(SerUmEmpfFehler);
-	PRINTVAL(SerUmEmpfMarkZaehl);
-	PRINTVAL(SerUmTickZaehlerEmpf);
-	PRINTVAL(SerUmTickZaehlerSend);
-	PRINTVAL(RuheZaehler);
-
 	PRINTVAL(PufferAnzahl(&EmpfPuffer));
 	for (i = EmpfPuffer.AusgP ; i != EmpfPuffer.SpeichP ; i++)
 		{
@@ -1648,9 +1659,22 @@ void txp_cgi_debug( void * pStruct )
 		printf_P(PSTR(" %02X"), EmpfPuffer.Puffer[i]);
 		}
 
+	PRINTVAL(SendeMark);
+	PRINTVAL(SerUmTickZaehlerSend);
 	PRINTVAL(SerUmSendBitNr);
 	PRINTVAL(SerUmSendDaten);
-	PRINTVAL(SendeMark);
+	PRINTVAL(PufferAnzahl(&SendePuffer));
+	for (i = SendePuffer.AusgP ; i != SendePuffer.SpeichP ; i++)
+		{
+		if (i >= MaxPuffer) 
+			i = 0;
+		printf_P(PSTR(" %02X"), SendePuffer.Puffer[i]);
+		}
+	
+	PRINTVAL(SocketInBufUsed);
+	PRINTVAL(SocketOutBufUsed);
+	
+	PRINTVAL(RuheZaehler);
 	PRINTVAL(TwiLebenszeichenZaehler); 
 
 	PRINTVAL(FalscherCode); FalscherCode = 0;

@@ -28,8 +28,9 @@ enum { TlnBuchMemMax = 20000UL } ; //!< Größe des Teilnehmerverzeichnisses in 
 //! \par 1 Byte Datensatzgröße insgesamt (einschließlich Teilnehmernummer und Größenangabe).
 //! \par 2 Byte Flags.
 //! \par 1 Byte Art. (siehe enum \sa TTlnAdresseArt)
+//! \par x Byte Name as String (mit \0 abgeschlossen)
 //! \par 4 Byte Datum.
-//! \par Folgende Daten nur, wenn Art != Gelöscht
+//! \par Folgende Daten abhängig von Art
 //! \par x Byte Adresse als String (mit \0 abgeschlossen) ODER 4 Byte IP-Adresse
 //! \par 2 Byte Port
 //! \par 1 Byte Durchwahl (0 bei keine Durchwahl).
@@ -50,22 +51,24 @@ static uint16_t TlnBuchMemUsed; //!< Ende des genutzten Bereichs in TlnBuch.
 //! Ermittelt die Größe eines Teilnehmereintrags.
 static uint8_t TlnEintragGroesse(TTlnDaten *Tln)
 	{
+	uint8_t Basis = 4 + 1 + 2 + 1 + strlen(Tln->Name)+1 + 4;
+	
 	switch (Tln->AdrArt)
 		{
 		case Geloescht: 
-			return 4 + 1 + 2 + 1 + 4;
+			return Basis;
 			
 		case TxpUrl:
-			return 4 + 1 + 2 + 1 + 4 + strlen(Tln->Adresse)+1 + 2 + 1;
+			return Basis + strlen(Tln->Adresse)+1 + 2 + 1;
 			
 		case TxpIP:
-			return 4 + 1 + 2 + 1 + 4 + 4 + 2 + 1;
+			return Basis + 4 + 2 + 1;
 		
 		case AsciiUrl:
-			return 4 + 1 + 2 + 1 + 4 + strlen(Tln->Adresse)+1 + 2;
+			return Basis + strlen(Tln->Adresse)+1 + 2;
 			
 		case AsciiIP:
-			return 4 + 1 + 2 + 1 + 4 + 4 + 2;
+			return Basis + 4 + 2;
 		
 		default:
 			return 255;
@@ -83,6 +86,7 @@ static void TlnEintragen(TTlnDaten *Tln, char *BuchP)
 	*((uint8_t *) p) = TlnEintragGroesse(Tln);			p += 1;
 	*((uint16_t *) p) = Tln->Flags;						p += 2;
 	*((uint8_t *) p) = (uint8_t) Tln->AdrArt;			p += 1;
+	strcpy(p, Tln->Name);								p += strlen(Tln->Name)+1;
 	*((uint32_t *) p) = Tln->Datum; 					p += 4;
 	switch (Tln->AdrArt)
 		{
@@ -132,6 +136,7 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 														p += 1;
     Tln->Flags = *((uint16_t *) p);						p += 2;															
 	Tln->AdrArt = (TTlnAdresseArt) *((uint8_t *) p);	p += 1;
+	strcpy(Tln->Name, p);								p += strlen(Tln->Name)+1;
 	Tln->Datum = *((uint32_t *) p); 					p += 4;
 	switch (Tln->AdrArt)
 		{
@@ -285,7 +290,7 @@ bool TlnListerNaechster(TTlnDaten *Tln)
 //! Im externen EEPROM sind beide Werte ganz am Anfang abgelegt.
 uint16_t MemUsedPruefwert(uint16_t groesse)
 	{
-	return (groesse ^ 0x7411) << 1; 
+	return (groesse ^ 0x4587) << 1; 
 	}
 	
 	
@@ -541,6 +546,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	static PROGMEM const char Edit_P[] = "edit";
 	static PROGMEM const char Nummer_P[] = "nummer";
 	static PROGMEM const char AltNummer_P[] = "altnummer";
+	static PROGMEM const char Name_P[] = "name";
 	static PROGMEM const char Adresse_P[] = "adresse";
 	static PROGMEM const char Port_P[] = "port";
 	static PROGMEM const char Durchwahl_P[] = "durchwahl";
@@ -563,6 +569,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 			"<tr>"
    			"<th align=\"right\">Nummer</th>" // Nummer
+   			"<th align=\"left\">Name</th>" // Name
    			"<th align=\"center\">Besond.</th>" // Flags
    			"<th align=\"left\">Typ</th>" // Typ
 			"<th align=\"left\">Adresse</th>" // Adresse
@@ -576,7 +583,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			{
 			while (TlnListerNaechster(&TD))
 				{
-				printf_P(PSTR("<tr><td align=\"right\">%ld</td><td>&#160;"), TD.Nummer); // Nummer
+				printf_P(PSTR("<tr><td align=\"right\">%ld</td>"), TD.Nummer); // Nummer
+				printf_P(PSTR("<td align=\"left\">%s</td><td>&#160;"), TD.Name); // name
 				if ((TD.Flags & TlnFlag_Lokal) != 0)
 					printf_P(PSTR("Lokal "));
 				printf_P(PSTR("</td>")); // Ende Besonderheiten
@@ -614,7 +622,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					
 				printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">&Auml;ndern</a></td></tr>"), TD.Nummer);
 				}
-			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
+			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
 						   "<td><a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></td>"
 						   "</table>"
 						   "<a href=\"txp-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a><br>"
@@ -635,6 +643,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Edit_P)]);
 		if (TD.Nummer == 0 || !TlnSuche(TD.Nummer, true, &TD))
 			{ // neuen oder nicht gefundenen Eintrag initialisieren.
+			TD.Name[0] = '\0';
 			TD.Adresse[0] = '\0';
 			TD.AdrArt = TxpUrl;
 			TD.Port = TXP_PORT;
@@ -647,7 +656,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		CgiFormInputFieldLong_P(PSTR("Nummer:"), Nummer_P, 10, TD.Nummer);
 
 		printf_P(PSTR("<input name=\"altnummer\" type=\"hidden\" value=\"%ld\">"), TD.Nummer);
-		
+
+		CgiFormInputFieldText_P(PSTR("Name:"), Name_P, TlnNameMax-1, TD.Name);
+	
 		CgiFormCheckbox_P(PSTR("nur Lokal:"), Lokal_P, (TD.Flags & TlnFlag_Lokal) != 0);
 
 		const char *TypSelList[] = { TypGeloescht_P, TypTxp_P, TypAscii_P } ;
@@ -678,6 +689,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		bool Ok = true; // nur wenn gesetzt, wird auch gespeichert
 		uint32_t AltNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, AltNummer_P)]);
 		TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Nummer_P)]);
+		strncpy(TD.Name, http_request->argvalue[PharseGetValue_P(http_request, Name_P)], TlnNameMax-1);
 		TD.Flags = 0;
 		char TypStr[20];
 		strncpy(TypStr, http_request->argvalue[PharseGetValue_P(http_request, Typ_P)], sizeof(TypStr));
@@ -697,6 +709,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			else if (AltNummer != TD.Nummer)
 				printf_P(PSTR("ehem. %ld"), AltNummer);
 			printf_P(PSTR("<br>"));
+			printf_P(PSTR("Name: %s<br>"), TD.Name);
 			}
 		
 		if (PharseCheckName_P(http_request, Lokal_P))

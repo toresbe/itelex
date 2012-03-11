@@ -10,6 +10,8 @@
 #include <inttypes.h>
 
 enum { TlnAdresseMax = 40 } ; //!< maximale Länge der Verbindungsadresse
+enum { TlnNameMax = 40 } ; //!< maximale Länge des Teilnehmer-Namens
+
 
 typedef enum 
 	{
@@ -23,6 +25,7 @@ typedef enum
 typedef struct
 	{
 	uint32_t Nummer; //!< Die Rufnummer, darf keine führenden Nullen enthalten
+	char Name[TlnNameMax]; //!< Ausführlicher Name
 	uint16_t Flags; //!< Boolsche werte. Siehe TlnFlag_*
 	TTlnAdresseArt AdrArt; //!< Was bedeutet die folgende Adresse
 	char Adresse[TlnAdresseMax]; //!< URL, IP, eMail, ...
