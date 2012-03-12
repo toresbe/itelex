@@ -542,6 +542,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	TTlnDaten TD;
+	bool Zurueck = false; // wird auf true gesetzt, wenn ein "zurück"-Text gedruckt werden soll.
 
 	static PROGMEM const char Edit_P[] = "edit";
 	static PROGMEM const char Nummer_P[] = "nummer";
@@ -562,7 +563,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	cgi_PrintHttpheaderStart();
 
 	if ( http_request->argc == 0 )
-		{ // Startseite = Liste
+		{ 
+		// Startseite = Liste
+		// ==================================================
 		printf_P(PSTR(
 			"<form action=\"txp-tlnverz.cgi\">"
 			"<h3>Teilnehmerverzeichnis</h3>"
@@ -639,7 +642,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		} // argc == 0 --> gesamte Liste ausgeben
 		
 	else if (PharseCheckName_P(http_request, Edit_P))
-		{ // Ändern ODER Neu --> Eingabeformular anzeigen und ggf. füllen.
+		{ 
+		// Ändern ODER Neu --> Eingabeformular anzeigen und füllen.
+		// =========================================================
 		TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Edit_P)]);
 		if (TD.Nummer == 0 || !TlnSuche(TD.Nummer, true, &TD))
 			{ // neuen oder nicht gefundenen Eintrag initialisieren.
@@ -682,10 +687,13 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			CgiFormFinish_P(PSTR("Hinzuf&uuml;gen"));
 		else
 			CgiFormFinish_P(PSTR("&Auml;ndern"));
+		Zurueck = true;
 		} // Ändern oder Neu
 
 	else if (PharseCheckName_P(http_request, Nummer_P))
-		{ // neuen Einfügen oder geänderten Aktualisieren
+		{ 
+		// neuen Einfügen oder geänderten Aktualisieren
+		// ==================================================
 		bool Ok = true; // nur wenn gesetzt, wird auch gespeichert
 		uint32_t AltNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, AltNummer_P)]);
 		TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Nummer_P)]);
@@ -806,41 +814,53 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P(PSTR("<b>Teilnehmerliste voll, Eintrag nicht gespeichert</b><br>"));
 				}
 			} // if Ok
-			
-		printf_P(PSTR("<br>Zur&uuml;ck zum <a href=\"txp-tlnverz.cgi\">Teilnehmer-Verzeichnis</a>"));
+		Zurueck = true;
 		} // if (PharseCheckName_P(http_request, Nummer_P)) ; also neuen Einfügen oder geänderten Aktualisieren
 		
 	else if (PharseCheckName_P(http_request, Save_P))
-		{ // auf externem Eeprom speichern
+		{ 
+		// auf externem Eeprom speichern
+		// ==================================================
 		int Res = TlnBuchSpeichereAufExternEeprom();
 		if (Res < 0)
 			printf_P(PSTR("<b>Fehler beim Speichern (Codes %d / %d)</b>"), Res, SwTwiLetzterFehler);
 		else
 			printf_P(PSTR("Erfolgreich gespeichert (%d Bytes)"), Res);
-			
+		Zurueck = true;
 		}
 		
 	else if (PharseCheckName_P(http_request, Load_P))
-		{ // von externem Eeprom laden
+		{ 
+		// von externem Eeprom laden
+		// ==================================================
 		int Res = TlnBuchLadeVonExternEeprom();
 		if (Res < 0)
 			printf_P(PSTR("<b>Fehler beim Laden (Codes %d / %d)</b>"), Res, SwTwiLetzterFehler);
 		else
 			printf_P(PSTR("Erfolgreich geladen (%d Bytes)"), Res);
-			
+		Zurueck = true;
 		}
 		
 	else if (PharseCheckName_P(http_request, Clear_P))
-		{ // komplett löschen
+		{ 
+		// komplett löschen
+		// ==================================================
 		printf_P(PSTR("komplett gel&ouml;scht"));
 		TlnBuchMemUsed = 0;
+		Zurueck = true;
 		}
 		
 	else
-		{ // nicht erkannt
+		{ 
+		// nicht erkannt
+		// ==================================================
 		printf_P(PSTR("Fehler: ungueltiger CGI-Aufruf: %s"), http_request->HTTP_LINEBUFFER);
+		Zurueck = true;
 		}
 		
+	if (Zurueck)
+		printf_P(PSTR("<br>Zur&uuml;ck zum <a href=\"txp-tlnverz.cgi\">Teilnehmer-Verzeichnis</a>"));
+	
 	cgi_PrintHttpheaderEnd();
 
 	}
