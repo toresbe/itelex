@@ -946,6 +946,8 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		while (i < SocketInBufUsed)
 			{
 			char c = SocketInBuf[i];
+			// Achtung: In dieser Schleife entweder i weiterbringen oder break!
+			// ****************************************************************
 			
 			// im Folgenden KEIN switch verwenden wegen break!
 			if (c == '\r' || c == '\n' || (c >= ' ' && c <= '~'))
@@ -959,6 +961,9 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 					AsciiDruckPuffer[alen+1] = '\0';
 					i++;
 					}
+				else
+					break; // kann nicht mehr verarbeitet werden, also Schleife beenden.
+					
 				if (Modus == ModKommendVerbVorstufe)
 					// ID#311 *******************************************************
 					ModusWechsel(ModKommendEinschalten);
