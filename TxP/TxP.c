@@ -71,12 +71,15 @@
 
 typedef enum
 	{
-	ModRuhe = 0, // nichts läuft
+	ModRuhe = 0, 
+		//!< nichts läuft
 	// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
 	ModGehendReserv = 1, 
 	ModGehendWaehlen = 2,
-	// nicht benötigt ModGehendVerbindungHerstellen = 3, // Einschaltkommando ist angekommen, Warte auf Quittung vom Anrufer
+		// nicht benötigt ModGehendVerbindungHerstellen = 3, 
+			// Einschaltkommando ist angekommen, Warte auf Quittung vom Anrufer
 	ModGehendVerbunden = 4,
+	
 	// Kommend = vom Netz zum internen Anschluss
 	ModKommendVerbVorstufe = 11, 
 		//!< es wird erst mal abgewartet, was aus der ankommenden Verbindung wird.
@@ -85,6 +88,8 @@ typedef enum
 	ModKommendWarteEinQuitt = 13, 
 		//!< Warte auf Einschalt-Quittung des Endgeräts
 	ModKommendVerbunden = 14, 
+	
+	ModPufferDruckUndSchluss = 18,
 	ModWarteSchlussQuitt = 19,
 	
 	// Über HTML-Seite eingegebener Verbindungswunsch
@@ -177,10 +182,10 @@ volatile TPuffer SendePuffer;
 volatile TPuffer EmpfPuffer; 
 	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Endgerät -> Netz
 	
-enum { HtmlEmpfTextMax = 100, HtmlSendeTextMax = 400 } ;
+enum { AsciiDruckPufferMax = 100, HtmlSendeTextMax = 400 } ;
 	//!< Puffergrößen für Textpuffer bei HTML-Kommunikation
 
-static char HtmlEmpfText[HtmlEmpfTextMax];
+static char AsciiDruckPuffer[AsciiDruckPufferMax];
 	//!< Puffer für zu druckenden Text (Netz -> Endgerät), mit Null abgeschlossen
 
 static char HtmlSendeText[HtmlSendeTextMax];
@@ -292,7 +297,7 @@ void txp_timerEvent(void)
 	else
 		LED_on(ROT);
 
-	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden || Modus == ModHtmlVerbunden)
+	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden || Modus == ModHtmlVerbunden || Modus == ModPufferDruckUndSchluss)
 		{ // ist Verbunden, also Pegel senden und empfangen
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
 		RuheZaehler++; // wird aber vielleicht gleich wieder auf Null gestellt
@@ -323,7 +328,7 @@ void txp_timerEvent(void)
 				else if (SerUmEmpfBitNr == 7) // im Stop-Bit
 					{
 					SerUmEmpfFehler = SerUmEmpfMarkZaehl < 2; 
-					SerUmEmpfBitNr = SerUmEmpfFertig; //! \TODO nur dann Empfang abschließen, wenn auch ein Stop-Bit da war
+					SerUmEmpfBitNr = SerUmEmpfFertig; //! \todo nur dann Empfang abschließen, wenn auch ein Stop-Bit da war
 
 					// und gleich in den Puffer...
 					if (!SerUmEmpfFehler)
@@ -548,8 +553,8 @@ static void DatumDruckenUndAusschalten()
 	// Zeit holen
 	CLOCK_GetTime(&Time);
 	
-	char *p = HtmlEmpfText;
-	while (*p != '\0' && p < HtmlEmpfText + HtmlEmpfTextMax - 50) // 50 ist die Länge des Datum-Strings
+	char *p = AsciiDruckPuffer;
+	while (*p != '\0' && p < AsciiDruckPuffer + AsciiDruckPufferMax - 50) // 50 ist die Länge des Datum-Strings
 		p++;
 
 	sprintf_P(p, PSTR("\r\n\ndatum: %02u.%02u.%04u  uhrzeit: %02d:%02d:%02d\r\n\n"),
@@ -584,6 +589,7 @@ static void ModusWechsel(TModus neu)
 			LED_off(GELB);
 			LED_off(GRUEN);
 			LED_off(BLAU);
+			AsciiDruckPuffer[0] = '\0';
 			break;
 	
 		// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
@@ -606,6 +612,7 @@ static void ModusWechsel(TModus neu)
 			SeriellUmsetzInit();
 			SendenBeschleunigen = false;
 			SocketModeAscii = false;
+			AsciiDruckPuffer[0] = '\0';
 			break;
 	
 		case ModGehendWaehlen:
@@ -654,6 +661,7 @@ static void ModusWechsel(TModus neu)
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
 			SeriellUmsetzInit();
 			SocketModeAscii = false;
+			AsciiDruckPuffer[0] = '\0';
 			SendenBeschleunigen	= false;
 			Durchwahl = 0;
 			break;
@@ -677,6 +685,11 @@ static void ModusWechsel(TModus neu)
 			SendeMark = true;
 			break;
 	
+		case ModPufferDruckUndSchluss:
+			CLR_BIT_Status(StatBit_Verbunden);
+			RuheZaehler = 0;
+			break;
+		
 		case ModWarteSchlussQuitt:
 			CLR_BIT_Status(StatBit_FsBefBetrieb);
 			CLR_BIT_Status(StatBit_FsBefEin);
@@ -750,7 +763,7 @@ static void CloseTxpServerSocket()
 #if (TXP_DEBUG >= 1)
 		printf_P(PSTR("TxP: Server-Socket (eingehend) wird geschlossen\r\n" ));
 #endif
-		//! \TODO ggf. Abbaumeldung?????
+		//! \todo ggf. Abbaumeldung?????
 		CloseTCPSocket(TxpServerSocket);
 		TxpServerSocket = NO_SOCKET_USED;
 		}
@@ -765,7 +778,7 @@ static void CloseTxpClientSocket()
 #if (TXP_DEBUG >= 1)
 		printf_P(PSTR("TxP: Client-Socket (ausgehend) wird geschlossen\r\n" ));
 #endif
-		//! \TODO ggf. Abbaumeldung?????
+		//! \todo ggf. Abbaumeldung?????
 		CloseTCPSocket(TxpClientSocket);
 		TxpClientSocket = NO_SOCKET_USED;
 		}
@@ -773,23 +786,20 @@ static void CloseTxpClientSocket()
 		
 
 //! Empfangene Daten vom Socket in den SendePuffer schreiben.
-static void SchreibeZeichenInSendePuffer(char c)
+//! \retval true, wenn Zeichen gedruckt wird (ausgegeben wird).
+static bool SchreibeZeichenInSendePuffer(char c)
 	{
 	uint8_t Code1, Code2;
 	
 	if (c == '@') 
 		{ // Kennungsgeber besonders behandeln...
-		PufferSpeich(&SendePuffer, TtyCodeZiUm);
-		PufferSpeich(&SendePuffer, TtyCodeZiWerDa);
+		return PufferSpeich(&SendePuffer, TtyCodeZiUm) && PufferSpeich(&SendePuffer, TtyCodeZiWerDa);
 		}
 	else 
 		{
 		if (ZeichenZuCode2(c, (char*) &SendePuffer.BuZiMode, &Code1, &Code2))
 			{ // Zeichen erfolgreich in Baudot-Code umgesetzt
-			if (PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2)))
-				{
-				// ??? irgendwas erledigen im erfolgsfall?
-				}
+			return PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2));
 			}
 		else
 			// Zeichen ist nicht darstellbar, also löschen
@@ -802,6 +812,7 @@ static void SchreibeZeichenInSendePuffer(char c)
 				DebugMsg[l] = c;
 				DebugMsg[l+1] = '\0';
 				}
+			return false;
 			}
 		} // kein Werda
 	}
@@ -907,22 +918,6 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	if (*Socket == NO_SOCKET_USED)
 		return;
 		
-	// soll offene Verbindung geschlossen werden?
-	if (CheckSocketState(*Socket) == SOCKET_NOT_USE)
-		{ // ID#242 ID#342 ID#314 ************************************************
-		printf_P(PSTR("Txp: Socket wurde von Gegenstelle geschlossen\r\n" ));
-		CloseTCPSocket(*Socket);
-		*Socket = NO_SOCKET_USED;
-		if (IstVerbunden)
-			{ 
-			BusSenden(BusKdoSchluss);
-			ModusWechsel(ModWarteSchlussQuitt);
-			}
-		else
-			ModusWechsel(ModRuhe); // ID#314
-		return;
-		}
-
 	// Auf neue Daten testen
 	// ---------------------------------
 	int InCount = GetBytesInSocketData(*Socket);
@@ -957,17 +952,12 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				{ // ein ASCII-Zeichen
 				// ID#246 ID#344 *****************************************************
 				SocketModeAscii = true;
-				if (!PufferVoll(&SendePuffer))
+				int alen = strlen(AsciiDruckPuffer);
+				if (alen < AsciiDruckPufferMax-2)
 					{
-					SchreibeZeichenInSendePuffer(SocketInBuf[i]);
+					AsciiDruckPuffer[alen] = c;
+					AsciiDruckPuffer[alen+1] = '\0';
 					i++;
-					}
-				else 
-					break;
-				if (SocketInBuf[i] == '@')
-					{
-					i = SocketInBufUsed; //! \TODO auf Ende der Ascii-Daten suchen
-					break;
 					}
 				if (Modus == ModKommendVerbVorstufe)
 					// ID#311 *******************************************************
@@ -1012,6 +1002,18 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 					break; // Daten können momentan nicht verarbeitet werden.
 					}
 				}
+
+			else if (c == TXPC_STOP)
+				{
+				uint8_t len = SocketInBuf[i+1];
+				int alen = strlen(AsciiDruckPuffer);
+				if (len + alen < AsciiDruckPufferMax-1)
+					{
+					strncpy(AsciiDruckPuffer + alen, SocketInBuf + i + 2, len);
+					AsciiDruckPuffer[len + alen] = '\0';
+					}
+				i += 2 + len;
+				} // c == TXPC_STOP
 				
 			else if (c == TXPC_START)
 				{ 
@@ -1046,7 +1048,20 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			SocketInBufUsed = 0;
 			
 		} // if GetBytesInSocketData > 0
-	
+
+	// soll offene Verbindung geschlossen werden?
+	if (CheckSocketState(*Socket) == SOCKET_NOT_USE)
+		{ // ID#242 ID#342 ID#314 ************************************************
+		printf_P(PSTR("Txp: Socket wurde von Gegenstelle geschlossen\r\n" ));
+		CloseTCPSocket(*Socket);
+		*Socket = NO_SOCKET_USED;
+		if (IstVerbunden)
+			ModusWechsel(ModPufferDruckUndSchluss);
+		else
+			ModusWechsel(ModRuhe); // ID#314
+		return;
+		}
+		
 	// vom Endgerät empfangene Daten übersetzen
 	// --------------------------------------------------
 	InCount = PufferAnzahl(&EmpfPuffer);
@@ -1106,6 +1121,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			{
 			//! \todo Fehlerbehandlung
 			}
+			
 		else if (Res < SocketOutBufUsed)
 			{
 			memmove(SocketOutBuf, SocketOutBuf + Res, SocketOutBufUsed - Res);
@@ -1332,8 +1348,7 @@ void txp_thread()
 				CloseTxpServerSocket();
 				
 				// Html-Puffer löschen
-				if (Modus == ModHtmlVerbunden)
-					HtmlEmpfText[0] = '\0'; // damit es keine neue Einschaltung gibt.
+				AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 					
 				// ID#411 ID#104 *************************************
 				ModusWechsel(ModRuhe);
@@ -1385,7 +1400,7 @@ void txp_thread()
 #if (TXP_DEBUG >= 1)
 				printf_P(PSTR("TxP: Anwahl intern an %d VERSAGT\r\n"), Durchwahl);
 #endif
-				strcpy_P(DebugMsg, PSTR("Reservierung f�r Einschaltung konnte nicht versand werden"));
+				strcpy_P(DebugMsg, PSTR("Reservierung fuer Einschaltung konnte nicht versand werden"));
 				CloseTxpServerSocket(); // Client kann nicht geöffnet sein.
 				ModusWechsel(ModRuhe);
 				}
@@ -1464,6 +1479,18 @@ void txp_thread()
 				ModusWechsel(ModRuhe);
 				break;
 
+			case ModPufferDruckUndSchluss:
+				// ID#422 *************************************************************
+#if (TXP_DEBUG >= 1)
+				printf_P(PSTR("TxP: Taste gedruckt --> Ausschaltung intern\r\n" ));
+#endif
+				BusSenden(BusKdoSchluss);
+				ModusWechsel(ModWarteSchlussQuitt);
+				AsciiDruckPuffer[0] = '\0';
+				PufferInit(&SendePuffer);
+				RuheZaehler = 0;
+				break;
+			
 			default:
 				break;
 								
@@ -1473,10 +1500,10 @@ void txp_thread()
 		}
 		
 	// ==========================================================================
-	// Html-Eingabe?
+	// Ascii-Text im Puffer z.B. durch Html-Eingabe?
 	// ==========================================================================
 
-	if (Modus == ModRuhe && HtmlEmpfText[0] != '\0')
+	if (Modus == ModRuhe && AsciiDruckPuffer[0] != '\0')
 		{
 		if (KommendInternAnwaehlen(0)) // keine Durchwahl
 			{ 
@@ -1489,55 +1516,36 @@ void txp_thread()
 		else
 			{ 
 #if (TXP_DEBUG >= 1)
-			printf_P(PSTR("TxP: HTML-Eingabe -> intern VERSAGT\r\n" ));
+			printf_P(PSTR("TxP: HTML-Eingabe -> Einschaltung intern VERSAGT\r\n" ));
 #endif
 			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
-			HtmlEmpfText[0] = '\0'; // damit es keine neue Einschaltung gibt.
+			AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 			ModusWechsel(ModRuhe);
 			}
 		} // if ModRuhe && Text per HTML empfangen
 		
-	if (Modus == ModHtmlVerbunden)
+	if (Modus == ModHtmlVerbunden || Modus == ModKommendVerbunden || Modus == ModGehendVerbunden || Modus == ModPufferDruckUndSchluss)
 		{
 		// zu druckenden Text umwandeln
 		// ---------------------------
-		if (HtmlEmpfText[0] != '\0' && PufferLeer(&SendePuffer))
+		if (AsciiDruckPuffer[0] != '\0' && PufferLeer(&SendePuffer))
 			{
-			uint8_t Code1, Code2;
-			
-			if (HtmlEmpfText[0] == '@') 
-				{ // Kennungsgeber besonders behandeln...
-				HtmlEmpfText[0] = CodeChrWerDa; 
-				HtmlEmpfText[1] = '\0'; // keine weiteren Zeichen bearbeiten
-				}
-			
-			if (ZeichenZuCode2(HtmlEmpfText[0], (char*) &SendePuffer.BuZiMode, &Code1, &Code2))
-				{ // Zeichen erfolgreich in Baudot-Code umgesetzt
-				if (PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2)))
+			if (SchreibeZeichenInSendePuffer(AsciiDruckPuffer[0]))
+				{
+				if (Modus == ModHtmlVerbunden)
 					{
 					char z[2];
-					z[0] = HtmlEmpfText[0];
+					z[0] = AsciiDruckPuffer[0];
 					z[1] = '\0';
 					strcat(HtmlSendeText, z); // Eigenecho
-					strcpy(HtmlEmpfText, HtmlEmpfText+1); // erstes Zeichen aus HtmlEmpfText-Puffer löschen
 					}
 				}
-			else
-				// Zeichen ist nicht darstellbar, also löschen
-				{
-				if (DebugMsg[0] == '\0') // noch leer
-					strcpy_P(DebugMsg, PSTR("?nicht druckbare Zeichen: "));
-				uint8_t l = strlen(DebugMsg);
-				if (DebugMsg[0] == '?' && l + 2 < DebugMsgMax)
-					{
-					DebugMsg[l] = HtmlEmpfText[0];
-					DebugMsg[l+1] = '\0';
-					}
-
-				strcpy(HtmlEmpfText, HtmlEmpfText+1); // erstes Zeichen aus HtmlEmpfText-Puffer löschen
-				}
-			} // HtmlEmpfText nicht leer und SendePuffer leer
-			
+			strcpy(AsciiDruckPuffer, AsciiDruckPuffer+1); // erstes Zeichen aus AsciiDruckPuffer-Puffer löschen
+			} // AsciiDruckPuffer nicht leer und SendePuffer leer
+		} // Modus aktiv, bei dem gedruckt werden kann.
+		
+	if (Modus == ModHtmlVerbunden)
+		{ // eigegebene Zeichen nach Ascii umwandeln
 		while (!PufferLeer(&EmpfPuffer))
 			{
 			if (strlen(HtmlSendeText) >= HtmlSendeTextMax - 20)
@@ -1548,7 +1556,7 @@ void txp_thread()
 			}
 
 		if (RuheZaehler > 30 * TxpTimerFreq // 30 Sekunden
-			&& HtmlEmpfText[0] == '\0'
+			&& AsciiDruckPuffer[0] == '\0'
 			&& PufferLeer(&SendePuffer)
 			&& PufferLeer(&EmpfPuffer) )
 			{
@@ -1562,6 +1570,20 @@ void txp_thread()
 
 		} // if Modus == ModHtmlVerbunden
 
+	// ==========================================================================
+	// Abschaltung nach Reste-Druck?
+	// ==========================================================================
+
+	if (Modus == ModPufferDruckUndSchluss && AsciiDruckPuffer[0] == '\0' && PufferLeer(&SendePuffer))
+		{ // ID#421 *************************************************************
+#if (TXP_DEBUG >= 1)
+		printf_P(PSTR("TxP: Reste gedruckt --> Ausschaltung intern\r\n" ));
+#endif
+		BusSenden(BusKdoSchluss);
+		ModusWechsel(ModWarteSchlussQuitt);
+		RuheZaehler = 0;
+		}
+	
 	} // txp_thread
 	
 
@@ -1631,8 +1653,8 @@ void txp_cgi_debug( void * pStruct )
 
 	printf_P(PSTR("HtmlSendeText: ["));
 	printf(HtmlSendeText);
-	printf_P(PSTR("]<br>HtmlEmpfText: ["));
-	printf(HtmlEmpfText);
+	printf_P(PSTR("]<br>AsciiDruckPuffer: ["));
+	printf(AsciiDruckPuffer);
 	printf_P(PSTR("]<p>DebugMsg: %s<br>"), DebugMsg);
 	DebugMsg[0] = '\0';
 
@@ -1706,15 +1728,13 @@ void txp_cgi_msg_Out( void * pStruct )
 					"<HEAD>"
 					"<meta http-equiv=\"expires\" content=\"1\">"
 					"<meta http-equiv=\"pragma\" content=\"no-cache\">"
-					"<meta http-equiv=\"refresh\" content=\"5; URL=txp-msg-out.cgi\">"
+					"<meta http-equiv=\"refresh\" content=\"10; URL=txp-msg-out.cgi\">"
 					"</HEAD>"
 					"<BODY>" ));
 					
 	if (Modus == ModHtmlVerbunden)
 		{
-		printf_P(PSTR("Druckspiegel:<br><pre>%s</pre>"), HtmlSendeText);
-		if (HtmlEmpfText[0] != '\0')
-			printf_P(PSTR("<i><pre>%s</pre></i>"), HtmlEmpfText);
+		printf_P(PSTR("Druckspiegel:<br><pre>%s&lt;&lt;&lt;%s</pre>"), HtmlSendeText, AsciiDruckPuffer);
 		}
 	else if (Modus == ModRuhe)
 		{
@@ -1742,15 +1762,13 @@ void txp_cgi_msg_In( void * pStruct )
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 
-	bool DrucktextAufforderung;
-
-	DrucktextAufforderung = (http_request->argc != 0) && PharseCheckName_P(http_request, PSTR("Eingabe"));
-
-	if (DrucktextAufforderung)
+	if ((http_request->argc != 0) 
+	    && PharseCheckName_P(http_request, PSTR("Eingabe"))
+		&& (Modus == ModRuhe || Modus == ModHtmlWarteEinQuitt || Modus == ModHtmlVerbunden))
 		{
-		strncat(HtmlEmpfText, http_request->argvalue[PharseGetValue_P(http_request, PSTR("Eingabe"))], HtmlEmpfTextMax - strlen(HtmlEmpfText) - 3);
-		HtmlEmpfText[HtmlEmpfTextMax-3] = '\0';
-		strcat_P(HtmlEmpfText, PSTR("\r\n"));
+		strncat(AsciiDruckPuffer, http_request->argvalue[PharseGetValue_P(http_request, PSTR("Eingabe"))], AsciiDruckPufferMax - strlen(AsciiDruckPuffer) - 3);
+		AsciiDruckPuffer[AsciiDruckPufferMax-3] = '\0';
+		strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 		}
 
 	cgi_PrintHttpheaderStart();
@@ -1900,7 +1918,7 @@ void txp_init()
 
 	TlnBuchInit();
 	
-	HtmlEmpfText[0] = '\0';
+	AsciiDruckPuffer[0] = '\0';
 	HtmlSendeText[0] = '\0';
 	DebugMsg[0] = '\0';
 	
