@@ -145,13 +145,6 @@ int check_files( void * pStruct )
 	
 	if ( returnvalue == -1 )
 	{
-#ifdef HTTP_DEBUG
-STDOUT_save( &oldstream );
-STDOUT_set( RS232, 0 );
-printf_P( PSTR("GET_FILE = %s\r\n") , http_request->GET_FILE );
-STDOUT_Flush();
-STDOUT_restore( &oldstream );
-#endif
 		i = strlen( http_request->GET_FILE );
 		filename = http_request->GET_FILE;
 		filename += i;
@@ -173,14 +166,6 @@ STDOUT_restore( &oldstream );
 			i--;
 		}
 
-#ifdef HTTP_DEBUG
-STDOUT_save( &oldstream );
-STDOUT_set( RS232, 0 );
-printf_P( PSTR("filename = %s, filetype = %s\r\n") , filename, filetype );
-STDOUT_Flush();
-STDOUT_restore( &oldstream );
-#endif
-		
 		struct fat_dir_entry_struct directory;
 		struct fat_dir_struct* dd;
 
@@ -203,13 +188,6 @@ STDOUT_restore( &oldstream );
 			// Verzeichniss inhalt lesen und Datei suchen
 			while(fat_read_dir(dd, &dir_entry))
 		    {
-#ifdef HTTP_DEBUG
-STDOUT_save( &oldstream );
-STDOUT_set( RS232, 0 );
-printf_P( PSTR("dir_entry.long_name = %s\r\n") , dir_entry.long_name );
-STDOUT_Flush();
-STDOUT_restore( &oldstream );
-#endif
 		        if(strcmp( dir_entry.long_name, filename ) == 0)
 		        {
 					filesize = dir_entry.file_size;
@@ -221,13 +199,6 @@ STDOUT_restore( &oldstream );
 			// Wenn Datei vorhanden, lesen und ausgeben
 			if ( filesize != 0 )
 			{
-#ifdef HTTP_DEBUG
-STDOUT_save( &oldstream );
-STDOUT_set( RS232, 0 );
-printf_P( PSTR("filesize = %ld\r\n") , filesize );
-STDOUT_Flush();
-STDOUT_restore( &oldstream );
-#endif
 				struct fat_file_struct* fd = fat_open_file(fs, &dir_entry); // open_file_in_dir(fs, dd, http_request->GET_FILE );
 
                 if( fd )
@@ -269,7 +240,7 @@ STDOUT_restore( &oldstream );
 
 						size = fat_read_file(fd, (unsigned char *) buffer, sizeof( buffer ));
 
-#ifdef HTTP_DEBUG
+#if HTTP_DEBUG >= 2
 						STDOUT_save( &oldstream );
 						STDOUT_set( RS232, 0 );
 						printf_P(PSTR(" %d"), size);
