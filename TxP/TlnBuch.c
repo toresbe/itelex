@@ -27,7 +27,7 @@ enum { TlnBuchMemMax = 20000UL } ; //!< Größe des Teilnehmerverzeichnisses in 
 //! \par 4 Byte Teilnehmernummer (muss eindeutig sein). 0, wenn Eintrag komplett gelöscht.
 //! \par 1 Byte Datensatzgröße insgesamt (einschließlich Teilnehmernummer und Größenangabe).
 //! \par 2 Byte Flags.
-//! \par 1 Byte Art. (siehe enum \sa TTlnAdresseArt)
+//! \par 1 Byte Art. (siehe enum #TTlnAdresseArt)
 //! \par x Byte Name as String (mit \0 abgeschlossen)
 //! \par 4 Byte Datum.
 //! \par Folgende Daten abhängig von Art

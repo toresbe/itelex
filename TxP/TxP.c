@@ -65,6 +65,7 @@
 #include "TxP2-Defs.h"
 #include "FifoPuffer.h"
 #include "BaudotCode.h"
+#include "Protokoll.h"
 
 
 // Aktueller Modus
@@ -1767,28 +1768,59 @@ void txp_cgi_msg_Out( void * pStruct )
 
 void TestSchreiben(char *filename, char *text)
 	{
-	struct fat_dir_entry_struct directory;
 	struct fat_dir_struct* dd;
-	
-	fat_get_dir_entry_of_path(fs, "/" , &directory);
-	// fat_get_dir_entry_of_path(fs, http_request->GET_FILE , &directory);
-	dd = fat_open_dir(fs, &directory);
-	if (dd)
+	struct fat_file_struct* fd;
+	struct fat_dir_entry_struct directory;
+	struct fat_dir_entry_struct dir_entry;
+	uint8_t Res;
+		
+	if (fs == NULL)
+		return;
+		
+	// Datei direkt öffnen (schauen, ob vorhanden)
+	Res = fat_get_dir_entry_of_path(fs, filename, &dir_entry);
+	if (!Res)
 		{
-		struct fat_dir_entry_struct dir_entry;
-		if (fat_create_file(dd, filename, &dir_entry))
+		// Basisverzeichnis öffnen
+		Res = fat_get_dir_entry_of_path(fs, "/", &directory);
+		if (Res)
 			{
-			struct fat_file_struct* fd = fat_open_file(fs, &dir_entry); 
-            if (fd)
+			dd = fat_open_dir(fs, &directory);
+			if (dd != NULL)
 				{
-				int32_t Pos = 0;
-				if (fat_seek_file(fd, &Pos, FAT_SEEK_END) > 0)
-					fat_write_file(fd, (uint8_t*) text, strlen(text));
-                fat_close_file(fd);
+				Res = fat_create_file(dd, filename, &dir_entry);
+				fat_close_dir(dd);
+				if (Res == 0)
+					sprintf_P(DebugMsg, PSTR("fat_create_file(%s) versagt"), filename);
 				}
+			else
+				sprintf_P(DebugMsg, PSTR("fat_open_dir des Hauptverzeichnis versagt"));
 			}
-		fat_close_dir(dd);
+		else
+			sprintf_P(DebugMsg, PSTR("fat_get_dir_entry_of_path des Hauptverzeichnis versagt"));
 		}
+	
+	// jetzt sollte dir_entry korrekt gefüllt sein
+	if (Res)
+		{
+		fd = fat_open_file(fs, &dir_entry); 
+		if (fd)
+			{
+			int32_t Pos = 0;
+			if (fat_seek_file(fd, &Pos, FAT_SEEK_END) > 0)
+				if (fat_write_file(fd, (uint8_t*) text, strlen(text)) > 0)
+					sprintf_P(DebugMsg, PSTR("fat_write_file erfolgreich (an Pos %ld)"), Pos);
+				else
+					sprintf_P(DebugMsg, PSTR("fat_write_file versagt (an Pos %ld)"), Pos);
+			else
+				sprintf_P(DebugMsg, PSTR("fat_seek_file versagt"));
+				
+			fat_close_file(fd);
+			}
+		else
+			sprintf_P(DebugMsg, PSTR("fat_open_file fuer %s versagt"), filename);
+		}
+		
 	} // TestSchreiben
 	
 	
@@ -1817,6 +1849,7 @@ strncpy(Filename, AsciiDruckPuffer, 4);
 Filename[4] = '\0';
 strcat_P(Filename, PSTR(".txt"));
 TestSchreiben(Filename, AsciiDruckPuffer);		
+		Protokollieren(AsciiDruckPuffer);
 		}
 
 	cgi_PrintHttpheaderStart();
@@ -1957,6 +1990,8 @@ void txp_cgi_config(void *pStruct)
 void txp_init()
 	{
 	init_Taste();
+	
+	ProtokollInit();
 	
 	SeriellUmsetzInit();
 

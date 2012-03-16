@@ -129,7 +129,7 @@ SRC += apps/mp3-streamingclient/mp3-streaming.c apps/mp3-streamingclient/mp3-cli
 SRC += apps/can/can_eth_rep.c
 
 # Add user C source files here.
-SRC += TxP/TxP.c TxP/TlnBuch.c TxP/CgiFormTools.c TxP/SwTwi.c
+SRC += TxP/TxP.c TxP/TlnBuch.c TxP/CgiFormTools.c TxP/SwTwi.c Txp/Protokoll.c
 SRC += TxP/Gemeinsam/BusKomm.c TxP/Gemeinsam/FifoPuffer.c TxP/Gemeinsam/BaudotCode.c 
 
 
