@@ -1664,6 +1664,11 @@ void txp_cgi_debug( void * pStruct )
 	printf_P(PSTR("]<p>DebugMsg: %s<br>"), DebugMsg);
 	DebugMsg[0] = '\0';
 
+	extern char Dateiname[]; // aus Protokoll.c
+	printf_P(PSTR("Protokolldatei: %s<br>"), Dateiname);
+	extern char Puffer[]; // aus Protokoll.c
+	printf_P(PSTR("Protokollpuffer: %s<br>"), Puffer);
+
 #define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %d"), Var)
 
 	PRINTVAL(Timer0Cnt_Min); Timer0Cnt_Min = 255;
@@ -1756,75 +1761,6 @@ void txp_cgi_msg_Out( void * pStruct )
 	}
 
 
-#include "system/filesystem/fat.h"
-#include "system/filesystem/filesystem.h"
-
-/*------------------------------------------------------------------------------------------------------------*/
-/*!\brief Testfunktion für Textausgabe in eine Datei.
- * \param 	filename Dateiname
- * \return	text zu schreibender Text
- */
-/*------------------------------------------------------------------------------------------------------------*/
-
-void TestSchreiben(char *filename, char *text)
-	{
-	struct fat_dir_struct* dd;
-	struct fat_file_struct* fd;
-	struct fat_dir_entry_struct directory;
-	struct fat_dir_entry_struct dir_entry;
-	uint8_t Res;
-		
-	if (fs == NULL)
-		return;
-		
-	// Datei direkt öffnen (schauen, ob vorhanden)
-	Res = fat_get_dir_entry_of_path(fs, filename, &dir_entry);
-	if (!Res)
-		{
-		// Basisverzeichnis öffnen
-		Res = fat_get_dir_entry_of_path(fs, "/", &directory);
-		if (Res)
-			{
-			dd = fat_open_dir(fs, &directory);
-			if (dd != NULL)
-				{
-				Res = fat_create_file(dd, filename, &dir_entry);
-				fat_close_dir(dd);
-				if (Res == 0)
-					sprintf_P(DebugMsg, PSTR("fat_create_file(%s) versagt"), filename);
-				}
-			else
-				sprintf_P(DebugMsg, PSTR("fat_open_dir des Hauptverzeichnis versagt"));
-			}
-		else
-			sprintf_P(DebugMsg, PSTR("fat_get_dir_entry_of_path des Hauptverzeichnis versagt"));
-		}
-	
-	// jetzt sollte dir_entry korrekt gefüllt sein
-	if (Res)
-		{
-		fd = fat_open_file(fs, &dir_entry); 
-		if (fd)
-			{
-			int32_t Pos = 0;
-			if (fat_seek_file(fd, &Pos, FAT_SEEK_END) > 0)
-				if (fat_write_file(fd, (uint8_t*) text, strlen(text)) > 0)
-					sprintf_P(DebugMsg, PSTR("fat_write_file erfolgreich (an Pos %ld)"), Pos);
-				else
-					sprintf_P(DebugMsg, PSTR("fat_write_file versagt (an Pos %ld)"), Pos);
-			else
-				sprintf_P(DebugMsg, PSTR("fat_seek_file versagt"));
-				
-			fat_close_file(fd);
-			}
-		else
-			sprintf_P(DebugMsg, PSTR("fat_open_file fuer %s versagt"), filename);
-		}
-		
-	} // TestSchreiben
-	
-	
-	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface für das Eingabefenster der Fernschreiber-Simulation
  * \param 	pStruct	Struktur auf den HTTP_Request
@@ -1844,11 +1780,6 @@ void txp_cgi_msg_In( void * pStruct )
 		strncat(AsciiDruckPuffer, http_request->argvalue[PharseGetValue_P(http_request, PSTR("Eingabe"))], AsciiDruckPufferMax - strlen(AsciiDruckPuffer) - 3);
 		AsciiDruckPuffer[AsciiDruckPufferMax-3] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
-char Filename[10];
-strncpy(Filename, AsciiDruckPuffer, 4);
-Filename[4] = '\0';
-strcat_P(Filename, PSTR(".txt"));
-TestSchreiben(Filename, AsciiDruckPuffer);		
 		Protokollieren(AsciiDruckPuffer);
 		}
 

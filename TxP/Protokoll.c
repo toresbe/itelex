@@ -19,7 +19,7 @@ enum { MaxPuffer = 512 }; //!< Länge des Protokoll-Puffers
 
 char Puffer[MaxPuffer]; //!< Puffert Meldungen bis es Zeit ist, diese auf SD-Karte zu speichern.
 
-char Dateiname[20]; //!< Aktueller Dateiname für die Protokolldatei.
+char Dateiname[40]; //!< Aktueller Dateiname für die Protokolldatei.
 
 enum { MaxDateigroesse = 100000UL } ; //!< Maximale Dateigröße. Bei überschreitung wird die nächste Datei angefangen.
 
@@ -31,7 +31,7 @@ extern char *DebugMsg;
 
 //! Schreibt die zwischengespeicherten Daten auf die SD-Karte.
 //! \retval true, wenn Puffer gespeichert wurde.
-static bool PufferSpeichern()
+bool ProtokollSpeichern()
 	{
 	struct fat_dir_struct* dd;
 	struct fat_file_struct* fd;
@@ -137,7 +137,7 @@ void Protokollieren(char *s)
 	
 	if (strlen(Puffer) + strlen(s) + 2 >= MaxPuffer)
 		{
-		if (!PufferSpeichern())
+		if (!ProtokollSpeichern())
 			return; // kein Platz mehr.
 		}
 
@@ -151,7 +151,6 @@ void Protokollieren(char *s)
 		}
 		
 	strcat(Puffer, s);
-	strcat_P(Puffer, "\r\n");
 	}
 	
 
@@ -159,7 +158,7 @@ void Protokollieren(char *s)
 static void SpeichernBeiIdle()
 	{
 	if (Idle)
-		PufferSpeichern();
+		ProtokollSpeichern();
 	else
 		Idle = true;
 	}
@@ -172,6 +171,7 @@ void ProtokollInit()
 	Dateiname[0] = '\0';
 	Idle = true;
 	CLOCK_RegisterCallbackFunction(SpeichernBeiIdle, MINUTE);
+	Protokollieren("Neustart\r\n");
 	}
 	
 

@@ -2,6 +2,10 @@
 
 #define __PROTOKOLL_H__
 
+#include "stdbool.h"
+
+extern bool ProtokollSpeichern();
+
 extern void Protokollieren(char *s);
 
 extern void ProtokollInit();

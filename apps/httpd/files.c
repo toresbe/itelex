@@ -90,6 +90,11 @@ int check_files( void * pStruct )
 	STDOUT_restore( &oldstream );
 #endif
 
+	extern void Protokollieren(char *s);
+	Protokollieren("http-request: ");
+	Protokollieren(http_request->GET_FILE);
+	Protokollieren("\r\n");
+
 #if !defined(HTTP_FILES_FROM_MMC)
 	for( i = 0 ; i < MAX_FILES_ENTRYS ; i++ )
 	{
