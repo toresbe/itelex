@@ -292,17 +292,19 @@ void txp_timerEvent(void)
 	uint8_t t0c = TCNT0;
 	Timer0CallbackCount++;
 	
+	wdt_reset();
+	
 	if (SocketLebenszeichenZaehler > 0)
 		SocketLebenszeichenZaehler--;
 		
-	if (TxpThreadCheckCount++ > 30000) // nach 30 Sekunden Reset
+	if (TxpThreadCheckCount++ > 30 * TxpTimerFreq) // nach 30 Sekunden Reset
 		{
-		Protokollieren("Reset wegen nicht-Aufrug von txp_thread()\r\n");
+		Protokollieren("Reset wegen nicht-Aufruf von txp_thread()\r\n");
 		ProtokollSpeichern();
 		softreset();
 		}
 		
-	if (TxpThreadCheckCount > 100)
+	if (TxpThreadCheckCount > 2 * TxpTimerFreq)
 		LED_on(ROT);
 		
 	TwiWatchdogCount++;
@@ -2038,10 +2040,27 @@ void txp_init()
 
 	THREAD_RegisterThread( txp_thread, PSTR("TxP"));
 
+	wdt_enable(WDTO_8S);
 	}
 
 
 #endif //def TELEXPHONE
+
+
+//! Ermittelt aktuelles Datum und Uhrzeit. 
+//----------------------------------------
+//! Wird für FAT-Funktionen erwartet.
+void get_datetime(uint16_t* year, uint8_t* month, uint8_t* day, uint8_t* hour, uint8_t* min, uint8_t* sec)
+	{
+	struct TIME Time;
+	CLOCK_GetTime(&Time);
+	*day = Time.DD;
+	*month = Time.MM;
+	*year = Time.YY;
+	*hour = Time.hh;
+	*min = Time.mm;
+	*sec = Time.ss;
+	}
 
 
 //@}
