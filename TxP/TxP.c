@@ -31,6 +31,7 @@
 #include <avr/version.h>
 #include <avr/interrupt.h>
 #include <avr/io.h>
+#include <avr/wdt.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -52,6 +53,7 @@
 #include "system/thread/thread.h"
 #include "system/config/eeconfig.h"
 #include "system/clock/clock.h"
+#include "system/softreset/softreset.h"
 
 #include "apps/httpd/cgibin/cgi-bin.h"
 #include "apps/httpd/httpd2_pharse.h"
@@ -173,7 +175,7 @@ volatile static uint16_t RuheZaehler;
 volatile static uint16_t SocketLebenszeichenZaehler;
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf der TCP-Verbindung.
 
-volatile static uint8_t TxpThreadCheckCount;
+volatile static uint16_t TxpThreadCheckCount;
 	//!< Prüft, ob die Funktion void txp_thread() ausreichend häufig aufgerufen wird.
 
 	
@@ -244,7 +246,7 @@ static uint32_t Wahlnummer;
 	
 static uint8_t Wahlziffern; 
 	//!< Anzahl gewählter Ziffern
-	
+
 
 //! Sollfrequenz des Aufrufs von txp_timerEvent()
 enum { TxpTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
@@ -293,11 +295,18 @@ void txp_timerEvent(void)
 	if (SocketLebenszeichenZaehler > 0)
 		SocketLebenszeichenZaehler--;
 		
-	if (TxpThreadCheckCount > 0)
-		TxpThreadCheckCount--;
-	else
+	if (TxpThreadCheckCount++ > 30000) // nach 30 Sekunden Reset
+		{
+		Protokollieren("Reset wegen nicht-Aufrug von txp_thread()\r\n");
+		ProtokollSpeichern();
+		softreset();
+		}
+		
+	if (TxpThreadCheckCount > 100)
 		LED_on(ROT);
-
+		
+	TwiWatchdogCount++;
+		
 	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden || Modus == ModHtmlVerbunden || Modus == ModPufferDruckUndSchluss)
 		{ // ist Verbunden, also Pegel senden und empfangen
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
@@ -575,6 +584,8 @@ static void ModusWechsel(TModus neu)
 	{
 	if (neu == Modus)
 		return;
+
+	TwiWatchdogCount = 0; // nicht in allen Modi erforderlich, schadet aber auch nicht.
 		
 	switch (neu)
 		{
@@ -1163,7 +1174,7 @@ void txp_thread()
 
 	TxpThreadCount++;
 
-	TxpThreadCheckCount = 5;
+	TxpThreadCheckCount = 0;
 	LED_off(ROT); 
 	
 	// ======================================================================
@@ -1334,7 +1345,7 @@ void txp_thread()
 				else
 					printf_P(PSTR("TxP: TWI Ausschaltung intern\r\n" ));
 #endif
-				if (BusQuittSchluss && Modus != ModWarteSchlussQuitt)
+				if (Code == BusQuittSchluss && Modus != ModWarteSchlussQuitt)
 					{
 					strcpy_P(DebugMsg, PSTR("Schlussquittung ohne Aufforderung"));
 					FalschCodeEmpfangen(Code);
@@ -1367,6 +1378,22 @@ void txp_thread()
 			} // switch Code
 		} // if GetEmpfByte
 
+	// ======================================================================
+	// Prüfen, ob TWI-Kommunikation überhaupt noch läuft
+	// ======================================================================
+
+	if (Modus == ModKommendWarteEinQuitt || ModKommendVerbunden 
+	    || Modus == ModGehendReserv || Modus == ModGehendWaehlen || Modus == ModGehendVerbunden 
+		|| Modus == ModHtmlVerbunden || Modus == ModPufferDruckUndSchluss)
+		{
+		if (TwiWatchdogCount > 2000)
+			{
+			Protokollieren("TWI-Timeout -> Abschaltung\r\n");
+			BusSenden(BusKdoSchluss);
+			ModusWechsel(ModWarteSchlussQuitt);
+			}
+		}
+	
 	// ======================================================================
 	// Socket Empfang und Sendung
 	// ======================================================================
@@ -1910,7 +1937,68 @@ void txp_cgi_config(void *pStruct)
 	}
 	
 	
+#include "system/filesystem/fat.h"
+#include "system/filesystem/filesystem.h"
+	
+//! Erzeugt Inhaltsverzeichnis der SD-Karte als HTML-Seite.
+//---------------------------------------------------------
+void cgi_SdDirectory(void *pStruct)
+	{
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+	char *BaseDir;
+	
+	cgi_PrintHttpheaderStart();
 
+	struct fat_dir_entry_struct directory;
+	struct fat_dir_struct* dd;
+
+	// Wenn nur filename dann Stammverzeichniss wählen, wenn nicht Verzeichnis wählen
+	if (http_request->argc == 0 || !PharseCheckName_P(http_request, PSTR("dir")))
+		{
+		fat_get_dir_entry_of_path(fs, "/" , &directory);
+		BaseDir = NULL;
+		printf_P(PSTR("<b>Content of /:</b><p>"));
+		}
+	else
+		{
+		BaseDir = http_request->argvalue[PharseGetValue_P(http_request, PSTR("dir"))];
+		fat_get_dir_entry_of_path(fs, BaseDir, &directory);
+		printf_P(PSTR("<b>Content of %s:</b><p>"), BaseDir);
+		}
+		
+	// Verzeichbnis öffnen
+	dd = fat_open_dir(fs, &directory);
+	if (dd)
+        {
+		struct fat_dir_entry_struct dir_entry;
+		
+		// Verzeichniss inhalt lesen und Datei suchen
+		while (fat_read_dir(dd, &dir_entry) > 0)
+		    {
+			if ((dir_entry.attributes & FAT_ATTRIB_DIR) != 0)
+				{
+				if (BaseDir == NULL)
+					printf_P(PSTR("<a href =\"sddir.cgi?dir=%s\">%s</a> DIR<br>"), dir_entry.long_name, dir_entry.long_name);
+				else
+					printf_P(PSTR("<a href =\"sddir.cgi?dir=%s/%s\">%s</a> DIR<br>"), BaseDir, dir_entry.long_name, dir_entry.long_name);
+				}
+			else
+				{ // normale Datei
+				if (BaseDir == NULL)
+					printf_P(PSTR("<a href =\"%s\">%s</a> %ld<br>"), dir_entry.long_name, dir_entry.long_name, dir_entry.file_size);
+				else
+					printf_P(PSTR("<a href =\"%s/%s\">%s</a> %ld<br>"), BaseDir, dir_entry.long_name, dir_entry.long_name, dir_entry.file_size);
+				}
+			}
+		fat_close_dir(dd);
+		}
+	
+	cgi_PrintHttpheaderEnd();
+	}
+
+	
+	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Initialisiert den TelexPhone-clinet und registriert den Port auf welchen dieser lauschen soll.
  * \param 	NONE
@@ -1976,6 +2064,7 @@ void txp_init()
 	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("txp-msg-out.cgi"));
 	cgi_RegisterCGI( txp_cgi_config, PSTR("txp-config.cgi"));
 	cgi_RegisterCGI( txp_cgi_debug, PSTR("txp-debug.cgi"));
+	cgi_RegisterCGI( cgi_SdDirectory, PSTR("sddir.cgi"));
 
 	TxpClientSocket = NO_SOCKET_USED;
 	TxpServerSocket = NO_SOCKET_USED;
