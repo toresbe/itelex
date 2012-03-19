@@ -11,6 +11,7 @@
 #include "system/clock/clock.h"
 #include "system/filesystem/fat.h"
 #include "system/filesystem/filesystem.h"
+#include "system/stdout/stdout.h"
 
 #include "Protokoll.h"
 
@@ -39,8 +40,21 @@ bool ProtokollSpeichern()
 	struct fat_dir_entry_struct dir_entry;
 	uint8_t Res;
 
-	if (Puffer[0] == '\0' || fs == NULL)
-		return true; // nichts zu speichern ODER filesystem nicht bereit.
+	if (Puffer[0] == '\0')
+		return true; // nichts zu speichern 
+		
+	if  (fs == NULL) 
+		{ // Filesystem nicht bereit --> auf RS232 senden.
+		struct STDOUT oldstream;
+
+		STDOUT_save( &oldstream );
+		STDOUT_set( RS232, 0 );
+		puts(Puffer);
+		STDOUT_Flush();
+		STDOUT_restore( &oldstream );
+		Puffer[0] = '\0';
+		return true;
+		}
 		
 	if (Dateiname[0] == '\0')
 		fd = NULL;
@@ -127,18 +141,22 @@ bool ProtokollSpeichern()
 	return true;
 	}
 	
-	
-//! Protokolliert einen beliebigen Text.
-void Protokollieren(char *s)
+
+//! Bereitet Protokollierung vor.
+//------------------------------
+//! Ggf. Puffer schreiben, zu lange Texte zurückweisen.
+//! \param len Textlänge des zu speichernden Textes.
+//! \retval true wenn Puffer beschrieben werden darf.
+static bool ProtPraeparieren(int len)
 	{
 	Idle = false;
-	if (s == NULL || s[0] == '\0' || strlen(s) > MaxPuffer / 2)
-		return;
+	if (len == 0 || len > MaxPuffer / 2)
+		return false;
 	
-	if (strlen(Puffer) + strlen(s) + 2 >= MaxPuffer)
+	if (strlen(Puffer) + len + 2 >= MaxPuffer)
 		{
 		if (!ProtokollSpeichern())
-			return; // kein Platz mehr.
+			return false; // kein Platz mehr.
 		}
 
 	if (Puffer[0] == '\0')
@@ -149,11 +167,34 @@ void Protokollieren(char *s)
 		sprintf_P(Puffer, PSTR("%02u.%02u.%04u %02d:%02d\r\n"),
 			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm);
 		}
+	return true;
+	}
 		
-	strcat(Puffer, s);
+	
+//! Protokolliert einen beliebigen Text.
+void Protokollieren(char *s)
+	{
+	if (s != NULL && ProtPraeparieren(strlen(s)))
+		strcat(Puffer, s);
 	}
 	
 
+//! Protokolliert einen beliebigen Text.
+void Protokollieren_P(const char *s)
+	{
+	if (s != NULL && ProtPraeparieren(strlen_P(s)))
+		strcat_P(Puffer, s);
+	}
+	
+
+//! Protokolliert einen Text mit einer Zahl (Printf-Format verwenden).
+void ProtokollierenInt_P(const char *s, long i)
+	{
+	if (s != NULL && ProtPraeparieren(strlen_P(s) + 10))
+		sprintf_P(Puffer + strlen(Puffer), s, i);
+	}
+
+	
 //! Speichert zwischengespeicherten Protokolltext auf SD-Karte, sobald Ruhe eingekehrt ist.	
 static void SpeichernBeiIdle()
 	{

@@ -897,7 +897,10 @@ void TlnBuchInit()
 		int Res = TlnBuchLadeVonExternEeprom();
 		extern char DebugMsg[];
 		if (Res < 0)
-			sprintf_P(DebugMsg, PSTR("Eeprom Ladefehler %d / %d"), Res, SwTwiLetzterFehler);
+			{
+			sprintf_P(DebugMsg, PSTR("TxP: Eeprom Ladefehler %d / %d"), Res, SwTwiLetzterFehler);
+			Protokollieren(DebugMsg);
+			}
 		} // if get_Taste()
 		
 	cgi_RegisterCGI( TlnBuch_Anzeige_CGI, PSTR("txp-tlnverz.cgi"));
