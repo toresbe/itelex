@@ -1764,6 +1764,7 @@ void txp_cgi_msg_In( void * pStruct )
 		strncat(AsciiDruckPuffer, http_request->argvalue[PharseGetValue_P(http_request, Eingabe_P)], AsciiDruckPufferMax - strlen(AsciiDruckPuffer) - 3);
 		AsciiDruckPuffer[AsciiDruckPufferMax-3] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
+		Protokollieren_P(PSTR("TxP: CGI-Druck "));
 		Protokollieren(AsciiDruckPuffer);
 		}
 
@@ -2021,7 +2022,9 @@ void txp_init()
 	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("txp-msg-out.cgi"));
 	cgi_RegisterCGI( txp_cgi_config, PSTR("txp-config.cgi"));
 	cgi_RegisterCGI( txp_cgi_debug, PSTR("txp-debug.cgi"));
+#if defined(MMC)
 	cgi_RegisterCGI( cgi_SdDirectory, PSTR("sddir.cgi"));
+#endif //defined(MMC)
 
 	TxpClientSocket = NO_SOCKET_USED;
 	TxpServerSocket = NO_SOCKET_USED;
@@ -2047,6 +2050,8 @@ void txp_init()
 #endif //def TELEXPHONE
 
 
+#if defined(MMC)
+
 //! Ermittelt aktuelles Datum und Uhrzeit. 
 //----------------------------------------
 //! Wird für FAT-Funktionen erwartet.
@@ -2061,6 +2066,8 @@ void get_datetime(uint16_t* year, uint8_t* month, uint8_t* day, uint8_t* hour, u
 	*min = Time.mm;
 	*sec = Time.ss;
 	}
+
+#endif //defined(MMC)
 
 
 //@}

@@ -283,6 +283,9 @@ const char data11[] PROGMEM = {
 	" / <a href=\"txp-tlnverz.cgi\" target=\"main\">Teilnehmer-Verzeichnis</a>"
 	" / <a href=\"txp-config.cgi\" target=\"main\">TxP-Einstellungen</a>"
 	" / <a href=\"txp-debug.cgi\" target=\"main\">Debug-Infos</a>"
+#if defined(MMC)
+	" / <a href=\"sddir.cgi\" target=\"main\">SD-Karte</a>"
+#endif //defined(MMC)
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n" } ;

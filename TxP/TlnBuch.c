@@ -13,6 +13,7 @@
 #include "TxP.h"
 #include "TlnBuch.h"
 #include "SwTwi.h"
+#include "Protokoll.h"
 
 #include "CgiFormTools.h"
 
