@@ -60,11 +60,11 @@ const char data1[] PROGMEM = {
 		",40"
 	#endif
 	"\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
-  	"<frame src=\"headline.html\" name=\"Navigation1\" scrolling=\"no\">"
-  	"<frame src=\"mainmenu.html\" name=\"Navigation2\" scrolling=\"no\">"
+  	"<frame src=\"headline.html\" name=\"Navigation1\" scrolling=\"auto\">"
+  	"<frame src=\"mainmenu.html\" name=\"Navigation2\" scrolling=\"auto\">"
   	"<frame src=\"info.html\" name=\"main\">"
 	#ifdef HTTPSERVER_STATS
-  	"<frame src=\"stats.cgi\" name=\"update\" scrolling=\"no\">"
+  	"<frame src=\"stats.cgi\" name=\"update\" scrolling=\"auto\">"
 	#endif
   	"<noframes>"
     "<body>"
@@ -283,6 +283,7 @@ const char data11[] PROGMEM = {
 	" / <a href=\"txp-tlnverz.cgi\" target=\"main\">Teilnehmer-Verzeichnis</a>"
 	" / <a href=\"txp-config.cgi\" target=\"main\">TxP-Einstellungen</a>"
 	" / <a href=\"txp-debug.cgi\" target=\"main\">Debug-Infos</a>"
+	" / <a href=\"txp-twitlnliste.cgi\" target=\"main\">Bus-Tln-Liste</a>"
 #if defined(MMC)
 	" / <a href=\"sddir.cgi\" target=\"main\">SD-Karte</a>"
 #endif //defined(MMC)

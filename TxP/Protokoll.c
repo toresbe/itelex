@@ -9,8 +9,12 @@
 
 #include "config.h"
 #include "system/clock/clock.h"
-#include "system/filesystem/fat.h"
-#include "system/filesystem/filesystem.h"
+
+#if defined(MMC)
+	#include "system/filesystem/fat.h"
+	#include "system/filesystem/filesystem.h"
+#endif
+	
 #include "system/stdout/stdout.h"
 
 #include "Protokoll.h"
@@ -34,16 +38,19 @@ extern char *DebugMsg;
 //! \retval true, wenn Puffer gespeichert wurde.
 bool ProtokollSpeichern()
 	{
+	if (Puffer[0] == '\0')
+		return true; // nichts zu speichern 
+		
+#if defined(MMC)
 	struct fat_dir_struct* dd;
 	struct fat_file_struct* fd;
 	struct fat_dir_entry_struct directory;
 	struct fat_dir_entry_struct dir_entry;
 	uint8_t Res;
 
-	if (Puffer[0] == '\0')
-		return true; // nichts zu speichern 
-		
 	if  (fs == NULL) 
+#endif //defined(MMC)
+
 		{ // Filesystem nicht bereit --> auf RS232 senden.
 		struct STDOUT oldstream;
 
@@ -55,7 +62,8 @@ bool ProtokollSpeichern()
 		Puffer[0] = '\0';
 		return true;
 		}
-		
+
+#if defined(MMC)
 	if (Dateiname[0] == '\0')
 		fd = NULL;
 	else
@@ -139,6 +147,7 @@ bool ProtokollSpeichern()
 	fat_close_file(fd);
 	Puffer[0] = '\0';
 	return true;
+#endif //defined(MMC)
 	}
 	
 
@@ -164,7 +173,7 @@ static bool ProtPraeparieren(int len)
 		struct TIME Time;
 
 		CLOCK_GetTime(&Time);
-		sprintf_P(Puffer, PSTR("%02u.%02u.%04u %02d:%02d\r\n"),
+		sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++ %02d:%02d ++++++\r\n"),
 			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm);
 		}
 	return true;

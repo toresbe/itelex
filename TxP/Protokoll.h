@@ -8,9 +8,9 @@ extern bool ProtokollSpeichern();
 
 extern void Protokollieren(char *s);
 
-extern void Protokollieren_P(const char *s);
+extern void Protokollieren_P(const prog_char *s);
 
-extern void ProtokollierenInt_P(const char *s, long i);
+extern void ProtokollierenInt_P(const prog_char *s, long i);
 
 extern void ProtokollInit();
 

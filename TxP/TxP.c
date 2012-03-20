@@ -309,10 +309,11 @@ void txp_timerEvent(void)
 		
 	TwiWatchdogCount++;
 		
+	RuheZaehler++; // wird aber vielleicht gleich wieder auf Null gestellt
+	
 	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden || Modus == ModHtmlVerbunden || Modus == ModPufferDruckUndSchluss)
 		{ // ist Verbunden, also Pegel senden und empfangen
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
-		RuheZaehler++; // wird aber vielleicht gleich wieder auf Null gestellt
 
 		if (t0c < Timer0Cnt_Min)
 			Timer0Cnt_Min = t0c;
@@ -1639,11 +1640,7 @@ void txp_cgi_debug( void * pStruct )
 
 	cgi_PrintHttpheaderStart();
 
-	printf_P(PSTR("HtmlSendeText: ["));
-	printf(HtmlSendeText);
-	printf_P(PSTR("]<br>AsciiDruckPuffer: ["));
-	printf(AsciiDruckPuffer);
-	printf_P(PSTR("]<p>DebugMsg: %s<br>"), DebugMsg);
+	printf_P(PSTR("DebugMsg: %s<br>"), DebugMsg);
 	DebugMsg[0] = '\0';
 
 	extern char Dateiname[]; // aus Protokoll.c
@@ -1653,12 +1650,10 @@ void txp_cgi_debug( void * pStruct )
 
 #define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %d"), Var)
 
-	PRINTVAL(Timer0Cnt_Min); Timer0Cnt_Min = 255;
-	PRINTVAL(Timer0Cnt_Max); Timer0Cnt_Max = 0;
-	PRINTVAL(Timer0Callback_Max); Timer0Callback_Max = 0;
-
 	PRINTVAL(Modus);
 	PRINTVAL(Status); // bezüglich TxP-Funktionalität (ist auf TWI-Bus sichtbar)
+	PRINTVAL(Wahlnummer);
+	PRINTVAL(Wahlziffern);
 
 	PRINTVAL(BusEmpfMark);
 	PRINTVAL(SerUmTickZaehlerEmpf);
@@ -1688,16 +1683,27 @@ void txp_cgi_debug( void * pStruct )
 	
 	PRINTVAL(SocketInBufUsed);
 	PRINTVAL(SocketOutBufUsed);
+	PRINTVAL(SocketModeAscii);
 	
 	PRINTVAL(RuheZaehler);
 	PRINTVAL(TwiLebenszeichenZaehler); 
+	PRINTVAL(SocketLebenszeichenZaehler);
+	PRINTVAL(TxpThreadCheckCount);
 
 	PRINTVAL(FalscherCode); FalscherCode = 0;
 	PRINTVAL(TwiIsrCount); TwiIsrCount = 0;
-	PRINTVAL(Timer0CallbackCount / TxpTimerFreq); //Timer0CallbackCount = 0;
 	PRINTVAL(TxpThreadCount / TxpTimerFreq); //TxpThreadCount = 0;
 
-	printf_P(PSTR("<p>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , ByteCounter, PacketCounter, eth_state_error );
+	PRINTVAL(Timer0CallbackCount / TxpTimerFreq); //Timer0CallbackCount = 0;
+	PRINTVAL(Timer0Cnt_Min); Timer0Cnt_Min = 255;
+	PRINTVAL(Timer0Cnt_Max); Timer0Cnt_Max = 0;
+	PRINTVAL(Timer0Callback_Max); Timer0Callback_Max = 0;
+
+	printf_P(PSTR("HtmlSendeText: ["));
+	printf(HtmlSendeText);
+	printf_P(PSTR("]<br>AsciiDruckPuffer: ["));
+	printf(AsciiDruckPuffer);
+	printf_P(PSTR("]<p>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , ByteCounter, PacketCounter, eth_state_error );
 
 	cgi_PrintHttpheaderEnd();
 
@@ -1894,6 +1900,37 @@ void txp_cgi_config(void *pStruct)
 
 	}
 	
+
+/*------------------------------------------------------------------------------------------------------------*/
+/*!\brief Das CGI-Interface für eine Bus-Status-Liste (TWI-Busteilnehmer)
+ * \param 	pStruct	Struktur auf den HTTP_Request
+ * \return	NONE
+ */
+/*------------------------------------------------------------------------------------------------------------*/
+
+void txp_cgi_TwiTlnListe(void *pStruct)
+	{
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+	
+	cgi_PrintHttpheaderStart();
+
+	printf_P(PSTR("Status der angeschlossenen TWI-Module:<p>"));
+	for (uint8_t AnzZif = 1 ; AnzZif <= 2 ; AnzZif++)
+		for (uint8_t Wahl = 0 ; Wahl <= ((AnzZif == 1) ? 9 : 99) ; Wahl++)
+			{
+			uint8_t BusNr = WahlZuAdresse(Wahl, AnzZif);
+			int16_t Stat = ((BusNr == BusEigenAdresse) ? Status : GetStatus(BusNr));
+			if (Stat >= 0)
+				printf_P(PSTR("Nummer %d Status %02x<br>"), Wahl, Stat);
+			}
+	printf_P(PSTR("+++fertig"));
+
+	cgi_PrintHttpheaderEnd();
+	
+	}
+	
+#if defined(MMC)
 	
 #include "system/filesystem/fat.h"
 #include "system/filesystem/filesystem.h"
@@ -1955,6 +1992,7 @@ void cgi_SdDirectory(void *pStruct)
 	cgi_PrintHttpheaderEnd();
 	}
 
+#endif //defined(MMC)
 	
 	
 /*------------------------------------------------------------------------------------------------------------*/
@@ -2022,6 +2060,7 @@ void txp_init()
 	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("txp-msg-out.cgi"));
 	cgi_RegisterCGI( txp_cgi_config, PSTR("txp-config.cgi"));
 	cgi_RegisterCGI( txp_cgi_debug, PSTR("txp-debug.cgi"));
+	cgi_RegisterCGI( txp_cgi_TwiTlnListe, PSTR("txp-twitlnliste.cgi"));
 #if defined(MMC)
 	cgi_RegisterCGI( cgi_SdDirectory, PSTR("sddir.cgi"));
 #endif //defined(MMC)
@@ -2048,7 +2087,6 @@ void txp_init()
 
 
 #endif //def TELEXPHONE
-
 
 #if defined(MMC)
 
