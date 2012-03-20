@@ -11,11 +11,12 @@
 #include "hardware/timer1/timer1.h"
 
 
+//! Zählwert für Timer1: Wenn TCNT1 > 4 * TaktViertel, dann ist ein Bit gesendet
 static uint8_t TaktViertel;
-// Zählwert für Timer1: Wenn TCNT1 > 4 * TaktViertel, dann ist ein Bit gesendet
 
+//! Zählwert für Timer1.
 static uint8_t Mikrosek;
-// Zählwert für Timer1
+
 
 static bool InWaitstate;
 

@@ -37,13 +37,13 @@ enum { TlnBuchMemMax = 20000UL } ; //!< Größe des Teilnehmerverzeichnisses in 
 //! \par 1 Byte Durchwahl (0 bei keine Durchwahl).
 
 
-static char TlnBuch[TlnBuchMemMax]; //! Das Teilnehmer-Verzeichnis.
+static char TlnBuch[TlnBuchMemMax]; //!< Das Teilnehmer-Verzeichnis.
 
 
 // Häufig benutzte Offsets:
-enum { TBOffsGroesse = 4 } ;
-enum { TBOffsFlags = 5 } ;
-enum { TBOffsArt = 7 } ;
+enum { TBOffsGroesse = 4 } ; //!< Position der Eintragsgröße im Teilnehmer-Verzeichnis-Eintrag
+enum { TBOffsFlags = 5 } ; //!< Position der Flags im Teilnehmer-Verzeichnis-Eintrag
+enum { TBOffsArt = 7 } ; //!< Position der Art (s. #TTlnAdresseArt) im Teilnehmer-Verzeichnis-Eintrag
 
 
 static uint16_t TlnBuchMemUsed; //!< Ende des genutzten Bereichs in TlnBuch.
@@ -295,7 +295,7 @@ uint16_t MemUsedPruefwert(uint16_t groesse)
 	}
 	
 	
-#define XEEPROM_TWI_ADR 0xA0
+#define XEEPROM_TWI_ADR 0xA0 //!< TWI-Adresse des Externen Eeproms (Typ 24AT256)
 
 
 //! Öffnet das externe Eeprom.

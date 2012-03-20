@@ -2014,8 +2014,6 @@ void txp_init()
 	PufferInit(&EmpfPuffer);
 	SocketBufInit();
 
-	TlnBuchInit();
-	
 	AsciiDruckPuffer[0] = '\0';
 	HtmlSendeText[0] = '\0';
 	DebugMsg[0] = '\0';
@@ -2082,6 +2080,8 @@ void txp_init()
 
 	THREAD_RegisterThread( txp_thread, PSTR("TxP"));
 
+	TlnBuchInit();
+	
 	wdt_enable(WDTO_8S);
 	}
 
