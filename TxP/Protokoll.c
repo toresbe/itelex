@@ -9,6 +9,8 @@
 
 #include "config.h"
 #include "system/clock/clock.h"
+#include "hardware/uart/uart_core.h"
+
 
 #if defined(MMC)
 	#include "system/filesystem/fat.h"
@@ -54,13 +56,8 @@ bool ProtokollSpeichern()
 #endif //defined(MMC)
 
 		{ // Filesystem nicht bereit --> auf RS232 senden.
-		struct STDOUT oldstream;
-
-		STDOUT_save( &oldstream );
-		STDOUT_set( RS232, 0 );
-		puts(Puffer);
-		STDOUT_Flush();
-		STDOUT_restore( &oldstream );
+		for (char *p = Puffer ; *p != '\0' ; p++)
+			UART_SendByte(0, *p);
 		Puffer[0] = '\0';
 		return true;
 		}

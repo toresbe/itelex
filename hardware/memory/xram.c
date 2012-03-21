@@ -34,6 +34,9 @@
 //@{
 
 #include <avr/io.h>
+#include <avr/wdt.h>
+#include <avr/interrupt.h>
+
 #include "config.h"
 
 #if defined EXTMEM
@@ -133,6 +136,7 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 	{
 		p = (uint8_t*) address;
 		*p = MemTestValue(address);
+		wdt_reset();
 	}
 
 	// Speicher testen
@@ -143,6 +147,7 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 		if (*p != MemTestValue(address))
 			fehler++;
 		*p = 0;
+		wdt_reset();
 	}
 
 	// Speicher ok?
@@ -151,8 +156,9 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 #if defined(LED)
 		LED_on( 1 );
 #endif
-		while(1) 
-			;
+		cli();
+		while (1) 
+			wdt_reset(); // damit er wirklich stehen bleibt.
 	}
 
 #if defined(LED)
