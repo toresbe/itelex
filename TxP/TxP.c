@@ -1707,6 +1707,8 @@ void txp_cgi_debug( void * pStruct )
 
 	cgi_PrintHttpheaderEnd();
 
+	ProtokollSpeichern();
+
 	}
 	
 

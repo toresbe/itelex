@@ -42,6 +42,7 @@ bool ProtokollSpeichern()
 		return true; // nichts zu speichern 
 		
 #if defined(MMC)
+
 	struct fat_dir_struct* dd;
 	struct fat_file_struct* fd;
 	struct fat_dir_entry_struct directory;
@@ -49,6 +50,7 @@ bool ProtokollSpeichern()
 	uint8_t Res;
 
 	if  (fs == NULL) 
+
 #endif //defined(MMC)
 
 		{ // Filesystem nicht bereit --> auf RS232 senden.
@@ -64,6 +66,7 @@ bool ProtokollSpeichern()
 		}
 
 #if defined(MMC)
+
 	if (Dateiname[0] == '\0')
 		fd = NULL;
 	else
@@ -147,7 +150,9 @@ bool ProtokollSpeichern()
 	fat_close_file(fd);
 	Puffer[0] = '\0';
 	return true;
+
 #endif //defined(MMC)
+
 	}
 	
 
