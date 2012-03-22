@@ -20,6 +20,7 @@
 #include "system/stdout/stdout.h"
 
 #include "Protokoll.h"
+#include "TxP.h"
 
 
 enum { MaxPuffer = 512 }; //!< Länge des Protokoll-Puffers
@@ -64,6 +65,9 @@ bool ProtokollSpeichern()
 
 #if defined(MMC)
 
+#if defined(LEDROT_SDKARTE)
+	LED_on(ROT); 
+#endif //defined(LEDROT_SDKARTE)
 	if (Dateiname[0] == '\0')
 		fd = NULL;
 	else
@@ -146,6 +150,9 @@ bool ProtokollSpeichern()
 		
 	fat_close_file(fd);
 	Puffer[0] = '\0';
+#if defined(LEDROT_SDKARTE)
+	LED_off(ROT); 
+#endif //defined(LEDROT_SDKARTE)
 	return true;
 
 #endif //defined(MMC)
@@ -206,7 +213,7 @@ void ProtokollierenInt_P(const char *s, long i)
 	}
 
 	
-//! Speichert zwischengespeicherten Protokolltext auf SD-Karte, sobald Ruhe eingekehrt ist.	
+/*/! Speichert zwischengespeicherten Protokolltext auf SD-Karte, sobald Ruhe eingekehrt ist.	
 static void SpeichernBeiIdle()
 	{
 	if (Idle)
@@ -214,6 +221,7 @@ static void SpeichernBeiIdle()
 	else
 		Idle = true;
 	}
+*/	
 	
 
 //! Initialisiert die Protokollierung.
@@ -222,7 +230,7 @@ void ProtokollInit()
 	Puffer[0] = '\0';
 	Dateiname[0] = '\0';
 	Idle = true;
-	CLOCK_RegisterCallbackFunction(SpeichernBeiIdle, MINUTE);
+//	CLOCK_RegisterCallbackFunction(SpeichernBeiIdle, MINUTE);
 	Protokollieren("Neustart\r\n");
 	}
 	

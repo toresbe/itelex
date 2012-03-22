@@ -10,6 +10,8 @@
 
 #include "hardware/timer1/timer1.h"
 
+#include "TxP.h"
+
 
 //! Zählwert für Timer1: Wenn TCNT1 > 4 * TaktViertel, dann ist ein Bit gesendet
 static uint8_t TaktViertel;

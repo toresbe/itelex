@@ -308,6 +308,10 @@ uint16_t MemUsedPruefwert(uint16_t groesse)
 //! \retval -1 Fehler
 static int ExternEepromOeffnen(uint8_t TwiAddr)
 	{
+#if defined(LEDROT_EXTEEPROM)
+	LED_on(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
+	
 	for (uint16_t TryCount = 0 ; TryCount < 10000 ; TryCount++)
 		{
 		bool Ack = true;
@@ -340,25 +344,41 @@ int TlnBuchLadeVonExternEeprom()
 	// Eeprom Lesevorgang initialisieren --> Adresse schreiben
 	Res = ExternEepromOeffnen(XEEPROM_TWI_ADR);
 	if (Res < 0)
+		{
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return -__LINE__ + Res;
+		}
 
 	if (!SwTwiSendByte(0x00, &Ack, false) || !Ack
 		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack
 		|| !SwTwiStop(false))
 		{
 		SwTwiForceStop();
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return -__LINE__;
 		}
 
 	Res = ExternEepromOeffnen(XEEPROM_TWI_ADR+1); // +1 = read
 	if (Res < 0)
+		{
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return -__LINE__ + Res;
+		}
 
 	// Gespeicherte Anzahl Byte laden
 	if (!SwTwiReadByte(&lo, true, false)
 		|| !SwTwiReadByte(&hi, true, false))
 		{
 		SwTwiForceStop();
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return -__LINE__;
 		}
 		
@@ -369,12 +389,18 @@ int TlnBuchLadeVonExternEeprom()
 		|| !SwTwiReadByte(&hi, true, false))
 		{
 		SwTwiForceStop();
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return -__LINE__;
 		}
 		
 	if (((hi << 8) | lo) != MemUsedPruefwert(NeuGr))
 		{
 		SwTwiStop(false);
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return -__LINE__;
 		}
 
@@ -382,6 +408,9 @@ int TlnBuchLadeVonExternEeprom()
 		{ // nichts weiter zu lesen
 		SwTwiReadByte(&lo, false, false); // dummy
 		SwTwiStop(false);
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return 0;
 		}
 		
@@ -395,6 +424,9 @@ int TlnBuchLadeVonExternEeprom()
 			{
 			SwTwiForceStop();
 			TlnBuchMemUsed = 0;
+#if defined(LEDROT_EXTEEPROM)
+			LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 			return -__LINE__;
 			}
 		}
@@ -403,10 +435,16 @@ int TlnBuchLadeVonExternEeprom()
 		{
 		SwTwiForceStop();
 		TlnBuchMemUsed = 0;
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return -__LINE__;
 		}
 		
 	SwTwiStop(false);
+#if defined(LEDROT_EXTEEPROM)
+	LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 	return TlnBuchMemUsed;
 	}
 			
@@ -427,7 +465,12 @@ int TlnBuchSpeichereAufExternEeprom()
 
 	Res = ExternEepromOeffnen(XEEPROM_TWI_ADR);
 	if (Res < 0)
+		{
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return -__LINE__ + Res;
+		}
 		
 	// Eeprom Speichervorgang initialisieren --> Adresse schreiben, Dummy-Länge 0 schreiben, Dummy-Prüfwert FF schreiben.
 	if (!SwTwiSendByte(0x00, &Ack, false) || !Ack // Zugriffs-Adresse EEPROM
@@ -438,6 +481,9 @@ int TlnBuchSpeichereAufExternEeprom()
 		|| !SwTwiSendByte(0xFF, &Ack, false) || !Ack)
 		{
 		SwTwiForceStop();
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return -__LINE__;
 		}
 
@@ -455,13 +501,21 @@ int TlnBuchSpeichereAufExternEeprom()
 					{ // vorheriger Schreibvorgang abgeschlossen, neuen beginnen
 					Res = ExternEepromOeffnen(XEEPROM_TWI_ADR);
 					if (Res < 0)
+						{
+#if defined(LEDROT_EXTEEPROM)
+						LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 						return -__LINE__ + Res;
+						}
 
 					// Zugriffsadresse senden
 					if (!SwTwiSendByte(EeAdr >> 8, &Ack, false) || !Ack
 						|| !SwTwiSendByte(EeAdr & 0xFF, &Ack, false) || !Ack)
 						{
 						SwTwiForceStop();
+#if defined(LEDROT_EXTEEPROM)
+						LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 						return -__LINE__;
 						}
 						
@@ -472,6 +526,9 @@ int TlnBuchSpeichereAufExternEeprom()
 				if (!SwTwiSendByte(TlnBuch[TbAdr], &Ack, false))
 					{
 					SwTwiForceStop();
+#if defined(LEDROT_EXTEEPROM)
+					LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 					return -__LINE__;
 					}
 					
@@ -483,6 +540,9 @@ int TlnBuchSpeichereAufExternEeprom()
 					if (!SwTwiStop(false))
 						{
 						SwTwiForceStop();
+#if defined(LEDROT_EXTEEPROM)
+						LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 						return -__LINE__;
 						}
 					EeOpen = false;
@@ -501,6 +561,9 @@ int TlnBuchSpeichereAufExternEeprom()
 		if (!SwTwiStop(false))
 			{
 			SwTwiForceStop();
+#if defined(LEDROT_EXTEEPROM)
+			LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 			return -__LINE__;
 			}
 		EeOpen = false;
@@ -514,7 +577,12 @@ int TlnBuchSpeichereAufExternEeprom()
 	// Öffnen kann schiefgehen, solange vorheriger Schreibprozess noch läuft
 	Res = ExternEepromOeffnen(XEEPROM_TWI_ADR);
 	if (Res < 0)
+		{
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return -__LINE__ + Res;
+		}
 
 	if (!SwTwiSendByte(0x00, &Ack, false) || !Ack // Zugriffs-Adresse EEPROM
 		|| !SwTwiSendByte(0x00, &Ack, false) || !Ack 
@@ -524,15 +592,24 @@ int TlnBuchSpeichereAufExternEeprom()
 		|| !SwTwiSendByte(pruef >> 8, &Ack, false) || !Ack)
 		{
 		SwTwiForceStop();
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return -__LINE__;
 		}
 
 	if (!SwTwiStop(false))
 		{
 		SwTwiForceStop();		
+#if defined(LEDROT_EXTEEPROM)
+		LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 		return -__LINE__;
 		}
 		
+#if defined(LEDROT_EXTEEPROM)
+	LED_off(ROT);
+#endif //defined(LEDROT_EXTEEPROM)
 	return EeAdr;
 	}
 

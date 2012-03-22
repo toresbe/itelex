@@ -52,6 +52,12 @@
 	extern TTastendruck Tastendruck;
 	extern bool WarteTaste();
 	
+	// Was soll LED rot anzeigen?
+	//---------------------------
+	//#define LEDROT_EXTEEPROM
+	//#define LEDROT_SDKARTE
+	#define LEDROT_TXPTHREADBLOCK
+	//#define LEDROT_UNERWARTET  // noch ungenutzt
 	
 	#endif //def TELEXPHONE
 	

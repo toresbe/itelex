@@ -61,8 +61,8 @@
 #include "hardware/timer0/timer0.h"
 
 #include "CgiFormTools.h"
-#include "TxP/TxP.h"
-#include "TxP/TlnBuch.h"
+#include "TxP.h"
+#include "TlnBuch.h"
 #include "BusKomm.h"
 #include "TxP2-Defs.h"
 #include "FifoPuffer.h"
@@ -170,7 +170,8 @@ volatile static uint16_t TwiLebenszeichenZaehler;
 volatile static uint16_t RuheZaehler;
 	//!< Zählt Ticks in denen nix passiert. Wird bei Datenempfang und Sendung und 
 	//!< Verbindungsaufbau auf Null gesetzt. Wird auch für Timeout beim Warten auf 
-	//!< die Ausschalt-Quittung benutzt.
+	//!< die Ausschalt-Quittung benutzt. In Grundstellung wird die Datuer der Grundstellung
+	//!< gemessen für das Protokollschreiben.
 	
 volatile static uint16_t SocketLebenszeichenZaehler;
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf der TCP-Verbindung.
@@ -304,8 +305,10 @@ void txp_timerEvent(void)
 		softreset();
 		}
 		
-	if (TxpThreadCheckCount > 2 * TxpTimerFreq)
+#if defined(LEDROT_TXPTHREADBLOCK)
+	if (TxpThreadCheckCount > TxpTimerFreq / 2) // nach halber Sekunde geht rot an
 		LED_on(ROT);
+#endif //defined(LEDROT_TXPTHREADBLOCK)
 		
 	TwiWatchdogCount++;
 		
@@ -605,6 +608,7 @@ static void ModusWechsel(TModus neu)
 			LED_off(GRUEN);
 			LED_off(BLAU);
 			AsciiDruckPuffer[0] = '\0';
+			RuheZaehler = 0;
 			break;
 	
 		// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
@@ -1173,7 +1177,10 @@ void txp_thread()
 	TxpThreadCount++;
 
 	TxpThreadCheckCount = 0;
+	
+#if defined(LEDROT_TXPTHREADBLOCK)
 	LED_off(ROT); 
+#endif //defined(LEDROT_TXPTHREADBLOCK)
 	
 	// ======================================================================
 	// Auf TWI-Bus empfangene Codes auswerten
@@ -1485,7 +1492,6 @@ void txp_thread()
 				ModusWechsel(ModWarteSchlussQuitt);
 				AsciiDruckPuffer[0] = '\0';
 				PufferInit(&SendePuffer);
-				RuheZaehler = 0;
 				break;
 			
 			default:
@@ -1572,7 +1578,17 @@ void txp_thread()
 		ModusWechsel(ModWarteSchlussQuitt);
 		RuheZaehler = 0;
 		}
-	
+
+	// ==========================================================================
+	// Irgendwas im Protokollspeicher, was zu schreiben wäre?
+	// ==========================================================================
+
+	if (Modus == ModRuhe && RuheZaehler > 30 * TxpTimerFreq) // 30 Sekunden
+		{
+		ProtokollSpeichern(); // Wenn Protokollpuffer leer, kehrt Funktion sofort zurück.
+		RuheZaehler = 0;
+		}
+		
 	} // txp_thread
 	
 
