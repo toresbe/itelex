@@ -118,7 +118,8 @@ static TModus Modus;
 #define TXPC_DURCHWAHL '\001' //!< Datenblock enthält ein Byte Durchwahl 
 #define TXPC_BAUDOT_DATA '\002' //!< Datenblock mit puren Baudot-Codes
 #define TXPC_STOP '\004' //!< Es können noch Daten angehängt werden.
-#define TXPC_START '\005' //!< Rückmeldung vom Angerufenen dass Empfangsbereit
+// \005 freigehalten für ^E = WerDa.
+#define TXPC_QUITT '\006' //!< Meldet Empfangsbereitschaft und Anzahl bereits verarbeiteter Zeichen.
 	
 // BusVerbPartner ist in BusKomm.h enthalten
 
@@ -216,6 +217,19 @@ static uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
 
 static char SocketOutBuf[SocketOutBufMax]; //!< TCP-Sendepuffer
 
+static uint8_t SocketAnzahlZeichenGesendet;
+	//!< Anzahl Baudot- oder Ascii-Codes, die bisher an die Gegenstelle gesendet worden sind.
+	
+static uint8_t SocketAnzahlZeichenEmpfangen;
+	//!< Anzahl Baudot- oder Ascii-Codes, die bisher von der Gegenstelle empfangen worden sind.
+	
+static uint8_t SocketAnzahlZeichenQuittiert;
+	//!< Anzahl Baudot- oder Ascii-Codes, die bisher von der Gegenstelle verarbeitet worden sind.
+	
+static bool SocketSendeQuittung;
+	//!< Wenn true, werden die Anzahl der bisher gedruckten Codes zurückgemeldet.
+	
+	
 static bool SocketModeAscii; 
 	//!< true, wenn die Daten als ASCII und nicht als Baudot-Daten übertragen werden.
 
@@ -392,6 +406,7 @@ void txp_timerEvent(void)
 					{
 					SerUmSendDaten = PufferAusg(&SendePuffer);
 					SerUmSendBitNr = SerUmSendStart;
+					SocketSendeQuittung = PufferLeer(&SendePuffer);
 					}
 				}
 			} // else Empfang ruht
@@ -609,6 +624,9 @@ static void ModusWechsel(TModus neu)
 			LED_off(BLAU);
 			AsciiDruckPuffer[0] = '\0';
 			RuheZaehler = 0;
+			SocketAnzahlZeichenEmpfangen = 0;
+			SocketAnzahlZeichenGesendet = 0;
+			SocketAnzahlZeichenQuittiert = 0;
 			break;
 	
 		// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
@@ -632,6 +650,9 @@ static void ModusWechsel(TModus neu)
 			SendenBeschleunigen = false;
 			SocketModeAscii = false;
 			AsciiDruckPuffer[0] = '\0';
+			SocketAnzahlZeichenEmpfangen = 0;
+			SocketAnzahlZeichenGesendet = 0;
+			SocketAnzahlZeichenQuittiert = 0;
 			break;
 	
 		case ModGehendWaehlen:
@@ -683,6 +704,9 @@ static void ModusWechsel(TModus neu)
 			AsciiDruckPuffer[0] = '\0';
 			SendenBeschleunigen	= false;
 			Durchwahl = 0;
+			SocketAnzahlZeichenEmpfangen = 0;
+			SocketAnzahlZeichenGesendet = 0;
+			SocketAnzahlZeichenQuittiert = 0;
 			break;
 
 		case ModKommendEinschalten:
@@ -733,6 +757,9 @@ static void ModusWechsel(TModus neu)
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
 			SeriellUmsetzInit();
 			SendenBeschleunigen = false;
+			SocketAnzahlZeichenEmpfangen = 0;
+			SocketAnzahlZeichenGesendet = 0;
+			SocketAnzahlZeichenQuittiert = 0;
 			break;
 	
 		case ModHtmlVerbunden: 
@@ -976,6 +1003,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 					AsciiDruckPuffer[alen] = c;
 					AsciiDruckPuffer[alen+1] = '\0';
 					i++;
+					SocketAnzahlZeichenEmpfangen++;
 					}
 				else
 					break; // kann nicht mehr verarbeitet werden, also Schleife beenden.
@@ -1007,6 +1035,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				if (i + 2 + len <= SocketInBufUsed && PufferAnzahl(&SendePuffer) + len < MaxPuffer)
 					{ // Baudot-Code-Block ist vollständig UND noch entsprechend Platz im Sendepuffer
 					i += 2; // Code und Länge überspringen
+					SocketAnzahlZeichenEmpfangen += len;
 					while (len > 0)
 						{
 						PufferSpeich(&SendePuffer, SocketInBuf[i]);
@@ -1036,8 +1065,9 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				i += 2 + len;
 				} // c == TXPC_STOP
 				
-			else if (c == TXPC_START)
+			else if (c == TXPC_QUITT)
 				{ 
+				uint8_t len = SocketInBuf[i+1];
 				if (Modus == ModKommendVerbVorstufe)
 					{ // ID#312 **************************************************
 					BusSenden(BusKdoEin);
@@ -1048,7 +1078,9 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 					BusSenden(BusQuittEin);
 					ModusWechsel(ModGehendVerbunden);
 					}
-				i += 2 + (uint8_t) SocketInBuf[i+1];
+				if (len >= 1)
+					SocketAnzahlZeichenQuittiert = (uint8_t) SocketInBuf[i+2];
+				i += 2 + len;
 				}
 				
 			else 
@@ -1086,7 +1118,12 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	// vom Endgerät empfangene Daten übersetzen
 	// --------------------------------------------------
 	InCount = PufferAnzahl(&EmpfPuffer);
-	if (InCount > 10 || (InCount > 0 && RuheZaehler >= TxpTimerFreq * 3/10)) // 0,3 Sekunden Tipp-Pause
+	if (InCount > 10 
+	    || (InCount > 0 && ((RuheZaehler >= TxpTimerFreq * 5/10) // 0,5 Sekunden Tipp-Pause
+		                    || (SocketAnzahlZeichenQuittiert == SocketAnzahlZeichenGesendet) // alles was gesendet wurde, ist schon verarbeitet
+						    )
+			)
+		)
 		{ // ID#244 ID#344 ***************************************************************
 		if (SocketModeAscii)
 			{
@@ -1094,7 +1131,10 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				{
 				SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
 				if (SocketOutBuf[SocketOutBufUsed] != '\0')
+					{
 					SocketOutBufUsed++;
+					SocketAnzahlZeichenGesendet++;
+					}
 				}
 			} // if SocketModeAscii
 		else
@@ -1106,13 +1146,28 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			SocketOutBufUsed++;
 			SocketOutBuf[SocketOutBufUsed] = len;
 			SocketOutBufUsed++;
+			SocketAnzahlZeichenGesendet += len;
 			while (len > 0)
 				{
 				SocketOutBuf[SocketOutBufUsed] = PufferAusg(&EmpfPuffer);
 				SocketOutBufUsed++;
 				len--;
 				}
+			SocketSendeQuittung = true;
 			} // else !SocketModeAscii
+		}
+		
+	// ggf. Anzahl verarbeiteter Zeichen zurückmelden
+	if (!SocketModeAscii && (SocketSendeQuittung || SocketLebenszeichenZaehler == 0))
+		{
+		SocketOutBuf[SocketOutBufUsed] = TXPC_QUITT;
+		SocketOutBufUsed++;
+		SocketOutBuf[SocketOutBufUsed] = 1;
+		SocketOutBufUsed++;
+		SocketOutBuf[SocketOutBufUsed] = 
+			(uint8_t) (SocketAnzahlZeichenEmpfangen 
+			           - SocketInBufUsed - PufferAnzahl(&SendePuffer));
+		SocketOutBufUsed++;
 		}
 		
 	// ggf Lebenszeichen erzeugen
@@ -1219,13 +1274,7 @@ void txp_thread()
 				if (Modus == ModKommendWarteEinQuitt)
 					{ // ID#331 ********************************************
 					ModusWechsel(ModKommendVerbunden);
-					if (!SocketModeAscii)
-						{ // also Txp-Protokoll
-						SocketOutBuf[SocketOutBufUsed] = TXPC_START;
-						SocketOutBufUsed++;
-						SocketOutBuf[SocketOutBufUsed] = 0;
-						SocketOutBufUsed++;
-						}
+					SocketSendeQuittung = true;
 					}
 
 				else if (Modus == ModHtmlWarteEinQuitt)
