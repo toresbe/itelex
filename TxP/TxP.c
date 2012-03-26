@@ -971,16 +971,16 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		{
 		int Res = GetSocketData(*Socket, InCount, SocketInBuf + SocketInBufUsed);
 #if (TXP_DEBUG >= 1)
-		printf_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
-		printf_P(PSTR("%d)"), Res);
-		for (uint16_t i = 0 ; i < Res ; i++)
-			printf_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
-		printf_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
-		// ProtokollierenInt_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
-		// ProtokollierenInt_P(PSTR("%d)"), Res);
+		// printf_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
+		// printf_P(PSTR("%d)"), Res);
 		// for (uint16_t i = 0 ; i < Res ; i++)
-			// ProtokollierenInt_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
-		// ProtokollierenInt_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
+			// printf_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
+		// printf_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
+		ProtokollierenInt_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
+		ProtokollierenInt_P(PSTR("%d)"), Res);
+		for (uint16_t i = 0 ; i < Res ; i++)
+			ProtokollierenInt_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
+		ProtokollierenInt_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
 #endif
 		if (Res > 0)
 			SocketInBufUsed += Res;
@@ -1190,16 +1190,16 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
 		SocketLebenszeichenZaehler = 4 * TxpTimerFreq; // alle 4 Sekunden ein Lebenszeichen
 #if (TXP_DEBUG >= 1)
-		// ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
-		// for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
-			// ProtokollierenInt_P(PSTR(" %02X"), SocketOutBuf[i]);
-		// ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
-		// ProtokollierenInt_P(PSTR(" Sum %d" ), SocketAnzahlZeichenGesendet);
-		printf_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
+		ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
 		for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
-			printf_P(PSTR(" %02X"), SocketOutBuf[i]);
-		printf_P(PSTR(" --> Res %d" ), Res);
-		printf_P(PSTR(" Sum %d" ), SocketAnzahlZeichenGesendet);
+			ProtokollierenInt_P(PSTR(" %02X"), SocketOutBuf[i]);
+		ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
+		ProtokollierenInt_P(PSTR(" Sum %d" ), SocketAnzahlZeichenGesendet);
+		// printf_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
+		// for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
+			// printf_P(PSTR(" %02X"), SocketOutBuf[i]);
+		// printf_P(PSTR(" --> Res %d" ), Res);
+		// printf_P(PSTR(" Sum %d" ), SocketAnzahlZeichenGesendet);
 #endif
 		if (Res <= 0)
 			{
