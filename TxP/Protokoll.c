@@ -177,7 +177,8 @@ static bool ProtPraeparieren(int len)
 			return false; // kein Platz mehr.
 		}
 
-	if (Puffer[0] == '\0')
+#if defined(MMC)
+	if (Puffer[0] == '\0' && fs != NULL)
 		{ // Zeit protokollieren
 		struct TIME Time;
 
@@ -185,6 +186,8 @@ static bool ProtPraeparieren(int len)
 		sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++ %02d:%02d ++++++\r\n"),
 			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm);
 		}
+#endif //defined(MMC)		
+
 	return true;
 	}
 		
@@ -213,7 +216,7 @@ void ProtokollierenInt_P(const char *s, long i)
 	}
 
 	
-/*/! Speichert zwischengespeicherten Protokolltext auf SD-Karte, sobald Ruhe eingekehrt ist.	
+//! Speichert zwischengespeicherten Protokolltext auf SD-Karte, sobald Ruhe eingekehrt ist.	
 static void SpeichernBeiIdle()
 	{
 	if (Idle)
@@ -221,7 +224,6 @@ static void SpeichernBeiIdle()
 	else
 		Idle = true;
 	}
-*/	
 	
 
 //! Initialisiert die Protokollierung.
@@ -230,7 +232,7 @@ void ProtokollInit()
 	Puffer[0] = '\0';
 	Dateiname[0] = '\0';
 	Idle = true;
-//	CLOCK_RegisterCallbackFunction(SpeichernBeiIdle, MINUTE);
+	CLOCK_RegisterCallbackFunction(SpeichernBeiIdle, MINUTE);
 	Protokollieren("Neustart\r\n");
 	}
 	

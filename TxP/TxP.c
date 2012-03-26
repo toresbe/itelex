@@ -406,7 +406,8 @@ void txp_timerEvent(void)
 					{
 					SerUmSendDaten = PufferAusg(&SendePuffer);
 					SerUmSendBitNr = SerUmSendStart;
-					SocketSendeQuittung = PufferLeer(&SendePuffer);
+					if (PufferLeer(&SendePuffer))
+						SocketSendeQuittung = true;
 					}
 				}
 			} // else Empfang ruht
@@ -624,9 +625,6 @@ static void ModusWechsel(TModus neu)
 			LED_off(BLAU);
 			AsciiDruckPuffer[0] = '\0';
 			RuheZaehler = 0;
-			SocketAnzahlZeichenEmpfangen = 0;
-			SocketAnzahlZeichenGesendet = 0;
-			SocketAnzahlZeichenQuittiert = 0;
 			break;
 	
 		// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
@@ -1122,9 +1120,13 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		
 	// vom Endgerät empfangene Daten übersetzen
 	// --------------------------------------------------
+	// es wird gesendet, wenn es was zu senden gibt 
+	// UND      a) es viel zu senden gibt 
+	//     ODER b) 0,5 sekunden nicht getippt wurde
+	//     ODER c) Alles was bisher gesendet wurde schon verarbeitet ist.
 	InCount = PufferAnzahl(&EmpfPuffer);
-	if (InCount > 10 
-	    || (InCount > 0 && ((RuheZaehler >= TxpTimerFreq * 5/10) // 0,5 Sekunden Tipp-Pause
+	if (InCount > 20
+	    || (InCount > 0 && ((RuheZaehler >= TxpTimerFreq * 8/10) // 0,8 Sekunden Tipp-Pause
 		                    || (SocketAnzahlZeichenQuittiert == SocketAnzahlZeichenGesendet) // alles was gesendet wurde, ist schon verarbeitet
 						    )
 			)
@@ -1172,6 +1174,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		SocketOutBuf[SocketOutBufUsed] = 
 			(uint8_t) (SocketAnzahlZeichenEmpfangen - PufferAnzahl(&SendePuffer));
 		SocketOutBufUsed++;
+		SocketSendeQuittung = false;
 		}
 		
 	// ggf Lebenszeichen erzeugen
@@ -1194,12 +1197,12 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
 			ProtokollierenInt_P(PSTR(" %02X"), SocketOutBuf[i]);
 		ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
-		ProtokollierenInt_P(PSTR(" Sum %d" ), SocketAnzahlZeichenGesendet);
+		ProtokollierenInt_P(PSTR(" Sum %d\r\n" ), SocketAnzahlZeichenGesendet);
 		// printf_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
 		// for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
 			// printf_P(PSTR(" %02X"), SocketOutBuf[i]);
 		// printf_P(PSTR(" --> Res %d" ), Res);
-		// printf_P(PSTR(" Sum %d" ), SocketAnzahlZeichenGesendet);
+		// printf_P(PSTR(" Sum %d\r\n" ), SocketAnzahlZeichenGesendet);
 #endif
 		if (Res <= 0)
 			{
@@ -1332,7 +1335,7 @@ void txp_thread()
 									{
 									ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden: "), TD.Nummer);
 									Protokollieren(TD.Adresse);
-									ProtokollierenInt_P(PSTR(" = %lx\r\n"), TD.IPAdr);
+									ProtokollierenInt_P(PSTR(" = %lX\r\n"), TD.IPAdr);
 									TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
 									}
 								else
@@ -1638,16 +1641,6 @@ void txp_thread()
 		RuheZaehler = 0;
 		}
 
-	// ==========================================================================
-	// Irgendwas im Protokollspeicher, was zu schreiben wäre?
-	// ==========================================================================
-
-	if (Modus == ModRuhe && RuheZaehler > 30 * TxpTimerFreq) // 30 Sekunden
-		{
-		ProtokollSpeichern(); // Wenn Protokollpuffer leer, kehrt Funktion sofort zurück.
-		RuheZaehler = 0;
-		}
-		
 	} // txp_thread
 	
 
