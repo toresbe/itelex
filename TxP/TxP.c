@@ -226,7 +226,7 @@ static uint8_t SocketAnzahlZeichenEmpfangen;
 static uint8_t SocketAnzahlZeichenQuittiert;
 	//!< Anzahl Baudot- oder Ascii-Codes, die bisher von der Gegenstelle verarbeitet worden sind.
 	
-static bool SocketSendeQuittung;
+volatile static bool SocketSendeQuittung;
 	//!< Wenn true, werden die Anzahl der bisher gedruckten Codes zurückgemeldet.
 	
 	
@@ -971,11 +971,16 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		{
 		int Res = GetSocketData(*Socket, InCount, SocketInBuf + SocketInBufUsed);
 #if (TXP_DEBUG >= 1)
-		ProtokollierenInt_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
-		ProtokollierenInt_P(PSTR("%d)"), Res);
+		printf_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
+		printf_P(PSTR("%d)"), Res);
 		for (uint16_t i = 0 ; i < Res ; i++)
-			ProtokollierenInt_P(PSTR(" %02x"), SocketInBuf[SocketInBufUsed + i]);
-		ProtokollierenInt_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
+			printf_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
+		printf_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
+		// ProtokollierenInt_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
+		// ProtokollierenInt_P(PSTR("%d)"), Res);
+		// for (uint16_t i = 0 ; i < Res ; i++)
+			// ProtokollierenInt_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
+		// ProtokollierenInt_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
 #endif
 		if (Res > 0)
 			SocketInBufUsed += Res;
@@ -1165,8 +1170,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		SocketOutBuf[SocketOutBufUsed] = 1;
 		SocketOutBufUsed++;
 		SocketOutBuf[SocketOutBufUsed] = 
-			(uint8_t) (SocketAnzahlZeichenEmpfangen 
-			           - SocketInBufUsed - PufferAnzahl(&SendePuffer));
+			(uint8_t) (SocketAnzahlZeichenEmpfangen - PufferAnzahl(&SendePuffer));
 		SocketOutBufUsed++;
 		}
 		
@@ -1186,10 +1190,16 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
 		SocketLebenszeichenZaehler = 4 * TxpTimerFreq; // alle 4 Sekunden ein Lebenszeichen
 #if (TXP_DEBUG >= 1)
-		ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
+		// ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
+		// for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
+			// ProtokollierenInt_P(PSTR(" %02X"), SocketOutBuf[i]);
+		// ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
+		// ProtokollierenInt_P(PSTR(" Sum %d" ), SocketAnzahlZeichenGesendet);
+		printf_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
 		for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
-			ProtokollierenInt_P(PSTR(" %02x"), SocketOutBuf[i]);
-		ProtokollierenInt_P(PSTR(" --> Res %d\r\n" ), Res);
+			printf_P(PSTR(" %02X"), SocketOutBuf[i]);
+		printf_P(PSTR(" --> Res %d" ), Res);
+		printf_P(PSTR(" Sum %d" ), SocketAnzahlZeichenGesendet);
 #endif
 		if (Res <= 0)
 			{
@@ -1750,6 +1760,10 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(SocketOutBufUsed);
 	PRINTVAL(SocketModeAscii);
 	
+	PRINTVAL(SocketAnzahlZeichenGesendet);
+	PRINTVAL(SocketAnzahlZeichenQuittiert);
+	PRINTVAL(SocketAnzahlZeichenEmpfangen);
+	
 	PRINTVAL(RuheZaehler);
 	PRINTVAL(TwiLebenszeichenZaehler); 
 	PRINTVAL(SocketLebenszeichenZaehler);
@@ -1764,11 +1778,11 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(Timer0Cnt_Max); Timer0Cnt_Max = 0;
 	PRINTVAL(Timer0Callback_Max); Timer0Callback_Max = 0;
 
-	printf_P(PSTR("HtmlSendeText: ["));
+	printf_P(PSTR("<br>HtmlSendeText: ["));
 	printf(HtmlSendeText);
 	printf_P(PSTR("]<br>AsciiDruckPuffer: ["));
 	printf(AsciiDruckPuffer);
-	printf_P(PSTR("]<p>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , ByteCounter, PacketCounter, eth_state_error );
+	printf_P(PSTR("]<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , ByteCounter, PacketCounter, eth_state_error );
 
 	cgi_PrintHttpheaderEnd();
 
@@ -1989,7 +2003,7 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 			uint8_t BusNr = WahlZuAdresse(Wahl, AnzZif);
 			int16_t Stat = ((BusNr == BusEigenAdresse) ? Status : GetStatus(BusNr));
 			if (Stat >= 0)
-				printf_P(PSTR("Nummer %d Status %02x<br>"), Wahl, Stat);
+				printf_P(PSTR("Nummer %d Status %02X<br>"), Wahl, Stat);
 			}
 	printf_P(PSTR("+++fertig"));
 
