@@ -228,7 +228,9 @@ static uint8_t SocketAnzahlZeichenQuittiert;
 	
 volatile static bool SocketSendeQuittung;
 	//!< Wenn true, werden die Anzahl der bisher gedruckten Codes zurückgemeldet.
-	
+
+static uint8_t SocketSendeFehlerZaehler;
+	//!< Zählt bis 10 bei nicht erfolgreichen Sendeversuchen auf dem Socket.
 	
 static bool SocketModeAscii; 
 	//!< true, wenn die Daten als ASCII und nicht als Baudot-Daten übertragen werden.
@@ -651,6 +653,7 @@ static void ModusWechsel(TModus neu)
 			SocketAnzahlZeichenEmpfangen = 0;
 			SocketAnzahlZeichenGesendet = 0;
 			SocketAnzahlZeichenQuittiert = 0;
+			SocketSendeFehlerZaehler = 0;
 			break;
 	
 		case ModGehendWaehlen:
@@ -705,6 +708,7 @@ static void ModusWechsel(TModus neu)
 			SocketAnzahlZeichenEmpfangen = 0;
 			SocketAnzahlZeichenGesendet = 0;
 			SocketAnzahlZeichenQuittiert = 0;
+			SocketSendeFehlerZaehler = 0;
 			break;
 
 		case ModKommendEinschalten:
@@ -758,6 +762,7 @@ static void ModusWechsel(TModus neu)
 			SocketAnzahlZeichenEmpfangen = 0;
 			SocketAnzahlZeichenGesendet = 0;
 			SocketAnzahlZeichenQuittiert = 0;
+			SocketSendeFehlerZaehler = 0;
 			break;
 	
 		case ModHtmlVerbunden: 
@@ -805,7 +810,6 @@ static void CloseTxpServerSocket()
 	if (TxpServerSocket != NO_SOCKET_USED)
 		{ 
 		Protokollieren_P(PSTR("TxP: Server-Socket (eingehend) wird geschlossen\r\n" ));
-		//! \todo ggf. Abbaumeldung?????
 		CloseTCPSocket(TxpServerSocket);
 		TxpServerSocket = NO_SOCKET_USED;
 		}
@@ -818,7 +822,6 @@ static void CloseTxpClientSocket()
 	if (TxpClientSocket != NO_SOCKET_USED)
 		{ 
 		Protokollieren_P(PSTR("TxP: Client-Socket (ausgehend) wird geschlossen\r\n" ));
-		//! \todo ggf. Abbaumeldung?????
 		CloseTCPSocket(TxpClientSocket);
 		TxpClientSocket = NO_SOCKET_USED;
 		}
@@ -1047,10 +1050,15 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 						} // umkopieren
 						
 					if (SendenBeschleunigen && PufferAnzahl(&SendePuffer) < MaxPuffer / 2)
+						{
+						Protokollieren_P(PSTR("TxP: SendenBeschleunigen AUS\r\n"));
 						SendenBeschleunigen = false;
+						}
 					}
 				else
 					{
+					if (!SendenBeschleunigen)
+						Protokollieren_P(PSTR("TxP: SendenBeschleunigen EIN\r\n"));
 					SendenBeschleunigen = true;
 					break; // Daten können momentan nicht verarbeitet werden.
 					}
@@ -1066,6 +1074,14 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 					AsciiDruckPuffer[len + alen] = '\0';
 					}
 				i += 2 + len;
+
+				Protokollieren_P(PSTR("TxP: Abbaubefehl von Gegenstelle\r\n"));
+
+				if (IstVerbunden)
+					ModusWechsel(ModPufferDruckUndSchluss);
+				else
+					ModusWechsel(ModRuhe);
+				
 				} // c == TXPC_STOP
 				
 			else if (c == TXPC_QUITT)
@@ -1206,16 +1222,29 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 #endif
 		if (Res <= 0)
 			{
-			//! \todo Fehlerbehandlung
+			SocketSendeFehlerZaehler++;
+			if (SocketSendeFehlerZaehler >= 10)
+				{
+				Protokollieren_P(PSTR("Txp: Mehrfache Fehler beim Senden ins Netz, Socket wird geschlossen\r\n" ));
+				CloseTCPSocket(*Socket);
+				*Socket = NO_SOCKET_USED;
+				if (IstVerbunden)
+					ModusWechsel(ModPufferDruckUndSchluss);
+				else
+					ModusWechsel(ModRuhe); 
+				}
 			}
-			
 		else if (Res < SocketOutBufUsed)
 			{
 			memmove(SocketOutBuf, SocketOutBuf + Res, SocketOutBufUsed - Res);
 			SocketOutBufUsed -= Res;
+			SocketSendeFehlerZaehler = 0;
 			}
 		else
+			{
 			SocketOutBufUsed = 0;
+			SocketSendeFehlerZaehler = 0;
+			}
 		} // if es gibt was zu senden
 	
 	} // SocketBearbeiten()
