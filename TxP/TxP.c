@@ -316,7 +316,7 @@ void txp_timerEvent(void)
 		
 	if (TxpThreadCheckCount++ > 30 * TxpTimerFreq) // nach 30 Sekunden Reset
 		{
-		Protokollieren("Reset wegen nicht-Aufruf von txp_thread()\r\n");
+		Protokollieren("TxP: Reset wegen nicht-Aufruf von txp_thread()\r\n");
 		ProtokollSpeichern();
 		softreset();
 		}
@@ -511,7 +511,7 @@ void txp_timerEvent(void)
 		case TasteAus:
 			if (!get_Taste()) // Gedrückt = LOW!
 				{
-				if (++TasteZaehler > 5) // 50 Millisekunden
+				if (++TasteZaehler > TxpTimerFreq * 5/100) // 50 Millisekunden
 					{ // ausreichend lang gedrückt
 					TasteZustandIntern = TasteEin;
 					TasteZaehler = 0;
@@ -1225,7 +1225,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			SocketSendeFehlerZaehler++;
 			if (SocketSendeFehlerZaehler >= 10)
 				{
-				Protokollieren_P(PSTR("Txp: Mehrfache Fehler beim Senden ins Netz, Socket wird geschlossen\r\n" ));
+				Protokollieren_P(PSTR("TxP: Mehrfache Fehler beim Senden ins Netz, Socket wird geschlossen\r\n" ));
 				CloseTCPSocket(*Socket);
 				*Socket = NO_SOCKET_USED;
 				if (IstVerbunden)
@@ -1330,7 +1330,7 @@ void txp_thread()
 				break;
 
 			case BusKdoWahlFreigabe:
-				// dies ist eine Leitungsschnittstelle, die kann nicht wählen.
+				// \todo Bei Relaisbetrieb... dies ist eine Leitungsschnittstelle, die kann nicht wählen.
 				Protokollieren_P(PSTR("TxP: TWI Wahlaufforderung intern / kommend\r\n" ));
 				FalschCodeEmpfangen(BusQuittEin);
 				break;
@@ -1352,7 +1352,7 @@ void txp_thread()
 							case TxpIP:
 							case AsciiIP:
 								ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld "), TD.Nummer);
-								ProtokollierenInt_P(PSTR("gefunden: %lx\r\n"), TD.IPAdr);
+								ProtokollierenInt_P(PSTR("gefunden: %lX\r\n"), TD.IPAdr);
 								TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
 								break;
 								
@@ -1464,9 +1464,9 @@ void txp_thread()
 	    || Modus == ModGehendReserv || Modus == ModGehendWaehlen || Modus == ModGehendVerbunden 
 		|| Modus == ModHtmlVerbunden || Modus == ModPufferDruckUndSchluss)
 		{
-		if (TwiWatchdogCount > 2000)
+		if (TwiWatchdogCount > 4 * TxpTimerFreq) // nach 4 Sekunden ohne TWI-Kommunikation
 			{
-			Protokollieren("TWI-Timeout -> Abschaltung\r\n");
+			Protokollieren("TxP: TWI-Timeout -> Abschaltung\r\n");
 			BusSenden(BusKdoSchluss);
 			ModusWechsel(ModWarteSchlussQuitt);
 			}
@@ -1793,9 +1793,9 @@ void txp_cgi_debug( void * pStruct )
 
 	PRINTVAL(FalscherCode); FalscherCode = 0;
 	PRINTVAL(TwiIsrCount); TwiIsrCount = 0;
-	PRINTVAL(TxpThreadCount / TxpTimerFreq); //TxpThreadCount = 0;
+	PRINTVAL(TxpThreadCount); //TxpThreadCount = 0;
 
-	PRINTVAL(Timer0CallbackCount / TxpTimerFreq); //Timer0CallbackCount = 0;
+	PRINTVAL(Timer0CallbackCount); //Timer0CallbackCount = 0;
 	PRINTVAL(Timer0Cnt_Min); Timer0Cnt_Min = 255;
 	PRINTVAL(Timer0Cnt_Max); Timer0Cnt_Max = 0;
 	PRINTVAL(Timer0Callback_Max); Timer0Callback_Max = 0;
@@ -1874,7 +1874,7 @@ void txp_cgi_msg_In( void * pStruct )
 		AsciiDruckPuffer[AsciiDruckPufferMax-3] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 		Protokollieren_P(PSTR("TxP: CGI-Druck "));
-		Protokollieren(AsciiDruckPuffer);
+		Protokollieren(AsciiDruckPuffer); // CRLF steht im Druckpuffer
 		}
 
 	cgi_PrintHttpheaderStart();
@@ -2091,6 +2091,8 @@ void cgi_SdDirectory(void *pStruct)
 			}
 		fat_close_dir(dd);
 		}
+	else
+		printf_P(PSTR("Error reading directory!"));
 	
 	cgi_PrintHttpheaderEnd();
 	}
