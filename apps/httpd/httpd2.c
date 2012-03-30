@@ -86,13 +86,15 @@ void httpd_thread( void )
 		http_request.HTTP_SOCKET = CheckPortRequest( HTTP_PORT );
 		if ( http_request.HTTP_SOCKET != SOCKET_ERROR )
 		{	
+			extern struct TCP_SOCKET TCP_sockettable[];
+
 			http_request.STATE = CONNECTED;
 			http_request.HTTP_POS = 0;
 			http_request.HTTP_LINEBUFFER[ 0 ] = '\0';
 			http_request.GET_FILE = NULL;
 			http_request.argc = 0;
 			http_request.REQUEST_TYPE = UNKNOWN_REQUEST;
-			
+			http_request.CLIENT_IP = TCP_sockettable[http_request.HTTP_SOCKET].SourceIP; 
 		}
 	}
 	else

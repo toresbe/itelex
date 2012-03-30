@@ -91,8 +91,15 @@ int check_files( void * pStruct )
 #endif
 
 	extern void Protokollieren(char *s);
-	Protokollieren("http-request: ");
+	extern void Protokollieren_P(const char *s);
+	extern void ProtokollierenIPAdr(long aip);
+	
+	Protokollieren_P(PSTR("http-request: "));
 	Protokollieren(http_request->GET_FILE);
+	Protokollieren_P(PSTR(" from "));
+	ProtokollierenIPAdr(http_request->CLIENT_IP);
+	Protokollieren_P(PSTR("\r\n"));
+	
 	Protokollieren("\r\n");
 
 #if !defined(HTTP_FILES_FROM_MMC)
