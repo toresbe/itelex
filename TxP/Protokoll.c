@@ -9,6 +9,8 @@
 
 #include "config.h"
 #include "system/clock/clock.h"
+#include "system/net/ip.h"
+#include "system/net/arp.h"
 #include "hardware/uart/uart_core.h"
 
 
@@ -213,6 +215,25 @@ void ProtokollierenInt_P(const char *s, long i)
 	{
 	if (s != NULL && ProtPraeparieren(strlen_P(s) + 10))
 		sprintf_P(Puffer + strlen(Puffer), s, i);
+	}
+
+	
+static char Buf[20];
+
+	
+//! Protokolliert eine IP-Adresse.
+void ProtokollierenIPAdr(long aip)
+	{
+	if (ProtPraeparieren(15))
+		strcat(Puffer, iptostr(aip, Buf));
+	}
+	
+
+//! Protokolliert eine MAC-Adresse.
+void ProtokollierenMAC(char mac[6])
+	{
+	if (ProtPraeparieren(17))
+		strcat(Puffer, mactostr(mac, Buf));
 	}
 
 	

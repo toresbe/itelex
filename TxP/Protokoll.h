@@ -12,6 +12,10 @@ extern void Protokollieren_P(const prog_char *s);
 
 extern void ProtokollierenInt_P(const prog_char *s, long i);
 
+extern void ProtokollierenIPAdr(long aip);
+
+extern void ProtokollierenMAC(char mac[6]);
+
 extern void ProtokollInit();
 
 #endif //ndef __PROTOKOLL_H__

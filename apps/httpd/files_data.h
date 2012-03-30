@@ -55,7 +55,7 @@ const char data1[] PROGMEM = {
 	"<HEAD>"
 	"<TITLE>TxP2-Net - Das Internet-Interface zum TelexPhone 2</TITLE>"
 	"</HEAD>"
-	"<frameset rows=\"63,35,*"
+	"<frameset rows=\"64,40,*"
 	#ifdef HTTPSERVER_STATS
 		",40"
 	#endif
@@ -68,7 +68,7 @@ const char data1[] PROGMEM = {
 	#endif
   	"<noframes>"
     "<body>"
-    "<p>Ihr Browser unterstützt keine Frames!</p>"
+    "<p>Ihr Browser unterst&uuml;tzt keine Frames!</p>"
     "</body>"
   	"</noframes>"
 	"</frameset>"

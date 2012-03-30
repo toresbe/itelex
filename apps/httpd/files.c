@@ -99,8 +99,6 @@ int check_files( void * pStruct )
 	Protokollieren_P(PSTR(" from "));
 	ProtokollierenIPAdr(http_request->CLIENT_IP);
 	Protokollieren_P(PSTR("\r\n"));
-	
-	Protokollieren("\r\n");
 
 #if !defined(HTTP_FILES_FROM_MMC)
 	for( i = 0 ; i < MAX_FILES_ENTRYS ; i++ )

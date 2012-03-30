@@ -131,12 +131,13 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 	uint8_t* p;
 	uint16_t address;
 
+	wdt_disable(); // der Timeout ist vielleicht noch 10 ms, daher erstmal deaktivieren.
+	
 	// Speicher vollschreiben
 	for (address = 0x2200 ; address < 0xffff ; address++)
 	{
 		p = (uint8_t*) address;
 		*p = MemTestValue(address);
-		wdt_reset();
 	}
 
 	// Speicher testen
@@ -147,7 +148,6 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 		if (*p != MemTestValue(address))
 			fehler++;
 		*p = 0;
-		wdt_reset();
 	}
 
 	// Speicher ok?
@@ -158,7 +158,7 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 #endif
 		cli();
 		while (1) 
-			wdt_reset(); // damit er wirklich stehen bleibt.
+			; // Endlosschleife
 	}
 
 #if defined(LED)

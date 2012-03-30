@@ -1520,11 +1520,18 @@ void txp_thread()
 	int NewServerSocket = CheckPortRequest(TXP_PORT);
 	if (NewServerSocket != NO_SOCKET_USED)
 		{
+		extern struct TCP_SOCKET TCP_sockettable[];
+
+		Protokollieren_P(PSTR("TxP: Server-Socket geoeffnet von IP "));
+		ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
+		Protokollieren_P(PSTR(" / MAC "));
+		ProtokollierenMAC(TCP_sockettable[NewServerSocket].MACadress);
+		
 		if (Modus == ModRuhe && TxpServerSocket == NO_SOCKET_USED)
 			{ // ID#102 *************************************************
 			// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
+			Protokollieren_P(PSTR(" ...ok\r\n"));
 			TxpServerSocket = NewServerSocket;
-			Protokollieren_P(PSTR("TxP: Server-Socket geoeffnet\r\n" ));
 			BusVerbPartner = Hauptstelle;
 			ModusWechsel(ModKommendVerbVorstufe);
 			SocketBufInit();
@@ -1532,8 +1539,8 @@ void txp_thread()
 		else
 			{ // ID#213 ID#225 ***************************************************
 			PutSocketData_RPE(NewServerSocket, 7, PSTR("\004\005occ\r\n"), FLASH); // 004 = TXPC_STOP
-			Protokollieren_P(PSTR("TxP: Server-Socket Anfrage ABGEWIESEN\r\n" ));
 			CloseTCPSocket(NewServerSocket);
+			Protokollieren_P(PSTR(" ...ABGEWIESEN\r\n" ));
 			}
 		}
 
