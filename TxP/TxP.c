@@ -1183,7 +1183,9 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		}
 		
 	// ggf. Anzahl verarbeiteter Zeichen zurückmelden
-	if (!SocketModeAscii && (SocketSendeQuittung || SocketLebenszeichenZaehler == 0))
+	if (!SocketModeAscii 
+		&& (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
+		&& (SocketSendeQuittung || SocketLebenszeichenZaehler == 0))
 		{
 		SocketOutBuf[SocketOutBufUsed] = TXPC_QUITT;
 		SocketOutBufUsed++;
@@ -1367,8 +1369,9 @@ void txp_thread()
 							{
 							case TxpIP:
 							case AsciiIP:
-								ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld "), TD.Nummer);
-								ProtokollierenInt_P(PSTR("gefunden: %lX\r\n"), TD.IPAdr);
+								ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden: "), TD.Nummer);
+								ProtokollierenIPAdr(TD.IPAdr);
+								Protokollieren_P(PSTR("\r\n"));
 								TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
 								break;
 								
@@ -1380,7 +1383,9 @@ void txp_thread()
 									{
 									ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden: "), TD.Nummer);
 									Protokollieren(TD.Adresse);
-									ProtokollierenInt_P(PSTR(" = %lX\r\n"), TD.IPAdr);
+									Protokollieren_P(PSTR(" = "));
+									ProtokollierenIPAdr(TD.IPAdr);
+									Protokollieren_P(PSTR("\r\n"));
 									TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
 									}
 								else
