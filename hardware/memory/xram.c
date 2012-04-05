@@ -125,7 +125,9 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 #if defined(LED)
 	LED_init();
 
-	LED_on( 0 );
+	LED_on(0); 
+	LED_on(1);
+	LED_on(2);
 #endif
 	
 	uint8_t* p;
@@ -140,6 +142,10 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 		*p = MemTestValue(address);
 	}
 
+#if defined(LED)
+	LED_off(2);
+#endif
+
 	// Speicher testen
 	uint16_t fehler = 0;
 	for (address = 0x2200 ; address < 0xffff ; address++)
@@ -153,20 +159,14 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 	// Speicher ok?
 	if ( fehler != 0 )
 	{
-#if defined(LED)
-		LED_on( 1 );
-#endif
 		cli();
+		wdt_disable();
 		while (1) 
 			; // Endlosschleife
 	}
 
 #if defined(LED)
-	else
-	{
-		LED_on( 1 );
-		LED_off( 0 );
-	}
+	LED_off(1);
 #endif
 	
 	return;

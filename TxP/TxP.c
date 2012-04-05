@@ -834,6 +834,8 @@ static bool SchreibeZeichenInSendePuffer(char c)
 	{
 	uint8_t Code1, Code2;
 	
+	//! \todo Umlaute übersetzen.
+	
 	if (c == '@') 
 		{ // Kennungsgeber besonders behandeln...
 		return PufferSpeich(&SendePuffer, TtyCodeZiUm) && PufferSpeich(&SendePuffer, TtyCodeZiWerDa);
@@ -1250,6 +1252,20 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	} // SocketBearbeiten()
 
 	
+//! Schiebt ein Zeichen in den Anzeigepuffer für HTML-Betrieb.
+static void ZeichenInHtmlSendeText(char c)
+	{
+	int i = strlen(HtmlSendeText);
+	if (i >= HtmlSendeTextMax - 60)
+		{
+		i -= 60;
+		memmove(HtmlSendeText, HtmlSendeText + 60, i);
+		}
+	HtmlSendeText[i] = c;
+	HtmlSendeText[i+1] = '\0';
+	}
+	
+	
 //! Nur für debugging.	
 static uint32_t TxpThreadCount; 
 
@@ -1628,29 +1644,22 @@ void txp_thread()
 		if (AsciiDruckPuffer[0] != '\0' && PufferLeer(&SendePuffer))
 			{
 			if (SchreibeZeichenInSendePuffer(AsciiDruckPuffer[0]))
-				{
+				{ // nur im Echo darstellen, wenn es auch gedruckt wurde.
 				if (Modus == ModHtmlVerbunden)
-					{
-					char z[2];
-					z[0] = AsciiDruckPuffer[0];
-					z[1] = '\0';
-					strcat(HtmlSendeText, z); // Eigenecho
-					}
+					ZeichenInHtmlSendeText(AsciiDruckPuffer[0]);
 				}
-			strcpy(AsciiDruckPuffer, AsciiDruckPuffer+1); // erstes Zeichen aus AsciiDruckPuffer-Puffer löschen
+				
+			memmove(AsciiDruckPuffer, AsciiDruckPuffer + 1, strlen(AsciiDruckPuffer)); 
+				// erstes Zeichen aus AsciiDruckPuffer-Puffer löschen
+				// Länge: +1 für das NUL-Zeichen am Ende, -1 weil das erste Zeichen 'rausfliegt
+				
 			} // AsciiDruckPuffer nicht leer und SendePuffer leer
 		} // Modus aktiv, bei dem gedruckt werden kann.
 		
 	if (Modus == ModHtmlVerbunden)
 		{ // eigegebene Zeichen nach Ascii umwandeln
 		while (!PufferLeer(&EmpfPuffer))
-			{
-			if (strlen(HtmlSendeText) >= HtmlSendeTextMax - 20)
-				memmove(HtmlSendeText, HtmlSendeText + 20, HtmlSendeTextMax - 20);
-			int i = strlen(HtmlSendeText);
-			HtmlSendeText[i] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
-			HtmlSendeText[i+1] = '\0';
-			}
+			ZeichenInHtmlSendeText(CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode));
 
 		if (RuheZaehler > 30 * TxpTimerFreq // 30 Sekunden
 			&& AsciiDruckPuffer[0] == '\0'
