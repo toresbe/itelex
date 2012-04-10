@@ -1986,7 +1986,7 @@ void AdresseZuWahlStr(uint8_t Adr, char Buf[])
 	{
 	uint8_t Wahl, AnzZif;
 	
-	Wahl = AdresseZuWahl(BusEigenAdresse, &AnzZif);
+	Wahl = AdresseZuWahl(Adr, &AnzZif);
 	itoa(Wahl, Buf, 4);
 	if (AnzZif > 1 && Buf[1] == '\0')
 		{
@@ -2129,6 +2129,7 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 	{
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
+	char Buf[10];
 	
 	cgi_PrintHttpheaderStart();
 
@@ -2137,9 +2138,10 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 		for (uint8_t Wahl = 0 ; Wahl <= ((AnzZif == 1) ? 9 : 99) ; Wahl++)
 			{
 			uint8_t BusNr = WahlZuAdresse(Wahl, AnzZif);
+			AdresseZuWahlStr(BusNr, Buf);
 			int16_t Stat = ((BusNr == BusEigenAdresse) ? Status : GetStatus(BusNr));
 			if (Stat >= 0)
-				printf_P(PSTR("Nummer %d Status %02X<br>"), Wahl, Stat);
+				printf_P(PSTR("Nummer %s Status %02X<br>"), Buf, Stat);
 			}
 	printf_P(PSTR("+++fertig"));
 
