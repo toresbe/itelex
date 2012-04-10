@@ -264,6 +264,8 @@ static uint32_t Wahlnummer;
 static uint8_t Wahlziffern; 
 	//!< Anzahl gewählter Ziffern
 
+static uint8_t ProtokollLevel;
+	//!< "Tiefe" der Protokollierung: 0 = Aus, 1 = Normal, 2 = Intensiv
 
 //! Sollfrequenz des Aufrufs von txp_timerEvent()
 enum { TxpTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
@@ -809,7 +811,8 @@ static void CloseTxpServerSocket()
 	{
 	if (TxpServerSocket != NO_SOCKET_USED)
 		{ 
-		Protokollieren_P(PSTR("TxP: Server-Socket (eingehend) wird geschlossen\r\n" ));
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("TxP: Server-Socket (eingehend) wird geschlossen\r\n" ));
 		CloseTCPSocket(TxpServerSocket);
 		TxpServerSocket = NO_SOCKET_USED;
 		}
@@ -821,7 +824,8 @@ static void CloseTxpClientSocket()
 	{
 	if (TxpClientSocket != NO_SOCKET_USED)
 		{ 
-		Protokollieren_P(PSTR("TxP: Client-Socket (ausgehend) wird geschlossen\r\n" ));
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("TxP: Client-Socket (ausgehend) wird geschlossen\r\n" ));
 		CloseTCPSocket(TxpClientSocket);
 		TxpClientSocket = NO_SOCKET_USED;
 		}
@@ -973,18 +977,21 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	if (InCount > 0) 
 		{
 		int Res = GetSocketData(*Socket, InCount, SocketInBuf + SocketInBufUsed);
-#if (TXP_DEBUG >= 1)
-		// printf_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
-		// printf_P(PSTR("%d)"), Res);
-		// for (uint16_t i = 0 ; i < Res ; i++)
-			// printf_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
-		// printf_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
-		ProtokollierenInt_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
-		ProtokollierenInt_P(PSTR("%d)"), Res);
-		for (uint16_t i = 0 ; i < Res ; i++)
-			ProtokollierenInt_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
-		ProtokollierenInt_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
-#endif
+		
+		if (ProtokollLevel >= 2)
+			{
+			// printf_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
+			// printf_P(PSTR("%d)"), Res);
+			// for (uint16_t i = 0 ; i < Res ; i++)
+				// printf_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
+			// printf_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
+			ProtokollierenInt_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
+			ProtokollierenInt_P(PSTR("%d)"), Res);
+			for (uint16_t i = 0 ; i < Res ; i++)
+				ProtokollierenInt_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
+			ProtokollierenInt_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
+			}
+			
 		if (Res > 0)
 			SocketInBufUsed += Res;
 		}
@@ -1053,13 +1060,14 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 						
 					if (SendenBeschleunigen && PufferAnzahl(&SendePuffer) < MaxPuffer / 2)
 						{
-						Protokollieren_P(PSTR("TxP: SendenBeschleunigen AUS\r\n"));
+						if (ProtokollLevel >= 2)
+							Protokollieren_P(PSTR("TxP: SendenBeschleunigen AUS\r\n"));
 						SendenBeschleunigen = false;
 						}
 					}
 				else
 					{
-					if (!SendenBeschleunigen)
+					if (!SendenBeschleunigen && (ProtokollLevel >= 2))
 						Protokollieren_P(PSTR("TxP: SendenBeschleunigen EIN\r\n"));
 					SendenBeschleunigen = true;
 					break; // Daten können momentan nicht verarbeitet werden.
@@ -1077,7 +1085,8 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 					}
 				i += 2 + len;
 
-				Protokollieren_P(PSTR("TxP: Abbaubefehl von Gegenstelle\r\n"));
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR("TxP: Abbaubefehl von Gegenstelle\r\n"));
 
 				if (IstVerbunden)
 					ModusWechsel(ModPufferDruckUndSchluss);
@@ -1126,7 +1135,8 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	// soll offene Verbindung geschlossen werden?
 	if (CheckSocketState(*Socket) == SOCKET_NOT_USE)
 		{ // ID#242 ID#342 ID#314 ************************************************
-		Protokollieren_P(PSTR("Txp: Socket wurde von Gegenstelle geschlossen\r\n" ));
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("Txp: Socket wurde von Gegenstelle geschlossen\r\n" ));
 		CloseTCPSocket(*Socket);
 		*Socket = NO_SOCKET_USED;
 		if (IstVerbunden)
@@ -1212,24 +1222,27 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		{
 		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
 		SocketLebenszeichenZaehler = 4 * TxpTimerFreq; // alle 4 Sekunden ein Lebenszeichen
-#if (TXP_DEBUG >= 1)
-		ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
-		for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
-			ProtokollierenInt_P(PSTR(" %02X"), SocketOutBuf[i]);
-		ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
-		ProtokollierenInt_P(PSTR(" Sum %d\r\n" ), SocketAnzahlZeichenGesendet);
-		// printf_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
-		// for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
-			// printf_P(PSTR(" %02X"), SocketOutBuf[i]);
-		// printf_P(PSTR(" --> Res %d" ), Res);
-		// printf_P(PSTR(" Sum %d\r\n" ), SocketAnzahlZeichenGesendet);
-#endif
+		if (ProtokollLevel >= 2)
+			{
+			ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
+			for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
+				ProtokollierenInt_P(PSTR(" %02X"), SocketOutBuf[i]);
+			ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
+			ProtokollierenInt_P(PSTR(" Sum %d\r\n" ), SocketAnzahlZeichenGesendet);
+			// printf_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
+			// for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
+				// printf_P(PSTR(" %02X"), SocketOutBuf[i]);
+			// printf_P(PSTR(" --> Res %d" ), Res);
+			// printf_P(PSTR(" Sum %d\r\n" ), SocketAnzahlZeichenGesendet);
+			}
+
 		if (Res <= 0)
 			{
 			SocketSendeFehlerZaehler++;
 			if (SocketSendeFehlerZaehler >= 10)
 				{
-				Protokollieren_P(PSTR("TxP: Mehrfache Fehler beim Senden ins Netz, Socket wird geschlossen\r\n" ));
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR("TxP: Mehrfache Fehler beim Senden ins Netz, Socket wird geschlossen\r\n" ));
 				CloseTCPSocket(*Socket);
 				*Socket = NO_SOCKET_USED;
 				if (IstVerbunden)
@@ -1306,7 +1319,8 @@ void txp_thread()
 		switch (Code)
 			{
 			case 1 ... BusKdoVerbAufnahme:
-				ProtokollierenInt_P(PSTR("TxP: TWI Reservierung intern / gehend von %d\r\n" ), Code);
+				if (ProtokollLevel >= 1)
+					ProtokollierenInt_P(PSTR("TxP: TWI Reservierung intern / gehend von %d\r\n" ), Code);
 				if (Modus == ModRuhe)
 					{ // ID#101 *********************************************
 					ModusWechsel(ModGehendReserv);
@@ -1319,7 +1333,8 @@ void txp_thread()
 				break;
 				
 			case BusKdoEin:
-				Protokollieren_P(PSTR("TxP: TWI Einschaltkommando intern / gehend\r\n" ));
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR("TxP: TWI Einschaltkommando intern / gehend\r\n" ));
 				if (Modus == ModGehendReserv)
 					{ // ID#211 ********************************************
 					BusSenden(BusKdoWahlFreigabe);
@@ -1330,15 +1345,18 @@ void txp_thread()
 				break;
 				
 			case BusQuittEin:
-				Protokollieren_P(PSTR("TxP: TWI Einschaltquittung intern / kommend\r\n" ));
 				if (Modus == ModKommendWarteEinQuitt)
 					{ // ID#331 ********************************************
+					if (ProtokollLevel >= 1)
+						Protokollieren_P(PSTR("TxP: TWI Einschaltquittung intern / kommend\r\n" ));
 					ModusWechsel(ModKommendVerbunden);
 					SocketSendeQuittung = true;
 					}
 
 				else if (Modus == ModHtmlWarteEinQuitt)
 					{ 
+					if (ProtokollLevel >= 1)
+						Protokollieren_P(PSTR("TxP: TWI Einschaltquittung durch HTML-Fenster\r\n" ));					
 					ModusWechsel(ModHtmlVerbunden);
 					}
 				
@@ -1349,12 +1367,14 @@ void txp_thread()
 
 			case BusKdoWahlFreigabe:
 				// \todo Bei Relaisbetrieb... dies ist eine Leitungsschnittstelle, die kann nicht wählen.
-				Protokollieren_P(PSTR("TxP: TWI Wahlaufforderung intern / kommend\r\n" ));
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR("TxP: TWI Wahlaufforderung intern / kommend\r\n" ));
 				FalschCodeEmpfangen(BusQuittEin);
 				break;
 				
 			case BusKdoWahlziffer0 ... BusKdoWahlziffer9:
-				ProtokollierenInt_P(PSTR("TxP: TWI Wahlziffer %d intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
+				if (ProtokollLevel >= 2)
+					ProtokollierenInt_P(PSTR("TxP: TWI Wahlziffer %d intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
 				if (Modus == ModGehendWaehlen && TxpClientSocket == NO_SOCKET_USED)
 					{
 					TTlnDaten TD;
@@ -1369,9 +1389,12 @@ void txp_thread()
 							{
 							case TxpIP:
 							case AsciiIP:
-								ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden: "), TD.Nummer);
-								ProtokollierenIPAdr(TD.IPAdr);
-								Protokollieren_P(PSTR("\r\n"));
+								if (ProtokollLevel >= 1)
+									{
+									ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden: "), TD.Nummer);
+									ProtokollierenIPAdr(TD.IPAdr);
+									Protokollieren_P(PSTR("\r\n"));
+									}
 								TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
 								break;
 								
@@ -1381,24 +1404,30 @@ void txp_thread()
 									// TP.IPAdr wird 'missbraucht' aber nicht gespeichert
 								if ( TD.IPAdr != -1 )
 									{
-									ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden: "), TD.Nummer);
-									Protokollieren(TD.Adresse);
-									Protokollieren_P(PSTR(" = "));
-									ProtokollierenIPAdr(TD.IPAdr);
-									Protokollieren_P(PSTR("\r\n"));
-									TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
+									if (ProtokollLevel >= 1)
+										{
+										ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden: "), TD.Nummer);
+										Protokollieren(TD.Adresse);
+										Protokollieren_P(PSTR(" = "));
+										ProtokollierenIPAdr(TD.IPAdr);
+										Protokollieren_P(PSTR("\r\n"));
+										}									TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
 									}
 								else
 									{
-									ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden, keine IP zu "), TD.Nummer);
-									Protokollieren(TD.Adresse);
-									Protokollieren_P(PSTR(" gefunden\r\n"));
+									if (ProtokollLevel >= 1)
+										{
+										ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden, keine IP zu "), TD.Nummer);
+										Protokollieren(TD.Adresse);
+										Protokollieren_P(PSTR(" gefunden\r\n"));
+										}
 									TxpClientSocket = -1;
 									}
 								break;
 								
 							default:
-								ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden: GELOESCHT\r\n" ), TD.Nummer);
+								if (ProtokollLevel >= 1)
+									ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden: GELOESCHT\r\n" ), TD.Nummer);
 								TxpClientSocket = -1;
 							}
 						
@@ -1406,21 +1435,24 @@ void txp_thread()
 							{ // ID#223 ********************************************
 							// Verbindung konnte nicht aufgebaut werden
 							BusSenden(BusKdoSchluss);
-							Protokollieren_P(PSTR("TxP: Client-Socket konnte nicht geoeffnet werden\r\n"));
+							if (ProtokollLevel >= 1)
+								Protokollieren_P(PSTR("TxP: Client-Socket konnte nicht geoeffnet werden\r\n"));
 							TxpClientSocket = NO_SOCKET_USED;
 							ModusWechsel(ModWarteSchlussQuitt);
 							}
 						else if (TD.AdrArt == AsciiUrl || TD.AdrArt == AsciiIP)
 							{ // ID#226 *********************************************
 							BusSenden(BusQuittEin);
-							Protokollieren_P(PSTR("TxP: Client-Socket Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
+							if (ProtokollLevel >= 1)
+								Protokollieren_P(PSTR("TxP: Client-Socket Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
 							ModusWechsel(ModGehendVerbunden);
 							SocketBufInit();
 							SocketModeAscii = true;
 							}
 						else // TxpUrl oder TxpIP
 							{ // ID#222 ********************************************
-							ProtokollierenInt_P(PSTR("TxP: Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %d\r\n"), TD.Durchwahl);
+							if (ProtokollLevel >= 1)
+								ProtokollierenInt_P(PSTR("TxP: Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %d\r\n"), TD.Durchwahl);
 
 							SocketBufInit();
 							SocketModeAscii = false;
@@ -1439,14 +1471,18 @@ void txp_thread()
 			case BusQuittSchluss:
 			case BusKdoSchluss:
 
-				if (Code == BusQuittSchluss)
-					Protokollieren_P(PSTR("TxP: TWI Ausschaltung quittiert\r\n" ));
-				else
-					Protokollieren_P(PSTR("TxP: TWI Ausschaltung intern\r\n" ));
-
+				if (ProtokollLevel >= 1)
+					{
+					if (Code == BusQuittSchluss)
+						Protokollieren_P(PSTR("TxP: TWI Ausschaltung quittiert\r\n" ));
+					else
+						Protokollieren_P(PSTR("TxP: TWI Ausschaltung intern\r\n" ));
+					}
+					
 				if (Code == BusQuittSchluss && Modus != ModWarteSchlussQuitt)
 					{
-					Protokollieren_P(PSTR("TxP: Schlussquittung ohne Aufforderung\r\n"));
+					if (ProtokollLevel >= 1)
+						Protokollieren_P(PSTR("TxP: Schlussquittung ohne Aufforderung\r\n"));
 					FalschCodeEmpfangen(Code);
 					}
 
@@ -1487,7 +1523,8 @@ void txp_thread()
 		{
 		if (TwiWatchdogCount > 4 * TxpTimerFreq) // nach 4 Sekunden ohne TWI-Kommunikation
 			{
-			Protokollieren("TxP: TWI-Timeout -> Abschaltung\r\n");
+			if (ProtokollLevel >= 1)
+				Protokollieren("TxP: TWI-Timeout -> Abschaltung\r\n");
 			BusSenden(BusKdoSchluss);
 			ModusWechsel(ModWarteSchlussQuitt);
 			}
@@ -1506,7 +1543,8 @@ void txp_thread()
 		if (Modus == ModGehendWaehlen && !PufferLeer(&SendePuffer))
 			{ // es wurden Daten empfangen, also schnellstens Endgerät anschmeißen
 			// ID#227 Teil 2 *******************************************************
-			Protokollieren_P(PSTR("TxP: Angerufener hat geantwortet -> Einschaltung intern\r\n" ));
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR("TxP: Angerufener hat geantwortet -> Einschaltung intern\r\n" ));
 			BusSenden(BusQuittEin);
 			ModusWechsel(ModGehendVerbunden);
 			}
@@ -1519,13 +1557,15 @@ void txp_thread()
 			{ 
 			if (KommendInternAnwaehlen(Durchwahl)) 
 				{ // ID#321 ********************************************
-				ProtokollierenInt_P(PSTR("TxP: Anwahl intern an %d erfolgt\r\n"), Durchwahl);
+				if (ProtokollLevel >= 1)
+					ProtokollierenInt_P(PSTR("TxP: Anwahl intern an %d erfolgt\r\n"), Durchwahl);
 				BusSenden(BusKdoEin);
 				ModusWechsel(ModKommendWarteEinQuitt);
 				}
 			else
 				{ // ID#322 ********************************************
-				ProtokollierenInt_P(PSTR("TxP: Anwahl intern an %d VERSAGT\r\n"), Durchwahl);
+				if (ProtokollLevel >= 1)
+					ProtokollierenInt_P(PSTR("TxP: Anwahl intern an %d VERSAGT\r\n"), Durchwahl);
 				strcpy_P(DebugMsg, PSTR("Reservierung fuer Einschaltung konnte nicht versand werden"));
 				CloseTxpServerSocket(); // Client kann nicht geöffnet sein.
 				ModusWechsel(ModRuhe);
@@ -1543,15 +1583,19 @@ void txp_thread()
 		{
 		extern struct TCP_SOCKET TCP_sockettable[];
 
-		Protokollieren_P(PSTR("TxP: Server-Socket geoeffnet von IP "));
-		ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
-		Protokollieren_P(PSTR(" / MAC "));
-		ProtokollierenMAC(TCP_sockettable[NewServerSocket].MACadress);
+		if (ProtokollLevel >= 1)
+			{
+			Protokollieren_P(PSTR("TxP: Server-Socket geoeffnet von IP "));
+			ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
+			Protokollieren_P(PSTR(" / MAC "));
+			ProtokollierenMAC(TCP_sockettable[NewServerSocket].MACadress);
+			}
 		
 		if (Modus == ModRuhe && TxpServerSocket == NO_SOCKET_USED)
 			{ // ID#102 *************************************************
 			// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
-			Protokollieren_P(PSTR(" ...ok\r\n"));
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR(" ...ok\r\n"));
 			TxpServerSocket = NewServerSocket;
 			BusVerbPartner = Hauptstelle;
 			ModusWechsel(ModKommendVerbVorstufe);
@@ -1561,7 +1605,8 @@ void txp_thread()
 			{ // ID#213 ID#225 ***************************************************
 			PutSocketData_RPE(NewServerSocket, 7, PSTR("\004\005occ\r\n"), FLASH); // 004 = TXPC_STOP
 			CloseTCPSocket(NewServerSocket);
-			Protokollieren_P(PSTR(" ...ABGEWIESEN\r\n" ));
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR(" ...ABGEWIESEN\r\n" ));
 			}
 		}
 
@@ -1572,14 +1617,16 @@ void txp_thread()
 	if (Modus == ModWarteSchlussQuitt && RuheZaehler > 3 * TxpTimerFreq)
 		{ // 3 Sekunden keine Schlussquittung empfangen
 		// ID#412 ****************************************************************
-		Protokollieren_P(PSTR("TxP: Timeout beim Warten auf die Schlussquittung\r\n" ));
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("TxP: Timeout beim Warten auf die Schlussquittung\r\n" ));
 		ModusWechsel(ModRuhe);
 		}
 		
 	if (Modus == ModKommendWarteEinQuitt && RuheZaehler > 3 * TxpTimerFreq)
 		{ // 3 Sekunden keine Einschalt-Quittung empfangen
 		// ID#332 ***************************************************************
-		Protokollieren_P(PSTR("TxP: Timeout beim Warten auf die Einschaltquittung\r\n" ));
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("TxP: Timeout beim Warten auf die Einschaltquittung\r\n" ));
 		BusSenden(BusKdoSchluss);
 		CloseTxpServerSocket();
 		ModusWechsel(ModWarteSchlussQuitt);
@@ -1606,7 +1653,8 @@ void txp_thread()
 
 			case ModPufferDruckUndSchluss:
 				// ID#422 *************************************************************
-				Protokollieren_P(PSTR("TxP: Taste gedruckt --> Ausschaltung intern\r\n" ));
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR("TxP: Taste gedruckt --> Ausschaltung intern\r\n" ));
 				BusSenden(BusKdoSchluss);
 				ModusWechsel(ModWarteSchlussQuitt);
 				AsciiDruckPuffer[0] = '\0';
@@ -1629,13 +1677,15 @@ void txp_thread()
 		{
 		if (KommendInternAnwaehlen(0)) // keine Durchwahl
 			{ 
-			Protokollieren_P(PSTR("TxP: HTML-Eingabe -> Einschaltung intern\r\n" ));
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR("TxP: HTML-Eingabe -> Einschaltung intern\r\n" ));
 			BusSenden(BusKdoEin);
 			ModusWechsel(ModHtmlWarteEinQuitt);
 			}
 		else
 			{ 
-			Protokollieren_P(PSTR("TxP: HTML-Eingabe -> Einschaltung intern VERSAGT\r\n" ));
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR("TxP: HTML-Eingabe -> Einschaltung intern VERSAGT\r\n" ));
 			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
 			AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 			ModusWechsel(ModRuhe);
@@ -1671,7 +1721,8 @@ void txp_thread()
 			&& PufferLeer(&SendePuffer)
 			&& PufferLeer(&EmpfPuffer) )
 			{
-			Protokollieren_P(PSTR("TxP: HTML-Ruhe --> Ausschaltung intern\r\n" ));
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR("TxP: HTML-Ruhe --> Ausschaltung intern\r\n" ));
 			BusSenden(BusKdoSchluss);
 			ModusWechsel(ModWarteSchlussQuitt);
 			RuheZaehler = 0;
@@ -1685,7 +1736,8 @@ void txp_thread()
 
 	if (Modus == ModPufferDruckUndSchluss && AsciiDruckPuffer[0] == '\0' && PufferLeer(&SendePuffer))
 		{ // ID#421 *************************************************************
-		Protokollieren_P(PSTR("TxP: Reste gedruckt --> Ausschaltung intern\r\n" ));
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("TxP: Reste gedruckt --> Ausschaltung intern\r\n" ));
 		BusSenden(BusKdoSchluss);
 		ModusWechsel(ModWarteSchlussQuitt);
 		RuheZaehler = 0;
@@ -1703,33 +1755,36 @@ void txp_thread()
 static uint8_t DurchwahlTabelleDekodieren(char *s)
 	{
 	uint8_t i = 0; // Index in der Tabelle
-	bool Anf = true; // noch keine Ziffer erkannt
+	uint8_t AnzSt = 0; // Anzahl Stellen
+	uint8_t WahlNr = 0; // Bisherige Nummer
 	
 	while (*s != '\0' && i < 9)
 		{
 		switch (*s)
 			{
 			case '0' ... '9':
-				if (Anf)
-					{
-					DurchwahlTabelle[i] = *s - '0';
-					Anf = false;
-					}
+				if (AnzSt == 0)
+					WahlNr = *s - '0';
 				else
-					DurchwahlTabelle[i] = (10 * DurchwahlTabelle[i]) + (*s - '0');
+					WahlNr = (10 * WahlNr) + (*s - '0');
+				if (AnzSt < 2)
+					AnzSt++;
+				DurchwahlTabelle[i] = WahlZuAdresse(WahlNr, AnzSt);
 				break;
 			
 			case ',':
 			case '/':
 			case '.':
 				i++;
-				Anf = true;
+				AnzSt = 0;
+				WahlNr = 0;
 				break;
 			
 			case ' ':
-				if (!Anf)
+				if (AnzSt > 0)
 					i++;
-				Anf = true;
+				AnzSt = 0;
+				WahlNr = 0;
 				break;
 
 			default:
@@ -1894,8 +1949,11 @@ void txp_cgi_msg_In( void * pStruct )
 		strncat(AsciiDruckPuffer, http_request->argvalue[PharseGetValue_P(http_request, Eingabe_P)], AsciiDruckPufferMax - strlen(AsciiDruckPuffer) - 3);
 		AsciiDruckPuffer[AsciiDruckPufferMax-3] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
-		Protokollieren_P(PSTR("TxP: CGI-Druck "));
-		Protokollieren(AsciiDruckPuffer); // CRLF steht im Druckpuffer
+		if (ProtokollLevel >= 2)
+			{
+			Protokollieren_P(PSTR("TxP: CGI-Druck "));
+			Protokollieren(AsciiDruckPuffer); // CRLF steht im Druckpuffer
+			}
 		}
 
 	cgi_PrintHttpheaderStart();
@@ -1909,20 +1967,42 @@ void txp_cgi_msg_In( void * pStruct )
 	}
 	
 	
+const PROGMEM char Hauptstelle_P[] = "HAUPTSTELLE";
+const PROGMEM char EigeneNummer_P[] = "EIGENENUMMER";
+const PROGMEM char FesteHst_P[] = "FESTEHPST";
+const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
+const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
+const PROGMEM char ProtokollLevel_P[] = "PROTLEVEL";
+
+
+//! Bildet den zur TWI-Adresse passenden Wähltext.
+//------------------------------------------------
+//! Beispiele: 45 -> "45", 05 -> "05", 103 -> "3"
+//! Siehe auch AdresseZuWahl()
+//! \param[in] Adr TWI-Adresse von 2 bis 220 (2 * 1 bis 2 * 110)
+//! \param[out] Buf String für Wähltext, mindestens 4 Zeichen Länge.
+
+void AdresseZuWahlStr(uint8_t Adr, char Buf[])
+	{
+	uint8_t Wahl, AnzZif;
+	
+	Wahl = AdresseZuWahl(BusEigenAdresse, &AnzZif);
+	itoa(Wahl, Buf, 4);
+	if (AnzZif > 1 && Buf[1] == '\0')
+		{
+		Buf[2] = '\0';
+		Buf[1] = Buf[0];
+		Buf[0] = '0';
+		}
+	}
+
+	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface zum Ändern der Einstellungen des TelexPhone-Interface 
  * \param 	pStruct	Struktur auf den HTTP_Request
  * \return	NONE
  */
 /*------------------------------------------------------------------------------------------------------------*/
-
-
-const PROGMEM char Hauptstelle_P[] = "HAUPTSTELLE";
-const PROGMEM char EigeneNummer_P[] = "EIGENENUMMER";
-const PROGMEM char FesteHst_P[] = "FESTEHPST";
-const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
-const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
-
  
 void txp_cgi_config(void *pStruct)
 	{
@@ -1936,9 +2016,11 @@ void txp_cgi_config(void *pStruct)
 		{
 		CgiFormStartTabbed_P(PSTR("txp-config.cgi"));
 
-		CgiFormInputFieldLong_P(PSTR("Eigene Nummer:"), EigeneNummer_P, 2, BusEigenAdresse >> 1);
+		AdresseZuWahlStr(BusEigenAdresse, Buf);
+		CgiFormInputFieldText_P(PSTR("Eigene Nummer:"), EigeneNummer_P, 2, Buf);
 
-		CgiFormInputFieldLong_P(PSTR("Hauptstelle:"), Hauptstelle_P, 2, Hauptstelle >> 1);
+		AdresseZuWahlStr(Hauptstelle, Buf);
+		CgiFormInputFieldText_P(PSTR("Hauptstelle:"), Hauptstelle_P, 2, Buf);
 
 		CgiFormCheckbox_P(PSTR("feste Hauptstelle:"), FesteHst_P, FesteHauptstelle);
 
@@ -1947,6 +2029,8 @@ void txp_cgi_config(void *pStruct)
 		readConfig_P(DurchwahlTabelle_P, Buf);
 
 		CgiFormInputFieldText_P(PSTR("Durchwahlen:<br>(mit Komma trennen)"), DurchwahlTabelle_P, 30, Buf);
+
+		CgiFormInputFieldLong_P(PSTR("Protokoll-Level:"), ProtokollLevel_P, 2, ProtokollLevel);
 
 		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
 		}
@@ -1960,12 +2044,12 @@ void txp_cgi_config(void *pStruct)
 		if (PharseCheckName_P(http_request, EigeneNummer_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EigeneNummer_P)], 2);
-			NeuEigenAdresse = atoi(Buf) << 1; 
+			NeuEigenAdresse = WahlZuAdresse(atoi(Buf), strlen(Buf));
 			if (Modus == ModRuhe && BusEigenAdressePruefenUndSetzen(NeuEigenAdresse))
 				{
-				itoa(NeuEigenAdresse >> 1, Buf, 10);
+				AdresseZuWahlStr(NeuEigenAdresse, Buf);
 				changeConfig_P(EigeneNummer_P, Buf);
-				printf_P(PSTR("<br>Eigene Nummer: %d"), BusEigenAdresse >> 1);
+				printf_P(PSTR("<br>Eigene Nummer: %s"), Buf);
 				}
 			else
 				printf_P(PSTR("<br>Eigene Nummer konnte nicht ge&auml;ndert werden"));
@@ -1974,11 +2058,11 @@ void txp_cgi_config(void *pStruct)
 		if (PharseCheckName_P(http_request, Hauptstelle_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, Hauptstelle_P)], 2);
-			Hauptstelle = atoi(Buf) << 1;
-			itoa(Hauptstelle >> 1, Buf, 10);
+			Hauptstelle = WahlZuAdresse(atoi(Buf), strlen(Buf));
+			AdresseZuWahlStr(Hauptstelle, Buf);
 			changeConfig_P(Hauptstelle_P, Buf);
 			}
-		printf_P(PSTR("<br>Hauptstelle: %d"), Hauptstelle >> 1);
+		printf_P(PSTR("<br>Hauptstelle: %s"), Buf);
 		
 		if (PharseCheckName_P(http_request, FesteHst_P))
 			{
@@ -2018,6 +2102,15 @@ void txp_cgi_config(void *pStruct)
 				  DurchwahlTabelle[6], DurchwahlTabelle[7], DurchwahlTabelle[8]);
 		changeConfig_P(DurchwahlTabelle_P, Buf);
 		printf_P(PSTR("<br>Durchwahlen: %s"), Buf);
+		
+		if (PharseCheckName_P(http_request, ProtokollLevel_P))
+			{
+			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, ProtokollLevel_P)], 2);
+			ProtokollLevel = atoi(Buf);
+			itoa(ProtokollLevel, Buf, 10);
+			changeConfig_P(ProtokollLevel_P, Buf);
+			}
+		printf_P(PSTR("<br>Protokoll-Level: %d"), ProtokollLevel);
 		}
 		
 	cgi_PrintHttpheaderEnd();
@@ -2148,7 +2241,7 @@ void txp_init()
 	char Buf[30];
 
 	if (readConfig_P(EigeneNummer_P, Buf) == 1)
-		BusEigenAdresse = atoi(Buf) << 1;
+		BusEigenAdresse = WahlZuAdresse(atoi(Buf), strlen(Buf));
 	else
 		BusEigenAdresse = 22 << 1;
 
@@ -2163,7 +2256,7 @@ void txp_init()
 		AlternativSucheBeiBesetzt = true;
 
 	if (readConfig_P(Hauptstelle_P, Buf) == 1)
-		Hauptstelle = atoi(Buf) << 1;
+		Hauptstelle = WahlZuAdresse(atoi(Buf), strlen(Buf));
 	else
 		Hauptstelle = 0, FesteHauptstelle = false;
 
@@ -2171,7 +2264,12 @@ void txp_init()
 		DurchwahlTabelle[i] = 0;
 	if (readConfig_P(DurchwahlTabelle_P, Buf) == 1)
 		DurchwahlTabelleDekodieren(Buf); // Ergebnis wird ignoriert
-	
+
+	if (readConfig_P(ProtokollLevel_P, Buf) == 1)
+		ProtokollLevel = atoi(Buf);
+	else
+		ProtokollLevel = 1;
+		
 	BusEigenAdrMehrfach = 1; // muss Potenz von 2 sein (also 1, 2, 4, 8, 16, ... , Standard = 1
 
 	TwiInit();
