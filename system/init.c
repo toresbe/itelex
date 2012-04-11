@@ -112,6 +112,16 @@ const char config_error[] PROGMEM = " Error\r\n";
 
 void init( void )
 {
+	// alle Interrupt-Enables sperren, vorerst nur für ATmegaXXX
+	PCICR = 0; // Pin Change Interrupt
+	TIMSK0 = 0; // Timer 0
+	TIMSK1 = 0; // Timer 1
+	TIMSK2 = 0; // Timer 2
+	UCSR0B = 0; // USART0
+	UCSR1B = 0; // USART1
+	TWCR = 0; // TWI
+	SPCR = 0; // SPI
+	
  	// Interrupts freigeben
 	sei();
 

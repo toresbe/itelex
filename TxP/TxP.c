@@ -245,7 +245,7 @@ static uint8_t Durchwahl;
 		
 static uint8_t Hauptstelle; 
 	//!< Bus-Adresse für den nächsten kommenden Ruf, wird bei FesteHauptstelle = false auf die
-	//!< Adresse des letzten Anrufers gesetzt
+	//!< Adresse des letzten Anrufers gesetzt. 
 
 static bool FesteHauptstelle;
 	//!< Wenn true, werden kommende Verbindungen immer auf die gleiche Endstelle gesendet
@@ -1987,12 +1987,18 @@ void AdresseZuWahlStr(uint8_t Adr, char Buf[])
 	uint8_t Wahl, AnzZif;
 	
 	Wahl = AdresseZuWahl(Adr, &AnzZif);
-	itoa(Wahl, Buf, 4);
-	if (AnzZif > 1 && Buf[1] == '\0')
+	
+	if (AnzZif == 0)
+		Buf[0] = '\0'; // ungültige Nummer
+	else
 		{
-		Buf[2] = '\0';
-		Buf[1] = Buf[0];
-		Buf[0] = '0';
+		itoa(Wahl, Buf, 4);
+		if (AnzZif > 1 && Buf[1] == '\0')
+			{
+			Buf[2] = '\0';
+			Buf[1] = Buf[0];
+			Buf[0] = '0';
+			}
 		}
 	}
 
@@ -2040,10 +2046,10 @@ void txp_cgi_config(void *pStruct)
 
 		printf_P(PSTR("neue Einstellungen: <a href=\"txp-config.cgi\">weiter</a>"));
 
-		Buf[2] = '\0';
 		if (PharseCheckName_P(http_request, EigeneNummer_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EigeneNummer_P)], 2);
+			Buf[2] = '\0';
 			NeuEigenAdresse = WahlZuAdresse(atoi(Buf), strlen(Buf));
 			if (Modus == ModRuhe && BusEigenAdressePruefenUndSetzen(NeuEigenAdresse))
 				{
@@ -2058,15 +2064,17 @@ void txp_cgi_config(void *pStruct)
 		if (PharseCheckName_P(http_request, Hauptstelle_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, Hauptstelle_P)], 2);
+			Buf[2] = '\0';
 			Hauptstelle = WahlZuAdresse(atoi(Buf), strlen(Buf));
 			AdresseZuWahlStr(Hauptstelle, Buf);
 			changeConfig_P(Hauptstelle_P, Buf);
+			printf_P(PSTR("<br>Hauptstelle: %s"), Buf);
 			}
-		printf_P(PSTR("<br>Hauptstelle: %s"), Buf);
 		
 		if (PharseCheckName_P(http_request, FesteHst_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, FesteHst_P)], 2);
+			Buf[2] = '\0';
 			FesteHauptstelle = atoi(Buf) != 0; 
 			}
 		else
@@ -2075,11 +2083,12 @@ void txp_cgi_config(void *pStruct)
 			Buf[0] = '0', Buf[1] = '\0';
 			}
 		changeConfig_P(FesteHst_P, Buf);
-		printf_P(PSTR("<br>Feste Hauptstelle: %d"), FesteHauptstelle);
+		printf_P(PSTR("<br>Feste Hauptstelle: %s"), Buf);
 		
 		if (PharseCheckName_P(http_request, AlternBeiBes_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, AlternBeiBes_P)], 2);
+			Buf[2] = '\0';
 			AlternativSucheBeiBesetzt = atoi(Buf) != 0; 
 			}
 		else
@@ -2088,7 +2097,7 @@ void txp_cgi_config(void *pStruct)
 			Buf[0] = '0', Buf[1] = '\0';
 			}
 		changeConfig_P(AlternBeiBes_P, Buf);
-		printf_P(PSTR("<br>Alternativ-Suche bei Besetzt: %d"), AlternativSucheBeiBesetzt);
+		printf_P(PSTR("<br>Alternativ-Suche bei Besetzt: %s"), Buf);
 		
 		if (PharseCheckName_P(http_request, DurchwahlTabelle_P))
 			{
@@ -2096,10 +2105,14 @@ void txp_cgi_config(void *pStruct)
 			Buf[30] = '\0';
 			DurchwahlTabelleDekodieren(Buf);
 			}
-		sprintf_P(Buf, PSTR("%d,%d,%d,%d,%d,%d,%d,%d,%d"), 
-				  DurchwahlTabelle[0], DurchwahlTabelle[1], DurchwahlTabelle[2],
-				  DurchwahlTabelle[3], DurchwahlTabelle[4], DurchwahlTabelle[5],
-				  DurchwahlTabelle[6], DurchwahlTabelle[7], DurchwahlTabelle[8]);
+			
+		AdresseZuWahlStr(DurchwahlTabelle[0], Buf);
+		for (uint8_t i = 1 ; i < 9 ; i++)
+			{
+			uint8_t len = strlen(Buf);
+			Buf[len] = ','; // Komma angefügt
+			AdresseZuWahlStr(DurchwahlTabelle[i], Buf + len + 1);
+			}
 		changeConfig_P(DurchwahlTabelle_P, Buf);
 		printf_P(PSTR("<br>Durchwahlen: %s"), Buf);
 		
