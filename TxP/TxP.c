@@ -1982,7 +1982,7 @@ const PROGMEM char ProtokollLevel_P[] = "PROTLEVEL";
 //! \param[in] Adr TWI-Adresse von 2 bis 220 (2 * 1 bis 2 * 110)
 //! \param[out] Buf String für Wähltext, mindestens 4 Zeichen Länge.
 
-void AdresseZuWahlStr(uint8_t Adr, char Buf[])
+void AdresseZuWahlStr(uint8_t Adr, char* Buf)
 	{
 	uint8_t Wahl, AnzZif;
 	
@@ -1992,7 +1992,7 @@ void AdresseZuWahlStr(uint8_t Adr, char Buf[])
 		Buf[0] = '\0'; // ungültige Nummer
 	else
 		{
-		itoa(Wahl, Buf, 4);
+		itoa(Wahl, Buf, 10); // 10 ist die Basis f�r Dezimal!
 		if (AnzZif > 1 && Buf[1] == '\0')
 			{
 			Buf[2] = '\0';
@@ -2120,7 +2120,7 @@ void txp_cgi_config(void *pStruct)
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, ProtokollLevel_P)], 2);
 			ProtokollLevel = atoi(Buf);
-			itoa(ProtokollLevel, Buf, 10);
+			itoa(ProtokollLevel, Buf, 10); // 10 ist die Basis, nicht die L�nge!
 			changeConfig_P(ProtokollLevel_P, Buf);
 			}
 		printf_P(PSTR("<br>Protokoll-Level: %d"), ProtokollLevel);
@@ -2154,7 +2154,9 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 			AdresseZuWahlStr(BusNr, Buf);
 			int16_t Stat = ((BusNr == BusEigenAdresse) ? Status : GetStatus(BusNr));
 			if (Stat >= 0)
+				{
 				printf_P(PSTR("Nummer %s Status %02X<br>"), Buf, Stat);
+				}
 			}
 	printf_P(PSTR("+++fertig"));
 
