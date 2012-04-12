@@ -2041,18 +2041,22 @@ void txp_cgi_config(void *pStruct)
 		}
 	else // argc > 0
 		{
-		uint8_t NeuEigenAdresse;
+		uint8_t Neu;
 
 		printf_P(PSTR("neue Einstellungen: <a href=\"txp-config.cgi\">weiter</a>"));
 
+		// Eigene Nummer
+		// -------------
 		if (PharseCheckName_P(http_request, EigeneNummer_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EigeneNummer_P)], 2);
 			Buf[2] = '\0';
-			NeuEigenAdresse = WahlZuAdresse(atoi(Buf), strlen(Buf));
-			if (Modus == ModRuhe && BusEigenAdressePruefenUndSetzen(NeuEigenAdresse))
+			Neu = WahlZuAdresse(atoi(Buf), strlen(Buf));
+			if (Neu == BusEigenAdresse)
+				printf_P(PSTR("<br>Eigene Nummer unver&auml;ndert: %s"), Buf);
+			else if (Modus == ModRuhe && BusEigenAdressePruefenUndSetzen(Neu))
 				{
-				AdresseZuWahlStr(NeuEigenAdresse, Buf);
+				AdresseZuWahlStr(Neu, Buf);
 				changeConfig_P(EigeneNummer_P, Buf);
 				printf_P(PSTR("<br>Eigene Nummer: %s"), Buf);
 				}
@@ -2060,74 +2064,119 @@ void txp_cgi_config(void *pStruct)
 				printf_P(PSTR("<br>Eigene Nummer konnte nicht ge&auml;ndert werden"));
 			}
 		
+		// Nummer Hauptstelle
+		// ------------------
 		if (PharseCheckName_P(http_request, Hauptstelle_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, Hauptstelle_P)], 2);
 			Buf[2] = '\0';
-			Hauptstelle = WahlZuAdresse(atoi(Buf), strlen(Buf));
-			AdresseZuWahlStr(Hauptstelle, Buf);
-			changeConfig_P(Hauptstelle_P, Buf);
-			printf_P(PSTR("<br>Hauptstelle: %s"), Buf);
+			Neu = WahlZuAdresse(atoi(Buf), strlen(Buf));
+			if (Neu == Hauptstelle)
+				printf_P(PSTR("<br>Hauptstelle unver&auml;ndert: %s"), Buf);
+			else
+				{
+				AdresseZuWahlStr(Neu, Buf);
+				changeConfig_P(Hauptstelle_P, Buf);
+				printf_P(PSTR("<br>Hauptstelle: %s"), Buf);
+				Hauptstelle = Neu;
+				}
 			}
 		
+		// Feste Hauptstelle
+		// ------------------
 		if (PharseCheckName_P(http_request, FesteHst_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, FesteHst_P)], 2);
 			Buf[2] = '\0';
-			FesteHauptstelle = atoi(Buf) != 0; 
+			Neu = atoi(Buf) != 0; 
 			}
 		else
 			{
-			FesteHauptstelle = false;
+			Neu = false;
 			Buf[0] = '0', Buf[1] = '\0';
 			}
-		changeConfig_P(FesteHst_P, Buf);
-		printf_P(PSTR("<br>Feste Hauptstelle: %s"), Buf);
-		
+		if (Neu == FesteHauptstelle)
+			printf_P(PSTR("<br>FesteHauptstelle unver&auml;ndert: %d"), Neu);
+		else
+			{
+			changeConfig_P(FesteHst_P, Buf);
+			printf_P(PSTR("<br>Feste Hauptstelle: %s"), Buf);
+			FesteHauptstelle = Neu;
+			}
+			
+		// AlternativSucheBeiBesetzt
+		// -------------------------
 		if (PharseCheckName_P(http_request, AlternBeiBes_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, AlternBeiBes_P)], 2);
 			Buf[2] = '\0';
-			AlternativSucheBeiBesetzt = atoi(Buf) != 0; 
+			Neu = atoi(Buf) != 0; 
 			}
 		else
 			{
-			AlternativSucheBeiBesetzt = false;
+			Neu = false;
 			Buf[0] = '0', Buf[1] = '\0';
 			}
-		changeConfig_P(AlternBeiBes_P, Buf);
-		printf_P(PSTR("<br>Alternativ-Suche bei Besetzt: %s"), Buf);
-		
-		if (PharseCheckName_P(http_request, DurchwahlTabelle_P))
+		if (Neu == AlternativSucheBeiBesetzt)
+			printf_P(PSTR("<br>AlternativSucheBeiBesetzt unver&auml;ndert: %d"), Neu);
+		else
 			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, DurchwahlTabelle_P)], 30);
-			Buf[30] = '\0';
-			DurchwahlTabelleDekodieren(Buf);
+			changeConfig_P(AlternBeiBes_P, Buf);
+			printf_P(PSTR("<br>Alternativ-Suche bei Besetzt: %s"), Buf);
+			AlternativSucheBeiBesetzt = Neu;
 			}
 			
-		AdresseZuWahlStr(DurchwahlTabelle[0], Buf);
-		for (uint8_t i = 1 ; i < 9 ; i++)
+		// DurchwahlTabelle
+		// ----------------
+		// hier ist Neu nur ein Flag
+		if (PharseCheckName_P(http_request, DurchwahlTabelle_P))
 			{
-			uint8_t len = strlen(Buf);
-			Buf[len] = ','; // Komma angefügt
-			AdresseZuWahlStr(DurchwahlTabelle[i], Buf + len + 1);
+			if (readConfig_P(DurchwahlTabelle_P, Buf) == 1)
+				Neu = strcmp(Buf, http_request->argvalue[PharseGetValue_P(http_request, DurchwahlTabelle_P)]) != 0;
+			else
+				Neu = true;
+				
+			if (Neu)
+				{
+				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, DurchwahlTabelle_P)], 33);
+				Buf[33] = '\0';
+				DurchwahlTabelleDekodieren(Buf);
+				AdresseZuWahlStr(DurchwahlTabelle[0], Buf);
+				for (uint8_t i = 1 ; i < 9 ; i++)
+					{
+					uint8_t len = strlen(Buf);
+					Buf[len] = ','; // Komma angefügt
+					AdresseZuWahlStr(DurchwahlTabelle[i], Buf + len + 1);
+					}
+				changeConfig_P(DurchwahlTabelle_P, Buf);
+				printf_P(PSTR("<br>Durchwahlen: %s"), Buf);
+				}
+			else
+				printf_P(PSTR("<br>Durchwahlen unver&auml;ndert: %s"), Buf);
 			}
-		changeConfig_P(DurchwahlTabelle_P, Buf);
-		printf_P(PSTR("<br>Durchwahlen: %s"), Buf);
-		
+			
+		// ProtokollLevel
+		// --------------
 		if (PharseCheckName_P(http_request, ProtokollLevel_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, ProtokollLevel_P)], 2);
-			ProtokollLevel = atoi(Buf);
-			itoa(ProtokollLevel, Buf, 10); // 10 ist die Basis, nicht die L�nge!
-			changeConfig_P(ProtokollLevel_P, Buf);
+			Neu = atoi(Buf);
+			if (Neu == ProtokollLevel)
+				printf_P(PSTR("<br>ProtokollLevel unver&auml;ndert: %d"), Neu);
+			else
+				{
+				itoa(Neu, Buf, 10); // 10 ist die Basis, nicht die Länge!
+				changeConfig_P(ProtokollLevel_P, Buf);
+				printf_P(PSTR("<br>Protokoll-Level: %s"), Buf);
+				ProtokollLevel = Neu;
+				}
 			}
-		printf_P(PSTR("<br>Protokoll-Level: %d"), ProtokollLevel);
-		}
+			
+		} // else argc > 0
 		
 	cgi_PrintHttpheaderEnd();
 
-	}
+	} // txp_cgi_config()
 	
 
 /*------------------------------------------------------------------------------------------------------------*/

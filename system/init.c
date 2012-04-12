@@ -114,12 +114,18 @@ void init( void )
 {
 	// alle Interrupt-Enables sperren, vorerst nur für ATmegaXXX
 	PCICR = 0; // Pin Change Interrupt
+	PCIFR = PCIFR; // alle Int-Flags löschen
 	TIMSK0 = 0; // Timer 0
+	TIFR0 = TIFR0; // alle Int-Flags löschen
 	TIMSK1 = 0; // Timer 1
+	TIFR1 = TIFR1; // alle Int-Flags löschen
 	TIMSK2 = 0; // Timer 2
+	TIFR2 = TIFR2; // alle Int-Flags löschen
 	UCSR0B = 0; // USART0
+	UCSR0A = UCSR0A; // alle Int-Flags löschen
 	UCSR1B = 0; // USART1
-	TWCR = 0; // TWI
+	UCSR1A = UCSR1A; // alle Int-Flags löschen
+	TWCR = (1 << TWINT); // TWI
 	SPCR = 0; // SPI
 	
  	// Interrupts freigeben
