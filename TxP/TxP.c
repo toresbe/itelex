@@ -313,8 +313,7 @@ void txp_timerEvent(void)
 	
 	wdt_reset();
 	
-	if (SocketLebenszeichenZaehler > 0)
-		SocketLebenszeichenZaehler--;
+	SocketLebenszeichenZaehler++;
 		
 	if (TxpThreadCheckCount++ > 30 * TxpTimerFreq) // nach 30 Sekunden Reset
 		{
@@ -802,7 +801,7 @@ static void SocketBufInit()
 	{
 	SocketInBufUsed = 0;
 	SocketOutBufUsed = 0;
-	SocketLebenszeichenZaehler = 4 * TxpTimerFreq;
+	SocketLebenszeichenZaehler = 0;
 	}
 	
 	
@@ -1195,7 +1194,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	// ggf. Anzahl verarbeiteter Zeichen zurückmelden
 	if (!SocketModeAscii 
 		&& (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
-		&& (SocketSendeQuittung || SocketLebenszeichenZaehler == 0))
+		&& (SocketSendeQuittung || SocketLebenszeichenZaehler > 4 * TxpTimerFreq))
 		{
 		SocketOutBuf[SocketOutBufUsed] = TXPC_QUITT;
 		SocketOutBufUsed++;
@@ -1209,8 +1208,8 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		
 	// ggf Lebenszeichen erzeugen
 	// --------------------------
-	if (SocketLebenszeichenZaehler == 0 && SocketOutBufUsed == 0)
-		{
+	if (SocketLebenszeichenZaehler > 4 * TxpTimerFreq && SocketOutBufUsed == 0)
+		{ // alle 4 Sekunden ein Lebenszeichen
 		SocketOutBuf[0] = TXPC_NULL;
 		SocketOutBuf[1] = 0;
 		SocketOutBufUsed = 2;
@@ -1221,7 +1220,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	if (SocketOutBufUsed > 0) //! \todo && !HaltSocketOut
 		{
 		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
-		SocketLebenszeichenZaehler = 4 * TxpTimerFreq; // alle 4 Sekunden ein Lebenszeichen
+		SocketLebenszeichenZaehler = 0; 
 		if (ProtokollLevel >= 2)
 			{
 			ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
