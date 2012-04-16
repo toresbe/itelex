@@ -65,7 +65,7 @@
 char mymac[6] = { ENC28J60_MAC0,ENC28J60_MAC1,ENC28J60_MAC2,ENC28J60_MAC3,ENC28J60_MAC4,ENC28J60_MAC5 };
 unsigned long PacketCounter;
 unsigned long ByteCounter;
-static char eth_state = ETH_LOCK;
+static char eth_state = ETH_NOTINIT;
 unsigned long eth_state_error = 0;
 /*
  -----------------------------------------------------------------------------------------------------------
@@ -268,6 +268,10 @@ void EthernetInit( void )
 #if defined(myAVR)
 		PCINT_set( ENC28J60_INT, ethernet );
 #endif
+
+		eth_state = ETH_LOCK;
+		eth_state_error = 0;
+		
 		// gibt Ethernet frei
 		FreeEthernet();
 }

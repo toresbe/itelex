@@ -63,7 +63,7 @@ bool ProtokollSpeichern(bool flush)
 		{ // Filesystem nicht bereit --> auf RS232 senden.
 		while (Puffer[0] != '\0')
 			{
-			if (UART_GetBytesinTxBuffer(0)) > 3)
+			if (UART_GetBytesinTxBuffer(0) > 3)
 				{
 				if (flush)
 					continue; // warten, bis Platz frei ist...
@@ -71,7 +71,7 @@ bool ProtokollSpeichern(bool flush)
 					return false; // Puffer nicht gespeichert
 				}
 			UART_SendByte(0, Puffer[0]);
-			memmove(Puffer, Pufer + 1, strlen(Puffer));
+			memmove(Puffer, Puffer + 1, strlen(Puffer));
 			}
 		return true;
 		}

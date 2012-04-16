@@ -45,7 +45,8 @@
 	void alive( void );
 
 	#define	ETH_LOCK	1
-	#define	ETH_FREE	0
+	#define	ETH_FREE	2
+	#define ETH_NOTINIT 0
 
 	#define ETHERNET_MIN_PACKET_LENGTH	0x3C
 	#define ETHERNET_HEADER_LENGTH		14
