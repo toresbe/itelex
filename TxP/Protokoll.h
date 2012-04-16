@@ -2,9 +2,9 @@
 
 #define __PROTOKOLL_H__
 
-#include "stdbool.h"
+#include <stdbool.h>
 
-extern bool ProtokollSpeichern();
+extern bool ProtokollSpeichern(bool flush);
 
 extern void Protokollieren(char *s);
 

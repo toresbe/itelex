@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <bool.h>
+#include <stdbool.h>
 
 #include "config.h"
 #include "system/clock/clock.h"
@@ -39,9 +39,11 @@ bool Idle; //!< Speichert, ob es zu protokollierende Ereignisse gab.
 extern char *DebugMsg;
 
 
-//! Schreibt die zwischengespeicherten Daten auf die SD-Karte.
+//! Schreibt die zwischengespeicherten Daten auf die SD-Karte oder sendet diese an 
+//! die serielle Schnittstelle.
+//! \param flush Falls True, alle zwischengespeicherten Daten senden
 //! \retval true, wenn Puffer gespeichert wurde.
-bool ProtokollSpeichern()
+bool ProtokollSpeichern(bool flush)
 	{
 	if (Puffer[0] == '\0')
 		return true; // nichts zu speichern 
@@ -59,13 +61,25 @@ bool ProtokollSpeichern()
 #endif //defined(MMC)
 
 		{ // Filesystem nicht bereit --> auf RS232 senden.
-		for (char *p = Puffer ; *p != '\0' ; p++)
-			UART_SendByte(0, *p);
-		Puffer[0] = '\0';
+		while (Puffer[0] != '\0')
+			{
+			if (UART_GetBytesinTxBuffer(0)) > 3)
+				{
+				if (flush)
+					continue; // warten, bis Platz frei ist...
+				else
+					return false; // Puffer nicht gespeichert
+				}
+			UART_SendByte(0, Puffer[0]);
+			memmove(Puffer, Pufer + 1, strlen(Puffer));
+			}
 		return true;
 		}
 
 #if defined(MMC)
+
+	if (!flush)
+		return false; //! \todo bei genügendem Inhalt doch speichern...
 
 #if defined(LEDROT_SDKARTE)
 	LED_on(ROT); 
@@ -175,7 +189,7 @@ static bool ProtPraeparieren(int len)
 	
 	if (strlen(Puffer) + len + 2 >= MaxPuffer)
 		{
-		if (!ProtokollSpeichern())
+		if (!ProtokollSpeichern(true))
 			return false; // kein Platz mehr.
 		}
 
@@ -241,7 +255,7 @@ void ProtokollierenMAC(char mac[6])
 static void SpeichernBeiIdle()
 	{
 	if (Idle)
-		ProtokollSpeichern();
+		ProtokollSpeichern(true);
 	else
 		Idle = true;
 	}

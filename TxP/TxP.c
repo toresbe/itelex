@@ -318,7 +318,7 @@ void txp_timerEvent(void)
 	if (TxpThreadCheckCount++ > 30 * TxpTimerFreq) // nach 30 Sekunden Reset
 		{
 		Protokollieren("TxP: Reset wegen nicht-Aufruf von txp_thread()\r\n");
-		ProtokollSpeichern();
+		ProtokollSpeichern(true);
 		softreset();
 		}
 		
@@ -1742,6 +1742,12 @@ void txp_thread()
 		RuheZaehler = 0;
 		}
 
+	// ==========================================================================
+	// Ab und zu mal den Protokollinhalt speichern
+	// ==========================================================================
+
+	ProtokollSpeichern(false);
+		
 	} // txp_thread
 	
 
@@ -1883,7 +1889,7 @@ void txp_cgi_debug( void * pStruct )
 
 	cgi_PrintHttpheaderEnd();
 
-	ProtokollSpeichern();
+	ProtokollSpeichern(true);
 
 	}
 	
