@@ -1516,7 +1516,7 @@ void txp_thread()
 	// Prüfen, ob TWI-Kommunikation überhaupt noch läuft
 	// ======================================================================
 
-	if (Modus == ModKommendWarteEinQuitt || ModKommendVerbunden 
+	if (Modus == ModKommendWarteEinQuitt || Modus == ModKommendVerbunden 
 	    || Modus == ModGehendReserv || Modus == ModGehendWaehlen || Modus == ModGehendVerbunden 
 		|| Modus == ModHtmlVerbunden || Modus == ModPufferDruckUndSchluss)
 		{
