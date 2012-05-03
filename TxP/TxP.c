@@ -977,7 +977,14 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		{
 		int Res = GetSocketData(*Socket, InCount, SocketInBuf + SocketInBufUsed);
 		
-		if (ProtokollLevel >= 2)
+		if (ProtokollLevel == 2) // Datenmengen
+			{
+			ProtokollierenInt_P(PSTR("TxP: Empf neu:%d " ), Res);
+			ProtokollierenInt_P(PSTR("sum:%d "), SocketAnzahlZeichenEmpfangen + Res);
+			ProtokollierenInt_P(PSTR("buf:%d\r\n"), SocketInBufUsed + PufferAnzahl(&SendePuffer));
+			}
+			
+		if (ProtokollLevel == 3) // Daten explizit
 			{
 			// printf_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
 			// printf_P(PSTR("%d)"), Res);
@@ -989,7 +996,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			for (uint16_t i = 0 ; i < Res ; i++)
 				ProtokollierenInt_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
 			ProtokollierenInt_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
-			}
+			}		
 			
 		if (Res > 0)
 			SocketInBufUsed += Res;
@@ -1221,7 +1228,15 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		{
 		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
 		SocketLebenszeichenZaehler = 0; 
-		if (ProtokollLevel >= 2)
+
+		if (ProtokollLevel == 2) // Datenmengen
+			{
+			ProtokollierenInt_P(PSTR("TxP: Send neu:%d " ), SocketOutBufUsed);
+			ProtokollierenInt_P(PSTR("sum:%d "), SocketAnzahlZeichenGesendet + Res);
+			ProtokollierenInt_P(PSTR("buf:%d\r\n"), (uint8_t)(SocketAnzahlZeichenGesendet - SocketAnzahlZeichenQuittiert));
+			}
+		
+		if (ProtokollLevel == 3)
 			{
 			ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
 			for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
@@ -1997,7 +2012,7 @@ void AdresseZuWahlStr(uint8_t Adr, char* Buf)
 		Buf[0] = '\0'; // ungültige Nummer
 	else
 		{
-		itoa(Wahl, Buf, 10); // 10 ist die Basis f�r Dezimal!
+		itoa(Wahl, Buf, 10); // 10 ist die Basis für Dezimal!
 		if (AnzZif > 1 && Buf[1] == '\0')
 			{
 			Buf[2] = '\0';
