@@ -84,6 +84,7 @@ bool ProtokollSpeichern(bool flush)
 #if defined(LEDROT_SDKARTE)
 	LED_on(ROT); 
 #endif //defined(LEDROT_SDKARTE)
+
 	if (Dateiname[0] == '\0')
 		fd = NULL;
 	else
@@ -166,9 +167,11 @@ bool ProtokollSpeichern(bool flush)
 		
 	fat_close_file(fd);
 	Puffer[0] = '\0';
+
 #if defined(LEDROT_SDKARTE)
 	LED_off(ROT); 
 #endif //defined(LEDROT_SDKARTE)
+
 	return true;
 
 #endif //defined(MMC)
@@ -187,7 +190,10 @@ static bool ProtPraeparieren(int len)
 	if (len == 0 || len > MaxPuffer / 2)
 		return false;
 	
-	if (strlen(Puffer) + len + 2 >= MaxPuffer)
+	if (strlen(Puffer) + len + 2 >= MaxPuffer
+		// Text passt nicht mehr in den Puffer
+		|| (strlen(Puffer) + 50 >= MaxPuffer && Puffer[strlen(Puffer) - 1] == '\n'))
+		// ganze Zeile passt nicht mehr in den Puffer
 		{
 		if (!ProtokollSpeichern(true))
 			return false; // kein Platz mehr.

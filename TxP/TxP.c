@@ -1051,7 +1051,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 					{ // Baudot-Code-Block ist vollständig UND noch entsprechend Platz im Sendepuffer
 					if (ProtokollLevel == 2) // Datenmengen protokollieren
 						{
-						ProtokollierenInt_P(PSTR("TxP: Empf %16d" ), PufferAnzahl(&SendePuffer));
+						ProtokollierenInt_P(PSTR("TxP: EmpfB %16d" ), PufferAnzahl(&SendePuffer));
 						ProtokollierenInt_P(PSTR("%4d"), len);
 						ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenEmpfangen + len);
 						}
@@ -1169,6 +1169,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		{ // ID#244 ID#344 ***************************************************************
 		if (SocketModeAscii)
 			{
+			uint8_t ProtAnz = 0;
 			while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3)
 				{
 				SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
@@ -1176,8 +1177,17 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 					{
 					SocketOutBufUsed++;
 					SocketAnzahlZeichenGesendet++;
+					ProtAnz++;
 					}
 				}
+
+			if (ProtokollLevel == 2 && ProtAnz > 0) // Datenmengen
+				{
+				ProtokollierenInt_P(PSTR("TxP: SendA %4d" ), (uint8_t)(SocketAnzahlZeichenGesendet - SocketAnzahlZeichenQuittiert));
+				ProtokollierenInt_P(PSTR("%4d"), ProtAnz);
+				ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenGesendet); // wurde schon erhöht
+				}
+				
 			} // if SocketModeAscii
 		else
 			{ // Baudot-Datenblock senden
@@ -1712,19 +1722,30 @@ void txp_thread()
 		{
 		// zu druckenden Text umwandeln
 		// ---------------------------
+		//! \todo mehr als ein Zeichen auf ein mal umkopieren
 		if (AsciiDruckPuffer[0] != '\0' && PufferLeer(&SendePuffer))
 			{
+			if (ProtokollLevel == 2) // Datenmengen protokollieren
+				{
+				ProtokollierenInt_P(PSTR("TxP: EmpfA %16d" ), PufferAnzahl(&SendePuffer));
+				ProtokollierenInt_P(PSTR("%4d"), 1);
+				ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenEmpfangen + 1);
+				}
+				
 			if (SchreibeZeichenInSendePuffer(AsciiDruckPuffer[0]))
 				{ // nur im Echo darstellen, wenn es auch gedruckt wurde.
 				if (Modus == ModHtmlVerbunden)
 					ZeichenInHtmlSendeText(AsciiDruckPuffer[0]);
 				}
 				
+			SocketAnzahlZeichenEmpfangen++;
+				
 			memmove(AsciiDruckPuffer, AsciiDruckPuffer + 1, strlen(AsciiDruckPuffer)); 
 				// erstes Zeichen aus AsciiDruckPuffer-Puffer löschen
 				// Länge: +1 für das NUL-Zeichen am Ende, -1 weil das erste Zeichen 'rausfliegt
 				
 			} // AsciiDruckPuffer nicht leer und SendePuffer leer
+			
 		} // Modus aktiv, bei dem gedruckt werden kann.
 		
 	if (Modus == ModHtmlVerbunden)
