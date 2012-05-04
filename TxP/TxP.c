@@ -977,13 +977,6 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		{
 		int Res = GetSocketData(*Socket, InCount, SocketInBuf + SocketInBufUsed);
 		
-		if (ProtokollLevel == 2) // Datenmengen
-			{
-			ProtokollierenInt_P(PSTR("TxP: Empf neu:%d " ), Res);
-			ProtokollierenInt_P(PSTR("sum:%d "), SocketAnzahlZeichenEmpfangen + Res);
-			ProtokollierenInt_P(PSTR("buf:%d\r\n"), SocketInBufUsed + PufferAnzahl(&SendePuffer));
-			}
-			
 		if (ProtokollLevel == 3) // Daten explizit
 			{
 			// printf_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
@@ -1053,8 +1046,16 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				{ // ID#243 ID#343 ***********************************************************
 				SocketModeAscii = false;
 				uint8_t len = SocketInBuf[i+1];
+				
 				if (i + 2 + len <= SocketInBufUsed && PufferAnzahl(&SendePuffer) + len < MaxPuffer)
 					{ // Baudot-Code-Block ist vollständig UND noch entsprechend Platz im Sendepuffer
+					if (ProtokollLevel == 2) // Datenmengen protokollieren
+						{
+						ProtokollierenInt_P(PSTR("TxP: Empf %16d" ), PufferAnzahl(&SendePuffer));
+						ProtokollierenInt_P(PSTR("%4d"), len);
+						ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenEmpfangen + len);
+						}
+					
 					i += 2; // Code und Länge überspringen
 					SocketAnzahlZeichenEmpfangen += len;
 					while (len > 0)
@@ -1183,6 +1184,14 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			uint8_t len = PufferAnzahl(&EmpfPuffer);
 			if (len > SocketOutBufMax - 3 - SocketOutBufUsed)
 				len = SocketOutBufMax - 3 - SocketOutBufUsed;
+				
+			if (ProtokollLevel == 2) // Datenmengen
+				{
+				ProtokollierenInt_P(PSTR("TxP: Send %4d" ), (uint8_t)(SocketAnzahlZeichenGesendet - SocketAnzahlZeichenQuittiert));
+				ProtokollierenInt_P(PSTR("%4d"), len);
+				ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenGesendet + len);
+				}
+				
 			SocketOutBuf[SocketOutBufUsed] = TXPC_BAUDOT_DATA;
 			SocketOutBufUsed++;
 			SocketOutBuf[SocketOutBufUsed] = len;
@@ -1229,13 +1238,6 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
 		SocketLebenszeichenZaehler = 0; 
 
-		if (ProtokollLevel == 2) // Datenmengen
-			{
-			ProtokollierenInt_P(PSTR("TxP: Send neu:%d " ), SocketOutBufUsed);
-			ProtokollierenInt_P(PSTR("sum:%d "), SocketAnzahlZeichenGesendet + Res);
-			ProtokollierenInt_P(PSTR("buf:%d\r\n"), (uint8_t)(SocketAnzahlZeichenGesendet - SocketAnzahlZeichenQuittiert));
-			}
-		
 		if (ProtokollLevel == 3)
 			{
 			ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
