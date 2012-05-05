@@ -1143,7 +1143,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	if (CheckSocketState(*Socket) == SOCKET_NOT_USE)
 		{ // ID#242 ID#342 ID#314 ************************************************
 		if (ProtokollLevel >= 1)
-			Protokollieren_P(PSTR("Txp: Socket wurde von Gegenstelle geschlossen\r\n" ));
+			Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle geschlossen\r\n" ));
 		CloseTCPSocket(*Socket);
 		*Socket = NO_SOCKET_USED;
 		if (IstVerbunden)
@@ -1197,7 +1197,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				
 			if (ProtokollLevel == 2) // Datenmengen
 				{
-				ProtokollierenInt_P(PSTR("TxP: Send %4d" ), (uint8_t)(SocketAnzahlZeichenGesendet - SocketAnzahlZeichenQuittiert));
+				ProtokollierenInt_P(PSTR("TxP: SendB %4d" ), (uint8_t)(SocketAnzahlZeichenGesendet - SocketAnzahlZeichenQuittiert));
 				ProtokollierenInt_P(PSTR("%4d"), len);
 				ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenGesendet + len);
 				}
