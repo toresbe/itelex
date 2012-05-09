@@ -420,8 +420,9 @@ void txp_timerEvent(void)
 			if (SerUmSendBitNr == 8) // Stop-Bit läuft
 				{
 				NeuMark = true;
-//				if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 13 : 15))
-				if (++SerUmTickZaehlerSend >= ((!get_Taste() || SendenBeschleunigen) ? 13 : 15)) // HACK Test wegen Auswirkung des schnellen Sendens....
+				if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 12 : 14)) // 12 und 14 empirisch ermittelt...
+				//if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 12 : 16)) // HACK Wert 16: Simulation zu schneller Sender
+				//if (++SerUmTickZaehlerSend >= ((!get_Taste() || SendenBeschleunigen) ? 12 : 14)) // HACK Test wegen Auswirkung des schnellen Sendens....
 					SerUmSendBitNr = SerUmSendWarte; // fertig für die nächsten Daten
 				}
 			else
