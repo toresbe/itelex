@@ -2067,12 +2067,12 @@ void txp_cgi_config(void *pStruct)
 		CgiFormStartTabbed_P(PSTR("txp-config.cgi"));
 
 		AdresseZuWahlStr(BusEigenAdresse, Buf);
-		CgiFormInputFieldText_P(PSTR("Eigene Nummer:"), EigeneNummer_P, 2, Buf);
+		CgiFormInputFieldText_P(PSTR("Netz-Vorwahl:"), EigeneNummer_P, 2, Buf);
+
+		CgiFormCheckbox_P(PSTR("feste Hauptstelle:"), FesteHst_P, FesteHauptstelle);
 
 		AdresseZuWahlStr(Hauptstelle, Buf);
 		CgiFormInputFieldText_P(PSTR("Hauptstelle:"), Hauptstelle_P, 2, Buf);
-
-		CgiFormCheckbox_P(PSTR("feste Hauptstelle:"), FesteHst_P, FesteHauptstelle);
 
 		CgiFormCheckbox_P(PSTR("Alternativ-Suche bei besetzt:"), AlternBeiBes_P, AlternativSucheBeiBesetzt);
 						
@@ -2098,15 +2098,15 @@ void txp_cgi_config(void *pStruct)
 			Buf[2] = '\0';
 			Neu = WahlZuAdresse(atoi(Buf), strlen(Buf));
 			if (Neu == BusEigenAdresse)
-				printf_P(PSTR("<br>Eigene Nummer unver&auml;ndert: %s"), Buf);
+				printf_P(PSTR("<br>Netz-Vorwahl unver&auml;ndert: %s"), Buf);
 			else if (Modus == ModRuhe && BusEigenAdressePruefenUndSetzen(Neu))
 				{
 				AdresseZuWahlStr(Neu, Buf);
 				changeConfig_P(EigeneNummer_P, Buf);
-				printf_P(PSTR("<br>Eigene Nummer: %s"), Buf);
+				printf_P(PSTR("<br>Netz-Vorwahl: %s"), Buf);
 				}
 			else
-				printf_P(PSTR("<br>Eigene Nummer konnte nicht ge&auml;ndert werden"));
+				printf_P(PSTR("<br>Netz-Vorwahl konnte nicht ge&auml;ndert werden"));
 			}
 		
 		// Nummer Hauptstelle

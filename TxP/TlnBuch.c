@@ -649,7 +649,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			"<h3>Teilnehmerverzeichnis</h3>"
 			"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 			"<tr>"
-   			"<th align=\"right\">Nummer</th>" // Nummer
+   			"<th align=\"right\">Rufnummer</th>" // Nummer
    			"<th align=\"left\">Name</th>" // Name
    			"<th align=\"center\">Besond.</th>" // Flags
    			"<th align=\"left\">Typ</th>" // Typ
@@ -736,7 +736,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 		CgiFormStartTabbed_P(PSTR("txp-tlnverz.cgi"));
 
-		CgiFormInputFieldLong_P(PSTR("Nummer:"), Nummer_P, 10, TD.Nummer);
+		CgiFormInputFieldLong_P(PSTR("Rufnummer:"), Nummer_P, 10, TD.Nummer);
 
 		printf_P(PSTR("<input name=\"altnummer\" type=\"hidden\" value=\"%ld\">"), TD.Nummer);
 
@@ -784,12 +784,12 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 		if (TD.Nummer == 0)
 			{
-			printf_P(PSTR("<b>Teilnehmernummer 0 nicht erlaubt!</b><br>"));
+			printf_P(PSTR("<b>Rufnummer 0 nicht erlaubt!</b><br>"));
 			Ok = false;
 			}
 		else
 			{
-			printf_P(PSTR("Teilnehmereintrag:<br>Nummer: %ld "), TD.Nummer);
+			printf_P(PSTR("Teilnehmereintrag:<br>Rufnummer: %ld "), TD.Nummer);
 			if (AltNummer == 0)
 				printf_P(PSTR("hinzuf&uuml;gen"));
 			else if (AltNummer != TD.Nummer)
@@ -864,7 +864,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			
 		if (Ok && TD.Nummer != AltNummer && TlnSuche(TD.Nummer, false, NULL))
 			{
-			printf_P(PSTR("<b>Nummer ist bereits vergeben, &Auml;nderung nicht gespeichert</b><br>"));
+			printf_P(PSTR("<b>Rufnummer ist bereits vergeben, &Auml;nderung nicht gespeichert</b><br>"));
 			Ok = false;
 			}
 			
