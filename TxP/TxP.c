@@ -232,6 +232,9 @@ volatile static bool SocketSendeQuittung;
 static uint8_t SocketSendeFehlerZaehler;
 	//!< Zählt bis 10 bei nicht erfolgreichen Sendeversuchen auf dem Socket.
 	
+static uint16_t SocketSendeSperrZaehler;
+	//!< Zählt nach Sendefehlern herunter und verhindert solange neue Sendeversuche.
+	
 static bool SocketModeAscii; 
 	//!< true, wenn die Daten als ASCII und nicht als Baudot-Daten übertragen werden.
 
@@ -330,6 +333,9 @@ void txp_timerEvent(void)
 	TwiWatchdogCount++;
 		
 	RuheZaehler++; // wird aber vielleicht gleich wieder auf Null gestellt
+	
+	if (SocketSendeSperrZaehler > 0)
+		SocketSendeSperrZaehler--;
 	
 	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden || Modus == ModHtmlVerbunden || Modus == ModPufferDruckUndSchluss)
 		{ // ist Verbunden, also Pegel senden und empfangen
@@ -803,6 +809,7 @@ static void SocketBufInit()
 	SocketInBufUsed = 0;
 	SocketOutBufUsed = 0;
 	SocketLebenszeichenZaehler = 0;
+	SocketSendeSperrZaehler = 0;
 	}
 	
 	
@@ -1221,7 +1228,8 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	// ggf. Anzahl verarbeiteter Zeichen zurückmelden
 	if (!SocketModeAscii 
 		&& (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
-		&& (SocketSendeQuittung || SocketLebenszeichenZaehler > 4 * TxpTimerFreq))
+		&& (SocketSendeQuittung || SocketLebenszeichenZaehler > 4 * TxpTimerFreq)
+		&& SocketSendeSperrZaehler == 0)
 		{
 		SocketOutBuf[SocketOutBufUsed] = TXPC_QUITT;
 		SocketOutBufUsed++;
@@ -1235,7 +1243,9 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		
 	// ggf Lebenszeichen erzeugen
 	// --------------------------
-	if (SocketLebenszeichenZaehler > 4 * TxpTimerFreq && SocketOutBufUsed == 0)
+	if (SocketLebenszeichenZaehler > 4 * TxpTimerFreq 
+	    && SocketOutBufUsed == 0
+		&& SocketSendeSperrZaehler == 0)
 		{ // alle 4 Sekunden ein Lebenszeichen
 		SocketOutBuf[0] = TXPC_NULL;
 		SocketOutBuf[1] = 0;
@@ -1244,7 +1254,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		
 	// Daten ggf. ins Netz senden
 	// --------------------------------------------------
-	if (SocketOutBufUsed > 0) //! \todo && !HaltSocketOut
+	if (SocketOutBufUsed > 0 && SocketSendeSperrZaehler == 0) //! \todo && !HaltSocketOut
 		{
 		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
 		SocketLebenszeichenZaehler = 0; 
@@ -1277,6 +1287,8 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				else
 					ModusWechsel(ModRuhe); 
 				}
+			else
+				SocketSendeSperrZaehler = 1 * TxpTimerFreq; // 1 Sekunde für nächsten Versuch warten.
 			}
 		else if (Res < SocketOutBufUsed)
 			{
