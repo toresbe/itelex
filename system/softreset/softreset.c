@@ -21,7 +21,7 @@ void softreset( void )
 {
 	do                          
 	{                           
-   		wdt_enable(WDTO_15MS);  
+   		wdt_enable(WDTO_2S);  
    		for(;;)                 
    		{                       
    		}                       

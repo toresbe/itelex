@@ -2115,10 +2115,10 @@ void txp_cgi_config_intern(void *pStruct)
 		AdresseZuWahlStr(BusEigenAdresse, Buf);
 		CgiFormInputFieldText_P(PSTR("Netz-Vorwahl f&uuml;r gehende Verbindungen:"), EigeneNummer_P, 2, Buf);
 
-		CgiFormCheckbox_P(PSTR("feste Hauptstelle für kommende Verbindungen:"), FesteHst_P, FesteHauptstelle);
+		CgiFormCheckbox_P(PSTR("feste Hauptstelle f&uuml;r kommende Verbindungen:"), FesteHst_P, FesteHauptstelle);
 
 		AdresseZuWahlStr(Hauptstelle, Buf);
-		CgiFormInputFieldText_P(PSTR("intere Duchwahl der Hauptstelle für kommende Verbindungen:"), Hauptstelle_P, 2, Buf);
+		CgiFormInputFieldText_P(PSTR("intere Duchwahl der Hauptstelle f&uuml;r kommende Verbindungen:"), Hauptstelle_P, 2, Buf);
 
 		CgiFormCheckbox_P(PSTR("Alternativ-Suche bei besetzt:"), AlternBeiBes_P, AlternativSucheBeiBesetzt);
 						
@@ -2357,10 +2357,10 @@ void txp_cgi_config_extern(void *pStruct)
 				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, RufnrServerAdr_P[i])], TlnAdresseMax);
 				Buf[TlnAdresseMax-1] = '\0';
 				if (strcmp(Buf, RufnummerServerAdresse[i]) == 0)
-					printf_P(PSTR("<br>Rufnummer-Server #%d unver&auml;ndert: %s"), Buf);
+					printf_P(PSTR("<br>Rufnummer-Server #%d unver&auml;ndert: %s"), i+1, Buf);
 				else
 					{
-					printf_P(PSTR("<br>Rufnummer-Server #%d ge&auml;ndert in: %s"), Buf);
+					printf_P(PSTR("<br>Rufnummer-Server #%d ge&auml;ndert in: %s"), i+1, Buf);
 					changeConfig_P(RufnrServerAdr_P[i], Buf);
 					strcpy(RufnummerServerAdresse[i], Buf);
 					}
