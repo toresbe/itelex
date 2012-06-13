@@ -95,9 +95,9 @@ typedef enum
 	ModPufferDruckUndSchluss = 18,
 	ModWarteSchlussQuitt = 19,
 	
-	// Über HTML-Seite eingegebener Verbindungswunsch
-	ModHtmlWarteEinQuitt = 21, //!< Warte auf Einschalt-Quittung des Endgeräts
-	ModHtmlVerbunden = 22, 
+	// z.B. über HTML-Seite verursachte direkte Druckausgabe
+	ModDirektdruckWarteEinQuitt = 21, //!< Warte auf Einschalt-Quittung des Endgeräts
+	ModDirektdruckVerbunden = 22, 
 	
 	ModDeaktiviert = 31 //!< Durch Tastendruck ausgeschaltet.
 	} TModus;
@@ -245,7 +245,8 @@ static bool SendenBeschleunigen;
 	
 static uint8_t Durchwahl;
 	//!< wenn != 0 wurde eine konkrete Nebenstelle gewählt.
-		
+
+	
 static uint8_t Hauptstelle; 
 	//!< Bus-Adresse für den nächsten kommenden Ruf, wird bei FesteHauptstelle = false auf die
 	//!< Adresse des letzten Anrufers gesetzt. 
@@ -256,7 +257,6 @@ static bool FesteHauptstelle;
 
 static bool AlternativSucheBeiBesetzt;
 	//!< Wenn true, werden bei besetzter Hauptstelle andere Endgeräte probiert.
-
 
 static uint8_t DurchwahlTabelle[9];
 	//!< Liste der Nebenstellen-Nummern bei kommenden Rufen mit Durchwahl
@@ -269,6 +269,20 @@ static uint8_t Wahlziffern;
 
 static uint8_t ProtokollLevel;
 	//!< "Tiefe" der Protokollierung: 0 = Aus, 1 = Normal, 2 = Intensiv
+
+	
+static uint32_t NetzRufnummer;
+	//!< Rufnummer des eigenen Anschlusses im ip-telex-Netz
+	
+static uint16_t NetzRufnummerPruefzahl;
+	//!< Prüfzahl zur NetzRufnummer. Um unberechtigte Fremd-Aktualisierungen zu vermeiden.
+	
+
+#define ANZ_RUFNUMMERN_SERVER 3
+	
+static char RufnummerServerAdresse[ANZ_RUFNUMMERN_SERVER][TlnAdresseMax];
+	//!< URL's oder IP's der Rufnummern-Server.
+
 
 //! Sollfrequenz des Aufrufs von txp_timerEvent()
 enum { TxpTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
@@ -337,7 +351,10 @@ void txp_timerEvent(void)
 	if (SocketSendeSperrZaehler > 0)
 		SocketSendeSperrZaehler--;
 	
-	if (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden || Modus == ModHtmlVerbunden || Modus == ModPufferDruckUndSchluss)
+	if (Modus == ModKommendVerbunden 
+		|| Modus == ModGehendVerbunden 
+		|| Modus == ModDirektdruckVerbunden 
+		|| Modus == ModPufferDruckUndSchluss)
 		{ // ist Verbunden, also Pegel senden und empfangen
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
 
@@ -724,7 +741,7 @@ static void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_FsBefEin);
 			break;
 		
-		case ModKommendWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
+		case ModKommendWarteEinQuitt: // Warte auf Einschalt-Quittung des Endgeräts
 			SET_BIT_Status(StatBit_FsBefBetrieb);
 			SET_BIT_Status(StatBit_FsBefEin);
 			RuheZaehler = 0;
@@ -738,7 +755,7 @@ static void ModusWechsel(TModus neu)
 			SendeMark = true;
 			break;
 	
-		case ModPufferDruckUndSchluss:
+		case ModPufferDruckUndSchluss: 
 			CLR_BIT_Status(StatBit_Verbunden);
 			RuheZaehler = 0;
 			break;
@@ -750,8 +767,7 @@ static void ModusWechsel(TModus neu)
 			RuheZaehler = 0;
 			break;
 
-		// Html = Auf HTML-Seite eingegebener Text
-		case ModHtmlWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
+		case ModDirektdruckWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
 			CLR_BIT_Status(StatBit_Frei);
 			CLR_BIT_Status(StatBit_LeitungKennung);
 			CLR_BIT_Status(StatBit_Verbunden);
@@ -773,7 +789,7 @@ static void ModusWechsel(TModus neu)
 			SocketSendeFehlerZaehler = 0;
 			break;
 	
-		case ModHtmlVerbunden: 
+		case ModDirektdruckVerbunden: 
 			SET_BIT_Status(StatBit_FsMeldBetrieb);
 			SET_BIT_Status(StatBit_FsMeldEin);
 			SET_BIT_Status(StatBit_Verbunden);
@@ -1392,11 +1408,11 @@ void txp_thread()
 					SocketSendeQuittung = true;
 					}
 
-				else if (Modus == ModHtmlWarteEinQuitt)
+				else if (Modus == ModDirektdruckWarteEinQuitt)
 					{ 
 					if (ProtokollLevel >= 1)
-						Protokollieren_P(PSTR("TxP: TWI Einschaltquittung durch HTML-Fenster\r\n" ));					
-					ModusWechsel(ModHtmlVerbunden);
+						Protokollieren_P(PSTR("TxP: TWI Einschaltquittung nach Direktdruck\r\n" ));					
+					ModusWechsel(ModDirektdruckVerbunden);
 					}
 				
 				else
@@ -1556,9 +1572,13 @@ void txp_thread()
 	// Prüfen, ob TWI-Kommunikation überhaupt noch läuft
 	// ======================================================================
 
-	if (Modus == ModKommendWarteEinQuitt || Modus == ModKommendVerbunden 
-	    || Modus == ModGehendReserv || Modus == ModGehendWaehlen || Modus == ModGehendVerbunden 
-		|| Modus == ModHtmlVerbunden || Modus == ModPufferDruckUndSchluss)
+	if (Modus == ModKommendWarteEinQuitt 
+		|| Modus == ModKommendVerbunden 
+	    || Modus == ModGehendReserv 
+		|| Modus == ModGehendWaehlen 
+		|| Modus == ModGehendVerbunden 
+		|| Modus == ModDirektdruckVerbunden 
+		|| Modus == ModPufferDruckUndSchluss)
 		{
 		if (TwiWatchdogCount > 4 * TxpTimerFreq) // nach 4 Sekunden ohne TWI-Kommunikation
 			{
@@ -1681,8 +1701,15 @@ void txp_thread()
 		switch (Modus)
 			{
 			case ModRuhe:
-				// ID#103 ********************************************************
-				ModusWechsel(ModDeaktiviert);
+				if (Tastendruck == Kurz)
+					// ID#103 ********************************************************
+					ModusWechsel(ModDeaktiviert);
+				else
+					{
+					//! \todo eigene IP ausgeben...
+					AlternativSucheBeiBesetzt = true; // damit auf jeden Fall gedruckt wird!
+					strcat_P(AsciiDruckPuffer, PSTR("Taste gedrueckt...\r\n")); 
+					}
 				break;
 				
 			case ModDeaktiviert:
@@ -1693,7 +1720,7 @@ void txp_thread()
 			case ModPufferDruckUndSchluss:
 				// ID#422 *************************************************************
 				if (ProtokollLevel >= 1)
-					Protokollieren_P(PSTR("TxP: Taste gedruckt --> Ausschaltung intern\r\n" ));
+					Protokollieren_P(PSTR("TxP: Taste gedruckt --> Reste-Druck abgebrochen\r\n" ));
 				BusSenden(BusKdoSchluss);
 				ModusWechsel(ModWarteSchlussQuitt);
 				AsciiDruckPuffer[0] = '\0';
@@ -1717,21 +1744,24 @@ void txp_thread()
 		if (KommendInternAnwaehlen(0)) // keine Durchwahl
 			{ 
 			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR("TxP: HTML-Eingabe -> Einschaltung intern\r\n" ));
+				Protokollieren_P(PSTR("TxP: Direktdruck -> Einschaltung intern\r\n" ));
 			BusSenden(BusKdoEin);
-			ModusWechsel(ModHtmlWarteEinQuitt);
+			ModusWechsel(ModDirektdruckWarteEinQuitt);
 			}
 		else
 			{ 
 			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR("TxP: HTML-Eingabe -> Einschaltung intern VERSAGT\r\n" ));
+				Protokollieren_P(PSTR("TxP: Direktdruck -> Einschaltung intern VERSAGT\r\n" ));
 			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
 			AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 			ModusWechsel(ModRuhe);
 			}
 		} // if ModRuhe && Text per HTML empfangen
 		
-	if (Modus == ModHtmlVerbunden || Modus == ModKommendVerbunden || Modus == ModGehendVerbunden || Modus == ModPufferDruckUndSchluss)
+	if (Modus == ModDirektdruckVerbunden 
+		|| Modus == ModKommendVerbunden 
+		|| Modus == ModGehendVerbunden 
+		|| Modus == ModPufferDruckUndSchluss)
 		{
 		// zu druckenden Text umwandeln
 		// ---------------------------
@@ -1747,7 +1777,7 @@ void txp_thread()
 				
 			if (SchreibeZeichenInSendePuffer(AsciiDruckPuffer[0]))
 				{ // nur im Echo darstellen, wenn es auch gedruckt wurde.
-				if (Modus == ModHtmlVerbunden)
+				if (Modus == ModDirektdruckVerbunden)
 					ZeichenInHtmlSendeText(AsciiDruckPuffer[0]);
 				}
 				
@@ -1755,14 +1785,16 @@ void txp_thread()
 				
 			memmove(AsciiDruckPuffer, AsciiDruckPuffer + 1, strlen(AsciiDruckPuffer)); 
 				// erstes Zeichen aus AsciiDruckPuffer-Puffer löschen
-				// Länge: +1 für das NUL-Zeichen am Ende, -1 weil das erste Zeichen 'rausfliegt
+				// Länge: +1 für das NUL-Zeichen am Ende, -1 weil das erste 
+				//        Zeichen 'rausfliegt, also +/- 0
 				
 			} // AsciiDruckPuffer nicht leer und SendePuffer leer
 			
 		} // Modus aktiv, bei dem gedruckt werden kann.
 		
-	if (Modus == ModHtmlVerbunden)
-		{ // eigegebene Zeichen nach Ascii umwandeln
+	if (Modus == ModDirektdruckVerbunden)
+		{ // am Fernschreiber eigegebene Zeichen nach Ascii umwandeln 
+		//! \todo eigentlich nur, wenn es tatsächlich über eine HTML-Seite lief...
 		while (!PufferLeer(&EmpfPuffer))
 			ZeichenInHtmlSendeText(CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode));
 
@@ -1772,13 +1804,13 @@ void txp_thread()
 			&& PufferLeer(&EmpfPuffer) )
 			{
 			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR("TxP: HTML-Ruhe --> Ausschaltung intern\r\n" ));
+				Protokollieren_P(PSTR("TxP: Direktdruck-Ruhe --> Ausschaltung intern\r\n" ));
 			BusSenden(BusKdoSchluss);
 			ModusWechsel(ModWarteSchlussQuitt);
 			RuheZaehler = 0;
 			} // Abschaltung nach 30 Sekunden
 
-		} // if Modus == ModHtmlVerbunden
+		} // if Modus == ModDirektdruckVerbunden
 
 	// ==========================================================================
 	// Abschaltung nach Reste-Druck?
@@ -1966,7 +1998,7 @@ void txp_cgi_msg_Out( void * pStruct )
 					"</HEAD>"
 					"<BODY>" ));
 					
-	if (Modus == ModHtmlVerbunden)
+	if (Modus == ModDirektdruckVerbunden)
 		{
 		printf_P(PSTR("Druckspiegel:<br><pre>%s&lt;&lt;&lt;%s</pre>"), HtmlSendeText, AsciiDruckPuffer);
 		}
@@ -2000,15 +2032,17 @@ void txp_cgi_msg_In( void * pStruct )
 
 	if ((http_request->argc != 0) 
 	    && PharseCheckName_P(http_request, Eingabe_P)
-		&& (Modus == ModRuhe || Modus == ModHtmlWarteEinQuitt || Modus == ModHtmlVerbunden))
+		&& (Modus == ModRuhe || Modus == ModDirektdruckWarteEinQuitt || Modus == ModDirektdruckVerbunden))
 		{
-		strncat(AsciiDruckPuffer, http_request->argvalue[PharseGetValue_P(http_request, Eingabe_P)], AsciiDruckPufferMax - strlen(AsciiDruckPuffer) - 3);
+		char *EingabeText = http_request->argvalue[PharseGetValue_P(http_request, Eingabe_P)];
+		strncat(AsciiDruckPuffer, EingabeText, AsciiDruckPufferMax - strlen(AsciiDruckPuffer) - 3);
 		AsciiDruckPuffer[AsciiDruckPufferMax-3] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 		if (ProtokollLevel >= 2)
 			{
 			Protokollieren_P(PSTR("TxP: CGI-Druck "));
-			Protokollieren(AsciiDruckPuffer); // CRLF steht im Druckpuffer
+			Protokollieren(EingabeText); 
+			Protokollieren_P(PSTR("\r\n"));
 			}
 		}
 
@@ -2023,14 +2057,6 @@ void txp_cgi_msg_In( void * pStruct )
 	}
 	
 	
-const PROGMEM char Hauptstelle_P[] = "HAUPTSTELLE";
-const PROGMEM char EigeneNummer_P[] = "EIGENENUMMER";
-const PROGMEM char FesteHst_P[] = "FESTEHPST";
-const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
-const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
-const PROGMEM char ProtokollLevel_P[] = "PROTLEVEL";
-
-
 //! Bildet den zur TWI-Adresse passenden Wähltext.
 //------------------------------------------------
 //! Beispiele: 45 -> "45", 05 -> "05", 103 -> "3"
@@ -2058,15 +2084,23 @@ void AdresseZuWahlStr(uint8_t Adr, char* Buf)
 		}
 	}
 
+
+const PROGMEM char Hauptstelle_P[] = "HAUPTSTELLE";
+const PROGMEM char EigeneNummer_P[] = "EIGENENUMMER";
+const PROGMEM char FesteHst_P[] = "FESTEHPST";
+const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
+const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
+const PROGMEM char ProtokollLevel_P[] = "PROTLEVEL";
 	
 /*------------------------------------------------------------------------------------------------------------*/
-/*!\brief Das CGI-Interface zum Ändern der Einstellungen des TelexPhone-Interface 
+/*!\brief Das CGI-Interface zum Ändern der Einstellungen des TelexPhone-Interface bezüglich der Einbindung
+ * in das lokale TxP-System
  * \param 	pStruct	Struktur auf den HTTP_Request
  * \return	NONE
  */
 /*------------------------------------------------------------------------------------------------------------*/
  
-void txp_cgi_config(void *pStruct)
+void txp_cgi_config_intern(void *pStruct)
 	{
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
@@ -2076,15 +2110,15 @@ void txp_cgi_config(void *pStruct)
 
 	if ( http_request->argc == 0 )
 		{
-		CgiFormStartTabbed_P(PSTR("txp-config.cgi"));
+		CgiFormStartTabbed_P(PSTR("txpcfg-intern.cgi"));
 
 		AdresseZuWahlStr(BusEigenAdresse, Buf);
-		CgiFormInputFieldText_P(PSTR("Netz-Vorwahl:"), EigeneNummer_P, 2, Buf);
+		CgiFormInputFieldText_P(PSTR("Netz-Vorwahl f&uuml;r gehende Verbindungen:"), EigeneNummer_P, 2, Buf);
 
-		CgiFormCheckbox_P(PSTR("feste Hauptstelle:"), FesteHst_P, FesteHauptstelle);
+		CgiFormCheckbox_P(PSTR("feste Hauptstelle für kommende Verbindungen:"), FesteHst_P, FesteHauptstelle);
 
 		AdresseZuWahlStr(Hauptstelle, Buf);
-		CgiFormInputFieldText_P(PSTR("Hauptstelle:"), Hauptstelle_P, 2, Buf);
+		CgiFormInputFieldText_P(PSTR("intere Duchwahl der Hauptstelle für kommende Verbindungen:"), Hauptstelle_P, 2, Buf);
 
 		CgiFormCheckbox_P(PSTR("Alternativ-Suche bei besetzt:"), AlternBeiBes_P, AlternativSucheBeiBesetzt);
 						
@@ -2100,7 +2134,7 @@ void txp_cgi_config(void *pStruct)
 		{
 		uint8_t Neu;
 
-		printf_P(PSTR("neue Einstellungen: <a href=\"txp-config.cgi\">weiter</a>"));
+		printf_P(PSTR("neue Einstellungen: <a href=\"txpcfg-intern.cgi\">weiter</a>"));
 
 		// Eigene Nummer
 		// -------------
@@ -2233,7 +2267,111 @@ void txp_cgi_config(void *pStruct)
 		
 	cgi_PrintHttpheaderEnd();
 
-	} // txp_cgi_config()
+	} // txp_cgi_config_intern()
+	
+
+const PROGMEM char NetzRufnummer_P[] = "NETZRUFNR";
+const PROGMEM char NetzRufnummerPruefzahl_P[] = "NETZRUFNRPRUEF";
+const PROGMEM char RufnrServerAdr1_P[] = "RUFNRSERV1";
+const PROGMEM char RufnrServerAdr2_P[] = "RUFNRSERV2";
+const PROGMEM char RufnrServerAdr3_P[] = "RUFNRSERV3";
+const char* RufnrServerAdr_P[] = { RufnrServerAdr1_P, RufnrServerAdr2_P, RufnrServerAdr3_P } ; // liegt dann zwar im RAM, ist aber halt so...
+	
+	
+/*------------------------------------------------------------------------------------------------------------*/
+/*!\brief Das CGI-Interface zum Ändern der Einstellungen des TelexPhone-Interface bezüglich der Einbindung
+ * in das globale ip-netz
+ * \param 	pStruct	Struktur auf den HTTP_Request
+ * \return	NONE
+ */
+/*------------------------------------------------------------------------------------------------------------*/
+ 
+void txp_cgi_config_extern(void *pStruct)
+	{
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+	char Buf[TlnAdresseMax + 1];
+	uint8_t i;
+	
+	cgi_PrintHttpheaderStart();
+
+	if ( http_request->argc == 0 )
+		{
+		CgiFormStartTabbed_P(PSTR("txpcfg-extern.cgi"));
+
+		CgiFormInputFieldLong_P(PSTR("eigene Rufnummer im ip-telex-Netz:"), NetzRufnummer_P, 10, NetzRufnummer);
+		
+		CgiFormInputFieldLong_P(PSTR("Pr&uuml;fzahl zur eigenen Rufnummer:"), NetzRufnummerPruefzahl_P, 6, NetzRufnummerPruefzahl);
+		
+		for (i = 0 ; i < ANZ_RUFNUMMERN_SERVER ; i++)
+			CgiFormInputFieldText_P(PSTR("Adresse des Rufnummern-Server:"), RufnrServerAdr_P[i], TlnAdresseMax, RufnummerServerAdresse[i]);
+
+		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
+		}
+	else // argc > 0
+		{
+		uint32_t Neu;
+
+		printf_P(PSTR("neue Einstellungen: <a href=\"txpcfg-extern.cgi\">weiter</a>"));
+
+		// Eigene Netz-Rufnummer
+		// ---------------------
+		if (PharseCheckName_P(http_request, NetzRufnummer_P))
+			{
+			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, NetzRufnummer_P)], 10);
+			Buf[10] = '\0';
+			Neu = atol(Buf);
+			if (Neu == NetzRufnummer)
+				printf_P(PSTR("<br>Netz-Rufnummer unver&auml;ndert: %s"), Buf);
+			else
+				{
+				printf_P(PSTR("<br>Netz-Rufnummer ge&auml;ndert in: %s"), Buf);
+				changeConfig_P(NetzRufnummer_P, Buf);
+				NetzRufnummer = Neu;
+				}
+			}
+		
+		// Prüfzahl zur eigene Netz-Rufnummer
+		// ----------------------------------
+		if (PharseCheckName_P(http_request, NetzRufnummerPruefzahl_P))
+			{
+			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, NetzRufnummerPruefzahl_P)], 10);
+			Buf[10] = '\0';
+			Neu = atol(Buf);
+			if (Neu == NetzRufnummerPruefzahl)
+				printf_P(PSTR("<br>Netz-Rufnummer-Pr&uuml;fzahl unver&auml;ndert: %s"), Buf);
+			else
+				{
+				printf_P(PSTR("<br>Netz-Rufnummer-Pr&uuml;fzahl ge&auml;ndert in: %s"), Buf);
+				changeConfig_P(NetzRufnummerPruefzahl_P, Buf);
+				NetzRufnummerPruefzahl = Neu;
+				}
+			}
+		
+		// URLs der Rufnummern-Server
+		// --------------------------
+		for (i = 0 ; i < ANZ_RUFNUMMERN_SERVER ; i++)
+			{
+			if (PharseCheckName_P(http_request, RufnrServerAdr_P[i]))
+				{
+				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, RufnrServerAdr_P[i])], TlnAdresseMax);
+				Buf[TlnAdresseMax-1] = '\0';
+				if (strcmp(Buf, RufnummerServerAdresse[i]) == 0)
+					printf_P(PSTR("<br>Rufnummer-Server #%d unver&auml;ndert: %s"), Buf);
+				else
+					{
+					printf_P(PSTR("<br>Rufnummer-Server #%d ge&auml;ndert in: %s"), Buf);
+					changeConfig_P(RufnrServerAdr_P[i], Buf);
+					strcpy(RufnummerServerAdresse[i], Buf);
+					}
+				} // if PharseCheckName_P()
+			} // for i
+			
+		} // else argc > 0
+		
+	cgi_PrintHttpheaderEnd();
+
+	} // txp_cgi_config_extern()
 	
 
 /*------------------------------------------------------------------------------------------------------------*/
@@ -2360,7 +2498,8 @@ void txp_init()
 	DebugMsg[0] = '\0';
 	
 	// EEPROM auslesen
-	char Buf[30];
+	char Buf[TlnAdresseMax];
+	uint8_t i;
 
 	if (readConfig_P(EigeneNummer_P, Buf) == 1)
 		BusEigenAdresse = WahlZuAdresse(atoi(Buf), strlen(Buf));
@@ -2382,7 +2521,7 @@ void txp_init()
 	else
 		Hauptstelle = 0, FesteHauptstelle = false;
 
-	for (uint8_t i = 0 ; i < 9 ; i++)
+	for (i = 0 ; i < 9 ; i++)
 		DurchwahlTabelle[i] = 0;
 	if (readConfig_P(DurchwahlTabelle_P, Buf) == 1)
 		DurchwahlTabelleDekodieren(Buf); // Ergebnis wird ignoriert
@@ -2391,6 +2530,22 @@ void txp_init()
 		ProtokollLevel = atoi(Buf);
 	else
 		ProtokollLevel = 1;
+		
+	if (readConfig_P(NetzRufnummer_P, Buf) == 1)
+		NetzRufnummer = atol(Buf);
+	else
+		NetzRufnummer = 0;
+		
+	if (readConfig_P(NetzRufnummerPruefzahl_P, Buf) == 1)
+		NetzRufnummerPruefzahl = atoi(Buf);
+	else
+		NetzRufnummerPruefzahl = 0;
+		
+	for (i = 0 ; i < ANZ_RUFNUMMERN_SERVER ; i++)
+		if (readConfig_P(RufnrServerAdr_P[i], RufnummerServerAdresse[i]) == 1)
+			; // ok
+		else
+			RufnummerServerAdresse[i][0] = '\0';
 		
 	BusEigenAdrMehrfach = 1; // muss Potenz von 2 sein (also 1, 2, 4, 8, 16, ... , Standard = 1
 
@@ -2402,7 +2557,8 @@ void txp_init()
 	
 	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
 	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("txp-msg-out.cgi"));
-	cgi_RegisterCGI( txp_cgi_config, PSTR("txp-config.cgi"));
+	cgi_RegisterCGI( txp_cgi_config_intern, PSTR("txpcfg-intern.cgi"));
+	cgi_RegisterCGI( txp_cgi_config_extern, PSTR("txpcfg-extern.cgi"));
 	cgi_RegisterCGI( txp_cgi_debug, PSTR("txp-debug.cgi"));
 	cgi_RegisterCGI( txp_cgi_TwiTlnListe, PSTR("txp-twitlnliste.cgi"));
 #if defined(MMC)

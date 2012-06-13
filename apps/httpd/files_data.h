@@ -281,7 +281,7 @@ const char data11[] PROGMEM = {
 	"<a href=\"mainmenu.html\">zur&uuml;ck</a>"
 	" / <a href=\"txp-msg.html\" target=\"main\">Nachricht senden</a>"
 	" / <a href=\"txp-tlnverz.cgi\" target=\"main\">Teilnehmer-Verzeichnis</a>"
-	" / <a href=\"txp-config.cgi\" target=\"main\">TxP-Einstellungen</a>"
+	" / <a href=\"txpcfg-menu.html\">TxP-Einstellungen</a>"
 	" / <a href=\"txp-debug.cgi\" target=\"main\">Debug-Infos</a>"
 	" / <a href=\"txp-twitlnliste.cgi\" target=\"main\">Bus-Tln-Liste</a>"
 #if defined(MMC)
@@ -291,6 +291,22 @@ const char data11[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n" } ;
 
+const char files13[] PROGMEM = "txpcfg-menu.html";
+const char data13[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"txp-menu.html\">zur&uuml;ck</a>"
+	" / <a href=\"txpcfg-intern.cgi\" target=\"main\">Einstellungen im lokalen TxP-System</a>"
+	" / <a href=\"txpcfg-extern.cgi\" target=\"main\">Einstellungen im ip-telex-Netz</a>"
+//	" / <a href=\"txpcfg-mail.cgi\" target=\"main\">Mail-Einstellungen</a>"
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n" } ;
+
+	
 const char files12[] PROGMEM = "txp-msg.html";
 const char data12[] PROGMEM = {
 	"<HTML>"
@@ -334,6 +350,7 @@ FILES files[] = {
 #if defined(TELEXPHONE)
 	{ files11, data11, TEXT, sizeof( data11 ) - 1 },
 	{ files12, data12, TEXT, sizeof( data12 ) - 1 },
+	{ files13, data13, TEXT, sizeof( data13 ) - 1 },
 #endif
 	{ lochstr_hg_filename, lochstreifen_hg, PNG, sizeof( lochstreifen_hg ) },
 	{ 0,0,0,0 }

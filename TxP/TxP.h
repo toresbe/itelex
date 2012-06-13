@@ -47,6 +47,9 @@
 	//! Der TCP-Port für die TelexPhone-Kommunikation
 	#define TXP_PORT 134
 	
+	//! Der TCP-Port für die TelexPhone-Rumnummernverwaltung
+	#define TXP_RUFNRSRV_PORT 11811
+	
 	extern void txp_init( void );
 	extern void txp_thread( void );
 	extern TTastendruck Tastendruck;
