@@ -529,7 +529,7 @@ void txp_timerEvent(void)
 	// -------------------------------
 	static enum { TasteAus, TasteEin, TasteSperr } TasteZustandIntern;
 		// Speichert den letzten Zustand der Taste.
-	static uint8_t TasteZaehler;
+	static uint16_t TasteZaehler;
 
 	switch (TasteZustandIntern)
 		{
@@ -578,6 +578,7 @@ void txp_timerEvent(void)
 		default:
 			TasteZustandIntern = TasteSperr;
 			Tastendruck = NichtGedr;
+			TasteZaehler = 0;
 			break;
 			
 		} // switch (TasteZustandIntern)
