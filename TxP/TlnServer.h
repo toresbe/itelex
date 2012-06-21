@@ -1,11 +1,11 @@
-/*! \file TxP.h \brief TelexPhone Definitionen */
+/*! \file TlnServer.h \brief TelexPhone Definitionen */
 /***************************************************************************
- *            TxP.h
+ *            TlnServer.h
  *
  ****************************************************************************/
 ///	\ingroup software
 ///	\defgroup 
-///	\code #include "txp.h" \endcode
+///	\code #include "TlnServer.h" \endcode
 //****************************************************************************/
 /*
  *  This program is free software; you can redistribute it and/or modify
@@ -23,46 +23,15 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 //@{
-#ifndef _TXP_H_
-	#define _TXP_H_
+#ifndef _TLNSERVER_H_
+	#define _TLNSERVER_H_
 	
-	#include "config.h"
-
 	#ifdef TELEXPHONE
 	
-	#include <avr/pgmspace.h>  
-	#include "system/shell/shell.h"
-	#include "config.h"
-
-	#include "Defports.h"
-	
-	DEFPORTINPULL(Taste, B, 3);
-	
-	typedef enum { 
-		NichtGedr, //!< nicht gedrückt.
-		Kurz, //!< kurz gedrückt ( < 0,8 Sekunden)
-		Lang  //!< lang gedrückt ( > 0,8 Sekunden)
-		} TTastendruck; //!< Art des Tastendrucks
-
-	//! Der TCP-Port für die TelexPhone-Kommunikation
-	#define TXP_PORT 134
-	
-	//! Der TCP-Port für die TelexPhone-Rumnummernverwaltung
-	#define TXP_TLNSERV_PORT 11811
-	
-	extern void txp_init( void );
-	extern void txp_thread( void );
-	extern TTastendruck Tastendruck;
-	extern bool WarteTaste();
-	
-	// Was soll LED rot anzeigen?
-	//---------------------------
-	//#define LEDROT_EXTEEPROM
-	//#define LEDROT_SDKARTE
-	#define LEDROT_TXPTHREADBLOCK
-	//#define LEDROT_UNERWARTET  // noch ungenutzt
+	extern void txp_tlnserv_thread( void );
+	extern void txp_tlnserv_init( void );
 	
 	#endif //def TELEXPHONE
 	
-#endif /* _TXP_H_ */
+#endif /* _TLNSERVER_H_ */
 //@}

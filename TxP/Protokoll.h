@@ -4,6 +4,8 @@
 
 #include <stdbool.h>
 
+extern uint8_t ProtokollLevel;
+
 extern bool ProtokollSpeichern(bool flush);
 
 extern void Protokollieren(char *s);

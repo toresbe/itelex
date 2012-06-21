@@ -35,6 +35,9 @@ enum { MaxDateigroesse = 100000UL } ; //!< Maximale Dateigröße. Bei überschre
 
 bool Idle; //!< Speichert, ob es zu protokollierende Ereignisse gab.
 
+uint8_t ProtokollLevel;
+	//!< "Tiefe" der Protokollierung: 0 = Aus, 1 = Normal, 2 = Intensiv
+
 
 extern char *DebugMsg;
 
@@ -270,6 +273,7 @@ static void SpeichernBeiIdle()
 //! Initialisiert die Protokollierung.
 void ProtokollInit()
 	{
+	ProtokollLevel = 1; // wird später aus der Konfiguration überschrieben
 	Puffer[0] = '\0';
 	Dateiname[0] = '\0';
 	Idle = true;

@@ -267,10 +267,7 @@ static uint32_t Wahlnummer;
 static uint8_t Wahlziffern; 
 	//!< Anzahl gewählter Ziffern
 
-static uint8_t ProtokollLevel;
-	//!< "Tiefe" der Protokollierung: 0 = Aus, 1 = Normal, 2 = Intensiv
 
-	
 static uint32_t NetzRufnummer;
 	//!< Rufnummer des eigenen Anschlusses im ip-telex-Netz
 	
@@ -1164,20 +1161,6 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			
 		} // if GetBytesInSocketData > 0
 
-	// soll offene Verbindung geschlossen werden?
-	if (CheckSocketState(*Socket) == SOCKET_NOT_USE)
-		{ // ID#242 ID#342 ID#314 ************************************************
-		if (ProtokollLevel >= 1)
-			Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle geschlossen\r\n" ));
-		CloseTCPSocket(*Socket);
-		*Socket = NO_SOCKET_USED;
-		if (IstVerbunden)
-			ModusWechsel(ModPufferDruckUndSchluss);
-		else
-			ModusWechsel(ModRuhe); // ID#314
-		return;
-		}
-		
 	// vom Endgerät empfangene Daten übersetzen
 	// --------------------------------------------------
 	// es wird gesendet, wenn es was zu senden gibt 
@@ -1243,6 +1226,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		}
 		
 	// ggf. Anzahl verarbeiteter Zeichen zurückmelden
+	// --------------------------------------------------
 	if (!SocketModeAscii 
 		&& (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
 		&& (SocketSendeQuittung || SocketLebenszeichenZaehler > 4 * TxpTimerFreq)
@@ -1267,6 +1251,21 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		SocketOutBuf[0] = TXPC_NULL;
 		SocketOutBuf[1] = 0;
 		SocketOutBufUsed = 2;
+		}
+
+	// soll offene Verbindung geschlossen werden?
+	// --------------------------------------------------
+	if (CheckSocketState(*Socket) == SOCKET_NOT_USE)
+		{ // ID#242 ID#342 ID#314 ************************************************
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle geschlossen\r\n" ));
+		CloseTCPSocket(*Socket);
+		*Socket = NO_SOCKET_USED;
+		if (IstVerbunden)
+			ModusWechsel(ModPufferDruckUndSchluss);
+		else
+			ModusWechsel(ModRuhe); // ID#314
+		return;
 		}
 		
 	// Daten ggf. ins Netz senden
@@ -1319,7 +1318,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			SocketSendeFehlerZaehler = 0;
 			}
 		} // if es gibt was zu senden
-	
+
 	} // SocketBearbeiten()
 
 	
@@ -2527,11 +2526,6 @@ void txp_init()
 	if (readConfig_P(DurchwahlTabelle_P, Buf) == 1)
 		DurchwahlTabelleDekodieren(Buf); // Ergebnis wird ignoriert
 
-	if (readConfig_P(ProtokollLevel_P, Buf) == 1)
-		ProtokollLevel = atoi(Buf);
-	else
-		ProtokollLevel = 1;
-		
 	if (readConfig_P(NetzRufnummer_P, Buf) == 1)
 		NetzRufnummer = atol(Buf);
 	else
@@ -2547,6 +2541,12 @@ void txp_init()
 			; // ok
 		else
 			RufnummerServerAdresse[i][0] = '\0';
+
+	// dies müsste eigentlich in Protokoll.c enthalten sein.
+	if (readConfig_P(ProtokollLevel_P, Buf) == 1)
+		ProtokollLevel = atoi(Buf);
+	else
+		ProtokollLevel = 1;
 		
 	BusEigenAdrMehrfach = 1; // muss Potenz von 2 sein (also 1, 2, 4, 8, 16, ... , Standard = 1
 
