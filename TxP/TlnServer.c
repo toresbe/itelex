@@ -388,7 +388,7 @@ void txp_tlnserv_init()
 	
 	RegisterTCPPort(TXP_TLNSERV_PORT);
 	
-	printf_P( PSTR("Txp TlnServer Port %d.\r\n") , TXP_PORT );
+	printf_P( PSTR("Txp TlnServer Port %d.\r\n") , TXP_TLNSERV_PORT );
 
 	THREAD_RegisterThread( txp_tlnserv_thread, PSTR("TlnSrv"));
 	}
