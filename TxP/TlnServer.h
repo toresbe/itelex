@@ -31,6 +31,12 @@
 	extern void txp_tlnserv_thread( void );
 	extern void txp_tlnserv_init( void );
 	
+	#define TLNSERV_SELBSTAKT 0x01
+	#define TLNSERV_IPRUECKMELD 0x02
+	#define TLNSERV_ABFRAGE 0x03
+	#define TLNSERV_AUSKUNFT 0x04
+	#define TLNSERV_FEHLER 0xFF
+	
 	#endif //def TELEXPHONE
 	
 #endif /* _TLNSERVER_H_ */

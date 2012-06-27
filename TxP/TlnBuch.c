@@ -35,6 +35,7 @@ enum { TlnBuchMemMax = 20000UL } ; //!< Größe des Teilnehmerverzeichnisses in 
 //! \par x Byte Adresse als String (mit \0 abgeschlossen) ODER 4 Byte IP-Adresse
 //! \par 2 Byte Port
 //! \par 1 Byte Durchwahl (0 bei keine Durchwahl).
+//! \par 2 Byte DynPin (nur bei Typ = TxpIP, wirksam nur bei Flag TlnFlag_DynIP)
 
 
 static char TlnBuch[TlnBuchMemMax]; //!< Das Teilnehmer-Verzeichnis.
@@ -64,6 +65,9 @@ static uint8_t TlnEintragGroesse(TTlnDaten *Tln)
 			
 		case TxpIP:
 			return Basis + 4 + 2 + 1;
+		
+		case TxpDynIP:
+			return Basis + 4 + 2 + 1 + 2;
 		
 		case AsciiUrl:
 			return Basis + strlen(Tln->Adresse)+1 + 2;
@@ -101,9 +105,12 @@ static void TlnEintragen(TTlnDaten *Tln, char *BuchP)
 			break;
 			
 		case TxpIP:
+		case TxpDynIP:
 			*((long *) p) = Tln->IPAdr;					p += 4;
 			*((uint16_t *) p) = Tln->Port;				p += 2;
 			*((uint8_t *) p) = Tln->Durchwahl;			p += 1;
+			if (Tln->AdrArt == TxpDynIP)
+				*((uint16_t *) p) = Tln->DynPin;		p += 2;
 			break;
 		
 		case AsciiUrl:
@@ -139,6 +146,7 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 	Tln->AdrArt = (TTlnAdresseArt) *((uint8_t *) p);	p += 1;
 	strcpy(Tln->Name, p);								p += strlen(Tln->Name)+1;
 	Tln->Datum = *((uint32_t *) p); 					p += 4;
+	Tln->DynPin = 0; // wird vielleicht wieder überschrieben.
 	switch (Tln->AdrArt)
 		{
 		case Geloescht: 
@@ -151,9 +159,12 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 			break;
 			
 		case TxpIP:
+		case TxpDynIP:
 			Tln->IPAdr = *((long *) p);					p += 4;
 			Tln->Port = *((uint16_t *) p);				p += 2;
 			Tln->Durchwahl = *((uint8_t *) p);			p += 1;
+			if (Tln->AdrArt == TxpDynIP)
+				Tln->DynPin = *((uint16_t *) p);		p += 2;
 			break;
 		
 		case AsciiUrl:
@@ -291,7 +302,7 @@ bool TlnListerNaechster(TTlnDaten *Tln)
 //! Im externen EEPROM sind beide Werte ganz am Anfang abgelegt.
 uint16_t MemUsedPruefwert(uint16_t groesse)
 	{
-	return (groesse ^ 0x4587) << 1; 
+	return (groesse ^ 0x4587) << 1; //### 8765
 	}
 	
 	
@@ -656,6 +667,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			"<th align=\"left\">Adresse</th>" // Adresse
 			"<th align=\"center\">Port</th>" // Port
 			"<th align=\"center\">Durchwahl</th>" // Durchwahl
+			"<th align=\"left\"letzte aktualis.</th>" // Datum / Uhrzeit
 			"<th align=\"left\">Aktion</th>" // in dieser Spalte sind die Buttons
 			"</tr>"			
 			));
@@ -668,11 +680,14 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P(PSTR("<td align=\"left\">%s</td><td>&#160;"), TD.Name); // name
 				if ((TD.Flags & TlnFlag_Lokal) != 0)
 					printf_P(PSTR("Lokal "));
+				if (TD.AdrArt == TxpDynIP)
+					printf_P(PSTR("DynIP "));
 				printf_P(PSTR("</td>")); // Ende Besonderheiten
 				
 				switch (TD.AdrArt)
 					{
 					case TxpIP:
+					case TxpDynIP:
 						iptostr(TD.IPAdr, TD.Adresse);
 						// weiter mit TxpUrl!
 					case TxpUrl:
@@ -701,6 +716,12 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						break;
 					}
 					
+				// Datum / Uhrzeit...
+				struct TIME Time;
+				Time.time = TD.Datum;
+				CLOCK_decode_time(&Time);
+				printf_P(PSTR("<td align=\"left\">%02u.%02u.%04u %02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm);
+				
 				printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">&Auml;ndern</a></td></tr>"), TD.Nummer);
 				}
 			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
@@ -749,6 +770,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		switch (TD.AdrArt)
 			{
 			case TxpIP:
+			case TxpDynIP:
 			case TxpUrl: 	TypSelNr = 1; break;
 			case AsciiIP:
 			case AsciiUrl: 	TypSelNr = 2; break;
@@ -827,6 +849,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					TD.AdrArt = TxpIP;
 					iptostr(TD.IPAdr, TD.Adresse); // und wieder zurück wandeln
 					printf_P(PSTR("TelexPhone: IP %s "), TD.Adresse);
+					//! \todo DynIP wie???
 					}
 				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
 				TD.Durchwahl = atoi(http_request->argvalue[PharseGetValue_P(http_request, Durchwahl_P)]);

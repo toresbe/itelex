@@ -4,8 +4,30 @@
 //*
 //****************************************************************************/
 ///	\ingroup software
-///	\defgroup TxP Hauptfunktion dieser Applikation: Als Server für die Herstellung 
-/// von Verbindungen dienen (Teilnehmerauskunft). Teilfunktion ist auch die ???
+///	\defgroup TlnServer
+/// Hauptfunktion dieser Applikation: Als Server für die Herstellung 
+/// von Verbindungen dienen (Teilnehmerauskunft). \par
+/// Grundsätzlicher Telegrammaufbau: \par
+/// * 1 Byte Telegrammtyp (siehe TLNSERV_*) \par
+/// * 1 Byte Gesamtlänge der Daten \par
+/// * n Byte Daten \par
+/// es ist nur ein Telegramm per IP-Packet erlaubt! \todo ändern. \par 
+/// Folgende Telegramme werden beherrscht: \par
+/// TLNSERV_SELBSTAKT: Aktualisierung durch normalen IP-Telex-Teilnehmer. Daten: \par
+/// * 4 Byte eigene Rufnummer \par
+/// * 2 Byte Authentifizierungs-Code (eine Art Prüfsumme der Rufnummer) \par
+/// * 2 Byte gewünschte Port-Nummer für Anrufe \par
+/// TLNSERV_IPRUECKMELD: Rückmeldung des Servers nach TLNSERV_SELBSTAKT. Daten: \par
+/// * 4 Byte aktuelle IP-Adresse des Teilnehmers (nicht des Servers). 0 wenn 
+///          Aktualiserung nicht zulässig (weil z.B. falscher Authentifizierungs-Code) \par
+/// TLNSERV_ABFRAGE: Abfrage eines Teilnehmers. Daten: \par
+/// * 4 Byte gewünschte Rufnummer. \par
+/// TLNSERV_AUSKUNFT: Daten des gefundenen Teilnehmers nach TLNSERV_ABFRAGE. Daten: \par
+/// * 1 Byte Versionsnummer / Art der Antwort. 0 bei nicht gefundenem Teilnehmer. \par
+/// * 4 Byte IP-Adresse (bei Version 1) \par
+/// * 2 Byte Port-Nummer (bei Version 1) \par
+/// TLNSERV_FEHLER: Fehlermeldung aller Art \par
+/// * 1 Byte Fehlercode \par
 ///	\code #include "TlnServer.h" \endcode
 //****************************************************************************/
 /*
@@ -56,6 +78,9 @@
 
 // #include "hardware/timer0/timer0.h"
 
+extern struct TCP_SOCKET TCP_sockettable[];
+	// explizit, weil in keiner Header-Datei enthalten.
+
 // #include "CgiFormTools.h"
 #include "TxP.h"
 #include "TlnBuch.h"
@@ -79,16 +104,54 @@ static uint16_t SocketSendeSperrZaehler;
 	
 static uint8_t SocketSendeFehlerZaehler;
 	//!< Zählt bis 10 bei nicht erfolgreichen Sendeversuchen auf dem Socket.
+		
 	
-	
-	
-enum { TlnServBufMax = 250 } ; //!< Größe des TCP-Puffers
-
-static char TlnServBuf[TlnServBufMax]; //!< TCP-Empfangspuffer und Sendepuffer
+static union
+	{
+	char Buf[255];
+	struct
+		{
+		uint8_t Code;
+		uint8_t DataLen;
+		union
+			{
+			char PureData[1];
+			struct 
+				{
+				uint32_t RufNr;
+				uint16_t Pin; // Personal Ident Nr.
+				uint16_t Port;
+				} SelbstAkt;
+			struct
+				{
+				uint32_t EmpfIP;
+				} IpRueckm;
+			struct 
+				{
+				uint32_t RufNr;
+				} TlnAbfr;
+			struct 
+				{
+				uint8_t AuskTyp;
+				uint32_t IP;
+				uint16_t Port;
+				} TlnAuskunft;
+			} ;
+		} ;
+	} TlnServBuf; //!< TCP-Empfangspuffer und Sendepuffer
 	//!< Dieser Puffer wird nur lokal in SocketBearbeiten benutzt. Alle eingehenden
 	//!< Daten werden sofort weiterverarbeitet, alle ausgehenden Daten sofort gesendet.
 	
 
+static uint8_t FehlerRueckmelden(PGM_P Text)
+	{
+	TlnServBuf.Code = TLNSERV_FEHLER;
+	TlnServBuf.DataLen = strlen_P(Text) + 1;
+	strcpy_P(TlnServBuf.PureData, Text);
+	return TlnServBuf.DataLen + 3; // Code + Len + Text + \0
+	}
+	
+	
 //! Socket für Teilnehmerauskunft-Server bearbeiten.
 //---------------------------------------------------------------------------
 //! \par - Empfangene Daten in den Socket-Empfangspuffer schreiben
@@ -97,7 +160,7 @@ static char TlnServBuf[TlnServBufMax]; //!< TCP-Empfangspuffer und Sendepuffer
 //! \par - Daten des Socket-Sendepuffers ggf. senden
 //! \par - Schlusszeichen bearbeiten
 
-static void SocketBearbeiten(int *Socket, bool IstVerbunden)
+static void SocketBearbeiten(int *Socket)
 	{
 	if (*Socket == NO_SOCKET_USED)
 		return;
@@ -112,23 +175,53 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	
 	if (InCount > 0) 
 		{
-		int Res = GetSocketData(*Socket, InCount, TlnServBuf);
+		int Res = GetSocketData(*Socket, InCount, TlnServBuf.Buf);
 		
 		if (ProtokollLevel == 3) // Daten explizit
 			{
 			ProtokollierenInt_P(PSTR("TlnSrv: Socket Empfang: (%d/" ), InCount);
 			ProtokollierenInt_P(PSTR("%d)"), Res);
 			for (uint16_t i = 0 ; i < Res ; i++)
-				ProtokollierenInt_P(PSTR(" %02X"), TlnServBuf[i]);
+				ProtokollierenInt_P(PSTR(" %02X"), TlnServBuf.Buf[i]);
 			Protokollieren_P(PSTR("\r\n"));
 			}		
 		
 		// Daten des Socket-Empfangspuffer interpretieren
 		// ----------------------------------------------
 		// es wird immer nur ein Telegramm gesendet und empfangen
+		switch (TlnServBuf.Code)
+			{
+			case TLNSERV_SELBSTAKT:
+				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SelbstAkt))
+					OutCount = FehlerRueckmelden(PSTR("not enough data"));
+				else
+					{
+					uint32_t RufNr = TlnServBuf.SelbstAkt.RufNr;
+					uint16_t GeheimNr = TlnServBuf.SelbstAkt.Pin;
+					uint16_t PortNr = TlnServBuf.SelbstAkt.Port;
+					ProtokollierenInt_P(PSTR("TlnSrv: Selbstaktualisierung empfangen. Nummer %ld " ), RufNr);
+					ProtokollierenInt_P(PSTR("Auth %d " ), GeheimNr);
+					ProtokollierenInt_P(PSTR("Port %d\r\n" ), PortNr);
+					//! \todo Pruefziffer pruefen
+					//! \todo Speichern
+					// Antwort generieren:
+					TlnServBuf.Code = TLNSERV_IPRUECKMELD;
+					TlnServBuf.DataLen = sizeof(TlnServBuf.IpRueckm);
+					TlnServBuf.IpRueckm.EmpfIP = TCP_sockettable[*Socket].SourceIP;
+					OutCount = 2 + TlnServBuf.DataLen;
+					}
+				break;
+				
+			case TLNSERV_ABFRAGE:
+				break;
+	
+			case TLNSERV_IPRUECKMELD: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
+			case TLNSERV_AUSKUNFT: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
+			default:
+				OutCount = FehlerRueckmelden(PSTR("unknown code"));
+				break;
+			}
 
-		// TODO
-		
 		} // if GetBytesInSocketData > 0
 		
 	/*/ ggf Lebenszeichen erzeugen
@@ -156,14 +249,14 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	// --------------------------------------------------
 	if (OutCount > 0 && SocketSendeSperrZaehler == 0) //! \todo && !HaltSocketOut
 		{
-		int Res = PutSocketData_RPE(*Socket, OutCount, TlnServBuf, RAM);
+		int Res = PutSocketData_RPE(*Socket, OutCount, TlnServBuf.Buf, RAM);
 		// SocketLebenszeichenZaehler = 0; 
 
 		if (ProtokollLevel == 3)
 			{
 			ProtokollierenInt_P(PSTR("TlnSrv: Socket Sendung: (%d)" ), OutCount);
 			for (uint16_t i = 0 ; i < OutCount ; i++)
-				ProtokollierenInt_P(PSTR(" %02X"), TlnServBuf[i]);
+				ProtokollierenInt_P(PSTR(" %02X"), TlnServBuf.Buf[i]);
 			ProtokollierenInt_P(PSTR(" --> Res %d\r\n" ), Res);
 			}
 
@@ -202,21 +295,15 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 
 void txp_tlnserv_thread()
 	{
-	uint8_t Code;
-
-#if defined(LEDROT_TXPTHREADBLOCK)
-	//! \todo LED_off(ROT); 
-#endif //defined(LEDROT_TXPTHREADBLOCK)
-	
 	// ======================================================================
 	// Socket Empfang und Sendung
 	// ======================================================================
 
 	if (TlnServerOutSocket != NO_SOCKET_USED)
-		SocketBearbeiten(&TlnServerOutSocket, true);
+		SocketBearbeiten(&TlnServerOutSocket);
 		
 	if (TlnServerInSocket != NO_SOCKET_USED)
-		SocketBearbeiten(&TlnServerInSocket, true);
+		SocketBearbeiten(&TlnServerInSocket);
 		
 	// ==========================================================================
 	// Neuer Anruf vom Ethernet?
@@ -226,8 +313,6 @@ void txp_tlnserv_thread()
 	int NewServerSocket = CheckPortRequest(TXP_TLNSERV_PORT);
 	if (NewServerSocket != NO_SOCKET_USED)
 		{
-		extern struct TCP_SOCKET TCP_sockettable[];
-
 		if (ProtokollLevel >= 1)
 			{
 			Protokollieren_P(PSTR("TlnSrv: Server-Socket geoeffnet von IP "));

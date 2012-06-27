@@ -19,8 +19,10 @@ typedef enum
 	TxpUrl = 1,
 	TxpIP = 2,
 	AsciiUrl = 3, //!< Telnet-ähnlich
-	AsciiIP = 4
+	AsciiIP = 4,
+	TxpDynIP = 5
 	} TTlnAdresseArt;
+	
 	
 typedef struct
 	{
@@ -32,6 +34,7 @@ typedef struct
 	long IPAdr; //!< bei eindeutiger IP-Adresse
 	uint16_t Port; //!< bei abweichendem Port
 	uint8_t Durchwahl; //!< interne Durchwahl bei "Nebenstellenanlagen"
+	uint16_t DynPin; //!< Geheimzahl für DynIP-Aktualisierung
 	uint32_t Datum; //!< letzte Änderung der Adresse
 	} TTlnDaten;
 	

@@ -68,6 +68,7 @@
 #include "FifoPuffer.h"
 #include "BaudotCode.h"
 #include "Protokoll.h"
+#include "TlnServer.h"
 
 
 // Aktueller Modus
@@ -271,8 +272,11 @@ static uint8_t Wahlziffern;
 static uint32_t NetzRufnummer;
 	//!< Rufnummer des eigenen Anschlusses im ip-telex-Netz
 	
-static uint16_t NetzRufnummerPruefzahl;
-	//!< Prüfzahl zur NetzRufnummer. Um unberechtigte Fremd-Aktualisierungen zu vermeiden.
+static uint16_t Geheimzahl;
+	//!< Um unberechtigte Fremd-Aktualisierungen zu vermeiden.
+
+static uint16_t NetzPort;
+	//!< Gewünschte Port-Nummer im globalen Netz. Kann aus bestimmten Gründen von 134 abweichen.
 	
 
 #define ANZ_RUFNUMMERN_SERVER 3
@@ -1443,6 +1447,7 @@ void txp_thread()
 						switch (TD.AdrArt)
 							{
 							case TxpIP:
+							case TxpDynIP:
 							case AsciiIP:
 								if (ProtokollLevel >= 1)
 									{
@@ -1450,7 +1455,7 @@ void txp_thread()
 									ProtokollierenIPAdr(TD.IPAdr);
 									Protokollieren_P(PSTR("\r\n"));
 									}
-								TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
+								TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port); 
 								break;
 								
 							case TxpUrl:
@@ -1489,6 +1494,7 @@ void txp_thread()
 						if (TxpClientSocket == -1 )
 							{ // ID#223 ********************************************
 							// Verbindung konnte nicht aufgebaut werden
+							//! \todo bei TxpDynIP den Rufnummer-Server befragen...
 							BusSenden(BusKdoSchluss);
 							if (ProtokollLevel >= 1)
 								Protokollieren_P(PSTR("TxP: Client-Socket konnte nicht geoeffnet werden\r\n"));
@@ -1706,9 +1712,10 @@ void txp_thread()
 					ModusWechsel(ModDeaktiviert);
 				else
 					{
-					//! \todo eigene IP ausgeben...
 					AlternativSucheBeiBesetzt = true; // damit auf jeden Fall gedruckt wird!
-					strcat_P(AsciiDruckPuffer, PSTR("Taste gedrueckt...\r\n")); 
+					strcpy_P(AsciiDruckPuffer, PSTR("interne IP: "));
+					iptostr(myIP, AsciiDruckPuffer + strlen(AsciiDruckPuffer));
+					strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 					}
 				break;
 				
@@ -2271,7 +2278,8 @@ void txp_cgi_config_intern(void *pStruct)
 	
 
 const PROGMEM char NetzRufnummer_P[] = "NETZRUFNR";
-const PROGMEM char NetzRufnummerPruefzahl_P[] = "NETZRUFNRPRUEF";
+const PROGMEM char Geheimzahl_P[] = "PIN";
+const PROGMEM char NetzPort_P[] = "NETZPORT";
 const PROGMEM char RufnrServerAdr1_P[] = "RUFNRSERV1";
 const PROGMEM char RufnrServerAdr2_P[] = "RUFNRSERV2";
 const PROGMEM char RufnrServerAdr3_P[] = "RUFNRSERV3";
@@ -2301,7 +2309,9 @@ void txp_cgi_config_extern(void *pStruct)
 
 		CgiFormInputFieldLong_P(PSTR("eigene Rufnummer im ip-telex-Netz:"), NetzRufnummer_P, 10, NetzRufnummer);
 		
-		CgiFormInputFieldLong_P(PSTR("Pr&uuml;fzahl zur eigenen Rufnummer:"), NetzRufnummerPruefzahl_P, 6, NetzRufnummerPruefzahl);
+		CgiFormInputFieldLong_P(PSTR("Geheimzahl:"), Geheimzahl_P, 6, Geheimzahl);
+
+		CgiFormInputFieldLong_P(PSTR("Port-Nummer im Netz:"), NetzPort_P, 6, NetzPort);
 		
 		for (i = 0 ; i < ANZ_RUFNUMMERN_SERVER ; i++)
 			CgiFormInputFieldText_P(PSTR("Adresse des Rufnummern-Server:"), RufnrServerAdr_P[i], TlnAdresseMax, RufnummerServerAdresse[i]);
@@ -2333,18 +2343,35 @@ void txp_cgi_config_extern(void *pStruct)
 		
 		// Prüfzahl zur eigene Netz-Rufnummer
 		// ----------------------------------
-		if (PharseCheckName_P(http_request, NetzRufnummerPruefzahl_P))
+		if (PharseCheckName_P(http_request, Geheimzahl_P))
 			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, NetzRufnummerPruefzahl_P)], 10);
+			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, Geheimzahl_P)], 10);
 			Buf[10] = '\0';
 			Neu = atol(Buf);
-			if (Neu == NetzRufnummerPruefzahl)
-				printf_P(PSTR("<br>Netz-Rufnummer-Pr&uuml;fzahl unver&auml;ndert: %s"), Buf);
+			if (Neu == Geheimzahl)
+				printf_P(PSTR("<br>Geheimzahl unver&auml;ndert: %s"), Buf);
 			else
 				{
-				printf_P(PSTR("<br>Netz-Rufnummer-Pr&uuml;fzahl ge&auml;ndert in: %s"), Buf);
-				changeConfig_P(NetzRufnummerPruefzahl_P, Buf);
-				NetzRufnummerPruefzahl = Neu;
+				printf_P(PSTR("<br>Geheimzahl ge&auml;ndert in: %s"), Buf);
+				changeConfig_P(Geheimzahl_P, Buf);
+				Geheimzahl = Neu;
+				}
+			}
+		
+		// Netz-Port
+		// ---------------------
+		if (PharseCheckName_P(http_request, NetzPort_P))
+			{
+			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, NetzPort_P)], 10);
+			Buf[10] = '\0';
+			Neu = atol(Buf);
+			if (Neu == NetzPort)
+				printf_P(PSTR("<br>Netz-Port unver&auml;ndert: %s"), Buf);
+			else
+				{
+				printf_P(PSTR("<br>Netz-Port ge&auml;ndert in: %s"), Buf);
+				changeConfig_P(NetzPort_P, Buf);
+				NetzPort = Neu;
 				}
 			}
 		
@@ -2531,10 +2558,15 @@ void txp_init()
 	else
 		NetzRufnummer = 0;
 		
-	if (readConfig_P(NetzRufnummerPruefzahl_P, Buf) == 1)
-		NetzRufnummerPruefzahl = atoi(Buf);
+	if (readConfig_P(Geheimzahl_P, Buf) == 1)
+		Geheimzahl = atoi(Buf);
 	else
-		NetzRufnummerPruefzahl = 0;
+		Geheimzahl = 0;
+
+	if (readConfig_P(NetzPort_P, Buf) == 1)
+		NetzPort = atol(Buf);
+	else
+		NetzPort = TXP_PORT;
 		
 	for (i = 0 ; i < ANZ_RUFNUMMERN_SERVER ; i++)
 		if (readConfig_P(RufnrServerAdr_P[i], RufnummerServerAdresse[i]) == 1)
@@ -2584,6 +2616,8 @@ void txp_init()
 	THREAD_RegisterThread( txp_thread, PSTR("TxP"));
 
 	TlnBuchInit();
+	
+	txp_tlnserv_init();
 	
 	wdt_enable(WDTO_8S);
 	}
