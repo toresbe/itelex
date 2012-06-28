@@ -124,7 +124,7 @@ static union
 				} SelbstAkt;
 			struct
 				{
-				uint32_t EmpfIP;
+				long EmpfIP;
 				} IpRueckm;
 			struct 
 				{
@@ -133,7 +133,7 @@ static union
 			struct 
 				{
 				uint8_t AuskTyp;
-				uint32_t IP;
+				long IP;
 				uint16_t Port;
 				} TlnAuskunft;
 			} ;
@@ -199,7 +199,8 @@ static void SocketBearbeiten(int *Socket)
 					uint32_t RufNr = TlnServBuf.SelbstAkt.RufNr;
 					uint16_t GeheimNr = TlnServBuf.SelbstAkt.Pin;
 					uint16_t PortNr = TlnServBuf.SelbstAkt.Port;
-					ProtokollierenInt_P(PSTR("TlnSrv: Selbstaktualisierung empfangen. Nummer %ld " ), RufNr);
+					long MeldeIP = TCP_sockettable[*Socket].SourceIP;
+					ProtokollierenInt_P(PSTR("TlnSrv: Aktualisierung empfangen. Nummer %ld " ), RufNr);
 					ProtokollierenInt_P(PSTR("Auth %d " ), GeheimNr);
 					ProtokollierenInt_P(PSTR("Port %d\r\n" ), PortNr);
 					//! \todo Pruefziffer pruefen
@@ -207,7 +208,7 @@ static void SocketBearbeiten(int *Socket)
 					// Antwort generieren:
 					TlnServBuf.Code = TLNSERV_IPRUECKMELD;
 					TlnServBuf.DataLen = sizeof(TlnServBuf.IpRueckm);
-					TlnServBuf.IpRueckm.EmpfIP = TCP_sockettable[*Socket].SourceIP;
+					TlnServBuf.IpRueckm.EmpfIP = MeldeIP;
 					OutCount = 2 + TlnServBuf.DataLen;
 					}
 				break;
@@ -331,10 +332,11 @@ void txp_tlnserv_thread()
 			}
 		else
 			{ 
-			PutSocketData_RPE(NewServerSocket, 7, PSTR("\004\005occ\r\n"), FLASH); //! \todo Richtig???
-			CloseTCPSocket(NewServerSocket);
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR(" ...ABGEWIESEN\r\n" ));
+			uint8_t OutCount = FehlerRueckmelden(PSTR("occupied"));
+			PutSocketData_RPE(NewServerSocket, OutCount, TlnServBuf.Buf, RAM);
+			CloseTCPSocket(NewServerSocket);
 			}
 		}
 

@@ -36,7 +36,7 @@ enum { MaxDateigroesse = 100000UL } ; //!< Maximale Dateigröße. Bei überschre
 bool Idle; //!< Speichert, ob es zu protokollierende Ereignisse gab.
 
 uint8_t ProtokollLevel;
-	//!< "Tiefe" der Protokollierung: 0 = Aus, 1 = Normal, 2 = Intensiv
+	//!< "Tiefe" der Protokollierung: 0 = Aus, 1 = Normal, 2 = Intensiv, 3 = im Detail
 
 
 extern char *DebugMsg;
@@ -203,13 +203,21 @@ static bool ProtPraeparieren(int len)
 		}
 
 #if defined(MMC)
-	if (Puffer[0] == '\0' && fs != NULL)
-		{ // Zeit protokollieren
+	if (fs != NULL)
+		{
 		struct TIME Time;
 
-		CLOCK_GetTime(&Time);
-		sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++ %02d:%02d ++++++\r\n"),
-			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm);
+		if (Puffer[0] == '\0')
+			{ // Zeit protokollieren
+			CLOCK_GetTime(&Time);
+			sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++ %02d:%02d ++++++\r\n%02d,%02d: "),
+				  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss, Time.ms);
+			}
+		else if (Puffer[strlen(Puffer)-1] == '\n')
+			{
+			CLOCK_GetTime(&Time);
+			sprintf_P(Puffer, PSTR("%02d,%02d: "), Time.ss, Time.ms);
+			}
 		}
 #endif //defined(MMC)		
 
