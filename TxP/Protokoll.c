@@ -216,7 +216,7 @@ static bool ProtPraeparieren(int len)
 		else if (Puffer[strlen(Puffer)-1] == '\n')
 			{
 			CLOCK_GetTime(&Time);
-			sprintf_P(Puffer, PSTR("%02d,%02d: "), Time.ss, Time.ms);
+			sprintf_P(Puffer + strlen(Puffer), PSTR("%02d,%02d: "), Time.ss, Time.ms);
 			}
 		}
 #endif //defined(MMC)		
