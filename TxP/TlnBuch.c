@@ -667,7 +667,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			"<th align=\"left\">Adresse</th>" // Adresse
 			"<th align=\"center\">Port</th>" // Port
 			"<th align=\"center\">Durchwahl</th>" // Durchwahl
-			"<th align=\"left\"letzte aktualis.</th>" // Datum / Uhrzeit
+			"<th align=\"center\">letzte<br>Aktualisierung</th>" // Datum / Uhrzeit
 			"<th align=\"left\">Aktion</th>" // in dieser Spalte sind die Buttons
 			"</tr>"			
 			));
@@ -720,11 +720,11 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				struct TIME Time;
 				Time.time = TD.Datum;
 				CLOCK_decode_time(&Time);
-				printf_P(PSTR("<td align=\"left\">%02u.%02u.%04u %02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm);
+				printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u %02d:%02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 				
 				printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">&Auml;ndern</a></td></tr>"), TD.Nummer);
 				}
-			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
+			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
 						   "<td><a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></td>"
 						   "</table>"
 						   "<a href=\"txp-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a><br>"

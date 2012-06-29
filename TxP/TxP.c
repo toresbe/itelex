@@ -100,7 +100,8 @@ typedef enum
 	ModDirektdruckWarteEinQuitt = 21, //!< Warte auf Einschalt-Quittung des Endgeräts
 	ModDirektdruckVerbunden = 22, 
 	
-	ModDeaktiviert = 31 //!< Durch Tastendruck ausgeschaltet.
+	ModDeaktiviert = 31, //!< Durch Tastendruck ausgeschaltet.
+	
 	} TModus;
 	
 	
@@ -269,6 +270,13 @@ static uint8_t Wahlziffern;
 	//!< Anzahl gewählter Ziffern
 
 
+static int TeilnehmerServerSocket;
+	//!< Handle für ausgehende Verbindungen zum Teilnehmer-Server
+	//!< Wird in ZWEI Situationen benutzt: 
+	//!< a) Dynamische IP-Aktualiserung
+	//!< b) Abfrage einer Teilnehmer-Adresse
+
+	
 static uint32_t NetzRufnummer;
 	//!< Rufnummer des eigenen Anschlusses im ip-telex-Netz
 	
@@ -276,13 +284,18 @@ static uint16_t Geheimzahl;
 	//!< Um unberechtigte Fremd-Aktualisierungen zu vermeiden.
 
 static uint16_t NetzPort;
-	//!< Gewünschte Port-Nummer im globalen Netz. Kann aus bestimmten Gründen von 134 abweichen.
+	//!< Gewünschte Port-Nummer im globalen Netz. Kann aus bestimmten Gründen von TXP_PORT (134) abweichen.
 	
+#define ANZ_TEILNEHMER_SERVER 3
+	
+static char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
+	//!< URL's oder IP's der Teilnehmer-Server.
 
-#define ANZ_RUFNUMMERN_SERVER 3
+static bool DynIPAktiv;
+	//!< Soll die eigene IP-Adresse auf den Teilnehmer-Server aktualisiert werden?
 	
-static char RufnummerServerAdresse[ANZ_RUFNUMMERN_SERVER][TlnAdresseMax];
-	//!< URL's oder IP's der Rufnummern-Server.
+static uint32_t DynIPAktZeitZaehler;
+	//!< Macht alle 15 Minuten eine Aktualsisierungsmeldung an einen der Teilnehmer-Server (sofern aktiviert).
 
 
 //! Sollfrequenz des Aufrufs von txp_timerEvent()
@@ -332,7 +345,10 @@ void txp_timerEvent(void)
 	wdt_reset();
 	
 	SocketLebenszeichenZaehler++;
-		
+	
+	if (DynIPAktiv)
+		DynIPAktZeitZaehler++;
+	
 	if (TxpThreadCheckCount++ > 30 * TxpTimerFreq) // nach 30 Sekunden Reset
 		{
 		Protokollieren("TxP: Reset wegen nicht-Aufruf von txp_thread()\r\n");
@@ -1339,7 +1355,35 @@ static void ZeichenInHtmlSendeText(char c)
 	HtmlSendeText[i+1] = '\0';
 	}
 	
+
+//! Verbindung zu einem Teilnehmer-Server herstellen.
+//! \param NONE
+//! \return Erfolgreich
+bool TeilnehmerServerSocketOeffnen()
+	{
+	int ServerI;
 	
+	for (ServerI = 0 ; ServerI < ANZ_TEILNEHMER_SERVER ; ServerI++)
+		{
+		long tsIP;
+		
+		if (TeilnehmerServerAdresse[ServerI][0] == '\0')
+			continue; // leere Adresse
+			
+		//! \todo IP erlauben
+		tsIP = DNS_ResolveName(TeilnehmerServerAdresse[ServerI]); 
+		if (tsIP != -1)
+			{
+			TeilnehmerServerSocket = Connect2IP(tsIP, TXP_TLNSERV_PORT);
+			if (TeilnehmerServerSocket != -1)
+				return true;
+			TeilnehmerServerSocket = NO_SOCKET_USED;
+			}
+		}
+	return false;
+	} // TeilnehmerServerSocketOeffnen()
+
+
 //! Nur für debugging.	
 static uint32_t TxpThreadCount; 
 
@@ -1471,7 +1515,8 @@ void txp_thread()
 										Protokollieren_P(PSTR(" = "));
 										ProtokollierenIPAdr(TD.IPAdr);
 										Protokollieren_P(PSTR("\r\n"));
-										}									TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
+										}									
+									TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
 									}
 								else
 									{
@@ -1494,7 +1539,7 @@ void txp_thread()
 						if (TxpClientSocket == -1 )
 							{ // ID#223 ********************************************
 							// Verbindung konnte nicht aufgebaut werden
-							//! \todo bei TxpDynIP den Rufnummer-Server befragen...
+							//! \todo bei TxpDynIP den Teilnehmer-Server befragen...
 							BusSenden(BusKdoSchluss);
 							if (ProtokollLevel >= 1)
 								Protokollieren_P(PSTR("TxP: Client-Socket konnte nicht geoeffnet werden\r\n"));
@@ -1832,6 +1877,76 @@ void txp_thread()
 		RuheZaehler = 0;
 		}
 
+	// ======================================================================
+	// Dynamische IP-Aktualiserung starten
+	// ======================================================================
+	
+	if (DynIPAktiv)
+		{
+		// Aktialisierung starten?
+		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
+			&& DynIPAktZeitZaehler >= 15L * 60 * TxpTimerFreq // alle 15 Minuten
+			&& TeilnehmerServerSocket == NO_SOCKET_USED)
+			{
+			if (TeilnehmerServerSocketOeffnen())
+				{ // Verbindung hergestellt.
+				// Telegramm senden
+				//! \todo
+				}
+			else
+				{ // keine Verbindung hergestellt
+				DynIPAktZeitZaehler = 0; // in 15 Minuten nochmal probieren
+				}
+			}
+		}
+		
+	// ======================================================================
+	// Antworten vom Teilnehmer-Server auswerten
+	// ======================================================================
+	
+	if (TeilnehmerServerSocket != NO_SOCKET_USED)
+		{
+		// Datenempfang vom Teilnehmer-Server
+		int InCount = GetBytesInSocketData(TeilnehmerServerSocket);
+		if (InCount > 0) 
+			{
+			static TTlnServBuf TlnServBuf;
+			
+			int Res = GetSocketData(TeilnehmerServerSocket, InCount, TlnServBuf.Buf);
+			
+			if (ProtokollLevel >= 3) // Daten explizit
+				{
+				ProtokollierenInt_P(PSTR("TxP: Teilnehmer-Server Empfang: (%d/" ), InCount);
+				ProtokollierenInt_P(PSTR("%d)"), Res);
+				for (uint16_t i = 0 ; i < Res ; i++)
+					ProtokollierenInt_P(PSTR(" %02X"), TlnServBuf.Buf[i]);
+				Protokollieren_P(PSTR("\r\n"));
+				}		
+			
+			// Daten des Socket-Empfangspuffer interpretieren
+			// ----------------------------------------------
+			// es wird immer nur ein Telegramm gesendet und empfangen
+			switch (TlnServBuf.Code)
+				{
+				//! \todo
+				}
+			}
+		
+		// Schließanforderung vom Teilnehmer-Server
+		if (CheckSocketState(TeilnehmerServerSocket) == SOCKET_NOT_USE)
+			{
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR("TxP: Socket zum Teilnehmer-Server wurde von Gegenstelle geschlossen\r\n" ));
+			CloseTCPSocket(TeilnehmerServerSocket);
+			TeilnehmerServerSocket = NO_SOCKET_USED;
+			return;
+			}
+		
+		// Timeout?
+		//!\todo Timeout
+		
+		}
+		
 	// ==========================================================================
 	// Ab und zu mal den Protokollinhalt speichern
 	// ==========================================================================
@@ -1961,6 +2076,8 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(TwiLebenszeichenZaehler); 
 	PRINTVAL(SocketLebenszeichenZaehler);
 	PRINTVAL(TxpThreadCheckCount);
+
+	PRINTVAL(DynIPAktZeitZaehler / TxpTimerFreq);
 
 	PRINTVAL(FalscherCode); FalscherCode = 0;
 	PRINTVAL(TwiIsrCount); TwiIsrCount = 0;
@@ -2279,6 +2396,7 @@ void txp_cgi_config_intern(void *pStruct)
 
 const PROGMEM char NetzRufnummer_P[] = "NETZRUFNR";
 const PROGMEM char Geheimzahl_P[] = "PIN";
+const PROGMEM char DynIPAktiv_P[] = "DYNIPAKTIV";
 const PROGMEM char NetzPort_P[] = "NETZPORT";
 const PROGMEM char RufnrServerAdr1_P[] = "RUFNRSERV1";
 const PROGMEM char RufnrServerAdr2_P[] = "RUFNRSERV2";
@@ -2310,11 +2428,13 @@ void txp_cgi_config_extern(void *pStruct)
 		CgiFormInputFieldLong_P(PSTR("eigene Rufnummer im ip-telex-Netz:"), NetzRufnummer_P, 10, NetzRufnummer);
 		
 		CgiFormInputFieldLong_P(PSTR("Geheimzahl:"), Geheimzahl_P, 6, Geheimzahl);
+		
+		CgiFormCheckbox_P(PSTR("IP-Aktualiserung aktiv:"), DynIPAktiv_P, DynIPAktiv);
 
 		CgiFormInputFieldLong_P(PSTR("Port-Nummer im Netz:"), NetzPort_P, 6, NetzPort);
 		
-		for (i = 0 ; i < ANZ_RUFNUMMERN_SERVER ; i++)
-			CgiFormInputFieldText_P(PSTR("Adresse des Rufnummern-Server:"), RufnrServerAdr_P[i], TlnAdresseMax, RufnummerServerAdresse[i]);
+		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+			CgiFormInputFieldText_P(PSTR("Adresse des Teilnehmer-Server:"), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
 
 		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
 		}
@@ -2357,6 +2477,28 @@ void txp_cgi_config_extern(void *pStruct)
 				Geheimzahl = Neu;
 				}
 			}
+			
+		// Dynamische IP-Aktualiserung
+		// ---------------------------
+		if (PharseCheckName_P(http_request, DynIPAktiv_P))
+			{
+			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, DynIPAktiv_P)], 2);
+			Buf[2] = '\0';
+			Neu = atoi(Buf) != 0; 
+			}
+		else
+			{
+			Neu = false;
+			Buf[0] = '0', Buf[1] = '\0';
+			}
+		if (Neu == DynIPAktiv)
+			printf_P(PSTR("<br>DynIPAktualisierung unver&auml;ndert: %d"), Neu);
+		else
+			{
+			changeConfig_P(DynIPAktiv_P, Buf);
+			printf_P(PSTR("<br>DynIPAktualisierung: %s"), Buf);
+			DynIPAktiv = Neu;
+			}
 		
 		// Netz-Port
 		// ---------------------
@@ -2375,21 +2517,21 @@ void txp_cgi_config_extern(void *pStruct)
 				}
 			}
 		
-		// URLs der Rufnummern-Server
+		// URLs der Teilnehmer-Server
 		// --------------------------
-		for (i = 0 ; i < ANZ_RUFNUMMERN_SERVER ; i++)
+		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 			{
 			if (PharseCheckName_P(http_request, RufnrServerAdr_P[i]))
 				{
 				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, RufnrServerAdr_P[i])], TlnAdresseMax);
 				Buf[TlnAdresseMax-1] = '\0';
-				if (strcmp(Buf, RufnummerServerAdresse[i]) == 0)
-					printf_P(PSTR("<br>Rufnummer-Server #%d unver&auml;ndert: %s"), i+1, Buf);
+				if (strcmp(Buf, TeilnehmerServerAdresse[i]) == 0)
+					printf_P(PSTR("<br>Teilnehmer-Server #%d unver&auml;ndert: %s"), i+1, Buf);
 				else
 					{
-					printf_P(PSTR("<br>Rufnummer-Server #%d ge&auml;ndert in: %s"), i+1, Buf);
+					printf_P(PSTR("<br>Teilnehmer-Server #%d ge&auml;ndert in: %s"), i+1, Buf);
 					changeConfig_P(RufnrServerAdr_P[i], Buf);
-					strcpy(RufnummerServerAdresse[i], Buf);
+					strcpy(TeilnehmerServerAdresse[i], Buf);
 					}
 				} // if PharseCheckName_P()
 			} // for i
@@ -2563,16 +2705,21 @@ void txp_init()
 	else
 		Geheimzahl = 0;
 
+	if (readConfig_P(DynIPAktiv_P, Buf) == 1)
+		DynIPAktiv = atoi(Buf) != 0;
+	else
+		DynIPAktiv = false;
+		
 	if (readConfig_P(NetzPort_P, Buf) == 1)
 		NetzPort = atol(Buf);
 	else
 		NetzPort = TXP_PORT;
 		
-	for (i = 0 ; i < ANZ_RUFNUMMERN_SERVER ; i++)
-		if (readConfig_P(RufnrServerAdr_P[i], RufnummerServerAdresse[i]) == 1)
+	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+		if (readConfig_P(RufnrServerAdr_P[i], TeilnehmerServerAdresse[i]) == 1)
 			; // ok
 		else
-			RufnummerServerAdresse[i][0] = '\0';
+			TeilnehmerServerAdresse[i][0] = '\0';
 
 	// dies müsste eigentlich in Protokoll.c enthalten sein.
 	if (readConfig_P(ProtokollLevel_P, Buf) == 1)
@@ -2582,7 +2729,20 @@ void txp_init()
 		
 	BusEigenAdrMehrfach = 1; // muss Potenz von 2 sein (also 1, 2, 4, 8, 16, ... , Standard = 1
 
+	TxpClientSocket = NO_SOCKET_USED;
+	TxpServerSocket = NO_SOCKET_USED;
+	TeilnehmerServerSocket = NO_SOCKET_USED;
+	
 	TwiInit();
+
+	TWCR = (1<<TWINT) | (1<<TWEA) | (0<<TWSTA) | (0<<TWSTO) | (1<<TWEN) | (1<<TWIE);
+
+	Timer0Cnt_Max = 0;
+	Timer0Callback_Max = 0;
+
+	DynIPAktZeitZaehler = 0;
+
+	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 
 	timer0_init(TxpTimerFreq); 
 	if (!timer0_RegisterCallbackFunction(txp_timerEvent))
@@ -2598,18 +2758,9 @@ void txp_init()
 	cgi_RegisterCGI( cgi_SdDirectory, PSTR("sddir.cgi"));
 #endif //defined(MMC)
 
-	TxpClientSocket = NO_SOCKET_USED;
-	TxpServerSocket = NO_SOCKET_USED;
-	
 	RegisterTCPPort(TXP_PORT);
 	
 	Timer0Cnt_Min = 255;
-	Timer0Cnt_Max = 0;
-	Timer0Callback_Max = 0;
-
-	TWCR = (1<<TWINT) | (1<<TWEA) | (0<<TWSTA) | (0<<TWSTO) | (1<<TWEN) | (1<<TWIE);
-
-	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 
 	printf_P( PSTR("TelexPhone Port %d.\r\n") , TXP_PORT );
 
@@ -2619,7 +2770,8 @@ void txp_init()
 	
 	txp_tlnserv_init();
 	
-	wdt_enable(WDTO_8S);
+	//wdt_enable(WDTO_8S);
+
 	}
 
 

@@ -105,49 +105,15 @@ static uint16_t SocketSendeSperrZaehler;
 static uint8_t SocketSendeFehlerZaehler;
 	//!< Zählt bis 10 bei nicht erfolgreichen Sendeversuchen auf dem Socket.
 		
-	
-static union
-	{
-	char Buf[255];
-	struct
-		{
-		uint8_t Code;
-		uint8_t DataLen;
-		union
-			{
-			char PureData[1];
-			struct 
-				{
-				uint32_t RufNr;
-				uint16_t Pin; // Personal Ident Nr.
-				uint16_t Port;
-				} SelbstAkt;
-			struct
-				{
-				long EmpfIP;
-				} IpRueckm;
-			struct 
-				{
-				uint32_t RufNr;
-				} TlnAbfr;
-			struct 
-				{
-				uint8_t AuskTyp;
-				long IP;
-				uint16_t Port;
-				} TlnAuskunft;
-			} ;
-		} ;
-	} TlnServBuf; //!< TCP-Empfangspuffer und Sendepuffer
-	//!< Dieser Puffer wird nur lokal in SocketBearbeiten benutzt. Alle eingehenden
-	//!< Daten werden sofort weiterverarbeitet, alle ausgehenden Daten sofort gesendet.
-	
+static TTlnServBuf TlnServBuf;
+	//!< Lokaler Puffer für alle Anfragen an den Teilnehmerauskunft-Server
 
-static uint8_t FehlerRueckmelden(PGM_P Text)
+	
+static uint8_t FehlerRueckmelden(PGM_P Text, int val)
 	{
 	TlnServBuf.Code = TLNSERV_FEHLER;
-	TlnServBuf.DataLen = strlen_P(Text) + 1;
-	strcpy_P(TlnServBuf.PureData, Text);
+	sprintf_P(TlnServBuf.PureData, Text, val);
+	TlnServBuf.DataLen = strlen(TlnServBuf.PureData) + 1;
 	return TlnServBuf.DataLen + 3; // Code + Len + Text + \0
 	}
 	
@@ -175,9 +141,11 @@ static void SocketBearbeiten(int *Socket)
 	
 	if (InCount > 0) 
 		{
+		TTlnDaten TD;
+		
 		int Res = GetSocketData(*Socket, InCount, TlnServBuf.Buf);
 		
-		if (ProtokollLevel == 3) // Daten explizit
+		if (ProtokollLevel >= 2) // Daten explizit
 			{
 			ProtokollierenInt_P(PSTR("TlnSrv: Socket Empfang: (%d/" ), InCount);
 			ProtokollierenInt_P(PSTR("%d)"), Res);
@@ -193,7 +161,7 @@ static void SocketBearbeiten(int *Socket)
 			{
 			case TLNSERV_SELBSTAKT:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SelbstAkt))
-					OutCount = FehlerRueckmelden(PSTR("not enough data"));
+					OutCount = FehlerRueckmelden(PSTR("update not enough data: %d"), TlnServBuf.DataLen);
 				else
 					{
 					uint32_t RufNr = TlnServBuf.SelbstAkt.RufNr;
@@ -214,13 +182,56 @@ static void SocketBearbeiten(int *Socket)
 				break;
 				
 			case TLNSERV_ABFRAGE:
+				if (TlnServBuf.DataLen < sizeof(TlnServBuf.TlnAbfr))
+					OutCount = FehlerRueckmelden(PSTR("request not enough data: %d"), TlnServBuf.DataLen);
+				else
+					{
+					uint32_t RufNr = TlnServBuf.TlnAbfr.RufNr;
+					if (ProtokollLevel >= 1) 
+						ProtokollierenInt_P(PSTR("TlnSrv: Abfrage empfangen. Nummer %ld: "), RufNr);
+					//! \todo Telefonbuch abfragen
+					if (TlnSuche(RufNr, false, &TD)
+						&& !(TD.Flags & TlnFlag_Lokal))
+						// && ! gesperrt
+						{ // gefunden
+						//! \todo URL auflösen in IP
+						
+						// Antwort generieren:
+						TlnServBuf.Code = TLNSERV_AUSKUNFT;
+						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
+						TlnServBuf.TlnAuskunft.AuskTyp = TD.AdrArt; //! \todo mal Gedanken machen
+						TlnServBuf.TlnAuskunft.IP = TD.IPAdr;
+						TlnServBuf.TlnAuskunft.Port = TD.Port;
+						OutCount = 2 + TlnServBuf.DataLen;
+						if (ProtokollLevel >= 1) 
+							Protokollieren_P(PSTR(" ...gefunden\r\n"));
+						}
+					else
+						{ // Nummer nicht gefunden
+						TlnServBuf.Code = TLNSERV_AUSKUNFT;
+						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
+						TlnServBuf.TlnAuskunft.AuskTyp = 0; // Kennzeichen für nicht gefunden
+						TlnServBuf.TlnAuskunft.IP = 0;
+						TlnServBuf.TlnAuskunft.Port = 0;
+						OutCount = 2 + TlnServBuf.DataLen;
+						if (ProtokollLevel >= 1) 
+							Protokollieren_P(PSTR(" ...nicht gefunden oder gesperrt\r\n"));
+						}
+					}
 				break;
 	
 			case TLNSERV_IPRUECKMELD: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			case TLNSERV_AUSKUNFT: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			default:
-				OutCount = FehlerRueckmelden(PSTR("unknown code"));
+				OutCount = FehlerRueckmelden(PSTR("unknown code %02X"), TlnServBuf.Code);
 				break;
+			}
+			
+		if (ProtokollLevel >= 1 && OutCount > 0 && TlnServBuf.Code == TLNSERV_FEHLER)
+			{
+			Protokollieren_P(PSTR("TlnServ: Error "));
+			Protokollieren(TlnServBuf.PureData);
+			Protokollieren_P(PSTR("\r\n"));
 			}
 
 		} // if GetBytesInSocketData > 0
@@ -253,7 +264,7 @@ static void SocketBearbeiten(int *Socket)
 		int Res = PutSocketData_RPE(*Socket, OutCount, TlnServBuf.Buf, RAM);
 		// SocketLebenszeichenZaehler = 0; 
 
-		if (ProtokollLevel == 3)
+		if (ProtokollLevel >= 2)
 			{
 			ProtokollierenInt_P(PSTR("TlnSrv: Socket Sendung: (%d)" ), OutCount);
 			for (uint16_t i = 0 ; i < OutCount ; i++)
@@ -334,7 +345,7 @@ void txp_tlnserv_thread()
 			{ 
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR(" ...ABGEWIESEN\r\n" ));
-			uint8_t OutCount = FehlerRueckmelden(PSTR("occupied"));
+			uint8_t OutCount = FehlerRueckmelden(PSTR("occupied"), 0);
 			PutSocketData_RPE(NewServerSocket, OutCount, TlnServBuf.Buf, RAM);
 			CloseTCPSocket(NewServerSocket);
 			}
