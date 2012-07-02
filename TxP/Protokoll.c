@@ -195,8 +195,8 @@ static bool ProtPraeparieren(int len)
 	
 	if (strlen(Puffer) + len + 2 >= MaxPuffer
 		// Text passt nicht mehr in den Puffer
-		|| (strlen(Puffer) + 50 >= MaxPuffer && Puffer[strlen(Puffer) - 1] == '\n'))
-		// ganze Zeile passt nicht mehr in den Puffer
+		|| (strlen(Puffer) + len + 50 >= MaxPuffer && Puffer[strlen(Puffer) - 1] == '\n'))
+		// nächste Zeile passt nicht mehr in den Puffer
 		{
 		if (!ProtokollSpeichern(true))
 			return false; // kein Platz mehr.

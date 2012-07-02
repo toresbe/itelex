@@ -49,6 +49,61 @@
 	
 	//! Der TCP-Port für die TelexPhone-Rumnummernverwaltung
 	#define TXP_TLNSERV_PORT 11811
+
+	// Daten / Datenstrukturen für Datenaustausch mit Teilnehmer-Server ("Auskunft")
+	#define TLNSERV_SELBSTAKT 0x01
+	#define TLNSERV_IPRUECKMELD 0x02
+	#define TLNSERV_ABFRAGE 0x03
+	#define TLNSERV_AUSKUNFT_NICHTVERG 0x04
+	#define TLNSERV_AUSKUNFT_IP 0x05
+	#define TLNSERV_AUSKUNFT_URL 0x06
+	#define TLNSERV_FEHLER 0xFF
+	
+	#define TLNSERV_URLMAXLEN 50
+
+	typedef union
+		{
+		char Buf[50]; // 50 Zeichen für Diagnosetexte...
+		struct
+			{
+			uint8_t Code;
+			uint8_t DataLen;
+			union
+				{
+				char PureData[1];
+				struct 
+					{
+					uint32_t RufNr;
+					uint16_t Pin; //!< Geheimzahl für DynIP-Aktualisierung
+					uint16_t Port;
+					} SelbstAkt;
+				struct
+					{
+					long EmpfIP;
+					} IpRueckm;
+				struct 
+					{
+					uint32_t RufNr;
+					} TlnAbfr;
+				// für Code == TLNSERV_AUSKUNFT_NICHTVERG keine Daten.
+				struct 
+					{
+					uint8_t Ascii; // eigentlich bool
+					long IP;
+					uint16_t Port;
+					uint8_t Durchwahl;
+					} TlnAuskunftIP;
+				struct 
+					{
+					uint8_t Ascii; // eigentlich bool
+					char Url[TLNSERV_URLMAXLEN]; 
+					uint16_t Port;
+					uint8_t Durchwahl;
+					} TlnAuskunftUrl;
+				} ;
+			} ;
+		} TTlnServBuf; 
+	
 	
 	extern void txp_init( void );
 	extern void txp_thread( void );

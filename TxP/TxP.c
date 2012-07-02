@@ -1891,7 +1891,14 @@ void txp_thread()
 			if (TeilnehmerServerSocketOeffnen())
 				{ // Verbindung hergestellt.
 				// Telegramm senden
-				//! \todo
+				TTlnServBuf TSB;
+				
+				TSB.Code = TLNSERV_SELBSTAKT;
+				TSB.DataLen = sizeof(TSB.SelbstAkt);
+				TSB.SelbstAkt.RufNr = NetzRufnummer;
+				TSB.SelbstAkt.Pin = Geheimzahl;
+				TSB.SelbstAkt.Port = NetzPort;
+				PutSocketData_RPE(TeilnehmerServerSocket, 2 + TSB.DataLen, TSB.Buf, RAM);
 				}
 			else
 				{ // keine Verbindung hergestellt
@@ -1930,6 +1937,11 @@ void txp_thread()
 				{
 				//! \todo
 				}
+				
+			// eine Antwort genügt...
+			CloseTCPSocket(TeilnehmerServerSocket);
+			TeilnehmerServerSocket = NO_SOCKET_USED;
+			DynIPAktZeitZaehler = 0; // in 15 Minuten wieder 
 			}
 		
 		// Schließanforderung vom Teilnehmer-Server
@@ -1942,8 +1954,7 @@ void txp_thread()
 			return;
 			}
 		
-		// Timeout?
-		//!\todo Timeout
+		// Timeout? kommt von selbst nach 20 Sekunden...
 		
 		}
 		

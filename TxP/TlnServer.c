@@ -11,7 +11,7 @@
 /// * 1 Byte Telegrammtyp (siehe TLNSERV_*) \par
 /// * 1 Byte Gesamtlänge der Daten \par
 /// * n Byte Daten \par
-/// es ist nur ein Telegramm per IP-Packet erlaubt! \todo ändern. \par 
+/// es ist nur ein Telegramm per IP-Packet erlaubt! \par 
 /// Folgende Telegramme werden beherrscht: \par
 /// TLNSERV_SELBSTAKT: Aktualisierung durch normalen IP-Telex-Teilnehmer. Daten: \par
 /// * 4 Byte eigene Rufnummer \par
@@ -120,6 +120,7 @@ static uint8_t FehlerRueckmelden(PGM_P Text, int val)
 	
 //! Socket für Teilnehmerauskunft-Server bearbeiten.
 //---------------------------------------------------------------------------
+//! Aufgaben:
 //! \par - Empfangene Daten in den Socket-Empfangspuffer schreiben
 //! \par - Daten vom Socket-Empfangspuffer übersetzen in den SendePuffer (zum Endgerät).
 //! \par - Daten des Empfangspuffers (Endgerät) in den Socket-Sendepuffer übersetzen
@@ -171,7 +172,7 @@ static void SocketBearbeiten(int *Socket)
 					ProtokollierenInt_P(PSTR("TlnSrv: Aktualisierung empfangen. Nummer %ld " ), RufNr);
 					ProtokollierenInt_P(PSTR("Auth %d " ), GeheimNr);
 					ProtokollierenInt_P(PSTR("Port %d\r\n" ), PortNr);
-					//! \todo Pruefziffer pruefen
+					//! \todo PIN pruefen
 					//! \todo Speichern
 					// Antwort generieren:
 					TlnServBuf.Code = TLNSERV_IPRUECKMELD;
@@ -189,30 +190,51 @@ static void SocketBearbeiten(int *Socket)
 					uint32_t RufNr = TlnServBuf.TlnAbfr.RufNr;
 					if (ProtokollLevel >= 1) 
 						ProtokollierenInt_P(PSTR("TlnSrv: Abfrage empfangen. Nummer %ld: "), RufNr);
-					//! \todo Telefonbuch abfragen
-					if (TlnSuche(RufNr, false, &TD)
-						&& !(TD.Flags & TlnFlag_Lokal))
-						// && ! gesperrt
-						{ // gefunden
-						//! \todo URL auflösen in IP
 						
+					// Telefonbuch abfragen
+					if (TlnSuche(RufNr, false, &TD)
+						&& !(TD.Flags & TlnFlag_Lokal)
+						&& !(TD.Flags & TlnFlag_Gesperrt))
+						{ // gefunden
 						// Antwort generieren:
-						TlnServBuf.Code = TLNSERV_AUSKUNFT;
-						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
-						TlnServBuf.TlnAuskunft.AuskTyp = TD.AdrArt; //! \todo mal Gedanken machen
-						TlnServBuf.TlnAuskunft.IP = TD.IPAdr;
-						TlnServBuf.TlnAuskunft.Port = TD.Port;
+						switch (TD.AdrArt)
+							{
+							case TxpUrl:
+							case AsciiUrl:
+								TlnServBuf.Code = TLNSERV_AUSKUNFT_URL;
+								TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunftUrl);
+								strncpy(TlnServBuf.TlnAuskunftUrl.Url, TD.Adresse, sizeof(TlnServBuf.TlnAuskunftUrl.Url));
+								TlnServBuf.TlnAuskunftUrl.Port = TD.Port;
+								TlnServBuf.TlnAuskunftUrl.Ascii = (TD.AdrArt == AsciiUrl);
+								TlnServBuf.TlnAuskunftUrl.Durchwahl = TD.Durchwahl;
+								break;
+							
+							case TxpIP:
+							case TxpDynIP:
+							case AsciiIP:
+								TlnServBuf.Code = TLNSERV_AUSKUNFT_IP;
+								TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunftIP);
+								TlnServBuf.TlnAuskunftIP.IP = TD.IPAdr;
+								TlnServBuf.TlnAuskunftIP.Port = TD.Port;
+								TlnServBuf.TlnAuskunftIP.Ascii = (TD.AdrArt == AsciiIP);
+								TlnServBuf.TlnAuskunftIP.Durchwahl = TD.Durchwahl;
+								break;
+
+							default:
+								TlnServBuf.Code = TLNSERV_AUSKUNFT_NICHTVERG;
+								TlnServBuf.DataLen = 0;
+								ProtokollierenInt_P(PSTR("Ungültiger Typ in Teilnehmerliste Eintrag %ld\r\n"), RufNr);
+								break;
+							} // switch TD.AdrArt
+							
 						OutCount = 2 + TlnServBuf.DataLen;
-						if (ProtokollLevel >= 1) 
+						if (ProtokollLevel >= 1 && OutCount > 2)
 							Protokollieren_P(PSTR(" ...gefunden\r\n"));
 						}
 					else
 						{ // Nummer nicht gefunden
-						TlnServBuf.Code = TLNSERV_AUSKUNFT;
-						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
-						TlnServBuf.TlnAuskunft.AuskTyp = 0; // Kennzeichen für nicht gefunden
-						TlnServBuf.TlnAuskunft.IP = 0;
-						TlnServBuf.TlnAuskunft.Port = 0;
+						TlnServBuf.Code = TLNSERV_AUSKUNFT_NICHTVERG;
+						TlnServBuf.DataLen = 0;
 						OutCount = 2 + TlnServBuf.DataLen;
 						if (ProtokollLevel >= 1) 
 							Protokollieren_P(PSTR(" ...nicht gefunden oder gesperrt\r\n"));
@@ -221,7 +243,9 @@ static void SocketBearbeiten(int *Socket)
 				break;
 	
 			case TLNSERV_IPRUECKMELD: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
-			case TLNSERV_AUSKUNFT: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
+			case TLNSERV_AUSKUNFT_NICHTVERG: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
+			case TLNSERV_AUSKUNFT_URL: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
+			case TLNSERV_AUSKUNFT_IP: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			default:
 				OutCount = FehlerRueckmelden(PSTR("unknown code %02X"), TlnServBuf.Code);
 				break;
@@ -355,7 +379,7 @@ void txp_tlnserv_thread()
 	// Timeouts?
 	// ==========================================================================
 
-	//! \todo
+	//! \todo Prüfen, ob die System-Timeouts immer richtig wirken...
 	
 	} // txp_tlnserv_thread
 	
@@ -372,7 +396,7 @@ void txp_tlnserv_thread()
 void txp_tlnserv_init()
 	{
 	// EEPROM auslesen
-	/*! \todo 
+	/*
 	
 	char Buf[TlnAdresseMax];
 	uint8_t i;
@@ -383,14 +407,14 @@ void txp_tlnserv_init()
 		BusEigenAdresse = 22 << 1;
 	*/
 	
-	/*! \todo Timer?
+	/*
 
 	timer0_init(TxpTimerFreq); 
 	if (!timer0_RegisterCallbackFunction(txp_timerEvent))
 		return;
 	*/
 	
-	/*! \todo cgi?
+	/*
 	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
 	*/
 

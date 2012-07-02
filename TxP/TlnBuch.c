@@ -645,6 +645,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	static PROGMEM const char TypAscii_P[] = "Ascii";
 	static PROGMEM const char TypTxp_P[] = "TelexPhone";
 	static PROGMEM const char Lokal_P[] = "local";
+	static PROGMEM const char Gesperrt_P[] = "lock";
 	static PROGMEM const char Save_P[] = "save";
 	static PROGMEM const char Clear_P[] = "clear";
 	static PROGMEM const char Load_P[] = "load";
@@ -680,6 +681,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P(PSTR("<td align=\"left\">%s</td><td>&#160;"), TD.Name); // name
 				if ((TD.Flags & TlnFlag_Lokal) != 0)
 					printf_P(PSTR("Lokal "));
+				if ((TD.Flags & TlnFlag_Gesperrt) != 0)
+					printf_P(PSTR("gesperrt "));
 				if (TD.AdrArt == TxpDynIP)
 					printf_P(PSTR("DynIP "));
 				printf_P(PSTR("</td>")); // Ende Besonderheiten
@@ -765,6 +768,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	
 		CgiFormCheckbox_P(PSTR("nur Lokal:"), Lokal_P, (TD.Flags & TlnFlag_Lokal) != 0);
 
+		CgiFormCheckbox_P(PSTR("gesperrt:"), Gesperrt_P, (TD.Flags & TlnFlag_Gesperrt) != 0);
+
 		const char *TypSelList[] = { TypGeloescht_P, TypTxp_P, TypAscii_P } ;
 		uint8_t TypSelNr;
 		switch (TD.AdrArt)
@@ -796,7 +801,16 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		// ==================================================
 		bool Ok = true; // nur wenn gesetzt, wird auch gespeichert
 		uint32_t AltNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, AltNummer_P)]);
-		TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Nummer_P)]);
+		uint32_t NeuNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Nummer_P)]);
+		
+		// brauche alte Geheimzahl und alten Typ
+		if (NeuNummer == 0 || !TlnSuche(NeuNummer, true, &TD))
+			{ // hat doch nicht geklappt
+			TD.AdrArt = 0;
+			TD.DynPin = 0;
+			}
+
+		TD.Nummer = NeuNummer;
 		strncpy(TD.Name, http_request->argvalue[PharseGetValue_P(http_request, Name_P)], TlnNameMax-1);
 		TD.Flags = 0;
 		char TypStr[20];
@@ -828,6 +842,14 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		if ((TD.Flags & TlnFlag_Lokal) != 0)
 			printf_P(PSTR("nur Lokal<br>"));
 
+		if (PharseCheckName_P(http_request, Gesperrt_P))
+			{
+			if (atoi(http_request->argvalue[PharseGetValue_P(http_request, Gesperrt_P)]) != 0)
+				TD.Flags |= TlnFlag_Gesperrt;
+			}
+		if ((TD.Flags & TlnFlag_Gesperrt) != 0)
+			printf_P(PSTR("gesperrt<br>"));
+
 		if (TD.Adresse[0] == '\0' || strcmp_P(TypStr, TypGeloescht_P) == 0)
 			// Leere Adresse --> löschen
 			{
@@ -846,10 +868,14 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					}
 				else
 					{
-					TD.AdrArt = TxpIP;
+					if (TD.AdrArt == TxpDynIP && AltNummer == TD.Nummer)
+						{ // der alte (!) Eintrag war ein Eintrag zu dynamischer IP-Aktualisierung
+						// es ist nix zu ändern, auch die Pin bleibt unverändert.
+						}
+					else
+						TD.AdrArt = TxpIP;
 					iptostr(TD.IPAdr, TD.Adresse); // und wieder zurück wandeln
 					printf_P(PSTR("TelexPhone: IP %s "), TD.Adresse);
-					//! \todo DynIP wie???
 					}
 				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
 				TD.Durchwahl = atoi(http_request->argvalue[PharseGetValue_P(http_request, Durchwahl_P)]);
@@ -879,6 +905,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				}
 			}
 
+		if (TD.AdrArt != TxpDynIP)
+			TD.DynPin = 0; // Datenschutz.
+			
 		if (Ok && TD.AdrArt == Geloescht && AltNummer == 0)
 			{ // einen neuen Lösch-Eintrag anzulegen ist doof
 			printf_P(PSTR("<b>keine &Auml;nderung</b><br>"));
