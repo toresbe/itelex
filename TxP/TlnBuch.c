@@ -186,6 +186,24 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 		
 	} // TlnEintragen
 	
+//! Initialisieren eines Adressbuch-Datensatzes
+// --------------------------------------------
+//! \param[out] Tln Zeiger auf den Datensatz-
+
+void TlnDatenInit(TTlnDaten *Tln)
+	{
+	Tln->Nummer = 0;
+	Tln->Name[0] = '\0';
+	Tln->Flags = 0;
+	Tln->AdrArt = 0; 
+	Tln->Adresse[0] = '\0';
+	Tln->IPAdr = 0;
+	Tln->Port = 0; 
+	Tln->Durchwahl = 0; 
+	Tln->DynPin = 0;
+	Tln->Datum = 0;
+	}
+	
 	
 //! Suche eines Adressbuch-Eintrags.
 // ---------------------------------
@@ -673,6 +691,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			"</tr>"			
 			));
 			
+		TlnDatenInit(&TD);
+		
 		if (TlnListerStart())
 			{
 			while (TlnListerNaechster(&TD))

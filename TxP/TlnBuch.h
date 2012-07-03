@@ -42,7 +42,9 @@ typedef struct
 enum { TlnFlag_Lokal = 1 } ; //!< Diese Nummer wird nicht mit anderen Teilnehmern synchronisiert (TODO).
 enum { TlnFlag_Gesperrt = 2 } ; //!< Diese Nummer darf nicht bei Abfragen der Teilnehmerliste vom 
 	//!< Teilnehmer-Server gemeldet werden.
-	
+
+extern void TlnDatenInit(TTlnDaten *Tln);
+
 extern bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln);
 
 extern bool TlnHinzufuegen(TTlnDaten *Tln);	

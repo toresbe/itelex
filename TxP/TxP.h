@@ -88,6 +88,7 @@
 				// für Code == TLNSERV_AUSKUNFT_NICHTVERG keine Daten.
 				struct 
 					{
+					uint32_t RufNr; // zu Vergleichszwecken
 					uint8_t Ascii; // eigentlich bool
 					long IP;
 					uint16_t Port;
@@ -95,6 +96,7 @@
 					} TlnAuskunftIP;
 				struct 
 					{
+					uint32_t RufNr; // zu Vergleichszwecken
 					uint8_t Ascii; // eigentlich bool
 					char Url[TLNSERV_URLMAXLEN]; 
 					uint16_t Port;

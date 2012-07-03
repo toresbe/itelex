@@ -80,8 +80,6 @@ typedef enum
 	// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
 	ModGehendReserv = 1, 
 	ModGehendWaehlen = 2,
-		// nicht benötigt ModGehendVerbindungHerstellen = 3, 
-			// Einschaltkommando ist angekommen, Warte auf Quittung vom Anrufer
 	ModGehendVerbunden = 4,
 	
 	// Kommend = vom Netz zum internen Anschluss
@@ -263,12 +261,17 @@ static bool AlternativSucheBeiBesetzt;
 static uint8_t DurchwahlTabelle[9];
 	//!< Liste der Nebenstellen-Nummern bei kommenden Rufen mit Durchwahl
 
+	
 static uint32_t Wahlnummer; 
 	//!< Momentan gewählte Nummer
 	
 static uint8_t Wahlziffern; 
 	//!< Anzahl gewählter Ziffern
-
+	
+static TTlnDaten GewaehlterTln;
+	//!< Datensatz zum aktuell gewählten Teilnehmer. Wird global gespeichert, um 
+	//!< Aktualisierungen vom Teilnehmer-Server "einpflegen" zu können.
+	
 
 static int TeilnehmerServerSocket;
 	//!< Handle für ausgehende Verbindungen zum Teilnehmer-Server
@@ -285,6 +288,9 @@ static uint16_t Geheimzahl;
 
 static uint16_t NetzPort;
 	//!< Gewünschte Port-Nummer im globalen Netz. Kann aus bestimmten Gründen von TXP_PORT (134) abweichen.
+
+static long NetzEigeneIP;
+	//!< Zurückgemeldete IP-Adresse im globalen Netz (nur für Diagnose)
 	
 #define ANZ_TEILNEHMER_SERVER 3
 	
@@ -702,15 +708,8 @@ static void ModusWechsel(TModus neu)
 		case ModGehendWaehlen:
 			Wahlnummer = 0;
 			Wahlziffern = 0;
-			// derzeit keine Änderung erforderlich
+			TlnDatenInit(&GewaehlterTln);
 			break;
-	
-/* nicht benötigt
-		case ModGehendVerbindungHerstellen: // Einschaltkommando ist angekommen, Warte auf Quittung vom Anrufer
-			BusEmpfMark = true;
-			SendeMark = true;
-			break;
-*/
 	
 		case ModGehendVerbunden:
 			SET_BIT_Status(StatBit_Verbunden);
@@ -997,6 +996,7 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 
 //! Socket bearbeiten.
 //---------------------------------------------------------------------------
+//! Aufgaben:
 //! \par - Empfangene Daten in den Socket-Empfangspuffer schreiben
 //! \par - Daten vom Socket-Empfangspuffer übersetzen in den SendePuffer (zum Endgerät).
 //! \par - Daten des Empfangspuffers (Endgerät) in den Socket-Sendepuffer übersetzen
@@ -1384,6 +1384,97 @@ bool TeilnehmerServerSocketOeffnen()
 	} // TeilnehmerServerSocketOeffnen()
 
 
+//! Versucht den Verbindungsaufbau zu einem vorhandenen Eintrag im eigenen Teilnehmerverzeichnis
+// ---------------------------------------------------------------------------------------------
+
+bool Verbindungsaufbau(TTlnDaten* td)
+	{
+	switch (td->AdrArt)
+		{
+		case TxpIP:
+		case TxpDynIP:
+		case AsciiIP:
+			if (ProtokollLevel >= 1)
+				{
+				Protokollieren_P(PSTR("TxP: Verbindungsaufbau zu IP "));
+				ProtokollierenIPAdr(td->IPAdr);
+				ProtokollierenInt_P(PSTR(" Port %d\r\n"), td->Port);
+				}
+			TxpClientSocket = Connect2IP(td->IPAdr, td->Port); 
+			break;
+			
+		case TxpUrl:
+		case AsciiUrl:
+			td->IPAdr = DNS_ResolveName(td->Adresse); 
+				// IPAdr wird 'missbraucht' aber nicht gespeichert
+			if (td->IPAdr != -1)
+				{
+				if (ProtokollLevel >= 1)
+					{
+					Protokollieren_P(PSTR("TxP: Verbindungsaufbau zu Url "));
+					Protokollieren(td->Adresse);
+					Protokollieren_P(PSTR(" = "));
+					ProtokollierenIPAdr(td->IPAdr);
+					ProtokollierenInt_P(PSTR(" Port %d\r\n"), td->Port);
+					}									
+				TxpClientSocket = Connect2IP(td->IPAdr, td->Port);
+				}
+			else
+				{
+				if (ProtokollLevel >= 1)
+					{
+					Protokollieren_P(PSTR("TxP: IP zu Url "));
+					Protokollieren(td->Adresse);
+					Protokollieren_P(PSTR(" nicht gefunden\r\n"));
+					}
+				TxpClientSocket = -1;
+				}
+			break;
+			
+		default:
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR("TxP: Teilnehmer ist GELOESCHT\r\n" ));
+			TxpClientSocket = -1;
+		}
+	
+	if (TxpClientSocket == -1)
+		{ // ID#223 ********************************************
+		// Verbindung konnte nicht aufgebaut werden
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("TxP: Client-Socket konnte nicht geoeffnet werden\r\n"));
+		TxpClientSocket = NO_SOCKET_USED;
+		return false;
+		}
+		
+	else if (td->AdrArt == AsciiUrl || td->AdrArt == AsciiIP)
+		{ // ID#226 *********************************************
+		BusSenden(BusQuittEin);
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("TxP: Client-Socket Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
+		ModusWechsel(ModGehendVerbunden);
+		SocketBufInit();
+		SocketModeAscii = true;
+		return true;
+		}
+	else // TxpUrl oder TxpIP
+		{ // ID#222 ********************************************
+		if (ProtokollLevel >= 1)
+			ProtokollierenInt_P(PSTR("TxP: Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %d\r\n"), td->Durchwahl);
+
+		SocketBufInit();
+		SocketModeAscii = false;
+		
+		SocketOutBuf[0] = TXPC_DURCHWAHL;
+		SocketOutBuf[1] = 1;
+		SocketOutBuf[2] = td->Durchwahl;
+		SocketOutBufUsed = 3;
+		
+		return true;
+		}
+		
+	} // Verbindungsaufbau()
+	
+	
 //! Nur für debugging.	
 static uint32_t TxpThreadCount; 
 
@@ -1469,7 +1560,7 @@ void txp_thread()
 				break;
 
 			case BusKdoWahlFreigabe:
-				// \todo Bei Relaisbetrieb... dies ist eine Leitungsschnittstelle, die kann nicht wählen.
+				//! \todo Bei Relaisbetrieb... dies ist eine Leitungsschnittstelle, die kann nicht wählen.
 				if (ProtokollLevel >= 1)
 					Protokollieren_P(PSTR("TxP: TWI Wahlaufforderung intern / kommend\r\n" ));
 				FalschCodeEmpfangen(BusQuittEin);
@@ -1480,95 +1571,27 @@ void txp_thread()
 					ProtokollierenInt_P(PSTR("TxP: TWI Wahlziffer %d intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
 				if (Modus == ModGehendWaehlen && TxpClientSocket == NO_SOCKET_USED)
 					{
-					TTlnDaten TD;
-					
 					// ID#221 ********************************************
 					Wahlnummer = 10 * Wahlnummer + (Code - BusKdoWahlziffer0);
 					Wahlziffern++;
+					RuheZaehler = 0;
 					
-					if (TlnSuche(Wahlnummer, false, &TD))
+					if (TlnSuche(Wahlnummer, false, &GewaehlterTln))
 						{ // ID#222 ********************************************
-						switch (TD.AdrArt)
-							{
-							case TxpIP:
-							case TxpDynIP:
-							case AsciiIP:
-								if (ProtokollLevel >= 1)
-									{
-									ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden: "), TD.Nummer);
-									ProtokollierenIPAdr(TD.IPAdr);
-									Protokollieren_P(PSTR("\r\n"));
-									}
-								TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port); 
-								break;
-								
-							case TxpUrl:
-							case AsciiUrl:
-								TD.IPAdr = DNS_ResolveName(TD.Adresse); 
-									// TP.IPAdr wird 'missbraucht' aber nicht gespeichert
-								if ( TD.IPAdr != -1 )
-									{
-									if (ProtokollLevel >= 1)
-										{
-										ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden: "), TD.Nummer);
-										Protokollieren(TD.Adresse);
-										Protokollieren_P(PSTR(" = "));
-										ProtokollierenIPAdr(TD.IPAdr);
-										Protokollieren_P(PSTR("\r\n"));
-										}									
-									TxpClientSocket = Connect2IP(TD.IPAdr, TD.Port);
-									}
-								else
-									{
-									if (ProtokollLevel >= 1)
-										{
-										ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden, keine IP zu "), TD.Nummer);
-										Protokollieren(TD.Adresse);
-										Protokollieren_P(PSTR(" gefunden\r\n"));
-										}
-									TxpClientSocket = -1;
-									}
-								break;
-								
-							default:
-								if (ProtokollLevel >= 1)
-									ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld gefunden: GELOESCHT\r\n" ), TD.Nummer);
-								TxpClientSocket = -1;
-							}
-						
-						if (TxpClientSocket == -1 )
-							{ // ID#223 ********************************************
-							// Verbindung konnte nicht aufgebaut werden
+						if (ProtokollLevel >= 1)
+							ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld im eigenen Telefonbuch gefunden.\r\n"), GewaehlterTln.Nummer);
+							
+						if (!Verbindungsaufbau(&GewaehlterTln))
 							//! \todo bei TxpDynIP den Teilnehmer-Server befragen...
+							{ // ID#223 ********************************************
 							BusSenden(BusKdoSchluss);
-							if (ProtokollLevel >= 1)
-								Protokollieren_P(PSTR("TxP: Client-Socket konnte nicht geoeffnet werden\r\n"));
-							TxpClientSocket = NO_SOCKET_USED;
 							ModusWechsel(ModWarteSchlussQuitt);
 							}
-						else if (TD.AdrArt == AsciiUrl || TD.AdrArt == AsciiIP)
-							{ // ID#226 *********************************************
-							BusSenden(BusQuittEin);
-							if (ProtokollLevel >= 1)
-								Protokollieren_P(PSTR("TxP: Client-Socket Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
-							ModusWechsel(ModGehendVerbunden);
-							SocketBufInit();
-							SocketModeAscii = true;
-							}
-						else // TxpUrl oder TxpIP
-							{ // ID#222 ********************************************
-							if (ProtokollLevel >= 1)
-								ProtokollierenInt_P(PSTR("TxP: Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %d\r\n"), TD.Durchwahl);
-
-							SocketBufInit();
-							SocketModeAscii = false;
-							
-							SocketOutBuf[0] = TXPC_DURCHWAHL;
-							SocketOutBuf[1] = 1;
-							SocketOutBuf[2] = TD.Durchwahl;
-							SocketOutBufUsed = 3;
-							}
+						
 						} // gewählte Nummer war vollständig
+					else
+						TlnDatenInit(&GewaehlterTln); 
+							// da die aktuell gewählte Nummer ggf. nicht mehr zum zuletzt gefundenen Teilnehmer passt.
 					} // if Modus == ModGehendWaehlen
 				else
 					FalschCodeEmpfangen(BusQuittEin);
@@ -1724,6 +1747,26 @@ void txp_thread()
 	// Timeouts?
 	// ==========================================================================
 
+	if (Modus == ModGehendWaehlen 
+		&& Wahlziffern >= 5
+		&& RuheZaehler > 2 * TxpTimerFreq)
+		{ // 2 Sekunden Wahlpause und 5 Ziffern gewählt
+		// ID#231 **************************************************************
+		if (ProtokollLevel >= 2)
+			Protokollieren_P(PSTR("TxP: Abfrage bei Teilnehmer-Servern\r\n" ));
+
+		if (TeilnehmerServerSocketOeffnen())
+			{ // Verbindung hergestellt.
+			// Telegramm senden
+			TTlnServBuf TSB;
+			
+			TSB.Code = TLNSERV_ABFRAGE;
+			TSB.DataLen = sizeof(TSB.TlnAbfr);
+			TSB.TlnAbfr.RufNr = Wahlnummer;
+			PutSocketData_RPE(TeilnehmerServerSocket, 2 + TSB.DataLen, TSB.Buf, RAM);
+			}
+		}
+		
 	if (Modus == ModWarteSchlussQuitt && RuheZaehler > 3 * TxpTimerFreq)
 		{ // 3 Sekunden keine Schlussquittung empfangen
 		// ID#412 ****************************************************************
@@ -1917,31 +1960,170 @@ void txp_thread()
 		int InCount = GetBytesInSocketData(TeilnehmerServerSocket);
 		if (InCount > 0) 
 			{
-			static TTlnServBuf TlnServBuf;
+			static TTlnServBuf TSB;
+			struct TIME CurTime;
 			
-			int Res = GetSocketData(TeilnehmerServerSocket, InCount, TlnServBuf.Buf);
+			int Res = GetSocketData(TeilnehmerServerSocket, InCount, TSB.Buf);
 			
 			if (ProtokollLevel >= 3) // Daten explizit
 				{
 				ProtokollierenInt_P(PSTR("TxP: Teilnehmer-Server Empfang: (%d/" ), InCount);
 				ProtokollierenInt_P(PSTR("%d)"), Res);
 				for (uint16_t i = 0 ; i < Res ; i++)
-					ProtokollierenInt_P(PSTR(" %02X"), TlnServBuf.Buf[i]);
+					ProtokollierenInt_P(PSTR(" %02X"), TSB.Buf[i]);
 				Protokollieren_P(PSTR("\r\n"));
 				}		
 			
 			// Daten des Socket-Empfangspuffer interpretieren
 			// ----------------------------------------------
 			// es wird immer nur ein Telegramm gesendet und empfangen
-			switch (TlnServBuf.Code)
+			switch (TSB.Code)
 				{
-				//! \todo
-				}
+				case TLNSERV_AUSKUNFT_NICHTVERG:
+					if (ProtokollLevel >= 2)
+						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet 'nicht gefunden'\r\n" ));
+					break;
+					
+				case TLNSERV_AUSKUNFT_IP:
+					if (Modus != ModGehendWaehlen)
+						{
+						Protokollieren_P(PSTR("TxP: Teilnehmer-Server liefert Teilnehmer-Datensatz obwohl nicht im Wahlzustand\r\n"));
+						break;
+						}
+					
+					if (TSB.TlnAuskunftIP.RufNr != Wahlnummer)
+						{
+						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet andere Nummer als gewählt\r\n"));
+						break;
+						}
+					
+					if (ProtokollLevel >= 2)
+						{
+						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet IP gefunden: " ));
+						ProtokollierenIPAdr(TSB.TlnAuskunftIP.IP);
+						Protokollieren_P(PSTR("\r\n"));
+						}
+						
+					if (GewaehlterTln.AdrArt == Geloescht)
+						{ // neuen Eintrag erzeugen
+						GewaehlterTln.Nummer = TSB.TlnAuskunftIP.RufNr;
+						GewaehlterTln.Name[0] = '\0'; // Name wird nicht übertragen
+						GewaehlterTln.Flags = 0;
+						GewaehlterTln.AdrArt = TxpDynIP;
+						GewaehlterTln.Adresse[0] = '\0';
+						GewaehlterTln.DynPin = 0;
+						}
+					else if (GewaehlterTln.AdrArt != TxpDynIP 
+							 || GewaehlterTln.Nummer != TSB.TlnAuskunftIP.RufNr)
+						{ // vorhandener Eintrag weicht von 'aktuellem' ab --> Abbruch
+						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet andere Nummer als angefragt\r\n"));
+						break;
+						}
+						
+					// ab hier ist der Eintrag abzuspeichern und der Teilnehmer anzuwählen
+					GewaehlterTln.IPAdr = TSB.TlnAuskunftIP.IP;
+					GewaehlterTln.Port = TSB.TlnAuskunftIP.Port;
+					GewaehlterTln.Durchwahl = TSB.TlnAuskunftIP.Durchwahl;
+					CLOCK_GetTime(&CurTime);
+					GewaehlterTln.Datum = CurTime.time;
+					
+					if (!TlnHinzufuegen(&GewaehlterTln))
+						ProtokollierenInt_P(PSTR("TxP: Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
+						
+					if (!Verbindungsaufbau(&GewaehlterTln))
+						{ // ID#252 ********************************************
+						BusSenden(BusKdoSchluss);
+						ModusWechsel(ModWarteSchlussQuitt);
+						}
+					
+					break; // case TLNSERV_AUSKUNFT_IP
+					
+				case TLNSERV_AUSKUNFT_URL:
+					if (Modus != ModGehendWaehlen)
+						{
+						Protokollieren_P(PSTR("TxP: Teilnehmer-Server liefert Teilnehmer-Datensatz obwohl nicht im Wahlzustand\r\n"));
+						break;
+						}
+					
+					if (TSB.TlnAuskunftUrl.RufNr != Wahlnummer)
+						{
+						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet andere Nummer als gewählt\r\n"));
+						break;
+						}
+					
+					if (ProtokollLevel >= 2)
+						{
+						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet: Url gefunden:" ));
+						Protokollieren(TSB.TlnAuskunftUrl.Url);
+						Protokollieren_P(PSTR("\r\n"));
+						}
+						
+					if (GewaehlterTln.AdrArt == Geloescht)
+						{ // neuen Eintrag erzeugen
+						GewaehlterTln.Nummer = TSB.TlnAuskunftUrl.RufNr;
+						GewaehlterTln.Name[0] = '\0'; // Name wird nicht übertragen
+						GewaehlterTln.Flags = 0;
+						GewaehlterTln.AdrArt = TxpUrl;
+						strcpy(GewaehlterTln.Adresse, TSB.TlnAuskunftUrl.Url);
+						GewaehlterTln.DynPin = 0;
+						}
+					/*! \todo Konzept auch Url-Einträge vom Server aktualisieren lassen
+						else if (GewaehlterTln.AdrArt != TxpDynIP 
+							 || GewaehlterTln.Nummer != TSB.TlnAuskunftUrl.RufNr)
+					*/
+					else
+						{ // vorhandener Eintrag weicht von 'aktuellem' ab --> Abbruch
+						Protokollieren_P(PSTR("TxP: keine Aktualisierung von Url-Einträgen möglich\r\n"));
+						break;
+						}
+						
+					// ab hier ist der Eintrag abzuspeichern und der Teilnehmer anzuwählen
+					GewaehlterTln.IPAdr = 0;
+					GewaehlterTln.Port = TSB.TlnAuskunftUrl.Port;
+					GewaehlterTln.Durchwahl = TSB.TlnAuskunftUrl.Durchwahl;
+					CLOCK_GetTime(&CurTime);
+					GewaehlterTln.Datum = CurTime.time;
+					
+					if (!TlnHinzufuegen(&GewaehlterTln))
+						ProtokollierenInt_P(PSTR("TxP: Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
+						
+					if (!Verbindungsaufbau(&GewaehlterTln))
+						{ // ID#252 ********************************************
+						BusSenden(BusKdoSchluss);
+						ModusWechsel(ModWarteSchlussQuitt);
+						}
+					
+					break; // case TLNSERV_AUSKUNFT_URL
+					
+				case TLNSERV_IPRUECKMELD:
+					if (TSB.IpRueckm.EmpfIP == NetzEigeneIP)
+						{ // keine Änderung
+						if (ProtokollLevel >= 2)
+							Protokollieren_P(PSTR("TxP: Dynamische IP-Aktualiserung: keine Änderung\r\n" ));
+						}
+					else
+						{
+						NetzEigeneIP = TSB.IpRueckm.EmpfIP;
+						if (ProtokollLevel >= 1)
+							{
+							Protokollieren_P(PSTR("TxP: Dynamische IP-Aktualiserung: neu "));
+							ProtokollierenIPAdr(NetzEigeneIP);
+							Protokollieren_P(PSTR("\r\n"));
+							}
+						}
+					DynIPAktZeitZaehler = 0; // in 15 Minuten wieder 
+					break;
+					
+				default:
+					Protokollieren_P(PSTR("TxP: unerwartete Antwort des Teilnehmer-Servers\r\n" ));
+					DynIPAktZeitZaehler = 0; // in 15 Minuten wieder 
+					break;
+				
+				} // switch (TSB.Code)
 				
 			// eine Antwort genügt...
 			CloseTCPSocket(TeilnehmerServerSocket);
 			TeilnehmerServerSocket = NO_SOCKET_USED;
-			DynIPAktZeitZaehler = 0; // in 15 Minuten wieder 
 			}
 		
 		// Schließanforderung vom Teilnehmer-Server
@@ -2743,6 +2925,7 @@ void txp_init()
 	TxpClientSocket = NO_SOCKET_USED;
 	TxpServerSocket = NO_SOCKET_USED;
 	TeilnehmerServerSocket = NO_SOCKET_USED;
+	NetzEigeneIP = 0;
 	
 	TwiInit();
 

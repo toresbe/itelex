@@ -143,6 +143,7 @@ static void SocketBearbeiten(int *Socket)
 	if (InCount > 0) 
 		{
 		TTlnDaten TD;
+		TlnDatenInit(&TD);
 		
 		int Res = GetSocketData(*Socket, InCount, TlnServBuf.Buf);
 		
@@ -204,6 +205,7 @@ static void SocketBearbeiten(int *Socket)
 								TlnServBuf.Code = TLNSERV_AUSKUNFT_URL;
 								TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunftUrl);
 								strncpy(TlnServBuf.TlnAuskunftUrl.Url, TD.Adresse, sizeof(TlnServBuf.TlnAuskunftUrl.Url));
+								TlnServBuf.TlnAuskunftUrl.RufNr = TD.Nummer;
 								TlnServBuf.TlnAuskunftUrl.Port = TD.Port;
 								TlnServBuf.TlnAuskunftUrl.Ascii = (TD.AdrArt == AsciiUrl);
 								TlnServBuf.TlnAuskunftUrl.Durchwahl = TD.Durchwahl;
@@ -214,6 +216,7 @@ static void SocketBearbeiten(int *Socket)
 							case AsciiIP:
 								TlnServBuf.Code = TLNSERV_AUSKUNFT_IP;
 								TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunftIP);
+								TlnServBuf.TlnAuskunftIP.RufNr = TD.Nummer;
 								TlnServBuf.TlnAuskunftIP.IP = TD.IPAdr;
 								TlnServBuf.TlnAuskunftIP.Port = TD.Port;
 								TlnServBuf.TlnAuskunftIP.Ascii = (TD.AdrArt == AsciiIP);
