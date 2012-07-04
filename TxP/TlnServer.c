@@ -158,12 +158,16 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 		{ // noch kein Eintrag vorhanden, neuen anlegen, aber gesperrt.
 		TlnDatenInit(&TD);
 		TD.Nummer = tsb->SelbstAkt.RufNr;
-		TD.AdrArt = TxpDynIP;
+		TD.Name[0] = '?';
+		TD.Name[1] = '\0';
 		TD.Flags = TlnFlag_Gesperrt;
-		TD.DynPin = tsb->SelbstAkt.Pin;
+		TD.AdrArt = TxpDynIP;
+		TD.IPAdr = TlnIP;
 		TD.Port = tsb->SelbstAkt.Port;
+		TD.DynPin = tsb->SelbstAkt.Pin;
 		CLOCK_GetTime(&CurTime);
 		TD.Datum = CurTime.time;
+
 		if (TlnHinzufuegen(&TD))
 			{
 			if (ProtokollLevel >= 1)

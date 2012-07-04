@@ -808,7 +808,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			}
 		CgiFormDropdown_P(PSTR("Typ:"), Typ_P, 3, TypSelList, TypSelNr);
 		
-		if (TD.AdrArt == TxpIP || TD.AdrArt == AsciiIP)
+		if (TD.AdrArt == TxpIP || TD.AdrArt == TxpDynIP || TD.AdrArt == AsciiIP)
 			iptostr(TD.IPAdr, TD.Adresse);
 		CgiFormInputFieldText_P(PSTR("Adresse:"), Adresse_P, TlnAdresseMax-1, TD.Adresse);
 		CgiFormInputFieldLong_P(PSTR("Port:"), Port_P, 5, TD.Port);

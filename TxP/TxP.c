@@ -312,8 +312,8 @@ enum { KonfigPasswortLen = 10 } ;
 static char KonfigPasswort[KonfigPasswortLen+1];
 	//!< Passwort für den Zugang zu Konfigurationsdaten.
 	
-static bool KonfigFreigegeben;
-	//!< true, wenn Zugriff auf die Konfigurationsseiten erlaubt ist.
+static unsigned long KonfigFreigabeZeit;
+	//!< Uhrzeit der letzen Freigabe bzw. Benutzung von freizugebenden Seiten
 
 
 //! Sollfrequenz des Aufrufs von txp_timerEvent()
@@ -2063,10 +2063,16 @@ void txp_thread()
 					if (!TlnHinzufuegen(&GewaehlterTln))
 						ProtokollierenInt_P(PSTR("TxP: Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
 						
-					if (!Verbindungsaufbau(&GewaehlterTln))
-						{ // ID#252 ********************************************
-						BusSenden(BusKdoSchluss);
-						ModusWechsel(ModWarteSchlussQuitt);
+					switch (Verbindungsaufbau(&GewaehlterTln))
+						{
+						case 0: 
+							break; // erfolgreich
+							
+						case 1: // Socket öffnen nicht erfolgreich
+						case 2: // Ungültige Daten
+							BusSenden(BusKdoSchluss);
+							ModusWechsel(ModWarteSchlussQuitt);
+							break;
 						}
 					
 					break; // case TLNSERV_AUSKUNFT_VERSION1
@@ -2423,7 +2429,7 @@ void txp_cgi_config_intern(void *pStruct)
 
 		CgiFormInputFieldLong_P(PSTR("Protokoll-Level:"), ProtokollLevel_P, 2, ProtokollLevel);
 
-		CgiFormInputFieldText_P(PSTR("Passwort"), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
+		CgiFormInputFieldText_P(PSTR("Passwort f&uuml;r Kofigurationsseiten:"), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
 		
 		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
 		}
@@ -2905,6 +2911,7 @@ void txp_init()
 
 	if (readConfig_P(KonfigPasswort_P, KonfigPasswort) != 1)
 		KonfigPasswort[0] = '\0';
+	KonfigFreigabeZeit = 0; // ist zwar 1970, sollte aber nicht das Problem sein...
 		
 	// dies müsste eigentlich in Protokoll.c enthalten sein.
 	if (readConfig_P(ProtokollLevel_P, Buf) == 1)
