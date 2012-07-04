@@ -110,7 +110,9 @@ static void TlnEintragen(TTlnDaten *Tln, char *BuchP)
 			*((uint16_t *) p) = Tln->Port;				p += 2;
 			*((uint8_t *) p) = Tln->Durchwahl;			p += 1;
 			if (Tln->AdrArt == TxpDynIP)
+				{
 				*((uint16_t *) p) = Tln->DynPin;		p += 2;
+				}
 			break;
 		
 		case AsciiUrl:
@@ -164,7 +166,9 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 			Tln->Port = *((uint16_t *) p);				p += 2;
 			Tln->Durchwahl = *((uint8_t *) p);			p += 1;
 			if (Tln->AdrArt == TxpDynIP)
+				{
 				Tln->DynPin = *((uint16_t *) p);		p += 2;
+				}
 			break;
 		
 		case AsciiUrl:
@@ -185,6 +189,7 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 		}
 		
 	} // TlnEintragen
+	
 	
 //! Initialisieren eines Adressbuch-Datensatzes
 // --------------------------------------------
