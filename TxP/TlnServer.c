@@ -7,27 +7,7 @@
 ///	\defgroup TlnServer
 /// Hauptfunktion dieser Applikation: Als Server für die Herstellung 
 /// von Verbindungen dienen (Teilnehmerauskunft). \par
-/// Grundsätzlicher Telegrammaufbau: \par
-/// * 1 Byte Telegrammtyp (siehe TLNSERV_*) \par
-/// * 1 Byte Gesamtlänge der Daten \par
-/// * n Byte Daten \par
-/// es ist nur ein Telegramm per IP-Packet erlaubt! \par 
-/// Folgende Telegramme werden beherrscht: \par
-/// TLNSERV_SELBSTAKT: Aktualisierung durch normalen IP-Telex-Teilnehmer. Daten: \par
-/// * 4 Byte eigene Rufnummer \par
-/// * 2 Byte Authentifizierungs-Code (eine Art Prüfsumme der Rufnummer) \par
-/// * 2 Byte gewünschte Port-Nummer für Anrufe \par
-/// TLNSERV_IPRUECKMELD: Rückmeldung des Servers nach TLNSERV_SELBSTAKT. Daten: \par
-/// * 4 Byte aktuelle IP-Adresse des Teilnehmers (nicht des Servers). 0 wenn 
-///          Aktualiserung nicht zulässig (weil z.B. falscher Authentifizierungs-Code) \par
-/// TLNSERV_ABFRAGE: Abfrage eines Teilnehmers. Daten: \par
-/// * 4 Byte gewünschte Rufnummer. \par
-/// TLNSERV_AUSKUNFT: Daten des gefundenen Teilnehmers nach TLNSERV_ABFRAGE. Daten: \par
-/// * 1 Byte Versionsnummer / Art der Antwort. 0 bei nicht gefundenem Teilnehmer. \par
-/// * 4 Byte IP-Adresse (bei Version 1) \par
-/// * 2 Byte Port-Nummer (bei Version 1) \par
-/// TLNSERV_FEHLER: Fehlermeldung aller Art \par
-/// * 1 Byte Fehlercode \par
+/// Grundsätzlicher Telegrammaufbau siehe #TTlnServBuf.
 ///	\code #include "TlnServer.h" \endcode
 //****************************************************************************/
 /*
@@ -109,6 +89,102 @@ static TTlnServBuf TlnServBuf;
 	//!< Lokaler Puffer für alle Anfragen an den Teilnehmerauskunft-Server
 
 	
+//! Bearbeitet die Aktualisierungsmeldung im eigenen Telefonbuch.
+//---------------------------------------------------------------
+//! \retval true, wenn Meldung akzeptiert wurde.
+	
+static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
+	{
+	TTlnDaten TD;
+	struct TIME CurTime;
+	
+	if (TlnSuche(tsb->SelbstAkt.RufNr, false, &TD))
+		{ // Eintrag ist schon vorhanden
+		if (TD.Flags & TlnFlag_Lokal)
+			{
+			if (ProtokollLevel >= 1)
+				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d schon vorhanden, aber LOKAL\r\n"), TD.Nummer);
+			return false;
+			}
+		else if (TD.Flags & TlnFlag_Gesperrt)
+			{
+			if (ProtokollLevel >= 1)
+				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d schon vorhanden, aber noch nicht freigegeben\r\n"), TD.Nummer);
+			return false;
+			}
+		else if (TD.AdrArt != TxpDynIP)
+			{
+			if (ProtokollLevel >= 1)
+				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d schon vorhanden, aber nicht Typ 'dynamisch'\r\n"), TD.Nummer);
+			return false;
+			}
+		else if (tsb->SelbstAkt.Pin != TD.DynPin)
+			{
+			ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d schon vorhanden, aber falsche IP gesendet\r\n"), TD.Nummer);
+			return false;
+			}
+		else if (tsb->SelbstAkt.Port == TD.Port && TlnIP == TD.IPAdr)
+			{
+			if (ProtokollLevel >= 2)
+				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d schon vorhanden, unveraenderte Daten\r\n"), TD.Nummer);
+			return true; // da zulässige Aktualisierung
+			}
+		else
+			{ // jetzt wirklich aktualisieren
+			TD.IPAdr = TlnIP;
+			TD.Port = tsb->SelbstAkt.Port;
+			CLOCK_GetTime(&CurTime);
+			TD.Datum = CurTime.time;
+			
+			if (TlnHinzufuegen(&TD))
+				{
+				if (ProtokollLevel >= 1)
+					{
+					ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d erfolgreich aktualisiert: IP "), TD.Nummer);
+					ProtokollierenIPAdr(TlnIP);
+					ProtokollierenInt_P(PSTR(" Port %d\r\n"), TD.Port);
+					}
+				return true;
+				}
+			else
+				{ // speichern war nicht erfolgreich
+				ProtokollierenInt_P(PSTR("TlnSrv: Aenderung Teilnehmer %d konnte nicht gespeichert werden\r\n"), TD.Nummer);
+				return true; //! \todo Oder wäre false für die Gesamtfunktionalität besser???
+				}
+			} // Aktualisierung erforderlich
+		} // Eintrag schon vorhanden
+		
+	else
+		{ // noch kein Eintrag vorhanden, neuen anlegen, aber gesperrt.
+		TlnDatenInit(&TD);
+		TD.Nummer = tsb->SelbstAkt.RufNr;
+		TD.AdrArt = TxpDynIP;
+		TD.Flags = TlnFlag_Gesperrt;
+		TD.DynPin = tsb->SelbstAkt.Pin;
+		TD.Port = tsb->SelbstAkt.Port;
+		CLOCK_GetTime(&CurTime);
+		TD.Datum = CurTime.time;
+		if (TlnHinzufuegen(&TD))
+			{
+			if (ProtokollLevel >= 1)
+				{
+				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d erfolgreich angelegt: IP "), TD.Nummer);
+				ProtokollierenIPAdr(TlnIP);
+				ProtokollierenInt_P(PSTR(" Port %d (noch gesperrt!)\r\n"), TD.Port);
+				}
+			return true;
+			}
+		else
+			{ // speichern war nicht erfolgreich
+			ProtokollierenInt_P(PSTR("TlnSrv: Neuer Teilnehmer %d konnte nicht gespeichert werden\r\n"), TD.Nummer);
+			return true; //! \todo Oder wäre false für die Gesamtfunktionalität besser???
+			}
+		} // Neuanlage erforderlich
+		
+	return true;
+	}
+	
+	
 static uint8_t FehlerRueckmelden(PGM_P Text, int val)
 	{
 	TlnServBuf.Code = TLNSERV_FEHLER;
@@ -166,20 +242,32 @@ static void SocketBearbeiten(int *Socket)
 					OutCount = FehlerRueckmelden(PSTR("update not enough data: %d"), TlnServBuf.DataLen);
 				else
 					{
-					uint32_t RufNr = TlnServBuf.SelbstAkt.RufNr;
-					uint16_t GeheimNr = TlnServBuf.SelbstAkt.Pin;
-					uint16_t PortNr = TlnServBuf.SelbstAkt.Port;
 					long MeldeIP = TCP_sockettable[*Socket].SourceIP;
-					ProtokollierenInt_P(PSTR("TlnSrv: Aktualisierung empfangen. Nummer %ld " ), RufNr);
-					ProtokollierenInt_P(PSTR("Auth %d " ), GeheimNr);
-					ProtokollierenInt_P(PSTR("Port %d\r\n" ), PortNr);
-					//! \todo PIN pruefen
-					//! \todo Speichern
-					// Antwort generieren:
-					TlnServBuf.Code = TLNSERV_IPRUECKMELD;
-					TlnServBuf.DataLen = sizeof(TlnServBuf.IpRueckm);
-					TlnServBuf.IpRueckm.EmpfIP = MeldeIP;
-					OutCount = 2 + TlnServBuf.DataLen;
+					if (ProtokollLevel >= 2)
+						{
+						ProtokollierenInt_P(PSTR("TlnSrv: Aktualisierung empfangen. Nummer %ld " ), TlnServBuf.SelbstAkt.RufNr);
+						ProtokollierenInt_P(PSTR("Auth %d " ), TlnServBuf.SelbstAkt.Pin);
+						ProtokollierenInt_P(PSTR("Port %d\r\n" ), TlnServBuf.SelbstAkt.Port);
+						}
+					
+					if (TlnAktualisierung(&TlnServBuf, MeldeIP))
+						{
+						// Antwort generieren:
+						TlnServBuf.Code = TLNSERV_IPRUECKMELD;
+						TlnServBuf.DataLen = sizeof(TlnServBuf.IpRueckm);
+						TlnServBuf.IpRueckm.EmpfIP = MeldeIP;
+						OutCount = 2 + TlnServBuf.DataLen;
+						}
+					else
+						{
+						OutCount = FehlerRueckmelden(PSTR("forbidden"), 0);	
+						if (ProtokollLevel >= 1)
+							{
+							Protokollieren_P(PSTR("TlnSrv: abgewiesene Anfrage war von IP "));
+							ProtokollierenIPAdr(MeldeIP);
+							Protokollieren_P(PSTR("\r\n"));
+							}
+						}
 					}
 				break;
 				
@@ -198,38 +286,12 @@ static void SocketBearbeiten(int *Socket)
 						&& !(TD.Flags & TlnFlag_Gesperrt))
 						{ // gefunden
 						// Antwort generieren:
-						switch (TD.AdrArt)
-							{
-							case TxpUrl:
-							case AsciiUrl:
-								TlnServBuf.Code = TLNSERV_AUSKUNFT_URL;
-								TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunftUrl);
-								strncpy(TlnServBuf.TlnAuskunftUrl.Url, TD.Adresse, sizeof(TlnServBuf.TlnAuskunftUrl.Url));
-								TlnServBuf.TlnAuskunftUrl.RufNr = TD.Nummer;
-								TlnServBuf.TlnAuskunftUrl.Port = TD.Port;
-								TlnServBuf.TlnAuskunftUrl.Ascii = (TD.AdrArt == AsciiUrl);
-								TlnServBuf.TlnAuskunftUrl.Durchwahl = TD.Durchwahl;
-								break;
-							
-							case TxpIP:
-							case TxpDynIP:
-							case AsciiIP:
-								TlnServBuf.Code = TLNSERV_AUSKUNFT_IP;
-								TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunftIP);
-								TlnServBuf.TlnAuskunftIP.RufNr = TD.Nummer;
-								TlnServBuf.TlnAuskunftIP.IP = TD.IPAdr;
-								TlnServBuf.TlnAuskunftIP.Port = TD.Port;
-								TlnServBuf.TlnAuskunftIP.Ascii = (TD.AdrArt == AsciiIP);
-								TlnServBuf.TlnAuskunftIP.Durchwahl = TD.Durchwahl;
-								break;
-
-							default:
-								TlnServBuf.Code = TLNSERV_AUSKUNFT_NICHTVERG;
-								TlnServBuf.DataLen = 0;
-								ProtokollierenInt_P(PSTR("Ungültiger Typ in Teilnehmerliste Eintrag %ld\r\n"), RufNr);
-								break;
-							} // switch TD.AdrArt
-							
+						TlnServBuf.Code = TLNSERV_AUSKUNFT_VERSION1;
+						TlnServBuf.TlnAuskunft = TD;
+						if (TlnServBuf.TlnAuskunft.AdrArt == TxpDynIP)
+							TlnServBuf.TlnAuskunft.AdrArt = TxpIP;
+						TlnServBuf.TlnAuskunft.DynPin = 0; // Datenschutz
+						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
 						OutCount = 2 + TlnServBuf.DataLen;
 						if (ProtokollLevel >= 1 && OutCount > 2)
 							Protokollieren_P(PSTR(" ...gefunden\r\n"));
@@ -247,8 +309,7 @@ static void SocketBearbeiten(int *Socket)
 	
 			case TLNSERV_IPRUECKMELD: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			case TLNSERV_AUSKUNFT_NICHTVERG: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
-			case TLNSERV_AUSKUNFT_URL: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
-			case TLNSERV_AUSKUNFT_IP: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
+			case TLNSERV_AUSKUNFT_VERSION1: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			default:
 				OutCount = FehlerRueckmelden(PSTR("unknown code %02X"), TlnServBuf.Code);
 				break;
@@ -256,7 +317,7 @@ static void SocketBearbeiten(int *Socket)
 			
 		if (ProtokollLevel >= 1 && OutCount > 0 && TlnServBuf.Code == TLNSERV_FEHLER)
 			{
-			Protokollieren_P(PSTR("TlnServ: Error "));
+			Protokollieren_P(PSTR("TlnSrv: Error "));
 			Protokollieren(TlnServBuf.PureData);
 			Protokollieren_P(PSTR("\r\n"));
 			}

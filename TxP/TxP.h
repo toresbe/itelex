@@ -50,17 +50,65 @@
 	//! Der TCP-Port für die TelexPhone-Rumnummernverwaltung
 	#define TXP_TLNSERV_PORT 11811
 
+	//! Typ eines Teilnehmers
+	typedef enum 
+		{
+		Geloescht = 0,
+		TxpUrl = 1,
+		TxpIP = 2,
+		AsciiUrl = 3, //!< Telnet-ähnlich
+		AsciiIP = 4,
+		TxpDynIP = 5 
+			//!< diesen Typ gibt es nur beim Teilnehmer-Server. Bei Abfragen wird der 
+			//!< Typ TxpIP gemeldet.
+		} TTlnAdresseArt;
+		
+
+	enum { TlnAdresseMax = 40 } ; 
+		//!< maximale Länge der Verbindungsadresse.
+		//!< Nicht ändern, da auch der Datenaustausch mit dem Teilnehmer-Server
+		//!< betroffen wäre (Kompatibilitätsprobleme) (siehe #TTlnDaten)
+
+	enum { TlnNameMax = 40 } ; //!< maximale Länge des Teilnehmer-Namens
+		//!< Nicht ändern, da auch der Datenaustausch mit dem Teilnehmer-Server
+		//!< betroffen wäre (Kompatibilitätsprobleme) (siehe #TTlnDaten)
+
+		
+	//! Datenstruktur für alle Informationen eines Teilnehmers.
+	//! Achtung: Bei Änderungen berücksichtigen, dass auch der Datenaustausch 
+	//! mit dem Teilnehmer-Server über dieses Format läuft.
+		
+	typedef struct
+		{
+		uint32_t Nummer; //!< Die Rufnummer, darf keine führenden Nullen enthalten
+		char Name[TlnNameMax]; //!< Ausführlicher Name
+		uint16_t Flags; //!< Boolsche werte. Siehe TlnFlag_*
+		TTlnAdresseArt AdrArt; //!< Was bedeutet die folgende Adresse
+		char Adresse[TlnAdresseMax]; //!< URL, IP, eMail, ...
+		long IPAdr; //!< bei eindeutiger IP-Adresse
+		uint16_t Port; //!< bei abweichendem Port
+		uint8_t Durchwahl; //!< interne Durchwahl bei "Nebenstellenanlagen"
+		uint16_t DynPin; //!< Geheimzahl für DynIP-Aktualisierung
+		uint32_t Datum; //!< letzte Änderung der Adresse
+		} TTlnDaten;
+		
+		
+	enum { TlnFlag_Lokal = 1 } ; 
+		//!< Diese Nummer wird nicht mit anderen Teilnehmern synchronisiert (TODO).
+		
+	enum { TlnFlag_Gesperrt = 2 } ; 
+		//!< Diese Nummer darf nicht bei Abfragen der Teilnehmerliste vom 
+		//!< Teilnehmer-Server gemeldet werden.
+
+	
 	// Daten / Datenstrukturen für Datenaustausch mit Teilnehmer-Server ("Auskunft")
 	#define TLNSERV_SELBSTAKT 0x01
 	#define TLNSERV_IPRUECKMELD 0x02
 	#define TLNSERV_ABFRAGE 0x03
 	#define TLNSERV_AUSKUNFT_NICHTVERG 0x04
-	#define TLNSERV_AUSKUNFT_IP 0x05
-	#define TLNSERV_AUSKUNFT_URL 0x06
+	#define TLNSERV_AUSKUNFT_VERSION1 0x05 // definiert das Datenformat
 	#define TLNSERV_FEHLER 0xFF
 	
-	#define TLNSERV_URLMAXLEN 50
-
 	typedef union
 		{
 		char Buf[50]; // 50 Zeichen für Diagnosetexte...
@@ -86,22 +134,7 @@
 					uint32_t RufNr;
 					} TlnAbfr;
 				// für Code == TLNSERV_AUSKUNFT_NICHTVERG keine Daten.
-				struct 
-					{
-					uint32_t RufNr; // zu Vergleichszwecken
-					uint8_t Ascii; // eigentlich bool
-					long IP;
-					uint16_t Port;
-					uint8_t Durchwahl;
-					} TlnAuskunftIP;
-				struct 
-					{
-					uint32_t RufNr; // zu Vergleichszwecken
-					uint8_t Ascii; // eigentlich bool
-					char Url[TLNSERV_URLMAXLEN]; 
-					uint16_t Port;
-					uint8_t Durchwahl;
-					} TlnAuskunftUrl;
+				TTlnDaten TlnAuskunft; // Version 1 = aktuelle Version
 				} ;
 			} ;
 		} TTlnServBuf; 

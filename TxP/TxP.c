@@ -272,13 +272,15 @@ static TTlnDaten GewaehlterTln;
 	//!< Datensatz zum aktuell gewählten Teilnehmer. Wird global gespeichert, um 
 	//!< Aktualisierungen vom Teilnehmer-Server "einpflegen" zu können.
 	
-
+static bool TlnServerAbfrageWiederholungssperre;
+	//!< Bewirkt, dass der Teilnehmer-Server nur ein mal je gewählte Ziffer abgefragt wird.
+	
 static int TeilnehmerServerSocket;
 	//!< Handle für ausgehende Verbindungen zum Teilnehmer-Server
 	//!< Wird in ZWEI Situationen benutzt: 
-	//!< a) Dynamische IP-Aktualiserung
+	//!< a) Dynamische IP-Aktualisierung
 	//!< b) Abfrage einer Teilnehmer-Adresse
-
+	
 	
 static uint32_t NetzRufnummer;
 	//!< Rufnummer des eigenen Anschlusses im ip-telex-Netz
@@ -302,6 +304,16 @@ static bool DynIPAktiv;
 	
 static uint32_t DynIPAktZeitZaehler;
 	//!< Macht alle 15 Minuten eine Aktualsisierungsmeldung an einen der Teilnehmer-Server (sofern aktiviert).
+	
+
+enum { KonfigPasswortLen = 10 } ;
+	//!< maximale Länge des Passworts für den Zugang zu Konfigurationsdaten.
+
+static char KonfigPasswort[KonfigPasswortLen+1];
+	//!< Passwort für den Zugang zu Konfigurationsdaten.
+	
+static bool KonfigFreigegeben;
+	//!< true, wenn Zugriff auf die Konfigurationsseiten erlaubt ist.
 
 
 //! Sollfrequenz des Aufrufs von txp_timerEvent()
@@ -709,6 +721,7 @@ static void ModusWechsel(TModus neu)
 			Wahlnummer = 0;
 			Wahlziffern = 0;
 			TlnDatenInit(&GewaehlterTln);
+			TlnServerAbfrageWiederholungssperre = true; // wird nach erster Ziffer auf false gesetzt
 			break;
 	
 		case ModGehendVerbunden:
@@ -1357,8 +1370,10 @@ static void ZeichenInHtmlSendeText(char c)
 	
 
 //! Verbindung zu einem Teilnehmer-Server herstellen.
+// --------------------------------------------------
 //! \param NONE
 //! \return Erfolgreich
+
 bool TeilnehmerServerSocketOeffnen()
 	{
 	int ServerI;
@@ -1386,8 +1401,11 @@ bool TeilnehmerServerSocketOeffnen()
 
 //! Versucht den Verbindungsaufbau zu einem vorhandenen Eintrag im eigenen Teilnehmerverzeichnis
 // ---------------------------------------------------------------------------------------------
+//! \retval 0 Erfolgreich
+//! \retval 1 Verbindung konnte nicht hergestellt werden.
+//! \retval 2 Keine gültigen Daten im Datensatz.
 
-bool Verbindungsaufbau(TTlnDaten* td)
+uint8_t Verbindungsaufbau(TTlnDaten* td)
 	{
 	switch (td->AdrArt)
 		{
@@ -1434,7 +1452,9 @@ bool Verbindungsaufbau(TTlnDaten* td)
 		default:
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR("TxP: Teilnehmer ist GELOESCHT\r\n" ));
-			TxpClientSocket = -1;
+			TxpClientSocket = NO_SOCKET_USED;
+			return 2;
+			
 		}
 	
 	if (TxpClientSocket == -1)
@@ -1443,7 +1463,7 @@ bool Verbindungsaufbau(TTlnDaten* td)
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("TxP: Client-Socket konnte nicht geoeffnet werden\r\n"));
 		TxpClientSocket = NO_SOCKET_USED;
-		return false;
+		return 1;
 		}
 		
 	else if (td->AdrArt == AsciiUrl || td->AdrArt == AsciiIP)
@@ -1454,7 +1474,7 @@ bool Verbindungsaufbau(TTlnDaten* td)
 		ModusWechsel(ModGehendVerbunden);
 		SocketBufInit();
 		SocketModeAscii = true;
-		return true;
+		return 0;
 		}
 	else // TxpUrl oder TxpIP
 		{ // ID#222 ********************************************
@@ -1469,7 +1489,7 @@ bool Verbindungsaufbau(TTlnDaten* td)
 		SocketOutBuf[2] = td->Durchwahl;
 		SocketOutBufUsed = 3;
 		
-		return true;
+		return 0;
 		}
 		
 	} // Verbindungsaufbau()
@@ -1575,17 +1595,36 @@ void txp_thread()
 					Wahlnummer = 10 * Wahlnummer + (Code - BusKdoWahlziffer0);
 					Wahlziffern++;
 					RuheZaehler = 0;
+					TlnServerAbfrageWiederholungssperre = false;
 					
 					if (TlnSuche(Wahlnummer, false, &GewaehlterTln))
 						{ // ID#222 ********************************************
 						if (ProtokollLevel >= 1)
 							ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld im eigenen Telefonbuch gefunden.\r\n"), GewaehlterTln.Nummer);
 							
-						if (!Verbindungsaufbau(&GewaehlterTln))
-							//! \todo bei TxpDynIP den Teilnehmer-Server befragen...
-							{ // ID#223 ********************************************
-							BusSenden(BusKdoSchluss);
-							ModusWechsel(ModWarteSchlussQuitt);
+						switch (Verbindungsaufbau(&GewaehlterTln))
+							{
+							case 0: 
+								break; // erfolgreich
+								
+							case 1:
+								// ID#223 ********************************************
+								if (GewaehlterTln.Flags & TlnFlag_Lokal)
+									{
+									BusSenden(BusKdoSchluss);
+									ModusWechsel(ModWarteSchlussQuitt);
+									}
+								else if (Wahlziffern >= 5)
+									{ // mal den Rufnummer-Server befragen...
+									RuheZaehler = 2 * TxpTimerFreq; // nicht mehr 2 Sekunden warten.
+									}
+								break;
+							
+							case 2:
+								BusSenden(BusKdoSchluss);
+								ModusWechsel(ModWarteSchlussQuitt);
+								TlnServerAbfrageWiederholungssperre = true;
+								break;
 							}
 						
 						} // gewählte Nummer war vollständig
@@ -1744,14 +1783,17 @@ void txp_thread()
 		}
 
 	// ==========================================================================
-	// Timeouts?
+	// Timeouts? (auch 2 Sekunden Wahlpause...)
 	// ==========================================================================
 
 	if (Modus == ModGehendWaehlen 
+		&& !TlnServerAbfrageWiederholungssperre
 		&& Wahlziffern >= 5
 		&& RuheZaehler > 2 * TxpTimerFreq)
 		{ // 2 Sekunden Wahlpause und 5 Ziffern gewählt
 		// ID#231 **************************************************************
+		TlnServerAbfrageWiederholungssperre = true;
+		
 		if (ProtokollLevel >= 2)
 			Protokollieren_P(PSTR("TxP: Abfrage bei Teilnehmer-Servern\r\n" ));
 
@@ -1921,7 +1963,7 @@ void txp_thread()
 		}
 
 	// ======================================================================
-	// Dynamische IP-Aktualiserung starten
+	// Dynamische IP-Aktualisierung starten
 	// ======================================================================
 	
 	if (DynIPAktiv)
@@ -1961,7 +2003,6 @@ void txp_thread()
 		if (InCount > 0) 
 			{
 			static TTlnServBuf TSB;
-			struct TIME CurTime;
 			
 			int Res = GetSocketData(TeilnehmerServerSocket, InCount, TSB.Buf);
 			
@@ -1984,14 +2025,14 @@ void txp_thread()
 						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet 'nicht gefunden'\r\n" ));
 					break;
 					
-				case TLNSERV_AUSKUNFT_IP:
+				case TLNSERV_AUSKUNFT_VERSION1:
 					if (Modus != ModGehendWaehlen)
 						{
 						Protokollieren_P(PSTR("TxP: Teilnehmer-Server liefert Teilnehmer-Datensatz obwohl nicht im Wahlzustand\r\n"));
 						break;
 						}
 					
-					if (TSB.TlnAuskunftIP.RufNr != Wahlnummer)
+					if (TSB.TlnAuskunft.Nummer != Wahlnummer)
 						{
 						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet andere Nummer als gewählt\r\n"));
 						break;
@@ -2000,32 +2041,24 @@ void txp_thread()
 					if (ProtokollLevel >= 2)
 						{
 						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet IP gefunden: " ));
-						ProtokollierenIPAdr(TSB.TlnAuskunftIP.IP);
+						ProtokollierenIPAdr(TSB.TlnAuskunft.Nummer);
 						Protokollieren_P(PSTR("\r\n"));
 						}
 						
 					if (GewaehlterTln.AdrArt == Geloescht)
-						{ // neuen Eintrag erzeugen
-						GewaehlterTln.Nummer = TSB.TlnAuskunftIP.RufNr;
-						GewaehlterTln.Name[0] = '\0'; // Name wird nicht übertragen
-						GewaehlterTln.Flags = 0;
-						GewaehlterTln.AdrArt = TxpDynIP;
-						GewaehlterTln.Adresse[0] = '\0';
-						GewaehlterTln.DynPin = 0;
-						}
-					else if (GewaehlterTln.AdrArt != TxpDynIP 
-							 || GewaehlterTln.Nummer != TSB.TlnAuskunftIP.RufNr)
+						; // weitermachen
+					else if (GewaehlterTln.Nummer != TSB.TlnAuskunft.Nummer)
 						{ // vorhandener Eintrag weicht von 'aktuellem' ab --> Abbruch
 						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet andere Nummer als angefragt\r\n"));
 						break;
 						}
-						
-					// ab hier ist der Eintrag abzuspeichern und der Teilnehmer anzuwählen
-					GewaehlterTln.IPAdr = TSB.TlnAuskunftIP.IP;
-					GewaehlterTln.Port = TSB.TlnAuskunftIP.Port;
-					GewaehlterTln.Durchwahl = TSB.TlnAuskunftIP.Durchwahl;
-					CLOCK_GetTime(&CurTime);
-					GewaehlterTln.Datum = CurTime.time;
+					else if ((GewaehlterTln.Flags & TlnFlag_Lokal) != 0)
+						{ // Privater Eintrag --> nicht ändern
+						Protokollieren_P(PSTR("TxP: im lokalen Telefonbus als 'Privat' gekennzeichnet\r\n"));
+						break;
+						}
+
+					GewaehlterTln = TSB.TlnAuskunft;
 					
 					if (!TlnHinzufuegen(&GewaehlterTln))
 						ProtokollierenInt_P(PSTR("TxP: Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
@@ -2036,77 +2069,20 @@ void txp_thread()
 						ModusWechsel(ModWarteSchlussQuitt);
 						}
 					
-					break; // case TLNSERV_AUSKUNFT_IP
-					
-				case TLNSERV_AUSKUNFT_URL:
-					if (Modus != ModGehendWaehlen)
-						{
-						Protokollieren_P(PSTR("TxP: Teilnehmer-Server liefert Teilnehmer-Datensatz obwohl nicht im Wahlzustand\r\n"));
-						break;
-						}
-					
-					if (TSB.TlnAuskunftUrl.RufNr != Wahlnummer)
-						{
-						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet andere Nummer als gewählt\r\n"));
-						break;
-						}
-					
-					if (ProtokollLevel >= 2)
-						{
-						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet: Url gefunden:" ));
-						Protokollieren(TSB.TlnAuskunftUrl.Url);
-						Protokollieren_P(PSTR("\r\n"));
-						}
-						
-					if (GewaehlterTln.AdrArt == Geloescht)
-						{ // neuen Eintrag erzeugen
-						GewaehlterTln.Nummer = TSB.TlnAuskunftUrl.RufNr;
-						GewaehlterTln.Name[0] = '\0'; // Name wird nicht übertragen
-						GewaehlterTln.Flags = 0;
-						GewaehlterTln.AdrArt = TxpUrl;
-						strcpy(GewaehlterTln.Adresse, TSB.TlnAuskunftUrl.Url);
-						GewaehlterTln.DynPin = 0;
-						}
-					/*! \todo Konzept auch Url-Einträge vom Server aktualisieren lassen
-						else if (GewaehlterTln.AdrArt != TxpDynIP 
-							 || GewaehlterTln.Nummer != TSB.TlnAuskunftUrl.RufNr)
-					*/
-					else
-						{ // vorhandener Eintrag weicht von 'aktuellem' ab --> Abbruch
-						Protokollieren_P(PSTR("TxP: keine Aktualisierung von Url-Einträgen möglich\r\n"));
-						break;
-						}
-						
-					// ab hier ist der Eintrag abzuspeichern und der Teilnehmer anzuwählen
-					GewaehlterTln.IPAdr = 0;
-					GewaehlterTln.Port = TSB.TlnAuskunftUrl.Port;
-					GewaehlterTln.Durchwahl = TSB.TlnAuskunftUrl.Durchwahl;
-					CLOCK_GetTime(&CurTime);
-					GewaehlterTln.Datum = CurTime.time;
-					
-					if (!TlnHinzufuegen(&GewaehlterTln))
-						ProtokollierenInt_P(PSTR("TxP: Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
-						
-					if (!Verbindungsaufbau(&GewaehlterTln))
-						{ // ID#252 ********************************************
-						BusSenden(BusKdoSchluss);
-						ModusWechsel(ModWarteSchlussQuitt);
-						}
-					
-					break; // case TLNSERV_AUSKUNFT_URL
+					break; // case TLNSERV_AUSKUNFT_VERSION1
 					
 				case TLNSERV_IPRUECKMELD:
 					if (TSB.IpRueckm.EmpfIP == NetzEigeneIP)
 						{ // keine Änderung
 						if (ProtokollLevel >= 2)
-							Protokollieren_P(PSTR("TxP: Dynamische IP-Aktualiserung: keine Änderung\r\n" ));
+							Protokollieren_P(PSTR("TxP: Dynamische IP-Aktualisierung: bestehende IP gilt weiter\r\n" ));
 						}
 					else
 						{
 						NetzEigeneIP = TSB.IpRueckm.EmpfIP;
 						if (ProtokollLevel >= 1)
 							{
-							Protokollieren_P(PSTR("TxP: Dynamische IP-Aktualiserung: neu "));
+							Protokollieren_P(PSTR("TxP: Dynamische IP-Aktualisierung: neue IP "));
 							ProtokollierenIPAdr(NetzEigeneIP);
 							Protokollieren_P(PSTR("\r\n"));
 							}
@@ -2408,6 +2384,8 @@ const PROGMEM char FesteHst_P[] = "FESTEHPST";
 const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
 const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
 const PROGMEM char ProtokollLevel_P[] = "PROTLEVEL";
+const PROGMEM char KonfigPasswort_P[] = "CFGPASS";
+
 	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface zum Ändern der Einstellungen des TelexPhone-Interface bezüglich der Einbindung
@@ -2445,6 +2423,8 @@ void txp_cgi_config_intern(void *pStruct)
 
 		CgiFormInputFieldLong_P(PSTR("Protokoll-Level:"), ProtokollLevel_P, 2, ProtokollLevel);
 
+		CgiFormInputFieldText_P(PSTR("Passwort"), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
+		
 		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
 		}
 	else // argc > 0
@@ -2580,6 +2560,15 @@ void txp_cgi_config_intern(void *pStruct)
 				}
 			}
 			
+		// KonfigPasswort
+		// --------------
+		if (PharseCheckName_P(http_request, KonfigPasswort_P))
+			{
+			strncpy(KonfigPasswort, http_request->argvalue[PharseGetValue_P(http_request, KonfigPasswort_P)], KonfigPasswortLen);
+			KonfigPasswort[KonfigPasswortLen] = '\0';
+			changeConfig_P(KonfigPasswort_P, KonfigPasswort);
+			}
+			
 		} // else argc > 0
 		
 	cgi_PrintHttpheaderEnd();
@@ -2622,7 +2611,7 @@ void txp_cgi_config_extern(void *pStruct)
 		
 		CgiFormInputFieldLong_P(PSTR("Geheimzahl:"), Geheimzahl_P, 6, Geheimzahl);
 		
-		CgiFormCheckbox_P(PSTR("IP-Aktualiserung aktiv:"), DynIPAktiv_P, DynIPAktiv);
+		CgiFormCheckbox_P(PSTR("IP-Aktualisierung aktiv:"), DynIPAktiv_P, DynIPAktiv);
 
 		CgiFormInputFieldLong_P(PSTR("Port-Nummer im Netz:"), NetzPort_P, 6, NetzPort);
 		
@@ -2671,7 +2660,7 @@ void txp_cgi_config_extern(void *pStruct)
 				}
 			}
 			
-		// Dynamische IP-Aktualiserung
+		// Dynamische IP-Aktualisierung
 		// ---------------------------
 		if (PharseCheckName_P(http_request, DynIPAktiv_P))
 			{
@@ -2914,6 +2903,9 @@ void txp_init()
 		else
 			TeilnehmerServerAdresse[i][0] = '\0';
 
+	if (readConfig_P(KonfigPasswort_P, KonfigPasswort) != 1)
+		KonfigPasswort[0] = '\0';
+		
 	// dies müsste eigentlich in Protokoll.c enthalten sein.
 	if (readConfig_P(ProtokollLevel_P, Buf) == 1)
 		ProtokollLevel = atoi(Buf);
