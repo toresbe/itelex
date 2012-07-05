@@ -69,6 +69,11 @@ void cgi_cron( void * pStruct )
 	char string[32];
 	int HH, MM;
 	
+#ifdef TELEXPHONE
+	extern uint8_t KonfigFreigabe(void *pStruct); 
+	if (!KonfigFreigabe(pStruct))
+		return;
+#endif	
 	
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;

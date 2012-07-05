@@ -144,7 +144,7 @@
 	extern void txp_thread( void );
 	extern TTastendruck Tastendruck;
 	extern bool WarteTaste();
-	extern bool KonfigFreigabe(void *pStruct);
+	extern uint8_t KonfigFreigabe(void *pStruct);
 	
 	// Was soll LED rot anzeigen?
 	//---------------------------

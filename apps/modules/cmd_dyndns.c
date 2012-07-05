@@ -146,6 +146,12 @@ void cgi_dyndns( void * pStruct )
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	
+#ifdef TELEXPHONE
+	extern uint8_t KonfigFreigabe(void *pStruct); 
+	if (!KonfigFreigabe(pStruct))
+		return;
+#endif	
+	
 	char DYNDNSON[10];
 	char DYNDNSDOMAIN[32];
 	int i;

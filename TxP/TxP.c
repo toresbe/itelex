@@ -2199,7 +2199,7 @@ static uint8_t DurchwahlTabelleDekodieren(char *s)
 
 static const PROGMEM char Kennwort_P[] = "kennw";
 
-bool KonfigFreigabe(void *pStruct)
+uint8_t KonfigFreigabe(void *pStruct)
 	{
 	if (KonfigPasswort[0] == '\0')
 		return true; // ohne Kennwort keine Sperre
@@ -2217,7 +2217,7 @@ bool KonfigFreigabe(void *pStruct)
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 
-	if (http_request->argc == 0)
+	if (http_request->argc == 0 || PharseCheckName_P(http_request, Kennwort_P) == 0)
 		{ // Ausgabe der Passwort - Eingabeseite
 		cgi_PrintHttpheaderStart();
 		CgiFormStartTabbed_P(PSTR("txpcfg-intern.cgi"));
