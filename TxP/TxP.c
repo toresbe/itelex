@@ -1913,15 +1913,17 @@ void txp_thread()
 					if (Modus == ModDirektdruckVerbunden)
 						ZeichenInHtmlSendeText(AsciiDruckPuffer[ki]);
 					}
-				SocketAnzahlZeichenEmpfangen++;
+				ki++;
 				}
 
 			if (ki > 0)
 				memmove(AsciiDruckPuffer, AsciiDruckPuffer + ki, strlen(AsciiDruckPuffer) - ki + 1); 
 			
+			SocketAnzahlZeichenEmpfangen += ki;
+			
 			if (ProtokollLevel == 2) // Datenmengen protokollieren
 				{
-				ProtokollierenInt_P(PSTR("TxP: EmpfA %16d" ), PufferAnzahl(&SendePuffer));
+				ProtokollierenInt_P(PSTR("TxP: EmpfA %16d" ), PufferAnzahl(&SendePuffer) + ki);
 				ProtokollierenInt_P(PSTR("%4d"), ki);
 				ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenEmpfangen);
 				}
@@ -2215,7 +2217,6 @@ bool KonfigFreigabe(void *pStruct)
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 
-
 	if (http_request->argc == 0)
 		{ // Ausgabe der Passwort - Eingabeseite
 		cgi_PrintHttpheaderStart();
@@ -2231,6 +2232,7 @@ bool KonfigFreigabe(void *pStruct)
 		if (strcmp(EingabeText, KonfigPasswort) == 0)
 			{ // korrekt eingegebenen
 			KonfigFreigabeZeit = CurTime.time;
+			http_request->argc = 0; // damit die eigentliche Seite nicht durch die Kennwort-Eingabe verwirrt ist!
 			return true;
 			}
 		else
@@ -2672,6 +2674,9 @@ void txp_cgi_config_extern(void *pStruct)
 	char Buf[TlnAdresseMax + 1];
 	uint8_t i;
 	
+	if (!KonfigFreigabe(pStruct))
+		return;
+	
 	cgi_PrintHttpheaderStart();
 
 	if ( http_request->argc == 0 )
@@ -2841,6 +2846,9 @@ void cgi_SdDirectory(void *pStruct)
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	char *BaseDir;
+	
+	if (!KonfigFreigabe(pStruct))
+		return;
 	
 	cgi_PrintHttpheaderStart();
 

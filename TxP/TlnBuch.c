@@ -747,11 +747,11 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				// Datum / Uhrzeit...
 				struct TIME Time;
 				Time.time = TD.Datum;
+				Time.timezone = 0; //! \todo aktuelle Zeitzone einsetzen.
 				CLOCK_decode_time(&Time);
 				
-				// ich weiß nicht warum, aber ein _zusammenhängender_ printf_P - Befehl macht manchmal ärger...
-				printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u "), Time.DD, Time.MM, Time.YY);
-				printf_P(PSTR("%02d:%02d:%02d</td>"), Time.hh, Time.mm, Time.ss);
+				
+				printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u %02d:%02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 				
 				printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">&Auml;ndern</a></td></tr>"), TD.Nummer);
 				}
@@ -770,6 +770,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			}
 
 		} // argc == 0 --> gesamte Liste ausgeben
+		
+	else if (!KonfigFreigabe(pStruct))
+		return;
 		
 	else if (PharseCheckName_P(http_request, Edit_P))
 		{ 
@@ -817,9 +820,6 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		CgiFormInputFieldLong_P(PSTR("Port:"), Port_P, 5, TD.Port);
 		CgiFormInputFieldLong_P(PSTR("Durchwahl:"), Durchwahl_P, 3, TD.Durchwahl);
 
-		// HACK: nur zum Debuggen
-		printf_P(PSTR("Timecode (Debug): %08lX<br>"), TD.Datum);
-		
 		if (TD.Nummer == 0)
 			CgiFormFinish_P(PSTR("Hinzuf&uuml;gen"));
 		else
