@@ -736,7 +736,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 							"<td align=\"left\">%s</td>" // Adresse
 							"<td align=\"center\">%d</td>" // Port
 					   		"<td>&#160;</td>" // Durchwahl
-							), TD.Adresse, TD.Port, TD.Durchwahl);
+							), TD.Adresse, TD.Port);
 						break;
 
 					default:
@@ -748,7 +748,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				struct TIME Time;
 				Time.time = TD.Datum;
 				CLOCK_decode_time(&Time);
-				printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u %02d:%02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+				
+				// ich weiß nicht warum, aber ein _zusammenhängender_ printf_P - Befehl macht manchmal ärger...
+				printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u "), Time.DD, Time.MM, Time.YY);
+				printf_P(PSTR("%02d:%02d:%02d</td>"), Time.hh, Time.mm, Time.ss);
 				
 				printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">&Auml;ndern</a></td></tr>"), TD.Nummer);
 				}
@@ -813,6 +816,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		CgiFormInputFieldText_P(PSTR("Adresse:"), Adresse_P, TlnAdresseMax-1, TD.Adresse);
 		CgiFormInputFieldLong_P(PSTR("Port:"), Port_P, 5, TD.Port);
 		CgiFormInputFieldLong_P(PSTR("Durchwahl:"), Durchwahl_P, 3, TD.Durchwahl);
+
+		// HACK: nur zum Debuggen
+		printf_P(PSTR("Timecode (Debug): %08lX<br>"), TD.Datum);
+		
 		if (TD.Nummer == 0)
 			CgiFormFinish_P(PSTR("Hinzuf&uuml;gen"));
 		else

@@ -1902,28 +1902,29 @@ void txp_thread()
 		{
 		// zu druckenden Text umwandeln
 		// ---------------------------
-		//! \todo mehr als ein Zeichen auf ein mal umkopieren
 		if (AsciiDruckPuffer[0] != '\0' && PufferLeer(&SendePuffer))
 			{
+			uint8_t ki = 0; // Kopierindex
+
+			while (AsciiDruckPuffer[ki] != '\0' && !PufferVoll(&SendePuffer))
+				{
+				if (SchreibeZeichenInSendePuffer(AsciiDruckPuffer[ki]))
+					{ // nur im Echo darstellen, wenn es auch gedruckt wurde.
+					if (Modus == ModDirektdruckVerbunden)
+						ZeichenInHtmlSendeText(AsciiDruckPuffer[ki]);
+					}
+				SocketAnzahlZeichenEmpfangen++;
+				}
+
+			if (ki > 0)
+				memmove(AsciiDruckPuffer, AsciiDruckPuffer + ki, strlen(AsciiDruckPuffer) - ki + 1); 
+			
 			if (ProtokollLevel == 2) // Datenmengen protokollieren
 				{
 				ProtokollierenInt_P(PSTR("TxP: EmpfA %16d" ), PufferAnzahl(&SendePuffer));
-				ProtokollierenInt_P(PSTR("%4d"), 1);
-				ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenEmpfangen + 1);
+				ProtokollierenInt_P(PSTR("%4d"), ki);
+				ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenEmpfangen);
 				}
-				
-			if (SchreibeZeichenInSendePuffer(AsciiDruckPuffer[0]))
-				{ // nur im Echo darstellen, wenn es auch gedruckt wurde.
-				if (Modus == ModDirektdruckVerbunden)
-					ZeichenInHtmlSendeText(AsciiDruckPuffer[0]);
-				}
-				
-			SocketAnzahlZeichenEmpfangen++;
-				
-			memmove(AsciiDruckPuffer, AsciiDruckPuffer + 1, strlen(AsciiDruckPuffer)); 
-				// erstes Zeichen aus AsciiDruckPuffer-Puffer löschen
-				// Länge: +1 für das NUL-Zeichen am Ende, -1 weil das erste 
-				//        Zeichen 'rausfliegt, also +/- 0
 				
 			} // AsciiDruckPuffer nicht leer und SendePuffer leer
 			
@@ -2095,7 +2096,14 @@ void txp_thread()
 						}
 					DynIPAktZeitZaehler = 0; // in 15 Minuten wieder 
 					break;
-					
+
+				case TLNSERV_FEHLER:
+					Protokollieren_P(PSTR("TxP: Fehlermeldung des Teilnehmer-Servers: "));
+					Protokollieren(TSB.PureData);
+					Protokollieren_P(PSTR("\r\n"));
+					DynIPAktZeitZaehler = 0; // in 15 Minuten wieder 
+					break;
+				
 				default:
 					Protokollieren_P(PSTR("TxP: unerwartete Antwort des Teilnehmer-Servers\r\n" ));
 					DynIPAktZeitZaehler = 0; // in 15 Minuten wieder 
@@ -2179,6 +2187,60 @@ static uint8_t DurchwahlTabelleDekodieren(char *s)
 		s++;
 		} // while *s != 0 && i < 9
 	return i;
+	}
+	
+
+//! Kann am Anfang jeder cgi-Funktion aufgerufen werden, um Zugang zu der Funktion erst nach Kennwort-Eingabe zu erlauben.
+// -----------------------------------------------------------------------------------------------------------------------
+//! \param 	pStruct	Struktur auf den HTTP_Request
+//! \retval true, wenn Zugriff erfolgen darf.
+
+static const PROGMEM char Kennwort_P[] = "kennw";
+
+bool KonfigFreigabe(void *pStruct)
+	{
+	if (KonfigPasswort[0] == '\0')
+		return true; // ohne Kennwort keine Sperre
+	
+	struct TIME CurTime;
+	CLOCK_GetTime(&CurTime);
+	if (CurTime.time <= KonfigFreigabeZeit + 5 * 60)
+		{ // 5 Minuten lang ist der Zugang erlaubt
+		KonfigFreigabeZeit = CurTime.time;
+		return true;
+		}
+		
+	//! \todo Sperre nach Fehlversuchen
+	
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+
+
+	if (http_request->argc == 0)
+		{ // Ausgabe der Passwort - Eingabeseite
+		cgi_PrintHttpheaderStart();
+		CgiFormStartTabbed_P(PSTR("txpcfg-intern.cgi"));
+		CgiFormInputFieldText_P(PSTR("Seite gesperrt! Kennwort :"), Kennwort_P, KonfigPasswortLen, NULL);
+		CgiFormFinish_P(PSTR("Freigeben"));
+		cgi_PrintHttpheaderEnd();
+		return false;
+		}
+	else
+		{ // Test des eingegebenen Kennworts
+		char *EingabeText = http_request->argvalue[PharseGetValue_P(http_request, Kennwort_P)];
+		if (strcmp(EingabeText, KonfigPasswort) == 0)
+			{ // korrekt eingegebenen
+			KonfigFreigabeZeit = CurTime.time;
+			return true;
+			}
+		else
+			{
+			cgi_PrintHttpheaderStart();
+			printf_P(PSTR("Kennwort falsch!"));
+			cgi_PrintHttpheaderEnd();
+			return false;
+			}
+		}
 	}
 	
 	
@@ -2406,6 +2468,9 @@ void txp_cgi_config_intern(void *pStruct)
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	char Buf[35];
+
+	if (!KonfigFreigabe(pStruct))
+		return;
 	
 	cgi_PrintHttpheaderStart();
 
