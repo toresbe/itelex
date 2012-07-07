@@ -1376,6 +1376,9 @@ static void ZeichenInHtmlSendeText(char c)
 
 bool TeilnehmerServerSocketOeffnen()
 	{
+	if (TeilnehmerServerSocket != NO_SOCKET_USED)
+		return true; // ist schon offen...
+		
 	int ServerI;
 	
 	for (ServerI = 0 ; ServerI < ANZ_TEILNEHMER_SERVER ; ServerI++)
@@ -1385,14 +1388,37 @@ bool TeilnehmerServerSocketOeffnen()
 		if (TeilnehmerServerAdresse[ServerI][0] == '\0')
 			continue; // leere Adresse
 			
-		//! \todo IP erlauben
-		tsIP = DNS_ResolveName(TeilnehmerServerAdresse[ServerI]); 
+		tsIP = strtoip(TeilnehmerServerAdresse[ServerI]);	// Annahme: eine IP-Adresse angegeben
+		
+		if (tsIP == 0) // ist es doch eine Url?
+			tsIP = DNS_ResolveName(TeilnehmerServerAdresse[ServerI]); 
+			
 		if (tsIP != -1)
 			{
 			TeilnehmerServerSocket = Connect2IP(tsIP, TXP_TLNSERV_PORT);
 			if (TeilnehmerServerSocket != -1)
+				{
+				if (ProtokollLevel >= 2)
+					{
+					Protokollieren_P(PSTR("TxP: Verbindung an Teilnehmer-Server "));
+					Protokollieren(TeilnehmerServerAdresse[ServerI]); 
+					Protokollieren_P(PSTR(" hergestellt\r\n"));
+					}
 				return true;
+				}
 			TeilnehmerServerSocket = NO_SOCKET_USED;
+			if (ProtokollLevel >= 1)
+				{
+				Protokollieren_P(PSTR("TxP: Verbindungsversuch an Teilnehmer-Server "));
+				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
+				Protokollieren_P(PSTR(" gescheitert\r\n"));
+				}
+			}
+		else
+			{
+			Protokollieren_P(PSTR("TxP: Teilnehmer-Server "));
+			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
+			Protokollieren_P(PSTR(" IP nicht bekannt\r\n"));
 			}
 		}
 	return false;
@@ -1493,6 +1519,27 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		}
 		
 	} // Verbindungsaufbau()
+
+
+//! Startet die Abfrage einer Rufnummer beim Teilnehmer-Server	
+static void RufnummerBeiTlnServerAbfragen()
+	{
+	TlnServerAbfrageWiederholungssperre = true;
+	
+	if (ProtokollLevel >= 2)
+		Protokollieren_P(PSTR("TxP: Abfrage bei Teilnehmer-Servern\r\n" ));
+
+	if (TeilnehmerServerSocketOeffnen())
+		{ // Verbindung hergestellt.
+		// Telegramm senden
+		TTlnServBuf TSB;
+		
+		TSB.Code = TLNSERV_ABFRAGE;
+		TSB.DataLen = sizeof(TSB.TlnAbfr);
+		TSB.TlnAbfr.RufNr = Wahlnummer;
+		PutSocketData_RPE(TeilnehmerServerSocket, 2 + TSB.DataLen, TSB.Buf, RAM);
+		}
+	}
 	
 	
 //! Nur für debugging.	
@@ -1601,6 +1648,9 @@ void txp_thread()
 						{ // ID#222 ********************************************
 						if (ProtokollLevel >= 1)
 							ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld im eigenen Telefonbuch gefunden.\r\n"), GewaehlterTln.Nummer);
+		
+						if (Wahlziffern >= 5 && (GewaehlterTln.Flags & TlnFlag_Lokal) == 0)
+							RufnummerBeiTlnServerAbfragen(); // TEST ob das sinnvoll ist...
 							
 						switch (Verbindungsaufbau(&GewaehlterTln))
 							{
@@ -1616,7 +1666,7 @@ void txp_thread()
 									}
 								else if (Wahlziffern >= 5)
 									{ // mal den Rufnummer-Server befragen...
-									RuheZaehler = 2 * TxpTimerFreq; // nicht mehr 2 Sekunden warten.
+									// herausgenommen, da oben TEST RuheZaehler = 2 * TxpTimerFreq; // nicht mehr 2 Sekunden warten.
 									}
 								break;
 							
@@ -1792,21 +1842,7 @@ void txp_thread()
 		&& RuheZaehler > 2 * TxpTimerFreq)
 		{ // 2 Sekunden Wahlpause und 5 Ziffern gewählt
 		// ID#231 **************************************************************
-		TlnServerAbfrageWiederholungssperre = true;
-		
-		if (ProtokollLevel >= 2)
-			Protokollieren_P(PSTR("TxP: Abfrage bei Teilnehmer-Servern\r\n" ));
-
-		if (TeilnehmerServerSocketOeffnen())
-			{ // Verbindung hergestellt.
-			// Telegramm senden
-			TTlnServBuf TSB;
-			
-			TSB.Code = TLNSERV_ABFRAGE;
-			TSB.DataLen = sizeof(TSB.TlnAbfr);
-			TSB.TlnAbfr.RufNr = Wahlnummer;
-			PutSocketData_RPE(TeilnehmerServerSocket, 2 + TSB.DataLen, TSB.Buf, RAM);
-			}
+		RufnummerBeiTlnServerAbfragen();
 		}
 		
 	if (Modus == ModWarteSchlussQuitt && RuheZaehler > 3 * TxpTimerFreq)
@@ -2029,18 +2065,6 @@ void txp_thread()
 					break;
 					
 				case TLNSERV_AUSKUNFT_VERSION1:
-					if (Modus != ModGehendWaehlen)
-						{
-						Protokollieren_P(PSTR("TxP: Teilnehmer-Server liefert Teilnehmer-Datensatz obwohl nicht im Wahlzustand\r\n"));
-						break;
-						}
-					
-					if (TSB.TlnAuskunft.Nummer != Wahlnummer)
-						{
-						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet andere Nummer als gewählt\r\n"));
-						break;
-						}
-					
 					if (ProtokollLevel >= 2)
 						{
 						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet IP gefunden: " ));
@@ -2061,23 +2085,27 @@ void txp_thread()
 						break;
 						}
 
+					//! \todo Name zum Eintrag ggf. nicht ändern
 					GewaehlterTln = TSB.TlnAuskunft;
 					
 					if (!TlnHinzufuegen(&GewaehlterTln))
 						ProtokollierenInt_P(PSTR("TxP: Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
-						
-					switch (Verbindungsaufbau(&GewaehlterTln))
-						{
-						case 0: 
-							break; // erfolgreich
-							
-						case 1: // Socket öffnen nicht erfolgreich
-						case 2: // Ungültige Daten
-							BusSenden(BusKdoSchluss);
-							ModusWechsel(ModWarteSchlussQuitt);
-							break;
+
+					if (Modus == ModGehendWaehlen && TSB.TlnAuskunft.Nummer == Wahlnummer)
+						{ // erhaltenen Datensatz auch zum Verbindungsaufbau nutzen.
+						switch (Verbindungsaufbau(&GewaehlterTln))
+							{
+							case 0: 
+								break; // erfolgreich
+								
+							case 1: // Socket öffnen nicht erfolgreich
+							case 2: // Ungültige Daten
+								BusSenden(BusKdoSchluss);
+								ModusWechsel(ModWarteSchlussQuitt);
+								break;
+							}
 						}
-					
+						
 					break; // case TLNSERV_AUSKUNFT_VERSION1
 					
 				case TLNSERV_IPRUECKMELD:

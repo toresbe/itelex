@@ -675,6 +675,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	
 	cgi_PrintHttpheaderStart();
 
+	if (http_request->argc != 0 && !KonfigFreigabe(pStruct))
+		return;
+
 	if ( http_request->argc == 0 )
 		{ 
 		// Startseite = Liste
@@ -697,6 +700,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			));
 			
 		TlnDatenInit(&TD);
+		
+		struct TIME Time;
+		CLOCK_GetTime(&Time); // holt auch die aktuelle Zeitzone
 		
 		if (TlnListerStart())
 			{
@@ -745,11 +751,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					}
 					
 				// Datum / Uhrzeit...
-				struct TIME Time;
 				Time.time = TD.Datum;
-				Time.timezone = 0; //! \todo aktuelle Zeitzone einsetzen.
 				CLOCK_decode_time(&Time);
-				
 				
 				printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u %02d:%02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 				
@@ -770,9 +773,6 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			}
 
 		} // argc == 0 --> gesamte Liste ausgeben
-		
-	else if (!KonfigFreigabe(pStruct))
-		return;
 		
 	else if (PharseCheckName_P(http_request, Edit_P))
 		{ 

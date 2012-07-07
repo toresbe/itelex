@@ -103,30 +103,30 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 		if (TD.Flags & TlnFlag_Lokal)
 			{
 			if (ProtokollLevel >= 1)
-				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d schon vorhanden, aber LOKAL\r\n"), TD.Nummer);
+				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld schon vorhanden, aber LOKAL\r\n"), TD.Nummer);
 			return false;
 			}
 		else if (TD.Flags & TlnFlag_Gesperrt)
 			{
 			if (ProtokollLevel >= 1)
-				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d schon vorhanden, aber noch nicht freigegeben\r\n"), TD.Nummer);
+				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld schon vorhanden, aber noch nicht freigegeben\r\n"), TD.Nummer);
 			return false;
 			}
 		else if (TD.AdrArt != TxpDynIP)
 			{
 			if (ProtokollLevel >= 1)
-				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d schon vorhanden, aber nicht Typ 'dynamisch'\r\n"), TD.Nummer);
+				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld schon vorhanden, aber nicht Typ 'dynamisch'\r\n"), TD.Nummer);
 			return false;
 			}
 		else if (tsb->SelbstAkt.Pin != TD.DynPin)
 			{
-			ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d schon vorhanden, aber falsche IP gesendet\r\n"), TD.Nummer);
+			ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld schon vorhanden, aber falsche Pin gesendet\r\n"), TD.Nummer);
 			return false;
 			}
 		else if (tsb->SelbstAkt.Port == TD.Port && TlnIP == TD.IPAdr)
 			{
 			if (ProtokollLevel >= 2)
-				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d schon vorhanden, unveraenderte Daten\r\n"), TD.Nummer);
+				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld schon vorhanden, unveraenderte Daten\r\n"), TD.Nummer);
 			return true; // da zulässige Aktualisierung
 			}
 		else
@@ -140,7 +140,7 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 				{
 				if (ProtokollLevel >= 1)
 					{
-					ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d erfolgreich aktualisiert: IP "), TD.Nummer);
+					ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld erfolgreich aktualisiert: IP "), TD.Nummer);
 					ProtokollierenIPAdr(TlnIP);
 					ProtokollierenInt_P(PSTR(" Port %d\r\n"), TD.Port);
 					}
@@ -148,8 +148,8 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 				}
 			else
 				{ // speichern war nicht erfolgreich
-				ProtokollierenInt_P(PSTR("TlnSrv: Aenderung Teilnehmer %d konnte nicht gespeichert werden\r\n"), TD.Nummer);
-				return true; //! \todo Oder wäre false für die Gesamtfunktionalität besser???
+				ProtokollierenInt_P(PSTR("TlnSrv: Aenderung Teilnehmer %ld konnte nicht gespeichert werden\r\n"), TD.Nummer);
+				return false;
 				}
 			} // Aktualisierung erforderlich
 		} // Eintrag schon vorhanden
@@ -172,7 +172,7 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 			{
 			if (ProtokollLevel >= 1)
 				{
-				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %d erfolgreich angelegt: IP "), TD.Nummer);
+				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld erfolgreich angelegt: IP "), TD.Nummer);
 				ProtokollierenIPAdr(TlnIP);
 				ProtokollierenInt_P(PSTR(" Port %d (noch gesperrt!)\r\n"), TD.Port);
 				}
@@ -180,8 +180,8 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 			}
 		else
 			{ // speichern war nicht erfolgreich
-			ProtokollierenInt_P(PSTR("TlnSrv: Neuer Teilnehmer %d konnte nicht gespeichert werden\r\n"), TD.Nummer);
-			return true; //! \todo Oder wäre false für die Gesamtfunktionalität besser???
+			ProtokollierenInt_P(PSTR("TlnSrv: Neuer Teilnehmer %ld konnte nicht gespeichert werden\r\n"), TD.Nummer);
+			return false;
 			}
 		} // Neuanlage erforderlich
 		
