@@ -2068,7 +2068,7 @@ void txp_thread()
 					if (ProtokollLevel >= 2)
 						{
 						Protokollieren_P(PSTR("TxP: Teilnehmer-Server meldet IP gefunden: " ));
-						ProtokollierenIPAdr(TSB.TlnAuskunft.Nummer);
+						ProtokollierenIPAdr(TSB.TlnAuskunft.IPAdr);
 						Protokollieren_P(PSTR("\r\n"));
 						}
 						
@@ -2081,7 +2081,7 @@ void txp_thread()
 						}
 					else if ((GewaehlterTln.Flags & TlnFlag_Lokal) != 0)
 						{ // Privater Eintrag --> nicht ändern
-						Protokollieren_P(PSTR("TxP: im lokalen Telefonbus als 'Privat' gekennzeichnet\r\n"));
+						Protokollieren_P(PSTR("TxP: im lokalen Telefonbuch als 'Privat' gekennzeichnet\r\n"));
 						break;
 						}
 
@@ -2091,7 +2091,7 @@ void txp_thread()
 					if (!TlnHinzufuegen(&GewaehlterTln))
 						ProtokollierenInt_P(PSTR("TxP: Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
 
-					if (Modus == ModGehendWaehlen && TSB.TlnAuskunft.Nummer == Wahlnummer)
+					if (Modus == ModGehendWaehlen && TxpClientSocket == NO_SOCKET_USED && TSB.TlnAuskunft.Nummer == Wahlnummer)
 						{ // erhaltenen Datensatz auch zum Verbindungsaufbau nutzen.
 						switch (Verbindungsaufbau(&GewaehlterTln))
 							{
