@@ -75,8 +75,10 @@
 		#define NTP
 	#endif
 
-	// aktiviert TelexPhone
+	// aktiviert TelexPhone und die entsprechenden Teilmodule
 	#define TELEXPHONE
+	#define TXP_ANSCHLUSS
+	#define TXP_TLNSERVER
 	
 	#define SHELL
 

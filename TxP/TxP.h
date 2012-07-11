@@ -29,6 +29,10 @@
 	#include "config.h"
 
 	#ifdef TELEXPHONE
+
+	#if !defined(TXP_TLNSERVER) && !defined(TXP_ANSCHLUSS)
+		#warning Kein TxP-Modul aktiv!
+	#endif
 	
 	#include <avr/pgmspace.h>  
 	#include "system/shell/shell.h"
@@ -141,7 +145,11 @@
 	
 	
 	extern void txp_init( void );
+	
+	#ifdef TXP_ANSCHLUSS
 	extern void txp_thread( void );
+	#endif // TXP_ANSCHLUSS
+	
 	extern TTastendruck Tastendruck;
 	extern bool WarteTaste();
 	extern uint8_t KonfigFreigabe(void *pStruct);

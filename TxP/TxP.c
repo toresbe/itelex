@@ -71,6 +71,8 @@
 #include "TlnServer.h"
 
 
+#ifdef TXP_ANSCHLUSS
+
 // Aktueller Modus
 
 typedef enum
@@ -275,12 +277,6 @@ static TTlnDaten GewaehlterTln;
 static bool TlnServerAbfrageWiederholungssperre;
 	//!< Bewirkt, dass der Teilnehmer-Server nur ein mal je gewählte Ziffer abgefragt wird.
 	
-static int TeilnehmerServerSocket;
-	//!< Handle für ausgehende Verbindungen zum Teilnehmer-Server
-	//!< Wird in ZWEI Situationen benutzt: 
-	//!< a) Dynamische IP-Aktualisierung
-	//!< b) Abfrage einer Teilnehmer-Adresse
-	
 	
 static uint32_t NetzRufnummer;
 	//!< Rufnummer des eigenen Anschlusses im ip-telex-Netz
@@ -293,18 +289,14 @@ static uint16_t NetzPort;
 
 static long NetzEigeneIP;
 	//!< Zurückgemeldete IP-Adresse im globalen Netz (nur für Diagnose)
+
+#endif // TXP_ANSCHLUSS
 	
+
 #define ANZ_TEILNEHMER_SERVER 3
 	
 static char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
 	//!< URL's oder IP's der Teilnehmer-Server.
-
-static bool DynIPAktiv;
-	//!< Soll die eigene IP-Adresse auf den Teilnehmer-Server aktualisiert werden?
-	
-static uint32_t DynIPAktZeitZaehler;
-	//!< Macht alle 15 Minuten eine Aktualsisierungsmeldung an einen der Teilnehmer-Server (sofern aktiviert).
-	
 
 enum { KonfigPasswortLen = 10 } ;
 	//!< maximale Länge des Passworts für den Zugang zu Konfigurationsdaten.
@@ -315,15 +307,33 @@ static char KonfigPasswort[KonfigPasswortLen+1];
 static unsigned long KonfigFreigabeZeit;
 	//!< Uhrzeit der letzen Freigabe bzw. Benutzung von freizugebenden Seiten
 
+static int TeilnehmerServerSocket;
+	//!< Handle für ausgehende Verbindungen zum Teilnehmer-Server
+	//!< Wird in ZWEI Situationen benutzt: 
+	//!< a) Dynamische IP-Aktualisierung
+	//!< b) Abfrage einer Teilnehmer-Adresse
+	
+	
+#ifdef TXP_ANSCHLUSS
+
+static bool DynIPAktiv;
+	//!< Soll die eigene IP-Adresse auf den Teilnehmer-Server aktualisiert werden?
+	
+static uint32_t DynIPAktZeitZaehler;
+	//!< Macht alle 15 Minuten eine Aktualsisierungsmeldung an einen der Teilnehmer-Server (sofern aktiviert).
+	
 
 //! Sollfrequenz des Aufrufs von txp_timerEvent()
 enum { TxpTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
+
+#endif // TXP_ANSCHLUSS
 
 
 enum { DebugMsgMax = 100 } ;
 
 char DebugMsg[DebugMsgMax];
 	//!< String für außergewöhnliche Fälle
+
 	
 TTastendruck Tastendruck;
 
@@ -335,6 +345,8 @@ TTastendruck Tastendruck;
 #define GRUEN 2
 #define BLAU 3
 
+
+#ifdef TXP_ANSCHLUSS
 	
 //! Initialisiert die serielle Umsetzung 
 static void SeriellUmsetzInit(void)
@@ -1368,6 +1380,8 @@ static void ZeichenInHtmlSendeText(char c)
 	HtmlSendeText[i+1] = '\0';
 	}
 	
+#endif // TXP_ANSCHLUSS
+
 
 //! Verbindung zu einem Teilnehmer-Server herstellen.
 // --------------------------------------------------
@@ -1424,6 +1438,8 @@ bool TeilnehmerServerSocketOeffnen()
 	return false;
 	} // TeilnehmerServerSocketOeffnen()
 
+
+#ifdef TXP_ANSCHLUSS
 
 //! Versucht den Verbindungsaufbau zu einem vorhandenen Eintrag im eigenen Teilnehmerverzeichnis
 // ---------------------------------------------------------------------------------------------
@@ -2085,12 +2101,25 @@ void txp_thread()
 						break;
 						}
 
-					//! \todo Name zum Eintrag ggf. nicht ändern
-					GewaehlterTln = TSB.TlnAuskunft;
-					
-					if (!TlnHinzufuegen(&GewaehlterTln))
-						ProtokollierenInt_P(PSTR("TxP: Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
+					// gelieferte Daten _teilweise_ in das eigene Telefonbuch kopieren...
+					if (TSB.TlnAuskunft.Datum > GewaehlterTln.Datum || GewaehlterTln.AdrArt == Geloescht)
+						{
+						if (GewaehlterTln.Name[0] == '\0') // nur leere Namen überschreiben
+							strncpy(GewaehlterTln.Name, TSB.TlnAuskunft.Name, sizeof(GewaehlterTln.Name));
+						GewaehlterTln.Flags = TSB.TlnAuskunft.Flags;
+						if (GewaehlterTln.AdrArt != TxpDynIP || TSB.TlnAuskunft.AdrArt != TxpIP)
+							// Nicht DynIP durch IP überschreiben
+							GewaehlterTln.AdrArt = TSB.TlnAuskunft.AdrArt; 
+						strncpy(GewaehlterTln.Adresse, TSB.TlnAuskunft.Adresse, sizeof(GewaehlterTln.Adresse));
+						GewaehlterTln.IPAdr = TSB.TlnAuskunft.IPAdr;
+						GewaehlterTln.Port = TSB.TlnAuskunft.Port;
+						GewaehlterTln.Durchwahl = TSB.TlnAuskunft.Durchwahl;
+						GewaehlterTln.Datum = TSB.TlnAuskunft.Datum;
 
+						if (!TlnHinzufuegen(&GewaehlterTln))
+							ProtokollierenInt_P(PSTR("TxP: Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
+						} // Aktualisieren ist sinnvoll
+						
 					if (Modus == ModGehendWaehlen && TxpClientSocket == NO_SOCKET_USED && TSB.TlnAuskunft.Nummer == Wahlnummer)
 						{ // erhaltenen Datensatz auch zum Verbindungsaufbau nutzen.
 						switch (Verbindungsaufbau(&GewaehlterTln))
@@ -2217,8 +2246,10 @@ static uint8_t DurchwahlTabelleDekodieren(char *s)
 		s++;
 		} // while *s != 0 && i < 9
 	return i;
-	}
+	} // DurchwahlTabelleDekodieren()
 	
+#endif // TXP_ANSCHLUSS
+
 
 //! Kann am Anfang jeder cgi-Funktion aufgerufen werden, um Zugang zu der Funktion erst nach Kennwort-Eingabe zu erlauben.
 // -----------------------------------------------------------------------------------------------------------------------
@@ -2286,8 +2317,6 @@ void txp_cgi_debug( void * pStruct )
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 
-	uint8_t i;
-
 	cgi_PrintHttpheaderStart();
 
 	printf_P(PSTR("DebugMsg: %s<br>"), DebugMsg);
@@ -2300,6 +2329,8 @@ void txp_cgi_debug( void * pStruct )
 
 #define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %d"), Var)
 
+	#ifdef TXP_ANSCHLUSS
+	
 	PRINTVAL(Modus);
 	PRINTVAL(Status); // bezüglich TxP-Funktionalität (ist auf TWI-Bus sichtbar)
 	PRINTVAL(Wahlnummer);
@@ -2312,7 +2343,7 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(SerUmEmpfDaten);
 	PRINTVAL(SerUmEmpfFehler);
 	PRINTVAL(PufferAnzahl(&EmpfPuffer));
-	for (i = EmpfPuffer.AusgP ; i != EmpfPuffer.SpeichP ; i++)
+	for (uint8_t i = EmpfPuffer.AusgP ; i != EmpfPuffer.SpeichP ; i++)
 		{
 		if (i >= MaxPuffer) 
 			i = 0;
@@ -2324,7 +2355,7 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(SerUmSendBitNr);
 	PRINTVAL(SerUmSendDaten);
 	PRINTVAL(PufferAnzahl(&SendePuffer));
-	for (i = SendePuffer.AusgP ; i != SendePuffer.SpeichP ; i++)
+	for (uint8_t i = SendePuffer.AusgP ; i != SendePuffer.SpeichP ; i++)
 		{
 		if (i >= MaxPuffer) 
 			i = 0;
@@ -2359,6 +2390,9 @@ void txp_cgi_debug( void * pStruct )
 	printf(HtmlSendeText);
 	printf_P(PSTR("]<br>AsciiDruckPuffer: ["));
 	printf(AsciiDruckPuffer);
+	
+	#endif // TXP_ANSCHLUSS
+	
 	printf_P(PSTR("]<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , ByteCounter, PacketCounter, eth_state_error );
 
 	cgi_PrintHttpheaderEnd();
@@ -2368,6 +2402,7 @@ void txp_cgi_debug( void * pStruct )
 	}
 	
 
+#ifdef TXP_ANSCHLUSS
 	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface für das Ausgabefenster der Fernschreiber-Simulation
@@ -2475,14 +2510,22 @@ void AdresseZuWahlStr(uint8_t Adr, char* Buf)
 		}
 	}
 
+#endif // TXP_ANSCHLUSS
+
+	
+const PROGMEM char KonfigPasswort_P[] = "CFGPASS";
+const PROGMEM char ProtokollLevel_P[] = "PROTLEVEL";
+
+
+#ifdef TXP_ANSCHLUSS
 
 const PROGMEM char Hauptstelle_P[] = "HAUPTSTELLE";
 const PROGMEM char EigeneNummer_P[] = "EIGENENUMMER";
 const PROGMEM char FesteHst_P[] = "FESTEHPST";
 const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
 const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
-const PROGMEM char ProtokollLevel_P[] = "PROTLEVEL";
-const PROGMEM char KonfigPasswort_P[] = "CFGPASS";
+
+#endif // TXP_ANSCHLUSS
 
 	
 /*------------------------------------------------------------------------------------------------------------*/
@@ -2508,6 +2551,8 @@ void txp_cgi_config_intern(void *pStruct)
 		{
 		CgiFormStartTabbed_P(PSTR("txpcfg-intern.cgi"));
 
+		#ifdef TXP_ANSCHLUSS
+		
 		AdresseZuWahlStr(BusEigenAdresse, Buf);
 		CgiFormInputFieldText_P(PSTR("Netz-Vorwahl f&uuml;r gehende Verbindungen:"), EigeneNummer_P, 2, Buf);
 
@@ -2521,6 +2566,8 @@ void txp_cgi_config_intern(void *pStruct)
 		readConfig_P(DurchwahlTabelle_P, Buf);
 
 		CgiFormInputFieldText_P(PSTR("Durchwahlen:<br>(mit Komma trennen)"), DurchwahlTabelle_P, 30, Buf);
+		
+		#endif // TXP_ANSCHLUSS
 
 		CgiFormInputFieldLong_P(PSTR("Protokoll-Level:"), ProtokollLevel_P, 2, ProtokollLevel);
 
@@ -2534,6 +2581,8 @@ void txp_cgi_config_intern(void *pStruct)
 
 		printf_P(PSTR("neue Einstellungen: <a href=\"txpcfg-intern.cgi\">weiter</a>"));
 
+		#ifdef TXP_ANSCHLUSS
+		
 		// Eigene Nummer
 		// -------------
 		if (PharseCheckName_P(http_request, EigeneNummer_P))
@@ -2643,7 +2692,9 @@ void txp_cgi_config_intern(void *pStruct)
 			else
 				printf_P(PSTR("<br>Durchwahlen unver&auml;ndert: %s"), Buf);
 			}
-			
+		
+		#endif // TXP_ANSCHLUSS
+		
 		// ProtokollLevel
 		// --------------
 		if (PharseCheckName_P(http_request, ProtokollLevel_P))
@@ -2677,10 +2728,16 @@ void txp_cgi_config_intern(void *pStruct)
 	} // txp_cgi_config_intern()
 	
 
+#ifdef TXP_ANSCHLUSS
+
 const PROGMEM char NetzRufnummer_P[] = "NETZRUFNR";
 const PROGMEM char Geheimzahl_P[] = "PIN";
 const PROGMEM char DynIPAktiv_P[] = "DYNIPAKTIV";
 const PROGMEM char NetzPort_P[] = "NETZPORT";
+
+#endif // TXP_ANSCHLUSS
+
+
 const PROGMEM char RufnrServerAdr1_P[] = "RUFNRSERV1";
 const PROGMEM char RufnrServerAdr2_P[] = "RUFNRSERV2";
 const PROGMEM char RufnrServerAdr3_P[] = "RUFNRSERV3";
@@ -2711,6 +2768,8 @@ void txp_cgi_config_extern(void *pStruct)
 		{
 		CgiFormStartTabbed_P(PSTR("txpcfg-extern.cgi"));
 
+		#ifdef TXP_ANSCHLUSS
+		
 		CgiFormInputFieldLong_P(PSTR("eigene Rufnummer im ip-telex-Netz:"), NetzRufnummer_P, 10, NetzRufnummer);
 		
 		CgiFormInputFieldLong_P(PSTR("Geheimzahl:"), Geheimzahl_P, 6, Geheimzahl);
@@ -2719,6 +2778,8 @@ void txp_cgi_config_extern(void *pStruct)
 
 		CgiFormInputFieldLong_P(PSTR("Port-Nummer im Netz:"), NetzPort_P, 6, NetzPort);
 		
+		#endif // TXP_ANSCHLUSS
+		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 			CgiFormInputFieldText_P(PSTR("Adresse des Teilnehmer-Server:"), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
 
@@ -2726,10 +2787,12 @@ void txp_cgi_config_extern(void *pStruct)
 		}
 	else // argc > 0
 		{
-		uint32_t Neu;
-
 		printf_P(PSTR("neue Einstellungen: <a href=\"txpcfg-extern.cgi\">weiter</a>"));
 
+		#ifdef TXP_ANSCHLUSS
+
+		uint32_t Neu;
+		
 		// Eigene Netz-Rufnummer
 		// ---------------------
 		if (PharseCheckName_P(http_request, NetzRufnummer_P))
@@ -2803,6 +2866,8 @@ void txp_cgi_config_extern(void *pStruct)
 				}
 			}
 		
+		#endif // TXP_ANSCHLUSS
+		
 		// URLs der Teilnehmer-Server
 		// --------------------------
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
@@ -2828,6 +2893,8 @@ void txp_cgi_config_extern(void *pStruct)
 
 	} // txp_cgi_config_extern()
 	
+
+#ifdef TXP_ANSCHLUSS
 
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface für eine Bus-Status-Liste (TWI-Busteilnehmer)
@@ -2861,6 +2928,9 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 	cgi_PrintHttpheaderEnd();
 	
 	}
+
+#endif // TXP_ANSCHLUSS
+
 	
 #if defined(MMC)
 	
@@ -2944,6 +3014,10 @@ void txp_init()
 	init_Taste();
 	
 	ProtokollInit();
+
+	DebugMsg[0] = '\0';
+
+	#ifdef TXP_ANSCHLUSS
 	
 	SeriellUmsetzInit();
 
@@ -2953,12 +3027,15 @@ void txp_init()
 
 	AsciiDruckPuffer[0] = '\0';
 	HtmlSendeText[0] = '\0';
-	DebugMsg[0] = '\0';
+	
+	#endif // TXP_ANSCHLUSS
 	
 	// EEPROM auslesen
 	char Buf[TlnAdresseMax];
 	uint8_t i;
 
+	#ifdef TXP_ANSCHLUSS
+	
 	if (readConfig_P(EigeneNummer_P, Buf) == 1)
 		BusEigenAdresse = WahlZuAdresse(atoi(Buf), strlen(Buf));
 	else
@@ -3004,6 +3081,8 @@ void txp_init()
 	else
 		NetzPort = TXP_PORT;
 		
+	#endif // TXP_ANSCHLUSS
+		
 	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		if (readConfig_P(RufnrServerAdr_P[i], TeilnehmerServerAdresse[i]) == 1)
 			; // ok
@@ -3020,11 +3099,14 @@ void txp_init()
 	else
 		ProtokollLevel = 1;
 		
+	TeilnehmerServerSocket = NO_SOCKET_USED;
+
+	#ifdef TXP_ANSCHLUSS
+	
 	BusEigenAdrMehrfach = 1; // muss Potenz von 2 sein (also 1, 2, 4, 8, 16, ... , Standard = 1
 
 	TxpClientSocket = NO_SOCKET_USED;
 	TxpServerSocket = NO_SOCKET_USED;
-	TeilnehmerServerSocket = NO_SOCKET_USED;
 	NetzEigeneIP = 0;
 	
 	TwiInit();
@@ -3044,14 +3126,20 @@ void txp_init()
 	
 	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
 	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("txp-msg-out.cgi"));
+	cgi_RegisterCGI( txp_cgi_TwiTlnListe, PSTR("txp-twitlnliste.cgi"));
+	
+	#endif // TXP_ANSCHLUSS
+	
 	cgi_RegisterCGI( txp_cgi_config_intern, PSTR("txpcfg-intern.cgi"));
 	cgi_RegisterCGI( txp_cgi_config_extern, PSTR("txpcfg-extern.cgi"));
 	cgi_RegisterCGI( txp_cgi_debug, PSTR("txp-debug.cgi"));
-	cgi_RegisterCGI( txp_cgi_TwiTlnListe, PSTR("txp-twitlnliste.cgi"));
+	
 #if defined(MMC)
 	cgi_RegisterCGI( cgi_SdDirectory, PSTR("sddir.cgi"));
 #endif //defined(MMC)
 
+	#ifdef TXP_ANSCHLUSS
+	
 	RegisterTCPPort(TXP_PORT);
 	
 	Timer0Cnt_Min = 255;
@@ -3060,16 +3148,21 @@ void txp_init()
 
 	THREAD_RegisterThread( txp_thread, PSTR("TxP"));
 
+	#endif // TXP_ANSCHLUSS
+	
 	TlnBuchInit();
+	
+	#ifdef TXP_TLNSERVER
 	
 	txp_tlnserv_init();
 	
-	//wdt_enable(WDTO_8S);
+	#endif // TXP_TLNSERVER
 
 	}
 
 
 #endif //def TELEXPHONE
+
 
 #if defined(MMC)
 

@@ -9,6 +9,8 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
+#include "TxP.h"
+
 extern void TlnDatenInit(TTlnDaten *Tln);
 
 extern bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln);

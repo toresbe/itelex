@@ -26,12 +26,15 @@
 #ifndef _TLNSERVER_H_
 	#define _TLNSERVER_H_
 	
-	#ifdef TELEXPHONE
+	#include "TxP.h"
+	
+	#ifdef TXP_TLNSERVER
 	
 	extern void txp_tlnserv_thread( void );
 	extern void txp_tlnserv_init( void );
 	
-	#endif //def TELEXPHONE
+	#endif //def TXP_TLNSERVER
 	
 #endif /* _TLNSERVER_H_ */
+
 //@}

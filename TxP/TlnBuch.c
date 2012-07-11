@@ -35,7 +35,7 @@ enum { TlnBuchMemMax = 20000UL } ; //!< Größe des Teilnehmerverzeichnisses in 
 //! \par x Byte Adresse als String (mit \0 abgeschlossen) ODER 4 Byte IP-Adresse
 //! \par 2 Byte Port
 //! \par 1 Byte Durchwahl (0 bei keine Durchwahl).
-//! \par 2 Byte DynPin (nur bei Typ = TxpIP, wirksam nur bei Flag TlnFlag_DynIP)
+//! \par 2 Byte DynPin (nur bei Typ = TxpDynIP)
 
 
 static char TlnBuch[TlnBuchMemMax]; //!< Das Teilnehmer-Verzeichnis.
@@ -787,6 +787,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			TD.Port = TXP_PORT;
 			TD.Durchwahl = 0;
 			TD.Flags = 0;
+			#ifdef TXP_ANSCHLUSS
+			TD.Flags |= (TlnFlag_Lokal);
+			#endif //def TXP_ANSCHLUSS
 			}
 
 		CgiFormStartTabbed_P(PSTR("txp-tlnverz.cgi"));

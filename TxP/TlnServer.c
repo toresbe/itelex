@@ -42,8 +42,6 @@
 
 #ifdef TELEXPHONE
 
-// #include "hardware/led/led_core.h"
-
 #include "system/net/ip.h"
 #include "system/net/tcp.h"
 #include "system/net/ethernet.h"
@@ -51,23 +49,25 @@
 #include "system/thread/thread.h"
 // #include "system/config/eeconfig.h"
 #include "system/clock/clock.h"
-// #include "system/softreset/softreset.h"
 
 // #include "apps/httpd/cgibin/cgi-bin.h"
 // #include "apps/httpd/httpd2_pharse.h"
 
 // #include "hardware/timer0/timer0.h"
 
+#include "TxP.h"
+
+#ifdef TXP_TLNSERVER
+
+#include "TlnBuch.h"
+#include "TlnServer.h"
+
 extern struct TCP_SOCKET TCP_sockettable[];
 	// explizit, weil in keiner Header-Datei enthalten.
 
 // #include "CgiFormTools.h"
-#include "TxP.h"
-#include "TlnBuch.h"
-#include "TlnServer.h"
-
 // #include "BusKomm.h"
-#include "TxP2-Defs.h"
+// #include "TxP2-Defs.h"
 // #include "FifoPuffer.h"
 // #include "BaudotCode.h"
 #include "Protokoll.h"
@@ -498,6 +498,8 @@ void txp_tlnserv_init()
 	THREAD_RegisterThread( txp_tlnserv_thread, PSTR("TlnSrv"));
 	}
 
+
+#endif //def TXP_TLNSERVER
 
 #endif //def TELEXPHONE
 
