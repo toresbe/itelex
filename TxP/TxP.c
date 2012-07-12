@@ -2104,6 +2104,7 @@ void txp_thread()
 					// gelieferte Daten _teilweise_ in das eigene Telefonbuch kopieren...
 					if (TSB.TlnAuskunft.Datum > GewaehlterTln.Datum || GewaehlterTln.AdrArt == Geloescht)
 						{
+						GewaehlterTln.Nummer = TSB.TlnAuskunft.Nummer;
 						if (GewaehlterTln.Name[0] == '\0') // nur leere Namen überschreiben
 							strncpy(GewaehlterTln.Name, TSB.TlnAuskunft.Name, sizeof(GewaehlterTln.Name));
 						GewaehlterTln.Flags = TSB.TlnAuskunft.Flags;
@@ -3116,7 +3117,8 @@ void txp_init()
 	Timer0Cnt_Max = 0;
 	Timer0Callback_Max = 0;
 
-	DynIPAktZeitZaehler = 0;
+	DynIPAktZeitZaehler = 14L * 60 * TxpTimerFreq; 
+		// 14 Minuten sind schon abgelaufen, daher Aktualisierung in einer Minute
 
 	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 
