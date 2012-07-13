@@ -587,6 +587,11 @@ void txp_timerEvent(void)
 					{ // ausreichend lang gedrückt
 					TasteZustandIntern = TasteEin;
 					TasteZaehler = 0;
+					
+					// Zugang zur Konfiguration erlauben.
+					struct TIME CurTime;
+					CLOCK_GetTime(&CurTime);
+					KonfigFreigabeZeit = CurTime.time;
 					}
 				}
 			else
@@ -2729,6 +2734,34 @@ void txp_cgi_config_intern(void *pStruct)
 	} // txp_cgi_config_intern()
 	
 
+/*------------------------------------------------------------------------------------------------------------*/
+/*!\brief Das CGI-Interface zum Aktivieren der Passwort-Sperre
+ * \param 	pStruct	Struktur auf den HTTP_Request
+ * \return	NONE
+ */
+/*------------------------------------------------------------------------------------------------------------*/
+ 
+void txp_cgi_config_sperren(void *pStruct)
+	{
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+
+	cgi_PrintHttpheaderStart();
+
+	if (KonfigPasswort[0] == '\0')
+		{
+		printf_P(PSTR("zun&auml;chst Passwort in <a href=\"txpcfg-intern.cgi\" target=\"main\">Einstellungen im lokalen TxP-System</a> eingeben!"));
+		}
+	else
+		{
+		KonfigFreigabeZeit = 0;
+		printf_P(PSTR("Konfigurationsseiten sind nun gesperrt. Zur Freigabe wieder das Passwort eingeben oder Taste der Baugruppe 2 x dr&uuml;cken."));
+		}
+
+	cgi_PrintHttpheaderEnd();
+	}
+	
+	
 #ifdef TXP_ANSCHLUSS
 
 const PROGMEM char NetzRufnummer_P[] = "NETZRUFNR";
@@ -3134,6 +3167,7 @@ void txp_init()
 	
 	cgi_RegisterCGI( txp_cgi_config_intern, PSTR("txpcfg-intern.cgi"));
 	cgi_RegisterCGI( txp_cgi_config_extern, PSTR("txpcfg-extern.cgi"));
+	cgi_RegisterCGI( txp_cgi_config_sperren, PSTR("txpcfg-sperren.cgi"));
 	cgi_RegisterCGI( txp_cgi_debug, PSTR("txp-debug.cgi"));
 	
 #if defined(MMC)
