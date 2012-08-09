@@ -12,6 +12,10 @@
 
 
 */
+
+// Modification Son 09.08.2012: - LED on for ip-Telex Card
+// Modification Son 09.08.2012: - Disable of serial Port
+
 ;*************************************************************************
 ;*									 *
 ;*				AVR universal Bootloader		 *
@@ -38,6 +42,12 @@ init:
 #if WDTRIGGER
 #include "watchdog.inc"
 #endif
+
+;Blue LED on, only for ip-Telex
+TODO
+
+;Disable serial Port
+TODO
 
 	IOPortInit
 #if CRC

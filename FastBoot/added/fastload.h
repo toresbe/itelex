@@ -11,6 +11,9 @@
 
 */
 
+// Modification Son 09.08.2012: BootDelay 2 Sek.
+
+
 ;*************************************************************************
 #include "compat.h" // compatibility definitions
 #include "protocol.h"
@@ -20,8 +23,10 @@
 #define  VERSION 0x0201
 
 #define  XTAL F_CPU	// 8MHz, not critical
-#define  BootDelay XTAL / 3	// 0.33s
-#define  BOOTDELAY XTAL / 3
+// Son #define  BootDelay XTAL / 3	// 0.33s
+// Son #define  BOOTDELAY XTAL / 3
+#define  BootDelay XTAL * 2	// 2s
+#define  BOOTDELAY XTAL * 2
 
 ;------------------------------	select UART mode -------------------------
 #if SRX == STX && SRX_PORT == STX_PORT
