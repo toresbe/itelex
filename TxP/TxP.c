@@ -219,10 +219,10 @@ static uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
 
 static char SocketOutBuf[SocketOutBufMax]; //!< TCP-Sendepuffer
 
-static uint8_t SocketAnzahlZeichenGesendet;
+static uint16_t SocketAnzahlZeichenGesendet;
 	//!< Anzahl Baudot- oder Ascii-Codes, die bisher an die Gegenstelle gesendet worden sind.
 	
-static uint8_t SocketAnzahlZeichenEmpfangen;
+static uint16_t SocketAnzahlZeichenEmpfangen;
 	//!< Anzahl Baudot- oder Ascii-Codes, die bisher von der Gegenstelle empfangen worden sind.
 	
 static uint8_t SocketAnzahlZeichenQuittiert;
@@ -346,6 +346,12 @@ TTastendruck Tastendruck;
 #define BLAU 3
 
 
+static inline uint8_t low(uint16_t x)
+	{
+	return x & 0xFF;
+	}
+	
+	
 #ifdef TXP_ANSCHLUSS
 	
 //! Initialisiert die serielle Umsetzung 
@@ -1125,7 +1131,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 						{
 						ProtokollierenInt_P(PSTR("TxP: EmpfB %16d" ), PufferAnzahl(&SendePuffer));
 						ProtokollierenInt_P(PSTR("%4d"), len);
-						ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenEmpfangen + len);
+						ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenEmpfangen) + len);
 						}
 					
 					i += 2; // Code und Länge überspringen
@@ -1220,7 +1226,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	InCount = PufferAnzahl(&EmpfPuffer);
 	if (InCount > 20
 	    || (InCount > 0 && ((RuheZaehler >= TxpTimerFreq * 8/10) // 0,8 Sekunden Tipp-Pause
-		                    || (SocketAnzahlZeichenQuittiert == SocketAnzahlZeichenGesendet) // alles was gesendet wurde, ist schon verarbeitet
+		                    || (SocketAnzahlZeichenQuittiert == low(SocketAnzahlZeichenGesendet)) // alles was gesendet wurde, ist schon verarbeitet
 						    )
 			)
 		)
@@ -1241,9 +1247,9 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 
 			if (ProtokollLevel == 2 && ProtAnz > 0) // Datenmengen
 				{
-				ProtokollierenInt_P(PSTR("TxP: SendA %4d" ), (uint8_t)(SocketAnzahlZeichenGesendet - SocketAnzahlZeichenQuittiert));
+				ProtokollierenInt_P(PSTR("TxP: SendA %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
 				ProtokollierenInt_P(PSTR("%4d"), ProtAnz);
-				ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenGesendet); // wurde schon erhöht
+				ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet)); // wurde schon erhöht
 				}
 				
 			} // if SocketModeAscii
@@ -1255,9 +1261,9 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				
 			if (ProtokollLevel == 2) // Datenmengen
 				{
-				ProtokollierenInt_P(PSTR("TxP: SendB %4d" ), (uint8_t)(SocketAnzahlZeichenGesendet - SocketAnzahlZeichenQuittiert));
+				ProtokollierenInt_P(PSTR("TxP: SendB %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
 				ProtokollierenInt_P(PSTR("%4d"), len);
-				ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenGesendet + len);
+				ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet) + len);
 				}
 				
 			SocketOutBuf[SocketOutBufUsed] = TXPC_BAUDOT_DATA;
@@ -1287,7 +1293,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		SocketOutBuf[SocketOutBufUsed] = 1;
 		SocketOutBufUsed++;
 		SocketOutBuf[SocketOutBufUsed] = 
-			(uint8_t) (SocketAnzahlZeichenEmpfangen - PufferAnzahl(&SendePuffer));
+			(uint8_t) (low(SocketAnzahlZeichenEmpfangen) - PufferAnzahl(&SendePuffer));
 		SocketOutBufUsed++;
 		SocketSendeQuittung = false;
 		}
@@ -1982,7 +1988,7 @@ void txp_thread()
 				{
 				ProtokollierenInt_P(PSTR("TxP: EmpfA %16d" ), PufferAnzahl(&SendePuffer) + ki);
 				ProtokollierenInt_P(PSTR("%4d"), ki);
-				ProtokollierenInt_P(PSTR("%4d\r\n"), SocketAnzahlZeichenEmpfangen);
+				ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenEmpfangen));
 				}
 				
 			} // AsciiDruckPuffer nicht leer und SendePuffer leer

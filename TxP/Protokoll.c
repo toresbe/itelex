@@ -210,13 +210,14 @@ static bool ProtPraeparieren(int len)
 		if (Puffer[0] == '\0')
 			{ // Zeit protokollieren
 			CLOCK_GetTime(&Time);
-			sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++ %02d:%02d ++++++\r\n%02d,%02d: "),
-				  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss, Time.ms);
+			sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++\r\n"),
+				  Time.DD, Time.MM, Time.YY);
 			}
-		else if (Puffer[strlen(Puffer)-1] == '\n')
+			
+		if (Puffer[strlen(Puffer)-1] == '\n')
 			{
 			CLOCK_GetTime(&Time);
-			sprintf_P(Puffer + strlen(Puffer), PSTR("%02d,%02d: "), Time.ss, Time.ms);
+			sprintf_P(Puffer + strlen(Puffer), PSTR("%02d:%02d:%02d,%02d: "), Time.hh, Time.mm, Time.ss, Time.ms);
 			}
 		}
 #endif //defined(MMC)		
