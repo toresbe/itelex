@@ -2439,15 +2439,32 @@ void txp_cgi_msg_Out( void * pStruct )
 	if (Modus == ModDirektdruckVerbunden)
 		{
 		printf_P(PSTR("Druckspiegel:<br><pre>%s&lt;&lt;&lt;%s</pre>"), HtmlSendeText, AsciiDruckPuffer);
+
+		if (ProtokollLevel >= 3)
+			{
+			Protokollieren_P(PSTR("TxP: Direktdruck Abruf Druckspiegel:"));
+			char *p = HtmlSendeText + strlen(HtmlSendeText) - 20;
+			if (p < HtmlSendeText) 
+				p = HtmlSendeText;
+			Protokollieren(p);
+			ProtokollierenInt_P(PSTR(" (%d)\r\n"), strlen(HtmlSendeText));
+			}
+
 		}
+
 	else if (Modus == ModRuhe)
 		{
 		printf_P(PSTR("Texteingabe startet Fernschreiber"));
 		HtmlSendeText[0] = '\0';
+		if (ProtokollLevel >= 3)
+			Protokollieren_P(PSTR("TxP: Direktdruck Abruf Druckspiegel (aus)\r\n"));
 		}
+		
 	else
 		{
 		printf_P(PSTR("Interface ist belegt, bitte warten."));
+		if (ProtokollLevel >= 3)
+			Protokollieren_P(PSTR("TxP: Direktdruck Abruf Druckspiegel (belegt)\r\n"));
 		}
 
 	cgi_PrintHttpheaderEnd();
@@ -2478,7 +2495,7 @@ void txp_cgi_msg_In( void * pStruct )
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 		if (ProtokollLevel >= 2)
 			{
-			Protokollieren_P(PSTR("TxP: CGI-Druck "));
+			Protokollieren_P(PSTR("TxP: Direktdruck Eingabe: "));
 			Protokollieren(EingabeText); 
 			Protokollieren_P(PSTR("\r\n"));
 			}
