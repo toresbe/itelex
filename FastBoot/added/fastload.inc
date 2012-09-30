@@ -44,10 +44,11 @@ init:
 #endif
 
 ;Blue LED on, only for ip-Telex
-TODO
+	sbi DDRB, 7
+	sbi PORTB, 7
 
 ;Disable serial Port
-TODO
+; TODO
 
 	IOPortInit
 #if CRC
