@@ -152,7 +152,7 @@ int check_cgibin( void * pStruct )
 		
 		if ( !strcmp_P( http_request->GET_FILE, cgi_table[ i ].funktionname ) )
 		{
-			printf_P( PSTR(		"HTTP/1.0 200 Document follows\r\n"
+			printf_P( PSTR(		"HTTP/1.1 200 Document follows\r\n"
 								"Content-Type: text/html\r\n"
 								"Cache-Control: no-cache\r\n"
 								"Connection: close\r\n"
@@ -165,13 +165,17 @@ int check_cgibin( void * pStruct )
 	return( returnvalue );
 }	
 
+
 void cgi_PrintHttpheaderStart( void )
 {
 	printf_P( PSTR(	"<HTML>"
 					"<HEAD><meta http-equiv=\"expires\" content=\"0\">"
+					"<!-- Enable IE9 Standards mode -->"
+					"<meta http-equiv=\"X-UA-Compatible\" content=\"IE=9\" >"
 					"</HEAD>"
 					"<BODY>"));
 }
+
 
 void cgi_PrintHttpheaderEnd( void )
 {
@@ -179,6 +183,7 @@ void cgi_PrintHttpheaderEnd( void )
 					"</HTML>"
 					"\r\n\r\n"));
 }
+
 
 /**
  * @}
