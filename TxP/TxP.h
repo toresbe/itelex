@@ -35,6 +35,7 @@
 	#endif
 	
 	#include <avr/pgmspace.h>  
+	#include <avr/interrupt.h>
 	#include "system/shell/shell.h"
 	#include "config.h"
 
@@ -153,6 +154,30 @@
 	extern TTastendruck Tastendruck;
 	extern bool WarteTaste();
 	extern uint8_t KonfigFreigabe(void *pStruct);
+	
+	extern volatile uint16_t MsTimerCnt;
+	
+	typedef uint16_t TMsTimer;
+
+	
+	static inline void StartTimer(TMsTimer *t)
+		{
+		cli();
+		*t = MsTimerCnt;
+		sei();
+		}
+		
+
+	static inline uint16_t TimerVal(TMsTimer *t)
+		{
+		uint16_t res;
+		
+		cli();
+		res = MsTimerCnt - *t; // Überlauf wird absichtlich erwartet!
+		sei();
+		return res;
+		}
+		
 	
 	// Was soll LED rot anzeigen?
 	//---------------------------

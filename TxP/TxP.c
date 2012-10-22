@@ -166,17 +166,25 @@ volatile static uint8_t SerUmTickZaehlerEmpf; //!< Zähler der Einzel-Ticks beim
 
 volatile static uint8_t SerUmTickZaehlerSend; //!< Zähler der Einzel-Ticks beim Senden
 
-volatile static uint16_t TwiLebenszeichenZaehler; 
+
+volatile uint16_t MsTimerCnt;
+//!< Die Timer-Basisvariable
+
+
+volatile uint8_t MsTimerVorteilerCnt;
+
+
+volatile static uint16_t TwiLebenszeichenZaehler; //! TODO Ersetzen
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf dem TWI-Bus.
 	//!< wird während der Verbindung missbraucht zum Zählen der Takte bis zur Pegelwiederholung.
 	
-volatile static uint16_t RuheZaehler;
-	//!< Zählt Ticks in denen nix passiert. Wird bei Datenempfang und Sendung und 
+static TMsTimer RuheTimer;  
+	//!< Misst die Zeit in der nix passiert. Wird bei Datenempfang und Sendung und 
 	//!< Verbindungsaufbau auf Null gesetzt. Wird auch für Timeout beim Warten auf 
-	//!< die Ausschalt-Quittung benutzt. In Grundstellung wird die Datuer der Grundstellung
+	//!< die Ausschalt-Quittung benutzt. In Grundstellung wird die Dauer der Grundstellung
 	//!< gemessen für das Protokollschreiben.
 	
-volatile static uint16_t SocketLebenszeichenZaehler;
+volatile static uint16_t SocketLebenszeichenZaehler; //! TODO Ersetzen
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf der TCP-Verbindung.
 
 volatile static uint16_t TxpThreadCheckCount;
@@ -326,6 +334,7 @@ static uint32_t DynIPAktZeitZaehler;
 //! Sollfrequenz des Aufrufs von txp_timerEvent()
 enum { TxpTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
 
+
 #endif // TXP_ANSCHLUSS
 
 
@@ -377,16 +386,23 @@ void txp_timerEvent(void)
 	{
 	uint8_t t0c = TCNT0;
 	Timer0CallbackCount++;
-	
+
+	MsTimerVorteilerCnt++;
+	if (MsTimerVorteilerCnt >= TxpTimerFreq / 100)
+		{
+		MsTimerCnt++;
+		MsTimerVorteilerCnt = 0;
+		}
+		
 	wdt_reset();
 	
-	SocketLebenszeichenZaehler++;
+	SocketLebenszeichenZaehler++; //! TODO Ersetzen
 	
 	if (DynIPAktiv)
-		DynIPAktZeitZaehler++;
+		DynIPAktZeitZaehler++; //! TODO Ersetzen
 	
 	if (TxpThreadCheckCount++ > 30 * TxpTimerFreq) // nach 30 Sekunden Reset
-		{
+		{ //! TODO Ersetzen
 		Protokollieren("TxP: Reset wegen nicht-Aufruf von txp_thread()\r\n");
 		ProtokollSpeichern(true);
 		softreset();
@@ -397,12 +413,10 @@ void txp_timerEvent(void)
 		LED_on(ROT);
 #endif //defined(LEDROT_TXPTHREADBLOCK)
 		
-	TwiWatchdogCount++;
+	TwiWatchdogCount++; //! TODO Ersetzen
 		
-	RuheZaehler++; // wird aber vielleicht gleich wieder auf Null gestellt
-	
 	if (SocketSendeSperrZaehler > 0)
-		SocketSendeSperrZaehler--;
+		SocketSendeSperrZaehler--; //! TODO Ersetzen
 	
 	if (Modus == ModKommendVerbunden 
 		|| Modus == ModGehendVerbunden 
@@ -458,7 +472,7 @@ void txp_timerEvent(void)
 				SerUmEmpfMarkZaehl = 0;
 				SerUmTickZaehlerEmpf = 10;
 				} // Abtastung eines Bits abgeschlossen
-			RuheZaehler = 0;
+			StartTimer(&RuheTimer);
 			} // if Empfang läuft
 		else // SerUmEmpfBitNr == 0 || SerUmEmpfBitNr == SerUmEmpfFertig
 			{ // Empfang ruht 
@@ -469,7 +483,7 @@ void txp_timerEvent(void)
 				SerUmEmpfFehler = false;
 				SerUmEmpfMarkZaehl = 0;
 				SerUmTickZaehlerEmpf = 6; // nicht 10, da in der Mitte der Bits abgetastet wird
-				RuheZaehler = 0;
+				StartTimer(&RuheTimer);
 				}
 			else
 				{
@@ -511,7 +525,7 @@ void txp_timerEvent(void)
 					SerUmTickZaehlerSend = 0;
 					}
 				}
-			RuheZaehler = 0;
+			StartTimer(&RuheTimer);
 			} // SerUmSendBitNr zwischen 2 und 8
 			
 		if (NeuMark && !SendeMark)
@@ -590,6 +604,7 @@ void txp_timerEvent(void)
 			if (!get_Taste()) // Gedrückt = LOW!
 				{
 				if (++TasteZaehler > TxpTimerFreq * 5/100) // 50 Millisekunden
+					//! TODO Ersetzen
 					{ // ausreichend lang gedrückt
 					TasteZustandIntern = TasteEin;
 					TasteZaehler = 0;
@@ -710,7 +725,7 @@ static void ModusWechsel(TModus neu)
 			LED_off(GRUEN);
 			LED_off(BLAU);
 			AsciiDruckPuffer[0] = '\0';
-			RuheZaehler = 0;
+			StartTimer(&RuheTimer);
 			break;
 	
 		// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
@@ -797,7 +812,7 @@ static void ModusWechsel(TModus neu)
 		case ModKommendWarteEinQuitt: // Warte auf Einschalt-Quittung des Endgeräts
 			SET_BIT_Status(StatBit_FsBefBetrieb);
 			SET_BIT_Status(StatBit_FsBefEin);
-			RuheZaehler = 0;
+			StartTimer(&RuheTimer);
 			break;
 	
 		case ModKommendVerbunden: 
@@ -810,14 +825,14 @@ static void ModusWechsel(TModus neu)
 	
 		case ModPufferDruckUndSchluss: 
 			CLR_BIT_Status(StatBit_Verbunden);
-			RuheZaehler = 0;
+			StartTimer(&RuheTimer);
 			break;
 		
 		case ModWarteSchlussQuitt:
 			CLR_BIT_Status(StatBit_FsBefBetrieb);
 			CLR_BIT_Status(StatBit_FsBefEin);
 			CLR_BIT_Status(StatBit_Verbunden);
-			RuheZaehler = 0;
+			StartTimer(&RuheTimer);
 			break;
 
 		case ModDirektdruckWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
@@ -1225,7 +1240,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	//     ODER c) Alles was bisher gesendet wurde schon verarbeitet ist.
 	InCount = PufferAnzahl(&EmpfPuffer);
 	if (InCount > 20
-	    || (InCount > 0 && ((RuheZaehler >= TxpTimerFreq * 8/10) // 0,8 Sekunden Tipp-Pause
+	    || (InCount > 0 && ((TimerVal(&RuheTimer) >= 80) // 0,8 Sekunden Tipp-Pause
 		                    || (SocketAnzahlZeichenQuittiert == low(SocketAnzahlZeichenGesendet)) // alles was gesendet wurde, ist schon verarbeitet
 						    )
 			)
@@ -1668,7 +1683,7 @@ void txp_thread()
 					// ID#221 ********************************************
 					Wahlnummer = 10 * Wahlnummer + (Code - BusKdoWahlziffer0);
 					Wahlziffern++;
-					RuheZaehler = 0;
+					StartTimer(&RuheTimer);
 					TlnServerAbfrageWiederholungssperre = false;
 					
 					if (TlnSuche(Wahlnummer, false, &GewaehlterTln))
@@ -1693,7 +1708,7 @@ void txp_thread()
 									}
 								else if (Wahlziffern >= 5)
 									{ // mal den Rufnummer-Server befragen...
-									// herausgenommen, da oben TEST RuheZaehler = 2 * TxpTimerFreq; // nicht mehr 2 Sekunden warten.
+									// herausgenommen, da oben TEST TimerVal(&RuheTimer) > 200; // nicht mehr 2 Sekunden warten.
 									}
 								break;
 							
@@ -1866,13 +1881,13 @@ void txp_thread()
 	if (Modus == ModGehendWaehlen 
 		&& !TlnServerAbfrageWiederholungssperre
 		&& Wahlziffern >= 5
-		&& RuheZaehler > 2 * TxpTimerFreq)
+		&& TimerVal(&RuheTimer) >= 200)
 		{ // 2 Sekunden Wahlpause und 5 Ziffern gewählt
 		// ID#231 **************************************************************
 		RufnummerBeiTlnServerAbfragen();
 		}
 		
-	if (Modus == ModWarteSchlussQuitt && RuheZaehler > 3 * TxpTimerFreq)
+	if (Modus == ModWarteSchlussQuitt && TimerVal(&RuheTimer) > 300)
 		{ // 3 Sekunden keine Schlussquittung empfangen
 		// ID#412 ****************************************************************
 		if (ProtokollLevel >= 1)
@@ -1880,7 +1895,7 @@ void txp_thread()
 		ModusWechsel(ModRuhe);
 		}
 		
-	if (Modus == ModKommendWarteEinQuitt && RuheZaehler > 3 * TxpTimerFreq)
+	if (Modus == ModKommendWarteEinQuitt && TimerVal(&RuheTimer) > 300)
 		{ // 3 Sekunden keine Einschalt-Quittung empfangen
 		// ID#332 ***************************************************************
 		if (ProtokollLevel >= 1)
@@ -2001,7 +2016,7 @@ void txp_thread()
 		while (!PufferLeer(&EmpfPuffer))
 			ZeichenInHtmlSendeText(CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode));
 
-		if (RuheZaehler > 30 * TxpTimerFreq // 30 Sekunden
+		if (TimerVal(&RuheTimer) > 3000 // 30 Sekunden
 			&& AsciiDruckPuffer[0] == '\0'
 			&& PufferLeer(&SendePuffer)
 			&& PufferLeer(&EmpfPuffer) )
@@ -2010,7 +2025,7 @@ void txp_thread()
 				Protokollieren_P(PSTR("TxP: Direktdruck-Ruhe --> Ausschaltung intern\r\n" ));
 			BusSenden(BusKdoSchluss);
 			ModusWechsel(ModWarteSchlussQuitt);
-			RuheZaehler = 0;
+			StartTimer(&RuheTimer);
 			} // Abschaltung nach 30 Sekunden
 
 		} // if Modus == ModDirektdruckVerbunden
@@ -2025,7 +2040,7 @@ void txp_thread()
 			Protokollieren_P(PSTR("TxP: Reste gedruckt --> Ausschaltung intern\r\n" ));
 		BusSenden(BusKdoSchluss);
 		ModusWechsel(ModWarteSchlussQuitt);
-		RuheZaehler = 0;
+		StartTimer(&RuheTimer);
 		}
 
 	// ======================================================================
@@ -2382,7 +2397,7 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(SocketAnzahlZeichenQuittiert);
 	PRINTVAL(SocketAnzahlZeichenEmpfangen);
 	
-	PRINTVAL(RuheZaehler);
+	PRINTVAL(TimerVal(&RuheTimer));
 	PRINTVAL(TwiLebenszeichenZaehler); 
 	PRINTVAL(SocketLebenszeichenZaehler);
 	PRINTVAL(TxpThreadCheckCount);
