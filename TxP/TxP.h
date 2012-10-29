@@ -162,9 +162,10 @@
 	
 	static inline void StartTimer(TMsTimer *t)
 		{
+		uint8_t sreg_tmp = SREG;
 		cli();
 		*t = MsTimerCnt;
-		sei();
+		SREG = sreg_tmp;
 		}
 		
 
@@ -172,9 +173,10 @@
 		{
 		uint16_t res;
 		
+		uint8_t sreg_tmp = SREG;
 		cli();
 		res = MsTimerCnt - (*t); // Überlauf wird absichtlich erwartet!
-		sei();
+		SREG = sreg_tmp;
 		return res;
 		}
 		

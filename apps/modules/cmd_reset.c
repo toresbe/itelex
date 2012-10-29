@@ -82,6 +82,11 @@ void cgi_reset( void * pStruct )
 			cgi_PrintHttpheaderEnd();
 			STDOUT_Flush();
 			CloseTCPSocket( http_request->HTTP_SOCKET );
+#if defined(TXPnet)
+			LED_on(1);
+			LED_on(2);
+			LED_on(3);
+#endif	
 			softreset();
 			while(1);
 		}

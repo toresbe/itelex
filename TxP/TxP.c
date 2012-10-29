@@ -1338,7 +1338,7 @@ static void SocketBearbeiten()
 		&& TimerVal(&TxpSocketAbbruchTimer) >= 3000) // 30 Sekunden.
 		{
 		if (ProtokollLevel >= 1)
-			Protokollieren_P(PSTR("TxP: Zeitueberschreibung bei Wiederaufnahme der Verbindung\r\n" ));
+			ProtokollierenInt_P(PSTR("TxP: Zeitueberschreibung bei Wiederaufnahme der Verbindung (%d)\r\n" ), TimerVal(&TxpSocketAbbruchTimer));
 		TxpSocketMode = SocketIdle;
 		TxpSocketAbbauGeplant = false;
 		TxpSocketIP = 0;
@@ -2153,7 +2153,8 @@ void txp_thread()
 		{ // 3 Sekunden keine Schlussquittung empfangen
 		// ID#412 ****************************************************************
 		if (ProtokollLevel >= 1)
-			Protokollieren_P(PSTR("TxP: Timeout beim Warten auf die Schlussquittung\r\n" ));
+			ProtokollierenInt_P(PSTR("TxP: Timeout beim Warten auf die Schlussquittung (%u)\r\n" ), TimerVal(&RuheTimer));
+				//! \todo Ausgabe von TimerVal(&RuheTimer) wieder 'rausschmeißen, da nur für Debugging drin.
 		ModusWechsel(ModRuhe);
 		}
 		
@@ -2284,7 +2285,7 @@ void txp_thread()
 			&& PufferLeer(&EmpfPuffer) )
 			{
 			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR("TxP: Direktdruck-Ruhe --> Ausschaltung intern\r\n" ));
+				ProtokollierenInt_P(PSTR("TxP: Direktdruck-Ruhe --> Ausschaltung intern (%d)\r\n" ), TimerVal(&RuheTimer));
 			BusSenden(BusKdoSchluss);
 			ModusWechsel(ModWarteSchlussQuitt);
 			StartTimer(&RuheTimer);
@@ -2330,8 +2331,7 @@ void txp_thread()
 				}
 			else
 				{ // keine Verbindung hergestellt
-				DynIPAktZeitZaehler = 0; // in 15 Minuten nochmal probieren
-				//! \todo Zufallsgesteuert einen anderen Abstand versuchen, da sonst absolute synchronität mit zweitem Teilnehmer möglich.
+				DynIPAktZeitZaehler = MsTimerCnt; // in 15 Minuten - Zufall nochmal probieren
 				}
 			}
 		}
