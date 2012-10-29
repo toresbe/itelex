@@ -132,6 +132,14 @@ static TModus Modus;
 	//!< Version der Kommunikation. Originate schlägt vor, Answer bestätigt.
 	//!< Erst wenn andere Seite mit gleicher Nummer antwortet, ist Protokollversion abgestimmt.
 
+/* Mustertelegramme zur Übernahme in FsTelnet (MFC-Programm)
+Protokoll und Durchwahl: 07 01 02 01 01 00
+Text:                    02 todo
+Kennungsabfrage:		 02 todo
+Füllzeichen:             00 00
+Ende:                    03 00
+*/
+	
 
 #define PROTVERSION_AKTUELL 1
 	//!< Aktuelle = beste Protokollversion
