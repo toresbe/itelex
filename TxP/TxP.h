@@ -173,7 +173,7 @@
 		uint16_t res;
 		
 		cli();
-		res = MsTimerCnt - *t; // Überlauf wird absichtlich erwartet!
+		res = MsTimerCnt - (*t); // Überlauf wird absichtlich erwartet!
 		sei();
 		return res;
 		}
