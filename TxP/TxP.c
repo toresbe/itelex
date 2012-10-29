@@ -79,10 +79,15 @@ typedef enum
 	{
 	ModRuhe = 0, 
 		//!< nichts läuft
+
 	// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
 	ModGehendReserv = 1, 
+		//!< Schnittstelle ist angesprochen worden, aber noch ein Einschaltkommando erhalten.
 	ModGehendWaehlen = 2,
+		//!< Einschaltkommando erhalten, Wahlaufforderung gesendet, 
+		//!< ggf. auch schon Wahlziffern empfangen.
 	ModGehendVerbunden = 4,
+		//!< Wahl abgeschlossen, Socket geöffnet, Endgerät eingeschaltet.
 	
 	// Kommend = vom Netz zum internen Anschluss
 	ModKommendVerbVorstufe = 11, 
@@ -117,11 +122,20 @@ static TModus Modus;
 //   * zugehörige Daten
 
 #define TXPC_NULL '\000' //!< Füllzeichen
-#define TXPC_DURCHWAHL '\001' //!< Datenblock enthält ein Byte Durchwahl 
+#define TXPC_DURCHWAHL '\001' //!< Startzeichen, Datenblock enthält ein Byte Durchwahl 
 #define TXPC_BAUDOT_DATA '\002' //!< Datenblock mit puren Baudot-Codes
-#define TXPC_STOP '\004' //!< Es können noch Daten angehängt werden.
+#define TXPC_ENDE '\003' //!< Beabsichtigter Verbindungsabbau.
+#define TXPC_STOP '\004' //!< Es können noch Daten angehängt werden. Ursache: Besetzt oder Störung
 // \005 freigehalten für ^E = WerDa.
 #define TXPC_QUITT '\006' //!< Meldet Empfangsbereitschaft und Anzahl bereits verarbeiteter Zeichen.
+#define TXPC_VERSION '\007' 
+	//!< Version der Kommunikation. Originate schlägt vor, Answer bestätigt.
+	//!< Erst wenn andere Seite mit gleicher Nummer antwortet, ist Protokollversion abgestimmt.
+
+
+#define PROTVERSION_AKTUELL 1
+	//!< Aktuelle = beste Protokollversion
+
 	
 // BusVerbPartner ist in BusKomm.h enthalten
 
@@ -174,7 +188,7 @@ volatile uint16_t MsTimerCnt;
 volatile uint8_t MsTimerVorteilerCnt;
 
 
-volatile static uint16_t TwiLebenszeichenZaehler; //! TODO Ersetzen
+volatile static uint16_t TwiLebenszeichenZaehler; //! \todo Ersetzen
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf dem TWI-Bus.
 	//!< wird während der Verbindung missbraucht zum Zählen der Takte bis zur Pegelwiederholung.
 	
@@ -184,7 +198,7 @@ static TMsTimer RuheTimer;
 	//!< die Ausschalt-Quittung benutzt. In Grundstellung wird die Dauer der Grundstellung
 	//!< gemessen für das Protokollschreiben.
 	
-volatile static uint16_t SocketLebenszeichenZaehler; //! TODO Ersetzen
+volatile static uint16_t SocketLebenszeichenZaehler; //! \todo Ersetzen
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf der TCP-Verbindung.
 
 volatile static uint16_t TxpThreadCheckCount;
@@ -207,12 +221,51 @@ static char HtmlSendeText[HtmlSendeTextMax];
 	//!< Puffer für zu Anzuzeigenden Text (Endgerät -> Netz), mit Null abgeschlossen
 
 
-static int TxpServerSocket;
+//OBSOLET static int TxpServerSocket;
 	//!< Handle für eingehende Txp-Verbindungen ("Server")
 	
-static int TxpClientSocket;
+//OBSOLET static int TxpClientSocket;
 	//!< Handle für ausgehende Txp-Verbindungen ("Client")
 
+static int TxpSocketHandle;
+	//!< Verweis auf Socket für Txp-Kommunikation. Istzustand. Wenn ungültig, aber TxpSocketMode
+	//!< ungleich Idle, ist ein kurzzeitiger Verbindungsverlust eingetreten.
+	
+	
+static enum { 
+	SocketIdle, //!< Unbenutzt
+	SocketOriginate, //!< Ausgehende Verbindung
+	SocketAnswer //!< Kommende Verbindung
+	} TxpSocketMode; 
+	//!< Speichert Sollzustand der Txp-Verbindung
+	
+	
+static long TxpSocketIP;
+	//!< Aktueller Verbindungspartner. Bei TxpSocketMode = SocketAnswer wird
+	//!< nach Verbindungsverlust geprüft, ob neu aufgenommene Verbindung wieder
+	//!< vom gleichen Anschluss kommt.
+
+static uint16_t TxpSocketPort;
+	//!< Bei ausgehenden Verbindungen der gewünschte Port des Empfängers.
+
+static bool TxpSocketAbbauGeplant;
+	//!< Wird auf true gesetzt, wenn ein Verbindungsabbau bevorsteht.
+	//!< Abbau erfolgt immer durch Anrufer. 
+	//!< \p Wenn true und TxpSocketMode = SocketOriginate wird Abbau nach letzem Datenblock ausgelöst
+	//!< \p Wenn true und TxpSocketMode = SocketAnswer wird nach gemeldetem Verbindungsabbau
+	//!< TxpSocketMode auf SocketIdle gesetzt und TxpSocketIP gelöscht.
+	
+static uint8_t TxpSocketProtVersion;
+	//!< Vereinbarte Protokollversion der Kommunikation
+
+static uint8_t TxpSocketProtVersionVorschlag;
+	//!< Selbst Vorgeschlagene Protokollversion der Kommunikation
+
+static bool TxpSocketModeAscii; 
+	//!< true, wenn die Daten als ASCII und nicht als Baudot-Daten übertragen werden.
+
+static TMsTimer TxpSocketAbbruchTimer;
+	//!< Nach 30 Sekunden unplanmäßigem Verbindungsverlust wird entgültig abgebaut.
 	
 enum { SocketInBufMax = 2500 } ; //!< Größe des TCP-Empfangspuffers
 
@@ -226,6 +279,7 @@ enum { SocketOutBufMax = 2500 } ; //!< Größe des TCP-Sendepuffers
 static uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
 
 static char SocketOutBuf[SocketOutBufMax]; //!< TCP-Sendepuffer
+
 
 static uint16_t SocketAnzahlZeichenGesendet;
 	//!< Anzahl Baudot- oder Ascii-Codes, die bisher an die Gegenstelle gesendet worden sind.
@@ -241,13 +295,12 @@ volatile static bool SocketSendeQuittung;
 
 static uint8_t SocketSendeFehlerZaehler;
 	//!< Zählt bis 10 bei nicht erfolgreichen Sendeversuchen auf dem Socket.
+	//!< \todo obsolet?
 	
 static uint16_t SocketSendeSperrZaehler;
 	//!< Zählt nach Sendefehlern herunter und verhindert solange neue Sendeversuche.
+	//!< \todo obsolet?
 	
-static bool SocketModeAscii; 
-	//!< true, wenn die Daten als ASCII und nicht als Baudot-Daten übertragen werden.
-
 static bool SendenBeschleunigen;
 	//!< wird auf true gesetzt, wenn der Puffer überzulaufen droht.
 	//!< bewirkt, dass das generierte Stop-Bit von 1,5 auf 1,3 verkürzt wird. 
@@ -314,7 +367,9 @@ static char KonfigPasswort[KonfigPasswortLen+1];
 	
 static unsigned long KonfigFreigabeZeit;
 	//!< Uhrzeit der letzen Freigabe bzw. Benutzung von freizugebenden Seiten
-
+	//!< \todo durhc Timer ersetzen
+	
+	
 static int TeilnehmerServerSocket;
 	//!< Handle für ausgehende Verbindungen zum Teilnehmer-Server
 	//!< Wird in ZWEI Situationen benutzt: 
@@ -576,7 +631,7 @@ void txp_timerEvent(void)
 			else
 				LED_on(GELB);
 			}
-		} // if IstVerbunden
+		} // if "Verbunden"
 
 	else if (Modus != ModRuhe && Modus != ModWarteSchlussQuitt)
 		{ // Lebenszeichen regelmäßig senden
@@ -747,7 +802,7 @@ static void ModusWechsel(TModus neu)
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
 			SeriellUmsetzInit();
 			SendenBeschleunigen = false;
-			SocketModeAscii = false;
+			TxpSocketModeAscii = false;
 			AsciiDruckPuffer[0] = '\0';
 			SocketAnzahlZeichenEmpfangen = 0;
 			SocketAnzahlZeichenGesendet = 0;
@@ -794,7 +849,7 @@ static void ModusWechsel(TModus neu)
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
 			SeriellUmsetzInit();
-			SocketModeAscii = false;
+			TxpSocketModeAscii = false;
 			AsciiDruckPuffer[0] = '\0';
 			SendenBeschleunigen	= false;
 			Durchwahl = 0;
@@ -897,32 +952,6 @@ static void SocketBufInit()
 	}
 	
 	
-//! Kommende TCP-Verbindung schließen
-static void CloseTxpServerSocket()
-	{
-	if (TxpServerSocket != NO_SOCKET_USED)
-		{ 
-		if (ProtokollLevel >= 1)
-			Protokollieren_P(PSTR("TxP: Server-Socket (eingehend) wird geschlossen\r\n" ));
-		CloseTCPSocket(TxpServerSocket);
-		TxpServerSocket = NO_SOCKET_USED;
-		}
-	}
-
-
-//! Gehende TCP-Verbindung schließen
-static void CloseTxpClientSocket()
-	{
-	if (TxpClientSocket != NO_SOCKET_USED)
-		{ 
-		if (ProtokollLevel >= 1)
-			Protokollieren_P(PSTR("TxP: Client-Socket (ausgehend) wird geschlossen\r\n" ));
-		CloseTCPSocket(TxpClientSocket);
-		TxpClientSocket = NO_SOCKET_USED;
-		}
-	}
-		
-
 //! Empfangene Daten vom Socket in den SendePuffer schreiben.
 //! \retval true, wenn Zeichen gedruckt wird (ausgegeben wird).
 static bool SchreibeZeichenInSendePuffer(char c)
@@ -1053,41 +1082,322 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 //! \par - Daten des Empfangspuffers (Endgerät) in den Socket-Sendepuffer übersetzen
 //! \par - Daten des Socket-Sendepuffers ggf. senden
 //! \par - Schlusszeichen bearbeiten
+//! \par - Öffnungs- und Schließanforderung bearbeiten
 
-static void SocketBearbeiten(int *Socket, bool IstVerbunden)
+static void SocketBearbeiten()
 	{
-	if (*Socket == NO_SOCKET_USED)
-		return;
+	// Neue Verbindungswünsche bearbeiten
+	// ----------------------------------
+	int NewServerSocket = CheckPortRequest(TXP_PORT);
+	if (NewServerSocket != NO_SOCKET_USED)
+		{
+		extern struct TCP_SOCKET TCP_sockettable[];
+		bool Abweisen = true; // Bei berechtigter kommender Verbindung auf false setzen.
+
+		if (ProtokollLevel >= 1)
+			{
+			Protokollieren_P(PSTR("TxP: Server-Socket geoeffnet von IP "));
+			ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
+			Protokollieren_P(PSTR(" / MAC "));
+			ProtokollierenMAC(TCP_sockettable[NewServerSocket].MACadress);
+			}
+		
+		if (TxpSocketMode == SocketIdle)
+			{ // neue Verbindung
+			if (Modus == ModRuhe)
+				{ // ID#102 *************************************************
+				// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR(" ...neu ok\r\n"));
+				TxpSocketHandle = NewServerSocket;
+				BusVerbPartner = Hauptstelle; // vorbereitet...
+				TxpSocketIP = TCP_sockettable[TxpSocketHandle].SourceIP;
+				TxpSocketMode = SocketAnswer;
+				TxpSocketAbbauGeplant = false;
+				TxpSocketProtVersion = 0;
+				TxpSocketProtVersionVorschlag = 0; // auf Gegenvorschlag warten
+				StartTimer(&TxpSocketAbbruchTimer);
+				SocketBufInit();
+				ModusWechsel(ModKommendVerbVorstufe);
+				Abweisen = false;
+				}
+			else
+				{
+				Abweisen = true; // anderweitig belegt
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR(", anderweitig belegt"));
+				}
+			} // TxpSocketMode == SocketIdle
+			
+		else if (TxpSocketMode == SocketAnswer && TxpSocketHandle == NO_SOCKET_USED)
+			{
+			if (TxpSocketIP == TCP_sockettable[TxpSocketHandle].SourceIP)
+				{
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR(" ...wiederverbindung ok\r\n"));
+				TxpSocketHandle = NewServerSocket;
+				Abweisen = false;
+				}
+			else
+				{
+				Abweisen = true; 
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR(", andere kommende Verbindung besteht"));
+				}
+			} // (TxpSocketMode == SocketAnswer && TxpSocketIP == NO_SOCKET_USED)
+			
+		else 
+			{ // TxpSocketMode == SocketOriginate || TxpSocketHandle bereits belegt
+			Abweisen = true; // anderweitig belegt
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR(", Verbindung besteht"));
+			}
+		
+		if (Abweisen)
+			{ // ID#213 ID#225 ***************************************************
+			PutSocketData_RPE(NewServerSocket, 7, PSTR("\004\005occ\r\n"), FLASH); // 004 = TXPC_STOP
+			CloseTCPSocket(NewServerSocket);
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR(" ...ABGEWIESEN\r\n" ));
+			}
+			
+		} // CheckPortRequest(TXP_PORT) != NO_SOCKET_USED
+
+	// Verbindungsabbruch durch Gegenseite?
+	// --------------------------------------------------
+	if (TxpSocketHandle != NO_SOCKET_USED && CheckSocketState(TxpSocketHandle) == SOCKET_NOT_USE)
+		{ // ID#242 ID#342 ID#314 ************************************************
+		if (TxpSocketAbbauGeplant)
+			{
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
+			TxpSocketMode = SocketIdle;
+			TxpSocketIP = 0;
+			TxpSocketAbbauGeplant = false;
+			SocketOutBufUsed = 0;
+			SocketInBufUsed = 0;
+			}
+		else
+			{
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n" ));
+			}
+			
+		CloseTCPSocket(TxpSocketHandle);
+		TxpSocketHandle = NO_SOCKET_USED;
+		return; // GGf wieder aufnahme der Verbindung beim nächsten Aufruf dieser funktion...
+		}
+		
+	// soll offene Verbindung geschlossen werden?
+	// --------------------------------------------------
+	if (TxpSocketHandle != NO_SOCKET_USED 
+		&& TxpSocketAbbauGeplant 
+		&& TxpSocketMode == SocketOriginate 
+		&& SocketOutBufUsed == 0)
+		{ 
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("TxP: Socket wird aktiv geschlossen\r\n" ));
+		CloseTCPSocket(TxpSocketHandle);
+		TxpSocketHandle = NO_SOCKET_USED;
+		TxpSocketMode = SocketIdle;
+		TxpSocketIP = 0;
+		TxpSocketAbbauGeplant = false;
+		SocketOutBufUsed = 0;
+		SocketInBufUsed = 0;
+		}
 		
 	// Auf neue Daten testen
 	// ---------------------------------
-	int InCount = GetBytesInSocketData(*Socket);
-	
-	if (SocketInBufUsed + InCount > SocketInBufMax)
-		InCount = SocketInBufMax - SocketInBufUsed;
-		
-	if (InCount > 0) 
+	if (TxpSocketHandle != NO_SOCKET_USED)
 		{
-		int Res = GetSocketData(*Socket, InCount, SocketInBuf + SocketInBufUsed);
+		StartTimer(&TxpSocketAbbruchTimer);
+			// so lange Verbindung aufrecht bleibt Timer auf 0
+
+		int InCount = GetBytesInSocketData(TxpSocketHandle);
 		
-		if (ProtokollLevel == 3) // Daten explizit
-			{
-			// printf_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
-			// printf_P(PSTR("%d)"), Res);
-			// for (uint16_t i = 0 ; i < Res ; i++)
-				// printf_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
-			// printf_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
-			ProtokollierenInt_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
-			ProtokollierenInt_P(PSTR("%d)"), Res);
-			for (uint16_t i = 0 ; i < Res ; i++)
-				ProtokollierenInt_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
-			ProtokollierenInt_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
-			}		
+		if (SocketInBufUsed + InCount > SocketInBufMax)
+			InCount = SocketInBufMax - SocketInBufUsed;
 			
-		if (Res > 0)
-			SocketInBufUsed += Res;
+		if (InCount > 0) 
+			{
+			int Res = GetSocketData(TxpSocketHandle, InCount, SocketInBuf + SocketInBufUsed);
+			
+			if (ProtokollLevel == 3) // Daten explizit
+				{
+				// printf_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
+				// printf_P(PSTR("%d)"), Res);
+				// for (uint16_t i = 0 ; i < Res ; i++)
+					// printf_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
+				// printf_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
+				ProtokollierenInt_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
+				ProtokollierenInt_P(PSTR("%d)"), Res);
+				for (uint16_t i = 0 ; i < Res ; i++)
+					ProtokollierenInt_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
+				ProtokollierenInt_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
+				}		
+				
+			if (Res > 0)
+				SocketInBufUsed += Res;
+			}
+		} // if TxpSocketHandle != NO_SOCKET_USED 
+		
+	// ggf Lebenszeichen erzeugen
+	// --------------------------
+	if (TxpSocketMode != SocketIdle
+		&& SocketLebenszeichenZaehler > 4 * TxpTimerFreq 
+	    && SocketOutBufUsed == 0
+		&& SocketSendeSperrZaehler == 0)
+		{ // alle 4 Sekunden ein Lebenszeichen
+		SocketOutBuf[0] = TXPC_NULL;
+		SocketOutBuf[1] = 0;
+		SocketOutBufUsed = 2;
+		}
+
+	// Ist ein Neuaufbau der Verbindung erforderlich?
+	// ----------------------------------------------
+	if (TxpSocketMode == SocketOriginate 
+		&& TxpSocketHandle == NO_SOCKET_USED 
+		&& SocketOutBufUsed != 0
+		&& !TxpSocketAbbauGeplant)
+		//! \todo Verzögerung?
+		{
+		TxpSocketHandle = Connect2IP(TxpSocketIP, TxpSocketPort); 
+	 
+		if (TxpSocketHandle == -1)
+			{ 
+			// Verbindung konnte nicht aufgebaut werden
+			if (ProtokollLevel >= 1)
+				Protokollieren_P(PSTR("TxP: Wieder-Oeffnung des Socket versagt.\r\n"));
+			TxpSocketHandle = NO_SOCKET_USED;
+			return;
+			}
+
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("TxP: Wieder-Oeffnung des Socket erfolgreich.\r\n"));
+			
+		//! \todo Initialsierungsdaten?
+		
 		}
 		
+	// Daten ggf. ins Netz senden
+	// --------------------------------------------------
+	if (TxpSocketHandle != NO_SOCKET_USED 
+		&& SocketOutBufUsed > 0 
+		&& SocketSendeSperrZaehler == 0) //! \todo && !HaltSocketOut
+		{
+		int Res = PutSocketData_RPE(TxpSocketHandle, SocketOutBufUsed, SocketOutBuf, RAM);
+		SocketLebenszeichenZaehler = 0; 
+
+		if (ProtokollLevel == 3)
+			{
+			ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
+			for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
+				ProtokollierenInt_P(PSTR(" %02X"), SocketOutBuf[i]);
+			ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
+			ProtokollierenInt_P(PSTR(" Sum %d\r\n" ), SocketAnzahlZeichenGesendet);
+			// printf_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
+			// for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
+				// printf_P(PSTR(" %02X"), SocketOutBuf[i]);
+			// printf_P(PSTR(" --> Res %d" ), Res);
+			// printf_P(PSTR(" Sum %d\r\n" ), SocketAnzahlZeichenGesendet);
+			}
+
+		if (Res <= 0)
+			{ // gar nichts gesendet.
+			SocketSendeFehlerZaehler++; //! \todo Prüfen ob wiederholtes Datensenden sinnvoll oder Verbindungsabbau und Wieder-Oeffnung besser...
+			if (SocketSendeFehlerZaehler >= 10)
+				{
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR("TxP: Mehrfache Fehler beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
+				CloseTCPSocket(TxpSocketHandle);
+				TxpSocketHandle = NO_SOCKET_USED;
+				}
+			else
+				SocketSendeSperrZaehler = 1 * TxpTimerFreq; // 1 Sekunde für nächsten Versuch warten.
+			}
+			
+		else if (Res < SocketOutBufUsed)
+			{ // nicht alles konnte gesendet werden...
+			memmove(SocketOutBuf, SocketOutBuf + Res, SocketOutBufUsed - Res);
+			SocketOutBufUsed -= Res;
+			SocketSendeFehlerZaehler = 0;
+			}
+			
+		else // Puffer erfolgreich vollständig gesendet.
+			{
+			SocketOutBufUsed = 0;
+			SocketSendeFehlerZaehler = 0;
+			}
+			
+		} // if es gibt was zu senden
+
+	// Abbruch wenn zu lange keine Verbindung besteht...
+	// -------------------------------------------------
+	if (TxpSocketMode != SocketIdle
+		&& TxpSocketHandle == NO_SOCKET_USED
+		&& TimerVal(&TxpSocketAbbruchTimer) >= 3000) // 30 Sekunden.
+		{
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("TxP: Zeitueberschreibung bei Wiederaufnahme der Verbindung\r\n" ));
+		TxpSocketMode = SocketIdle;
+		TxpSocketAbbauGeplant = false;
+		TxpSocketIP = 0;
+		SocketOutBufUsed = 0;
+		SocketInBufUsed = 0;
+		}
+
+	} // SocketBearbeiten()
+
+
+//! Interner Statuswechsel bei Ende-befehl (Socket geschlossen oder anderes Ende-Kommando)
+
+static void InterneVerbindungBeenden()
+	{
+	switch (Modus)
+		{
+		case ModRuhe:
+		case ModGehendReserv:
+		case ModGehendWaehlen:
+		case ModPufferDruckUndSchluss:
+		case ModWarteSchlussQuitt:
+		case ModDirektdruckWarteEinQuitt:
+		case ModDirektdruckVerbunden: 
+		case ModDeaktiviert:
+			// in diesen Zuständen ist normalerweise kein Socket offen.
+			// daher auch keine Reaktion auf geschlossenen Socket.
+			break; 
+			
+		case ModKommendVerbVorstufe:
+		case ModKommendEinschalten:
+		case ModKommendWarteEinQuitt:
+			if (ProtokollLevel >= 1)
+				ProtokollierenInt_P(PSTR("TxP: Wechsel nach Modus Ruhe (von %d)\r\n"), Modus);
+			ModusWechsel(ModRuhe); 
+			break;
+		
+		case ModKommendVerbunden:
+		case ModGehendVerbunden:
+			if (ProtokollLevel >= 1)
+				ProtokollierenInt_P(PSTR("TxP: Wechsel nach Modus PufferDruckUndSchluss (von %d)\r\n"), Modus);
+			ModusWechsel(ModPufferDruckUndSchluss);
+			break;
+		}
+	} // InterneVerbindungBeenden()
+	
+	
+//! Interpretiert empfangene Daten vom Socket und schiebt diese in den 
+//! EmpfPuffer. Wandelt Daten aus dem SendePuffer um.
+//! Bearbeitet auch Statusänderungen.
+
+static void TxpDatenVerarbeiten()
+	{
+	// Verbindungsabbau bearbeiten
+	// ---------------------------
+	if (TxpSocketMode == SocketIdle)
+		{
+		InterneVerbindungBeenden();
+		} // if (TxpSocketMode == SocketIdle)
+	
 	// Daten des Socket-Empfangspuffer interpretieren
 	// ----------------------------------------------
 	if (SocketInBufUsed > 0)
@@ -1103,7 +1413,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			if (c == '\r' || c == '\n' || (c >= ' ' && c <= '~'))
 				{ // ein ASCII-Zeichen
 				// ID#246 ID#344 *****************************************************
-				SocketModeAscii = true;
+				TxpSocketModeAscii = true;
 				int alen = strlen(AsciiDruckPuffer);
 				if (alen < AsciiDruckPufferMax-2)
 					{
@@ -1118,6 +1428,9 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				if (Modus == ModKommendVerbVorstufe)
 					// ID#311 *******************************************************
 					ModusWechsel(ModKommendEinschalten);
+
+				TxpSocketAbbauGeplant = false;
+
 				} // ASCII-Zeichen oder WR oder ZL
 				
 			else if (c == TXPC_NULL)
@@ -1133,11 +1446,12 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 					ModusWechsel(ModKommendEinschalten);
 					}
 				i += 2 + (uint8_t) SocketInBuf[i+1];
+				TxpSocketAbbauGeplant = false;
 				}
 				
 			else if (c == TXPC_BAUDOT_DATA)
 				{ // ID#243 ID#343 ***********************************************************
-				SocketModeAscii = false;
+				TxpSocketModeAscii = false;
 				uint8_t len = SocketInBuf[i+1];
 				
 				if (i + 2 + len <= SocketInBufUsed && PufferAnzahl(&SendePuffer) + len < MaxPuffer)
@@ -1164,17 +1478,21 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 							Protokollieren_P(PSTR("TxP: SendenBeschleunigen AUS\r\n"));
 						SendenBeschleunigen = false;
 						}
+						
+					if (Modus == ModKommendVerbVorstufe)
+						// war noch gar nicht eingeschaltet, dann wird es aber Zeit...
+						ModusWechsel(ModKommendEinschalten);
 					}
-				else
+				else // Baudot-Code-Block ist noch nicht vollständig UND noch entsprechend Platz im Sendepuffer
 					{
 					if (!SendenBeschleunigen && (ProtokollLevel >= 2))
 						Protokollieren_P(PSTR("TxP: SendenBeschleunigen EIN\r\n"));
 					SendenBeschleunigen = true;
 					break; // Daten können momentan nicht verarbeitet werden.
 					}
-				}
+				} // else if (c == TXPC_BAUDOT_DATA)
 
-			else if (c == TXPC_STOP)
+			else if (c == TXPC_STOP || c == TXPC_ENDE)
 				{
 				uint8_t len = SocketInBuf[i+1];
 				int alen = strlen(AsciiDruckPuffer);
@@ -1188,12 +1506,11 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				if (ProtokollLevel >= 1)
 					Protokollieren_P(PSTR("TxP: Abbaubefehl von Gegenstelle\r\n"));
 
-				if (IstVerbunden)
-					ModusWechsel(ModPufferDruckUndSchluss);
-				else
-					ModusWechsel(ModRuhe);
+				InterneVerbindungBeenden();
 				
-				} // c == TXPC_STOP
+				TxpSocketAbbauGeplant = true;
+				
+				} // c == TXPC_STOP oder TXPC_ENDE
 				
 			else if (c == TXPC_QUITT)
 				{ 
@@ -1201,7 +1518,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				if (Modus == ModKommendVerbVorstufe)
 					{ // ID#312 **************************************************
 					BusSenden(BusKdoEin);
-					ModusWechsel(ModGehendVerbunden);
+					ModusWechsel(ModKommendEinschalten);
 					}
 				else if (Modus == ModGehendWaehlen)
 					{ // ID#227 **************************************************
@@ -1211,7 +1528,45 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				if (len >= 1)
 					SocketAnzahlZeichenQuittiert = (uint8_t) SocketInBuf[i+2];
 				i += 2 + len;
-				}
+				} // c == TXPC_QUITT
+				
+			else if (c == TXPC_VERSION)
+				{ 
+				uint8_t len = SocketInBuf[i+1];
+				if (len >= 1)
+					{
+					uint8_t ProtVorschlag = SocketInBuf[i+2]; 
+
+					if (ProtokollLevel >= 2)
+						ProtokollierenInt_P(PSTR("TxP: Protokollversion-Vorschlag %d empfangen\r\n"), ProtVorschlag);
+
+					if (ProtVorschlag == TxpSocketProtVersionVorschlag)
+						{ // Vorschlag ist bestätigt...
+						TxpSocketProtVersion = ProtVorschlag;
+						}
+					else if (ProtVorschlag > PROTVERSION_AKTUELL)
+						{
+						TxpSocketProtVersionVorschlag = PROTVERSION_AKTUELL;
+						}
+					// hier ggf. weitere Inkompatibilitäten bearbeiten...
+					else
+						{
+						TxpSocketProtVersionVorschlag = ProtVorschlag;
+						}
+						
+					if (TxpSocketProtVersion == 0) // noch nichts festgelegt, also Gegenvorschlag senden.
+						{
+						SocketOutBuf[SocketOutBufUsed++] = TXPC_VERSION;
+						SocketOutBuf[SocketOutBufUsed++] = 1;
+						SocketOutBuf[SocketOutBufUsed++] = TxpSocketProtVersionVorschlag;
+						
+						if (ProtokollLevel >= 2)
+							ProtokollierenInt_P(PSTR("TxP: Sende Protokollversion-Gegenvorschlag %d\r\n"), TxpSocketProtVersionVorschlag);
+						}
+					} // len >= 1
+					
+				i += 2 + len;
+				} // c == TXPC_VERSION
 				
 			else 
 				{ // unbekannter Code --> ignorieren EINSCHLIEßLICH Daten
@@ -1219,7 +1574,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				i += 2 + (uint8_t) SocketInBuf[i+1];
 				}
 				
-			}
+			} // while (i < SocketInBufUsed)
 			
 		// verarbeiteten Teil des Empfangspuffers löschen
 		if (i < SocketInBufUsed)
@@ -1238,7 +1593,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 	// UND      a) es viel zu senden gibt 
 	//     ODER b) 0,5 sekunden nicht getippt wurde
 	//     ODER c) Alles was bisher gesendet wurde schon verarbeitet ist.
-	InCount = PufferAnzahl(&EmpfPuffer);
+	int InCount = PufferAnzahl(&EmpfPuffer);
 	if (InCount > 20
 	    || (InCount > 0 && ((TimerVal(&RuheTimer) >= 80) // 0,8 Sekunden Tipp-Pause
 		                    || (SocketAnzahlZeichenQuittiert == low(SocketAnzahlZeichenGesendet)) // alles was gesendet wurde, ist schon verarbeitet
@@ -1246,7 +1601,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 			)
 		)
 		{ // ID#244 ID#344 ***************************************************************
-		if (SocketModeAscii)
+		if (TxpSocketModeAscii)
 			{
 			uint8_t ProtAnz = 0;
 			while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3)
@@ -1267,7 +1622,7 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet)); // wurde schon erhöht
 				}
 				
-			} // if SocketModeAscii
+			} // if TxpSocketModeAscii
 		else
 			{ // Baudot-Datenblock senden
 			uint8_t len = PufferAnzahl(&EmpfPuffer);
@@ -1293,12 +1648,12 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 				len--;
 				}
 			SocketSendeQuittung = true;
-			} // else !SocketModeAscii
+			} // else !TxpSocketModeAscii
 		}
 		
 	// ggf. Anzahl verarbeiteter Zeichen zurückmelden
 	// --------------------------------------------------
-	if (!SocketModeAscii 
+	if (!TxpSocketModeAscii 
 		&& (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
 		&& (SocketSendeQuittung || SocketLebenszeichenZaehler > 4 * TxpTimerFreq)
 		&& SocketSendeSperrZaehler == 0)
@@ -1312,86 +1667,21 @@ static void SocketBearbeiten(int *Socket, bool IstVerbunden)
 		SocketOutBufUsed++;
 		SocketSendeQuittung = false;
 		}
-		
-	// ggf Lebenszeichen erzeugen
-	// --------------------------
-	if (SocketLebenszeichenZaehler > 4 * TxpTimerFreq 
-	    && SocketOutBufUsed == 0
-		&& SocketSendeSperrZaehler == 0)
-		{ // alle 4 Sekunden ein Lebenszeichen
-		SocketOutBuf[0] = TXPC_NULL;
-		SocketOutBuf[1] = 0;
-		SocketOutBufUsed = 2;
-		}
 
-	// soll offene Verbindung geschlossen werden?
-	// --------------------------------------------------
-	if (CheckSocketState(*Socket) == SOCKET_NOT_USE)
-		{ // ID#242 ID#342 ID#314 ************************************************
-		if (ProtokollLevel >= 1)
-			Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle geschlossen\r\n" ));
-		CloseTCPSocket(*Socket);
-		*Socket = NO_SOCKET_USED;
-		if (IstVerbunden)
-			ModusWechsel(ModPufferDruckUndSchluss);
-		else
-			ModusWechsel(ModRuhe); // ID#314
-		return;
-		}
-		
-	// Daten ggf. ins Netz senden
-	// --------------------------------------------------
-	if (SocketOutBufUsed > 0 && SocketSendeSperrZaehler == 0) //! \todo && !HaltSocketOut
-		{
-		int Res = PutSocketData_RPE(*Socket, SocketOutBufUsed, SocketOutBuf, RAM);
-		SocketLebenszeichenZaehler = 0; 
+	} // TxpDatenVerarbeiten()
+	
 
-		if (ProtokollLevel == 3)
-			{
-			ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
-			for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
-				ProtokollierenInt_P(PSTR(" %02X"), SocketOutBuf[i]);
-			ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
-			ProtokollierenInt_P(PSTR(" Sum %d\r\n" ), SocketAnzahlZeichenGesendet);
-			// printf_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
-			// for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
-				// printf_P(PSTR(" %02X"), SocketOutBuf[i]);
-			// printf_P(PSTR(" --> Res %d" ), Res);
-			// printf_P(PSTR(" Sum %d\r\n" ), SocketAnzahlZeichenGesendet);
-			}
-
-		if (Res <= 0)
-			{
-			SocketSendeFehlerZaehler++;
-			if (SocketSendeFehlerZaehler >= 10)
-				{
-				if (ProtokollLevel >= 1)
-					Protokollieren_P(PSTR("TxP: Mehrfache Fehler beim Senden ins Netz, Socket wird geschlossen\r\n" ));
-				CloseTCPSocket(*Socket);
-				*Socket = NO_SOCKET_USED;
-				if (IstVerbunden)
-					ModusWechsel(ModPufferDruckUndSchluss);
-				else
-					ModusWechsel(ModRuhe); 
-				}
-			else
-				SocketSendeSperrZaehler = 1 * TxpTimerFreq; // 1 Sekunde für nächsten Versuch warten.
-			}
-		else if (Res < SocketOutBufUsed)
-			{
-			memmove(SocketOutBuf, SocketOutBuf + Res, SocketOutBufUsed - Res);
-			SocketOutBufUsed -= Res;
-			SocketSendeFehlerZaehler = 0;
-			}
-		else
-			{
-			SocketOutBufUsed = 0;
-			SocketSendeFehlerZaehler = 0;
-			}
-		} // if es gibt was zu senden
-
-	} // SocketBearbeiten()
-
+//! Schreibt ein Ende-Kommando mit Zusatztext in den Socket-Sendepuffer
+static void SendeStopkommando(PGM_P s)
+	{
+	uint8_t len = strlen_P(s);
+	SocketOutBuf[SocketOutBufUsed] = TXPC_STOP;
+	SocketOutBuf[SocketOutBufUsed + 1] = len;
+	strcpy_P(SocketOutBuf + SocketOutBufUsed + 2, s);
+	SocketOutBufUsed += 2 + len;
+	TxpSocketAbbauGeplant = true;
+	}
+	
 	
 //! Schiebt ein Zeichen in den Anzeigepuffer für HTML-Betrieb.
 static void ZeichenInHtmlSendeText(char c)
@@ -1486,7 +1776,9 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				ProtokollierenIPAdr(td->IPAdr);
 				ProtokollierenInt_P(PSTR(" Port %d\r\n"), td->Port);
 				}
-			TxpClientSocket = Connect2IP(td->IPAdr, td->Port); 
+			TxpSocketIP = td->IPAdr;
+			TxpSocketPort = td->Port;
+			// Mode wird nach erfolgreichem Öffnen gesetzt.
 			break;
 			
 		case TxpUrl:
@@ -1503,7 +1795,9 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 					ProtokollierenIPAdr(td->IPAdr);
 					ProtokollierenInt_P(PSTR(" Port %d\r\n"), td->Port);
 					}									
-				TxpClientSocket = Connect2IP(td->IPAdr, td->Port);
+				TxpSocketIP = td->IPAdr;
+				TxpSocketPort = td->Port;
+				// Mode wird nach erfolgreichem Öffnen gesetzt.
 				}
 			else
 				{
@@ -1513,35 +1807,45 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 					Protokollieren(td->Adresse);
 					Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 					}
-				TxpClientSocket = -1;
+				return 1;
 				}
 			break;
 			
 		default:
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR("TxP: Teilnehmer ist GELOESCHT\r\n" ));
-			TxpClientSocket = NO_SOCKET_USED;
 			return 2;
 			
 		}
-	
-	if (TxpClientSocket == -1)
+
+	// und hier wird geöffet...
+	TxpSocketHandle = Connect2IP(TxpSocketIP, TxpSocketPort); 
+	 
+	if (TxpSocketHandle == -1)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
 		if (ProtokollLevel >= 1)
-			Protokollieren_P(PSTR("TxP: Client-Socket konnte nicht geoeffnet werden\r\n"));
-		TxpClientSocket = NO_SOCKET_USED;
+			Protokollieren_P(PSTR("TxP: Socket konnte nicht erstmalig geoeffnet werden\r\n"));
+		TxpSocketHandle = NO_SOCKET_USED;
+		TxpSocketMode = SocketIdle;
 		return 1;
 		}
+
+	TxpSocketMode = SocketOriginate;
+	TxpSocketAbbauGeplant = false;
+	TxpSocketProtVersion = 0;
+	TxpSocketProtVersionVorschlag = PROTVERSION_AKTUELL;
+	
+	StartTimer(&TxpSocketAbbruchTimer);
 		
-	else if (td->AdrArt == AsciiUrl || td->AdrArt == AsciiIP)
+	if (td->AdrArt == AsciiUrl || td->AdrArt == AsciiIP)
 		{ // ID#226 *********************************************
 		BusSenden(BusQuittEin);
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("TxP: Client-Socket Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
 		ModusWechsel(ModGehendVerbunden);
 		SocketBufInit();
-		SocketModeAscii = true;
+		TxpSocketModeAscii = true;
 		return 0;
 		}
 	else // TxpUrl oder TxpIP
@@ -1550,12 +1854,15 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			ProtokollierenInt_P(PSTR("TxP: Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %d\r\n"), td->Durchwahl);
 
 		SocketBufInit();
-		SocketModeAscii = false;
+		TxpSocketModeAscii = false;
 		
-		SocketOutBuf[0] = TXPC_DURCHWAHL;
+		SocketOutBuf[0] = TXPC_VERSION;
 		SocketOutBuf[1] = 1;
-		SocketOutBuf[2] = td->Durchwahl;
-		SocketOutBufUsed = 3;
+		SocketOutBuf[2] = TxpSocketProtVersionVorschlag;
+		SocketOutBuf[3] = TXPC_DURCHWAHL;
+		SocketOutBuf[4] = 1;
+		SocketOutBuf[5] = td->Durchwahl;
+		SocketOutBufUsed = 6;
 		
 		return 0;
 		}
@@ -1678,7 +1985,7 @@ void txp_thread()
 			case BusKdoWahlziffer0 ... BusKdoWahlziffer9:
 				if (ProtokollLevel >= 2)
 					ProtokollierenInt_P(PSTR("TxP: TWI Wahlziffer %d intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
-				if (Modus == ModGehendWaehlen && TxpClientSocket == NO_SOCKET_USED)
+				if (Modus == ModGehendWaehlen && TxpSocketMode == SocketIdle)
 					{
 					// ID#221 ********************************************
 					Wahlnummer = 10 * Wahlnummer + (Code - BusKdoWahlziffer0);
@@ -1751,19 +2058,16 @@ void txp_thread()
 				if (Modus != ModRuhe && Code == BusKdoSchluss)
 					BusSenden(BusQuittSchluss);
 					
-				// ausgehende Ports schließen...
-				// ID#241 ********************************************			
-				CloseTxpClientSocket();
-				
-				// eingehende Ports schließen...
-				// ID#341 ********************************************
-				CloseTxpServerSocket();
+				TxpSocketAbbauGeplant = true;
+
+				SocketOutBuf[SocketOutBufUsed++] = TXPC_ENDE;
+				SocketOutBuf[SocketOutBufUsed++] = 0;
 				
 				// Html-Puffer löschen
 				AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 					
 				// ID#411 ID#104 *************************************
-				ModusWechsel(ModRuhe);
+				// ???? \todo Ablauftabelle prüfen...
 				break;
 
 			default:
@@ -1791,6 +2095,7 @@ void txp_thread()
 				Protokollieren("TxP: TWI-Timeout -> Abschaltung\r\n");
 			BusSenden(BusKdoSchluss);
 			ModusWechsel(ModWarteSchlussQuitt);
+			//! \todo Socket ordentlich schließen
 			}
 		}
 	
@@ -1798,82 +2103,39 @@ void txp_thread()
 	// Socket Empfang und Sendung
 	// ======================================================================
 
-	if (Modus == ModKommendVerbunden)
-		SocketBearbeiten(&TxpServerSocket, true);
-		
-	if (Modus == ModGehendVerbunden || Modus == ModGehendWaehlen)
-		{
-		SocketBearbeiten(&TxpClientSocket, true);
-		if (Modus == ModGehendWaehlen && !PufferLeer(&SendePuffer))
-			{ // es wurden Daten empfangen, also schnellstens Endgerät anschmeißen
-			// ID#227 Teil 2 *******************************************************
-			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR("TxP: Angerufener hat geantwortet -> Einschaltung intern\r\n" ));
-			BusSenden(BusQuittEin);
-			ModusWechsel(ModGehendVerbunden);
-			}
-		}
-
-	if (Modus == ModKommendVerbVorstufe || Modus == ModKommendEinschalten)
-		{
-		SocketBearbeiten(&TxpServerSocket, false);
-		if (Modus == ModKommendEinschalten)
-			{ 
-			if (KommendInternAnwaehlen(Durchwahl)) 
-				{ // ID#321 ********************************************
-				if (ProtokollLevel >= 1)
-					ProtokollierenInt_P(PSTR("TxP: Anwahl intern an %d erfolgt\r\n"), Durchwahl);
-				BusSenden(BusKdoEin);
-				ModusWechsel(ModKommendWarteEinQuitt);
-				}
-			else
-				{ // ID#322 ********************************************
-				if (ProtokollLevel >= 1)
-					ProtokollierenInt_P(PSTR("TxP: Anwahl intern an %d VERSAGT\r\n"), Durchwahl);
-				strcpy_P(DebugMsg, PSTR("Reservierung fuer Einschaltung konnte nicht versand werden"));
-				CloseTxpServerSocket(); // Client kann nicht geöffnet sein.
-				ModusWechsel(ModRuhe);
-				}
-			} // if Modus == ModKommendEinschalten
-		}
-			
-	// ==========================================================================
-	// Neuer Anruf vom Ethernet?
-	// ==========================================================================
-
-	// auf neue Verbindungsanfrage testen
-	int NewServerSocket = CheckPortRequest(TXP_PORT);
-	if (NewServerSocket != NO_SOCKET_USED)
-		{
-		extern struct TCP_SOCKET TCP_sockettable[];
-
+	SocketBearbeiten();
+	TxpDatenVerarbeiten();
+	
+	if (Modus == ModGehendWaehlen && !PufferLeer(&SendePuffer))
+		{ // es wurden Daten empfangen, also schnellstens Endgerät anschmeißen
+		// ID#227 Teil 2 *******************************************************
 		if (ProtokollLevel >= 1)
-			{
-			Protokollieren_P(PSTR("TxP: Server-Socket geoeffnet von IP "));
-			ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
-			Protokollieren_P(PSTR(" / MAC "));
-			ProtokollierenMAC(TCP_sockettable[NewServerSocket].MACadress);
-			}
-		
-		if (Modus == ModRuhe && TxpServerSocket == NO_SOCKET_USED)
-			{ // ID#102 *************************************************
-			// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
+			Protokollieren_P(PSTR("TxP: Angerufener hat geantwortet -> Einschaltung intern\r\n" ));
+		BusSenden(BusQuittEin);
+		ModusWechsel(ModGehendVerbunden);
+		}
+
+	if (Modus == ModKommendEinschalten)
+		{ 
+		if (KommendInternAnwaehlen(Durchwahl)) 
+			{ // ID#321 ********************************************
 			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR(" ...ok\r\n"));
-			TxpServerSocket = NewServerSocket;
-			BusVerbPartner = Hauptstelle;
-			ModusWechsel(ModKommendVerbVorstufe);
-			SocketBufInit();
+				ProtokollierenInt_P(PSTR("TxP: Anwahl intern an %d erfolgt\r\n"), Durchwahl);
+			BusSenden(BusKdoEin);
+			ModusWechsel(ModKommendWarteEinQuitt);
 			}
 		else
-			{ // ID#213 ID#225 ***************************************************
-			PutSocketData_RPE(NewServerSocket, 7, PSTR("\004\005occ\r\n"), FLASH); // 004 = TXPC_STOP
-			CloseTCPSocket(NewServerSocket);
+			{ // ID#322 ********************************************
 			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR(" ...ABGEWIESEN\r\n" ));
-			}
-		}
+				ProtokollierenInt_P(PSTR("TxP: Anwahl intern an %d VERSAGT\r\n"), Durchwahl);
+			strcpy_P(DebugMsg, PSTR("Reservierung fuer Einschaltung konnte nicht versand werden"));
 
+			SendeStopkommando(PSTR("occ\r\n"));
+			
+			ModusWechsel(ModRuhe);
+			}
+		} // if Modus == ModKommendEinschalten
+			
 	// ==========================================================================
 	// Timeouts? (auch 2 Sekunden Wahlpause...)
 	// ==========================================================================
@@ -1901,7 +2163,7 @@ void txp_thread()
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("TxP: Timeout beim Warten auf die Einschaltquittung\r\n" ));
 		BusSenden(BusKdoSchluss);
-		CloseTxpServerSocket();
+		SendeStopkommando(PSTR("err\r\n"));
 		ModusWechsel(ModWarteSchlussQuitt);
 		}
 		
@@ -2069,6 +2331,7 @@ void txp_thread()
 			else
 				{ // keine Verbindung hergestellt
 				DynIPAktZeitZaehler = 0; // in 15 Minuten nochmal probieren
+				//! \todo Zufallsgesteuert einen anderen Abstand versuchen, da sonst absolute synchronität mit zweitem Teilnehmer möglich.
 				}
 			}
 		}
@@ -2147,7 +2410,7 @@ void txp_thread()
 							ProtokollierenInt_P(PSTR("TxP: Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
 						} // Aktualisieren ist sinnvoll
 						
-					if (Modus == ModGehendWaehlen && TxpClientSocket == NO_SOCKET_USED && TSB.TlnAuskunft.Nummer == Wahlnummer)
+					if (Modus == ModGehendWaehlen && TxpSocketMode == SocketIdle && TSB.TlnAuskunft.Nummer == Wahlnummer)
 						{ // erhaltenen Datensatz auch zum Verbindungsaufbau nutzen.
 						switch (Verbindungsaufbau(&GewaehlterTln))
 							{
@@ -2354,7 +2617,8 @@ void txp_cgi_debug( void * pStruct )
 	extern char Puffer[]; // aus Protokoll.c
 	printf_P(PSTR("Protokollpuffer: %s<br>"), Puffer);
 
-#define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %d"), Var)
+#define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %u"), Var)
+#define PRINTVALHEX(Var) printf_P(PSTR("<br>" #Var " = %X"), Var)
 
 	#ifdef TXP_ANSCHLUSS
 	
@@ -2389,9 +2653,14 @@ void txp_cgi_debug( void * pStruct )
 		printf_P(PSTR(" %02X"), SendePuffer.Puffer[i]);
 		}
 	
+	PRINTVAL(TxpSocketMode);
+	PRINTVAL(TxpSocketHandle);
+	PRINTVALHEX(TxpSocketIP);
+	PRINTVAL(TxpSocketAbbauGeplant);
+	PRINTVAL(TimerVal(&TxpSocketAbbruchTimer));
 	PRINTVAL(SocketInBufUsed);
 	PRINTVAL(SocketOutBufUsed);
-	PRINTVAL(SocketModeAscii);
+	PRINTVAL(TxpSocketModeAscii);
 	
 	PRINTVAL(SocketAnzahlZeichenGesendet);
 	PRINTVAL(SocketAnzahlZeichenQuittiert);
@@ -2454,6 +2723,7 @@ void txp_cgi_msg_Out( void * pStruct )
 	if (Modus == ModDirektdruckVerbunden)
 		{
 		printf_P(PSTR("Druckspiegel:<br><pre>%s&lt;&lt;&lt;%s</pre>"), HtmlSendeText, AsciiDruckPuffer);
+		//! \todo Timeout-Zeitgeber für Verbindungsverlust resetten. Timeout ist 20 Sekunden, da normalerweise diese CGI-Seite alle 10 Sekunden abgerufen wird.
 
 		if (ProtokollLevel >= 3)
 			{
@@ -2481,7 +2751,7 @@ void txp_cgi_msg_Out( void * pStruct )
 		if (ProtokollLevel >= 3)
 			Protokollieren_P(PSTR("TxP: Direktdruck Abruf Druckspiegel (belegt)\r\n"));
 		}
-
+	
 	cgi_PrintHttpheaderEnd();
 	}
 
@@ -3177,8 +3447,14 @@ void txp_init()
 	
 	BusEigenAdrMehrfach = 1; // muss Potenz von 2 sein (also 1, 2, 4, 8, 16, ... , Standard = 1
 
-	TxpClientSocket = NO_SOCKET_USED;
-	TxpServerSocket = NO_SOCKET_USED;
+	TxpSocketHandle = NO_SOCKET_USED;
+	TxpSocketMode = SocketIdle;
+	TxpSocketIP = 0;
+	TxpSocketAbbauGeplant = false;
+	StartTimer(&TxpSocketAbbruchTimer);
+	SocketOutBufUsed = 0;
+	SocketInBufUsed = 0;
+	
 	NetzEigeneIP = 0;
 	
 	TwiInit();
