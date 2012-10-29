@@ -133,11 +133,13 @@ static TModus Modus;
 	//!< Erst wenn andere Seite mit gleicher Nummer antwortet, ist Protokollversion abgestimmt.
 
 /* Mustertelegramme zur Übernahme in FsTelnet (MFC-Programm)
-Protokoll und Durchwahl: 07 01 02 01 01 00
-Text:                    02 todo
-Kennungsabfrage:		 02 todo
-Füllzeichen:             00 00
-Ende:                    03 00
+
+	Text1 = _T("07 01 02 01 01 00");                       // Protokoll und Durchwahl
+	Text2 = _T("02 0b 1f 02 08 16 0a 10 12 04 18 13 04");  // Text
+	Text3 = _T("02 02 1b 12");                             // Kennungsabfrage
+	Text4 = _T("00 00");                                   // Füllzeichen
+	Text5 = _T("03 00");                                   // Ende
+
 */
 	
 
@@ -256,6 +258,9 @@ static long TxpSocketIP;
 static uint16_t TxpSocketPort;
 	//!< Bei ausgehenden Verbindungen der gewünschte Port des Empfängers.
 
+static TMsTimer TxpSocketAbbruchTimer;
+	//!< Nach 30 Sekunden unplanmäßigem Verbindungsverlust wird entgültig abgebaut.
+	
 static bool TxpSocketAbbauGeplant;
 	//!< Wird auf true gesetzt, wenn ein Verbindungsabbau bevorsteht.
 	//!< Abbau erfolgt immer durch Anrufer. 
@@ -272,9 +277,6 @@ static uint8_t TxpSocketProtVersionVorschlag;
 static bool TxpSocketModeAscii; 
 	//!< true, wenn die Daten als ASCII und nicht als Baudot-Daten übertragen werden.
 
-static TMsTimer TxpSocketAbbruchTimer;
-	//!< Nach 30 Sekunden unplanmäßigem Verbindungsverlust wird entgültig abgebaut.
-	
 enum { SocketInBufMax = 2500 } ; //!< Größe des TCP-Empfangspuffers
 
 static uint16_t SocketInBufUsed; //!< Benutzter Teil des TCP-Empfangspuffers
@@ -2044,26 +2046,32 @@ void txp_thread()
 				break;
 				
 			case BusQuittSchluss:
-			case BusKdoSchluss:
 
 				if (ProtokollLevel >= 1)
-					{
-					if (Code == BusQuittSchluss)
 						Protokollieren_P(PSTR("TxP: TWI Ausschaltung quittiert\r\n" ));
-					else
-						Protokollieren_P(PSTR("TxP: TWI Ausschaltung intern\r\n" ));
-					}
 					
-				if (Code == BusQuittSchluss && Modus != ModWarteSchlussQuitt)
+				if (Modus != ModWarteSchlussQuitt)
 					{
 					if (ProtokollLevel >= 1)
 						Protokollieren_P(PSTR("TxP: Schlussquittung ohne Aufforderung\r\n"));
 					FalschCodeEmpfangen(Code);
 					}
 
+				// Html-Puffer löschen
+				AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
+					
+				ModusWechsel(ModRuhe);
+				
+				break;
+			
+			case BusKdoSchluss:
+
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR("TxP: TWI Ausschaltung intern\r\n" ));
+					
 				// ID#212 ********************************************
 				// ID#224 ********************************************
-				if (Modus != ModRuhe && Code == BusKdoSchluss)
+				if (Modus != ModRuhe)
 					BusSenden(BusQuittSchluss);
 					
 				TxpSocketAbbauGeplant = true;
@@ -2074,10 +2082,11 @@ void txp_thread()
 				// Html-Puffer löschen
 				AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 					
-				// ID#411 ID#104 *************************************
-				// ???? \todo Ablauftabelle prüfen...
 				break;
 
+			// ID#411 ID#104 *************************************
+			// ???? \todo Ablauftabelle prüfen...
+				
 			default:
 				FalschCodeEmpfangen(Code);
 				break;
