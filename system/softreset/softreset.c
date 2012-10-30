@@ -21,11 +21,12 @@ void softreset( void )
 {
 	do                          
 	{                           
-   		wdt_enable(WDTO_2S);  
+		wdt_disable();
+   		wdt_enable(WDTO_250MS);  
    		for(;;)                 
    		{                       
    		}                       
-	} while(0);
+	} while(1);
 }
 
 // Function Implementation

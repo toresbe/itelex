@@ -31,7 +31,13 @@
 #include "apps/httpd/httpd2_pharse.h"
 #include "system/stdout/stdout.h"
 
+#if defined(TXPnet)
+#include "hardware/led/led_core.h"
+#endif
+
 #include "cmd_reset.h"
+
+
 
 void init_cmd_reset( void )
 {
