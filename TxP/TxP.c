@@ -191,18 +191,18 @@ volatile static uint8_t SerUmTickZaehlerEmpf; //!< Zähler der Einzel-Ticks beim
 volatile static uint8_t SerUmTickZaehlerSend; //!< Zähler der Einzel-Ticks beim Senden
 
 
-volatile uint16_t MsTimerCnt;
+volatile uint16_t KurzTimerCnt;
 //!< Die Timer-Basisvariable
 
 
-volatile uint8_t MsTimerVorteilerCnt;
+volatile uint8_t KurzTimerVorteilerCnt;
 
 
 volatile static uint16_t TwiLebenszeichenZaehler; //! \todo Ersetzen
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf dem TWI-Bus.
 	//!< wird während der Verbindung missbraucht zum Zählen der Takte bis zur Pegelwiederholung.
 	
-static TMsTimer RuheTimer;  
+static TKurzTimer RuheTimer;  
 	//!< Misst die Zeit in der nix passiert. Wird bei Datenempfang und Sendung und 
 	//!< Verbindungsaufbau auf Null gesetzt. Wird auch für Timeout beim Warten auf 
 	//!< die Ausschalt-Quittung benutzt. In Grundstellung wird die Dauer der Grundstellung
@@ -230,6 +230,14 @@ static char AsciiDruckPuffer[AsciiDruckPufferMax];
 static char HtmlSendeText[HtmlSendeTextMax];
 	//!< Puffer für zu Anzuzeigenden Text (Endgerät -> Netz), mit Null abgeschlossen
 
+static TKurzTimer HtmlDruckspiegelAnzeigeTimer;
+	//!< Zeit seit der letzten Anzeige des Druckspiegels. Druckspiegel wird alle 10 Sekunden 
+	//!< abgerufen.
+	
+static TKurzTimer HtmlTexteingabeTimer;
+	//!< Zeit seit der letzten Eingabe eines Textes auf der CGI-Seite für Direktdruck oder
+	//!< seit dem letzten lokal eingegebenen Zeichen im Modus ModDirektdruckVerbunden.
+
 
 static int TxpSocketHandle;
 	//!< Verweis auf Socket für Txp-Kommunikation. Istzustand. Wenn ungültig, aber TxpSocketMode
@@ -252,7 +260,7 @@ static long TxpSocketIP;
 static uint16_t TxpSocketPort;
 	//!< Bei ausgehenden Verbindungen der gewünschte Port des Empfängers.
 
-static TMsTimer TxpSocketAbbruchTimer;
+static TKurzTimer TxpSocketAbbruchTimer;
 	//!< Nach 30 Sekunden unplanmäßigem Verbindungsverlust wird entgültig abgebaut.
 	
 static bool TxpSocketAbbauGeplant;
@@ -446,11 +454,11 @@ void txp_timerEvent(void)
 	uint8_t t0c = TCNT0;
 	Timer0CallbackCount++;
 
-	MsTimerVorteilerCnt++;
-	if (MsTimerVorteilerCnt >= TxpTimerFreq / 100)
+	KurzTimerVorteilerCnt++;
+	if (KurzTimerVorteilerCnt >= TxpTimerFreq / 10)
 		{
-		MsTimerCnt++;
-		MsTimerVorteilerCnt = 0;
+		KurzTimerCnt++;
+		KurzTimerVorteilerCnt = 0;
 		}
 		
 	wdt_reset();
@@ -922,6 +930,8 @@ static void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_Verbunden);
 			BusEmpfMark = true;
 			SendeMark = true;
+			StartTimer(&HtmlTexteingabeTimer);
+			StartTimer(&HtmlDruckspiegelAnzeigeTimer);
 			break;
 
 		case ModDeaktiviert:
@@ -1348,7 +1358,7 @@ static void SocketBearbeiten()
 	// -------------------------------------------------
 	if (TxpSocketMode != SocketIdle
 		&& TxpSocketHandle == NO_SOCKET_USED
-		&& TimerVal(&TxpSocketAbbruchTimer) >= 3000) // 30 Sekunden.
+		&& TimerVal(&TxpSocketAbbruchTimer) >= 300) // 30 Sekunden.
 		{
 		if (ProtokollLevel >= 1)
 			ProtokollierenInt_P(PSTR("TxP: Zeitueberschreibung bei Wiederaufnahme der Verbindung (%u)\r\n" ), TimerVal(&TxpSocketAbbruchTimer));
@@ -1608,7 +1618,7 @@ static void TxpDatenVerarbeiten()
 	//     ODER c) Alles was bisher gesendet wurde schon verarbeitet ist.
 	int InCount = PufferAnzahl(&EmpfPuffer);
 	if (InCount > 20
-	    || (InCount > 0 && ((TimerVal(&RuheTimer) >= 80) // 0,8 Sekunden Tipp-Pause
+	    || (InCount > 0 && ((TimerVal(&RuheTimer) >= 8) // 0,8 Sekunden Tipp-Pause
 		                    || (SocketAnzahlZeichenQuittiert == low(SocketAnzahlZeichenGesendet)) // alles was gesendet wurde, ist schon verarbeitet
 						    )
 			)
@@ -2028,7 +2038,7 @@ void txp_thread()
 									}
 								else if (Wahlziffern >= 5)
 									{ // mal den Rufnummer-Server befragen...
-									// herausgenommen, da oben TEST TimerVal(&RuheTimer) > 200; // nicht mehr 2 Sekunden warten.
+									// herausgenommen, da oben TEST TimerVal(&RuheTimer) > 20; // nicht mehr 2 Sekunden warten.
 									}
 								break;
 							
@@ -2166,13 +2176,13 @@ void txp_thread()
 	if (Modus == ModGehendWaehlen 
 		&& !TlnServerAbfrageWiederholungssperre
 		&& Wahlziffern >= 5
-		&& TimerVal(&RuheTimer) >= 200)
+		&& TimerVal(&RuheTimer) >= 20)
 		{ // 2 Sekunden Wahlpause und 5 Ziffern gewählt
 		// ID#231 **************************************************************
 		RufnummerBeiTlnServerAbfragen();
 		}
 		
-	if (Modus == ModWarteSchlussQuitt && TimerVal(&RuheTimer) > 300)
+	if (Modus == ModWarteSchlussQuitt && TimerVal(&RuheTimer) > 30)
 		{ // 3 Sekunden keine Schlussquittung empfangen
 		// ID#412 ****************************************************************
 		if (ProtokollLevel >= 1)
@@ -2181,7 +2191,7 @@ void txp_thread()
 		ModusWechsel(ModRuhe);
 		}
 		
-	if (Modus == ModKommendWarteEinQuitt && TimerVal(&RuheTimer) > 300)
+	if (Modus == ModKommendWarteEinQuitt && TimerVal(&RuheTimer) > 30)
 		{ // 3 Sekunden keine Einschalt-Quittung empfangen
 		// ID#332 ***************************************************************
 		if (ProtokollLevel >= 1)
@@ -2300,18 +2310,21 @@ void txp_thread()
 		{ // am Fernschreiber eigegebene Zeichen nach Ascii umwandeln 
 		//! \todo eigentlich nur, wenn es tatsächlich über eine HTML-Seite lief...
 		while (!PufferLeer(&EmpfPuffer))
+			{
 			ZeichenInHtmlSendeText(CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode));
+			StartTimer(&HtmlTexteingabeTimer);
+			}
 
-		if (TimerVal(&RuheTimer) > 3000 // 30 Sekunden
-			&& AsciiDruckPuffer[0] == '\0'
+		if (AsciiDruckPuffer[0] == '\0'
 			&& PufferLeer(&SendePuffer)
-			&& PufferLeer(&EmpfPuffer) )
+			&& PufferLeer(&EmpfPuffer)
+			&& (TimerVal(&HtmlDruckspiegelAnzeigeTimer) > 300 // 30 Sekunden keine Anzeige-Abfrage
+				|| TimerVal(&HtmlTexteingabeTimer) > 1800)) // 2 Minuten nichts eingegeben
 			{
 			if (ProtokollLevel >= 1)
 				ProtokollierenInt_P(PSTR("TxP: Direktdruck-Ruhe --> Ausschaltung intern (%u)\r\n" ), TimerVal(&RuheTimer));
 			BusSenden(BusKdoSchluss);
 			ModusWechsel(ModWarteSchlussQuitt);
-			StartTimer(&RuheTimer);
 			} // Abschaltung nach 30 Sekunden
 
 		} // if Modus == ModDirektdruckVerbunden
@@ -2354,7 +2367,7 @@ void txp_thread()
 				}
 			else
 				{ // keine Verbindung hergestellt
-				DynIPAktZeitZaehler = MsTimerCnt; // in 15 Minuten - Zufall nochmal probieren
+				DynIPAktZeitZaehler = KurzTimerCnt; // in 15 Minuten - Zufall nochmal probieren
 				}
 			}
 		}
@@ -2776,6 +2789,9 @@ void txp_cgi_msg_Out( void * pStruct )
 		}
 	
 	cgi_PrintHttpheaderEnd();
+	
+	StartTimer(&HtmlDruckspiegelAnzeigeTimer);
+	
 	}
 
 
@@ -2807,6 +2823,7 @@ void txp_cgi_msg_In( void * pStruct )
 			Protokollieren(EingabeText); 
 			Protokollieren_P(PSTR("\r\n"));
 			}
+		StartTimer(&HtmlTexteingabeTimer);
 		}
 
 	cgi_PrintHttpheaderStart();

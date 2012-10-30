@@ -155,27 +155,29 @@
 	extern bool WarteTaste();
 	extern uint8_t KonfigFreigabe(void *pStruct);
 	
-	extern volatile uint16_t MsTimerCnt;
+	extern volatile uint16_t KurzTimerCnt;
 	
-	typedef uint16_t TMsTimer;
+	typedef uint16_t TKurzTimer;
 
 	
-	static inline void StartTimer(TMsTimer *t)
+	//! Startet Kurzzeit-Messung.
+	static inline void StartTimer(TKurzTimer *t)
 		{
 		uint8_t sreg_tmp = SREG;
 		cli();
-		*t = MsTimerCnt;
+		*t = KurzTimerCnt;
 		SREG = sreg_tmp;
 		}
 		
 
-	static inline uint16_t TimerVal(TMsTimer *t)
+	//! Aktueller Wert einer Kurzzeit-Messung in zehntel Sekunden.
+	static inline uint16_t TimerVal(TKurzTimer *t)
 		{
 		uint16_t res;
 		
 		uint8_t sreg_tmp = SREG;
 		cli();
-		res = MsTimerCnt - (*t); // Überlauf wird absichtlich erwartet!
+		res = KurzTimerCnt - (*t); // Überlauf wird absichtlich erwartet!
 		SREG = sreg_tmp;
 		return res;
 		}
