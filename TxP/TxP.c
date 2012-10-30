@@ -1261,7 +1261,8 @@ static void SocketBearbeiten()
 	if (TxpSocketMode != SocketIdle
 		&& SocketLebenszeichenZaehler > 4 * TxpTimerFreq 
 	    && SocketOutBufUsed == 0
-		&& SocketSendeSperrZaehler == 0)
+		&& SocketSendeSperrZaehler == 0
+		&& TxpSocketHandle != NO_SOCKET_USED)
 		{ // alle 4 Sekunden ein Lebenszeichen
 		SocketOutBuf[0] = TXPC_NULL;
 		SocketOutBuf[1] = 0;
@@ -1679,7 +1680,8 @@ static void TxpDatenVerarbeiten()
 		&& (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
 		&& (SocketSendeQuittung || SocketLebenszeichenZaehler > 4 * TxpTimerFreq)
 		&& SocketSendeSperrZaehler == 0
-		&& SocketOutBufUsed < SocketOutBufMax - 4 - 10) // - 10 = Reserve für wichtige Daten
+		&& SocketOutBufUsed < SocketOutBufMax - 4 - 10 // - 10 = Reserve für wichtige Daten
+		&& TxpSocketHandle != NO_SOCKET_USED)
 		{
 		SocketOutBuf[SocketOutBufUsed++] = TXPC_QUITT;
 		SocketOutBuf[SocketOutBufUsed++] = 1;
