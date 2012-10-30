@@ -14,13 +14,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
 #include <avr/wdt.h>
+#include <avr/interrupt.h>
 #include "softreset.h"
 
 // Function Implementation
 void softreset( void )
 {
 	do                          
-	{                           
+	{            
+		cli();
 		wdt_disable();
    		wdt_enable(WDTO_250MS);  
    		for(;;)                 

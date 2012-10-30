@@ -1145,10 +1145,10 @@ static void SocketBearbeiten()
 			
 		else if (TxpSocketMode == SocketAnswer && TxpSocketHandle == NO_SOCKET_USED)
 			{
-			if (TxpSocketIP == TCP_sockettable[TxpSocketHandle].SourceIP)
+			if (TxpSocketIP == TCP_sockettable[NewServerSocket].SourceIP)
 				{
 				if (ProtokollLevel >= 1)
-					Protokollieren_P(PSTR(" ...wiederverbindung ok\r\n"));
+					Protokollieren_P(PSTR(" ...Wiederverbindung ok\r\n"));
 				TxpSocketHandle = NewServerSocket;
 				Abweisen = false;
 				}
@@ -2319,13 +2319,13 @@ void txp_thread()
 			&& PufferLeer(&SendePuffer)
 			&& PufferLeer(&EmpfPuffer)
 			&& (TimerVal(&HtmlDruckspiegelAnzeigeTimer) > 300 // 30 Sekunden keine Anzeige-Abfrage
-				|| TimerVal(&HtmlTexteingabeTimer) > 1800)) // 2 Minuten nichts eingegeben
+				|| TimerVal(&HtmlTexteingabeTimer) > 1800)) // 3 Minuten nichts eingegeben
 			{
 			if (ProtokollLevel >= 1)
-				ProtokollierenInt_P(PSTR("TxP: Direktdruck-Ruhe --> Ausschaltung intern (%u)\r\n" ), TimerVal(&RuheTimer));
+				Protokollieren_P(PSTR("TxP: Direktdruck-Ruhe --> Ausschaltung intern\r\n" ));
 			BusSenden(BusKdoSchluss);
 			ModusWechsel(ModWarteSchlussQuitt);
-			} // Abschaltung nach 30 Sekunden
+			} // Abschaltung nach 30 Sekunden / 180 Sekunden.
 
 		} // if Modus == ModDirektdruckVerbunden
 
