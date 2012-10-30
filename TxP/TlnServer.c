@@ -142,7 +142,7 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 					{
 					ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld erfolgreich aktualisiert: IP "), TD.Nummer);
 					ProtokollierenIPAdr(TlnIP);
-					ProtokollierenInt_P(PSTR(" Port %d\r\n"), TD.Port);
+					ProtokollierenInt_P(PSTR(" Port %u\r\n"), TD.Port);
 					}
 				return true;
 				}
@@ -174,7 +174,7 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 				{
 				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld erfolgreich angelegt: IP "), TD.Nummer);
 				ProtokollierenIPAdr(TlnIP);
-				ProtokollierenInt_P(PSTR(" Port %d (noch gesperrt!)\r\n"), TD.Port);
+				ProtokollierenInt_P(PSTR(" Port %u (noch gesperrt!)\r\n"), TD.Port);
 				}
 			return true;
 			}
@@ -243,15 +243,15 @@ static void SocketBearbeiten(int *Socket)
 			{
 			case TLNSERV_SELBSTAKT:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SelbstAkt))
-					OutCount = FehlerRueckmelden(PSTR("update not enough data: %d"), TlnServBuf.DataLen);
+					OutCount = FehlerRueckmelden(PSTR("update not enough data: %u"), TlnServBuf.DataLen);
 				else
 					{
 					long MeldeIP = TCP_sockettable[*Socket].SourceIP;
 					if (ProtokollLevel >= 2)
 						{
-						ProtokollierenInt_P(PSTR("TlnSrv: Aktualisierung empfangen. Nummer %ld " ), TlnServBuf.SelbstAkt.RufNr);
-						ProtokollierenInt_P(PSTR("Auth %d " ), TlnServBuf.SelbstAkt.Pin);
-						ProtokollierenInt_P(PSTR("Port %d\r\n" ), TlnServBuf.SelbstAkt.Port);
+						ProtokollierenInt_P(PSTR("TlnSrv: Aktualisierung empfangen. Nummer %lu " ), TlnServBuf.SelbstAkt.RufNr);
+						ProtokollierenInt_P(PSTR("Auth %u " ), TlnServBuf.SelbstAkt.Pin);
+						ProtokollierenInt_P(PSTR("Port %u\r\n" ), TlnServBuf.SelbstAkt.Port);
 						}
 					
 					if (TlnAktualisierung(&TlnServBuf, MeldeIP))
@@ -277,7 +277,7 @@ static void SocketBearbeiten(int *Socket)
 				
 			case TLNSERV_ABFRAGE:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.TlnAbfr))
-					OutCount = FehlerRueckmelden(PSTR("request not enough data: %d"), TlnServBuf.DataLen);
+					OutCount = FehlerRueckmelden(PSTR("request not enough data: %u"), TlnServBuf.DataLen);
 				else
 					{
 					uint32_t RufNr = TlnServBuf.TlnAbfr.RufNr;
@@ -358,7 +358,7 @@ static void SocketBearbeiten(int *Socket)
 
 		if (ProtokollLevel >= 2)
 			{
-			ProtokollierenInt_P(PSTR("TlnSrv: Socket Sendung: (%d)" ), OutCount);
+			ProtokollierenInt_P(PSTR("TlnSrv: Socket Sendung: (%u)" ), OutCount);
 			for (uint16_t i = 0 ; i < OutCount ; i++)
 				ProtokollierenInt_P(PSTR(" %02X"), TlnServBuf.Buf[i]);
 			ProtokollierenInt_P(PSTR(" --> Res %d\r\n" ), Res);
@@ -493,7 +493,7 @@ void txp_tlnserv_init()
 	
 	RegisterTCPPort(TXP_TLNSERV_PORT);
 	
-	printf_P( PSTR("Txp TlnServer Port %d.\r\n") , TXP_TLNSERV_PORT );
+	printf_P( PSTR("Txp TlnServer Port %u.\r\n") , TXP_TLNSERV_PORT );
 
 	THREAD_RegisterThread( txp_tlnserv_thread, PSTR("TlnSrv"));
 	}

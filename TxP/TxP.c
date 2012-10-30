@@ -231,12 +231,6 @@ static char HtmlSendeText[HtmlSendeTextMax];
 	//!< Puffer für zu Anzuzeigenden Text (Endgerät -> Netz), mit Null abgeschlossen
 
 
-//OBSOLET static int TxpServerSocket;
-	//!< Handle für eingehende Txp-Verbindungen ("Server")
-	
-//OBSOLET static int TxpClientSocket;
-	//!< Handle für ausgehende Txp-Verbindungen ("Client")
-
 static int TxpSocketHandle;
 	//!< Verweis auf Socket für Txp-Kommunikation. Istzustand. Wenn ungültig, aber TxpSocketMode
 	//!< ungleich Idle, ist ein kurzzeitiger Verbindungsverlust eingetreten.
@@ -1177,7 +1171,7 @@ static void SocketBearbeiten()
 	// --------------------------------------------------
 	if (TxpSocketHandle != NO_SOCKET_USED && CheckSocketState(TxpSocketHandle) == SOCKET_NOT_USE)
 		{ // ID#242 ID#342 ID#314 ************************************************
-		if (TxpSocketAbbauGeplant)
+		if (TxpSocketAbbauGeplant || TxpSocketModeAscii)
 			{
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
@@ -1191,6 +1185,7 @@ static void SocketBearbeiten()
 			{
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n" ));
+			StartTimer(&TxpSocketAbbruchTimer);
 			}
 			
 		CloseTCPSocket(TxpSocketHandle);
@@ -1243,7 +1238,7 @@ static void SocketBearbeiten()
 				ProtokollierenInt_P(PSTR("%d)"), Res);
 				for (uint16_t i = 0 ; i < Res ; i++)
 					ProtokollierenInt_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
-				ProtokollierenInt_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
+				ProtokollierenInt_P(PSTR(" --> neu Ges %u\r\n"), SocketInBufUsed + Res);
 				}		
 				
 			if (Res > 0)
@@ -1295,16 +1290,24 @@ static void SocketBearbeiten()
 		&& SocketOutBufUsed > 0 
 		&& SocketSendeSperrZaehler == 0) //! \todo && !HaltSocketOut
 		{
-		int Res = PutSocketData_RPE(TxpSocketHandle, SocketOutBufUsed, SocketOutBuf, RAM);
+		uint16_t SendSize;
+		
+		SendSize = SocketOutBufUsed;
+		if (SendSize > MAX_TCP_Datalenght)
+			SendSize = MAX_TCP_Datalenght;
+			
+		int Res = PutSocketData_RPE(TxpSocketHandle, SendSize, SocketOutBuf, RAM);
 		SocketLebenszeichenZaehler = 0; 
 
 		if (ProtokollLevel == 3)
 			{
-			ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
-			for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
+			ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%u)" ), SendSize);
+			for (uint16_t i = 0 ; i < SendSize ; i++)
 				ProtokollierenInt_P(PSTR(" %02X"), SocketOutBuf[i]);
 			ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
-			ProtokollierenInt_P(PSTR(" Sum %d\r\n" ), SocketAnzahlZeichenGesendet);
+			if (Res > 0 && Res < SocketOutBufUsed)
+				ProtokollierenInt_P(PSTR(", Rest %u" ), SocketOutBufUsed - Res);
+			ProtokollierenInt_P(PSTR(" Sum %u\r\n" ), SocketAnzahlZeichenGesendet);
 			// printf_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
 			// for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
 				// printf_P(PSTR(" %02X"), SocketOutBuf[i]);
@@ -1348,7 +1351,7 @@ static void SocketBearbeiten()
 		&& TimerVal(&TxpSocketAbbruchTimer) >= 3000) // 30 Sekunden.
 		{
 		if (ProtokollLevel >= 1)
-			ProtokollierenInt_P(PSTR("TxP: Zeitueberschreibung bei Wiederaufnahme der Verbindung (%d)\r\n" ), TimerVal(&TxpSocketAbbruchTimer));
+			ProtokollierenInt_P(PSTR("TxP: Zeitueberschreibung bei Wiederaufnahme der Verbindung (%u)\r\n" ), TimerVal(&TxpSocketAbbruchTimer));
 		TxpSocketMode = SocketIdle;
 		TxpSocketAbbauGeplant = false;
 		TxpSocketIP = 0;
@@ -1548,7 +1551,7 @@ static void TxpDatenVerarbeiten()
 					uint8_t ProtVorschlag = SocketInBuf[i+2]; 
 
 					if (ProtokollLevel >= 2)
-						ProtokollierenInt_P(PSTR("TxP: Protokollversion-Vorschlag %d empfangen\r\n"), ProtVorschlag);
+						ProtokollierenInt_P(PSTR("TxP: Protokollversion-Vorschlag %u empfangen\r\n"), ProtVorschlag);
 
 					if (ProtVorschlag == TxpSocketProtVersionVorschlag)
 						{ // Vorschlag ist bestätigt...
@@ -1564,14 +1567,14 @@ static void TxpDatenVerarbeiten()
 						TxpSocketProtVersionVorschlag = ProtVorschlag;
 						}
 						
-					if (TxpSocketProtVersion == 0) // noch nichts festgelegt, also Gegenvorschlag senden.
+					if (TxpSocketProtVersion == 0 && SocketOutBufUsed < SocketOutBufMax - 3) // noch nichts festgelegt, also Gegenvorschlag senden.
 						{
 						SocketOutBuf[SocketOutBufUsed++] = TXPC_VERSION;
 						SocketOutBuf[SocketOutBufUsed++] = 1;
 						SocketOutBuf[SocketOutBufUsed++] = TxpSocketProtVersionVorschlag;
 						
 						if (ProtokollLevel >= 2)
-							ProtokollierenInt_P(PSTR("TxP: Sende Protokollversion-Gegenvorschlag %d\r\n"), TxpSocketProtVersionVorschlag);
+							ProtokollierenInt_P(PSTR("TxP: Sende Protokollversion-Gegenvorschlag %u\r\n"), TxpSocketProtVersionVorschlag);
 						}
 					} // len >= 1
 					
@@ -1614,7 +1617,7 @@ static void TxpDatenVerarbeiten()
 		if (TxpSocketModeAscii)
 			{
 			uint8_t ProtAnz = 0;
-			while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3)
+			while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3 - 10) // - 10 = Reserve für wichtige Daten
 				{
 				SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
 				if (SocketOutBuf[SocketOutBufUsed] != '\0')
@@ -1631,50 +1634,47 @@ static void TxpDatenVerarbeiten()
 				ProtokollierenInt_P(PSTR("%4d"), ProtAnz);
 				ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet)); // wurde schon erhöht
 				}
-				
 			} // if TxpSocketModeAscii
 		else
 			{ // Baudot-Datenblock senden
-			uint8_t len = PufferAnzahl(&EmpfPuffer);
-			if (len > SocketOutBufMax - 3 - SocketOutBufUsed)
-				len = SocketOutBufMax - 3 - SocketOutBufUsed;
-				
-			if (ProtokollLevel == 2) // Datenmengen
-				{
-				ProtokollierenInt_P(PSTR("TxP: SendB %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
-				ProtokollierenInt_P(PSTR("%4d"), len);
-				ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet) + len);
-				}
-				
-			SocketOutBuf[SocketOutBufUsed] = TXPC_BAUDOT_DATA;
-			SocketOutBufUsed++;
-			SocketOutBuf[SocketOutBufUsed] = len;
-			SocketOutBufUsed++;
-			SocketAnzahlZeichenGesendet += len;
-			while (len > 0)
-				{
-				SocketOutBuf[SocketOutBufUsed] = PufferAusg(&EmpfPuffer);
-				SocketOutBufUsed++;
-				len--;
-				}
-			SocketSendeQuittung = true;
+			if (SocketOutBufUsed < SocketOutBufMax - 4 - 10) // - 10 = Reserve für wichtige Daten
+				{ // es ist überhaupt Platz zum Senden
+				uint8_t len = PufferAnzahl(&EmpfPuffer);
+				if (len > SocketOutBufMax - 10 - 3 - SocketOutBufUsed)
+					len = SocketOutBufMax - 10 - 3 - SocketOutBufUsed;
+					
+				if (ProtokollLevel == 2) // Datenmengen
+					{
+					ProtokollierenInt_P(PSTR("TxP: SendB %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
+					ProtokollierenInt_P(PSTR("%4d"), len);
+					ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet) + len);
+					}
+					
+				SocketOutBuf[SocketOutBufUsed++] = TXPC_BAUDOT_DATA;
+				SocketOutBuf[SocketOutBufUsed++] = len;
+				SocketAnzahlZeichenGesendet += len;
+				while (len > 0)
+					{
+					SocketOutBuf[SocketOutBufUsed++] = PufferAusg(&EmpfPuffer);
+					len--;
+					}
+				SocketSendeQuittung = true;
+				} // if SocketOutBufUsed < SocketOutBufMax - 4
 			} // else !TxpSocketModeAscii
-		}
+		} // if (...) = Im Baudot-Puffer liegende Daten senden...
 		
 	// ggf. Anzahl verarbeiteter Zeichen zurückmelden
 	// --------------------------------------------------
 	if (!TxpSocketModeAscii 
 		&& (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
 		&& (SocketSendeQuittung || SocketLebenszeichenZaehler > 4 * TxpTimerFreq)
-		&& SocketSendeSperrZaehler == 0)
+		&& SocketSendeSperrZaehler == 0
+		&& SocketOutBufUsed < SocketOutBufMax - 4 - 10) // - 10 = Reserve für wichtige Daten
 		{
-		SocketOutBuf[SocketOutBufUsed] = TXPC_QUITT;
-		SocketOutBufUsed++;
-		SocketOutBuf[SocketOutBufUsed] = 1;
-		SocketOutBufUsed++;
-		SocketOutBuf[SocketOutBufUsed] = 
+		SocketOutBuf[SocketOutBufUsed++] = TXPC_QUITT;
+		SocketOutBuf[SocketOutBufUsed++] = 1;
+		SocketOutBuf[SocketOutBufUsed++] = 
 			(uint8_t) (low(SocketAnzahlZeichenEmpfangen) - PufferAnzahl(&SendePuffer));
-		SocketOutBufUsed++;
 		SocketSendeQuittung = false;
 		}
 
@@ -1685,10 +1685,13 @@ static void TxpDatenVerarbeiten()
 static void SendeStopkommando(PGM_P s)
 	{
 	uint8_t len = strlen_P(s);
-	SocketOutBuf[SocketOutBufUsed] = TXPC_STOP;
-	SocketOutBuf[SocketOutBufUsed + 1] = len;
-	strcpy_P(SocketOutBuf + SocketOutBufUsed + 2, s);
-	SocketOutBufUsed += 2 + len;
+	if (SocketOutBufUsed + 2 + len < SocketOutBufMax - 10) // - 10 = Reserve für wichtige Daten
+		{
+		SocketOutBuf[SocketOutBufUsed++] = TXPC_STOP;
+		SocketOutBuf[SocketOutBufUsed++] = len;
+		strcpy_P(SocketOutBuf + SocketOutBufUsed, s);
+		SocketOutBufUsed += len;
+		}
 	TxpSocketAbbauGeplant = true;
 	}
 	
@@ -1784,7 +1787,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				{
 				Protokollieren_P(PSTR("TxP: Verbindungsaufbau zu IP "));
 				ProtokollierenIPAdr(td->IPAdr);
-				ProtokollierenInt_P(PSTR(" Port %d\r\n"), td->Port);
+				ProtokollierenInt_P(PSTR(" Port %u\r\n"), td->Port);
 				}
 			TxpSocketIP = td->IPAdr;
 			TxpSocketPort = td->Port;
@@ -1803,7 +1806,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 					Protokollieren(td->Adresse);
 					Protokollieren_P(PSTR(" = "));
 					ProtokollierenIPAdr(td->IPAdr);
-					ProtokollierenInt_P(PSTR(" Port %d\r\n"), td->Port);
+					ProtokollierenInt_P(PSTR(" Port %u\r\n"), td->Port);
 					}									
 				TxpSocketIP = td->IPAdr;
 				TxpSocketPort = td->Port;
@@ -1861,7 +1864,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 	else // TxpUrl oder TxpIP
 		{ // ID#222 ********************************************
 		if (ProtokollLevel >= 1)
-			ProtokollierenInt_P(PSTR("TxP: Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %d\r\n"), td->Durchwahl);
+			ProtokollierenInt_P(PSTR("TxP: Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %u\r\n"), td->Durchwahl);
 
 		SocketBufInit();
 		TxpSocketModeAscii = false;
@@ -1940,7 +1943,7 @@ void txp_thread()
 			{
 			case 1 ... BusKdoVerbAufnahme:
 				if (ProtokollLevel >= 1)
-					ProtokollierenInt_P(PSTR("TxP: TWI Reservierung intern / gehend von %d\r\n" ), Code);
+					ProtokollierenInt_P(PSTR("TxP: TWI Reservierung intern / gehend von %u\r\n" ), Code);
 				if (Modus == ModRuhe)
 					{ // ID#101 *********************************************
 					ModusWechsel(ModGehendReserv);
@@ -1994,7 +1997,7 @@ void txp_thread()
 				
 			case BusKdoWahlziffer0 ... BusKdoWahlziffer9:
 				if (ProtokollLevel >= 2)
-					ProtokollierenInt_P(PSTR("TxP: TWI Wahlziffer %d intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
+					ProtokollierenInt_P(PSTR("TxP: TWI Wahlziffer %u intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
 				if (Modus == ModGehendWaehlen && TxpSocketMode == SocketIdle)
 					{
 					// ID#221 ********************************************
@@ -2076,8 +2079,11 @@ void txp_thread()
 					
 				TxpSocketAbbauGeplant = true;
 
-				SocketOutBuf[SocketOutBufUsed++] = TXPC_ENDE;
-				SocketOutBuf[SocketOutBufUsed++] = 0;
+				if (SocketOutBufUsed < SocketOutBufMax - 2)
+					{
+					SocketOutBuf[SocketOutBufUsed++] = TXPC_ENDE;
+					SocketOutBuf[SocketOutBufUsed++] = 0;
+					}
 				
 				// Html-Puffer löschen
 				AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
@@ -2137,14 +2143,14 @@ void txp_thread()
 		if (KommendInternAnwaehlen(Durchwahl)) 
 			{ // ID#321 ********************************************
 			if (ProtokollLevel >= 1)
-				ProtokollierenInt_P(PSTR("TxP: Anwahl intern an %d erfolgt\r\n"), Durchwahl);
+				ProtokollierenInt_P(PSTR("TxP: Anwahl intern an %u erfolgt\r\n"), Durchwahl);
 			BusSenden(BusKdoEin);
 			ModusWechsel(ModKommendWarteEinQuitt);
 			}
 		else
 			{ // ID#322 ********************************************
 			if (ProtokollLevel >= 1)
-				ProtokollierenInt_P(PSTR("TxP: Anwahl intern an %d VERSAGT\r\n"), Durchwahl);
+				ProtokollierenInt_P(PSTR("TxP: Anwahl intern an %u VERSAGT\r\n"), Durchwahl);
 			strcpy_P(DebugMsg, PSTR("Reservierung fuer Einschaltung konnte nicht versand werden"));
 
 			SendeStopkommando(PSTR("occ\r\n"));
@@ -2302,7 +2308,7 @@ void txp_thread()
 			&& PufferLeer(&EmpfPuffer) )
 			{
 			if (ProtokollLevel >= 1)
-				ProtokollierenInt_P(PSTR("TxP: Direktdruck-Ruhe --> Ausschaltung intern (%d)\r\n" ), TimerVal(&RuheTimer));
+				ProtokollierenInt_P(PSTR("TxP: Direktdruck-Ruhe --> Ausschaltung intern (%u)\r\n" ), TimerVal(&RuheTimer));
 			BusSenden(BusKdoSchluss);
 			ModusWechsel(ModWarteSchlussQuitt);
 			StartTimer(&RuheTimer);
@@ -2749,7 +2755,7 @@ void txp_cgi_msg_Out( void * pStruct )
 			if (p < HtmlSendeText) 
 				p = HtmlSendeText;
 			Protokollieren(p);
-			ProtokollierenInt_P(PSTR(" (%d)\r\n"), strlen(HtmlSendeText));
+			ProtokollierenInt_P(PSTR(" (%u)\r\n"), strlen(HtmlSendeText));
 			}
 
 		}
@@ -2965,7 +2971,7 @@ void txp_cgi_config_intern(void *pStruct)
 			Buf[0] = '0', Buf[1] = '\0';
 			}
 		if (Neu == FesteHauptstelle)
-			printf_P(PSTR("<br>FesteHauptstelle unver&auml;ndert: %d"), Neu);
+			printf_P(PSTR("<br>FesteHauptstelle unver&auml;ndert: %u"), Neu);
 		else
 			{
 			changeConfig_P(FesteHst_P, Buf);
@@ -2987,7 +2993,7 @@ void txp_cgi_config_intern(void *pStruct)
 			Buf[0] = '0', Buf[1] = '\0';
 			}
 		if (Neu == AlternativSucheBeiBesetzt)
-			printf_P(PSTR("<br>AlternativSucheBeiBesetzt unver&auml;ndert: %d"), Neu);
+			printf_P(PSTR("<br>AlternativSucheBeiBesetzt unver&auml;ndert: %u"), Neu);
 		else
 			{
 			changeConfig_P(AlternBeiBes_P, Buf);
@@ -3033,7 +3039,7 @@ void txp_cgi_config_intern(void *pStruct)
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, ProtokollLevel_P)], 2);
 			Neu = atoi(Buf);
 			if (Neu == ProtokollLevel)
-				printf_P(PSTR("<br>ProtokollLevel unver&auml;ndert: %d"), Neu);
+				printf_P(PSTR("<br>ProtokollLevel unver&auml;ndert: %u"), Neu);
 			else
 				{
 				itoa(Neu, Buf, 10); // 10 ist die Basis, nicht die Länge!
@@ -3192,15 +3198,15 @@ void txp_cgi_config_extern(void *pStruct)
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, DynIPAktiv_P)], 2);
 			Buf[2] = '\0';
-			Neu = atoi(Buf) != 0; 
+			Neu = atol(Buf); 
 			}
 		else
 			{
-			Neu = false;
+			Neu = 0;
 			Buf[0] = '0', Buf[1] = '\0';
 			}
 		if (Neu == DynIPAktiv)
-			printf_P(PSTR("<br>DynIPAktualisierung unver&auml;ndert: %d"), Neu);
+			printf_P(PSTR("<br>DynIPAktualisierung unver&auml;ndert: %u"), Neu);
 		else
 			{
 			changeConfig_P(DynIPAktiv_P, Buf);
@@ -3511,7 +3517,7 @@ void txp_init()
 	
 	Timer0Cnt_Min = 255;
 
-	printf_P( PSTR("TelexPhone Port %d.\r\n") , TXP_PORT );
+	printf_P( PSTR("TelexPhone Port %u.\r\n") , TXP_PORT );
 
 	THREAD_RegisterThread( txp_thread, PSTR("TxP"));
 

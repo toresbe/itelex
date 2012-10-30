@@ -728,8 +728,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						printf_P(PSTR(
 							"<td align=\"left\">TelexPhone</td>"
 							"<td align=\"left\">%s</td>" // Adresse
-							"<td align=\"center\">%d</td>" // Port
-					   		"<td align=\"center\">%d</td>" // Durchwahl
+							"<td align=\"center\">%u</td>" // Port
+					   		"<td align=\"center\">%u</td>" // Durchwahl
 							), TD.Adresse, TD.Port, TD.Durchwahl);
 						break;
 
@@ -740,7 +740,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						printf_P(PSTR(
 							"<td align=\"left\">Ascii</td>"
 							"<td align=\"left\">%s</td>" // Adresse
-							"<td align=\"center\">%d</td>" // Port
+							"<td align=\"center\">%u</td>" // Port
 					   		"<td>&#160;</td>" // Durchwahl
 							), TD.Adresse, TD.Port);
 						break;
@@ -914,7 +914,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					}
 				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
 				TD.Durchwahl = atoi(http_request->argvalue[PharseGetValue_P(http_request, Durchwahl_P)]);
-				printf_P(PSTR("Port %d Durchwahl %d<br>"), TD.Port, TD.Durchwahl);
+				printf_P(PSTR("Port %u Durchwahl %u<br>"), TD.Port, TD.Durchwahl);
 				}
 			else if (strcmp_P(TypStr, TypAscii_P) == 0)
 				{
@@ -931,7 +931,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					}
 				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
 				TD.Durchwahl = 0;
-				printf_P(PSTR("Port %d<br>"), TD.Port);
+				printf_P(PSTR("Port %u<br>"), TD.Port);
 				}
 			else
 				{
@@ -988,7 +988,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		// ==================================================
 		int Res = TlnBuchSpeichereAufExternEeprom();
 		if (Res < 0)
-			printf_P(PSTR("<b>Fehler beim Speichern (Codes %d / %d)</b>"), Res, SwTwiLetzterFehler);
+			printf_P(PSTR("<b>Fehler beim Speichern (Codes %d / %02X)</b>"), Res, SwTwiLetzterFehler);
 		else
 			printf_P(PSTR("Erfolgreich gespeichert (%d Bytes)"), Res);
 		Zurueck = true;
@@ -1000,7 +1000,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		// ==================================================
 		int Res = TlnBuchLadeVonExternEeprom();
 		if (Res < 0)
-			printf_P(PSTR("<b>Fehler beim Laden (Codes %d / %d)</b>"), Res, SwTwiLetzterFehler);
+			printf_P(PSTR("<b>Fehler beim Laden (Codes %d / %02X)</b>"), Res, SwTwiLetzterFehler);
 		else
 			printf_P(PSTR("Erfolgreich geladen (%d Bytes)"), Res);
 		Zurueck = true;
@@ -1063,7 +1063,7 @@ void TlnBuchInit()
 		extern char DebugMsg[];
 		if (Res < 0)
 			{
-			sprintf_P(DebugMsg, PSTR("TxP: Eeprom Ladefehler %d / %d"), Res, SwTwiLetzterFehler);
+			sprintf_P(DebugMsg, PSTR("TxP: Eeprom Ladefehler %d / %02X"), Res, SwTwiLetzterFehler);
 			Protokollieren(DebugMsg);
 			}
 		} // if get_Taste()
