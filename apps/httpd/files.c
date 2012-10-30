@@ -108,7 +108,7 @@ int check_files( void * pStruct )
 
 		if ( !strcmp_P( http_request->GET_FILE, files[ i ].filesname ) )
 		{
-			printf_P( PSTR("HTTP/1.0 200 Document follows\r\n"
+			printf_P( PSTR("HTTP/1.1 200 Document follows\r\n"
 			               "Content-Type: ") );
 
 			switch ( files[ i ].filestype )
@@ -218,7 +218,7 @@ int check_files( void * pStruct )
 					if ( !strcmp_P( filetype, PSTR("html") ) || !strcmp_P( filetype, PSTR("htm") ) )
 						strcpy_P( type , PSTR("text/") );
 					
-					printf_P( PSTR(	"HTTP/1.0 200 Document follows\r\n"
+					printf_P( PSTR(	"HTTP/1.1 200 Document follows\r\n"
 					               	"Content-Length: %ld\r\n"
 								   	"Content-Type: %s%s\r\n"
 								    "Cache-Control: max-age=3600\r\n"
