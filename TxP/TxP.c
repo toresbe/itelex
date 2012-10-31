@@ -104,8 +104,11 @@ typedef enum
 	// z.B. über HTML-Seite verursachte direkte Druckausgabe
 	ModDirektdruckWarteEinQuitt = 21, //!< Warte auf Einschalt-Quittung des Endgeräts
 	ModDirektdruckVerbunden = 22, 
-	
+
 	ModDeaktiviert = 31, //!< Durch Tastendruck ausgeschaltet.
+	ModWarteGrundstellung = 32, 
+		//!< Wartet darauf, dass nach Ausschaltung des lokalen Endgerätes der 
+		//!< Socket wieder geschlossen ist und alles andere auch die Grundstellung hat.
 	
 	} TModus;
 	
@@ -645,7 +648,7 @@ void txp_timerEvent(void)
 			}
 		} // if "Verbunden"
 
-	else if (Modus != ModRuhe && Modus != ModWarteSchlussQuitt)
+	else if (Modus != ModRuhe && Modus != ModWarteSchlussQuitt && Modus != ModWarteGrundstellung)
 		{ // Lebenszeichen regelmäßig senden
 		if (TwiLebenszeichenZaehler > 0)
 			TwiLebenszeichenZaehler--;
@@ -947,7 +950,23 @@ static void ModusWechsel(TModus neu)
 			LED_off(GRUEN);
 			LED_on(BLAU);
 			break;
-		
+
+		case ModWarteGrundstellung:
+			CLR_BIT_Status(StatBit_Verbunden);
+			CLR_BIT_Status(StatBit_AngerufenBelegt);
+			CLR_BIT_Status(StatBit_FsBefBetrieb);
+			CLR_BIT_Status(StatBit_FsMeldBetrieb);
+			CLR_BIT_Status(StatBit_FsBefEin);
+			CLR_BIT_Status(StatBit_FsMeldEin);
+			CLR_BIT_Status(StatBit_Frei);
+			CLR_BIT_Status(StatBit_LeitungKennung);
+			LED_off(GELB);
+			LED_off(GRUEN);
+			LED_on(BLAU);
+			AsciiDruckPuffer[0] = '\0';
+			StartTimer(&RuheTimer);
+			break;
+			
 		default:
 			return; // nix wird geändert
 		} // switch neu
@@ -1387,6 +1406,7 @@ static void InterneVerbindungBeenden()
 		case ModDirektdruckWarteEinQuitt:
 		case ModDirektdruckVerbunden: 
 		case ModDeaktiviert:
+		case ModWarteGrundstellung:
 			// in diesen Zuständen ist normalerweise kein Socket offen.
 			// daher auch keine Reaktion auf geschlossenen Socket.
 			break; 
@@ -1396,7 +1416,7 @@ static void InterneVerbindungBeenden()
 		case ModKommendWarteEinQuitt:
 			if (ProtokollLevel >= 1)
 				ProtokollierenInt_P(PSTR("TxP: Wechsel nach Modus Ruhe (von %d)\r\n"), Modus);
-			ModusWechsel(ModRuhe); 
+			ModusWechsel(ModWarteGrundstellung); 
 			break;
 		
 		case ModKommendVerbunden:
@@ -2063,7 +2083,7 @@ void txp_thread()
 			case BusQuittSchluss:
 
 				if (ProtokollLevel >= 1)
-						Protokollieren_P(PSTR("TxP: TWI Ausschaltung quittiert\r\n" ));
+					Protokollieren_P(PSTR("TxP: TWI Ausschaltung quittiert\r\n" ));
 					
 				if (Modus != ModWarteSchlussQuitt)
 					{
@@ -2075,7 +2095,7 @@ void txp_thread()
 				// Html-Puffer löschen
 				AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 					
-				ModusWechsel(ModRuhe);
+				ModusWechsel(ModWarteGrundstellung);
 				
 				break;
 			
@@ -2099,6 +2119,8 @@ void txp_thread()
 				
 				// Html-Puffer löschen
 				AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
+
+				ModusWechsel(ModWarteGrundstellung);
 					
 				break;
 
@@ -2167,7 +2189,7 @@ void txp_thread()
 
 			SendeStopkommando(PSTR("occ\r\n"));
 			
-			ModusWechsel(ModRuhe);
+			ModusWechsel(ModWarteGrundstellung);
 			}
 		} // if Modus == ModKommendEinschalten
 			
@@ -2190,7 +2212,7 @@ void txp_thread()
 		if (ProtokollLevel >= 1)
 			ProtokollierenInt_P(PSTR("TxP: Timeout beim Warten auf die Schlussquittung (%u)\r\n" ), TimerVal(&RuheTimer));
 				//! \todo Ausgabe von TimerVal(&RuheTimer) wieder 'rausschmeißen, da nur für Debugging drin.
-		ModusWechsel(ModRuhe);
+		ModusWechsel(ModWarteGrundstellung);
 		}
 		
 	if (Modus == ModKommendWarteEinQuitt && TimerVal(&RuheTimer) > 30)
@@ -2227,7 +2249,7 @@ void txp_thread()
 				
 			case ModDeaktiviert:
 				// ID#511 ********************************************************
-				ModusWechsel(ModRuhe);
+				ModusWechsel(ModWarteGrundstellung);
 				break;
 
 			case ModPufferDruckUndSchluss:
@@ -2267,7 +2289,7 @@ void txp_thread()
 				Protokollieren_P(PSTR("TxP: Direktdruck -> Einschaltung intern VERSAGT\r\n" ));
 			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
 			AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
-			ModusWechsel(ModRuhe);
+			ModusWechsel(ModWarteGrundstellung);
 			}
 		} // if ModRuhe && Text per HTML empfangen
 		
@@ -2344,6 +2366,19 @@ void txp_thread()
 		StartTimer(&RuheTimer);
 		}
 
+	// ==========================================================================
+	// Grundstellung nach eigenem Verbindungsabbau?
+	// ==========================================================================
+
+	if (Modus == ModWarteGrundstellung 
+		&& TxpSocketHandle == NO_SOCKET_USED
+		&& TxpSocketMode == SocketIdle)
+		{
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen\r\n" ));
+		ModusWechsel(ModRuhe);
+		}
+		
 	// ======================================================================
 	// Dynamische IP-Aktualisierung starten
 	// ======================================================================
