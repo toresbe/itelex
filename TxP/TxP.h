@@ -187,7 +187,8 @@
 	//---------------------------
 	//#define LEDROT_EXTEEPROM
 	//#define LEDROT_SDKARTE
-	#define LEDROT_TXPTHREADBLOCK
+	//#define LEDROT_TXPTHREADBLOCK
+	#define LEDROT_SOCKETERROR
 	//#define LEDROT_UNERWARTET  // noch ungenutzt
 	
 	#endif //def TELEXPHONE

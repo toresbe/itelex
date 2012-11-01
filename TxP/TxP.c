@@ -211,8 +211,8 @@ static TKurzTimer RuheTimer;
 	//!< die Ausschalt-Quittung benutzt. In Grundstellung wird die Dauer der Grundstellung
 	//!< gemessen für das Protokollschreiben.
 	
-volatile static uint16_t SocketLebenszeichenZaehler; //! \todo Ersetzen
-	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf der TCP-Verbindung.
+static TKurzTimer TxpSocketLebenszeichenTimer;
+	//!< Alle 3,5 bis 4 Sekunden ein Lebenszeichen senden...
 
 volatile static uint16_t TxpThreadCheckCount;
 	//!< Prüft, ob die Funktion void txp_thread() ausreichend häufig aufgerufen wird.
@@ -265,6 +265,11 @@ static uint16_t TxpSocketPort;
 
 static TKurzTimer TxpSocketAbbruchTimer;
 	//!< Nach 30 Sekunden unplanmäßigem Verbindungsverlust wird entgültig abgebaut.
+
+static TKurzTimer TxpSocketWiederholungVerzoegerung;
+	//!< Bei spontanem Verbindungsabbau oder Sendestörung wird 2 Sekunden auf den nächsten 
+	//!< Versuch gewartet.
+	
 	
 static bool TxpSocketAbbauGeplant;
 	//!< Wird auf true gesetzt, wenn ein Verbindungsabbau bevorsteht.
@@ -310,10 +315,6 @@ volatile static bool SocketSendeQuittung;
 
 static uint8_t SocketSendeFehlerZaehler;
 	//!< Zählt bis 10 bei nicht erfolgreichen Sendeversuchen auf dem Socket.
-	//!< \todo obsolet?
-	
-static uint16_t SocketSendeSperrZaehler;
-	//!< Zählt nach Sendefehlern herunter und verhindert solange neue Sendeversuche.
 	//!< \todo obsolet?
 	
 static bool SendenBeschleunigen;
@@ -466,8 +467,6 @@ void txp_timerEvent(void)
 		
 	wdt_reset();
 	
-	SocketLebenszeichenZaehler++; //! TODO Ersetzen
-	
 	if (DynIPAktiv)
 		DynIPAktZeitZaehler++; //! TODO Ersetzen
 	
@@ -485,9 +484,6 @@ void txp_timerEvent(void)
 		
 	TwiWatchdogCount++; //! TODO Ersetzen
 		
-	if (SocketSendeSperrZaehler > 0)
-		SocketSendeSperrZaehler--; //! TODO Ersetzen
-	
 	if (Modus == ModKommendVerbunden 
 		|| Modus == ModGehendVerbunden 
 		|| Modus == ModDirektdruckVerbunden 
@@ -980,8 +976,7 @@ static void SocketBufInit()
 	{
 	SocketInBufUsed = 0;
 	SocketOutBufUsed = 0;
-	SocketLebenszeichenZaehler = 0;
-	SocketSendeSperrZaehler = 0;
+	StartTimer(&TxpSocketLebenszeichenTimer);
 	}
 	
 	
@@ -1160,6 +1155,9 @@ static void SocketBearbeiten()
 				if (ProtokollLevel >= 1)
 					Protokollieren_P(PSTR(", anderweitig belegt"));
 				}
+			#ifdef LEDROT_SOCKETERROR
+				LED_off(ROT);
+			#endif //def LEDROT_SOCKETERROR
 			} // TxpSocketMode == SocketIdle
 			
 		else if (TxpSocketMode == SocketAnswer && TxpSocketHandle == NO_SOCKET_USED)
@@ -1170,6 +1168,9 @@ static void SocketBearbeiten()
 					Protokollieren_P(PSTR(" ...Wiederverbindung ok\r\n"));
 				TxpSocketHandle = NewServerSocket;
 				Abweisen = false;
+				#ifdef LEDROT_SOCKETERROR
+					LED_off(ROT);
+				#endif //def LEDROT_SOCKETERROR
 				}
 			else
 				{
@@ -1209,15 +1210,21 @@ static void SocketBearbeiten()
 			TxpSocketAbbauGeplant = false;
 			SocketOutBufUsed = 0;
 			SocketInBufUsed = 0;
+			#ifdef LEDROT_SOCKETERROR
+				LED_off(ROT);
+			#endif //def LEDROT_SOCKETERROR
 			}
 		else
 			{
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n" ));
-			StartTimer(&TxpSocketAbbruchTimer);
+			#ifdef LEDROT_SOCKETERROR
+				LED_on(ROT);
+			#endif //def LEDROT_SOCKETERROR
 			}
-			
 		CloseTCPSocket(TxpSocketHandle);
+		StartTimer(&TxpSocketAbbruchTimer);
+		StartTimer(&TxpSocketWiederholungVerzoegerung);
 		TxpSocketHandle = NO_SOCKET_USED;
 		return; // GGf wieder aufnahme der Verbindung beim nächsten Aufruf dieser funktion...
 		}
@@ -1238,6 +1245,9 @@ static void SocketBearbeiten()
 		TxpSocketAbbauGeplant = false;
 		SocketOutBufUsed = 0;
 		SocketInBufUsed = 0;
+		#ifdef LEDROT_SOCKETERROR
+			LED_off(ROT);
+		#endif //def LEDROT_SOCKETERROR
 		}
 		
 	// Auf neue Daten testen
@@ -1278,9 +1288,9 @@ static void SocketBearbeiten()
 	// ggf Lebenszeichen erzeugen
 	// --------------------------
 	if (TxpSocketMode != SocketIdle
-		&& SocketLebenszeichenZaehler > 4 * TxpTimerFreq 
+		&& TimerVal(&TxpSocketLebenszeichenTimer) >= 40
 	    && SocketOutBufUsed == 0
-		&& SocketSendeSperrZaehler == 0
+		&& SocketSendeFehlerZaehler == 0
 		&& TxpSocketHandle != NO_SOCKET_USED)
 		{ // alle 4 Sekunden ein Lebenszeichen
 		SocketOutBuf[0] = TXPC_NULL;
@@ -1293,8 +1303,8 @@ static void SocketBearbeiten()
 	if (TxpSocketMode == SocketOriginate 
 		&& TxpSocketHandle == NO_SOCKET_USED 
 		&& SocketOutBufUsed != 0
-		&& !TxpSocketAbbauGeplant)
-		//! \todo Verzögerung?
+		&& !TxpSocketAbbauGeplant
+		&& TimerVal(&TxpSocketWiederholungVerzoegerung) > 20) // 2 Sekunden verzögerung
 		{
 		TxpSocketHandle = Connect2IP(TxpSocketIP, TxpSocketPort); 
 	 
@@ -1304,11 +1314,16 @@ static void SocketBearbeiten()
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR("TxP: Wieder-Oeffnung des Socket versagt.\r\n"));
 			TxpSocketHandle = NO_SOCKET_USED;
+			StartTimer(&TxpSocketWiederholungVerzoegerung);
 			return;
 			}
 
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("TxP: Wieder-Oeffnung des Socket erfolgreich.\r\n"));
+
+		#ifdef LEDROT_SOCKETERROR
+			LED_off(ROT);
+		#endif //def LEDROT_SOCKETERROR
 			
 		//! \todo Initialsierungsdaten?
 		
@@ -1318,7 +1333,8 @@ static void SocketBearbeiten()
 	// --------------------------------------------------
 	if (TxpSocketHandle != NO_SOCKET_USED 
 		&& SocketOutBufUsed > 0 
-		&& SocketSendeSperrZaehler == 0) //! \todo && !HaltSocketOut
+		&& (SocketSendeFehlerZaehler == 0 || TimerVal(&TxpSocketWiederholungVerzoegerung) > 15)) 
+			// Nach Sendefehlern höchstens alle 1,5 Sekunden senden.
 		{
 		uint16_t SendSize;
 		
@@ -1327,7 +1343,6 @@ static void SocketBearbeiten()
 			SendSize = MAX_TCP_Datalenght;
 			
 		int Res = PutSocketData_RPE(TxpSocketHandle, SendSize, SocketOutBuf, RAM);
-		SocketLebenszeichenZaehler = 0; 
 
 		if (ProtokollLevel == 3)
 			{
@@ -1355,8 +1370,11 @@ static void SocketBearbeiten()
 				CloseTCPSocket(TxpSocketHandle);
 				TxpSocketHandle = NO_SOCKET_USED;
 				}
-			else
-				SocketSendeSperrZaehler = 1 * TxpTimerFreq; // 1 Sekunde für nächsten Versuch warten.
+			StartTimer(&TxpSocketWiederholungVerzoegerung);
+			StartTimer(&TxpSocketLebenszeichenTimer);
+			#ifdef LEDROT_SOCKETERROR
+				LED_on(ROT);
+			#endif //def LEDROT_SOCKETERROR
 			}
 			
 		else if (Res < SocketOutBufUsed)
@@ -1364,12 +1382,18 @@ static void SocketBearbeiten()
 			memmove(SocketOutBuf, SocketOutBuf + Res, SocketOutBufUsed - Res);
 			SocketOutBufUsed -= Res;
 			SocketSendeFehlerZaehler = 0;
+			#ifdef LEDROT_SOCKETERROR
+				LED_on(ROT);
+			#endif //def LEDROT_SOCKETERROR
 			}
 			
 		else // Puffer erfolgreich vollständig gesendet.
 			{
 			SocketOutBufUsed = 0;
 			SocketSendeFehlerZaehler = 0;
+			#ifdef LEDROT_SOCKETERROR
+				LED_off(ROT);
+			#endif //def LEDROT_SOCKETERROR
 			}
 			
 		} // if es gibt was zu senden
@@ -1387,6 +1411,9 @@ static void SocketBearbeiten()
 		TxpSocketIP = 0;
 		SocketOutBufUsed = 0;
 		SocketInBufUsed = 0;
+		#ifdef LEDROT_SOCKETERROR
+			LED_off(ROT);
+		#endif //def LEDROT_SOCKETERROR
 		}
 
 	} // SocketBearbeiten()
@@ -1698,8 +1725,8 @@ static void TxpDatenVerarbeiten()
 	// --------------------------------------------------
 	if (!TxpSocketModeAscii 
 		&& (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
-		&& (SocketSendeQuittung || SocketLebenszeichenZaehler > 4 * TxpTimerFreq)
-		&& SocketSendeSperrZaehler == 0
+		&& (SocketSendeQuittung || TimerVal(&TxpSocketLebenszeichenTimer) > 35)
+		&& SocketSendeFehlerZaehler == 0
 		&& SocketOutBufUsed < SocketOutBufMax - 4 - 10 // - 10 = Reserve für wichtige Daten
 		&& TxpSocketHandle != NO_SOCKET_USED)
 		{
@@ -2741,7 +2768,7 @@ void txp_cgi_debug( void * pStruct )
 	
 	PRINTVAL(TimerVal(&RuheTimer));
 	PRINTVAL(TwiLebenszeichenZaehler); 
-	PRINTVAL(SocketLebenszeichenZaehler);
+	PRINTVAL(TimerVal(&TxpSocketLebenszeichenTimer));
 	PRINTVAL(TxpThreadCheckCount);
 
 	PRINTVAL(DynIPAktZeitZaehler / TxpTimerFreq);
