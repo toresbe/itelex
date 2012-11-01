@@ -1296,6 +1296,7 @@ static void SocketBearbeiten()
 		SocketOutBuf[0] = TXPC_NULL;
 		SocketOutBuf[1] = 0;
 		SocketOutBufUsed = 2;
+		StartTimer(&TxpSocketLebenszeichenTimer);
 		}
 
 	// Ist ein Neuaufbau der Verbindung erforderlich?
@@ -1371,7 +1372,6 @@ static void SocketBearbeiten()
 				TxpSocketHandle = NO_SOCKET_USED;
 				}
 			StartTimer(&TxpSocketWiederholungVerzoegerung);
-			StartTimer(&TxpSocketLebenszeichenTimer);
 			#ifdef LEDROT_SOCKETERROR
 				LED_on(ROT);
 			#endif //def LEDROT_SOCKETERROR
@@ -1735,6 +1735,7 @@ static void TxpDatenVerarbeiten()
 		SocketOutBuf[SocketOutBufUsed++] = 
 			(uint8_t) (low(SocketAnzahlZeichenEmpfangen) - PufferAnzahl(&SendePuffer));
 		SocketSendeQuittung = false;
+		StartTimer(&TxpSocketLebenszeichenTimer);
 		}
 
 	} // TxpDatenVerarbeiten()
@@ -2248,8 +2249,8 @@ void txp_thread()
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("TxP: Timeout beim Warten auf die Einschaltquittung\r\n" ));
 		BusSenden(BusKdoSchluss);
-		SendeStopkommando(PSTR("err\r\n"));
 		ModusWechsel(ModWarteSchlussQuitt);
+		SendeStopkommando(PSTR("err\r\n"));
 		}
 		
 
@@ -2402,7 +2403,7 @@ void txp_thread()
 		&& TxpSocketMode == SocketIdle)
 		{
 		if (ProtokollLevel >= 1)
-			Protokollieren_P(PSTR("TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen\r\n" ));
+			Protokollieren_P(PSTR("TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)\r\n" ));
 		ModusWechsel(ModRuhe);
 		}
 		
@@ -2823,7 +2824,6 @@ void txp_cgi_msg_Out( void * pStruct )
 	if (Modus == ModDirektdruckVerbunden)
 		{
 		printf_P(PSTR("Druckspiegel:<br><pre>%s&lt;&lt;&lt;%s</pre>"), HtmlSendeText, AsciiDruckPuffer);
-		//! \todo Timeout-Zeitgeber für Verbindungsverlust resetten. Timeout ist 20 Sekunden, da normalerweise diese CGI-Seite alle 10 Sekunden abgerufen wird.
 
 		if (ProtokollLevel >= 3)
 			{
