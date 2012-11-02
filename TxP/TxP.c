@@ -2069,7 +2069,7 @@ void txp_thread()
 					if (TlnSuche(Wahlnummer, false, &GewaehlterTln))
 						{ // ID#222 ********************************************
 						if (ProtokollLevel >= 1)
-							ProtokollierenInt_P(PSTR("TxP: Teilnehmer %ld im eigenen Telefonbuch gefunden.\r\n"), GewaehlterTln.Nummer);
+							ProtokollierenInt_P(PSTR("TxP: Teilnehmer %lu im eigenen Telefonbuch gefunden.\r\n"), GewaehlterTln.Nummer);
 		
 						if (Wahlziffern >= 5 && (GewaehlterTln.Flags & TlnFlag_Lokal) == 0)
 							RufnummerBeiTlnServerAbfragen(); // TEST ob das sinnvoll ist...
@@ -2933,6 +2933,7 @@ void AdresseZuWahlStr(uint8_t Adr, char* Buf)
 	
 const PROGMEM char KonfigPasswort_P[] = "CFGPASS";
 const PROGMEM char ProtokollLevel_P[] = "PROTLEVEL";
+const PROGMEM char ProtokollLevelTlnServ_P[] = "PROTLEVELTLNSRV";
 
 
 #ifdef TXP_ANSCHLUSS
@@ -2988,6 +2989,10 @@ void txp_cgi_config_intern(void *pStruct)
 		#endif // TXP_ANSCHLUSS
 
 		CgiFormInputFieldLong_P(PSTR("Protokoll-Level:"), ProtokollLevel_P, 2, ProtokollLevel);
+
+#ifdef TXP_TLNSERVER
+		CgiFormInputFieldLong_P(PSTR("Protokoll-Level f&uuml;r Teiln-Server:"), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
+#endif //def TXP_TLNSERVER
 
 		CgiFormInputFieldText_P(PSTR("Passwort f&uuml;r Kofigurationsseiten:"), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
 		
@@ -3129,6 +3134,25 @@ void txp_cgi_config_intern(void *pStruct)
 				ProtokollLevel = Neu;
 				}
 			}
+
+#ifdef TXP_TLNSERVER
+		// ProtokollLevelTlnServ
+		// ---------------------
+		if (PharseCheckName_P(http_request, ProtokollLevelTlnServ_P))
+			{
+			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, ProtokollLevelTlnServ_P)], 2);
+			Neu = atoi(Buf);
+			if (Neu == ProtokollLevelTlnServ)
+				printf_P(PSTR("<br>ProtokollLevelTlnServ unver&auml;ndert: %u"), Neu);
+			else
+				{
+				itoa(Neu, Buf, 10); // 10 ist die Basis, nicht die Länge!
+				changeConfig_P(ProtokollLevelTlnServ_P, Buf);
+				printf_P(PSTR("<br>Protokoll-Level für Teilnehmer-Server: %s"), Buf);
+				ProtokollLevelTlnServ = Neu;
+				}
+			}
+#endif //def TXP_TLNSERVER
 			
 		// KonfigPasswort
 		// --------------
@@ -3544,6 +3568,14 @@ void txp_init()
 		ProtokollLevel = atoi(Buf);
 	else
 		ProtokollLevel = 1;
+		
+#ifdef TXP_TLNSERVER
+	// dies müsste eigentlich in Protokoll.c enthalten sein.
+	if (readConfig_P(ProtokollLevelTlnServ_P, Buf) == 1)
+		ProtokollLevelTlnServ = atoi(Buf);
+	else
+		ProtokollLevelTlnServ = 1;
+#endif //def TXP_TLNSERVER
 		
 	TeilnehmerServerSocket = NO_SOCKET_USED;
 

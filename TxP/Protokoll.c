@@ -36,8 +36,12 @@ enum { MaxDateigroesse = 100000UL } ; //!< Maximale Dateigröße. Bei überschre
 bool Idle; //!< Speichert, ob es zu protokollierende Ereignisse gab.
 
 uint8_t ProtokollLevel;
-	//!< "Tiefe" der Protokollierung: 0 = Aus, 1 = Normal, 2 = Intensiv, 3 = im Detail
+	//!< "Tiefe" der Protokollierung für "normale" Abläufe: 0 = Aus, 1 = Normal, 2 = Intensiv, 3 = im Detail
 
+#ifdef TXP_TLNSERVER
+uint8_t ProtokollLevelTlnServ;
+	//!< "Tiefe" der Protokollierung für Teilnehmer-Server: 0 = Aus, 1 = Normal, 2 = Intensiv, 3 = im Detail
+#endif //def TXP_TLNSERVER
 
 extern char *DebugMsg;
 
@@ -283,6 +287,9 @@ static void SpeichernBeiIdle()
 void ProtokollInit()
 	{
 	ProtokollLevel = 1; // wird später aus der Konfiguration überschrieben
+#ifdef TXP_TLNSERVER
+	ProtokollLevelTlnServ = 1; // wird später aus der Konfiguration überschrieben
+#endif //def TXP_TLNSERVER
 	Puffer[0] = '\0';
 	Dateiname[0] = '\0';
 	Idle = true;

@@ -6,6 +6,10 @@
 
 extern uint8_t ProtokollLevel;
 
+#ifdef TXP_TLNSERVER
+extern uint8_t ProtokollLevelTlnServ;
+#endif //def TXP_TLNSERVER
+
 extern bool ProtokollSpeichern(bool flush);
 
 extern void Protokollieren(char *s);
