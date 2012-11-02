@@ -121,6 +121,7 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 		else if (tsb->SelbstAkt.Pin != TD.DynPin)
 			{
 			ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld schon vorhanden, aber falsche Pin gesendet\r\n"), TD.Nummer);
+				// immer speichern, auch bei abgeschaltetem Protokoll.
 			return false;
 			}
 		else if (tsb->SelbstAkt.Port == TD.Port && TlnIP == TD.IPAdr)
@@ -281,7 +282,7 @@ static void SocketBearbeiten(int *Socket)
 				else
 					{
 					uint32_t RufNr = TlnServBuf.TlnAbfr.RufNr;
-					if (ProtokollLevelTlnServ >= 1) 
+					if (ProtokollLevelTlnServ >= 2) 
 						ProtokollierenInt_P(PSTR("TlnSrv: Abfrage empfangen. Nummer %ld: "), RufNr);
 						
 					// Telefonbuch abfragen
@@ -297,7 +298,7 @@ static void SocketBearbeiten(int *Socket)
 						TlnServBuf.TlnAuskunft.DynPin = 0; // Datenschutz
 						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
 						OutCount = 2 + TlnServBuf.DataLen;
-						if (ProtokollLevelTlnServ >= 1 && OutCount > 2)
+						if (ProtokollLevelTlnServ >= 2 && OutCount > 2)
 							Protokollieren_P(PSTR(" ...gefunden\r\n"));
 						}
 					else
@@ -305,7 +306,7 @@ static void SocketBearbeiten(int *Socket)
 						TlnServBuf.Code = TLNSERV_AUSKUNFT_NICHTVERG;
 						TlnServBuf.DataLen = 0;
 						OutCount = 2 + TlnServBuf.DataLen;
-						if (ProtokollLevelTlnServ >= 1) 
+						if (ProtokollLevelTlnServ >= 2) 
 							Protokollieren_P(PSTR(" ...nicht gefunden oder gesperrt\r\n"));
 						}
 					}
@@ -342,7 +343,7 @@ static void SocketBearbeiten(int *Socket)
 	// soll offene Verbindung geschlossen werden?
 	if (CheckSocketState(*Socket) == SOCKET_NOT_USE)
 		{
-		if (ProtokollLevelTlnServ >= 1)
+		if (ProtokollLevelTlnServ >= 2)
 			Protokollieren_P(PSTR("TlnSrv: Socket wurde von Gegenstelle geschlossen\r\n" ));
 		CloseTCPSocket(*Socket);
 		*Socket = NO_SOCKET_USED;
@@ -417,7 +418,8 @@ void txp_tlnserv_thread()
 	int NewServerSocket = CheckPortRequest(TXP_TLNSERV_PORT);
 	if (NewServerSocket != NO_SOCKET_USED)
 		{
-		if (ProtokollLevelTlnServ >= 1)
+		if (ProtokollLevelTlnServ >= 2
+			|| (ProtokollLevelTlnServ >= 1 && TlnServerInSocket != NO_SOCKET_USED))
 			{
 			Protokollieren_P(PSTR("TlnSrv: Server-Socket geoeffnet von IP "));
 			ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
@@ -427,7 +429,7 @@ void txp_tlnserv_thread()
 		
 		if (TlnServerInSocket == NO_SOCKET_USED)
 			{
-			if (ProtokollLevelTlnServ >= 1)
+			if (ProtokollLevelTlnServ >= 2)
 				Protokollieren_P(PSTR(" ...ok\r\n"));
 			TlnServerInSocket = NewServerSocket;
 			SocketSendeFehlerZaehler = 0;

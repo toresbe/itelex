@@ -201,20 +201,22 @@ volatile uint16_t KurzTimerCnt;
 volatile uint8_t KurzTimerVorteilerCnt;
 
 
-volatile static uint16_t TwiLebenszeichenZaehler; //! \todo Ersetzen
+volatile static uint16_t TwiLebenszeichenZaehler; 
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf dem TWI-Bus.
 	//!< wird während der Verbindung missbraucht zum Zählen der Takte bis zur Pegelwiederholung.
+	//!< Kein Timer, da nur lokal in txp_timerEvent() verwendet und unterschiedliche 
+	//!< Ablaufzeiten realisiert werden müssen.
 	
 static TKurzTimer RuheTimer;  
 	//!< Misst die Zeit in der nix passiert. Wird bei Datenempfang und Sendung und 
 	//!< Verbindungsaufbau auf Null gesetzt. Wird auch für Timeout beim Warten auf 
 	//!< die Ausschalt-Quittung benutzt. In Grundstellung wird die Dauer der Grundstellung
-	//!< gemessen für das Protokollschreiben.
+	//!< gemessen für das Protokollschreiben. \todo Durch einzelne Timer ersetzen
 	
 static TKurzTimer TxpSocketLebenszeichenTimer;
 	//!< Alle 3,5 bis 4 Sekunden ein Lebenszeichen senden...
 
-volatile static uint16_t TxpThreadCheckCount;
+static TKurzTimer TxpThreadCheckTimer;
 	//!< Prüft, ob die Funktion void txp_thread() ausreichend häufig aufgerufen wird.
 
 	
@@ -315,7 +317,7 @@ volatile static bool SocketSendeQuittung;
 
 static uint8_t SocketSendeFehlerZaehler;
 	//!< Zählt bis 10 bei nicht erfolgreichen Sendeversuchen auf dem Socket.
-	//!< \todo obsolet?
+
 	
 static bool SendenBeschleunigen;
 	//!< wird auf true gesetzt, wenn der Puffer überzulaufen droht.
@@ -383,7 +385,7 @@ static char KonfigPasswort[KonfigPasswortLen+1];
 	
 static unsigned long KonfigFreigabeZeit;
 	//!< Uhrzeit der letzen Freigabe bzw. Benutzung von freizugebenden Seiten
-	//!< \todo durhc Timer ersetzen
+	//!< \todo durch Timer ersetzen
 	
 	
 static int TeilnehmerServerSocket;
@@ -453,6 +455,8 @@ volatile static uint32_t Timer0CallbackCount;
 //! Timer-Callback-Funktion. Macht seriell-parallel-Umsetzung und umgekehrt.
 //--------------------------------------------------------------------------
 //! Sendet auf TWI auch die Mark- / Space-Wechsel und die Lebenszeichen.
+//! Wird mit Frequenz TxpTimerFreq aufgerufen.
+
 void txp_timerEvent(void)
 	{
 	uint8_t t0c = TCNT0;
@@ -468,21 +472,21 @@ void txp_timerEvent(void)
 	wdt_reset();
 	
 	if (DynIPAktiv)
-		DynIPAktZeitZaehler++; //! TODO Ersetzen
+		DynIPAktZeitZaehler++; //! \todo Durch Timer Ersetzen
 	
-	if (TxpThreadCheckCount++ > 30 * TxpTimerFreq) // nach 30 Sekunden Reset
-		{ //! TODO Ersetzen
+	if (TimerVal(&TxpThreadCheckTimer) > 300) // nach 30 Sekunden Reset
+		{ 
 		Protokollieren("TxP: Reset wegen nicht-Aufruf von txp_thread()\r\n");
 		ProtokollSpeichern(true);
 		softreset();
 		}
 		
 #if defined(LEDROT_TXPTHREADBLOCK)
-	if (TxpThreadCheckCount > TxpTimerFreq / 2) // nach halber Sekunde geht rot an
+	if (TimerVal(&TxpThreadCheckTimer) > 5) // nach halber Sekunde geht rot an
 		LED_on(ROT);
 #endif //defined(LEDROT_TXPTHREADBLOCK)
 		
-	TwiWatchdogCount++; //! TODO Ersetzen
+	TwiWatchdogCount++; //! \todo Ersetzen
 		
 	if (Modus == ModKommendVerbunden 
 		|| Modus == ModGehendVerbunden 
@@ -670,7 +674,7 @@ void txp_timerEvent(void)
 			if (!get_Taste()) // Gedrückt = LOW!
 				{
 				if (++TasteZaehler > TxpTimerFreq * 5/100) // 50 Millisekunden
-					//! TODO Ersetzen
+					//! \todo Durch Timer Ersetzen
 					{ // ausreichend lang gedrückt
 					TasteZustandIntern = TasteEin;
 					TasteZaehler = 0;
@@ -1326,8 +1330,6 @@ static void SocketBearbeiten()
 			LED_off(ROT);
 		#endif //def LEDROT_SOCKETERROR
 			
-		//! \todo Initialsierungsdaten?
-		
 		}
 		
 	// Daten ggf. ins Netz senden
@@ -1363,7 +1365,7 @@ static void SocketBearbeiten()
 
 		if (Res <= 0)
 			{ // gar nichts gesendet.
-			SocketSendeFehlerZaehler++; //! \todo Prüfen ob wiederholtes Datensenden sinnvoll oder Verbindungsabbau und Wieder-Oeffnung besser...
+			SocketSendeFehlerZaehler++; 
 			if (SocketSendeFehlerZaehler >= 10)
 				{
 				if (ProtokollLevel >= 1)
@@ -1987,7 +1989,7 @@ void txp_thread()
 
 	TxpThreadCount++;
 
-	TxpThreadCheckCount = 0;
+	StartTimer(&TxpThreadCheckTimer);
 	
 #if defined(LEDROT_TXPTHREADBLOCK)
 	LED_off(ROT); 
@@ -2238,8 +2240,7 @@ void txp_thread()
 		{ // 3 Sekunden keine Schlussquittung empfangen
 		// ID#412 ****************************************************************
 		if (ProtokollLevel >= 1)
-			ProtokollierenInt_P(PSTR("TxP: Timeout beim Warten auf die Schlussquittung (%u)\r\n" ), TimerVal(&RuheTimer));
-				//! \todo Ausgabe von TimerVal(&RuheTimer) wieder 'rausschmeißen, da nur für Debugging drin.
+			Protokollieren_P(PSTR("TxP: Timeout beim Warten auf die Schlussquittung\r\n" ));
 		ModusWechsel(ModWarteGrundstellung);
 		}
 		
@@ -2770,7 +2771,7 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(TimerVal(&RuheTimer));
 	PRINTVAL(TwiLebenszeichenZaehler); 
 	PRINTVAL(TimerVal(&TxpSocketLebenszeichenTimer));
-	PRINTVAL(TxpThreadCheckCount);
+	PRINTVAL(TimerVal(&TxpThreadCheckTimer));
 
 	PRINTVAL(DynIPAktZeitZaehler / TxpTimerFreq);
 
@@ -3602,13 +3603,15 @@ void txp_init()
 
 	DynIPAktZeitZaehler = 14L * 60 * TxpTimerFreq; 
 		// 14 Minuten sind schon abgelaufen, daher Aktualisierung in einer Minute
-
+		
 	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 
 	timer0_init(TxpTimerFreq); 
 	if (!timer0_RegisterCallbackFunction(txp_timerEvent))
 		return;
-	
+
+	StartTimer(&TxpThreadCheckTimer);
+		
 	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
 	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("txp-msg-out.cgi"));
 	cgi_RegisterCGI( txp_cgi_TwiTlnListe, PSTR("txp-twitlnliste.cgi"));
