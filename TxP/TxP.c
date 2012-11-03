@@ -1295,6 +1295,7 @@ static void SocketBearbeiten()
 		&& TimerVal(&TxpSocketLebenszeichenTimer) >= 40
 	    && SocketOutBufUsed == 0
 		&& SocketSendeFehlerZaehler == 0
+		&& !TxpSocketAbbauGeplant
 		&& TxpSocketHandle != NO_SOCKET_USED)
 		{ // alle 4 Sekunden ein Lebenszeichen
 		SocketOutBuf[0] = TXPC_NULL;
@@ -1317,7 +1318,7 @@ static void SocketBearbeiten()
 			{ 
 			// Verbindung konnte nicht aufgebaut werden
 			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR("TxP: Wieder-Oeffnung des Socket versagt.\r\n"));
+				Protokollieren_P(PSTR("TxP: Wieder-Oeffnung des Socket VERSAGT.\r\n"));
 			TxpSocketHandle = NO_SOCKET_USED;
 			StartTimer(&TxpSocketWiederholungVerzoegerung);
 			return;
@@ -1369,7 +1370,7 @@ static void SocketBearbeiten()
 			if (SocketSendeFehlerZaehler >= 10)
 				{
 				if (ProtokollLevel >= 1)
-					Protokollieren_P(PSTR("TxP: Mehrfache Fehler beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
+					Protokollieren_P(PSTR("TxP: Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
 				CloseTCPSocket(TxpSocketHandle);
 				TxpSocketHandle = NO_SOCKET_USED;
 				}
@@ -1407,7 +1408,7 @@ static void SocketBearbeiten()
 		&& TimerVal(&TxpSocketAbbruchTimer) >= 300) // 30 Sekunden.
 		{
 		if (ProtokollLevel >= 1)
-			ProtokollierenInt_P(PSTR("TxP: Zeitueberschreibung bei Wiederaufnahme der Verbindung (%u)\r\n" ), TimerVal(&TxpSocketAbbruchTimer));
+			Protokollieren_P(PSTR("TxP: ZEITUEBERSCHREITUNG bei Wiederaufnahme der Verbindung\r\n" ));
 		TxpSocketMode = SocketIdle;
 		TxpSocketAbbauGeplant = false;
 		TxpSocketIP = 0;
@@ -1634,7 +1635,7 @@ static void TxpDatenVerarbeiten()
 						SocketOutBuf[SocketOutBufUsed++] = TxpSocketProtVersionVorschlag;
 						
 						if (ProtokollLevel >= 2)
-							ProtokollierenInt_P(PSTR("TxP: Sende Protokollversion-Gegenvorschlag %u\r\n"), TxpSocketProtVersionVorschlag);
+							ProtokollierenInt_P(PSTR("TxP: Sende Protokollversion-Vorschlag %u\r\n"), TxpSocketProtVersionVorschlag);
 						}
 					} // len >= 1
 					
@@ -1679,7 +1680,13 @@ static void TxpDatenVerarbeiten()
 			uint8_t ProtAnz = 0;
 			while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3 - 10) // - 10 = Reserve für wichtige Daten
 				{
-				SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+				uint8_t code = PufferAusg(&EmpfPuffer);
+				
+				if (code == TtyCodeZiWerDa && EmpfPuffer.BuZiMode == ZiMode)
+					SocketOutBuf[SocketOutBufUsed] = '@'; // testweise wird Werda als @ gesendet (für Email-Adressen)
+				else
+					SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(code, (char*) &EmpfPuffer.BuZiMode);
+					
 				if (SocketOutBuf[SocketOutBufUsed] != '\0')
 					{
 					SocketOutBufUsed++;
@@ -1728,6 +1735,7 @@ static void TxpDatenVerarbeiten()
 	if (!TxpSocketModeAscii 
 		&& (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
 		&& (SocketSendeQuittung || TimerVal(&TxpSocketLebenszeichenTimer) > 35)
+		&& !TxpSocketAbbauGeplant
 		&& SocketSendeFehlerZaehler == 0
 		&& SocketOutBufUsed < SocketOutBufMax - 4 - 10 // - 10 = Reserve für wichtige Daten
 		&& TxpSocketHandle != NO_SOCKET_USED)
@@ -1803,7 +1811,7 @@ bool TeilnehmerServerSocketOeffnen()
 			TeilnehmerServerSocket = Connect2IP(tsIP, TXP_TLNSERV_PORT);
 			if (TeilnehmerServerSocket != -1)
 				{
-				if (ProtokollLevel >= 2)
+				if (ProtokollLevelTlnServ >= 2)
 					{
 					Protokollieren_P(PSTR("TxP: Verbindung an Teilnehmer-Server "));
 					Protokollieren(TeilnehmerServerAdresse[ServerI]); 
@@ -1812,11 +1820,11 @@ bool TeilnehmerServerSocketOeffnen()
 				return true;
 				}
 			TeilnehmerServerSocket = NO_SOCKET_USED;
-			if (ProtokollLevel >= 1)
+			if (ProtokollLevelTlnServ >= 1)
 				{
 				Protokollieren_P(PSTR("TxP: Verbindungsversuch an Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
-				Protokollieren_P(PSTR(" gescheitert\r\n"));
+				Protokollieren_P(PSTR(" GESCHEITERT\r\n"));
 				}
 			}
 		else
@@ -2452,7 +2460,7 @@ void txp_thread()
 			
 			int Res = GetSocketData(TeilnehmerServerSocket, InCount, TSB.Buf);
 			
-			if (ProtokollLevel >= 3) // Daten explizit
+			if (ProtokollLevelTlnServ >= 3) // Daten explizit
 				{
 				ProtokollierenInt_P(PSTR("TxP: Teilnehmer-Server Empfang: (%d/" ), InCount);
 				ProtokollierenInt_P(PSTR("%d)"), Res);
@@ -2532,13 +2540,13 @@ void txp_thread()
 				case TLNSERV_IPRUECKMELD:
 					if (TSB.IpRueckm.EmpfIP == NetzEigeneIP)
 						{ // keine Änderung
-						if (ProtokollLevel >= 2)
+						if (ProtokollLevelTlnServ >= 2)
 							Protokollieren_P(PSTR("TxP: Dynamische IP-Aktualisierung: bestehende IP gilt weiter\r\n" ));
 						}
 					else
 						{
 						NetzEigeneIP = TSB.IpRueckm.EmpfIP;
-						if (ProtokollLevel >= 1)
+						if (ProtokollLevelTlnServ >= 1)
 							{
 							Protokollieren_P(PSTR("TxP: Dynamische IP-Aktualisierung: neue IP "));
 							ProtokollierenIPAdr(NetzEigeneIP);
@@ -2570,7 +2578,7 @@ void txp_thread()
 		// Schließanforderung vom Teilnehmer-Server
 		if (CheckSocketState(TeilnehmerServerSocket) == SOCKET_NOT_USE)
 			{
-			if (ProtokollLevel >= 1)
+			if (ProtokollLevelTlnServ >= 1)
 				Protokollieren_P(PSTR("TxP: Socket zum Teilnehmer-Server wurde von Gegenstelle geschlossen\r\n" ));
 			CloseTCPSocket(TeilnehmerServerSocket);
 			TeilnehmerServerSocket = NO_SOCKET_USED;
@@ -2991,9 +2999,7 @@ void txp_cgi_config_intern(void *pStruct)
 
 		CgiFormInputFieldLong_P(PSTR("Protokoll-Level:"), ProtokollLevel_P, 2, ProtokollLevel);
 
-#ifdef TXP_TLNSERVER
 		CgiFormInputFieldLong_P(PSTR("Protokoll-Level f&uuml;r Teiln-Server:"), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
-#endif //def TXP_TLNSERVER
 
 		CgiFormInputFieldText_P(PSTR("Passwort f&uuml;r Kofigurationsseiten:"), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
 		
@@ -3136,7 +3142,6 @@ void txp_cgi_config_intern(void *pStruct)
 				}
 			}
 
-#ifdef TXP_TLNSERVER
 		// ProtokollLevelTlnServ
 		// ---------------------
 		if (PharseCheckName_P(http_request, ProtokollLevelTlnServ_P))
@@ -3153,7 +3158,6 @@ void txp_cgi_config_intern(void *pStruct)
 				ProtokollLevelTlnServ = Neu;
 				}
 			}
-#endif //def TXP_TLNSERVER
 			
 		// KonfigPasswort
 		// --------------
@@ -3570,13 +3574,11 @@ void txp_init()
 	else
 		ProtokollLevel = 1;
 		
-#ifdef TXP_TLNSERVER
 	// dies müsste eigentlich in Protokoll.c enthalten sein.
 	if (readConfig_P(ProtokollLevelTlnServ_P, Buf) == 1)
 		ProtokollLevelTlnServ = atoi(Buf);
 	else
 		ProtokollLevelTlnServ = 1;
-#endif //def TXP_TLNSERVER
 		
 	TeilnehmerServerSocket = NO_SOCKET_USED;
 
