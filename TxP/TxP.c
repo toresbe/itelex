@@ -1292,6 +1292,7 @@ static void SocketBearbeiten()
 	// ggf Lebenszeichen erzeugen
 	// --------------------------
 	if (TxpSocketMode != SocketIdle
+		&& !TxpSocketModeAscii
 		&& TimerVal(&TxpSocketLebenszeichenTimer) >= 40
 	    && SocketOutBufUsed == 0
 		&& SocketSendeFehlerZaehler == 0
