@@ -1118,12 +1118,13 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 
 static void SocketBearbeiten()
 	{
+	extern struct TCP_SOCKET TCP_sockettable[];
+
 	// Neue Verbindungswünsche bearbeiten
 	// ----------------------------------
 	int NewServerSocket = CheckPortRequest(TXP_PORT);
 	if (NewServerSocket != NO_SOCKET_USED)
 		{
-		extern struct TCP_SOCKET TCP_sockettable[];
 		bool Abweisen = true; // Bei berechtigter kommender Verbindung auf false setzen.
 
 		if (ProtokollLevel >= 1)
@@ -1305,6 +1306,15 @@ static void SocketBearbeiten()
 		StartTimer(&TxpSocketLebenszeichenTimer);
 		}
 
+	// Timeout bei Ascii-Verbindungen verhindern
+	// -----------------------------------------
+	if (!TxpSocketAbbauGeplant
+		&& TxpSocketModeAscii
+		&& TxpSocketHandle != NO_SOCKET_USED)
+		{ 
+		TCP_sockettable[TxpSocketHandle].Timeoutcounter = 10; // Sekunden
+		}
+		
 	// Ist ein Neuaufbau der Verbindung erforderlich?
 	// ----------------------------------------------
 	if (TxpSocketMode == SocketOriginate 
