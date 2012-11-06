@@ -279,6 +279,11 @@ static bool TxpSocketAbbauGeplant;
 	//!< \p Wenn true und TxpSocketMode = SocketOriginate wird Abbau nach letzem Datenblock ausgelöst
 	//!< \p Wenn true und TxpSocketMode = SocketAnswer wird nach gemeldetem Verbindungsabbau
 	//!< TxpSocketMode auf SocketIdle gesetzt und TxpSocketIP gelöscht.
+
+static TKurzTimer TxpSocketAbbauVerzoegerung;
+	//!< Geht der Verbindungsabbau vom Anrufer aus, ist eine kurze Verzögerung zwischen 
+	//!< letzter Sendung und Verbindungsabbau sinnvoll.
+	
 	
 static uint8_t TxpSocketProtVersion;
 	//!< Vereinbarte Protokollversion der Kommunikation
@@ -1150,6 +1155,7 @@ static void SocketBearbeiten()
 				TxpSocketProtVersion = 0;
 				TxpSocketProtVersionVorschlag = 0; // auf Gegenvorschlag warten
 				StartTimer(&TxpSocketAbbruchTimer);
+				StartTimer(&TxpSocketAbbauVerzoegerung);
 				SocketBufInit();
 				ModusWechsel(ModKommendVerbVorstufe);
 				Abweisen = false;
@@ -1172,6 +1178,7 @@ static void SocketBearbeiten()
 				if (ProtokollLevel >= 1)
 					Protokollieren_P(PSTR(" ...Wiederverbindung ok\r\n"));
 				TxpSocketHandle = NewServerSocket;
+				StartTimer(&TxpSocketAbbauVerzoegerung);
 				Abweisen = false;
 				#ifdef LEDROT_SOCKETERROR
 					LED_off(ROT);
@@ -1239,6 +1246,7 @@ static void SocketBearbeiten()
 	if (TxpSocketHandle != NO_SOCKET_USED 
 		&& TxpSocketAbbauGeplant 
 		&& TxpSocketMode == SocketOriginate 
+		&& TimerVal(&TxpSocketAbbauVerzoegerung) > 15 // 1,5 Sekunden nach letzter Sendung...
 		&& SocketOutBufUsed == 0)
 		{ 
 		if (ProtokollLevel >= 1)
@@ -1338,6 +1346,8 @@ static void SocketBearbeiten()
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("TxP: Wieder-Oeffnung des Socket erfolgreich.\r\n"));
 
+		StartTimer(&TxpSocketAbbauVerzoegerung);
+			
 		#ifdef LEDROT_SOCKETERROR
 			LED_off(ROT);
 		#endif //def LEDROT_SOCKETERROR
@@ -1367,7 +1377,8 @@ static void SocketBearbeiten()
 			ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
 			if (Res > 0 && Res < SocketOutBufUsed)
 				ProtokollierenInt_P(PSTR(", Rest %u" ), SocketOutBufUsed - Res);
-			ProtokollierenInt_P(PSTR(" Sum %u\r\n" ), SocketAnzahlZeichenGesendet);
+			ProtokollierenInt_P(PSTR(" Sum %u/"), SocketAnzahlZeichenGesendet);
+			ProtokollierenInt_P(PSTR("%02X\r\n" ), low(SocketAnzahlZeichenGesendet));
 			// printf_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
 			// for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
 				// printf_P(PSTR(" %02X"), SocketOutBuf[i]);
@@ -1399,6 +1410,7 @@ static void SocketBearbeiten()
 			#ifdef LEDROT_SOCKETERROR
 				LED_on(ROT);
 			#endif //def LEDROT_SOCKETERROR
+			StartTimer(&TxpSocketAbbauVerzoegerung);
 			}
 			
 		else // Puffer erfolgreich vollständig gesendet.
@@ -1408,6 +1420,7 @@ static void SocketBearbeiten()
 			#ifdef LEDROT_SOCKETERROR
 				LED_off(ROT);
 			#endif //def LEDROT_SOCKETERROR
+			StartTimer(&TxpSocketAbbauVerzoegerung);
 			}
 			
 		} // if es gibt was zu senden
@@ -1931,6 +1944,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 	TxpSocketProtVersionVorschlag = PROTVERSION_AKTUELL;
 	
 	StartTimer(&TxpSocketAbbruchTimer);
+	StartTimer(&TxpSocketAbbauVerzoegerung);
 		
 	if (td->AdrArt == AsciiUrl || td->AdrArt == AsciiIP)
 		{ // ID#226 *********************************************
@@ -2354,7 +2368,21 @@ void txp_thread()
 
 			while (AsciiDruckPuffer[ki] != '\0' && !PufferVoll(&SendePuffer))
 				{
-				if (SchreibeZeichenInSendePuffer(AsciiDruckPuffer[ki]))
+				if (AsciiDruckPuffer[ki] == '@')
+					{ // nur in WerDa umwandfeln, wenn am Ende der Eingabe
+					if (!PufferLeer(&SendePuffer))
+						break; // warten, bis alles gedruckt ist
+					else if (AsciiDruckPuffer[ki+1] == '\0' || strcmp_P(AsciiDruckPuffer+1, PSTR("\r\n")) == 0)
+						{
+						SchreibeZeichenInSendePuffer(AsciiDruckPuffer[ki]);
+						ki++;
+						AsciiDruckPuffer[ki] = '\0';
+						break; // nichts mehr übersetzen und Ende
+						}
+					else
+						; // Zeichen ignorieren
+					}
+				else if (SchreibeZeichenInSendePuffer(AsciiDruckPuffer[ki]))
 					{ // nur im Echo darstellen, wenn es auch gedruckt wurde.
 					if (Modus == ModDirektdruckVerbunden)
 						ZeichenInHtmlSendeText(AsciiDruckPuffer[ki]);
