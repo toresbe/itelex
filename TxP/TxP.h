@@ -63,9 +63,10 @@
 		TxpIP = 2,
 		AsciiUrl = 3, //!< Telnet-ähnlich
 		AsciiIP = 4,
-		TxpDynIP = 5 
+		TxpDynIP = 5,
 			//!< diesen Typ gibt es nur beim Teilnehmer-Server. Bei Abfragen wird der 
 			//!< Typ TxpIP gemeldet.
+		eMail = 6
 		} TTlnAdresseArt;
 		
 

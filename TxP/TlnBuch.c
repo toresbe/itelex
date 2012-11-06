@@ -75,6 +75,9 @@ static uint8_t TlnEintragGroesse(TTlnDaten *Tln)
 		case AsciiIP:
 			return Basis + 4 + 2;
 		
+		case eMail:
+			return Basis + strlen(Tln->Adresse)+1;
+			
 		default:
 			return 255;
 		}
@@ -125,6 +128,10 @@ static void TlnEintragen(TTlnDaten *Tln, char *BuchP)
 			*((uint16_t *) p) = Tln->Port;				p += 2;
 			break;
 		
+		case eMail:
+			strcpy(p, Tln->Adresse);					p += strlen(Tln->Adresse)+1;
+			break;
+			
 		default:
 			*((uint8_t *) (p-5)) = (uint8_t) Geloescht; // nachträglich auf gelöscht ändern
 			Tln->AdrArt = Geloescht;
@@ -183,6 +190,12 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 			Tln->Durchwahl = 0;
 			break;
 		
+		case eMail:
+			strcpy(Tln->Adresse, p);					p += strlen(Tln->Adresse)+1;
+			Tln->Port = 0;
+			Tln->Durchwahl = 0;
+			break;
+			
 		default:
 			Tln->AdrArt = Geloescht; // nachträglich auf gelöscht ändern
 			break;
@@ -667,6 +680,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	static PROGMEM const char TypGeloescht_P[] = "geloescht";
 	static PROGMEM const char TypAscii_P[] = "Ascii";
 	static PROGMEM const char TypTxp_P[] = "TelexPhone";
+	static PROGMEM const char TypEMail_P[] = "eMail";
 	static PROGMEM const char Lokal_P[] = "local";
 	static PROGMEM const char Gesperrt_P[] = "lock";
 	static PROGMEM const char Save_P[] = "save";
@@ -745,6 +759,15 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 							), TD.Adresse, TD.Port);
 						break;
 
+					case eMail:
+						printf_P(PSTR(
+							"<td align=\"left\">eMail</td>"
+							"<td align=\"left\">%s</td>" // Adresse
+							"<td align=\"center\">&#160;</td>" // Port
+					   		"<td>&#160;</td>" // Durchwahl
+							), TD.Adresse);
+						break;
+
 					default:
 						printf_P(PSTR("<td align=\"left\">gel&ouml;scht</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"));
 						break;
@@ -804,7 +827,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 		CgiFormCheckbox_P(PSTR("gesperrt:"), Gesperrt_P, (TD.Flags & TlnFlag_Gesperrt) != 0);
 
-		const char *TypSelList[] = { TypGeloescht_P, TypTxp_P, TypAscii_P } ;
+		const char *TypSelList[] = { TypGeloescht_P, TypTxp_P, TypAscii_P, TypEMail_P } ;
 		uint8_t TypSelNr;
 		switch (TD.AdrArt)
 			{
@@ -813,9 +836,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			case TxpUrl: 	TypSelNr = 1; break;
 			case AsciiIP:
 			case AsciiUrl: 	TypSelNr = 2; break;
+			case eMail:		TypSelNr = 3; break;
 			default: 		TypSelNr = 0; break;
 			}
-		CgiFormDropdown_P(PSTR("Typ:"), Typ_P, 3, TypSelList, TypSelNr);
+		CgiFormDropdown_P(PSTR("Typ:"), Typ_P, 4, TypSelList, TypSelNr);
 		
 		if (TD.AdrArt == TxpIP || TD.AdrArt == TxpDynIP || TD.AdrArt == AsciiIP)
 			iptostr(TD.IPAdr, TD.Adresse);
@@ -894,6 +918,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		else
 			{
 			TD.IPAdr = strtoip(TD.Adresse);
+			
 			if (strcmp_P(TypStr, TypTxp_P) == 0)
 				{
 				if (TD.IPAdr == 0)
@@ -916,6 +941,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				TD.Durchwahl = atoi(http_request->argvalue[PharseGetValue_P(http_request, Durchwahl_P)]);
 				printf_P(PSTR("Port %u Durchwahl %u<br>"), TD.Port, TD.Durchwahl);
 				}
+				
 			else if (strcmp_P(TypStr, TypAscii_P) == 0)
 				{
 				if (TD.IPAdr == 0)
@@ -933,6 +959,15 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				TD.Durchwahl = 0;
 				printf_P(PSTR("Port %u<br>"), TD.Port);
 				}
+
+			else if (strcmp_P(TypStr, TypEMail_P) == 0)
+				{
+				printf_P(PSTR("eMail: Adresse %s<br>"), TD.Adresse);
+				TD.AdrArt = eMail;
+				TD.Port = 0;
+				TD.Durchwahl = 0;
+				}
+				
 			else
 				{
 				printf_P(PSTR("<b>Unbekannter Typ!</b><br>"));

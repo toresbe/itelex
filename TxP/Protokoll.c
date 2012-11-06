@@ -238,6 +238,18 @@ void Protokollieren(char *s)
 	
 
 //! Protokolliert einen beliebigen Text.
+void ProtokollierenC(char c)
+	{
+	if (ProtPraeparieren(1))
+		{
+		uint16_t len = strlen(Puffer);
+		Puffer[len] = c;
+		Puffer[len+1] = '\0';
+		}
+	}
+	
+
+//! Protokolliert einen beliebigen Text.
 void Protokollieren_P(const char *s)
 	{
 	if (s != NULL && ProtPraeparieren(strlen_P(s)))
@@ -269,6 +281,54 @@ void ProtokollierenMAC(char mac[6])
 	{
 	if (ProtPraeparieren(17))
 		strcat(Puffer, mactostr(mac, Buf));
+	}
+
+
+//! Protokolliert eine Pufferinhalt.
+//
+//! Erkennt automatisch, ob Hex oder Ascii...
+void ProtokollierenPuffer(char buf[], uint16_t Len)
+	{
+	uint16_t i;
+	uint16_t AnzAscii;
+	bool DruckAscii;
+	bool InHochkomma;
+	
+	// Prüfe ob Ascii oder Hex
+	AnzAscii = 0;
+	for (i = 0 ; i < Len ; i++)
+		if (buf[i] >= ' ' && buf[i] <= '~')
+			AnzAscii++;
+			
+	DruckAscii = AnzAscii > Len / 2;
+	InHochkomma = false;
+
+	// Ausgeben
+	for (i = 0 ; i < Len ; i++)
+		{
+		if (DruckAscii && buf[i] >= ' ' && buf[i] <= '~')
+			{
+			if (!InHochkomma)
+				{
+				ProtokollierenC(' ');
+				ProtokollierenC('\'');
+				InHochkomma = true;
+				}
+			ProtokollierenC(buf[i]);
+			}
+		else
+			{
+			if (InHochkomma)
+				{
+				ProtokollierenC('\'');
+				InHochkomma = false;
+				}
+			ProtokollierenInt_P(PSTR(" %02X"), buf[i]);
+			}
+		} // for i
+	
+	if (InHochkomma)
+		ProtokollierenC('\'');
 	}
 
 	

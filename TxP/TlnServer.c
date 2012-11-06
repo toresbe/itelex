@@ -232,8 +232,7 @@ static void SocketBearbeiten(int *Socket)
 			{
 			ProtokollierenInt_P(PSTR("TlnSrv: Socket Empfang: (%d/" ), InCount);
 			ProtokollierenInt_P(PSTR("%d)"), Res);
-			for (uint16_t i = 0 ; i < Res ; i++)
-				ProtokollierenInt_P(PSTR(" %02X"), TlnServBuf.Buf[i]);
+			ProtokollierenPuffer(TlnServBuf.Buf, Res);
 			Protokollieren_P(PSTR("\r\n"));
 			}		
 		
@@ -360,8 +359,7 @@ static void SocketBearbeiten(int *Socket)
 		if (ProtokollLevelTlnServ >= 2)
 			{
 			ProtokollierenInt_P(PSTR("TlnSrv: Socket Sendung: (%u)" ), OutCount);
-			for (uint16_t i = 0 ; i < OutCount ; i++)
-				ProtokollierenInt_P(PSTR(" %02X"), TlnServBuf.Buf[i]);
+			ProtokollierenPuffer(TlnServBuf.Buf, OutCount);
 			ProtokollierenInt_P(PSTR(" --> Res %d\r\n" ), Res);
 			}
 

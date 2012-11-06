@@ -20,6 +20,8 @@ extern void ProtokollierenIPAdr(long aip);
 
 extern void ProtokollierenMAC(char mac[6]);
 
+extern void ProtokollierenPuffer(char Buf[], uint16_t Len);
+
 extern void ProtokollInit();
 
 #endif //ndef __PROTOKOLL_H__

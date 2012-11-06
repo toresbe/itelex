@@ -291,8 +291,14 @@ static uint8_t TxpSocketProtVersion;
 static uint8_t TxpSocketProtVersionVorschlag;
 	//!< Selbst Vorgeschlagene Protokollversion der Kommunikation
 
-static bool TxpSocketModeAscii; 
-	//!< true, wenn die Daten als ASCII und nicht als Baudot-Daten übertragen werden.
+static enum {
+	TelexPhone,		//!< Das eigene Protokoll
+	Ascii,			//!< Ascii, also telnet
+	POP3,			//!< Mail-Abfrage
+	SMTP			//!< Mail-Sendung
+	} TxpSocketProtokoll; 
+	//!< Was geht über den Socket 'rüber.
+	
 
 enum { SocketInBufMax = 2500 } ; //!< Größe des TCP-Empfangspuffers
 
@@ -822,7 +828,7 @@ static void ModusWechsel(TModus neu)
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
 			SeriellUmsetzInit();
 			SendenBeschleunigen = false;
-			TxpSocketModeAscii = false;
+			TxpSocketProtokoll = TelexPhone;
 			AsciiDruckPuffer[0] = '\0';
 			SocketAnzahlZeichenEmpfangen = 0;
 			SocketAnzahlZeichenGesendet = 0;
@@ -869,7 +875,7 @@ static void ModusWechsel(TModus neu)
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
 			SeriellUmsetzInit();
-			TxpSocketModeAscii = false;
+			TxpSocketProtokoll = TelexPhone;
 			AsciiDruckPuffer[0] = '\0';
 			SendenBeschleunigen	= false;
 			Durchwahl = 0;
@@ -1213,27 +1219,45 @@ static void SocketBearbeiten()
 	// --------------------------------------------------
 	if (TxpSocketHandle != NO_SOCKET_USED && CheckSocketState(TxpSocketHandle) == SOCKET_NOT_USE)
 		{ // ID#242 ID#342 ID#314 ************************************************
-		if (TxpSocketAbbauGeplant || TxpSocketModeAscii)
+		switch (TxpSocketProtokoll)
 			{
-			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
-			TxpSocketMode = SocketIdle;
-			TxpSocketIP = 0;
-			TxpSocketAbbauGeplant = false;
-			SocketOutBufUsed = 0;
-			SocketInBufUsed = 0;
-			#ifdef LEDROT_SOCKETERROR
-				LED_off(ROT);
-			#endif //def LEDROT_SOCKETERROR
+			case TelexPhone:
+				if (!TxpSocketAbbauGeplant)
+					{
+					if (ProtokollLevel >= 1)
+						Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n" ));
+					#ifdef LEDROT_SOCKETERROR
+						LED_on(ROT);
+					#endif //def LEDROT_SOCKETERROR
+					break; // des switch
+					}
+				// sonst weiter mit Ascii, kein break;
+				
+			case Ascii:
+				// oder TelexPhone und AbbauGeplant
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
+				TxpSocketMode = SocketIdle;
+				TxpSocketIP = 0;
+				TxpSocketAbbauGeplant = false;
+				SocketOutBufUsed = 0;
+				SocketInBufUsed = 0;
+				#ifdef LEDROT_SOCKETERROR
+					LED_off(ROT);
+				#endif //def LEDROT_SOCKETERROR
+				break;
+				
+			default:
+				Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle GETRENNT\r\n" ));
+				TxpSocketMode = SocketIdle;
+				TxpSocketIP = 0;
+				TxpSocketAbbauGeplant = false;
+				SocketOutBufUsed = 0;
+				SocketInBufUsed = 0;
+				break;
+				
 			}
-		else
-			{
-			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n" ));
-			#ifdef LEDROT_SOCKETERROR
-				LED_on(ROT);
-			#endif //def LEDROT_SOCKETERROR
-			}
+			
 		CloseTCPSocket(TxpSocketHandle);
 		StartTimer(&TxpSocketAbbruchTimer);
 		StartTimer(&TxpSocketWiederholungVerzoegerung);
@@ -1281,16 +1305,10 @@ static void SocketBearbeiten()
 			
 			if (ProtokollLevel == 3) // Daten explizit
 				{
-				// printf_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
-				// printf_P(PSTR("%d)"), Res);
-				// for (uint16_t i = 0 ; i < Res ; i++)
-					// printf_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
-				// printf_P(PSTR(" --> neu Ges %d\r\n"), SocketInBufUsed + Res);
 				ProtokollierenInt_P(PSTR("TxP: Socket Empfang: (%d/" ), InCount);
 				ProtokollierenInt_P(PSTR("%d)"), Res);
-				for (uint16_t i = 0 ; i < Res ; i++)
-					ProtokollierenInt_P(PSTR(" %02X"), SocketInBuf[SocketInBufUsed + i]);
-				ProtokollierenInt_P(PSTR(" --> neu Ges %u\r\n"), SocketInBufUsed + Res);
+				ProtokollierenPuffer(SocketInBuf + SocketInBufUsed, Res);
+				ProtokollierenInt_P(PSTR(" --> BufUsed %u\r\n"), SocketInBufUsed + Res);
 				}		
 				
 			if (Res > 0)
@@ -1301,7 +1319,7 @@ static void SocketBearbeiten()
 	// ggf Lebenszeichen erzeugen
 	// --------------------------
 	if (TxpSocketMode != SocketIdle
-		&& !TxpSocketModeAscii
+		&& TxpSocketProtokoll == TelexPhone
 		&& TimerVal(&TxpSocketLebenszeichenTimer) >= 40
 	    && SocketOutBufUsed == 0
 		&& SocketSendeFehlerZaehler == 0
@@ -1317,7 +1335,7 @@ static void SocketBearbeiten()
 	// Timeout bei Ascii-Verbindungen verhindern
 	// -----------------------------------------
 	if (!TxpSocketAbbauGeplant
-		&& TxpSocketModeAscii
+		&& TxpSocketProtokoll != TelexPhone
 		&& TxpSocketHandle != NO_SOCKET_USED)
 		{ 
 		TCP_sockettable[TxpSocketHandle].Timeoutcounter = 10; // Sekunden
@@ -1372,18 +1390,11 @@ static void SocketBearbeiten()
 		if (ProtokollLevel == 3)
 			{
 			ProtokollierenInt_P(PSTR("TxP: Socket Sendung: (%u)" ), SendSize);
-			for (uint16_t i = 0 ; i < SendSize ; i++)
-				ProtokollierenInt_P(PSTR(" %02X"), SocketOutBuf[i]);
+			ProtokollierenPuffer(SocketOutBuf, SendSize);
 			ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
 			if (Res > 0 && Res < SocketOutBufUsed)
 				ProtokollierenInt_P(PSTR(", Rest %u" ), SocketOutBufUsed - Res);
-			ProtokollierenInt_P(PSTR(" Sum %u/"), SocketAnzahlZeichenGesendet);
-			ProtokollierenInt_P(PSTR("%02X\r\n" ), low(SocketAnzahlZeichenGesendet));
-			// printf_P(PSTR("TxP: Socket Sendung: (%d)" ), SocketOutBufUsed);
-			// for (uint16_t i = 0 ; i < SocketOutBufUsed ; i++)
-				// printf_P(PSTR(" %02X"), SocketOutBuf[i]);
-			// printf_P(PSTR(" --> Res %d" ), Res);
-			// printf_P(PSTR(" Sum %d\r\n" ), SocketAnzahlZeichenGesendet);
+			ProtokollierenInt_P(PSTR(" SumAnz %u\r\n" ), SocketAnzahlZeichenGesendet);
 			}
 
 		if (Res <= 0)
@@ -1482,20 +1493,11 @@ static void InterneVerbindungBeenden()
 		}
 	} // InterneVerbindungBeenden()
 	
-	
-//! Interpretiert empfangene Daten vom Socket und schiebt diese in den 
-//! EmpfPuffer. Wandelt Daten aus dem SendePuffer um.
-//! Bearbeitet auch Statusänderungen.
 
-static void TxpDatenVerarbeiten()
+//! Interpretiert empfangene Daten vom Socket und schiebt diese in den 
+//! EmpfPuffer.
+static void TxpOderAsciiEmpfangVerarbeiten()
 	{
-	// Verbindungsabbau bearbeiten
-	// ---------------------------
-	if (TxpSocketMode == SocketIdle)
-		{
-		InterneVerbindungBeenden();
-		} // if (TxpSocketMode == SocketIdle)
-	
 	// Daten des Socket-Empfangspuffer interpretieren
 	// ----------------------------------------------
 	if (SocketInBufUsed > 0)
@@ -1511,7 +1513,7 @@ static void TxpDatenVerarbeiten()
 			if (c == '\r' || c == '\n' || (c >= ' ' && c <= '~'))
 				{ // ein ASCII-Zeichen
 				// ID#246 ID#344 *****************************************************
-				TxpSocketModeAscii = true;
+				TxpSocketProtokoll = Ascii;
 				int alen = strlen(AsciiDruckPuffer);
 				if (alen < AsciiDruckPufferMax-2)
 					{
@@ -1549,7 +1551,7 @@ static void TxpDatenVerarbeiten()
 				
 			else if (c == TXPC_BAUDOT_DATA)
 				{ // ID#243 ID#343 ***********************************************************
-				TxpSocketModeAscii = false;
+				TxpSocketProtokoll = TelexPhone;
 				uint8_t len = SocketInBuf[i+1];
 				
 				if (i + 2 + len <= SocketInBufUsed && PufferAnzahl(&SendePuffer) + len < MaxPuffer)
@@ -1684,7 +1686,15 @@ static void TxpDatenVerarbeiten()
 			SocketInBufUsed = 0;
 			
 		} // if GetBytesInSocketData > 0
+	} // TxpOderAsciiEmpfangVerarbeiten()
 
+	
+//! Wandelt Daten aus dem SendePuffer um.
+//! Bearbeitet auch Statusänderungen.
+static void TxpDatenVerarbeiten()
+	{
+	TxpOderAsciiEmpfangVerarbeiten();
+		
 	// vom Endgerät empfangene Daten übersetzen
 	// --------------------------------------------------
 	// es wird gesendet, wenn es was zu senden gibt 
@@ -1699,65 +1709,35 @@ static void TxpDatenVerarbeiten()
 			)
 		)
 		{ // ID#244 ID#344 ***************************************************************
-		if (TxpSocketModeAscii)
-			{
-			uint8_t ProtAnz = 0;
-			while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3 - 10) // - 10 = Reserve für wichtige Daten
-				{
-				uint8_t code = PufferAusg(&EmpfPuffer);
+		// Baudot-Datenblock senden
+		if (SocketOutBufUsed < SocketOutBufMax - 4 - 10) // - 10 = Reserve für wichtige Daten
+			{ // es ist überhaupt Platz zum Senden
+			uint8_t len = PufferAnzahl(&EmpfPuffer);
+			if (len > SocketOutBufMax - 10 - 3 - SocketOutBufUsed)
+				len = SocketOutBufMax - 10 - 3 - SocketOutBufUsed;
 				
-				if (code == TtyCodeZiWerDa && EmpfPuffer.BuZiMode == ZiMode)
-					SocketOutBuf[SocketOutBufUsed] = '@'; // testweise wird Werda als @ gesendet (für Email-Adressen)
-				else
-					SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(code, (char*) &EmpfPuffer.BuZiMode);
-					
-				if (SocketOutBuf[SocketOutBufUsed] != '\0')
-					{
-					SocketOutBufUsed++;
-					SocketAnzahlZeichenGesendet++;
-					ProtAnz++;
-					}
-				}
-
-			if (ProtokollLevel == 2 && ProtAnz > 0) // Datenmengen
+			if (ProtokollLevel == 2) // Datenmengen
 				{
-				ProtokollierenInt_P(PSTR("TxP: SendA %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
-				ProtokollierenInt_P(PSTR("%4d"), ProtAnz);
-				ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet)); // wurde schon erhöht
+				ProtokollierenInt_P(PSTR("TxP: SendB %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
+				ProtokollierenInt_P(PSTR("%4d"), len);
+				ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet) + len);
 				}
-			} // if TxpSocketModeAscii
-		else
-			{ // Baudot-Datenblock senden
-			if (SocketOutBufUsed < SocketOutBufMax - 4 - 10) // - 10 = Reserve für wichtige Daten
-				{ // es ist überhaupt Platz zum Senden
-				uint8_t len = PufferAnzahl(&EmpfPuffer);
-				if (len > SocketOutBufMax - 10 - 3 - SocketOutBufUsed)
-					len = SocketOutBufMax - 10 - 3 - SocketOutBufUsed;
-					
-				if (ProtokollLevel == 2) // Datenmengen
-					{
-					ProtokollierenInt_P(PSTR("TxP: SendB %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
-					ProtokollierenInt_P(PSTR("%4d"), len);
-					ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet) + len);
-					}
-					
-				SocketOutBuf[SocketOutBufUsed++] = TXPC_BAUDOT_DATA;
-				SocketOutBuf[SocketOutBufUsed++] = len;
-				SocketAnzahlZeichenGesendet += len;
-				while (len > 0)
-					{
-					SocketOutBuf[SocketOutBufUsed++] = PufferAusg(&EmpfPuffer);
-					len--;
-					}
-				SocketSendeQuittung = true;
-				} // if SocketOutBufUsed < SocketOutBufMax - 4
-			} // else !TxpSocketModeAscii
+				
+			SocketOutBuf[SocketOutBufUsed++] = TXPC_BAUDOT_DATA;
+			SocketOutBuf[SocketOutBufUsed++] = len;
+			SocketAnzahlZeichenGesendet += len;
+			while (len > 0)
+				{
+				SocketOutBuf[SocketOutBufUsed++] = PufferAusg(&EmpfPuffer);
+				len--;
+				}
+			SocketSendeQuittung = true;
+			} // if SocketOutBufUsed < SocketOutBufMax - 4
 		} // if (...) = Im Baudot-Puffer liegende Daten senden...
 		
 	// ggf. Anzahl verarbeiteter Zeichen zurückmelden
 	// --------------------------------------------------
-	if (!TxpSocketModeAscii 
-		&& (Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
+	if ((Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
 		&& (SocketSendeQuittung || TimerVal(&TxpSocketLebenszeichenTimer) > 35)
 		&& !TxpSocketAbbauGeplant
 		&& SocketSendeFehlerZaehler == 0
@@ -1773,6 +1753,47 @@ static void TxpDatenVerarbeiten()
 		}
 
 	} // TxpDatenVerarbeiten()
+	
+
+//! Wandelt Daten aus dem SendePuffer um.
+//! Bearbeitet auch Statusänderungen.
+static void AsciiDatenVerarbeiten()
+	{
+	TxpOderAsciiEmpfangVerarbeiten();
+		
+	// vom Endgerät empfangene Daten übersetzen
+	// --------------------------------------------------
+	// es wird gesendet, wenn es was zu senden gibt 
+	// UND      a) es viel zu senden gibt 
+	//     ODER b) 0,5 sekunden nicht getippt wurde.
+	int InCount = PufferAnzahl(&EmpfPuffer);
+	if (InCount > 20
+	    || (InCount > 0 && TimerVal(&RuheTimer) >= 8) // 0,8 Sekunden Tipp-Pause
+		)
+		{ // ID#244 ID#344 ***************************************************************
+		uint8_t ProtAnz = 0;
+		while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3 - 10) // - 10 = Reserve für wichtige Daten
+			{
+			SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+			if (SocketOutBuf[SocketOutBufUsed] != '\0')
+				{
+				SocketOutBufUsed++;
+				SocketAnzahlZeichenGesendet++;
+				ProtAnz++;
+				}
+			}
+
+		if (ProtokollLevel == 2 && ProtAnz > 0) // Datenmengen
+			{
+			ProtokollierenInt_P(PSTR("TxP: SendA %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
+			ProtokollierenInt_P(PSTR("%4d"), ProtAnz);
+			ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet)); // wurde schon erhöht
+			}
+			
+		StartTimer(&TxpSocketLebenszeichenTimer);
+		}
+
+	} // AsciiDatenVerarbeiten()
 	
 
 //! Schreibt ein Ende-Kommando mit Zusatztext in den Socket-Sendepuffer
@@ -1918,6 +1939,10 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				}
 			break;
 			
+		case eMail:
+			Protokollieren_P(PSTR("TxP: eMail noch nicht unterstuetzt\r\n" ));
+			return 2;
+			
 		default:
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR("TxP: Teilnehmer ist GELOESCHT\r\n" ));
@@ -1953,7 +1978,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			Protokollieren_P(PSTR("TxP: Client-Socket Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
 		ModusWechsel(ModGehendVerbunden);
 		SocketBufInit();
-		TxpSocketModeAscii = true;
+		TxpSocketProtokoll = Ascii;
 		return 0;
 		}
 	else // TxpUrl oder TxpIP
@@ -1962,7 +1987,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			ProtokollierenInt_P(PSTR("TxP: Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %u\r\n"), td->Durchwahl);
 
 		SocketBufInit();
-		TxpSocketModeAscii = false;
+		TxpSocketProtokoll = TelexPhone;
 		
 		SocketOutBuf[0] = TXPC_VERSION;
 		SocketOutBuf[1] = 1;
@@ -2224,8 +2249,39 @@ void txp_thread()
 	// ======================================================================
 
 	SocketBearbeiten();
-	TxpDatenVerarbeiten();
 	
+	// Verbindungsabbau bearbeiten
+	// ---------------------------
+	if (TxpSocketMode == SocketIdle)
+		{
+		InterneVerbindungBeenden();
+		} // if (TxpSocketMode == SocketIdle)
+	
+	switch (TxpSocketProtokoll)
+		{
+		case Ascii:
+			AsciiDatenVerarbeiten();
+			break;
+			
+		case TelexPhone:
+			TxpDatenVerarbeiten();
+			break;
+			
+		case POP3:
+			//! \todo
+			break;
+			
+		case SMTP:
+			//! \todo
+			break;
+		
+		default:
+			Protokollieren("TxP: ILLEGALES Protokoll\r\n");
+			TxpSocketProtokoll = Ascii;
+			break;
+		}
+			
+		
 	if (Modus == ModGehendWaehlen && !PufferLeer(&SendePuffer))
 		{ // es wurden Daten empfangen, also schnellstens Endgerät anschmeißen
 		// ID#227 Teil 2 *******************************************************
@@ -2809,7 +2865,7 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(TimerVal(&TxpSocketAbbruchTimer));
 	PRINTVAL(SocketInBufUsed);
 	PRINTVAL(SocketOutBufUsed);
-	PRINTVAL(TxpSocketModeAscii);
+	PRINTVAL(TxpSocketProtokoll);
 	
 	PRINTVAL(SocketAnzahlZeichenGesendet);
 	PRINTVAL(SocketAnzahlZeichenQuittiert);
