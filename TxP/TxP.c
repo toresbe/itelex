@@ -1394,7 +1394,8 @@ static void SocketBearbeiten()
 			ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
 			if (Res > 0 && Res < SocketOutBufUsed)
 				ProtokollierenInt_P(PSTR(", Rest %u" ), SocketOutBufUsed - Res);
-			ProtokollierenInt_P(PSTR(" SumAnz %u\r\n" ), SocketAnzahlZeichenGesendet);
+			ProtokollierenInt_P(PSTR(" SumAnz %u" ), SocketAnzahlZeichenGesendet);
+			ProtokollierenInt_P(PSTR("/%02X\r\n" ), low(SocketAnzahlZeichenGesendet));
 			}
 
 		if (Res <= 0)
