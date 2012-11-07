@@ -1,0 +1,36 @@
+=~=~=~=~=~=~=~=~=~=~=~= PuTTY log 2012.11.07 18:09:10 =~=~=~=~=~=~=~=~=~=~=~=
+220 winmail-qwmail.de (IMail 8.15 78648-1) NT-ESMTP Server X1
+auth login
+334 VXNlcm5hbWU6
+ZnJlZEB0ZWxlcHJpbnRlci5uZXQ=
+334 UGFzc3dvcmQ6
+c29ubmlicw==
+235 authenticated
+mail from:<fred@teleprinter.net>
+503 HELO/EHLO not received.
+ehlo
+250-teleprinter.net says hello
+250-SIZE 0
+250-8BITMIME
+250-DSN
+250-ETRN
+250-AUTH LOGIN CRAM-MD5
+250-AUTH=LOGIN
+250 EXPN
+mail from:<fred@teleprinter.net>
+250 ok
+rcpt to:<fred.sonnenrein@gmx.de>
+250 ok its for <fred.sonnenrein@gmx.de>
+data
+354 ok, send it; end with <CRLF>.<CRLF>
+HGanz i       Fred  om:<fred@teleprinter.net>
+To:<fred.sonnenrein@gmx.de>
+Subject: Blubb
+
+Test 123
+zweite Zeile
+letzte Zeile
+.
+250 Message queued
+quit
+221 Goodbye
