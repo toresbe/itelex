@@ -79,6 +79,7 @@
 	#define TELEXPHONE
 	#define TXP_ANSCHLUSS
 	#define TXP_TLNSERVER
+	#define TXP_EMAIL
 	
 	#define SHELL
 

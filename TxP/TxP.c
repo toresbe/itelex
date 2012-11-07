@@ -69,6 +69,7 @@
 #include "BaudotCode.h"
 #include "Protokoll.h"
 #include "TlnServer.h"
+#include "eMail.h"
 
 
 #ifdef TXP_ANSCHLUSS
@@ -1459,22 +1460,30 @@ static void SocketBearbeiten()
 
 
 //! Interner Statuswechsel bei Ende-befehl (Socket geschlossen oder anderes Ende-Kommando)
-
-static void InterneVerbindungBeenden()
+//! \param Force alle schwebenden Zustände (z.B. Wahlzustand) auch zum Abschluss bringen.
+static void InterneVerbindungBeenden(bool Force)
 	{
 	switch (Modus)
 		{
-		case ModRuhe:
 		case ModGehendReserv:
 		case ModGehendWaehlen:
-		case ModPufferDruckUndSchluss:
-		case ModWarteSchlussQuitt:
 		case ModDirektdruckWarteEinQuitt:
 		case ModDirektdruckVerbunden: 
+			if (Force)
+				{
+				BusSenden(BusKdoSchluss);
+				ModusWechsel(ModWarteSchlussQuitt);
+				}
+			// sonst in diesen Zuständen ist normalerweise kein Socket offen.
+			// daher auch keine Reaktion auf geschlossenen Socket.
+			break; 
+		
+		case ModRuhe:
+		case ModPufferDruckUndSchluss:
+		case ModWarteSchlussQuitt:
 		case ModDeaktiviert:
 		case ModWarteGrundstellung:
-			// in diesen Zuständen ist normalerweise kein Socket offen.
-			// daher auch keine Reaktion auf geschlossenen Socket.
+			// in diesen Zuständen ist nicht zu tun, sondern nur abzuwarten.
 			break; 
 			
 		case ModKommendVerbVorstufe:
@@ -1482,6 +1491,10 @@ static void InterneVerbindungBeenden()
 		case ModKommendWarteEinQuitt:
 			if (ProtokollLevel >= 1)
 				ProtokollierenInt_P(PSTR("TxP: Wechsel nach Modus Ruhe (von %d)\r\n"), Modus);
+				
+			if (Modus == ModKommendWarteEinQuitt)
+				BusSenden(BusKdoSchluss);
+				
 			ModusWechsel(ModWarteGrundstellung); 
 			break;
 		
@@ -1489,6 +1502,7 @@ static void InterneVerbindungBeenden()
 		case ModGehendVerbunden:
 			if (ProtokollLevel >= 1)
 				ProtokollierenInt_P(PSTR("TxP: Wechsel nach Modus PufferDruckUndSchluss (von %d)\r\n"), Modus);
+			BusSenden(BusKdoSchluss);
 			ModusWechsel(ModPufferDruckUndSchluss);
 			break;
 		}
@@ -1607,7 +1621,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				if (ProtokollLevel >= 1)
 					Protokollieren_P(PSTR("TxP: Abbaubefehl von Gegenstelle\r\n"));
 
-				InterneVerbindungBeenden();
+				InterneVerbindungBeenden(true);
 				
 				TxpSocketAbbauGeplant = true;
 				
@@ -2129,11 +2143,13 @@ void txp_thread()
 					
 					if (TlnSuche(Wahlnummer, false, &GewaehlterTln))
 						{ // ID#222 ********************************************
+						bool RufnummerServerAbfrage = (Wahlziffern >= 5 && (GewaehlterTln.Flags & TlnFlag_Lokal) == 0);
+						
 						if (ProtokollLevel >= 1)
 							ProtokollierenInt_P(PSTR("TxP: Teilnehmer %lu im eigenen Telefonbuch gefunden.\r\n"), GewaehlterTln.Nummer);
 		
-						if (Wahlziffern >= 5 && (GewaehlterTln.Flags & TlnFlag_Lokal) == 0)
-							RufnummerBeiTlnServerAbfragen(); // TEST ob das sinnvoll ist...
+						if (RufnummerServerAbfrage)
+							RufnummerBeiTlnServerAbfragen(); 
 							
 						switch (Verbindungsaufbau(&GewaehlterTln))
 							{
@@ -2142,20 +2158,14 @@ void txp_thread()
 								
 							case 1:
 								// ID#223 ********************************************
-								if (GewaehlterTln.Flags & TlnFlag_Lokal)
-									{
-									BusSenden(BusKdoSchluss);
-									ModusWechsel(ModWarteSchlussQuitt);
-									}
-								else if (Wahlziffern >= 5)
-									{ // mal den Rufnummer-Server befragen...
-									// herausgenommen, da oben TEST TimerVal(&RuheTimer) > 20; // nicht mehr 2 Sekunden warten.
-									}
+								if (!RufnummerServerAbfrage)
+									// sonst besteht eine Chance auf eine Meldung des Rufnummern-Servers
+									InterneVerbindungBeenden(true);
+									
 								break;
 							
 							case 2:
-								BusSenden(BusKdoSchluss);
-								ModusWechsel(ModWarteSchlussQuitt);
+								InterneVerbindungBeenden(true);
 								TlnServerAbfrageWiederholungssperre = true;
 								break;
 							}
@@ -2239,8 +2249,7 @@ void txp_thread()
 			{
 			if (ProtokollLevel >= 1)
 				Protokollieren("TxP: TWI-Timeout -> Abschaltung\r\n");
-			BusSenden(BusKdoSchluss);
-			ModusWechsel(ModWarteSchlussQuitt);
+			InterneVerbindungBeenden(true);
 			//! \todo Socket ordentlich schließen
 			}
 		}
@@ -2255,7 +2264,7 @@ void txp_thread()
 	// ---------------------------
 	if (TxpSocketMode == SocketIdle)
 		{
-		InterneVerbindungBeenden();
+		InterneVerbindungBeenden(false);
 		} // if (TxpSocketMode == SocketIdle)
 	
 	switch (TxpSocketProtokoll)
@@ -2339,8 +2348,7 @@ void txp_thread()
 		// ID#332 ***************************************************************
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("TxP: Timeout beim Warten auf die Einschaltquittung\r\n" ));
-		BusSenden(BusKdoSchluss);
-		ModusWechsel(ModWarteSchlussQuitt);
+		InterneVerbindungBeenden(true);
 		SendeStopkommando(PSTR("err\r\n"));
 		}
 		
@@ -2480,8 +2488,7 @@ void txp_thread()
 			{
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR("TxP: Direktdruck-Ruhe --> Ausschaltung intern\r\n" ));
-			BusSenden(BusKdoSchluss);
-			ModusWechsel(ModWarteSchlussQuitt);
+			InterneVerbindungBeenden(true);
 			} // Abschaltung nach 30 Sekunden / 180 Sekunden.
 
 		} // if Modus == ModDirektdruckVerbunden
@@ -2560,8 +2567,7 @@ void txp_thread()
 				{
 				ProtokollierenInt_P(PSTR("TxP: Teilnehmer-Server Empfang: (%d/" ), InCount);
 				ProtokollierenInt_P(PSTR("%d)"), Res);
-				for (uint16_t i = 0 ; i < Res ; i++)
-					ProtokollierenInt_P(PSTR(" %02X"), TSB.Buf[i]);
+				ProtokollierenPuffer(TSB.Buf, Res);
 				Protokollieren_P(PSTR("\r\n"));
 				}		
 			
@@ -2625,8 +2631,7 @@ void txp_thread()
 								
 							case 1: // Socket öffnen nicht erfolgreich
 							case 2: // Ungültige Daten
-								BusSenden(BusKdoSchluss);
-								ModusWechsel(ModWarteSchlussQuitt);
+								InterneVerbindungBeenden(true);
 								break;
 							}
 						}
@@ -2681,7 +2686,7 @@ void txp_thread()
 			return;
 			}
 		
-		// Timeout? kommt von selbst nach 20 Sekunden...
+		// Timeout? kommt von selbst nach 30 Sekunden...
 		
 		}
 		
@@ -3745,6 +3750,11 @@ void txp_init()
 	
 	#endif // TXP_TLNSERVER
 
+	#ifdef TXP_EMAIL
+	
+	txp_email_init();
+	
+	#endif //def TXP_EMAIL
 	}
 
 

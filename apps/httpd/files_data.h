@@ -223,7 +223,7 @@ const char data7[] PROGMEM = {
 	"<HTML>"
 	"<BODY>"
 	"<pre><p>"
-	"  Welcome on\r\n"
+	"  Welcome to\r\n"
 	"__________________________________________________________________________\r\n"
 	" OOOOO  OOOOO  O      OOOOO  O   O       OOOO   O   O   OOO   O   O  OOOOO\r\n"
 	"   O    O      O      O       O O        O   O  O   O  O   O  OO  O  O    \r\n"
@@ -301,7 +301,9 @@ const char data13[] PROGMEM = {
 	"<a href=\"txp-menu.html\">zur&uuml;ck</a>"
 	" / <a href=\"txpcfg-intern.cgi\" target=\"main\">Einstellungen im lokalen TxP-System</a>"
 	" / <a href=\"txpcfg-extern.cgi\" target=\"main\">Einstellungen im ip-telex-Netz</a>"
-//	" / <a href=\"txpcfg-mail.cgi\" target=\"main\">Mail-Einstellungen</a>"
+#ifdef TXP_MAIL
+	" / <a href=\"txpcfg-email.cgi\" target=\"main\">eMail-Einstellungen</a>"
+#endif //def TXP_MAIL	
 	" / <a href=\"txpcfg-sperren.cgi\" target=\"main\">Sperren</a>"
 	"</BODY>"
 	"</HTML>"
