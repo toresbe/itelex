@@ -45,6 +45,49 @@
 #include "FifoPuffer.h"
 
 
+typedef enum
+	{
+	ModRuhe = 0, 
+		//!< nichts läuft
+
+	// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
+	ModGehendReserv = 1, 
+		//!< Schnittstelle ist angesprochen worden, aber noch ein Einschaltkommando erhalten.
+	ModGehendWaehlen = 2,
+		//!< Einschaltkommando erhalten, Wahlaufforderung gesendet, 
+		//!< ggf. auch schon Wahlziffern empfangen.
+	ModGehendVerbunden = 4,
+		//!< Wahl abgeschlossen, Socket geöffnet, Endgerät eingeschaltet.
+	
+	// Kommend = vom Netz zum internen Anschluss
+	ModKommendVerbVorstufe = 11, 
+		//!< es wird erst mal abgewartet, was aus der ankommenden Verbindung wird.
+	ModKommendEinschalten = 12, 
+		//!< Es wurden Daten oder ein Einschaltkommando (Durchwahl) empfangen.
+	ModKommendWarteEinQuitt = 13, 
+		//!< Warte auf Einschalt-Quittung des Endgeräts
+	ModKommendVerbunden = 14, 
+	
+	ModPufferDruckUndSchluss = 18,
+	ModWarteSchlussQuitt = 19,
+	
+	// z.B. über HTML-Seite verursachte direkte Druckausgabe
+	ModDirektdruckWarteEinQuitt = 21, //!< Warte auf Einschalt-Quittung des Endgeräts
+	ModDirektdruckVerbunden = 22, 
+
+	ModDeaktiviert = 31, //!< Durch Tastendruck ausgeschaltet.
+	ModWarteGrundstellung = 32, 
+		//!< Wartet darauf, dass nach Ausschaltung des lokalen Endgerätes der 
+		//!< Socket wieder geschlossen ist und alles andere auch die Grundstellung hat.
+	
+	} TModus;
+	
+	
+extern TModus Modus;
+
+extern void ModusWechsel(TModus neu);
+
+
 DEFPORTINPULL(Taste, B, 3);
 
 typedef enum { 

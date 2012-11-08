@@ -40,5 +40,8 @@ extern bool SMTPOeffnen(char *EmfaengerName);
 
 extern void SMTPSchliessen();
 
+extern void POP3Einleiten();
+
+
 
 #endif //def TXP_EMAIL

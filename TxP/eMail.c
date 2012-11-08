@@ -75,7 +75,19 @@ static uint8_t EmailAbfrageTakt;
 static char EmailEmpfaenger[TlnAdresseMax];
 	//!< Zwischenspeicher für Empfänger.
 	
+static TKurzTimer POPWartezeitTimer;
+	//!< Zeitmesser für die Email-Abfrage-Takte
 
+static uint16_t POPWartezeitEnde;
+	//!< Ablaufzeit für die Email-Abfrage-Takte. 3 Minuten nach jeder anderen Kommunikation,
+	//!< #EmailAbfrageTakt Minuten nach jeder erfolglosen Email-Abfrage.
+
+
+static bool POPOkEmpfangen;
+	//!< Wird auf true gesetzt, wenn eine Zeile mit + am Anfang empfangen wurde.
+	//!< Nach Kommandoausgaben auf false.
+	
+	
 enum {
 	HalloSagen = 1,
 	AnmeldungStarten = 2,
@@ -87,18 +99,220 @@ enum {
 	WarteStart = 8,
 	MailData = 9,
 	Abmelden = 10,
-	WarteEnde = 11
+	WarteEnde = 11,
+	Loeschen = 12
 	} ; // Konstanten für ProtokollPhase
 
 	
+
+//! Startet in gewissen Zeiträumen die Abfrage des POP-Servers.
+// =========================================================================
+//! 
+void POP3Einleiten()
+	{
+	if (TimerVal(&POPWartezeitTimer) < POPWartezeitEnde)
+		return;
+		
+	if (EmailAbfrageTakt == 0)
+		return;
+		
+	if (Modus != ModRuhe || TxpSocketHandle != NO_SOCKET_USED)
+		{
+		StartTimer(&POPWartezeitTimer);
+		POPWartezeitEnde = 3 * 600;
+		}
+
+	StartTimer(&POPWartezeitTimer);
+	POPWartezeitEnde = 3 * 600;
+		// hier schon, da nach Öffnen immer ein Zeitfenster gestartet wird.
+		
+	// jetzt geht's los...
+	long ServerIP;
 	
+	ServerIP = DNS_ResolveName(EmailPOPServerAdresse); 
+	if (ServerIP == -1)
+		{
+		Protokollieren_P(PSTR("TxP POP: IP zu Url "));
+		Protokollieren(EmailPOPServerAdresse);
+		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
+		
+		POPWartezeitEnde = EmailAbfrageTakt * 600;
+		
+		return;
+		}
+	
+	// und hier wird geöffet...
+	TxpSocketHandle = Connect2IP(ServerIP, 110); 
+	 
+	if (TxpSocketHandle == -1)
+		{ // ID#223 ********************************************
+		// Verbindung konnte nicht aufgebaut werden
+		Protokollieren_P(PSTR("TxP POP: Socket zum Server konnte nicht geoeffnet werden\r\n"));
+		TxpSocketHandle = NO_SOCKET_USED;
+		TxpSocketMode = SocketIdle;
+		return;
+		}
+
+	SocketBufInit();
+	ModusWechsel(ModKommendVerbVorstufe);
+	
+	TxpSocketMode = SocketOriginate;
+	TxpSocketAbbauGeplant = false;
+	TxpSocketProtokoll = POP3;
+	
+	ProtokollPhase = AnmeldungName;
+	POPOkEmpfangen = false;
+	
+	StartTimer(&TxpSocketAbbruchTimer);
+	
+	return;
+	} // POP3Einleiten
+	
+
 //! Bearbeitet die Socket-Daten für die Kommunikation mit einem POP3-Server.
 // =========================================================================
 //! 
+/* Typischer Ablauf einer POP3-Sitzung:
++OK example.com POP3-Server
+USER wiki@example.com 	
++OK Please enter password
+PASS passwort_im_klartext 	
++OK mailbox locked and ready
+STAT 	
++OK 1 236
+LIST 	
++OK mailbox has 1 messages (236 octets)
+1 236
+.
+RETR 1 	
++OK message follows
+Date: Mon, 18 Oct 2004 04:11:45 +0200
+From: Someone <someone@example.com>
+To: wiki@example.com
+Subject: Test-E-Mail
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+
+Dies ist eine Test-E-Mail
+
+.
+DELE 1 	
++OK message marked for delete
+QUIT 	
++OK bye
+*/
+
 void Pop3DatenVerarbeiten()
 	{
+	uint16_t i;
+	
+	if (SocketOutBufUsed != 0)
+		return;
+		
+	if (SocketInBufUsed == 0)
+		return;
+		
+	if (SocketInBuf[SocketInBufUsed-1] != 0x0a) // Linefeed.
+		return; 
+		
+	if (SocketInBuf[0] == '+')
+		POPOkEmpfangen = true;
+
+	SocketInBuf[SocketInBufUsed] = '\0';
+		
+	if (!POPOkEmpfangen)
+		{
+		if (ProtokollLevel >= 1)
+			{
+			Protokollieren_P(PSTR("TxP POP: Fehlermeldung: "));
+			Protokollieren(SocketInBuf);
+			}
+
+		InterneVerbindungBeenden(true);
+		TxpSocketAbbauGeplant = true;
+		return;
+		}
+			
+	switch (ProtokollPhase)
+		{
+		case HalloSagen:
+		case AnmeldungStarten:
+		case MailFrom:
+		case MailTo:
+			// gibt es nicht...
+			TxpSocketAbbauGeplant = true;
+			return;
+			
+		case AnmeldungName:
+			strcpy_P(SocketOutBuf, PSTR("USER "));
+			strcat(SocketOutBuf, EmailEigeneAdresse);
+			strcat_P(SocketOutBuf, PSTR("\r\n"));
+			ProtokollPhase = AnmeldungKennwort;
+			break;
+			
+		case AnmeldungKennwort:
+			strcpy_P(SocketOutBuf, PSTR("PASS "));
+			strcat(SocketOutBuf, EmailEigenesPasswort);
+			strcat_P(SocketOutBuf, PSTR("\r\n"));
+			ProtokollPhase = StartData;
+			break;
+
+		case StartData:
+			strcpy_P(SocketOutBuf, PSTR("STAT\r\n"));
+			ProtokollPhase = WarteStart;
+			break;
+			
+		case WarteStart:
+			// Anzahl der Meldungen prüfen
+			for (i = 0 ; i < SocketInBufUsed ; i++)
+				if (SocketInBuf[i] == ' ')
+					break;
+					
+			if (i < SocketInBufUsed && atoi(SocketInBuf + i) == 0)
+				{ // nichts im Puffer...
+				POPWartezeitEnde = EmailAbfrageTakt * 600;
+				StartTimer(&POPWartezeitTimer);
+				strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
+				ProtokollPhase = WarteEnde;
+				}
+			else
+				{ // mindestens eine Meldung im Puffer...
+				strcpy_P(SocketOutBuf, PSTR("RETR 1\r\n"));
+				ProtokollPhase = MailData;
+				}
+			break;
+			
+		case MailData:
+			// \todo Daten in den AsciiDruckPuffer übertragen
+			if (strcmp_P(SocketInBuf + SocketInBufUsed - 5, PSTR("\r\n.\r\n")) == 0)
+				// Ende des Mail-Bodys
+				ProtokollPhase = Loeschen;
+			break;
+
+		case Loeschen:
+			strcpy_P(SocketOutBuf, PSTR("DELE 1\r\n"));
+			ProtokollPhase = Abmelden;
+			break;
+			
+		case Abmelden:
+			strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
+			ProtokollPhase = WarteEnde;
+			break;
+			
+		case WarteEnde:
+			TxpSocketAbbauGeplant = true;
+			break;
+
+		}
+			
+	SocketInBufUsed = 0; // alle EIngabedaten verarbeitet. Falls nicht, muss vorher herausgesprungen werden.
+	SocketOutBufUsed = strlen(SocketOutBuf);
+	if (SocketOutBufUsed != 0)
+		POPOkEmpfangen = false;
+	
 	}
 	
+			
 			
 //! Offnet den Socket-Daten für die Kommunikation mit einem SMTP-Server.
 // =========================================================================
@@ -273,7 +487,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 	ServerIP = DNS_ResolveName(EmailSMTPServerAdresse); 
 	if (ServerIP == -1)
 		{
-		Protokollieren_P(PSTR("TxP: IP zu Url "));
+		Protokollieren_P(PSTR("TxP SMTP: IP zu Url "));
 		Protokollieren(EmailSMTPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 		return false;
@@ -285,7 +499,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 	if (TxpSocketHandle == -1)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
-		Protokollieren_P(PSTR("TxP: Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
+		Protokollieren_P(PSTR("TxP SMTP: Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
 		TxpSocketHandle = NO_SOCKET_USED;
 		TxpSocketMode = SocketIdle;
 		return false;
@@ -440,15 +654,22 @@ void txp_cgi_email_config(void *pStruct)
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EmailAbfrageTakt_P)], 10);
 			Buf[10] = '\0';
 			Neu = atol(Buf);
+			
+			if (EmailPOPServerAdresse[0] == '\0'
+				|| EmailEigeneAdresse[0] == '\0'
+				|| EmailEigenesPasswort[0] == '\0')
+				Neu = 0; // ausgeschaltet, da keine sinnvolle Angabe
+			else if (Neu > 0 && Neu < 5)
+				Neu = 5;
+			else if (Neu > 100)
+				Neu = 100;
+				
+			itoa(Neu, Buf, 10); // 10 ist die Basis, nicht die Länge!
+				
 			if (Neu == EmailAbfrageTakt)
 				printf_P(PSTR("<br>Abfragetakt unver&auml;ndert: %s"), Buf);
 			else
 				{
-				if (Neu < 5)
-					{
-					Neu = 5;
-					Buf[0] = '5'; Buf[1] = '\0';
-					}
 				printf_P(PSTR("<br>Abfragetakt ge&auml;ndert in: %s"), Buf);
 				changeConfig_P(EmailAbfrageTakt_P, Buf);
 				EmailAbfrageTakt = Neu;
@@ -482,8 +703,11 @@ void txp_email_init()
 	if (readConfig_P(EmailAbfrageTakt_P, Buf) == 1)
 		EmailAbfrageTakt = atoi(Buf);
 	else
-		EmailAbfrageTakt = 15; // Minuten
+		EmailAbfrageTakt = 0; // ausgeschaltet.
 
+	POPWartezeitEnde = 3 * 600; // 3 Minuten
+	StartTimer(&POPWartezeitTimer);
+	
 	// cgi Registrieren
 	
 	cgi_RegisterCGI(txp_cgi_email_config, PSTR("txpcfg-email.cgi"));

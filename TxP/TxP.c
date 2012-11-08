@@ -74,48 +74,9 @@
 
 #ifdef TXP_ANSCHLUSS
 
-// Aktueller Modus
 
-typedef enum
-	{
-	ModRuhe = 0, 
-		//!< nichts läuft
-
-	// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
-	ModGehendReserv = 1, 
-		//!< Schnittstelle ist angesprochen worden, aber noch ein Einschaltkommando erhalten.
-	ModGehendWaehlen = 2,
-		//!< Einschaltkommando erhalten, Wahlaufforderung gesendet, 
-		//!< ggf. auch schon Wahlziffern empfangen.
-	ModGehendVerbunden = 4,
-		//!< Wahl abgeschlossen, Socket geöffnet, Endgerät eingeschaltet.
-	
-	// Kommend = vom Netz zum internen Anschluss
-	ModKommendVerbVorstufe = 11, 
-		//!< es wird erst mal abgewartet, was aus der ankommenden Verbindung wird.
-	ModKommendEinschalten = 12, 
-		//!< Es wurden Daten oder ein Einschaltkommando (Durchwahl) empfangen.
-	ModKommendWarteEinQuitt = 13, 
-		//!< Warte auf Einschalt-Quittung des Endgeräts
-	ModKommendVerbunden = 14, 
-	
-	ModPufferDruckUndSchluss = 18,
-	ModWarteSchlussQuitt = 19,
-	
-	// z.B. über HTML-Seite verursachte direkte Druckausgabe
-	ModDirektdruckWarteEinQuitt = 21, //!< Warte auf Einschalt-Quittung des Endgeräts
-	ModDirektdruckVerbunden = 22, 
-
-	ModDeaktiviert = 31, //!< Durch Tastendruck ausgeschaltet.
-	ModWarteGrundstellung = 32, 
-		//!< Wartet darauf, dass nach Ausschaltung des lokalen Endgerätes der 
-		//!< Socket wieder geschlossen ist und alles andere auch die Grundstellung hat.
-	
-	} TModus;
-	
-	
 //! Aktueller Modus. Sollte nur durch ModusWechsel geändert werden.	
-static TModus Modus;
+TModus Modus;
 
 	
 // Die Datem auf dem TXP-Port haben folgende Struktur:
@@ -776,7 +737,7 @@ static void DatumDruckenUndAusschalten()
 //! \par - LED-Anzeigen aktualisieren
 //! \par - Status (für TWI-Abfrage) aktualisieren
 //! \par - Puffer-Initialisierung
-static void ModusWechsel(TModus neu)
+void ModusWechsel(TModus neu)
 	{
 	if (neu == Modus)
 		return;
@@ -867,7 +828,6 @@ static void ModusWechsel(TModus neu)
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
 			SeriellUmsetzInit();
-			TxpSocketProtokoll = TelexPhone;
 			AsciiDruckPuffer[0] = '\0';
 			SendenBeschleunigen	= false;
 			Durchwahl = 0;
@@ -1152,6 +1112,7 @@ static void SocketBearbeiten()
 				TxpSocketAbbauGeplant = false;
 				TxpSocketProtVersion = 0;
 				TxpSocketProtVersionVorschlag = 0; // auf Gegenvorschlag warten
+				TxpSocketProtokoll = TelexPhone; // versuch...
 				StartTimer(&TxpSocketAbbruchTimer);
 				StartTimer(&TxpSocketAbbauVerzoegerung);
 				SocketBufInit();
@@ -2721,7 +2682,17 @@ void txp_thread()
 	// ==========================================================================
 
 	ProtokollSpeichern(false);
-		
+	
+#ifdef TXP_EMAIL
+
+	// ==========================================================================
+	// Ab und zu mal prüfen, ob es neue Mails gibt.
+	// ==========================================================================
+	
+	POP3Einleiten();
+	
+#endif //def TXP_EMAIL
+	
 	} // txp_thread
 	
 

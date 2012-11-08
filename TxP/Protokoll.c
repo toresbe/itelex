@@ -192,6 +192,8 @@ bool ProtokollSpeichern(bool flush)
 //! \retval true wenn Puffer beschrieben werden darf.
 static bool ProtPraeparieren(int len)
 	{
+	struct TIME Time;
+	
 	Idle = false;
 	if (len == 0 || len > MaxProtPuffer / 2)
 		return false;
@@ -208,22 +210,20 @@ static bool ProtPraeparieren(int len)
 #if defined(MMC)
 	if (fs != NULL)
 		{
-		struct TIME Time;
-
 		if (Puffer[0] == '\0')
 			{ // Zeit protokollieren
 			CLOCK_GetTime(&Time);
 			sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++\r\n"),
 				  Time.DD, Time.MM, Time.YY);
 			}
-			
-		if (Puffer[strlen(Puffer)-1] == '\n')
-			{
-			CLOCK_GetTime(&Time);
-			sprintf_P(Puffer + strlen(Puffer), PSTR("%02d:%02d:%02d,%02d: "), Time.hh, Time.mm, Time.ss, Time.ms);
-			}
 		}
 #endif //defined(MMC)		
+
+	if (Puffer[strlen(Puffer)-1] == '\n')
+		{
+		CLOCK_GetTime(&Time);
+		sprintf_P(Puffer + strlen(Puffer), PSTR("%02d:%02d:%02d,%02d: "), Time.hh, Time.mm, Time.ss, Time.ms);
+		}
 
 	return true;
 	}
