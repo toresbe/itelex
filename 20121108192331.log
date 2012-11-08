@@ -1,0 +1,291 @@
+Terminal log file
+Date: 08.11.2012 - 19:23:33
+-----------------------------------------------
+TxP: TWI Reservierung intern / gehend von 3119:23:41.875> 
+TxP: TWI Einschaltkommando intern / gehend19:23:41.937> 
+TxP: TWI Wahlziffer 5 intern / gehend19:23:42.750> 
+TxP: TWI Wahlziffer 1 intern / gehend19:23:43.250> 
+19:23:57,19: TxP: Teilnehmer 51 im eigenen Telefonbuch gefunden.19:23:43.312> 
+19:23:57,24: TxP: Client-Socket SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI19:23:43.437> 
+TxP: Socket Empfang: (63/63) '220 winmail-qwmail.de (IMail 8.15 80281-2) NT-ESMTP Server X1' 0D 0A --> BufUsed 6319:23:43.562> 
+TxP: Socket Sendung: (29) 'EHLO TelexPhone mail client' 0D 0A --> Res 29 SumAnz 0/0019:23:43.625> 
+TxP: Socket Empfang: (130/130) '250-winmail-qwmail.de says hello' 0D 0A '250-SIZE 0' 0D 0A '250-8BITMIME' 0D 0A '250-DSN' 0D 0A '250-ETRN' 0D 0A '250-AUTH LOGIN CRAM-MD5' 0D 0A '250-AUTH=LOGIN' 0D 0A '250 EXPN' 0D 0A --> BufUsed 13019:23:43.875> 
+TxP: Socket Sendung: (12) 'AUTH LOGIN' 0D 0A --> Res 12 SumAnz 0/0019:23:43.937> 
+TxP: Socket Empfang: (18/18) '334 VXNlcm5hbWU6' 0D 0A --> BufUsed 1819:23:44.062> 
+TxP: Socket Sendung: (30) 'ZnJlZEB0ZWxlcHJpbnRlci5uZXQ=' 0D 0A --> Res 30 SumAnz 0/0019:23:44.125> 
+TxP: Socket Empfang: (18/18) '334 UGFzc3dvcmQ6' 0D 0A --> BufUsed 1819:23:44.187> 
+TxP: Socket Sendung: (14) 'c29ubmlicw==' 0D 0A --> Res 14 SumAnz 0/0019:23:44.250> 
+TxP: Socket Empfang: (19/19) '235 authenticated' 0D 0A --> BufUsed 1919:23:44.375> 
+TxP: Socket Sendung: (34) 'MAIL FROM:<fred@teleprinter.net>' 0D 0A --> Res 34 SumAnz 0/0019:23:44.437> 
+TxP: Socket Empfang: (8/8) '250 ok' 0D 0A --> BufUsed 819:23:44.500> 
+TxP: Socket Sendung: (34) 'RCPT TO:<fred.sonnenrein@gmx.de>' 0D 0A --> Res 34 SumAnz 0/0019:23:44.625> 
+TxP: Socket Empfang: (41/41) '250 ok its for <fred.sonnenrein@gmx.de>' 0D 0A --> BufUsed 4119:23:44.687> 
+TxP: Socket Sendung: (6) 'DATA' 0D 0A --> Res 6 SumAnz 0/0019:23:44.750> 
+TxP: Socket Empfang: (41/41) '354 ok, send it; end with <CRLF>.<CRLF>' 0D 0A --> BufUsed 4119:23:44.875> 
+TxP: Socket Sendung: (99) 'From:<fred@teleprinter.net>' 0D 0A 'To:fred.sonnenrein@gmx.de>' 0D 0A 'Subject: *TXP* Mail sent by TelexPhone' 0D 0A 0D 0A --> Res 99 SumAnz 0/0019:23:45.062> 
+TxP: Socket Sendung: (1) 'z' --> Res 1 SumAnz 0/0019:23:53.500> 
+TxP: Socket Sendung: (1) 'w' --> Res 1 SumAnz 0/0019:23:53.687> 
+TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/0019:23:53.937> 
+TxP: Socket Sendung: (1) 'i' --> Res 1 SumAnz 0/0019:23:54.125> 
+TxP: Socket Sendung: (1) 't' --> Res 1 SumAnz 0/0019:23:54.437> 
+TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/0019:23:54.625> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:23:54.875> 
+TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/0019:23:55.062> 
+TxP: Socket Sendung: (1) 'v' --> Res 1 SumAnz 0/0019:23:55.375> 
+TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/0019:23:55.562> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:23:55.812> 
+TxP: Socket Sendung: (1) 's' --> Res 1 SumAnz 0/0019:23:56.125> 
+TxP: Socket Sendung: (1) 'u' --> Res 1 SumAnz 0/0019:23:56.312> 
+TxP: Socket Sendung: (1) 'c' --> Res 1 SumAnz 0/0019:23:56.562> 
+TxP: Socket Sendung: (1) 'h' --> Res 1 SumAnz 0/0019:23:56.812> 
+TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/0019:23:58.062> 
+TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/0019:23:58.250> 
+TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/0019:23:59.062> 
+TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/0019:23:59.250> 
+TxP: Socket Sendung: (1) '8' --> Res 1 SumAnz 0/0019:23:59.562> 
+TxP: Socket Sendung: (1) '5' --> Res 1 SumAnz 0/0019:23:59.687> 
+TxP: Socket Sendung: (1) '7' --> Res 1 SumAnz 0/0019:23:59.812> 
+TxP: Socket Sendung: (1) '9' --> Res 1 SumAnz 0/0019:24:00.000> 
+TxP: Socket Sendung: (1) '9' --> Res 1 SumAnz 0/0019:24:00.125> 
+TxP: Socket Sendung: (1) '2' --> Res 1 SumAnz 0/0019:24:00.250> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:24:00.437> 
+TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/0019:24:00.562> 
+TxP: Socket Sendung: (1) 'h' --> Res 1 SumAnz 0/0019:24:00.875> 
+TxP: Socket Sendung: (1) 'a' --> Res 1 SumAnz 0/0019:24:01.062> 
+TxP: Socket Sendung: (1) 'w' --> Res 1 SumAnz 0/0019:24:01.187> 
+TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/0019:24:01.312> 
+TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/0019:24:01.500> 
+TxP: Socket Sendung: (1) 'd' --> Res 1 SumAnz 0/0019:24:01.625> 
+TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/0019:24:02.437> 
+TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/0019:24:02.687> 
+TxP: TWI Ausschaltung intern19:24:04.812> 
+19:24:18,78: TxP: Socket Sendung: (5) 0D 0A 2E 0D 0A --> Res 5 SumAnz 0/0019:24:04.875> 
+TxP: Socket Empfang: (20/20) '250 Message queued' 0D 0A --> BufUsed 2019:24:05.000> 
+TxP: Socket Sendung: (6) 'QUIT' 0D 0A --> Res -1 SumAnz 0/0019:24:05.000> 
+TxP: Socket wurde von Gegenstelle GETRENNT19:24:05.125> 
+19:24:18,93: TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)19:24:05.187> 
+TxP: Dynamische IP-Aktualisierung: neue IP 89.182.180.8819:24:05.437> 
+TxP: TWI Reservierung intern / gehend von 3119:29:12.156> 
+TxP: TWI Einschaltkommando intern / gehend19:29:12.218> 
+TxP: TWI Wahlziffer 5 intern / gehend19:29:13.031> 
+TxP: TWI Wahlziffer 1 intern / gehend19:29:13.593> 
+19:29:27,26: TxP: Teilnehmer 51 im eigenen Telefonbuch gefunden.19:29:13.656> 
+19:29:27,32: TxP: Client-Socket SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI19:29:13.781> 
+TxP: Socket Empfang: (63/63) '220 winmail-qwmail.de (IMail 8.15 80287-1) NT-ESMTP Server X1' 0D 0A --> BufUsed 6319:29:13.906> 
+TxP: Socket Sendung: (29) 'EHLO TelexPhone mail client' 0D 0A --> Res 29 SumAnz 0/0019:29:13.968> 
+TxP: Socket Empfang: (130/130) '250-winmail-qwmail.de says hello' 0D 0A '250-SIZE 0' 0D 0A '250-8BITMIME' 0D 0A '250-DSN' 0D 0A '250-ETRN' 0D 0A '250-AUTH LOGIN CRAM-MD5' 0D 0A '250-AUTH=LOGIN' 0D 0A '250 EXPN' 0D 0A --> BufUsed 13019:29:14.218> 
+TxP: TWI Ausschaltung intern19:29:36.718> 
+19:29:50,41: TxP: Socket Sendung: (6) 'QUIT' 0D 0A --> Res -1 SumAnz 0/0019:29:36.781> 
+TxP: Socket wurde von Gegenstelle GETRENNT19:29:36.843> 
+19:29:50,42: TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)19:29:36.906> 
+TxP: Dynamische IP-Aktualisierung: neue IP 89.182.180.8819:29:37.343> 
+Config Initialisiert19:38:39.359> 
+EXTINT Initialisiert19:38:39.359> 
+MMC/SD Error19:38:39.484> 
+SHELL Initialisiert19:38:39.546> 
+THREAD Initialisiert19:38:39.546> 
+ENC28j60 (Rev.: 6) initialisiert ( HW-Add: 00:22:f9:01:4e:cc ) Fullduplex: Link ready19:38:40.421> 
+-+-> ARP initialisiert19:38:40.484> 
+ |-> UDP (Tornado-engine) initialisiert19:38:40.484> 
+ |-> TCP (Hurrican-engine) initialisiert19:38:40.546> 
+ |-> Versuche DHCP-Config zu holen. DHCP-Config geholt19:38:42.171> 
+ |   IP     : 192.168.178.3819:38:42.234> 
+ |   Netmask: 255.255.255.019:38:42.234> 
+ |   Gateway: 192.168.178.119:38:42.296> 
+ |   DNS    : 192.168.178.119:38:42.296> 
+ |-> NTP-Server Zeit aktualisieren: Zeit: 19:38:56.0519:38:42.421> 
+HTTP-Server Port 80.19:38:45.296> 
+Telnet-Server Port 23.19:38:45.296> 
+TelexPhone Port 134.19:38:54.171> 
+Txp TlnServer Port 11811.19:38:54.359> 
+Neustart19:38:58.921> 
+TxP: Dynamische IP-Aktualisierung: neue IP 89.182.180.8819:39:55.296> 
+TxP: TWI Reservierung intern / gehend von 3119:44:07.546> 
+TxP: TWI Einschaltkommando intern / gehend19:44:07.609> 
+TxP: TWI Wahlziffer 5 intern / gehend19:44:08.171> 
+TxP: TWI Wahlziffer 1 intern / gehend19:44:08.859> 
+19:44:22,46: TxP: Teilnehmer 51 im eigenen Telefonbuch gefunden.19:44:08.921> 
+19:44:22,51: TxP: Client-Socket SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI19:44:09.046> 
+TxP: Socket Empfang: (63/63) '220 winmail-qwmail.de (IMail 8.15 80299-1) NT-ESMTP Server X1' 0D 0A --> BufUsed 6319:44:09.171> 
+TxP: Socket Sendung: (29) 'EHLO TelexPhone mail client' 0D 0A --> Res 29 SumAnz 0/0019:44:09.234> 
+TxP: Socket Empfang: (130/130) '250-winmail-qwmail.de says hello' 0D 0A '250-SIZE 0' 0D 0A '250-8BITMIME' 0D 0A '250-DSN' 0D 0A '250-ETRN' 0D 0A '250-AUTH LOGIN CRAM-MD5' 0D 0A '250-AUTH=LOGIN' 0D 0A '250 EXPN' 0D 0A --> BufUsed 13019:44:09.484> 
+TxP: Socket Sendung: (12) 'AUTH LOGIN' 0D 0A --> Res 12 SumAnz 0/0019:44:10.921> 
+TxP: Socket Empfang: (18/18) '334 VXNlcm5hbWU6' 0D 0A --> BufUsed 1819:44:10.984> 
+TxP: Socket Sendung: (30) 'ZnJlZEB0ZWxlcHJpbnRlci5uZXQ=' 0D 0A --> Res 30 SumAnz 0/0019:44:11.109> 
+TxP: Socket Empfang: (18/18) '334 UGFzc3dvcmQ6' 0D 0A --> BufUsed 1819:44:11.171> 
+TxP: Socket Sendung: (14) 'c29ubmlicw==' 0D 0A --> Res 14 SumAnz 0/0019:44:11.234> 
+TxP: Socket Empfang: (19/19) '235 authenticated' 0D 0A --> BufUsed 1919:44:11.296> 
+TxP: Socket Sendung: (34) 'MAIL FROM:<fred@teleprinter.net>' 0D 0A --> Res 34 SumAnz 0/0019:44:11.421> 
+TxP: Socket Empfang: (8/8) '250 ok' 0D 0A --> BufUsed 819:44:11.484> 
+TxP: Socket Sendung: (34) 'RCPT TO:<fred.sonnenrein@gmx.de>' 0D 0A --> Res 34 SumAnz 0/0019:44:11.546> 
+TxP: Socket Empfang: (41/41) '250 ok its for <fred.sonnenrein@gmx.de>' 0D 0A --> BufUsed 4119:44:11.671> 
+TxP: Socket Sendung: (6) 'DATA' 0D 0A --> Res 6 SumAnz 0/0019:44:11.734> 
+TxP: Socket Empfang: (41/41) '354 ok, send it; end with <CRLF>.<CRLF>' 0D 0A --> BufUsed 4119:44:11.796> 
+TxP: Socket Sendung: (99) 'From:<fred@teleprinter.net>' 0D 0A 'To:fred.sonnenrein@gmx.de>' 0D 0A 'Subject: *TXP* Mail sent by TelexPhone' 0D 0A 0D 0A --> Res 99 SumAnz 0/0019:44:11.984> 
+TxP: Socket Sendung: (1) 'd' --> Res 1 SumAnz 0/0019:44:20.359> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:20.484> 
+TxP: Socket Sendung: (1) 'i' --> Res 1 SumAnz 0/0019:44:20.671> 
+TxP: Socket Sendung: (1) 't' --> Res 1 SumAnz 0/0019:44:20.921> 
+TxP: Socket Sendung: (1) 't' --> Res 1 SumAnz 0/0019:44:21.109> 
+TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/0019:44:21.234> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:21.421> 
+TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/0019:44:21.546> 
+TxP: Socket Sendung: (1) 'v' --> Res 1 SumAnz 0/0019:44:21.859> 
+TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/0019:44:22.046> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:22.171> 
+TxP: Socket Sendung: (1) 's' --> Res 1 SumAnz 0/0019:44:22.421> 
+TxP: Socket Sendung: (1) 'u' --> Res 1 SumAnz 0/0019:44:22.609> 
+TxP: Socket Sendung: (1) 'c' --> Res 1 SumAnz 0/0019:44:22.734> 
+TxP: Socket Sendung: (1) 'h' --> Res 1 SumAnz 0/0019:44:22.859> 
+TxP: Socket Sendung: (1) '.' --> Res 1 SumAnz 0/0019:44:23.421> 
+TxP: Socket Sendung: (1) '.' --> Res 1 SumAnz 0/0019:44:23.609> 
+TxP: Socket Sendung: (1) '.' --> Res 1 SumAnz 0/0019:44:23.734> 
+TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/0019:44:23.859> 
+TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/0019:44:24.109> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:28.484> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:28.609> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:28.796> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:28.921> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:29.046> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:29.234> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:29.359> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:29.546> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:29.671> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:29.796> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:29.984> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:30.109> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:30.296> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:30.421> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:30.546> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:30.734> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:30.859> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:31.046> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:31.171> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:31.296> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:31.484> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:31.609> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:31.796> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:31.921> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:32.046> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:32.234> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:32.359> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:32.546> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:32.671> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:32.796> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:32.984> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:33.109> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:33.296> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:33.421> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:33.546> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:33.734> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:33.859> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:34.046> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:34.171> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:34.296> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:34.484> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:34.609> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:34.796> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:34.921> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:35.046> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:35.234> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:35.359> 
+TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/0019:44:35.546> 
+TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/0019:44:35.671> 
+TxP: Socket Sendung: (1) '0' --> Res 1 SumAnz 0/0019:44:35.984> 
+TxP: Socket Sendung: (1) '1' --> Res 1 SumAnz 0/0019:44:36.109> 
+TxP: Socket Sendung: (1) '2' --> Res 1 SumAnz 0/0019:44:36.296> 
+TxP: Socket Sendung: (1) '3' --> Res 1 SumAnz 0/0019:44:36.421> 
+TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0019:44:36.546> 
+TxP: Socket Sendung: (1) '5' --> Res 1 SumAnz 0/0019:44:36.734> 
+TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0019:44:36.859> 
+TxP: Socket Sendung: (1) '7' --> Res 1 SumAnz 0/0019:44:37.046> 
+TxP: Socket Sendung: (1) '8' --> Res 1 SumAnz 0/0019:44:37.171> 
+TxP: Socket Sendung: (1) '9' --> Res 1 SumAnz 0/0019:44:37.296> 
+TxP: Socket Sendung: (1) '0' --> Res 1 SumAnz 0/0019:44:37.484> 
+TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/0019:44:37.609> 
+TxP: Socket Sendung: (1) '.' --> Res 1 SumAnz 0/0019:44:37.796> 
+TxP: Socket Sendung: (1) ',' --> Res 1 SumAnz 0/0019:44:37.921> 
+TxP: Socket Sendung: (1) '-' --> Res 1 SumAnz 0/0019:44:38.046> 
+TxP: Socket Sendung: (1) ':' --> Res 1 SumAnz 0/0019:44:38.234> 
+TxP: Socket Sendung: (1) '/' --> Res 1 SumAnz 0/0019:44:38.359> 
+TxP: Socket Sendung: (1) '?' --> Res 1 SumAnz 0/0019:44:38.546> 
+TxP: Socket Sendung: (1) '(' --> Res 1 SumAnz 0/0019:44:38.671> 
+TxP: Socket Sendung: (1) ')' --> Res 1 SumAnz 0/0019:44:38.796> 
+TxP: Socket Sendung: (1) '+' --> Res 1 SumAnz 0/0019:44:38.984> 
+TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/0019:44:39.109> 
+TxP: Socket Sendung: (1) 'a' --> Res 1 SumAnz 0/0019:44:39.421> 
+TxP: Socket Sendung: (1) 'b' --> Res 1 SumAnz 0/0019:44:39.546> 
+TxP: Socket Sendung: (1) 'c' --> Res 1 SumAnz 0/0019:44:39.734> 
+TxP: Socket Sendung: (1) 'd' --> Res 1 SumAnz 0/0019:44:39.859> 
+TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/0019:44:40.046> 
+TxP: Socket Sendung: (1) 'f' --> Res 1 SumAnz 0/0019:44:40.171> 
+TxP: Socket Sendung: (1) 'g' --> Res 1 SumAnz 0/0019:44:40.296> 
+TxP: Socket Sendung: (1) 'h' --> Res 1 SumAnz 0/0019:44:40.484> 
+TxP: Socket Sendung: (1) 'i' --> Res 1 SumAnz 0/0019:44:40.609> 
+TxP: Socket Sendung: (1) 'j' --> Res 1 SumAnz 0/0019:44:40.796> 
+TxP: Socket Sendung: (1) 'k' --> Res 1 SumAnz 0/0019:44:40.921> 
+TxP: Socket Sendung: (1) 'l' --> Res 1 SumAnz 0/0019:44:41.046> 
+TxP: Socket Sendung: (1) 'm' --> Res 1 SumAnz 0/0019:44:41.234> 
+TxP: Socket Sendung: (1) 'n' --> Res 1 SumAnz 0/0019:44:41.359> 
+TxP: Socket Sendung: (1) 'o' --> Res 1 SumAnz 0/0019:44:41.546> 
+TxP: Socket Sendung: (1) 'p' --> Res 1 SumAnz 0/0019:44:41.671> 
+TxP: Socket Sendung: (1) 'q' --> Res 1 SumAnz 0/0019:44:41.796> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:41.984> 
+TxP: Socket Sendung: (1) 's' --> Res 1 SumAnz 0/0019:44:42.109> 
+TxP: Socket Sendung: (1) 't' --> Res 1 SumAnz 0/0019:44:42.296> 
+TxP: Socket Sendung: (1) 'u' --> Res 1 SumAnz 0/0019:44:42.421> 
+TxP: Socket Sendung: (1) 'v' --> Res 1 SumAnz 0/0019:44:42.546> 
+TxP: Socket Sendung: (1) 'w' --> Res 1 SumAnz 0/0019:44:42.734> 
+TxP: Socket Sendung: (1) 'x' --> Res 1 SumAnz 0/0019:44:42.859> 
+TxP: Socket Sendung: (1) 'y' --> Res 1 SumAnz 0/0019:44:43.046> 
+TxP: Socket Sendung: (1) 'z' --> Res 1 SumAnz 0/0019:44:43.171> 
+TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/0019:44:43.296> 
+TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/0019:44:43.484> 
+TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/0019:44:45.546> 
+TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/0019:44:45.734> 
+TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/0019:44:45.859> 
+TxP: Socket Sendung: (1) 't' --> Res 1 SumAnz 0/0019:44:46.171> 
+TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/0019:44:46.296> 
+TxP: Socket Sendung: (1) 's' --> Res 1 SumAnz 0/0019:44:46.484> 
+TxP: Socket Sendung: (1) 't' --> Res 1 SumAnz 0/0019:44:46.609> 
+TxP: Socket Sendung: (1) 's' --> Res 1 SumAnz 0/0019:44:46.796> 
+TxP: Socket Sendung: (1) 't' --> Res 1 SumAnz 0/0019:44:46.921> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:47.046> 
+TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/0019:44:47.234> 
+TxP: Socket Sendung: (1) 'i' --> Res 1 SumAnz 0/0019:44:47.359> 
+TxP: Socket Sendung: (1) 'f' --> Res 1 SumAnz 0/0019:44:47.546> 
+TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/0019:44:47.671> 
+TxP: Socket Sendung: (1) 'n' --> Res 1 SumAnz 0/0019:44:47.796> 
+TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/0019:44:47.984> 
+TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/0019:44:48.109> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:48.421> 
+TxP: Socket Sendung: (1) 'y' --> Res 1 SumAnz 0/0019:44:48.546> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:48.734> 
+TxP: Socket Sendung: (1) 'y' --> Res 1 SumAnz 0/0019:44:48.859> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:49.046> 
+TxP: Socket Sendung: (1) 'y' --> Res 1 SumAnz 0/0019:44:49.171> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:49.296> 
+TxP: Socket Sendung: (1) 'y' --> Res 1 SumAnz 0/0019:44:49.484> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:49.609> 
+TxP: Socket Sendung: (1) 'y' --> Res 1 SumAnz 0/0019:44:49.796> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:49.921> 
+TxP: Socket Sendung: (1) 'y' --> Res 1 SumAnz 0/0019:44:50.046> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:50.234> 
+TxP: Socket Sendung: (1) 'y' --> Res 1 SumAnz 0/0019:44:50.359> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:50.546> 
+TxP: Socket Sendung: (1) 'y' --> Res 1 SumAnz 0/0019:44:50.671> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:50.796> 
+TxP: Socket Sendung: (1) 'y' --> Res 1 SumAnz 0/0019:44:50.984> 
+TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0019:44:51.109> 
+TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/0019:44:52.859> 
+TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/0019:44:52.984> 
+TxP: TWI Ausschaltung intern19:44:54.984> 
+19:45:08,65: TxP: Socket Sendung: (5) 0D 0A 2E 0D 0A --> Res 5 SumAnz 0/0019:44:55.109> 
+TxP: Socket Empfang: (20/20) '250 Message queued' 0D 0A --> BufUsed 2019:44:55.171> 
+TxP: Socket Sendung: (6) 'QUIT' 0D 0A --> Res -1 SumAnz 0/0019:44:55.234> 
+TxP: Socket wurde von Gegenstelle GETRENNT19:44:55.234> 
+19:45:08,79: TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)19:44:55.359> 
+
+-----------------------------------------------
+Date: 08.11.2012 - 19:47:10
+End log file

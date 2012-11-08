@@ -1,0 +1,85 @@
+Terminal log file
+Date: 08.11.2012 - 19:47:12
+-----------------------------------------------
+http-server: mainmenu.html ( 281 Byte uebertragen (FLASH)19:47:16.359> 
+http-request: mainmenu.html from 192.168.178.2919:47:16.421> 
+http-server: style.css ( 448 Byte uebertragen (FLASH)19:47:17.359> 
+http-request: style.css from 192.168.178.2919:47:19.359> 
+http-server: txp-menu.html ( 505 Byte uebertragen (FLASH)19:47:20.359> 
+http-request: txp-menu.html from 192.168.178.2919:47:22.359> 
+http-server: txpcfg-menu.html ( 443 Byte uebertragen (FLASH)19:47:24.359> 
+http-request: txpcfg-menu.html from 192.168.178.2919:47:26.359> 
+TxP: Socket Empfang: (62/62) '+OK X1 NT-POP3 Server winmail-qwmail.de (IMail 8.15 85216-2)' 0D 0A --> BufUsed 6219:47:40.421> 
+TxP: Socket Sendung: (27) 'USER fred@teleprinter.net' 0D 0A --> Res 27 SumAnz 0/0019:47:40.546> 
+TxP: Socket Empfang: (24/24) '+OK send your password' 0D 0A --> BufUsed 2419:47:40.609> 
+TxP: Socket Sendung: (14) 'PASS sonnibs' 0D 0A --> Res 14 SumAnz 0/0019:47:40.671> 
+TxP: Socket Empfang: (31/31) '+OK maildrop locked and ready' 0D 0A --> BufUsed 3119:47:40.734> 
+TxP: Socket Sendung: (6) 'STAT' 0D 0A --> Res 6 SumAnz 0/0019:47:40.796> 
+TxP: Socket Empfang: (13/13) '+OK 7 11441' 0D 0A --> BufUsed 1319:47:40.921> 
+TxP: Socket Sendung: (8) 'RETR 1' 0D 0A --> Res 8 SumAnz 0/0019:47:40.984> 
+TxP: Socket Empfang: (16/16) '+OK 887 octets' 0D 0A --> BufUsed 1619:47:41.046> 
+TxP: Socket Empfang: (892/892) 'Received: from mailout-de.gmx.net [213.165.64.22] by winmail-qwmail.de' 0D 0A '  (SMTPD32-8.15) id AB0F305200AA; Fri, 02 Nov 2012 20:12:15 +0100' 0D 0A 'Received: (qmail invoked by alias); 02 Nov 2012 19:12:15 -0000' 0D 0A 'Received: from a89-182-182-165.net-htp.de (EHLO FRED-004) [89.182.182.165]' 0D 0A '  by mail.gmx.net (mp002) with SMTP; 02 Nov 2012 20:12:15 +0100' 0D 0A 'X-Authenticated: #5925835' 0D 0A 'X-Provags-ID: V01U2FsdGVkX1/tgYk+ek3tGYgkAzza43SVIGELm97216lwrPaHse' 0D 0A 09 'uj7S48PnZUg8p5' 0D 0A 'From: Fred Sonnenrein <fred.sonnenrein@gmx.de>' 0D 0A 'To: fred@teleprinter.net' 0D 0A 'Subject: Test1' 0D 0A 'Date: Fri, 02 Nov 2012 20:16:08 +0100' 0D 0A 'X-Mailer: Forte Agent 1.8/32.548' 0D 0A 'MIME-Version: 1.0' 0D 0A 'Content-Type: text/plain; charset=us-ascii' 0D 0A 'Content-Transfer-Encoding: quoted-printable' 0D 0A 'X-Y-GMX-Trusted: 0' 0D 0A 'Message-Id: <201211022012831.SM01832@mailout-de.gmx.net>' 0D 0A 'X-RCPT-TO: <fred@teleprinter.net>' 0D 0A 'Status: R' 0D 0A 'X-UIDL: 651883504' 0D 0A 0D 0A 'Hallo Fred' 0D 0A 0D 0A 0D 0A '.' 0D 0A --> BufUsed 89219:47:42.171> 
+TxP: Socket Sendung: (8) 'DELE 1' 0D 0A --> Res 8 SumAnz 0/0019:47:42.234> 
+TxP: Socket Empfang: (17/17) '+OK msg deleted' 0D 0A --> BufUsed 1719:47:42.296> 
+TxP: Socket Sendung: (6) 'QUIT' 0D 0A --> Res 6 SumAnz 0/0019:47:42.359> 
+TxP: Socket Empfang: (33/33) '+OK POP3 Server saying Good-Bye' 0D 0A --> BufUsed 3319:47:42.562> 
+TxP: Socket wurde von Gegenstelle erwartet geschlossen19:47:42.562> 
+19:47:55,92: TxP: Wechsel nach Modus Ruhe (von 11)19:47:42.562> 
+19:47:55,92: TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)19:47:42.656> 
+TxP: Socket Empfang: (62/62) '+OK X1 NT-POP3 Server winmail-qwmail.de (IMail 8.15 85219-3)' 0D 0A --> BufUsed 6219:50:41.796> 
+TxP: Socket Sendung: (27) 'USER fred@teleprinter.net' 0D 0A --> Res 27 SumAnz 0/0019:50:41.859> 
+TxP: Socket Empfang: (24/24) '+OK send your password' 0D 0A --> BufUsed 2419:50:41.921> 
+TxP: Socket Sendung: (14) 'PASS sonnibs' 0D 0A --> Res 14 SumAnz 0/0019:50:42.046> 
+TxP: Socket Empfang: (31/31) '+OK maildrop locked and ready' 0D 0A --> BufUsed 3119:50:42.109> 
+TxP: Socket Sendung: (6) 'STAT' 0D 0A --> Res 6 SumAnz 0/0019:50:42.171> 
+TxP: Socket Empfang: (13/13) '+OK 6 10554' 0D 0A --> BufUsed 1319:50:42.234> 
+TxP: Socket Sendung: (8) 'RETR 1' 0D 0A --> Res 8 SumAnz 0/0019:50:42.296> 
+TxP: Socket Empfang: (16/16) '+OK 513 octets' 0D 0A --> BufUsed 1619:50:42.359> 
+TxP: Socket Empfang: (518/518) 'Received: from sonnibs [89.182.182.165] by winmail-qwmail.de' 0D 0A '  (SMTPD32-8.15) id AE0C1A940110; Fri, 02 Nov 2012 20:25:00 +0100' 0D 0A 'From: <fred@teleprinter.net>' 0D 0A 'To: <fred.sonnenrein@gmx.de>' 0D 0A 'Subject: !SPAM-Connection  Blabla' 0D 0A 'Date: 01 Nov 2012' 0D 0A 'Message-Id: <201211022026491.SM01832@sonnibs>' 0D 0A 'X-IMAIL-SPAM-VALHELO: (1de81a940110e136)' 0D 0A 'X-RCPT-TO: fred@teleprinter.net' 0D 0A 'Status: R' 0D 0A 'X-UIDL: 651883506' 0D 0A 0D 0A 'Dies ist der Byody.' 0D 0A 'Mal sehen, weas GMS daraus machr....' 0D 0A 'Tippen lakann ich auch nicht mehr...' 0D 0A 'eagfhefgrgfsjfsdg' 0D 0A 0D 0A '.' 0D 0A --> BufUsed 51819:50:43.109> 
+TxP: Socket Sendung: (8) 'DELE 1' 0D 0A --> Res 8 SumAnz 0/0019:50:43.171> 
+TxP: Socket Empfang: (17/17) '+OK msg deleted' 0D 0A --> BufUsed 1719:50:43.234> 
+TxP: Socket Sendung: (6) 'QUIT' 0D 0A --> Res 6 SumAnz 0/0019:50:43.296> 
+TxP: Socket Empfang: (33/33) '+OK POP3 Server saying Good-Bye' 0D 0A --> BufUsed 3319:50:43.359> 
+TxP: Socket wurde von Gegenstelle erwartet geschlossen19:50:43.421> 
+19:50:56,84: TxP: Wechsel nach Modus Ruhe (von 11)19:50:43.484> 
+19:50:56,84: TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)19:50:43.609> 
+TxP: Socket Empfang: (62/62) '+OK X1 NT-POP3 Server winmail-qwmail.de (IMail 8.15 85221-3)' 0D 0A --> BufUsed 6219:53:43.171> 
+TxP: Socket Sendung: (27) 'USER fred@teleprinter.net' 0D 0A --> Res 27 SumAnz 0/0019:53:43.296> 
+TxP: Socket Empfang: (24/24) '+OK send your password' 0D 0A --> BufUsed 2419:53:43.359> 
+TxP: Socket Sendung: (14) 'PASS sonnibs' 0D 0A --> Res 14 SumAnz 0/0019:53:43.421> 
+TxP: Socket Empfang: (31/31) '+OK maildrop locked and ready' 0D 0A --> BufUsed 3119:53:43.546> 
+TxP: Socket Sendung: (6) 'STAT' 0D 0A --> Res 6 SumAnz 0/0019:53:43.609> 
+TxP: Socket Empfang: (13/13) '+OK 5 10041' 0D 0A --> BufUsed 1319:53:43.671> 
+TxP: Socket Sendung: (8) 'RETR 1' 0D 0A --> Res 8 SumAnz 0/0019:53:43.734> 
+TxP: Socket Empfang: (16/16) '+OK 197 octets' 0D 0A --> BufUsed 1619:53:43.796> 
+TxP: Socket Empfang: (202/202) 'Received: from sonnibs [89.182.182.165] by winmail-qwmail.de' 0D 0A '  (SMTPD32-8.15) id A2A114D70136; Fri, 02 Nov 2012 20:44:33 +0100' 0D 0A 'Ohne Header und ohne alles. ' 0D 0A 'Das ist spannend.' 0D 0A 'X-UIDL: 651883508' 0D 0A 0D 0A '.' 0D 0A --> BufUsed 20219:53:44.109> 
+TxP: Socket Sendung: (8) 'DELE 1' 0D 0A --> Res 8 SumAnz 0/0019:53:44.171> 
+TxP: Socket Empfang: (17/17) '+OK msg deleted' 0D 0A --> BufUsed 1719:53:44.234> 
+TxP: Socket Sendung: (6) 'QUIT' 0D 0A --> Res 6 SumAnz 0/0019:53:44.296> 
+TxP: Socket Empfang: (33/33) '+OK POP3 Server saying Good-Bye' 0D 0A --> BufUsed 3319:53:44.359> 
+TxP: Socket wurde von Gegenstelle erwartet geschlossen19:53:44.421> 
+19:53:57,87: TxP: Wechsel nach Modus Ruhe (von 11)19:53:44.484> 
+19:53:57,87: TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)19:53:44.609> 
+TxP: Socket Empfang: (62/62) '+OK X1 NT-POP3 Server winmail-qwmail.de (IMail 8.15 85223-3)' 0D 0A --> BufUsed 6219:56:44.609> 
+TxP: Socket Sendung: (27) 'USER fred@teleprinter.net' 0D 0A --> Res 27 SumAnz 0/0019:56:44.671> 
+TxP: Socket Empfang: (24/24) '+OK send your password' 0D 0A --> BufUsed 2419:56:44.796> 
+TxP: Socket Sendung: (14) 'PASS sonnibs' 0D 0A --> Res 14 SumAnz 0/0019:56:44.859> 
+TxP: Socket Empfang: (31/31) '+OK maildrop locked and ready' 0D 0A --> BufUsed 3119:56:44.921> 
+TxP: Socket Sendung: (6) 'STAT' 0D 0A --> Res 6 SumAnz 0/0019:56:44.984> 
+TxP: Socket Empfang: (12/12) '+OK 4 9844' 0D 0A --> BufUsed 1219:56:45.109> 
+TxP: Socket Sendung: (8) 'RETR 1' 0D 0A --> Res 8 SumAnz 0/0019:56:45.171> 
+TxP: Socket Empfang: (1709/1709) '+OK 2347 octets' 0D 0A 'Received: from mail-ia0-f175.google.com [209.85.210.175] by winmail-qwmail.de with ESMTP' 0D 0A '  (SMTPD32-8.15) id A06415800136; Sat, 03 Nov 2012 10:14:12 +0100' 0D 0A 'Received: by mail-ia0-f175.google.com with SMTP id b35so3499172iac.20' 0D 0A '        for <fred@teleprinter.net>; Sat, 03 Nov 2012 02:14:12 -0700 (PDT)' 0D 0A 'DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;' 0D 0A '        d=gmail.com; s=20120113;' 0D 0A '        h=mime-version:in-reply-to:references:date:message-id:subject:from:to' 0D 0A '         :content-type:content-transfer-encoding;' 0D 0A '        bh=hbVsXmynVposj6gd8q1aQz85PDi1VxjrSPQ9TjQpltw=;' 0D 0A '        b=iXmf5DlTEQq5x2VBZQ82q/5sySTIxL4J9UMpb80e7+C4E3GPeGobpCWuS80G8M31PJ' 0D 0A '         ktMGfqMaDdm1JW/5473CIsWTFRTjd/cPLTPF4MG/7Y8Djsa/HnWqyC9WqIQ3EVDGNhMn' 0D 0A '         a+w0BqR/vvHVqRP2IzeVZnVf9U4imA7uLrMchZq9RGgz8EyddLAituR2oaMmnIPtUFG9' 0D 0A '         LeXc9VJ4LTEAshiFJ1HJAfZkb0kzclAs6YD4GC03UY49esa9NYN00DogVWXVqJG9xW/v' 0D 0A '         rYush8KfNen1q6FswdByUtmCUwq/oYV3x0ZBSx9A1eJkNoRJgblNZ/mPm6K7xMhrGdr2' 0D 0A '         pVDw==' 0D 0A 'MIME-Version: 1.0' 0D 0A 'Received: by 10.50.188.199 with SMTP id gc7mr4430813igc.4.1351934051987; Sat,' 0D 0A ' 03 Nov 2012 02:14:11 -0700 (PDT)' 0D 0A 'Received: by 10.64.61.34 with HTTP; Sat, 3 Nov 2012 02:14:11 -0700 (PDT)' 0D 0A 'In-Reply-To: <201211022036492.SM01832@sonnibs>' 0D 0A 'References: <201211022036492.SM01832@sonnibs>' 0D 0A 'Date: Sat, 3 Nov 2012 10:14:11 +0100' 0D 0A 'Message-ID: <CAGcpztjQuDr011_9u4akorr0hcthYCti18hqsO7ak0WC-ZTJMQ@mail.gmail.com>' 0D 0A 'Subject: Re: !SPAM-Connection Testmail' 0D 0A 'From: Henning Treumann <df3oe.henning@googlemail.com>' 0D 0A 'To: fred@teleprinter.net' 0D 0A 'Content-Type: text/plain; charset=ISO-8859-1' 0D 0A 'Content-Transfer-Encoding: quoted-printable' 0D 0A 'X-RCPT-TO: <fred@teleprinter.net>' 0D 0A 'Status: R' 0D 0A 'X-UIDL: 651883509' 0D 0A 0D 0A --> BufUsed 170919:56:47.234> 
+TxP: Socket Empfang: (660/660) 'Hallo Fred,' 0D 0A 0D 0A 'Mail ist angekommen, wie du siehst...' 0D 0A 'Ich nutze diese Adresse nur als Empfangsadresse zur Weiterleitung' 0D 0A 'auf meinen Google-Mailaccount.' 0D 0A 0D 0A 'Gruesse,' 0D 0A 'Henning' 0D 0A '+++' 0D 0A 0D 0A 0D 0A 'Am 1. November 2011 08:00 schrieb  <fred@teleprinter.net>:' 0D 0A '> Hallo Henning,' 0D 0A '> schreib mir mal zurueck, ob du diese Mail bekommen hast...' 0D 0A '> Fred' 0D 0A '> Verwendest du die Mailadresse henning@teleprinter.net eigentlich auch' 0D 0A '> zum versenden von mails?' 0D 0A '> ach ja. schreib mir auch uzeber txp oder fred.sonnenrein@gmx.de, wenn du' 0D 0A '> diese mail gelesen hast.' 0D 0A '> Ich habe die mail n=E4mlich textbasiert auf dem teleprinter-server eingeg=' 0D 0A 'eben...' 0D 0A '> schoenen abend!' 0D 0A '> Fred' 0D 0A '> .' 0D 0A 0D 0A '.' 0D 0A --> BufUsed 66019:56:48.109> 
+TxP: Socket Sendung: (8) 'DELE 1' 0D 0A --> Res 8 SumAnz 0/0019:56:48.171> 
+TxP: Socket Empfang: (17/17) '+OK msg deleted' 0D 0A --> BufUsed 1719:56:48.234> 
+TxP: Socket Sendung: (6) 'QUIT' 0D 0A --> Res 6 SumAnz 0/0019:56:48.296> 
+TxP: Socket Empfang: (33/33) '+OK POP3 Server saying Good-Bye' 0D 0A --> BufUsed 3319:56:48.421> 
+TxP: Socket wurde von Gegenstelle erwartet geschlossen19:56:48.484> 
+19:57:01,91: TxP: Wechsel nach Modus Ruhe (von 11)19:56:48.546> 
+19:57:01,91: TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)19:56:48.609> 
+TelexPhone Port 134.20:00:15.375> 
+Txp TlnServer Port 11811.20:00:15.562> 
+
+-----------------------------------------------
+Date: 08.11.2012 - 20:00:18
+End log file

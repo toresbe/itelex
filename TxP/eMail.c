@@ -75,6 +75,11 @@ static uint8_t EmailAbfrageTakt;
 static char EmailEmpfaenger[TlnAdresseMax];
 	//!< Zwischenspeicher für Empfänger.
 	
+	
+static TKurzTimer VervollstaendigungTimer;
+	//!< Misst, ob der POP bzw SMTP-Server fertig ist mit Meldungen ausgeben.
+	
+	
 static TKurzTimer POPWartezeitTimer;
 	//!< Zeitmesser für die Email-Abfrage-Takte
 
@@ -99,8 +104,7 @@ enum {
 	WarteStart = 8,
 	MailData = 9,
 	Abmelden = 10,
-	WarteEnde = 11,
-	Loeschen = 12
+	WarteEnde = 11
 	} ; // Konstanten für ProtokollPhase
 
 	
@@ -120,6 +124,7 @@ void POP3Einleiten()
 		{
 		StartTimer(&POPWartezeitTimer);
 		POPWartezeitEnde = 3 * 600;
+		return;
 		}
 
 	StartTimer(&POPWartezeitTimer);
@@ -163,7 +168,7 @@ void POP3Einleiten()
 	ProtokollPhase = AnmeldungName;
 	POPOkEmpfangen = false;
 	
-	StartTimer(&TxpSocketAbbruchTimer);
+	StartTimer(&VervollstaendigungTimer);
 	
 	return;
 	} // POP3Einleiten
@@ -232,7 +237,10 @@ void Pop3DatenVerarbeiten()
 		TxpSocketAbbauGeplant = true;
 		return;
 		}
-			
+
+	SocketOutBuf[0] = '\0';
+		// damit falls nichts in den Puffer geschrieben wird, SocketOutBufUsed auf 0 bleibt.
+	
 	switch (ProtokollPhase)
 		{
 		case HalloSagen:
@@ -273,6 +281,7 @@ void Pop3DatenVerarbeiten()
 				POPWartezeitEnde = EmailAbfrageTakt * 600;
 				StartTimer(&POPWartezeitTimer);
 				strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
+				TxpSocketAbbauGeplant = true;
 				ProtokollPhase = WarteEnde;
 				}
 			else
@@ -286,29 +295,29 @@ void Pop3DatenVerarbeiten()
 			// \todo Daten in den AsciiDruckPuffer übertragen
 			if (strcmp_P(SocketInBuf + SocketInBufUsed - 5, PSTR("\r\n.\r\n")) == 0)
 				// Ende des Mail-Bodys
-				ProtokollPhase = Loeschen;
+				{
+				strcpy_P(SocketOutBuf, PSTR("DELE 1\r\n"));
+				ProtokollPhase = Abmelden;
+				}
 			break;
 
-		case Loeschen:
-			strcpy_P(SocketOutBuf, PSTR("DELE 1\r\n"));
-			ProtokollPhase = Abmelden;
-			break;
-			
 		case Abmelden:
 			strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
+			TxpSocketAbbauGeplant = true;
 			ProtokollPhase = WarteEnde;
 			break;
 			
 		case WarteEnde:
-			TxpSocketAbbauGeplant = true;
 			break;
 
 		}
 			
-	SocketInBufUsed = 0; // alle EIngabedaten verarbeitet. Falls nicht, muss vorher herausgesprungen werden.
+	SocketInBufUsed = 0; // alle Eingabedaten verarbeitet. Falls nicht, muss vorher herausgesprungen werden.
 	SocketOutBufUsed = strlen(SocketOutBuf);
 	if (SocketOutBufUsed != 0)
 		POPOkEmpfangen = false;
+		
+	StartTimer(&VervollstaendigungTimer);
 	
 	}
 	
@@ -317,6 +326,48 @@ void Pop3DatenVerarbeiten()
 //! Offnet den Socket-Daten für die Kommunikation mit einem SMTP-Server.
 // =========================================================================
 //! 
+bool SMTPOeffnen(char *EmfaengerName)
+	{
+	long ServerIP;
+	
+	strncpy(EmailEmpfaenger, EmfaengerName, sizeof(EmailEmpfaenger)-1);
+	EmailEmpfaenger[sizeof(EmailEmpfaenger)-1] = '\0';
+	
+	ServerIP = DNS_ResolveName(EmailSMTPServerAdresse); 
+	if (ServerIP == -1)
+		{
+		Protokollieren_P(PSTR("TxP SMTP: IP zu Url "));
+		Protokollieren(EmailSMTPServerAdresse);
+		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
+		return false;
+		}
+	
+	// und hier wird geöffet...
+	TxpSocketHandle = Connect2IP(ServerIP, 25); 
+	 
+	if (TxpSocketHandle == -1)
+		{ // ID#223 ********************************************
+		// Verbindung konnte nicht aufgebaut werden
+		Protokollieren_P(PSTR("TxP SMTP: Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
+		TxpSocketHandle = NO_SOCKET_USED;
+		TxpSocketMode = SocketIdle;
+		return false;
+		}
+
+	SocketBufInit();
+	
+	TxpSocketMode = SocketOriginate;
+	TxpSocketAbbauGeplant = false;
+	TxpSocketProtokoll = SMTP;
+	
+	ProtokollPhase = HalloSagen;
+	
+	StartTimer(&VervollstaendigungTimer);
+	
+	return true;
+	}
+	
+
 /* Typischer Ablauf einer SMTP-Sitzung:
 220 winmail-qwmail.de (IMail 8.15 78648-1) NT-ESMTP Server X1
 ehlo
@@ -353,6 +404,9 @@ quit
 221 Goodbye
 */
 
+//! Bearbeitet die Socket-Daten für die Kommunikation mit einem SMTP-Server.
+// =========================================================================
+//! 
 void SMTPDatenVerarbeiten()
 	{
 	if (SocketOutBufUsed != 0)
@@ -366,15 +420,13 @@ void SMTPDatenVerarbeiten()
 		if (SocketInBuf[SocketInBufUsed-1] != 0x0a) // Linefeed.
 			return; 
 			
-		/*
 		if (ProtokollPhase == AnmeldungStarten)
 			{
+			//! \todo bei Änderungen von SocketInBufUsed Timer neu Starten
 			// warte auf ende aller Meldungen des SMTP-Servers.
-			if (TimerVal(&TxpSocketAbbruchTimer) < 20)
-				// der Timer wird bei jedem Datenpaket-Empfang auf 0 gesetzt
+			if (TimerVal(&VervollstaendigungTimer) < 20)
 				return;
 			}
-		*/
 		
 		// Abbruch bei Fehlern
 		if (SocketInBuf[0] >= '4')
@@ -394,6 +446,9 @@ void SMTPDatenVerarbeiten()
 		SocketInBufUsed = 0;
 		} // if ProtokollPhase != MailData
 		
+	SocketOutBuf[0] = '\0';
+		// damit falls nichts in den Puffer geschrieben wird, SocketOutBufUsed auf 0 bleibt.
+	
 	switch (ProtokollPhase)
 		{
 		case HalloSagen:
@@ -444,22 +499,25 @@ void SMTPDatenVerarbeiten()
 			strcat(SocketOutBuf, EmailEmpfaenger);
 			strcat_P(SocketOutBuf, PSTR(">\r\nSubject: *TXP* Mail sent by TelexPhone\r\n\r\n")); 
 			//! \todo Erste Zeile als Subject...
+			strcpy_P(AsciiDruckPuffer, PSTR("\r\ntext:\r\n"));
 			ProtokollPhase = MailData;
 			break;
 			
 		case MailData:
 			while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3 - 10) // - 10 = Reserve für wichtige Daten
 				{
-				SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
-				if (SocketOutBuf[SocketOutBufUsed] != '\0')
-					SocketOutBufUsed++;
+				char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+				if (z != '\0' && z != '#')
+					SocketOutBuf[SocketOutBufUsed++] = z;
 				}
+				
 			SocketOutBuf[SocketOutBufUsed] = '\0';
 			//! \todo Zeile mit einzelnem Punkt abfangen
 			break;
 			
 		case Abmelden:
 			strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
+			TxpSocketAbbauGeplant = true;
 			ProtokollPhase = WarteEnde;
 			break;
 			
@@ -470,52 +528,8 @@ void SMTPDatenVerarbeiten()
 		}
 			
 	SocketOutBufUsed = strlen(SocketOutBuf);
+	StartTimer(&VervollstaendigungTimer);
 			
-	}
-	
-
-//! Bearbeitet die Socket-Daten für die Kommunikation mit einem SMTP-Server.
-// =========================================================================
-//! 
-bool SMTPOeffnen(char *EmfaengerName)
-	{
-	long ServerIP;
-	
-	strncpy(EmailEmpfaenger, EmfaengerName, sizeof(EmailEmpfaenger)-1);
-	EmailEmpfaenger[sizeof(EmailEmpfaenger)-1] = '\0';
-	
-	ServerIP = DNS_ResolveName(EmailSMTPServerAdresse); 
-	if (ServerIP == -1)
-		{
-		Protokollieren_P(PSTR("TxP SMTP: IP zu Url "));
-		Protokollieren(EmailSMTPServerAdresse);
-		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
-		return false;
-		}
-	
-	// und hier wird geöffet...
-	TxpSocketHandle = Connect2IP(ServerIP, 25); 
-	 
-	if (TxpSocketHandle == -1)
-		{ // ID#223 ********************************************
-		// Verbindung konnte nicht aufgebaut werden
-		Protokollieren_P(PSTR("TxP SMTP: Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
-		TxpSocketHandle = NO_SOCKET_USED;
-		TxpSocketMode = SocketIdle;
-		return false;
-		}
-
-	SocketBufInit();
-	
-	TxpSocketMode = SocketOriginate;
-	TxpSocketAbbauGeplant = false;
-	TxpSocketProtokoll = SMTP;
-	
-	ProtokollPhase = HalloSagen;
-	
-	StartTimer(&TxpSocketAbbruchTimer);
-	
-	return true;
 	}
 	
 
@@ -572,7 +586,7 @@ void txp_cgi_email_config(void *pStruct)
 		CgiFormInputFieldText_P(PSTR("POP-Server Adresse:"), EmailPOPServerAdresse_P, TlnAdresseMax, EmailPOPServerAdresse);
 		CgiFormInputFieldText_P(PSTR("SMTP-Server Adresse:"), EmailSMTPServerAdresse_P, TlnAdresseMax, EmailSMTPServerAdresse);
 		CgiFormInputFieldText_P(PSTR("Eigene eMail-Adresse:"), EmailEigeneAdresse_P, TlnAdresseMax, EmailEigeneAdresse);
-		CgiFormInputFieldText_P(PSTR("Kennwort für eMail-Server:"), EmailEigenesPasswort_P, TlnAdresseMax, EmailEigenesPasswort);
+		CgiFormInputFieldText_P(PSTR("Kennwort f&uuml;r eMail-Server:"), EmailEigenesPasswort_P, TlnAdresseMax, EmailEigenesPasswort);
 		CgiFormInputFieldLong_P(PSTR("Takt des eMail-Abrufs (Minuten):"), EmailAbfrageTakt_P, 2, EmailAbfrageTakt);
 		
 		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
@@ -705,7 +719,9 @@ void txp_email_init()
 	else
 		EmailAbfrageTakt = 0; // ausgeschaltet.
 
-	POPWartezeitEnde = 3 * 600; // 3 Minuten
+	POPWartezeitEnde = 5 * 600; // 5 Minuten
+	POPWartezeitEnde = 100; // 20 Sekunden nach Start. HACK 
+	
 	StartTimer(&POPWartezeitTimer);
 	
 	// cgi Registrieren

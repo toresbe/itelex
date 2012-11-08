@@ -233,6 +233,11 @@ static inline uint16_t TimerVal(TKurzTimer *t)
 extern volatile TPuffer SendePuffer; 
 	
 extern volatile TPuffer EmpfPuffer; 
+
+enum { AsciiDruckPufferMax = 100, HtmlSendeTextMax = 400 } ;
+	//!< Puffergrößen für Textpuffer bei HTML-Kommunikation
+
+extern char AsciiDruckPuffer[AsciiDruckPufferMax];
 		
 		
 extern int TxpSocketHandle;

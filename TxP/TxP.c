@@ -188,10 +188,7 @@ volatile TPuffer SendePuffer;
 volatile TPuffer EmpfPuffer; 
 	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Endgerät -> Netz
 	
-enum { AsciiDruckPufferMax = 100, HtmlSendeTextMax = 400 } ;
-	//!< Puffergrößen für Textpuffer bei HTML-Kommunikation
-
-static char AsciiDruckPuffer[AsciiDruckPufferMax];
+char AsciiDruckPuffer[AsciiDruckPufferMax];
 	//!< Puffer für zu druckenden Text (Netz -> Endgerät), mit Null abgeschlossen
 
 static char HtmlSendeText[HtmlSendeTextMax];
@@ -1201,7 +1198,10 @@ static void SocketBearbeiten()
 				break;
 				
 			default:
-				Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle GETRENNT\r\n" ));
+				if (!TxpSocketAbbauGeplant)
+					Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle GETRENNT\r\n" ));
+				else if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR("TxP: Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
 				TxpSocketMode = SocketIdle;
 				TxpSocketIP = 0;
 				TxpSocketAbbauGeplant = false;
@@ -2504,6 +2504,9 @@ void txp_thread()
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)\r\n" ));
 		ModusWechsel(ModRuhe);
+		#ifdef LEDROT_SOCKETERROR
+			LED_off(ROT);
+		#endif //def LEDROT_SOCKETERROR
 		}
 		
 	// ======================================================================
@@ -2670,7 +2673,6 @@ void txp_thread()
 				Protokollieren_P(PSTR("TxP: Socket zum Teilnehmer-Server wurde von Gegenstelle geschlossen\r\n" ));
 			CloseTCPSocket(TeilnehmerServerSocket);
 			TeilnehmerServerSocket = NO_SOCKET_USED;
-			return;
 			}
 		
 		// Timeout? kommt von selbst nach 30 Sekunden...
