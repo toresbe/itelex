@@ -25,9 +25,9 @@
 #include "TxP.h"
 
 
-enum { MaxPuffer = 512 }; //!< Länge des Protokoll-Puffers
+enum { MaxProtPuffer = 512 }; //!< Länge des Protokoll-Puffers
 
-char Puffer[MaxPuffer]; //!< Puffert Meldungen bis es Zeit ist, diese auf SD-Karte zu speichern.
+char Puffer[MaxProtPuffer]; //!< Puffert Meldungen bis es Zeit ist, diese auf SD-Karte zu speichern.
 
 char Dateiname[40]; //!< Aktueller Dateiname für die Protokolldatei.
 
@@ -193,12 +193,12 @@ bool ProtokollSpeichern(bool flush)
 static bool ProtPraeparieren(int len)
 	{
 	Idle = false;
-	if (len == 0 || len > MaxPuffer / 2)
+	if (len == 0 || len > MaxProtPuffer / 2)
 		return false;
 	
-	if (strlen(Puffer) + len + 2 >= MaxPuffer
+	if (strlen(Puffer) + len + 2 >= MaxProtPuffer
 		// Text passt nicht mehr in den Puffer
-		|| (strlen(Puffer) + len + 50 >= MaxPuffer && Puffer[strlen(Puffer) - 1] == '\n'))
+		|| (strlen(Puffer) + len + 50 >= MaxProtPuffer && Puffer[strlen(Puffer) - 1] == '\n'))
 		// nächste Zeile passt nicht mehr in den Puffer
 		{
 		if (!ProtokollSpeichern(true))

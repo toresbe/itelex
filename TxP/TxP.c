@@ -245,16 +245,12 @@ static TKurzTimer HtmlTexteingabeTimer;
 	//!< seit dem letzten lokal eingegebenen Zeichen im Modus ModDirektdruckVerbunden.
 
 
-static int TxpSocketHandle;
+int TxpSocketHandle;
 	//!< Verweis auf Socket für Txp-Kommunikation. Istzustand. Wenn ungültig, aber TxpSocketMode
 	//!< ungleich Idle, ist ein kurzzeitiger Verbindungsverlust eingetreten.
 	
 	
-static enum { 
-	SocketIdle, //!< Unbenutzt
-	SocketOriginate, //!< Ausgehende Verbindung
-	SocketAnswer //!< Kommende Verbindung
-	} TxpSocketMode; 
+TTxpSocketMode TxpSocketMode;
 	//!< Speichert Sollzustand der Txp-Verbindung
 	
 	
@@ -266,7 +262,7 @@ static long TxpSocketIP;
 static uint16_t TxpSocketPort;
 	//!< Bei ausgehenden Verbindungen der gewünschte Port des Empfängers.
 
-static TKurzTimer TxpSocketAbbruchTimer;
+TKurzTimer TxpSocketAbbruchTimer;
 	//!< Nach 30 Sekunden unplanmäßigem Verbindungsverlust wird entgültig abgebaut.
 
 static TKurzTimer TxpSocketWiederholungVerzoegerung;
@@ -274,7 +270,7 @@ static TKurzTimer TxpSocketWiederholungVerzoegerung;
 	//!< Versuch gewartet.
 	
 	
-static bool TxpSocketAbbauGeplant;
+bool TxpSocketAbbauGeplant;
 	//!< Wird auf true gesetzt, wenn ein Verbindungsabbau bevorsteht.
 	//!< Abbau erfolgt immer durch Anrufer. 
 	//!< \p Wenn true und TxpSocketMode = SocketOriginate wird Abbau nach letzem Datenblock ausgelöst
@@ -292,27 +288,22 @@ static uint8_t TxpSocketProtVersion;
 static uint8_t TxpSocketProtVersionVorschlag;
 	//!< Selbst Vorgeschlagene Protokollversion der Kommunikation
 
-static enum {
-	TelexPhone,		//!< Das eigene Protokoll
-	Ascii,			//!< Ascii, also telnet
-	POP3,			//!< Mail-Abfrage
-	SMTP			//!< Mail-Sendung
-	} TxpSocketProtokoll; 
+TTxpSocketProtokoll TxpSocketProtokoll;
 	//!< Was geht über den Socket 'rüber.
 	
 
-enum { SocketInBufMax = 2500 } ; //!< Größe des TCP-Empfangspuffers
+uint16_t SocketInBufUsed; //!< Benutzter Teil des TCP-Empfangspuffers
 
-static uint16_t SocketInBufUsed; //!< Benutzter Teil des TCP-Empfangspuffers
-
-static char SocketInBuf[SocketInBufMax]; //!< TCP-Empfangspuffer
+char SocketInBuf[SocketInBufMax]; //!< TCP-Empfangspuffer
 
 	
-enum { SocketOutBufMax = 2500 } ; //!< Größe des TCP-Sendepuffers
+uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
 
-static uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
+char SocketOutBuf[SocketOutBufMax]; //!< TCP-Sendepuffer
 
-static char SocketOutBuf[SocketOutBufMax]; //!< TCP-Sendepuffer
+
+uint8_t ProtokollPhase;
+	//!< für POP3 und SMTP ein Speicher für den aktuellen Kommunikationsschritt
 
 
 static uint16_t SocketAnzahlZeichenGesendet;
@@ -988,7 +979,7 @@ static void ModusWechsel(TModus neu)
 	
 	
 //! TCP-Puffer initialisieren
-static void SocketBufInit()
+void SocketBufInit()
 	{
 	SocketInBufUsed = 0;
 	SocketOutBufUsed = 0;
@@ -1461,7 +1452,7 @@ static void SocketBearbeiten()
 
 //! Interner Statuswechsel bei Ende-befehl (Socket geschlossen oder anderes Ende-Kommando)
 //! \param Force alle schwebenden Zustände (z.B. Wahlzustand) auch zum Abschluss bringen.
-static void InterneVerbindungBeenden(bool Force)
+void InterneVerbindungBeenden(bool Force)
 	{
 	switch (Modus)
 		{
@@ -1955,8 +1946,21 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			break;
 			
 		case eMail:
-			Protokollieren_P(PSTR("TxP: eMail noch nicht unterstuetzt\r\n" ));
+#ifdef TXP_EMAIL
+			if (SMTPOeffnen(td->Adresse))
+				{
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR("TxP: Client-Socket SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
+				BusSenden(BusQuittEin);
+				ModusWechsel(ModGehendVerbunden);
+				return 0; // gut
+				}
+			else
+				return 2; // schlecht
+#else
+			Protokollieren_P(PSTR("TxP: eMail nicht unterstuetzt\r\n" ));
 			return 2;
+#endif //ndef TXP_EMAIL		
 			
 		default:
 			if (ProtokollLevel >= 1)
@@ -1978,6 +1982,8 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		return 1;
 		}
 
+	SocketBufInit();
+	
 	TxpSocketMode = SocketOriginate;
 	TxpSocketAbbauGeplant = false;
 	TxpSocketProtVersion = 0;
@@ -1992,7 +1998,6 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("TxP: Client-Socket Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
 		ModusWechsel(ModGehendVerbunden);
-		SocketBufInit();
 		TxpSocketProtokoll = Ascii;
 		return 0;
 		}
@@ -2001,7 +2006,6 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		if (ProtokollLevel >= 1)
 			ProtokollierenInt_P(PSTR("TxP: Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %u\r\n"), td->Durchwahl);
 
-		SocketBufInit();
 		TxpSocketProtokoll = TelexPhone;
 		
 		SocketOutBuf[0] = TXPC_VERSION;
@@ -2206,16 +2210,35 @@ void txp_thread()
 				// ID#212 ********************************************
 				// ID#224 ********************************************
 				if (Modus != ModRuhe)
-					BusSenden(BusQuittSchluss);
-					
-				TxpSocketAbbauGeplant = true;
-
-				if (SocketOutBufUsed < SocketOutBufMax - 2)
 					{
-					SocketOutBuf[SocketOutBufUsed++] = TXPC_ENDE;
-					SocketOutBuf[SocketOutBufUsed++] = 0;
+					BusSenden(BusQuittSchluss);
+
+					switch (TxpSocketProtokoll)
+						{
+						case Ascii:
+							TxpSocketAbbauGeplant = true;
+							break;
+							
+						case TelexPhone:
+							TxpSocketAbbauGeplant = true;
+							if (SocketOutBufUsed < SocketOutBufMax - 2)
+								{
+								SocketOutBuf[SocketOutBufUsed++] = TXPC_ENDE;
+								SocketOutBuf[SocketOutBufUsed++] = 0;
+								}
+							break;
+							
+						case SMTP:
+							SMTPSchliessen();
+							break;
+							
+						case POP3:
+							// todo
+							break;
+							
+						}
 					}
-				
+						
 				// Html-Puffer löschen
 				AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 
@@ -2277,13 +2300,16 @@ void txp_thread()
 			TxpDatenVerarbeiten();
 			break;
 			
+#ifdef TXP_EMAIL
 		case POP3:
-			//! \todo
+			Pop3DatenVerarbeiten();
 			break;
 			
 		case SMTP:
-			//! \todo
+			SMTPDatenVerarbeiten();
 			break;
+			
+#endif //def TXP_EMAIL
 		
 		default:
 			Protokollieren("TxP: ILLEGALES Protokoll\r\n");
@@ -2872,6 +2898,7 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(SocketInBufUsed);
 	PRINTVAL(SocketOutBufUsed);
 	PRINTVAL(TxpSocketProtokoll);
+	PRINTVAL(ProtokollPhase);
 	
 	PRINTVAL(SocketAnzahlZeichenGesendet);
 	PRINTVAL(SocketAnzahlZeichenQuittiert);
