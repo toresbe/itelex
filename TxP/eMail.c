@@ -1,3 +1,141 @@
+DebugMsg:
+Protokolldatei:
+Protokollpuffer:
+
+Modus = 32
+Status = 0
+Wahlnummer = 51
+Wahlziffern = 2
+BusEmpfMark = 0
+SerUmTickZaehlerEmpf = 10
+SerUmEmpfBitNr = 6
+SerUmEmpfMarkZaehl = 0
+SerUmEmpfDaten = 0
+SerUmEmpfFehler = 0
+PufferAnzahl(&EmpfPuffer) = 0
+SendeMark = 1
+SerUmTickZaehlerSend = 0
+SerUmSendBitNr = 0
+SerUmSendDaten = 0
+PufferAnzahl(&SendePuffer) = 0
+TxpSocketMode = 1
+TxpSocketHandle = 0
+TxpSocketIP = 0
+TxpSocketAbbauGeplant = 0
+TimerVal(&TxpSocketAbbruchTimer) = 0
+SocketInBufUsed = 0
+SocketOutBufUsed = 0
+TxpSocketProtokoll = 3
+ProtokollPhase = 10
+SocketAnzahlZeichenGesendet = 0
+SocketAnzahlZeichenQuittiert = 0
+SocketAnzahlZeichenEmpfangen = 0
+TimerVal(&RuheTimer) = 771
+TwiLebenszeichenZaehler = 39
+TimerVal(&TxpSocketLebenszeichenTimer) = 1097
+TimerVal(&TxpThreadCheckTimer) = 0
+DynIPAktZeitZaehler / TxpTimerFreq = 986
+FalscherCode = 0
+TwiIsrCount = 1571
+TxpThreadCount = 49452
+Timer0CallbackCount = 7757
+Timer0Cnt_Min = 0
+Timer0Cnt_Max = 120
+Timer0Callback_Max = 2
+HtmlSendeText: []
+AsciiDruckPuffer: []
+Ethernet: 29085 Bytes in 317 Packeten LockErrors 0 
+
+
+10:53:08.359> TxP: TWI Wahlziffer 5 intern / gehend
+10:53:08.859> TxP: TWI Wahlziffer 1 intern / gehend
+10:53:08.921> TxP: Teilnehmer 51 im eigenen Telefonbuch gefunden.
+10:53:08.984> TxP: Client-Socket SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI
+10:53:09.109> TxP: Socket Empfang: (63/63) '220 winmail-qwmail.de (IMail 8.15 79453-2) NT-ESMTP Server X1' 0D 0A --> BufUsed 63
+10:53:09.234> TxP: Socket Sendung: (29) 'EHLO TelexPhone mail client' 0D 0A --> Res 29 SumAnz 0/00
+TxP: Socket Empfang: (130/130) '250-winmail-qwmail.de says hello' 0D 0A '250-SIZE 0' 0D 0A '250-8BITMIME' 0D 0A '250-DSN' 0D 0A '250-ETRN' 0D 0A '250-AUTH LOGIN CRAM-MD5' 0D 0A '250-AUTH=LOGIN' 0D 0A '250 10:53:09.484> EXPN' 0D 0A --> BufUsed 130
+10:53:09.546> TxP: Socket Sendung: (12) 'AUTH LOGIN' 0D 0A --> Res 12 SumAnz 0/00
+10:53:09.609> TxP: Socket Empfang: (18/18) '334 VXNlcm5hbWU6' 0D 0A --> BufUsed 18
+10:53:09.671> TxP: Socket Sendung: (30) 'ZnJlZEB0ZWxlcHJpbnRlci5uZXQ=' 0D 0A --> Res 30 SumAnz 0/00
+10:53:09.796> TxP: Socket Empfang: (18/18) '334 UGFzc3dvcmQ6' 0D 0A --> BufUsed 18
+10:53:09.859> TxP: Socket Sendung: (14) 'c29ubmlicw==' 0D 0A --> Res 14 SumAnz 0/00
+10:53:09.921> TxP: Socket Empfang: (19/19) '235 authenticated' 0D 0A --> BufUsed 19
+10:53:10.046> TxP: Socket Sendung: (34) 'MAIL FROM:<fred@teleprinter.net>' 0D 0A --> Res 34 SumAnz 0/00
+10:53:10.046> TxP: Socket Empfang: (8/8) '250 ok' 0D 0A --> BufUsed 8
+10:53:10.171> TxP: Socket Sendung: (34) 'RCPT TO:<fred.sonnenrein@gmx.de>' 0D 0A --> Res 34 SumAnz 0/00
+10:53:10.296> TxP: Socket Empfang: (41/41) '250 ok its for <fred.sonnenrein@gmx.de>' 0D 0A --> BufUsed 41
+10:53:10.359> TxP: Socket Sendung: (6) 'DATA' 0D 0A --> Res 6 SumAnz 0/00
+10:53:10.421> TxP: Socket Empfang: (41/41) '354 ok, send it; end with <CRLF>.<CRLF>' 0D 0A --> BufUsed 41
+10:53:10.609> TxP: Socket Sendung: (99) 'From:<fred@teleprinter.net>' 0D 0A 'To:fred.sonnenrein@gmx.de>' 0D 0A 'Subject: *TXP* Mail sent by TelexPhone' 0D 0A 0D 0A --> Res 99 SumAnz 0/00
+10:53:10.671> TxP: Socket Sendung: (1) '#' --> Res 1 SumAnz 0/00
+10:53:14.921> TxP: Socket Sendung: (1) '#' --> Res 1 SumAnz 0/00
+10:53:19.984> TxP: Socket Sendung: (1) '#' --> Res 1 SumAnz 0/00
+10:53:25.046> TxP: Socket Sendung: (1) '#' --> Res 1 SumAnz 0/00
+10:53:26.296> TxP: Socket Sendung: (1) 't' --> Res 1 SumAnz 0/00
+10:53:26.421> TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/00
+10:53:26.609> TxP: Socket Sendung: (1) 's' --> Res 1 SumAnz 0/00
+10:53:26.734> TxP: Socket Sendung: (1) 't' --> Res 1 SumAnz 0/00
+10:53:27.234> TxP: Socket Sendung: (1) '1' --> Res 1 SumAnz 0/00
+10:53:27.359> TxP: Socket Sendung: (1) '2' --> Res 1 SumAnz 0/00
+10:53:27.984> TxP: Socket Sendung: (1) '3' --> Res 1 SumAnz 0/00
+10:53:28.234> TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/00
+10:53:28.796> TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/00
+10:53:28.984> TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/00
+10:53:29.671> TxP: Socket Sendung: (1) 'u' --> Res 1 SumAnz 0/00
+10:53:29.796> TxP: Socket Sendung: (1) 'n' --> Res 1 SumAnz 0/00
+10:53:29.921> TxP: Socket Sendung: (1) 'd' --> Res 1 SumAnz 0/00
+10:53:30.109> TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/00
+10:53:30.359> TxP: Socket Sendung: (1) 'n' --> Res 1 SumAnz 0/00
+10:53:30.609> TxP: Socket Sendung: (1) 'o' --> Res 1 SumAnz 0/00
+10:53:30.734> TxP: Socket Sendung: (1) 'c' --> Res 1 SumAnz 0/00
+10:53:30.921> TxP: Socket Sendung: (1) 'h' --> Res 1 SumAnz 0/00
+10:53:31.046> TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/00
+10:53:31.296> TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/00
+10:53:31.421> TxP: Socket Sendung: (1) 'i' --> Res 1 SumAnz 0/00
+10:53:31.609> TxP: Socket Sendung: (1) 'n' --> Res 1 SumAnz 0/00
+10:53:31.734> TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/00
+10:53:31.921> TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/00
+10:53:32.171> TxP: Socket Sendung: (1) 'z' --> Res 1 SumAnz 0/00
+10:53:32.359> TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/00
+10:53:32.484> TxP: Socket Sendung: (1) 'i' --> Res 1 SumAnz 0/00
+10:53:32.671> TxP: Socket Sendung: (1) 'l' --> Res 1 SumAnz 0/00
+10:53:32.796> TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/00
+10:53:33.296> TxP: Socket Sendung: (1) '.' --> Res 1 SumAnz 0/00
+10:53:33.421> TxP: Socket Sendung: (1) '.' --> Res 1 SumAnz 0/00
+10:53:33.609> TxP: Socket Sendung: (1) '.' --> Res 1 SumAnz 0/00
+10:53:33.734> TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/00
+10:53:33.859> TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/00
+10:53:34.046> TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/00
+10:53:34.421> TxP: Socket Sendung: (1) 'u' --> Res 1 SumAnz 0/00
+10:53:34.609> TxP: Socket Sendung: (1) 'n' --> Res 1 SumAnz 0/00
+10:53:34.734> TxP: Socket Sendung: (1) 'd' --> Res 1 SumAnz 0/00
+10:53:34.921> TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/00
+10:53:35.546> TxP: Socket Sendung: (1) 'j' --> Res 1 SumAnz 0/00
+10:53:35.734> TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/00
+10:53:35.859> TxP: Socket Sendung: (1) 't' --> Res 1 SumAnz 0/00
+10:53:36.046> TxP: Socket Sendung: (1) 'z' --> Res 1 SumAnz 0/00
+10:53:36.234> TxP: Socket Sendung: (1) 't' --> Res 1 SumAnz 0/00
+10:53:36.546> TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/00
+10:53:36.796> TxP: Socket Sendung: (1) 'i' --> Res 1 SumAnz 0/00
+10:53:36.984> TxP: Socket Sendung: (1) 's' --> Res 1 SumAnz 0/00
+10:53:37.109> TxP: Socket Sendung: (1) 't' --> Res 1 SumAnz 0/00
+10:53:37.359> TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/00
+10:53:37.609> TxP: Socket Sendung: (1) 's' --> Res 1 SumAnz 0/00
+10:53:37.796> TxP: Socket Sendung: (1) 'c' --> Res 1 SumAnz 0/00
+10:53:37.921> TxP: Socket Sendung: (1) 'h' --> Res 1 SumAnz 0/00
+10:53:38.109> TxP: Socket Sendung: (1) 'l' --> Res 1 SumAnz 0/00
+10:53:38.359> TxP: Socket Sendung: (1) 'u' --> Res 1 SumAnz 0/00
+10:53:38.546> TxP: Socket Sendung: (1) 's' --> Res 1 SumAnz 0/00
+10:53:38.671> TxP: Socket Sendung: (1) 's' --> Res 1 SumAnz 0/00
+10:53:39.171> TxP: Socket Sendung: (1) '.' --> Res 1 SumAnz 0/00
+10:53:39.359> TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/00
+10:53:39.546> TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/00
+10:53:41.796> TxP: TWI Ausschaltung intern
+10:54:55.546> http-server: mainmenu.html ( 281 Byte uebertragen (FLASH)
+10:54:55.609> http-request: mainmenu.html from 192.168.178.29
+
+
+
 /*! \file eMail.c \brief Anwendung zur Einbettung in das TxP2-System */
 //***************************************************************************
 //*            eMail.c
@@ -149,9 +287,10 @@ void SMTPDatenVerarbeiten()
 		if (SocketInBufUsed == 0)
 			return;
 			
-		if (SocketInBuf[SocketInBufUsed-1] != '\n')
+		if (SocketInBuf[SocketInBufUsed-1] != 0x0a) // Linefeed.
 			return; 
 			
+		/*
 		if (ProtokollPhase == AnmeldungStarten)
 			{
 			// warte auf ende aller Meldungen des SMTP-Servers.
@@ -159,6 +298,7 @@ void SMTPDatenVerarbeiten()
 				// der Timer wird bei jedem Datenpaket-Empfang auf 0 gesetzt
 				return;
 			}
+		*/
 		
 		// Abbruch bei Fehlern
 		if (SocketInBuf[0] >= '4')
@@ -293,6 +433,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 	
 	TxpSocketMode = SocketOriginate;
 	TxpSocketAbbauGeplant = false;
+	TxpSocketProtokoll = SMTP;
 	
 	ProtokollPhase = HalloSagen;
 	

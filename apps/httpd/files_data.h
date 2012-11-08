@@ -301,9 +301,9 @@ const char data13[] PROGMEM = {
 	"<a href=\"txp-menu.html\">zur&uuml;ck</a>"
 	" / <a href=\"txpcfg-intern.cgi\" target=\"main\">Einstellungen im lokalen TxP-System</a>"
 	" / <a href=\"txpcfg-extern.cgi\" target=\"main\">Einstellungen im ip-telex-Netz</a>"
-#ifdef TXP_MAIL
+#ifdef TXP_EMAIL
 	" / <a href=\"txpcfg-email.cgi\" target=\"main\">eMail-Einstellungen</a>"
-#endif //def TXP_MAIL	
+#endif //def TXP_EMAIL	
 	" / <a href=\"txpcfg-sperren.cgi\" target=\"main\">Sperren</a>"
 	"</BODY>"
 	"</HTML>"
