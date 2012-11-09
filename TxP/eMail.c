@@ -611,7 +611,7 @@ void SMTPDatenVerarbeiten()
 		case WarteStart:
 			strcpy_P(SocketOutBuf, PSTR("From:<"));
 			strcat(SocketOutBuf, EmailEigeneAdresse);
-			strcat_P(SocketOutBuf, PSTR(">\r\nTo:"));
+			strcat_P(SocketOutBuf, PSTR(">\r\nTo:<"));
 			strcat(SocketOutBuf, EmailEmpfaenger);
 			strcat_P(SocketOutBuf, PSTR(">\r\nContent-Type: text/plain; charset=us-ascii\r\nSubject: ")); 
 			
