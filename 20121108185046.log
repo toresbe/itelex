@@ -1,22 +1,0 @@
-Terminal log file
-Date: 08.11.2012 - 18:50:49
------------------------------------------------
-TxP: Socket Empfang: (62/62) '+OK X1 NT-POP3 Server winmail-qwmail.de (IMail 8.15 85191-2)' 0D 0A --> BufUsed 6218:56:38.812> 
-TxP: Socket Sendung: (27) 'USER fred@teleprinter.net' 0D 0A --> Res 27 SumAnz 0/0018:56:38.875> 
-TxP: Socket Empfang: (24/24) '+OK send your password' 0D 0A --> BufUsed 2418:56:39.000> 
-TxP: Socket Sendung: (14) 'PASS sonnibs' 0D 0A --> Res 14 SumAnz 0/0018:56:39.062> 
-TxP: Socket Empfang: (31/31) '+OK maildrop locked and ready' 0D 0A --> BufUsed 3118:56:39.125> 
-TxP: Socket Sendung: (6) 'STAT' 0D 0A --> Res 6 SumAnz 0/0018:56:39.187> 
-TxP: Socket Empfang: (13/13) '+OK 7 11441' 0D 0A --> BufUsed 1318:56:39.250> 
-TxP: Socket Sendung: (8) 'RETR 1' 0D 0A --> Res 8 SumAnz 0/0018:56:39.312> 
-TxP: Socket Empfang: (16/16) '+OK 887 octets' 0D 0A --> BufUsed 1618:56:39.375> 
-TxP: Socket Empfang: (892/892) 'Received: from mailout-de.gmx.net [213.165.64.22] by winmail-qwmail.de' 0D 0A '  (SMTPD32-8.15) id AB0F305200AA; Fri, 02 Nov 2012 20:12:15 +0100' 0D 0A 'Received: (qmail invoked by alias); 02 Nov 2012 19:12:15 -0000' 0D 0A 'Received: from a89-182-182-165.net-htp.de (EHLO FRED-004) [89.182.182.165]' 0D 0A '  by mail.gmx.net (mp002) with SMTP; 02 Nov 2012 20:12:15 +0100' 0D 0A 'X-Authenticated: #5925835' 0D 0A 'X-Provags-ID: V01U2FsdGVkX1/tgYk+ek3tGYgkAzza43SVIGELm97216lwrPaHse' 0D 0A 09 'uj7S48PnZUg8p5' 0D 0A 'From: Fred Sonnenrein <fred.sonnenrein@gmx.de>' 0D 0A 'To: fred@teleprinter.net' 0D 0A 'Subject: Test1' 0D 0A 'Date: Fri, 02 Nov 2012 20:16:08 +0100' 0D 0A 'X-Mailer: Forte Agent 1.8/32.548' 0D 0A 'MIME-Version: 1.0' 0D 0A 'Content-Type: text/plain; charset=us-ascii' 0D 0A 'Content-Transfer-Encoding: quoted-printable' 0D 0A 'X-Y-GMX-Trusted: 0' 0D 0A 'Message-Id: <201211022012831.SM01832@mailout-de.gmx.net>' 0D 0A 'X-RCPT-TO: <fred@teleprinter.net>' 0D 0A 'Status: R' 0D 0A 'X-UIDL: 651883504' 0D 0A 0D 0A 'Hallo Fred' 0D 0A 0D 0A 0D 0A '.' 0D 0A --> BufUsed 89218:56:40.562> 
-18:56:54,66: TxP: Socket Sendung: (8) 'RETR 1' 0D 0A --> Res 8 SumAnz 0/0018:56:40.625> 
-18:56:54,66: TxP POP: Fehlermeldung: TxP: Wechsel nach Modus Ruhe (von 11)18:56:40.687> 
-TxP: Socket Empfang: (908/908) '+OK 887 octets' 0D 0A 'Received: from mailout-de.gmx.net [213.165.64.22] by winmail-qwmail.de' 0D 0A '  (SMTPD32-8.15) id AB0F305200AA; Fri, 02 Nov 2012 20:12:15 +0100' 0D 0A 'Received: (qmail invoked by alias); 02 Nov 2012 19:12:15 -0000' 0D 0A 'Received: from a89-182-182-165.net-htp.de (EHLO FRED-004) [89.182.182.165]' 0D 0A '  by mail.gmx.net (mp002) with SMTP; 02 Nov 2012 20:12:15 +0100' 0D 0A 'X-Authenticated: #5925835' 0D 0A 'X-Provags-ID: V01U2FsdGVkX1/tgYk+ek3tGYgkAzza43SVIGELm97216lwrPaHse' 0D 0A 09 'uj7S48PnZUg8p5' 0D 0A 'From: Fred Sonnenrein <fred.sonnenrein@gmx.de>' 0D 0A 'To: fred@teleprinter.net' 0D 0A 'Subject: Test1' 0D 0A 'Date: Fri, 02 Nov 2012 20:16:08 +0100' 0D 0A 'X-Mailer: Forte Agent 1.8/32.548' 0D 0A 'MIME-Version: 1.0' 0D 0A 'Content-Type: text/plain; charset=us-ascii' 0D 0A 'Content-Transfer-Encoding: quoted-printable' 0D 0A 'X-Y-GMX-Trusted: 0' 0D 0A 'Message-Id: <201211022012831.SM01832@mailout-de.gmx.net>' 0D 0A 'X-RCPT-TO: <fred@teleprinter.net>' 0D 0A 'Status: R' 0D 0A 'X-UIDL: 651883504' 0D 0A 0D 0A 'Hallo Fred' 0D 0A 0D 0A 0D 0A '.' 0D 0A --> BufUsed 180018:56:41.937> 
-18:56:55,93: TxP POP: Fehlermeldung: TxP POP: Fehlermeldung: TxP POP: Fehlermeldung: TxP POP: Fehlermeldung: TxP POP: Fehlermeldung: TxP: Socket wird aktiv geschlossen18:56:43.812> 
-18:56:58,19: TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)18:56:43.875> 
-
------------------------------------------------
-Date: 08.11.2012 - 19:05:45
-End log file

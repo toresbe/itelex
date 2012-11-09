@@ -2418,6 +2418,8 @@ void txp_thread()
 			{
 			uint8_t ki = 0; // Kopierindex
 
+			//! \todo Umlaute wandeln, andere Zeichen wandeln, autom. Zeilenumbruch.
+			
 			while (AsciiDruckPuffer[ki] != '\0' && !PufferVoll(&SendePuffer))
 				{
 				if (AsciiDruckPuffer[ki] == '@')
@@ -3448,19 +3450,7 @@ void txp_cgi_config_extern(void *pStruct)
 		// --------------------------
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 			{
-			if (PharseCheckName_P(http_request, RufnrServerAdr_P[i]))
-				{
-				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, RufnrServerAdr_P[i])], TlnAdresseMax);
-				Buf[TlnAdresseMax-1] = '\0';
-				if (strcmp(Buf, TeilnehmerServerAdresse[i]) == 0)
-					printf_P(PSTR("<br>Teilnehmer-Server #%d unver&auml;ndert: %s"), i+1, Buf);
-				else
-					{
-					printf_P(PSTR("<br>Teilnehmer-Server #%d ge&auml;ndert in: %s"), i+1, Buf);
-					changeConfig_P(RufnrServerAdr_P[i], Buf);
-					strcpy(TeilnehmerServerAdresse[i], Buf);
-					}
-				} // if PharseCheckName_P()
+			CgiCheckText_P(http_request, PSTR("Teilnehmer-Server"), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
 			} // for i
 			
 		} // else argc > 0

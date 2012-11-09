@@ -44,7 +44,11 @@ uint8_t ProtokollLevelTlnServ;
 
 extern char *DebugMsg;
 
-
+static bool DruckeUhrzeit;
+	//!< speichert, ob die letzte Zeile ein CR LF enthielt, wenn ja wird die 
+	//!< nächste Zeile mit Datum / Uhrzeit begonnen
+	
+	
 //! Schreibt die zwischengespeicherten Daten auf die SD-Karte oder sendet diese an 
 //! die serielle Schnittstelle.
 //! \param flush Falls True, alle zwischengespeicherten Daten senden
@@ -77,6 +81,7 @@ bool ProtokollSpeichern(bool flush)
 					return false; // Puffer nicht gespeichert
 				}
 			UART_SendByte(0, Puffer[0]);
+			DruckeUhrzeit = (Puffer[0] == '\n');
 			memmove(Puffer, Puffer + 1, strlen(Puffer));
 			}
 		return true;
@@ -170,7 +175,8 @@ bool ProtokollSpeichern(bool flush)
 		fat_close_file(fd);
 		return false;
 		}
-		
+
+	DruckeUhrzeit = true;
 	fat_close_file(fd);
 	Puffer[0] = '\0';
 
@@ -211,18 +217,20 @@ static bool ProtPraeparieren(int len)
 	if (fs != NULL)
 		{
 		if (Puffer[0] == '\0')
-			{ // Zeit protokollieren
+			{ // Datum protokollieren
 			CLOCK_GetTime(&Time);
 			sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++\r\n"),
 				  Time.DD, Time.MM, Time.YY);
 			}
+		DruckeUhrzeit = true;
 		}
 #endif //defined(MMC)		
 
-	if (Puffer[0] == '\0' || Puffer[strlen(Puffer)-1] == '\n')
+	if (DruckeUhrzeit || Puffer[strlen(Puffer)-1] == '\n')
 		{
 		CLOCK_GetTime(&Time);
 		sprintf_P(Puffer + strlen(Puffer), PSTR("%02d:%02d:%02d,%02d: "), Time.hh, Time.mm, Time.ss, Time.ms);
+		DruckeUhrzeit = false;
 		}
 
 	return true;
@@ -303,6 +311,13 @@ void ProtokollierenPuffer(char buf[], uint16_t Len)
 	DruckAscii = AnzAscii > Len / 2;
 	InHochkomma = false;
 
+	if (DruckAscii)
+		ProtPraeparieren(AnzAscii + AnzAscii / 4 + 3 * (Len - AnzAscii));
+			// Schätzung: jedes Ascii-Zeichen ein Buchstabe + 25% Mehraufwand für 
+			// Hochkommas und jedes nicht-Ascii-Zeichen drei Buchstaben
+	else
+		ProtPraeparieren(3 * Len);
+		
 	// Ausgeben
 	for (i = 0 ; i < Len ; i++)
 		{
@@ -351,6 +366,7 @@ void ProtokollInit()
 	Dateiname[0] = '\0';
 	Idle = true;
 	CLOCK_RegisterCallbackFunction(SpeichernBeiIdle, MINUTE);
+	DruckeUhrzeit = true;
 	Protokollieren("Neustart\r\n");
 	}
 	

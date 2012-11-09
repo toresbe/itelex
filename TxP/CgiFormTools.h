@@ -16,4 +16,6 @@ extern void CgiFormDropdown_P(const char *FieldText, const char *FieldLabel, uin
 
 extern void CgiFormFinish_P(const char *ButtonText);
 
+extern void CgiCheckText_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, int Size, char *Value);
+
 #endif //ndef __CGIFORMTOOLS_H__

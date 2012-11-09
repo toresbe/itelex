@@ -35,6 +35,7 @@
 
 #include "apps/httpd/cgibin/cgi-bin.h"
 #include "apps/httpd/httpd2_pharse.h"
+#include "system/config/eeconfig.h"
 
 
 //! Einleitung eines durch Tabelle strukturieten CGI-Eingabeformulares
@@ -138,4 +139,33 @@ void CgiFormFinish_P(const char *ButtonText)
 	printf_P(ButtonText);
 	printf_P(PSTR("\"></td></tr></table></form>"));
 	}
+	
+
+static char Buf[255];
+
+//! Wertet Eingabefeld für Text aus
+//--------------------------------------------------------------------
+//! \param http_request Zeiger auf die Struktur der CGI-Antwort
+//! \param FieldText Bedeutung des Feldes für den Anwender (im PROGMEM)
+//! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
+//! \param Size Eingabegröße des Feldes ( = Zeichenzahl)
+//! \param Value Aktueller Wert des Feldes
+void CgiCheckText_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, int Size, char *Value)
+	{
+	if (PharseCheckName_P(http_request, FieldLabel))
+		{
+		strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, FieldLabel)], Size-1);
+		Buf[Size-1] = '\0';
+		printf_P(PSTR("<br>"));
+		printf_P(FieldText);
+		if (strcmp(Buf, Value) == 0)
+			printf_P(PSTR(" unver&auml;ndert: %s"), Buf);
+		else
+			{
+			printf_P(PSTR(" ge&auml;ndert in: %s"), Buf);
+			changeConfig_P(FieldLabel, Buf);
+			strcpy(Value, Buf);
+			}
+		} // if PharseCheckName_P()
+	} // CgiCheckText_P
 	

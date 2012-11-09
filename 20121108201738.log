@@ -1,88 +1,0 @@
-Terminal log file
-Date: 08.11.2012 - 20:17:40
------------------------------------------------
-20:18:02,36: TxP: TWI Reservierung intern / gehend von 3120:17:48.187> 
-20:18:02,36: TxP: TWI Einschaltkommando intern / gehend20:17:48.250> 
-20:18:03,04: TxP: TWI Wahlziffer 5 intern / gehend20:17:48.875> 
-20:18:03,71: TxP: TWI Wahlziffer 2 intern / gehend20:17:49.562> 
-20:18:03,72: TxP: Teilnehmer 52 im eigenen Telefonbuch gefunden.20:17:49.625> 
-20:18:03,77: TxP: Client-Socket SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI20:17:49.750> 
-20:18:03,82: TxP: Socket Empfang: (63/63) '220 winmail-qwmail.de (IMail 8.15 80320-1) NT-ESMTP Server X1' 0D 0A --> BufUsed 6320:17:49.875> 
-20:18:03,90: TxP: Socket Sendung: (29) 'EHLO TelexPhone mail client' 0D 0A --> Res 29 SumAnz 0/0020:17:50.000> 
-20:18:03,95: TxP: Socket Empfang: (130/130) '250-winmail-qwmail.de says hello' 0D 0A '250-SIZE 0' 0D 0A '250-8BITMIME' 0D 0A '250-DSN' 0D 0A '250-ETRN' 0D 0A '250-AUTH LOGIN CRAM-MD5' 0D 0A '250-AUTH=LOGIN' 0D 0A '250 EXPN' 0D 0A --> BufUsed 13020:17:50.250> 
-20:18:05,82: TxP: Socket Sendung: (12) 'AUTH LOGIN' 0D 0A --> Res 12 SumAnz 0/0020:17:51.687> 
-20:18:05,83: TxP: Socket Empfang: (18/18) '334 VXNlcm5hbWU6' 0D 0A --> BufUsed 1820:17:51.750> 
-20:18:05,89: TxP: Socket Sendung: (30) 'ZnJlZEB0ZWxlcHJpbnRlci5uZXQ=' 0D 0A --> Res 30 SumAnz 0/0020:17:51.875> 
-20:18:05,90: TxP: Socket Empfang: (18/18) '334 UGFzc3dvcmQ6' 0D 0A --> BufUsed 1820:17:51.937> 
-20:18:05,97: TxP: Socket Sendung: (14) 'c29ubmlicw==' 0D 0A --> Res 14 SumAnz 0/0020:17:52.062> 
-20:18:06,01: TxP: Socket Empfang: (19/19) '235 authenticated' 0D 0A --> BufUsed 1920:17:52.125> 
-20:18:06,14: TxP: Socket Sendung: (34) 'MAIL FROM:<fred@teleprinter.net>' 0D 0A --> Res 34 SumAnz 0/0020:17:52.250> 
-20:18:06,20: TxP: Socket Empfang: (8/8) '250 ok' 0D 0A --> BufUsed 820:17:52.312> 
-20:18:06,32: TxP: Socket Sendung: (32) 'RCPT TO:<fred@teleprinter.net>' 0D 0A --> Res 32 SumAnz 0/0020:17:52.437> 
-20:18:06,38: TxP: Socket Empfang: (39/39) '250 ok its for <fred@teleprinter.net>' 0D 0A --> BufUsed 3920:17:52.500> 
-20:18:06,54: TxP: Socket Sendung: (6) 'DATA' 0D 0A --> Res 6 SumAnz 0/0020:17:52.625> 
-20:18:06,57: TxP: Socket Empfang: (41/41) '354 ok, send it; end with <CRLF>.<CRLF>' 0D 0A --> BufUsed 4120:17:52.687> 
-20:18:06,73: TxP: Socket Sendung: (97) 'From:<fred@teleprinter.net>' 0D 0A 'To:fred@teleprinter.net>' 0D 0A 'Subject: *TXP* Mail sent by TelexPhone' 0D 0A 0D 0A --> Res 97 SumAnz 0/0020:17:52.875> 
-20:18:11,85: TxP: Socket Sendung: (1) 'h' --> Res 1 SumAnz 0/0020:17:57.687> 
-20:18:12,00: TxP: Socket Sendung: (1) 'a' --> Res 1 SumAnz 0/0020:17:57.812> 
-20:18:12,15: TxP: Socket Sendung: (1) 'l' --> Res 1 SumAnz 0/0020:17:58.000> 
-20:18:12,30: TxP: Socket Sendung: (1) 'l' --> Res 1 SumAnz 0/0020:17:58.125> 
-20:18:12,45: TxP: Socket Sendung: (1) 'o' --> Res 1 SumAnz 0/0020:17:58.250> 
-20:18:12,68: TxP: Socket Sendung: (1) ' ' --> Res 1 SumAnz 0/0020:17:58.500> 
-20:18:12,98: TxP: Socket Sendung: (1) 'f' --> Res 1 SumAnz 0/0020:17:58.812> 
-20:18:13,18: TxP: Socket Sendung: (1) 'r' --> Res 1 SumAnz 0/0020:17:59.000> 
-20:18:13,33: TxP: Socket Sendung: (1) 'e' --> Res 1 SumAnz 0/0020:17:59.125> 
-20:18:13,51: TxP: Socket Sendung: (1) 'd' --> Res 1 SumAnz 0/0020:17:59.312> 
-20:18:14,33: TxP: Socket Sendung: (1) '.' --> Res 1 SumAnz 0/0020:18:00.125> 
-20:18:14,48: TxP: Socket Sendung: (1) '.' --> Res 1 SumAnz 0/0020:18:00.312> 
-20:18:14,63: TxP: Socket Sendung: (1) '.' --> Res 1 SumAnz 0/0020:18:00.437> 
-20:18:15,07: TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/0020:18:00.875> 
-20:18:15,27: TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/0020:18:01.125> 
-20:18:19,39: TxP: Socket Sendung: (1) '1' --> Res 1 SumAnz 0/0020:18:05.187> 
-20:18:19,57: TxP: Socket Sendung: (1) '2' --> Res 1 SumAnz 0/0020:18:05.375> 
-20:18:19,77: TxP: Socket Sendung: (1) '3' --> Res 1 SumAnz 0/0020:18:05.562> 
-20:18:19,97: TxP: Socket Sendung: (1) '4' --> Res 1 SumAnz 0/0020:18:05.812> 
-20:18:20,22: TxP: Socket Sendung: (1) '5' --> Res 1 SumAnz 0/0020:18:06.062> 
-20:18:20,46: TxP: Socket Sendung: (1) '6' --> Res 1 SumAnz 0/0020:18:06.312> 
-20:18:20,69: TxP: Socket Sendung: (1) '7' --> Res 1 SumAnz 0/0020:18:06.500> 
-20:18:20,93: TxP: Socket Sendung: (1) '8' --> Res 1 SumAnz 0/0020:18:06.750> 
-20:18:21,18: TxP: Socket Sendung: (1) '9' --> Res 1 SumAnz 0/0020:18:07.000> 
-20:18:21,48: TxP: Socket Sendung: (1) '0' --> Res 1 SumAnz 0/0020:18:07.312> 
-20:18:22,14: TxP: Socket Sendung: (1) 0D --> Res 1 SumAnz 0/0020:18:07.937> 
-20:18:22,38: TxP: Socket Sendung: (1) 0A --> Res 1 SumAnz 0/0020:18:08.187> 
-20:18:28,65: TxP: TWI Ausschaltung intern20:18:14.500> 
-20:18:28,69: TxP: Socket Sendung: (5) 0D 0A 2E 0D 0A --> Res 5 SumAnz 0/0020:18:14.562> 
-20:18:28,71: TxP: Socket Empfang: (20/20) '250 Message queued' 0D 0A --> BufUsed 2020:18:14.687> 
-20:18:28,84: TxP: Socket Sendung: (6) 'QUIT' 0D 0A --> Res -1 SumAnz 0/0020:18:14.750> 
-20:18:28,84: TxP: Socket wurde von Gegenstelle GETRENNT20:18:14.812> 
-20:18:28,84: TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)20:18:14.875> 
-20:18:29,20: TxP: Dynamische IP-Aktualisierung: neue IP 89.182.180.8820:18:15.062> 
-20:22:32,58: TxP: Socket Empfang: (62/62) '+OK X1 NT-POP3 Server winmail-qwmail.de (IMail 8.15 85240-3)' 0D 0A --> BufUsed 6220:22:18.437> 
-20:22:32,65: TxP: Socket Sendung: (27) 'USER fred@teleprinter.net' 0D 0A --> Res 27 SumAnz 0/0020:22:18.562> 
-20:22:32,66: TxP: Socket Empfang: (24/24) '+OK send your password' 0D 0A --> BufUsed 2420:22:18.625> 
-20:22:32,72: TxP: Socket Sendung: (14) 'PASS sonnibs' 0D 0A --> Res 14 SumAnz 0/0020:22:18.750> 
-20:22:32,73: TxP: Socket Empfang: (31/31) '+OK maildrop locked and ready' 0D 0A --> BufUsed 3120:22:18.812> 
-20:22:32,88: TxP: Socket Sendung: (6) 'STAT' 0D 0A --> Res 6 SumAnz 0/0020:22:18.937> 
-20:22:32,91: TxP: Socket Empfang: (11/11) '+OK 1 443' 0D 0A --> BufUsed 1120:22:19.000> 
-20:22:33,03: TxP: Socket Sendung: (8) 'RETR 1' 0D 0A --> Res 8 SumAnz 0/0020:22:19.062> 
-20:22:33,07: TxP: Socket Empfang: (16/16) '+OK 443 octets' 0D 0A --> BufUsed 1620:22:19.125> 
-20:22:33,16: TxP: Socket Empfang: (448/448) 'Received: from TelexPhone mail client [89.182.180.88] by teleprinter.net with ESMTP' 0D 0A '  (SMTPD32-8.15) id A56E51E00F6; Thu, 08 Nov 2012 20:18:06 +0100' 0D 0A 'From:<fred@teleprinter.net>' 0D 0A 'To:fred@teleprinter.net>' 0D 0A 'Subject: *TXP* Mail sent by TelexPhone' 0D 0A 'Message-Id: <201211082018787.SM01832@TelexPhone mail client>' 0D 0A 'Date: Thu,  8 Nov 2012 20:18:28 +0100' 0D 0A 'X-RCPT-TO: <fred@teleprinter.net>' 0D 0A 'Status: U' 0D20:22:33,67:  0A 'X-UIDL: 651883514' 0D 0A 0D 0A 'hallo fred...' 0D 0A '1234567890' 0D 0A 0D 0A 0D 0A '.' 0D 0A --> BufUsed 44820:22:19.812> 
-20:22:33,85: TxP: Socket Sendung: (8) 'DELE 1' 0D 0A --> Res 8 SumAnz 0/0020:22:19.875> 
-20:22:33,88: TxP: Socket Empfang: (17/17) '+OK msg deleted' 0D 0A --> BufUsed 1720:22:19.937> 
-20:22:34,01: TxP: Socket Sendung: (6) 'QUIT' 0D 0A --> Res 6 SumAnz 0/0020:22:20.062> 
-20:22:34,04: TxP: Socket Empfang: (33/33) '+OK POP3 Server saying Good-Bye' 0D 0A --> BufUsed 3320:22:20.125> 
-20:22:34,15: TxP: Socket wurde von Gegenstelle erwartet geschlossen20:22:20.187> 
-20:22:34,15: TxP: Wechsel nach Modus Ruhe (von 11)20:22:20.250> 
-20:22:34,15: TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)20:22:20.484> 
-20:25:34,01: TxP: Socket Empfang: (62/62) '+OK X1 NT-POP3 Server winmail-qwmail.de (IMail 8.15 85242-3)' 0D 0A --> BufUsed 6220:25:19.890> 
-20:25:34,08: TxP: Socket Sendung: (27) 'USER fred@teleprinter.net' 0D 0A --> Res 27 SumAnz 0/0020:25:19.953> 
-20:25:34,09: TxP: Socket Empfang: (24/24) '+OK send your password' 0D 0A --> BufUsed 2420:25:20.078> 
-20:25:34,15: TxP: Socket Sendung: (14) 'PASS sonnibs' 0D 0A --> Res 14 SumAnz 0/0020:25:20.140> 
-20:25:34,17: TxP: Socket Empfang: (31/31) '+OK maildrop locked and ready' 0D 0A --> BufUsed 3120:25:20.265> 
-20:25:34,31: TxP: Socket Sendung: (6) 'STAT' 0D 0A --> Res 6 SumAnz 0/0020:25:20.328> 
-20:25:34,34: TxP: Socket Empfang: (9/9) '+OK 0 0' 0D 0A --> BufUsed 920:25:20.390> 
-20:25:34,46: TxP: Socket Sendung: (6) 'QUIT' 0D 0A --> Res 6 SumAnz 0/0020:25:20.453> 
-20:25:34,49: TxP: Socket Empfang: (33/33) '+OK POP3 Server saying Good-Bye' 0D 0A --> BufUsed 3320:25:20.578> 
-20:25:34,59: TxP: Socket wurde von Gegenstelle erwartet geschlossen20:25:20.640> 
-20:25:34,59: TxP: Wechsel nach Modus Ruhe (von 11)20:25:20.703> 
-20:25:34,60: TxP: Grundstellung erreicht (Socket geschlossen, TWI geschlossen)20:25:20.828> 

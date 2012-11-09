@@ -69,7 +69,10 @@ static char EmailEigenesPasswort[TlnAdresseMax];
 	//!< eigenes Passwort des Email-Servers.
 	
 static uint8_t EmailAbfrageTakt;
-	//!< Abstand der eMail-Abfragen in Minuten.
+	//!< Abstand der eMail-Abfragen in Minuten. 0 = Ausgeschaltet
+
+static bool EmailAusgabeFilternKennung;
+	//!< Nur die emails ausgeben, die eine +TX+ Kennung in der Subject-Zeile haben
 	
 	
 static char EmailEmpfaenger[TlnAdresseMax];
@@ -91,6 +94,15 @@ static uint16_t POPWartezeitEnde;
 static bool POPOkEmpfangen;
 	//!< Wird auf true gesetzt, wenn eine Zeile mit + am Anfang empfangen wurde.
 	//!< Nach Kommandoausgaben auf false.
+
+static bool InMailHeader;
+	//!< so lange true, so lange Zeilen des Mail-Headers an MailZeileVerarbeiten()
+	//!< übergeben werden.
+	
+static bool MailUnterdruecken; 
+	//!< Wird auf true gesetzt, wenn bestimmte Kriterien erfüllt sind:
+	//!< Subject ohne Kennung, sofern Filter eingeschaltet
+	//!< HTML- oder Multipart-Bodies.
 	
 	
 enum {
@@ -102,13 +114,65 @@ enum {
 	MailTo = 6,
 	StartData = 7,
 	WarteStart = 8,
-	MailData = 9,
-	Abmelden = 10,
-	WarteEnde = 11
+	MailSubject = 9,
+	MailData = 10,
+	Abmelden = 11,
+	WarteEnde = 12
 	} ; // Konstanten für ProtokollPhase
 
+		
+//! Bearbeitet das Drucken von empfangenen Mails.
+// =========================================================================
+//! Filtert aus dem Header die interessanten Zeilen heraus und Druckt nur diese.
+//! Prüft auch auf korrekten Inhalt. Ggf Zeilenumbrüche selber einfügen.
+//! Ist zum Erfolg verdammt. /todo prüfen ob blockieren hilft.
+void MailZeileVerarbeiten(char *Zeile)
+	{
+	char *p; 
 	
+	if (InMailHeader)
+		{
+		if (Zeile[0] == '\r' && Zeile[1] == '\n')
+			{ // Leerzeile leitet Mail-Body ein
+			InMailHeader = false;
+			return;
+			}
+		p = strstr_P(Zeile, PSTR(":"));
+		if (p == NULL) // Header-Zeile ohne Doppelpunkt: ignorieren
+			return;
+			
+		if (strncasecmp_P(Zeile, PSTR("from"), p - Zeile) == 0
+			|| strncasecmp_P(Zeile, PSTR("to"), p - Zeile) == 0
+			|| strncasecmp_P(Zeile, PSTR("date"), p - Zeile) == 0)
+			{
+			// unten weitermachen...
+			}
+		else if (strncasecmp_P(Zeile, PSTR("subject"), p - Zeile) == 0)
+			{
+			if (EmailAusgabeFilternKennung && strstr_P(p, PSTR("+TX+")) == NULL)
+				// Nur Emails-mit Kennung im Subject drucken, aber keine Kennung enthalten...
+				MailUnterdruecken = true;
+				// aber kein return, so wird die Subject-Zeile noch gedruckt.
+			}
+		else if (strncasecmp_P(Zeile, PSTR("content-type"), p - Zeile) == 0)
+			{
+			if (strstr_P(p, PSTR("text/plain")) == NULL)
+				// Kein pures Ascii -> weg.
+				MailUnterdruecken = true;
+				// aber kein return, so wird die Content-Zeile noch gedruckt.
+			}
+		else
+			// uninteressante Header-Zeile -> ignorieren
+			return;
+		}
 
+	// jetzt Zeile drucken, um Umbruch und co kümmern sich andere...
+	if (strlen(AsciiDruckPuffer) + strlen(Zeile) < AsciiDruckPufferMax)
+		strcat(AsciiDruckPuffer, Zeile);
+		//! \todo was tun wenn kein Platz???
+	}
+		
+	
 //! Startet in gewissen Zeiträumen die Abfrage des POP-Servers.
 // =========================================================================
 //! 
@@ -159,7 +223,6 @@ void POP3Einleiten()
 		}
 
 	SocketBufInit();
-	ModusWechsel(ModKommendVerbVorstufe);
 	
 	TxpSocketMode = SocketOriginate;
 	TxpSocketAbbauGeplant = false;
@@ -207,9 +270,15 @@ QUIT
 +OK bye
 */
 
+
+#define MAXLINELEN 63
+
+
 void Pop3DatenVerarbeiten()
 	{
 	uint16_t i;
+	uint16_t ZeileAnfang;
+	char *p;
 	
 	if (SocketOutBufUsed != 0)
 		return;
@@ -276,8 +345,9 @@ void Pop3DatenVerarbeiten()
 				if (SocketInBuf[i] == ' ')
 					break;
 					
-			if (i < SocketInBufUsed && atoi(SocketInBuf + i) == 0)
-				{ // nichts im Puffer...
+			if ((i < SocketInBufUsed && atoi(SocketInBuf + i) == 0)
+				|| Modus != ModRuhe)
+				{ // nichts im Puffer ODER plötzlich doch belegt...
 				POPWartezeitEnde = EmailAbfrageTakt * 600;
 				StartTimer(&POPWartezeitTimer);
 				strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
@@ -286,19 +356,65 @@ void Pop3DatenVerarbeiten()
 				}
 			else
 				{ // mindestens eine Meldung im Puffer...
+				strcpy_P(AsciiDruckPuffer, PSTR("\r\nemail empfangen:\r\n")); 
+					// startet sofort den Fernschreiber
+				
 				strcpy_P(SocketOutBuf, PSTR("RETR 1\r\n"));
 				ProtokollPhase = MailData;
+				InMailHeader = true; // für MailZeileVerarbeiten()
+				MailUnterdruecken = false;
 				}
+				
 			break;
 			
 		case MailData:
-			// \todo Daten in den AsciiDruckPuffer übertragen
-			if (strcmp_P(SocketInBuf + SocketInBufUsed - 5, PSTR("\r\n.\r\n")) == 0)
-				// Ende des Mail-Bodys
+			if (AsciiDruckPuffer[0] != '\0')
+				return; // es wird noch gedruckt, also nichts neues Drucken...
+				
+			// Empfang in einzelne Zeilen zerlegen und verarbeiten...
+			ZeileAnfang = 0;
+			while (ZeileAnfang < SocketInBufUsed)
 				{
-				strcpy_P(SocketOutBuf, PSTR("DELE 1\r\n"));
-				ProtokollPhase = Abmelden;
-				}
+				if (strcmp_P(SocketInBuf + ZeileAnfang, PSTR(".\r\n")) == 0)
+					// == 0 nur dann, wenn . CR LF auch am Ende des Empfangspuffers steht.
+					{ // Kennung des Endes des Mail-Bodys
+					strcpy_P(SocketOutBuf, PSTR("DELE 1\r\n"));
+					ProtokollPhase = Abmelden;
+					break;
+					}
+				
+				// nächstes Zeilenende finden
+				p = strstr_P(SocketInBuf + ZeileAnfang, PSTR("\r\n"));
+				if (p == NULL)
+					{ // es folgt kein CRLF mehr
+					if (SocketInBufUsed < ZeileAnfang + MAXLINELEN)
+						{ // auf vervollständigung der Zeile warten
+						memmove(SocketInBuf, SocketInBuf + ZeileAnfang, SocketInBufUsed - ZeileAnfang);
+						SocketInBufUsed -= ZeileAnfang;
+						return; 
+						}
+					else
+						{ // Zeile ist auch so lang genug zum Verarbeiten
+						if (!MailUnterdruecken)
+							MailZeileVerarbeiten(SocketInBuf + ZeileAnfang);
+							// Ende ist bereits mit \0 markiert.
+						break; // der while-Schleife
+						}
+					} // p == NULL -> kein CRLF in der Zeile
+				else
+					{ // nach ZeileAnfang wurde ein CRLF gefunden
+					p += 2; // Auf das Zeichen HINTER dem CRLF gehen
+					if (!MailUnterdruecken)
+						{
+						char h = *p; // speichert Zeilen nach ZeilenEnde
+						*p = '\0';
+						MailZeileVerarbeiten(SocketInBuf + ZeileAnfang);
+						*p = h; // Zeichen der nächsten Zeile wiederherstellen
+						}
+					ZeileAnfang = p - SocketInBuf;
+					}
+				} // while (ZeileAnfang < SocketInBufUsed)
+			
 			break;
 
 		case Abmelden:
@@ -412,7 +528,7 @@ void SMTPDatenVerarbeiten()
 	if (SocketOutBufUsed != 0)
 		return;
 		
-	if (ProtokollPhase != MailData)
+	if (ProtokollPhase != MailData && ProtokollPhase != MailSubject)
 		{ // in MailData wird jedes Zeichen sofort gesendet.
 		if (SocketInBufUsed == 0)
 			return;
@@ -497,10 +613,33 @@ void SMTPDatenVerarbeiten()
 			strcat(SocketOutBuf, EmailEigeneAdresse);
 			strcat_P(SocketOutBuf, PSTR(">\r\nTo:"));
 			strcat(SocketOutBuf, EmailEmpfaenger);
-			strcat_P(SocketOutBuf, PSTR(">\r\nSubject: *TXP* Mail sent by TelexPhone\r\n\r\n")); 
-			//! \todo Erste Zeile als Subject...
-			strcpy_P(AsciiDruckPuffer, PSTR("\r\ntext:\r\n"));
-			ProtokollPhase = MailData;
+			strcat_P(SocketOutBuf, PSTR(">\r\nContent-Type: text/plain; charset=us-ascii\r\nSubject: ")); 
+			
+			// Aufforderung für Subject-Eingabe:
+			strcpy_P(AsciiDruckPuffer, PSTR("\r\nbetreff:\r\n"));
+			ProtokollPhase = MailSubject;
+			break;
+			
+		case MailSubject:
+			while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3 - 10) // - 10 = Reserve für wichtige Daten
+				{
+				char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+				if (z == '\r' || z == '\n')
+					{
+					strcpy_P(SocketOutBuf + SocketOutBufUsed, PSTR("+TX+\r\n\r\n"));
+						// Ende der Subject-Zeile + Einleitung des Body
+					ProtokollPhase = MailData;
+					
+					// Aufforderung für Body-Eingabe:
+					strcpy_P(AsciiDruckPuffer, PSTR("\r\ntext:\r\n"));
+					PufferInit(&EmpfPuffer);
+					break;
+					}
+				else if (z != '\0' && z != '#')
+					SocketOutBuf[SocketOutBufUsed++] = z;
+				}
+				
+			SocketOutBuf[SocketOutBufUsed] = '\0';
 			break;
 			
 		case MailData:
@@ -538,7 +677,7 @@ void SMTPDatenVerarbeiten()
 //! Muss in jedem Zustand funktionieren können.
 void SMTPSchliessen()
 	{
-	if (ProtokollPhase == MailData)
+	if (ProtokollPhase == MailData || ProtokollPhase == MailSubject)
 		{
 		strcpy_P(SocketOutBuf, PSTR("\r\n.\r\n"));
 		ProtokollPhase = Abmelden;
@@ -547,6 +686,7 @@ void SMTPSchliessen()
 		{
 		strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
 		ProtokollPhase = WarteEnde;
+		TxpSocketAbbauGeplant = true;
 		}
 	SocketOutBufUsed = strlen(SocketOutBuf);
 	}
@@ -559,6 +699,7 @@ const PROGMEM char EmailSMTPServerAdresse_P[] = "SMTPSERVER";
 const PROGMEM char EmailEigeneAdresse_P[] = "EMAILADR";
 const PROGMEM char EmailEigenesPasswort_P[] = "EMAILPASS";
 const PROGMEM char EmailAbfrageTakt_P[] = "EMAILABFRTAKT";
+const PROGMEM char EmailAusgabeFilternKennung_P[] = "EMAILFILTERKENNUNG";
 
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface zum Ändern der Einstellungen des TelexPhone-Interface bezüglich der Anbindung 
@@ -587,7 +728,8 @@ void txp_cgi_email_config(void *pStruct)
 		CgiFormInputFieldText_P(PSTR("SMTP-Server Adresse:"), EmailSMTPServerAdresse_P, TlnAdresseMax, EmailSMTPServerAdresse);
 		CgiFormInputFieldText_P(PSTR("Eigene eMail-Adresse:"), EmailEigeneAdresse_P, TlnAdresseMax, EmailEigeneAdresse);
 		CgiFormInputFieldText_P(PSTR("Kennwort f&uuml;r eMail-Server:"), EmailEigenesPasswort_P, TlnAdresseMax, EmailEigenesPasswort);
-		CgiFormInputFieldLong_P(PSTR("Takt des eMail-Abrufs (Minuten):"), EmailAbfrageTakt_P, 2, EmailAbfrageTakt);
+		CgiFormInputFieldLong_P(PSTR("Takt des eMail-Abrufs (Minuten)<br>0 = ausgeschaltet:"), EmailAbfrageTakt_P, 2, EmailAbfrageTakt);
+		CgiFormCheckbox_P(PSTR("Nur eMails mit +TX+ im Subject drucken:"), EmailAusgabeFilternKennung_P, EmailAusgabeFilternKennung);
 		
 		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
 		}
@@ -597,69 +739,13 @@ void txp_cgi_email_config(void *pStruct)
 
 		printf_P(PSTR("neue Einstellungen: <a href=\"txpcfg-email.cgi\">weiter</a>"));
 
-		// EmailPOPServerAdresse
-		// ---------------------
-		if (PharseCheckName_P(http_request, EmailPOPServerAdresse_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EmailPOPServerAdresse_P)], TlnAdresseMax);
-			Buf[TlnAdresseMax-1] = '\0';
-			if (strcmp(Buf, EmailPOPServerAdresse) == 0)
-				printf_P(PSTR("<br>POP-Server unver&auml;ndert: %s"), Buf);
-			else
-				{
-				printf_P(PSTR("<br>POP-Server ge&auml;ndert in: %s"), Buf);
-				changeConfig_P(EmailPOPServerAdresse_P, Buf);
-				strcpy(EmailPOPServerAdresse, Buf);
-				}
-			} // if PharseCheckName_P()
+		CgiCheckText_P(http_request, PSTR("POP-Server Adresse"), EmailPOPServerAdresse_P, TlnAdresseMax, EmailPOPServerAdresse);
 		
-		// EmailSMTPServerAdresse
-		// ----------------------
-		if (PharseCheckName_P(http_request, EmailSMTPServerAdresse_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EmailSMTPServerAdresse_P)], TlnAdresseMax);
-			Buf[TlnAdresseMax-1] = '\0';
-			if (strcmp(Buf, EmailSMTPServerAdresse) == 0)
-				printf_P(PSTR("<br>SMTP-Server unver&auml;ndert: %s"), Buf);
-			else
-				{
-				printf_P(PSTR("<br>SMTP-Server ge&auml;ndert in: %s"), Buf);
-				changeConfig_P(EmailSMTPServerAdresse_P, Buf);
-				strcpy(EmailSMTPServerAdresse, Buf);
-				}
-			} // if PharseCheckName_P()
+		CgiCheckText_P(http_request, PSTR("SMTP-Server Adresse"), EmailSMTPServerAdresse_P, TlnAdresseMax, EmailSMTPServerAdresse);
 		
-		// EmailEigeneAdresse
-		// ----------------------
-		if (PharseCheckName_P(http_request, EmailEigeneAdresse_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EmailEigeneAdresse_P)], TlnAdresseMax);
-			Buf[TlnAdresseMax-1] = '\0';
-			if (strcmp(Buf, EmailEigeneAdresse) == 0)
-				printf_P(PSTR("<br>eigene Adresse unver&auml;ndert: %s"), Buf);
-			else
-				{
-				printf_P(PSTR("<br>eigene Adresse ge&auml;ndert in: %s"), Buf);
-				changeConfig_P(EmailEigeneAdresse_P, Buf);
-				strcpy(EmailEigeneAdresse, Buf);
-				}
-			} // if PharseCheckName_P()
+		CgiCheckText_P(http_request, PSTR("eigene Adresse"), EmailEigeneAdresse_P, TlnAdresseMax, EmailEigeneAdresse);
 		
-		// EmailEigenesPasswort
-		// ----------------------
-		if (PharseCheckName_P(http_request, EmailEigenesPasswort_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EmailEigenesPasswort_P)], TlnAdresseMax);
-			Buf[TlnAdresseMax-1] = '\0';
-			if (strcmp(Buf, EmailEigenesPasswort) == 0)
-				printf_P(PSTR("<br>eigenes Kennwort unver&auml;ndert: %s"), Buf);
-			else
-				{
-				printf_P(PSTR("<br>eigenes Kennwort ge&auml;ndert in: %s"), Buf);
-				changeConfig_P(EmailEigenesPasswort_P, Buf);
-				strcpy(EmailEigenesPasswort, Buf);
-				}
-			} // if PharseCheckName_P()
+		CgiCheckText_P(http_request, PSTR("eigenes Kennwort"), EmailEigenesPasswort_P, TlnAdresseMax, EmailEigenesPasswort);
 		
 		// Abfragetakt
 		// ---------------------
@@ -688,6 +774,28 @@ void txp_cgi_email_config(void *pStruct)
 				changeConfig_P(EmailAbfrageTakt_P, Buf);
 				EmailAbfrageTakt = Neu;
 				}
+			}
+			
+		// Filtern nach +TX+ im Subject
+		// ----------------------------
+		if (PharseCheckName_P(http_request, EmailAusgabeFilternKennung_P))
+			{
+			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EmailAusgabeFilternKennung_P)], 2);
+			Buf[2] = '\0';
+			Neu = atoi(Buf) != 0; 
+			}
+		else
+			{
+			Neu = false;
+			Buf[0] = '0', Buf[1] = '\0';
+			}
+		if (Neu == EmailAusgabeFilternKennung)
+			printf_P(PSTR("<br>Email-Filterung unver&auml;ndert: %u"), Neu);
+		else
+			{
+			changeConfig_P(EmailAusgabeFilternKennung_P, Buf);
+			printf_P(PSTR("<br>Email-Filterung: %s"), Buf);
+			EmailAusgabeFilternKennung = Neu;
 			}
 		
 		} // else argc > 0
@@ -718,9 +826,14 @@ void txp_email_init()
 		EmailAbfrageTakt = atoi(Buf);
 	else
 		EmailAbfrageTakt = 0; // ausgeschaltet.
-
+		
+	if (readConfig_P(EmailAusgabeFilternKennung_P, Buf) == 1)
+		EmailAusgabeFilternKennung = atoi(Buf);
+	else
+		EmailAusgabeFilternKennung = false;
+		
 	POPWartezeitEnde = 5 * 600; // 5 Minuten
-	POPWartezeitEnde = 100; // 20 Sekunden nach Start. HACK 
+	POPWartezeitEnde = 200; // 20 Sekunden nach Start. HACK 
 	
 	StartTimer(&POPWartezeitTimer);
 	
