@@ -132,21 +132,19 @@ void MailZeileVerarbeiten(char *Zeile)
 	
 	if (InMailHeader)
 		{
-		if (Zeile[0] == '\r' && Zeile[1] == '\n')
-			{ // Leerzeile leitet Mail-Body ein
-			InMailHeader = false;
-			return;
-			}
 		p = strstr_P(Zeile, PSTR(":"));
-		if (p == NULL) // Header-Zeile ohne Doppelpunkt: ignorieren
-			return;
+		
+		if (Zeile[0] == '\r' && Zeile[1] == '\n')
+			// Leerzeile leitet Mail-Body ein
+			InMailHeader = false;
 			
-		if (strncasecmp_P(Zeile, PSTR("from"), p - Zeile) == 0
-			|| strncasecmp_P(Zeile, PSTR("to"), p - Zeile) == 0
-			|| strncasecmp_P(Zeile, PSTR("date"), p - Zeile) == 0)
-			{
-			// unten weitermachen...
-			}
+		else if (p == NULL) // Header-Zeile ohne Doppelpunkt: ignorieren
+			return;
+				
+		else if (strncasecmp_P(Zeile, PSTR("from"), p - Zeile) == 0
+				|| strncasecmp_P(Zeile, PSTR("to"), p - Zeile) == 0
+				|| strncasecmp_P(Zeile, PSTR("date"), p - Zeile) == 0)
+			; // Zeile Drucken, siehe unten
 		else if (strncasecmp_P(Zeile, PSTR("subject"), p - Zeile) == 0)
 			{
 			if (EmailAusgabeFilternKennung && strstr_P(p, PSTR("+TX+")) == NULL)
@@ -156,15 +154,19 @@ void MailZeileVerarbeiten(char *Zeile)
 			}
 		else if (strncasecmp_P(Zeile, PSTR("content-type"), p - Zeile) == 0)
 			{
+			//! \todo Zeichensatz
+			
 			if (strstr_P(p, PSTR("text/plain")) == NULL)
 				// Kein pures Ascii -> weg.
 				MailUnterdruecken = true;
 				// aber kein return, so wird die Content-Zeile noch gedruckt.
+			else
+				return; // die content-type Zeile nicht drucken.
 			}
 		else
 			// uninteressante Header-Zeile -> ignorieren
 			return;
-		}
+		} // if InMailHeader
 
 	// jetzt Zeile drucken, um Umbruch und co kümmern sich andere...
 	if (strlen(AsciiDruckPuffer) + strlen(Zeile) < AsciiDruckPufferMax)
@@ -380,6 +382,7 @@ void Pop3DatenVerarbeiten()
 					{ // Kennung des Endes des Mail-Bodys
 					strcpy_P(SocketOutBuf, PSTR("DELE 1\r\n"));
 					ProtokollPhase = Abmelden;
+					strcpy_P(AsciiDruckPuffer, PSTR("\r\n\n\n\n"));
 					break;
 					}
 				
