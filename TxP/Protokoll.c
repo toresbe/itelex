@@ -221,8 +221,8 @@ static bool ProtPraeparieren(int len)
 			CLOCK_GetTime(&Time);
 			sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++\r\n"),
 				  Time.DD, Time.MM, Time.YY);
+			DruckeUhrzeit = true;
 			}
-		DruckeUhrzeit = true;
 		}
 #endif //defined(MMC)		
 
