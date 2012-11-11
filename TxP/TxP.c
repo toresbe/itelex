@@ -2072,7 +2072,7 @@ void AsciiDruckPufferVerarbeiten()
 		uint8_t ZeilePos = AsciiHilfZeilenanfang; // Rechnet mit, an welcher Stelle der Zeile der Druckwagen steht.
 		uint8_t UmbruchPosVorschlag = 0; // speichert, wo sinnvollerweise der Umbruch erfolgt, sofern kein Umbruch im Puffer steht.
 		
-		for (dpi = 0 ; AsciiDruckPuffer[dpi] != '\0' ; dpi++)
+		for (dpi = 0 ; AsciiDruckPuffer[dpi] != '\0' && hpi < AsciiHilfPufferMax - 2 && ZeilePos <= Druckzeilenlaenge ; dpi++)
 			{
 			if (ZeichenZuCode(AsciiDruckPuffer[dpi], BuMode) != 255 
 				|| ZeichenZuCode(AsciiDruckPuffer[dpi], ZiMode) != 255)
@@ -2104,34 +2104,30 @@ void AsciiDruckPufferVerarbeiten()
 						hpi++, ZeilePos++;
 					}
 				}
-			
-			// ZeilePos bewerten
-			if (ZeilePos > Druckzeilenlaenge)
-				{
-				// war schon eine geeignete Stelle für den Umbruch gefunden?
-				// wenn nein jetzt eines setzen...
-				if (UmbruchPosVorschlag != 0)
-					{
-					// Zeilenumbruch einbauen...
-					if (hpi > UmbruchPosVorschlag)
-						memmove(AsciiHilfPuffer + UmbruchPosVorschlag + 2, 
-								AsciiHilfPuffer + UmbruchPosVorschlag, 
-								hpi - UmbruchPosVorschlag);
-					AsciiHilfPuffer[UmbruchPosVorschlag] = '\r';
-					AsciiHilfPuffer[UmbruchPosVorschlag+1] = '\n';
-					hpi += 2;
-					}
-				else
-					{ // jetzt WR + ZL einbauen
-					AsciiHilfPuffer[hpi++] = '\r';
-					AsciiHilfPuffer[hpi++] = '\n';
-					}
-				break; // diese Zeile nicht weiter bearbeiten
-				}
-				
-			if (hpi > AsciiHilfPufferMax - 3)
-				break; // sicherheitshalber beenden
 			} // for dpi
+			
+		// ZeilePos bewerten
+		if (ZeilePos > Druckzeilenlaenge)
+			{
+			// war schon eine geeignete Stelle für den Umbruch gefunden?
+			// wenn nein jetzt eines setzen...
+			if (UmbruchPosVorschlag != 0)
+				{
+				// Zeilenumbruch einbauen...
+				if (hpi > UmbruchPosVorschlag)
+					memmove(AsciiHilfPuffer + UmbruchPosVorschlag + 2, 
+							AsciiHilfPuffer + UmbruchPosVorschlag, 
+							hpi - UmbruchPosVorschlag);
+				AsciiHilfPuffer[UmbruchPosVorschlag] = '\r';
+				AsciiHilfPuffer[UmbruchPosVorschlag+1] = '\n';
+				hpi += 2;
+				}
+			else
+				{ // jetzt WR + ZL einbauen
+				AsciiHilfPuffer[hpi++] = '\r';
+				AsciiHilfPuffer[hpi++] = '\n';
+				}
+			}
 			
 		AsciiHilfPuffer[hpi] = '\0';
 
