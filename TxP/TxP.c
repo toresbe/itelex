@@ -194,6 +194,21 @@ char AsciiDruckPuffer[AsciiDruckPufferMax];
 static char HtmlSendeText[HtmlSendeTextMax];
 	//!< Puffer für zu Anzuzeigenden Text (Endgerät -> Netz), mit Null abgeschlossen
 
+enum { AsciiHilfPufferMax = 100 } ;
+	//!< Größe von AsciiDruckPuffer.
+	
+static char AsciiHilfPuffer[AsciiHilfPufferMax];
+	//!< Hilfspuffer für Ascii-Druck: Enthält eine Zeile des AsciiPuffers, Umlaute etc. 
+	//!< sind übersetzt. Zeilenumbruch wird in diesen Puffer eingebaut.
+	
+static uint8_t AsciiHilfZeilenanfang;
+	//!< Speichert, an welcher Stelle in einer Zeile der Hilfspuffer beginnt, d.h. wieviele
+	//!< Zeichen bereits vorher gedruckt worden sind. Erforderlich für automatischen Zeilenumbruch.
+	
+enum { Druckzeilenlaenge = 64 } ; 
+	//!< Zeichen pro Zeile auf den Fernschreibern.
+	
+
 static TKurzTimer HtmlDruckspiegelAnzeigeTimer;
 	//!< Zeit seit der letzten Anzeige des Druckspiegels. Druckspiegel wird alle 10 Sekunden 
 	//!< abgerufen.
@@ -756,6 +771,8 @@ void ModusWechsel(TModus neu)
 			LED_off(GRUEN);
 			LED_off(BLAU);
 			AsciiDruckPuffer[0] = '\0';
+			AsciiHilfPuffer[0] = '\0';
+			AsciiHilfZeilenanfang = 0;
 			StartTimer(&RuheTimer);
 			break;
 	
@@ -780,6 +797,8 @@ void ModusWechsel(TModus neu)
 			SendenBeschleunigen = false;
 			TxpSocketProtokoll = TelexPhone;
 			AsciiDruckPuffer[0] = '\0';
+			AsciiHilfPuffer[0] = '\0';
+			AsciiHilfZeilenanfang = 0;
 			SocketAnzahlZeichenEmpfangen = 0;
 			SocketAnzahlZeichenGesendet = 0;
 			SocketAnzahlZeichenQuittiert = 0;
@@ -826,6 +845,8 @@ void ModusWechsel(TModus neu)
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
 			SeriellUmsetzInit();
 			AsciiDruckPuffer[0] = '\0';
+			AsciiHilfPuffer[0] = '\0';
+			AsciiHilfZeilenanfang = 0;
 			SendenBeschleunigen	= false;
 			Durchwahl = 0;
 			SocketAnzahlZeichenEmpfangen = 0;
@@ -924,6 +945,8 @@ void ModusWechsel(TModus neu)
 			LED_off(GRUEN);
 			LED_on(BLAU);
 			AsciiDruckPuffer[0] = '\0';
+			AsciiHilfPuffer[0] = '\0';
+			AsciiHilfZeilenanfang = 0;
 			StartTimer(&RuheTimer);
 			break;
 			
@@ -949,8 +972,6 @@ void SocketBufInit()
 static bool SchreibeZeichenInSendePuffer(char c)
 	{
 	uint8_t Code1, Code2;
-	
-	//! \todo Umlaute übersetzen.
 	
 	if (c == '@') 
 		{ // Kennungsgeber besonders behandeln...
@@ -1470,6 +1491,8 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 	if (SocketInBufUsed > 0)
 		{ 
 		uint8_t i = 0;
+		uint16_t AnzAsciiEmpf = 0;
+		
 		while (i < SocketInBufUsed)
 			{
 			char c = SocketInBuf[i];
@@ -1488,6 +1511,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 					AsciiDruckPuffer[alen+1] = '\0';
 					i++;
 					SocketAnzahlZeichenEmpfangen++;
+					AnzAsciiEmpf++;
 					}
 				else
 					break; // kann nicht mehr verarbeitet werden, also Schleife beenden.
@@ -1651,6 +1675,14 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 			}
 		else
 			SocketInBufUsed = 0;
+			
+		if (ProtokollLevel == 2 && AnzAsciiEmpf > 0) // Datenmengen protokollieren
+			{
+			ProtokollierenInt_P(PSTR("TxP: EmpfA %16d" ), PufferAnzahl(&SendePuffer) + AnzAsciiEmpf);
+				//! \todo Häää die Zahlen verstehe ich nicht...
+			ProtokollierenInt_P(PSTR("%4d"), AnzAsciiEmpf);
+			ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenEmpfangen));
+			}
 			
 		} // if GetBytesInSocketData > 0
 	} // TxpOderAsciiEmpfangVerarbeiten()
@@ -2004,6 +2036,145 @@ static void RufnummerBeiTlnServerAbfragen()
 	}
 	
 	
+//! Übersetzungstabellen für nicht direkt im Zeichenvorrat der Fernschreiber 
+//! vorkommende Zeichen
+//--------------------------------------------------------------------------
+
+const PROGMEM char UebersetzUr[] = "äöüÄÖÜß<>[]{}@"; //!< Übersetzungstabelle für Umlaute: zu übersetzendes Zeichen.
+const PROGMEM char UebersertN1[] = "aouAOUs(.(:(-("; //!< Übersetzungstabelle für Umlaute: erstes Ersatzzeichen.
+const PROGMEM char UebersetzN2[] = "eeeeees.):)-))"; //!< Übersetzungstabelle für Umlaute: zweites Ersatzzeichen.
+	
+
+//! Bearbeitet die Ausgabe von Ascii-Text.
+//----------------------------------------
+//! Funktionen: Übersetzung von Umlauten, Automatischer Zeilenumbruch, 
+//! Übersetzung ASCII - Baudot.
+
+void AsciiDruckPufferVerarbeiten()
+	{
+	//! \todo Werda richtig verarbeiten
+	if (Modus != ModDirektdruckVerbunden 
+		&& Modus != ModKommendVerbunden 
+		&& Modus != ModGehendVerbunden 
+		&& Modus != ModPufferDruckUndSchluss)
+		return; // Drucken nicht möglich.
+		
+	if (!PufferLeer(&SendePuffer))
+		return; // Erst mal zu Ende drucken lassen.
+		
+	if (AsciiDruckPuffer[0] != '\0' && AsciiHilfPuffer[0] == '\0')
+		{ // Daten vom puren Puffer in den Hilfspuffer umkopieren, dabei Umlaute übersetzten
+		// und Zeilenumbruch durchführen
+		
+		// zuerst bis zum nächsten ZL oder bis zur vollen Zeile übernehmen
+		uint8_t hpi = 0; // Index in HilfPuffer
+		uint8_t dpi = 0; // Index in DruckPuffer
+		uint8_t ZeilePos = AsciiHilfZeilenanfang; // Rechnet mit, an welcher Stelle der Zeile der Druckwagen steht.
+		uint8_t UmbruchPosVorschlag = 0; // speichert, wo sinnvollerweise der Umbruch erfolgt, sofern kein Umbruch im Puffer steht.
+		
+		for (dpi = 0 ; AsciiDruckPuffer[dpi] != '\0' ; dpi++)
+			{
+			if (ZeichenZuCode(AsciiDruckPuffer[dpi], BuMode) != 255 
+				|| ZeichenZuCode(AsciiDruckPuffer[dpi], ZiMode) != 255)
+				{ // Zeichen direkt druckbar.
+				AsciiHilfPuffer[hpi++] = AsciiDruckPuffer[dpi];
+				
+				if (AsciiDruckPuffer[dpi] == '\r')
+					ZeilePos = 0, UmbruchPosVorschlag = 0;
+				else if (AsciiDruckPuffer[dpi] == '\n')
+					break; // for-schleife beenden, ZeilePos nicht ändern...
+				else
+					ZeilePos++;
+					
+				if (AsciiDruckPuffer[dpi] == ' ' || AsciiDruckPuffer[dpi] == '-')
+					UmbruchPosVorschlag = hpi;
+				}
+			else
+				{ // Ersatztabelle benutzten
+				PGM_P p = strchr_P(UebersetzUr, AsciiDruckPuffer[dpi]);
+				if (p != NULL)
+					{
+					AsciiHilfPuffer[hpi++] = pgm_read_byte(UebersertN1[p - UebersetzUr]);
+					ZeilePos++;
+					AsciiHilfPuffer[hpi] = pgm_read_byte(UebersetzN2[p - UebersetzUr]);
+					if (AsciiHilfPuffer[hpi] != ' ')
+						hpi++, ZeilePos++;
+					}
+				}
+			
+			// ZeilePos bewerten
+			if (ZeilePos > Druckzeilenlaenge)
+				{
+				// war schon eine geeignete Stelle für den Umbruch gefunden?
+				// wenn nein jetzt eines setzen...
+				if (UmbruchPosVorschlag != 0)
+					{
+					// Zeilenumbruch einbauen...
+					if (hpi > UmbruchPosVorschlag)
+						memmove(AsciiHilfPuffer + UmbruchPosVorschlag, 
+								AsciiHilfPuffer + UmbruchPosVorschlag + 2, 
+								hpi - UmbruchPosVorschlag);
+					AsciiHilfPuffer[UmbruchPosVorschlag] = '\r';
+					AsciiHilfPuffer[UmbruchPosVorschlag+1] = '\n';
+					hpi += 2;
+					}
+				else
+					{ // jetzt WR + ZL einbauen
+					AsciiHilfPuffer[hpi++] = '\r';
+					AsciiHilfPuffer[hpi++] = '\n';
+					}
+				break; // diese Zeile nicht weiter bearbeiten
+				}
+				
+			if (hpi > AsciiHilfPufferMax - 3)
+				break; // sicherheitshalber beenden
+			} // for dpi
+			
+		AsciiHilfPuffer[hpi] = '\0';
+
+		if (ProtokollLevel == 3)
+			{
+			Protokollieren_P(PSTR("TxP: Ascii-Verarbeitung: " ));
+			ProtokollierenPuffer(AsciiDruckPuffer, dpi);
+			Protokollieren_P(PSTR("\r\nTxP: gewandelt in: " ));
+			ProtokollierenPuffer(AsciiHilfPuffer, hpi);
+			Protokollieren_P(PSTR("\r\n" ));
+			}
+
+		memmove(AsciiDruckPuffer + dpi, AsciiDruckPuffer, strlen(AsciiDruckPuffer) + 1 - dpi);
+		} // if (AsciiDruckPuffer[0] != '\0' && AsciiHilfPuffer[0] == '\0')
+		
+	if (AsciiHilfPuffer[0] != '\0')
+		{
+		// zu druckenden Text umwandeln
+		// ---------------------------
+		uint8_t ki = 0; // Kopierindex
+
+		while (AsciiHilfPuffer[ki] != '\0' && !PufferVoll(&SendePuffer))
+			{
+			if (AsciiHilfPuffer[ki] == '\r')
+				AsciiHilfZeilenanfang = 0;
+			else
+				AsciiHilfZeilenanfang++;
+				
+			if (SchreibeZeichenInSendePuffer(AsciiHilfPuffer[ki]))
+				{ // nur im Echo darstellen, wenn es auch gedruckt wurde.
+				if (Modus == ModDirektdruckVerbunden)
+					ZeichenInHtmlSendeText(AsciiHilfPuffer[ki]);
+				}
+				
+			ki++;
+			}
+
+		if (ki > 0)
+			memmove(AsciiHilfPuffer, AsciiHilfPuffer + ki, strlen(AsciiHilfPuffer) - ki + 1); 
+		
+		} // AsciiHilfPuffer nicht leer und SendePuffer leer
+
+	} // AsciiDruckPufferVerarbeiten()
+
+	
+	
 //! Nur für debugging.	
 static uint32_t TxpThreadCount; 
 
@@ -2158,6 +2329,8 @@ void txp_thread()
 
 				// Html-Puffer löschen
 				AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
+				AsciiHilfPuffer[0] = '\0';
+				AsciiHilfZeilenanfang = 0;
 					
 				ModusWechsel(ModWarteGrundstellung);
 				
@@ -2202,6 +2375,8 @@ void txp_thread()
 						
 				// Html-Puffer löschen
 				AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
+				AsciiHilfPuffer[0] = '\0';
+				AsciiHilfZeilenanfang = 0;
 
 				ModusWechsel(ModWarteGrundstellung);
 					
@@ -2373,6 +2548,8 @@ void txp_thread()
 				BusSenden(BusKdoSchluss);
 				ModusWechsel(ModWarteSchlussQuitt);
 				AsciiDruckPuffer[0] = '\0';
+				AsciiHilfPuffer[0] = '\0';
+				AsciiHilfZeilenanfang = 0;
 				PufferInit(&SendePuffer);
 				break;
 			
@@ -2403,63 +2580,14 @@ void txp_thread()
 				Protokollieren_P(PSTR("TxP: Direktdruck -> Einschaltung intern VERSAGT\r\n" ));
 			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
 			AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
+			AsciiHilfPuffer[0] = '\0';
+			AsciiHilfZeilenanfang = 0;
 			ModusWechsel(ModWarteGrundstellung);
 			}
 		} // if ModRuhe && Text per HTML empfangen
 		
-	if (Modus == ModDirektdruckVerbunden 
-		|| Modus == ModKommendVerbunden 
-		|| Modus == ModGehendVerbunden 
-		|| Modus == ModPufferDruckUndSchluss)
-		{
-		// zu druckenden Text umwandeln
-		// ---------------------------
-		if (AsciiDruckPuffer[0] != '\0' && PufferLeer(&SendePuffer))
-			{
-			uint8_t ki = 0; // Kopierindex
-
-			//! \todo Umlaute wandeln, andere Zeichen wandeln, autom. Zeilenumbruch.
-			
-			while (AsciiDruckPuffer[ki] != '\0' && !PufferVoll(&SendePuffer))
-				{
-				if (AsciiDruckPuffer[ki] == '@')
-					{ // nur in WerDa umwandfeln, wenn am Ende der Eingabe
-					if (!PufferLeer(&SendePuffer))
-						break; // warten, bis alles gedruckt ist
-					else if (AsciiDruckPuffer[ki+1] == '\0' || strcmp_P(AsciiDruckPuffer+1, PSTR("\r\n")) == 0)
-						{
-						SchreibeZeichenInSendePuffer(AsciiDruckPuffer[ki]);
-						ki++;
-						AsciiDruckPuffer[ki] = '\0';
-						break; // nichts mehr übersetzen und Ende
-						}
-					else
-						; // Zeichen ignorieren
-					}
-				else if (SchreibeZeichenInSendePuffer(AsciiDruckPuffer[ki]))
-					{ // nur im Echo darstellen, wenn es auch gedruckt wurde.
-					if (Modus == ModDirektdruckVerbunden)
-						ZeichenInHtmlSendeText(AsciiDruckPuffer[ki]);
-					}
-				ki++;
-				}
-
-			if (ki > 0)
-				memmove(AsciiDruckPuffer, AsciiDruckPuffer + ki, strlen(AsciiDruckPuffer) - ki + 1); 
-			
-			SocketAnzahlZeichenEmpfangen += ki;
-			
-			if (ProtokollLevel == 2) // Datenmengen protokollieren
-				{
-				ProtokollierenInt_P(PSTR("TxP: EmpfA %16d" ), PufferAnzahl(&SendePuffer) + ki);
-				ProtokollierenInt_P(PSTR("%4d"), ki);
-				ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenEmpfangen));
-				}
-				
-			} // AsciiDruckPuffer nicht leer und SendePuffer leer
-			
-		} // Modus aktiv, bei dem gedruckt werden kann.
-		
+	AsciiDruckPufferVerarbeiten();
+	
 	if (Modus == ModDirektdruckVerbunden)
 		{ // am Fernschreiber eigegebene Zeichen nach Ascii umwandeln 
 		//! \todo eigentlich nur, wenn es tatsächlich über eine HTML-Seite lief...

@@ -289,6 +289,8 @@ extern void InterneVerbindungBeenden(bool Force);
 	
 extern void SocketBufInit();
 
+extern void AsciiDruckPufferVerarbeiten();
+
 
 	
 // Was soll LED rot anzeigen?
