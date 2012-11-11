@@ -1490,7 +1490,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 	// ----------------------------------------------
 	if (SocketInBufUsed > 0)
 		{ 
-		uint8_t i = 0;
+		uint16_t i = 0;
 		uint16_t AnzAsciiEmpf = 0;
 		
 		while (i < SocketInBufUsed)
@@ -1711,7 +1711,7 @@ static void TxpDatenVerarbeiten()
 		// Baudot-Datenblock senden
 		if (SocketOutBufUsed < SocketOutBufMax - 4 - 10) // - 10 = Reserve für wichtige Daten
 			{ // es ist überhaupt Platz zum Senden
-			uint8_t len = PufferAnzahl(&EmpfPuffer);
+			uint16_t len = PufferAnzahl(&EmpfPuffer);
 			if (len > SocketOutBufMax - 10 - 3 - SocketOutBufUsed)
 				len = SocketOutBufMax - 10 - 3 - SocketOutBufUsed;
 				
@@ -2082,7 +2082,10 @@ void AsciiDruckPufferVerarbeiten()
 				if (AsciiDruckPuffer[dpi] == '\r')
 					ZeilePos = 0, UmbruchPosVorschlag = 0;
 				else if (AsciiDruckPuffer[dpi] == '\n')
+					{
+					dpi++;
 					break; // for-schleife beenden, ZeilePos nicht ändern...
+					}
 				else
 					ZeilePos++;
 					
@@ -2111,8 +2114,8 @@ void AsciiDruckPufferVerarbeiten()
 					{
 					// Zeilenumbruch einbauen...
 					if (hpi > UmbruchPosVorschlag)
-						memmove(AsciiHilfPuffer + UmbruchPosVorschlag, 
-								AsciiHilfPuffer + UmbruchPosVorschlag + 2, 
+						memmove(AsciiHilfPuffer + UmbruchPosVorschlag + 2, 
+								AsciiHilfPuffer + UmbruchPosVorschlag, 
 								hpi - UmbruchPosVorschlag);
 					AsciiHilfPuffer[UmbruchPosVorschlag] = '\r';
 					AsciiHilfPuffer[UmbruchPosVorschlag+1] = '\n';
@@ -2136,19 +2139,19 @@ void AsciiDruckPufferVerarbeiten()
 			{
 			Protokollieren_P(PSTR("TxP: Ascii-Verarbeitung: " ));
 			ProtokollierenPuffer(AsciiDruckPuffer, dpi);
-			Protokollieren_P(PSTR("\r\nTxP: gewandelt in: " ));
+			ProtokollierenInt_P(PSTR(" (+%u)\r\nTxP: gewandelt in: " ), strlen(AsciiDruckPuffer) - dpi);
 			ProtokollierenPuffer(AsciiHilfPuffer, hpi);
 			Protokollieren_P(PSTR("\r\n" ));
 			}
 
-		memmove(AsciiDruckPuffer + dpi, AsciiDruckPuffer, strlen(AsciiDruckPuffer) + 1 - dpi);
+		memmove(AsciiDruckPuffer, AsciiDruckPuffer + dpi, strlen(AsciiDruckPuffer) + 1 - dpi);
 		} // if (AsciiDruckPuffer[0] != '\0' && AsciiHilfPuffer[0] == '\0')
 		
 	if (AsciiHilfPuffer[0] != '\0')
 		{
 		// zu druckenden Text umwandeln
 		// ---------------------------
-		uint8_t ki = 0; // Kopierindex
+		uint16_t ki = 0; // Kopierindex
 
 		while (AsciiHilfPuffer[ki] != '\0' && !PufferVoll(&SendePuffer))
 			{
@@ -2974,7 +2977,7 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(SerUmEmpfDaten);
 	PRINTVAL(SerUmEmpfFehler);
 	PRINTVAL(PufferAnzahl(&EmpfPuffer));
-	for (uint8_t i = EmpfPuffer.AusgP ; i != EmpfPuffer.SpeichP ; i++)
+	for (uint16_t i = EmpfPuffer.AusgP ; i != EmpfPuffer.SpeichP ; i++)
 		{
 		if (i >= MaxPuffer) 
 			i = 0;
@@ -2986,7 +2989,7 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(SerUmSendBitNr);
 	PRINTVAL(SerUmSendDaten);
 	PRINTVAL(PufferAnzahl(&SendePuffer));
-	for (uint8_t i = SendePuffer.AusgP ; i != SendePuffer.SpeichP ; i++)
+	for (uint16_t i = SendePuffer.AusgP ; i != SendePuffer.SpeichP ; i++)
 		{
 		if (i >= MaxPuffer) 
 			i = 0;
@@ -3726,7 +3729,7 @@ void txp_init()
 	
 	// EEPROM auslesen
 	char Buf[TlnAdresseMax];
-	uint8_t i;
+	uint16_t i;
 
 	#ifdef TXP_ANSCHLUSS
 	
