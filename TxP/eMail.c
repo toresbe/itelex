@@ -835,8 +835,7 @@ void txp_email_init()
 	else
 		EmailAusgabeFilternKennung = false;
 		
-	POPWartezeitEnde = 5 * 600; // 5 Minuten
-	POPWartezeitEnde = 200; // 20 Sekunden nach Start. HACK 
+	POPWartezeitEnde = 600; // 1 Minute
 	
 	StartTimer(&POPWartezeitTimer);
 	

@@ -2036,14 +2036,8 @@ static void RufnummerBeiTlnServerAbfragen()
 	}
 	
 	
-//! Übersetzungstabellen für nicht direkt im Zeichenvorrat der Fernschreiber 
-//! vorkommende Zeichen
-//--------------------------------------------------------------------------
-
-const PROGMEM char UebersetzUr[] = "äöüÄÖÜß<>[]{}@"; //!< Übersetzungstabelle für Umlaute: zu übersetzendes Zeichen.
-const PROGMEM char UebersertN1[] = "aouAOUs(.(:(-("; //!< Übersetzungstabelle für Umlaute: erstes Ersatzzeichen.
-const PROGMEM char UebersetzN2[] = "eeeeees.):)-))"; //!< Übersetzungstabelle für Umlaute: zweites Ersatzzeichen.
-	
+#include "UebersetzTab.h"
+// als Include-Datei, da anderer Zeichensatz	
 
 //! Bearbeitet die Ausgabe von Ascii-Text.
 //----------------------------------------
@@ -2097,9 +2091,9 @@ void AsciiDruckPufferVerarbeiten()
 				PGM_P p = strchr_P(UebersetzUr, AsciiDruckPuffer[dpi]);
 				if (p != NULL)
 					{
-					AsciiHilfPuffer[hpi++] = pgm_read_byte(UebersertN1[p - UebersetzUr]);
+					AsciiHilfPuffer[hpi++] = pgm_read_byte(UebersetzN1 + (p - UebersetzUr));
 					ZeilePos++;
-					AsciiHilfPuffer[hpi] = pgm_read_byte(UebersetzN2[p - UebersetzUr]);
+					AsciiHilfPuffer[hpi] = pgm_read_byte(UebersetzN2 + (p - UebersetzUr));
 					if (AsciiHilfPuffer[hpi] != ' ')
 						hpi++, ZeilePos++;
 					}
