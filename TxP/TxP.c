@@ -378,9 +378,11 @@ static int TeilnehmerServerSocket;
 static bool DynIPAktiv;
 	//!< Soll die eigene IP-Adresse auf den Teilnehmer-Server aktualisiert werden?
 	
-static uint32_t DynIPAktZeitZaehler;
+static TKurzTimer DynIPAktualisierungTimer;
 	//!< Macht alle 15 Minuten eine Aktualsisierungsmeldung an einen der Teilnehmer-Server (sofern aktiviert).
-	
+
+static uint16_t DynIPAktualisierungEndzeit;
+	//!< Wann soll die nächste Aktualisierung sein?
 
 //! Sollfrequenz des Aufrufs von txp_timerEvent()
 enum { TxpTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
@@ -448,9 +450,6 @@ void txp_timerEvent(void)
 		}
 		
 	wdt_reset();
-	
-	if (DynIPAktiv)
-		DynIPAktZeitZaehler++; //! \todo Durch Timer Ersetzen
 	
 	if (TimerVal(&TxpThreadCheckTimer) > 300) // nach 30 Sekunden Reset
 		{ 
@@ -2648,7 +2647,7 @@ void txp_thread()
 		{
 		// Aktialisierung starten?
 		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
-			&& DynIPAktZeitZaehler >= 15L * 60 * TxpTimerFreq // alle 15 Minuten
+			&& TimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit
 			&& TeilnehmerServerSocket == NO_SOCKET_USED)
 			{
 			if (TeilnehmerServerSocketOeffnen())
@@ -2665,7 +2664,10 @@ void txp_thread()
 				}
 			else
 				{ // keine Verbindung hergestellt
-				DynIPAktZeitZaehler = KurzTimerCnt; // in 15 Minuten - Zufall nochmal probieren
+				StartTimer(&DynIPAktualisierungTimer);
+				DynIPAktualisierungEndzeit = 15 * 600 - (KurzTimerCnt & 0x3FF);
+					// in 15 Minuten minus Zufall wieder.
+				
 				}
 			}
 		}
@@ -2775,19 +2777,24 @@ void txp_thread()
 							Protokollieren_P(PSTR("\r\n"));
 							}
 						}
-					DynIPAktZeitZaehler = 0; // in 15 Minuten wieder 
+					StartTimer(&DynIPAktualisierungTimer);
+					DynIPAktualisierungEndzeit = 15 * 600; // in 15 Minuten wieder
 					break;
 
 				case TLNSERV_FEHLER:
 					Protokollieren_P(PSTR("TxP: Fehlermeldung des Teilnehmer-Servers: "));
 					Protokollieren(TSB.PureData);
 					Protokollieren_P(PSTR("\r\n"));
-					DynIPAktZeitZaehler = 0; // in 15 Minuten wieder 
+					StartTimer(&DynIPAktualisierungTimer);
+					DynIPAktualisierungEndzeit = 15 * 600 - (KurzTimerCnt & 0x3FF);
+						// in 15 Minuten minus Zufall wieder.
 					break;
 				
 				default:
 					Protokollieren_P(PSTR("TxP: unerwartete Antwort des Teilnehmer-Servers\r\n" ));
-					DynIPAktZeitZaehler = 0; // in 15 Minuten wieder 
+					StartTimer(&DynIPAktualisierungTimer);
+					DynIPAktualisierungEndzeit = 15 * 600 - (KurzTimerCnt & 0x3FF);
+						// in 15 Minuten minus Zufall wieder.
 					break;
 				
 				} // switch (TSB.Code)
@@ -3020,7 +3027,8 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(TimerVal(&TxpSocketLebenszeichenTimer));
 	PRINTVAL(TimerVal(&TxpThreadCheckTimer));
 
-	PRINTVAL(DynIPAktZeitZaehler / TxpTimerFreq);
+	PRINTVAL(TimerVal(&DynIPAktualisierungTimer));
+	PRINTVAL(DynIPAktualisierungEndzeit);
 
 	PRINTVAL(FalscherCode); FalscherCode = 0;
 	PRINTVAL(TwiIsrCount); TwiIsrCount = 0;
@@ -3830,8 +3838,8 @@ void txp_init()
 	Timer0Cnt_Max = 0;
 	Timer0Callback_Max = 0;
 
-	DynIPAktZeitZaehler = 14L * 60 * TxpTimerFreq; 
-		// 14 Minuten sind schon abgelaufen, daher Aktualisierung in einer Minute
+	StartTimer(&DynIPAktualisierungTimer);
+	DynIPAktualisierungEndzeit = 300; // 1/2 Minute 
 		
 	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 
