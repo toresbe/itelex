@@ -1272,7 +1272,14 @@ static void SocketBearbeiten()
 		int InCount = GetBytesInSocketData(TxpSocketHandle);
 		
 		if (SocketInBufUsed + InCount > SocketInBufMax)
+			{
+			if (ProtokollLevel >= 1) 
+				{
+				ProtokollierenInt_P(PSTR("TxP: Socket Empfang drohender Ueberlauf: Empfang von %d" ), InCount);
+				ProtokollierenInt_P(PSTR("limitiert auf %d\r\n" ), SocketInBufMax - SocketInBufUsed);
+				}
 			InCount = SocketInBufMax - SocketInBufUsed;
+			}
 			
 		if (InCount > 0) 
 			{

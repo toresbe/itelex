@@ -288,13 +288,13 @@ void Pop3DatenVerarbeiten()
 	if (SocketInBufUsed == 0)
 		return;
 		
-	if (SocketInBuf[SocketInBufUsed-1] != 0x0a) // Linefeed.
-		return; 
+	SocketInBuf[SocketInBufUsed] = '\0';
+	
+	if (strchr(SocketInBuf, 0x0a) == NULL && SocketInBufUsed < SocketInBufMax / 2)
+		return; // da müssen noch Daten kommen.
 		
 	if (SocketInBuf[0] == '+')
 		POPOkEmpfangen = true;
-
-	SocketInBuf[SocketInBufUsed] = '\0';
 		
 	if (!POPOkEmpfangen)
 		{
