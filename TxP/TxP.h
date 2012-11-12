@@ -195,9 +195,6 @@ typedef union
 
 extern void txp_init( void );
 
-#ifdef TXP_ANSCHLUSS
-extern void txp_thread( void );
-#endif // TXP_ANSCHLUSS
 
 extern TTastendruck Tastendruck;
 extern bool WarteTaste();
@@ -291,6 +288,10 @@ extern void SocketBufInit();
 
 extern void AsciiDruckPufferVerarbeiten();
 
+
+DEFPORTOUT(RTS, D, 4)
+
+DEFPORTIN(CTS, D, 5)
 
 	
 // Was soll LED rot anzeigen?

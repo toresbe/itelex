@@ -1275,7 +1275,7 @@ static void SocketBearbeiten()
 			if (ProtokollLevel >= 1) 
 				{
 				ProtokollierenInt_P(PSTR("TxP: Socket Empfang drohender Ueberlauf: Empfang von %d" ), InCount);
-				ProtokollierenInt_P(PSTR("limitiert auf %d\r\n" ), SocketInBufMax - SocketInBufUsed);
+				ProtokollierenInt_P(PSTR(" limitiert auf %d\r\n" ), SocketInBufMax - SocketInBufUsed);
 				}
 			InCount = SocketInBufMax - SocketInBufUsed;
 			}
@@ -1294,7 +1294,17 @@ static void SocketBearbeiten()
 				
 			if (Res > 0)
 				SocketInBufUsed += Res;
+				
+			//! \todo folgenden Code wieder löschen dient nur der Fehlerfindung.
+			if (Res == 0 && ProtokollLevel == 3) // Daten explizit
+				{
+				ProtokollierenInt_P(PSTR("TxP: HACK TEST SocketInBuf: (%d)" ), InCount);
+				ProtokollierenPuffer(SocketInBuf + SocketInBufUsed, InCount);
+				Protokollieren_P(PSTR("\r\n"));
+				}		
+				
 			}
+
 		} // if TxpSocketHandle != NO_SOCKET_USED 
 		
 	// ggf Lebenszeichen erzeugen
@@ -2840,6 +2850,9 @@ void txp_thread()
 	if (KonfigFreigabeErteilt && TimerVal(&KonfigFreigabeTimer) > 5 * 600)
 		KonfigFreigabeErteilt = false;
 	
+	// HACK Status-Signale Seriell
+	bset_RTS(get_CTS());
+	
 	} // txp_thread
 	
 
@@ -2936,6 +2949,7 @@ uint8_t KonfigFreigabe(void *pStruct)
 			{ // korrekt eingegebenen
 			KonfigFreigabeErteilt = true;
 			StartTimer(&KonfigFreigabeTimer);
+			http_request->argc = 0; // damit die eigentliche Seite nicht durch die Kennwort-Eingabe verwirrt ist!			
 			return true;
 			}
 		else
@@ -3722,6 +3736,8 @@ void cgi_SdDirectory(void *pStruct)
 void txp_init()
 	{
 	init_Taste();
+	init_RTS();
+	init_CTS();
 	
 	ProtokollInit();
 
