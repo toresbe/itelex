@@ -359,9 +359,11 @@ enum { KonfigPasswortLen = 10 } ;
 static char KonfigPasswort[KonfigPasswortLen+1];
 	//!< Passwort für den Zugang zu Konfigurationsdaten.
 	
-static unsigned long KonfigFreigabeZeit;
-	//!< Uhrzeit der letzen Freigabe bzw. Benutzung von freizugebenden Seiten
-	//!< \todo durch Timer ersetzen
+static TKurzTimer KonfigFreigabeTimer;
+	//!< Timer zur Messung der Zeit seit letzter Freigabe bzw. Benutzung von freizugebenden Seiten
+	
+static bool KonfigFreigabeErteilt;
+	//!< Damit Überlauf des #KonfigFreigabeTimer nicht zur wieder-Freigabe führt.
 	
 	
 static int TeilnehmerServerSocket;
@@ -656,9 +658,8 @@ void txp_timerEvent(void)
 					TasteZaehler = 0;
 					
 					// Zugang zur Konfiguration erlauben.
-					struct TIME CurTime;
-					CLOCK_GetTime(&CurTime);
-					KonfigFreigabeZeit = CurTime.time;
+					KonfigFreigabeErteilt = true;
+					StartTimer(&KonfigFreigabeTimer);
 					}
 				}
 			else
@@ -2818,6 +2819,13 @@ void txp_thread()
 	
 #endif //def TXP_EMAIL
 	
+	// ==========================================================================
+	// Sicherheitslücke durch Überlauf des Konfig-Freigabe-Timers schließen.
+	// ==========================================================================
+	
+	if (KonfigFreigabeErteilt && TimerVal(&KonfigFreigabeTimer) > 5 * 600)
+		KonfigFreigabeErteilt = false;
+	
 	} // txp_thread
 	
 
@@ -2886,11 +2894,9 @@ uint8_t KonfigFreigabe(void *pStruct)
 	if (KonfigPasswort[0] == '\0')
 		return true; // ohne Kennwort keine Sperre
 	
-	struct TIME CurTime;
-	CLOCK_GetTime(&CurTime);
-	if (CurTime.time <= KonfigFreigabeZeit + 5 * 60)
+	if (KonfigFreigabeErteilt && TimerVal(&KonfigFreigabeTimer) < 5 * 600)
 		{ // 5 Minuten lang ist der Zugang erlaubt
-		KonfigFreigabeZeit = CurTime.time;
+		StartTimer(&KonfigFreigabeTimer);
 		return true;
 		}
 		
@@ -2901,6 +2907,7 @@ uint8_t KonfigFreigabe(void *pStruct)
 
 	if (http_request->argc == 0 || PharseCheckName_P(http_request, Kennwort_P) == 0)
 		{ // Ausgabe der Passwort - Eingabeseite
+		KonfigFreigabeErteilt = false;
 		cgi_PrintHttpheaderStart();
 		CgiFormStartTabbed_P(PSTR("txpcfg-intern.cgi"));
 		CgiFormInputFieldText_P(PSTR("Seite gesperrt! Kennwort :"), Kennwort_P, KonfigPasswortLen, NULL);
@@ -2913,8 +2920,8 @@ uint8_t KonfigFreigabe(void *pStruct)
 		char *EingabeText = http_request->argvalue[PharseGetValue_P(http_request, Kennwort_P)];
 		if (strcmp(EingabeText, KonfigPasswort) == 0)
 			{ // korrekt eingegebenen
-			KonfigFreigabeZeit = CurTime.time;
-			http_request->argc = 0; // damit die eigentliche Seite nicht durch die Kennwort-Eingabe verwirrt ist!
+			KonfigFreigabeErteilt = true;
+			StartTimer(&KonfigFreigabeTimer);
 			return true;
 			}
 		else
@@ -2922,6 +2929,7 @@ uint8_t KonfigFreigabe(void *pStruct)
 			cgi_PrintHttpheaderStart();
 			printf_P(PSTR("Kennwort falsch!"));
 			cgi_PrintHttpheaderEnd();
+			KonfigFreigabeErteilt = false;
 			return false;
 			}
 		}
@@ -3419,7 +3427,7 @@ void txp_cgi_config_sperren(void *pStruct)
 		}
 	else
 		{
-		KonfigFreigabeZeit = 0;
+		KonfigFreigabeErteilt = false;
 		printf_P(PSTR("Konfigurationsseiten sind nun gesperrt. Zur Freigabe wieder das Passwort eingeben oder Taste der Baugruppe 2 x dr&uuml;cken."));
 		}
 
@@ -3778,7 +3786,7 @@ void txp_init()
 
 	if (readConfig_P(KonfigPasswort_P, KonfigPasswort) != 1)
 		KonfigPasswort[0] = '\0';
-	KonfigFreigabeZeit = 0; // ist zwar 1970, sollte aber nicht das Problem sein...
+	KonfigFreigabeErteilt = false;
 		
 	// dies müsste eigentlich in Protokoll.c enthalten sein.
 	if (readConfig_P(ProtokollLevel_P, Buf) == 1)
