@@ -31,6 +31,8 @@
 /// \date	04-02-2012: Fred Sonnenrein: GetSocketDataToFIFO, GetSocketData, FlushSocketData, GetBytesInSocketData 
 ///         und GetByteFromSocketData geändert, so dass kurze Pakete, die gleich ein Abbau der Verbindung verursachen 
 ///         (z.B. bei Abfrage von checkip.dyndns.com) noch auslesbar sind.
+/// \date	12-11-2012: Fred Sonnenrein: GetSocketData liefert vernünftigen Rückgabewert, wenn mehr Daten im Fifo als
+///         im Puffer Platz sind.
 //****************************************************************************/
 /*
  *  This program is free software; you can redistribute it and/or modify
@@ -1108,6 +1110,7 @@ int GetSocketData( int Socket , int bufferlen, char *buffer)
 	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) > bufferlen )
 	{
 		Get_Block_from_FIFO ( TCP_sockettable[ Socket ].fifo, bufferlen, buffer );
+		i = bufferlen;
 	}
 	else
 	{
