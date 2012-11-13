@@ -234,7 +234,7 @@ extern volatile TPuffer EmpfPuffer;
 enum { AsciiDruckPufferMax = 1000, HtmlSendeTextMax = 400 } ;
 	//!< Puffergrößen für Textpuffer bei HTML-Kommunikation
 
-extern char AsciiDruckPuffer[AsciiDruckPufferMax];
+extern char AsciiDruckPuffer[AsciiDruckPufferMax+4];
 		
 		
 extern int TxpSocketHandle;
@@ -270,14 +270,14 @@ enum { SocketInBufMax = 2500 } ; //!< Größe des TCP-Empfangspuffers
 
 extern uint16_t SocketInBufUsed; //!< Benutzter Teil des TCP-Empfangspuffers
 
-extern char SocketInBuf[SocketInBufMax]; //!< TCP-Empfangspuffer
+extern char SocketInBuf[SocketInBufMax+4]; //!< TCP-Empfangspuffer
 
 	
 enum { SocketOutBufMax = 2500 } ; //!< Größe des TCP-Sendepuffers
 
 extern uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
 
-extern char SocketOutBuf[SocketOutBufMax]; //!< TCP-Sendepuffer
+extern char SocketOutBuf[SocketOutBufMax+4]; //!< TCP-Sendepuffer
 
 extern uint8_t ProtokollPhase;
 	

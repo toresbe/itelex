@@ -134,7 +134,7 @@ void MailZeileVerarbeiten(char *Zeile)
 		{
 		Protokollieren_P(PSTR("TxP POP: ZeileVerarbeiten: "));
 		ProtokollierenPuffer(Zeile, strlen(Zeile));
-		Protokollieren(SocketInBuf);
+		Protokollieren_P(PSTR("\r\n"));
 		}
 
 	if (InMailHeader)

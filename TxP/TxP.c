@@ -169,11 +169,18 @@ volatile static uint16_t TwiLebenszeichenZaehler;
 	//!< Kein Timer, da nur lokal in txp_timerEvent() verwendet und unterschiedliche 
 	//!< Ablaufzeiten realisiert werden müssen.
 	
-static TKurzTimer RuheTimer;  
-	//!< Misst die Zeit in der nix passiert. Wird bei Datenempfang und Sendung und 
-	//!< Verbindungsaufbau auf Null gesetzt. Wird auch für Timeout beim Warten auf 
-	//!< die Ausschalt-Quittung benutzt. In Grundstellung wird die Dauer der Grundstellung
-	//!< gemessen für das Protokollschreiben. \todo Durch einzelne Timer ersetzen
+static TKurzTimer SchreibPauseTimer;
+	//!< Misst die Zeit zwischen zwei vom Endgerät empfangenen Zeichen.
+	//!< Sendung wird nach 0,8 Sekunden Pause ausgelöst
+	
+static TKurzTimer WahlPauseTimer;
+	//!< Misst die Zeit zwischen zwei vom Endgerät empfangenen Wahlziffern.
+	//!< Abfrage des Rufnummern-Servers wird nach 2 Sekunden ausgelöst.
+	
+static TKurzTimer BusQuittTimer;
+	//!< Misst die Zeit zwischen nach Einschalt-Aufforderung oder Schluss-Aufforderung.
+	//!< Auf Empfang der Quittung wird nur 3 Sekunden gewartet.
+
 	
 static TKurzTimer TxpSocketLebenszeichenTimer;
 	//!< Alle 3,5 bis 4 Sekunden ein Lebenszeichen senden...
@@ -188,16 +195,16 @@ volatile TPuffer SendePuffer;
 volatile TPuffer EmpfPuffer; 
 	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Endgerät -> Netz
 	
-char AsciiDruckPuffer[AsciiDruckPufferMax];
+char AsciiDruckPuffer[AsciiDruckPufferMax+4];
 	//!< Puffer für zu druckenden Text (Netz -> Endgerät), mit Null abgeschlossen
 
-static char HtmlSendeText[HtmlSendeTextMax];
+static char HtmlSendeText[HtmlSendeTextMax+4];
 	//!< Puffer für zu Anzuzeigenden Text (Endgerät -> Netz), mit Null abgeschlossen
 
 enum { AsciiHilfPufferMax = 100 } ;
 	//!< Größe von AsciiDruckPuffer.
 	
-static char AsciiHilfPuffer[AsciiHilfPufferMax];
+static char AsciiHilfPuffer[AsciiHilfPufferMax+4];
 	//!< Hilfspuffer für Ascii-Druck: Enthält eine Zeile des AsciiPuffers, Umlaute etc. 
 	//!< sind übersetzt. Zeilenumbruch wird in diesen Puffer eingebaut.
 	
@@ -267,12 +274,12 @@ TTxpSocketProtokoll TxpSocketProtokoll;
 
 uint16_t SocketInBufUsed; //!< Benutzter Teil des TCP-Empfangspuffers
 
-char SocketInBuf[SocketInBufMax]; //!< TCP-Empfangspuffer
+char SocketInBuf[SocketInBufMax+4]; //!< TCP-Empfangspuffer
 
 	
 uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
 
-char SocketOutBuf[SocketOutBufMax]; //!< TCP-Sendepuffer
+char SocketOutBuf[SocketOutBufMax+4]; //!< TCP-Sendepuffer
 
 
 uint8_t ProtokollPhase;
@@ -519,7 +526,7 @@ void txp_timerEvent(void)
 				SerUmEmpfMarkZaehl = 0;
 				SerUmTickZaehlerEmpf = 10;
 				} // Abtastung eines Bits abgeschlossen
-			StartTimer(&RuheTimer);
+			StartTimer(&SchreibPauseTimer);
 			} // if Empfang läuft
 		else // SerUmEmpfBitNr == 0 || SerUmEmpfBitNr == SerUmEmpfFertig
 			{ // Empfang ruht 
@@ -530,7 +537,6 @@ void txp_timerEvent(void)
 				SerUmEmpfFehler = false;
 				SerUmEmpfMarkZaehl = 0;
 				SerUmTickZaehlerEmpf = 6; // nicht 10, da in der Mitte der Bits abgetastet wird
-				StartTimer(&RuheTimer);
 				}
 			else
 				{
@@ -572,7 +578,6 @@ void txp_timerEvent(void)
 					SerUmTickZaehlerSend = 0;
 					}
 				}
-			StartTimer(&RuheTimer);
 			} // SerUmSendBitNr zwischen 2 und 8
 			
 		if (NeuMark && !SendeMark)
@@ -772,7 +777,6 @@ void ModusWechsel(TModus neu)
 			AsciiDruckPuffer[0] = '\0';
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
-			StartTimer(&RuheTimer);
 			break;
 	
 		// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
@@ -809,6 +813,7 @@ void ModusWechsel(TModus neu)
 			Wahlziffern = 0;
 			TlnDatenInit(&GewaehlterTln);
 			TlnServerAbfrageWiederholungssperre = true; // wird nach erster Ziffer auf false gesetzt
+			StartTimer(&WahlPauseTimer);
 			break;
 	
 		case ModGehendVerbunden:
@@ -822,6 +827,7 @@ void ModusWechsel(TModus neu)
 			LED_on(GELB);
 			LED_off(GRUEN);
 			LED_off(BLAU);
+			StartTimer(&SchreibPauseTimer);
 			break;
 	
 		// Kommend = vom Netz zum internen Anschluss
@@ -862,7 +868,7 @@ void ModusWechsel(TModus neu)
 		case ModKommendWarteEinQuitt: // Warte auf Einschalt-Quittung des Endgeräts
 			SET_BIT_Status(StatBit_FsBefBetrieb);
 			SET_BIT_Status(StatBit_FsBefEin);
-			StartTimer(&RuheTimer);
+			StartTimer(&BusQuittTimer);
 			break;
 	
 		case ModKommendVerbunden: 
@@ -871,18 +877,18 @@ void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_Verbunden);
 			BusEmpfMark = true;
 			SendeMark = true;
+			StartTimer(&SchreibPauseTimer);
 			break;
 	
 		case ModPufferDruckUndSchluss: 
 			CLR_BIT_Status(StatBit_Verbunden);
-			StartTimer(&RuheTimer);
 			break;
 		
 		case ModWarteSchlussQuitt:
 			CLR_BIT_Status(StatBit_FsBefBetrieb);
 			CLR_BIT_Status(StatBit_FsBefEin);
 			CLR_BIT_Status(StatBit_Verbunden);
-			StartTimer(&RuheTimer);
+			StartTimer(&BusQuittTimer);
 			break;
 
 		case ModDirektdruckWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
@@ -946,7 +952,6 @@ void ModusWechsel(TModus neu)
 			AsciiDruckPuffer[0] = '\0';
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
-			StartTimer(&RuheTimer);
 			break;
 			
 		default:
@@ -1273,11 +1278,26 @@ static void SocketBearbeiten()
 			{
 			if (ProtokollLevel >= 1) 
 				{
-				ProtokollierenInt_P(PSTR("TxP: Socket Empfang drohender Ueberlauf: Empfang von %d" ), InCount);
-				ProtokollierenInt_P(PSTR(" limitiert auf %d\r\n" ), SocketInBufMax - SocketInBufUsed);
+				ProtokollierenInt_P(PSTR("TxP: Socket Empfang drohender Ueberlauf: Empfang von %d " ), InCount);
+				ProtokollierenInt_P(PSTR("limitiert auf %d\r\n" ), SocketInBufMax - SocketInBufUsed);
 				}
 			InCount = SocketInBufMax - SocketInBufUsed;
 			}
+			
+		// HACK: Brutal ausbremsen wenn Puffer randvoll. In der Zwangspause sollte ein Teil der Arbeit erledigt werden
+		if (InCount == 0 && !PufferLeer(&SendePuffer))
+			{
+			TKurzTimer ZwangsPauseTimer;
+			
+			LED_on(ROT);
+			StartTimer(&ZwangsPauseTimer);
+			ProtokollierenInt_P(PSTR("Txp: Zwangspause Anfang, Sendepuffer = %u\r\n"), PufferAnzahl(&SendePuffer));
+			while (TimerVal(&ZwangsPauseTimer) < 50 && !PufferLeer(&SendePuffer))
+				; // absolut nix tun.
+			ProtokollierenInt_P(PSTR("Txp: Zwangspause Ende, Sendepuffer = %u\r\n"), PufferAnzahl(&SendePuffer));
+			LED_off(ROT);
+			} 
+		// Ende HACK
 			
 		if (InCount > 0) 
 			{
@@ -1720,7 +1740,7 @@ static void TxpDatenVerarbeiten()
 	//     ODER c) Alles was bisher gesendet wurde schon verarbeitet ist.
 	int InCount = PufferAnzahl(&EmpfPuffer);
 	if (InCount > 20
-	    || (InCount > 0 && ((TimerVal(&RuheTimer) >= 8) // 0,8 Sekunden Tipp-Pause
+	    || (InCount > 0 && ((TimerVal(&SchreibPauseTimer) >= 8) // 0,8 Sekunden Tipp-Pause
 		                    || (SocketAnzahlZeichenQuittiert == low(SocketAnzahlZeichenGesendet)) // alles was gesendet wurde, ist schon verarbeitet
 						    )
 			)
@@ -1785,7 +1805,7 @@ static void AsciiDatenVerarbeiten()
 	//     ODER b) 0,5 sekunden nicht getippt wurde.
 	int InCount = PufferAnzahl(&EmpfPuffer);
 	if (InCount > 20
-	    || (InCount > 0 && TimerVal(&RuheTimer) >= 8) // 0,8 Sekunden Tipp-Pause
+	    || (InCount > 0 && TimerVal(&SchreibPauseTimer) >= 8) // 0,8 Sekunden Tipp-Pause
 		)
 		{ // ID#244 ID#344 ***************************************************************
 		uint8_t ProtAnz = 0;
@@ -2285,7 +2305,7 @@ void txp_thread()
 					// ID#221 ********************************************
 					Wahlnummer = 10 * Wahlnummer + (Code - BusKdoWahlziffer0);
 					Wahlziffern++;
-					StartTimer(&RuheTimer);
+					StartTimer(&WahlPauseTimer);
 					TlnServerAbfrageWiederholungssperre = false;
 					
 					if (TlnSuche(Wahlnummer, false, &GewaehlterTln))
@@ -2507,13 +2527,13 @@ void txp_thread()
 	if (Modus == ModGehendWaehlen 
 		&& !TlnServerAbfrageWiederholungssperre
 		&& Wahlziffern >= 5
-		&& TimerVal(&RuheTimer) >= 20)
+		&& TimerVal(&WahlPauseTimer) >= 20)
 		{ // 2 Sekunden Wahlpause und 5 Ziffern gewählt
 		// ID#231 **************************************************************
 		RufnummerBeiTlnServerAbfragen();
 		}
 		
-	if (Modus == ModWarteSchlussQuitt && TimerVal(&RuheTimer) > 30)
+	if (Modus == ModWarteSchlussQuitt && TimerVal(&BusQuittTimer) > 30)
 		{ // 3 Sekunden keine Schlussquittung empfangen
 		// ID#412 ****************************************************************
 		if (ProtokollLevel >= 1)
@@ -2521,7 +2541,7 @@ void txp_thread()
 		ModusWechsel(ModWarteGrundstellung);
 		}
 		
-	if (Modus == ModKommendWarteEinQuitt && TimerVal(&RuheTimer) > 30)
+	if (Modus == ModKommendWarteEinQuitt && TimerVal(&BusQuittTimer) > 30)
 		{ // 3 Sekunden keine Einschalt-Quittung empfangen
 		// ID#332 ***************************************************************
 		if (ProtokollLevel >= 1)
@@ -2636,7 +2656,6 @@ void txp_thread()
 			Protokollieren_P(PSTR("TxP: Reste gedruckt --> Ausschaltung intern\r\n" ));
 		BusSenden(BusKdoSchluss);
 		ModusWechsel(ModWarteSchlussQuitt);
-		StartTimer(&RuheTimer);
 		}
 
 	// ==========================================================================
@@ -3042,7 +3061,9 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(SocketAnzahlZeichenQuittiert);
 	PRINTVAL(SocketAnzahlZeichenEmpfangen);
 	
-	PRINTVAL(TimerVal(&RuheTimer));
+	PRINTVAL(TimerVal(&WahlPauseTimer));
+	PRINTVAL(TimerVal(&SchreibPauseTimer));
+	PRINTVAL(TimerVal(&BusQuittTimer));
 	PRINTVAL(TwiLebenszeichenZaehler); 
 	PRINTVAL(TimerVal(&TxpSocketLebenszeichenTimer));
 	PRINTVAL(TimerVal(&TxpThreadCheckTimer));
