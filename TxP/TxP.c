@@ -1568,6 +1568,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 						ProtokollierenInt_P(PSTR("TxP: EmpfB %16d" ), PufferAnzahl(&SendePuffer));
 						ProtokollierenInt_P(PSTR("%4d"), len);
 						ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenEmpfangen) + len);
+						// Zahlen: unverarbeitete Daten / neue Daten / Daten insgesamt
 						}
 					
 					i += 2; // Code und Länge überspringen
@@ -1694,10 +1695,11 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 			
 		if (ProtokollLevel == 2 && AnzAsciiEmpf > 0) // Datenmengen protokollieren
 			{
-			ProtokollierenInt_P(PSTR("TxP: EmpfA %16d" ), PufferAnzahl(&SendePuffer) + AnzAsciiEmpf);
-				//! \todo Häää die Zahlen verstehe ich nicht...
+			ProtokollierenInt_P(PSTR("TxP: EmpfA %16d" ), 
+				PufferAnzahl(&SendePuffer) + strlen(AsciiDruckPuffer) + strlen(AsciiHilfPuffer) );
 			ProtokollierenInt_P(PSTR("%4d"), AnzAsciiEmpf);
 			ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenEmpfangen));
+			// Zahlen: unverarbeitete Daten / neue Daten / Daten insgesamt
 			}
 			
 		} // if GetBytesInSocketData > 0
@@ -2418,7 +2420,12 @@ void txp_thread()
 			if (ProtokollLevel >= 1)
 				Protokollieren("TxP: TWI-Timeout -> Abschaltung\r\n");
 			InterneVerbindungBeenden(true);
-			//! \todo Socket ordentlich schließen
+			TxpSocketAbbauGeplant = true;
+			if (SocketOutBufUsed < SocketOutBufMax - 2)
+				{
+				SocketOutBuf[SocketOutBufUsed++] = TXPC_ENDE;
+				SocketOutBuf[SocketOutBufUsed++] = 0;
+				}
 			}
 		}
 	
