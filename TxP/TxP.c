@@ -463,7 +463,7 @@ void txp_timerEvent(void)
 		LED_on(ROT);
 #endif //defined(LEDROT_TXPTHREADBLOCK)
 		
-	TwiWatchdogCount++; //! \todo Ersetzen
+	TwiWatchdogCount++; 
 		
 	if (Modus == ModKommendVerbunden 
 		|| Modus == ModGehendVerbunden 
@@ -643,18 +643,17 @@ void txp_timerEvent(void)
 	// -------------------------------
 	static enum { TasteAus, TasteEin, TasteSperr } TasteZustandIntern;
 		// Speichert den letzten Zustand der Taste.
-	static uint16_t TasteZaehler;
+	static TKurzTimer TasteTimer;
 
 	switch (TasteZustandIntern)
 		{
 		case TasteAus:
 			if (!get_Taste()) // Gedrückt = LOW!
 				{
-				if (++TasteZaehler > TxpTimerFreq * 5/100) // 50 Millisekunden
-					//! \todo Durch Timer Ersetzen
+				if (TimerVal(&TasteTimer) >= 2) // 2 Zehntel
 					{ // ausreichend lang gedrückt
 					TasteZustandIntern = TasteEin;
-					TasteZaehler = 0;
+					StartTimer(&TasteTimer);
 					
 					// Zugang zur Konfiguration erlauben.
 					KonfigFreigabeErteilt = true;
@@ -663,14 +662,14 @@ void txp_timerEvent(void)
 				}
 			else
 				{
-				TasteZaehler = 0;
+				StartTimer(&TasteTimer);
 				}
 			break;
 
 		case TasteEin: 
 			if (!get_Taste()) // Gedrückt = LOW!
 				{
-				if (++TasteZaehler > TxpTimerFreq * 8/10) // 0,8 Sekunden
+				if (TimerVal(&TasteTimer) >= 8) // 0,8 Sekunden
 					{ // lang gedrückt
 					TasteZustandIntern = TasteSperr;
 					Tastendruck = Lang;
@@ -697,7 +696,7 @@ void txp_timerEvent(void)
 		default:
 			TasteZustandIntern = TasteSperr;
 			Tastendruck = NichtGedr;
-			TasteZaehler = 0;
+			StartTimer(&TasteTimer);
 			break;
 			
 		} // switch (TasteZustandIntern)
