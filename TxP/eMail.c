@@ -125,11 +125,18 @@ enum {
 // =========================================================================
 //! Filtert aus dem Header die interessanten Zeilen heraus und Druckt nur diese.
 //! Prüft auch auf korrekten Inhalt. Ggf Zeilenumbrüche selber einfügen.
-//! Ist zum Erfolg verdammt. /todo prüfen ob blockieren hilft.
+//! Ist zum Erfolg verdammt. \todo prüfen ob blockieren hilft.
 void MailZeileVerarbeiten(char *Zeile)
 	{
 	char *p; 
 	
+	if (ProtokollLevel >= 3)
+		{
+		Protokollieren_P(PSTR("TxP POP: ZeileVerarbeiten: "));
+		ProtokollierenPuffer(Zeile, strlen(Zeile));
+		Protokollieren(SocketInBuf);
+		}
+
 	if (InMailHeader)
 		{
 		p = strstr_P(Zeile, PSTR(":"));
