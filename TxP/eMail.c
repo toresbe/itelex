@@ -129,12 +129,12 @@ enum {
 void MailZeileVerarbeiten(char *Zeile)
 	{
 	char *p; 
+	bool DieseZeileDrucken = true;
 	
 	if (ProtokollLevel >= 3)
 		{
 		Protokollieren_P(PSTR("TxP POP: ZeileVerarbeiten: "));
 		ProtokollierenPuffer(Zeile, strlen(Zeile));
-		Protokollieren_P(PSTR("\r\n"));
 		}
 
 	if (InMailHeader)
@@ -146,7 +146,7 @@ void MailZeileVerarbeiten(char *Zeile)
 			InMailHeader = false;
 			
 		else if (p == NULL) // Header-Zeile ohne Doppelpunkt: ignorieren
-			return;
+			DieseZeileDrucken = false;
 				
 		else if (strncasecmp_P(Zeile, PSTR("from"), p - Zeile) == 0
 				|| strncasecmp_P(Zeile, PSTR("to"), p - Zeile) == 0
@@ -168,18 +168,31 @@ void MailZeileVerarbeiten(char *Zeile)
 				MailUnterdruecken = true;
 				// aber kein return, so wird die Content-Zeile noch gedruckt.
 			else
-				return; // die content-type Zeile nicht drucken.
+				DieseZeileDrucken = false; // die content-type Zeile nicht drucken.
 			}
 		else
 			// uninteressante Header-Zeile -> ignorieren
-			return;
+			DieseZeileDrucken = false;
 		} // if InMailHeader
 
+	if (ProtokollLevel >= 3)
+		{
+		if (DieseZeileDrucken)
+			ProtokollierenInt_P(PSTR(" ...druck (Ges. %u)\r\n"), strlen(AsciiDruckPuffer) + strlen(Zeile));
+		else
+			Protokollieren_P(PSTR(" ...ignorieren\r\n"));
+		}
+
 	// jetzt Zeile drucken, um Umbruch und co kümmern sich andere...
-	if (strlen(AsciiDruckPuffer) + strlen(Zeile) < AsciiDruckPufferMax)
-		strcat(AsciiDruckPuffer, Zeile);
-		//! \todo was tun wenn kein Platz???
-	}
+	if (DieseZeileDrucken)
+		{
+		if (strlen(AsciiDruckPuffer) + strlen(Zeile) < AsciiDruckPufferMax)
+			strcat(AsciiDruckPuffer, Zeile);
+		else
+			Protokollieren_P(PSTR("TxP POP: UEBERLAUF AsciiDruckPuffer.\r\n"));
+		}
+		
+	} // MailZeileVerarbeiten()
 		
 	
 //! Startet in gewissen Zeiträumen die Abfrage des POP-Servers.
@@ -389,7 +402,7 @@ void Pop3DatenVerarbeiten()
 					{ // Kennung des Endes des Mail-Bodys
 					strcpy_P(SocketOutBuf, PSTR("DELE 1\r\n"));
 					ProtokollPhase = Abmelden;
-					strcpy_P(AsciiDruckPuffer, PSTR("\r\n\n\n\n"));
+					strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n\n"));
 					break;
 					}
 				

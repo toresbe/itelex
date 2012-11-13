@@ -591,10 +591,12 @@ gccversion :
 
 # Program the device.  
 program: $(TARGET).hex $(TARGET).eep
-	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
+#	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 #	sleep 3
 #	avarice -2 -D -j com2 -x
+	fboot.exe /C1 /B38400 /P$(TARGET).hex /V$(TARGET).hex
 
+	
 # Write the fuses
 fuses:
 	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_FUSE) $(AVRDUDE_WRITE_EFUSE) $(AVRDUDE_WRITE_HFUSE) $(AVRDUDE_WRITE_LFUSE)

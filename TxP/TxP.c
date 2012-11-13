@@ -1282,22 +1282,24 @@ static void SocketBearbeiten()
 				ProtokollierenInt_P(PSTR("limitiert auf %d\r\n" ), SocketInBufMax - SocketInBufUsed);
 				}
 			InCount = SocketInBufMax - SocketInBufUsed;
+
+			// HACK: Brutal ausbremsen wenn Puffer randvoll. In der Zwangspause sollte ein Teil der Arbeit erledigt werden
+			if (InCount == 0 && !PufferLeer(&SendePuffer))
+				{
+				TKurzTimer ZwangsPauseTimer;
+				
+				LED_on(ROT);
+				StartTimer(&ZwangsPauseTimer);
+				ProtokollierenInt_P(PSTR("Txp: Zwangspause Anfang, Sendepuffer = %u\r\n"), PufferAnzahl(&SendePuffer));
+				while (TimerVal(&ZwangsPauseTimer) < 50 && !PufferLeer(&SendePuffer))
+					; // absolut nix tun.
+				ProtokollierenInt_P(PSTR("Txp: Zwangspause Ende, Sendepuffer = %u\r\n"), PufferAnzahl(&SendePuffer));
+				LED_off(ROT);
+				} 
+			// Ende HACK
+			
 			}
 			
-		// HACK: Brutal ausbremsen wenn Puffer randvoll. In der Zwangspause sollte ein Teil der Arbeit erledigt werden
-		if (InCount == 0 && !PufferLeer(&SendePuffer))
-			{
-			TKurzTimer ZwangsPauseTimer;
-			
-			LED_on(ROT);
-			StartTimer(&ZwangsPauseTimer);
-			ProtokollierenInt_P(PSTR("Txp: Zwangspause Anfang, Sendepuffer = %u\r\n"), PufferAnzahl(&SendePuffer));
-			while (TimerVal(&ZwangsPauseTimer) < 50 && !PufferLeer(&SendePuffer))
-				; // absolut nix tun.
-			ProtokollierenInt_P(PSTR("Txp: Zwangspause Ende, Sendepuffer = %u\r\n"), PufferAnzahl(&SendePuffer));
-			LED_off(ROT);
-			} 
-		// Ende HACK
 			
 		if (InCount > 0) 
 			{
@@ -2634,14 +2636,17 @@ void txp_thread()
 			}
 
 		if (AsciiDruckPuffer[0] == '\0'
+			&& AsciiHilfPuffer[0] == '\0'
 			&& PufferLeer(&SendePuffer)
 			&& PufferLeer(&EmpfPuffer)
+			&& (TxpSocketHandle == NO_SOCKET_USED || SocketInBufUsed == 0)
 			&& (TimerVal(&HtmlDruckspiegelAnzeigeTimer) > 300 // 30 Sekunden keine Anzeige-Abfrage
 				|| TimerVal(&HtmlTexteingabeTimer) > 1800)) // 3 Minuten nichts eingegeben
 			{
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR("TxP: Direktdruck-Ruhe --> Ausschaltung intern\r\n" ));
 			InterneVerbindungBeenden(true);
+			//! \todo ResteDruck wartet auch auf Leerung des Puffers...
 			} // Abschaltung nach 30 Sekunden / 180 Sekunden.
 
 		} // if Modus == ModDirektdruckVerbunden
@@ -2650,7 +2655,10 @@ void txp_thread()
 	// Abschaltung nach Reste-Druck?
 	// ==========================================================================
 
-	if (Modus == ModPufferDruckUndSchluss && AsciiDruckPuffer[0] == '\0' && PufferLeer(&SendePuffer))
+	if (Modus == ModPufferDruckUndSchluss 
+		&& AsciiDruckPuffer[0] == '\0' 
+		&& AsciiHilfPuffer[0] == '\0'
+		&& PufferLeer(&SendePuffer))
 		{ // ID#421 *************************************************************
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("TxP: Reste gedruckt --> Ausschaltung intern\r\n" ));
