@@ -69,10 +69,10 @@ static char EmailEigenesPasswort[TlnAdresseMax];
 	//!< eigenes Passwort des Email-Servers.
 	
 static uint8_t EmailAbfrageTakt;
-	//!< Abstand der eMail-Abfragen in Minuten. 0 = Ausgeschaltet
+	//!< Abstand der eMail-Abfragen in Minuten. 0 = Ausgeschaltet.
 
 static bool EmailAusgabeFilternKennung;
-	//!< Nur die emails ausgeben, die eine +TX+ Kennung in der Subject-Zeile haben
+	//!< Nur die emails ausgeben, die eine +TX+ Kennung in der Subject-Zeile haben.
 	
 	
 static char EmailEmpfaenger[TlnAdresseMax];
@@ -701,7 +701,7 @@ void SMTPSchliessen()
 	SocketOutBufUsed = strlen(SocketOutBuf);
 	}
 	
-	
+		
 // Parameternamen
 
 const PROGMEM char EmailPOPServerAdresse_P[] = "POPSERVER";
@@ -788,25 +788,7 @@ void txp_cgi_email_config(void *pStruct)
 			
 		// Filtern nach +TX+ im Subject
 		// ----------------------------
-		if (PharseCheckName_P(http_request, EmailAusgabeFilternKennung_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EmailAusgabeFilternKennung_P)], 2);
-			Buf[2] = '\0';
-			Neu = atoi(Buf) != 0; 
-			}
-		else
-			{
-			Neu = false;
-			Buf[0] = '0', Buf[1] = '\0';
-			}
-		if (Neu == EmailAusgabeFilternKennung)
-			printf_P(PSTR("<br>Email-Filterung unver&auml;ndert: %u"), Neu);
-		else
-			{
-			changeConfig_P(EmailAusgabeFilternKennung_P, Buf);
-			printf_P(PSTR("<br>Email-Filterung: %s"), Buf);
-			EmailAusgabeFilternKennung = Neu;
-			}
+		EmailAusgabeFilternKennung = CgiCheckBool_P(http_request, PSTR("Email-Filterung"), EmailAusgabeFilternKennung_P, EmailAusgabeFilternKennung);
 		
 		} // else argc > 0
 		

@@ -22,16 +22,17 @@
 
   
 //@{
+#include "config.h"
+
 #include <avr/pgmspace.h>
-//#include <avr/version.h>
-//#include <avr/interrupt.h>
-//#include <avr/io.h>
+#include <avr/version.h>
+#include <avr/interrupt.h>
+#include <avr/io.h>
+#include <avr/wdt.h>
 #include <stdio.h>
 #include <string.h>
-//#include <stdlib.h>
+#include <stdlib.h>
 #include <bool.h>
-
-#include "config.h"
 
 #include "apps/httpd/cgibin/cgi-bin.h"
 #include "apps/httpd/httpd2_pharse.h"
@@ -169,3 +170,69 @@ void CgiCheckText_P(struct HTTP_REQUEST * http_request, const char *FieldText, c
 		} // if PharseCheckName_P()
 	} // CgiCheckText_P
 	
+	
+//! Wertet Eingabefeld für kleine Ganzzahl aus
+//--------------------------------------------------------------------
+//! \param http_request Zeiger auf die Struktur der CGI-Antwort
+//! \param FieldText Bedeutung des Feldes für den Anwender (im PROGMEM)
+//! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
+//! \param Old Aktueller Wert des Feldes
+//! \return Neuer Wert der Variable
+uint16_t CgiCheckUint16_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, uint16_t Old)
+	{
+	uint16_t Neu;
+	
+	if (PharseCheckName_P(http_request, FieldLabel))
+		{
+		strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, FieldLabel)], 10);
+		Buf[10] = '\0';
+		Neu = atoi(Buf);
+		printf_P(PSTR("<br>"));
+		printf_P(FieldText);
+		if (Neu == Old)
+			printf_P(PSTR(" unver&auml;ndert: %u"), Neu);
+		else
+			{
+			printf_P(PSTR(" ge&auml;ndert in: %u"), Neu);
+			changeConfig_P(FieldLabel, Buf);
+			}
+		return Neu;
+		} // if PharseCheckName_P()
+	else
+		return Old;
+	} // CgiCheckUint16_P
+		
+		
+//! Wertet Eingabefeld für Boolsche Werte aus
+//--------------------------------------------------------------------
+//! \param http_request Zeiger auf die Struktur der CGI-Antwort
+//! \param FieldText Bedeutung des Feldes für den Anwender (im PROGMEM)
+//! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
+//! \param Old Aktueller Wert der Variable
+//! \return Neuer Wert der Variable
+bool CgiCheckBool_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, bool Old)
+	{
+	bool Neu;
+	
+	if (PharseCheckName_P(http_request, FieldLabel))
+		{
+		strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, FieldLabel)], 2);
+		Buf[2] = '\0';
+		Neu = atoi(Buf) != 0; 
+		}
+	else
+		{
+		Neu = false;
+		Buf[0] = '0', Buf[1] = '\0';
+		}
+	printf_P(PSTR("<br>"));
+	printf_P(FieldText);
+	if (Neu == Old)
+		printf_P(PSTR(" unver&auml;ndert: %u"), Neu);
+	else
+		{
+		changeConfig_P(FieldLabel, Buf);
+		printf_P(PSTR(" ge&auml;ndert in: %u"), Neu);
+		}
+	return Neu;
+	}
