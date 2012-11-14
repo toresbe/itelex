@@ -170,7 +170,8 @@ bool ProtokollSpeichern(bool flush)
 			sprintf_P(DebugMsg, PSTR("fat_open_file der neuen Datei %s versagt"), Dateiname);
 			return false;
 			}
-		}
+			
+		} // neue Datei anlegen.
 	
 	// jetzt muss fd geöffnet sein.
 	if (fat_write_file(fd, (uint8_t*) Puffer, strlen(Puffer)) <= 0)
@@ -180,9 +181,10 @@ bool ProtokollSpeichern(bool flush)
 		return false;
 		}
 
-	LetzteDruckZeit = 0;
-	DruckeUhrzeit = true;
 	fat_close_file(fd);
+
+	DruckeUhrzeit = (Puffer[strlen(Puffer)-1] == '\n');
+	
 	Puffer[0] = '\0';
 
 #if defined(LEDROT_SDKARTE)

@@ -2147,7 +2147,8 @@ void AsciiDruckPufferVerarbeiten()
 			{
 			Protokollieren_P(PSTR("TxP: Ascii-Verarbeitung: " ));
 			ProtokollierenPuffer(AsciiDruckPuffer, dpi);
-			ProtokollierenInt_P(PSTR(" (+%u)\r\nTxP: gewandelt in: " ), strlen(AsciiDruckPuffer) - dpi);
+			ProtokollierenInt_P(PSTR(" (+%u)\r\n" ), strlen(AsciiDruckPuffer) - dpi);
+			Protokollieren_P(PSTR("TxP:       gewandelt in: " ));
 			ProtokollierenPuffer(AsciiHilfPuffer, hpi);
 			Protokollieren_P(PSTR("\r\n" ));
 			}

@@ -664,8 +664,10 @@ void SMTPDatenVerarbeiten()
 				char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
 				if (z == '\r' || z == '\n')
 					{
-					strcpy_P(SocketOutBuf + SocketOutBufUsed, PSTR("+TX+\r\n\r\n"));
+					strcpy_P(SocketOutBuf + SocketOutBufUsed, PSTR(" +TX+\r\n\r\n"));
 						// Ende der Subject-Zeile + Einleitung des Body
+					SocketOutBufUsed = strlen(SocketOutBuf);
+					
 					ProtokollPhase = MailData;
 					
 					// Aufforderung für Body-Eingabe:
