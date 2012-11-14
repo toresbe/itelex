@@ -817,7 +817,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 		CgiFormStartTabbed_P(PSTR("txp-tlnverz.cgi"));
 
-		CgiFormInputFieldLong_P(PSTR("Rufnummer:"), Nummer_P, 10, TD.Nummer);
+		CgiFormInputFieldULong_P(PSTR("Rufnummer:"), Nummer_P, 10, TD.Nummer);
 
 		printf_P(PSTR("<input name=\"altnummer\" type=\"hidden\" value=\"%ld\">"), TD.Nummer);
 
@@ -844,8 +844,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		if (TD.AdrArt == TxpIP || TD.AdrArt == TxpDynIP || TD.AdrArt == AsciiIP)
 			iptostr(TD.IPAdr, TD.Adresse);
 		CgiFormInputFieldText_P(PSTR("Adresse:"), Adresse_P, TlnAdresseMax-1, TD.Adresse);
-		CgiFormInputFieldLong_P(PSTR("Port:"), Port_P, 5, TD.Port);
-		CgiFormInputFieldLong_P(PSTR("Durchwahl:"), Durchwahl_P, 3, TD.Durchwahl);
+		CgiFormInputFieldULong_P(PSTR("Port:"), Port_P, 5, TD.Port);
+		CgiFormInputFieldULong_P(PSTR("Durchwahl:"), Durchwahl_P, 3, TD.Durchwahl);
 
 		if (TD.Nummer == 0)
 			CgiFormFinish_P(PSTR("Hinzuf&uuml;gen"));
@@ -861,6 +861,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		bool Ok = true; // nur wenn gesetzt, wird auch gespeichert
 		uint32_t AltNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, AltNummer_P)]);
 		uint32_t NeuNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Nummer_P)]);
+			//! \todo Umstellen auf CgiCheckULong...
 		
 		// brauche alte Geheimzahl und alten Typ
 		if (NeuNummer == 0 || !TlnSuche(NeuNummer, true, &TD))

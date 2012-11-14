@@ -3271,9 +3271,9 @@ void txp_cgi_config_intern(void *pStruct)
 		
 		#endif // TXP_ANSCHLUSS
 
-		CgiFormInputFieldLong_P(PSTR("Protokoll-Level:"), ProtokollLevel_P, 2, ProtokollLevel);
+		CgiFormInputFieldULong_P(PSTR("Protokoll-Level:"), ProtokollLevel_P, 2, ProtokollLevel);
 
-		CgiFormInputFieldLong_P(PSTR("Protokoll-Level f&uuml;r Teiln-Server:"), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
+		CgiFormInputFieldULong_P(PSTR("Protokoll-Level f&uuml;r Teiln-Server:"), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
 
 		CgiFormInputFieldText_P(PSTR("Passwort f&uuml;r Kofigurationsseiten:"), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
 		
@@ -3399,40 +3399,12 @@ void txp_cgi_config_intern(void *pStruct)
 		
 		#endif // TXP_ANSCHLUSS
 		
-		// ProtokollLevel
-		// --------------
-		if (PharseCheckName_P(http_request, ProtokollLevel_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, ProtokollLevel_P)], 2);
-			Neu = atoi(Buf);
-			if (Neu == ProtokollLevel)
-				printf_P(PSTR("<br>ProtokollLevel unver&auml;ndert: %u"), Neu);
-			else
-				{
-				itoa(Neu, Buf, 10); // 10 ist die Basis, nicht die Länge!
-				changeConfig_P(ProtokollLevel_P, Buf);
-				printf_P(PSTR("<br>Protokoll-Level: %s"), Buf);
-				ProtokollLevel = Neu;
-				}
-			}
+		ProtokollLevel = CgiCheckULong_P(http_request, 
+			PSTR("Protokoll-Level"), ProtokollLevel_P, ProtokollLevel);
 
-		// ProtokollLevelTlnServ
-		// ---------------------
-		if (PharseCheckName_P(http_request, ProtokollLevelTlnServ_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, ProtokollLevelTlnServ_P)], 2);
-			Neu = atoi(Buf);
-			if (Neu == ProtokollLevelTlnServ)
-				printf_P(PSTR("<br>ProtokollLevelTlnServ unver&auml;ndert: %u"), Neu);
-			else
-				{
-				itoa(Neu, Buf, 10); // 10 ist die Basis, nicht die Länge!
-				changeConfig_P(ProtokollLevelTlnServ_P, Buf);
-				printf_P(PSTR("<br>Protokoll-Level für Teilnehmer-Server: %s"), Buf);
-				ProtokollLevelTlnServ = Neu;
-				}
-			}
-			
+		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, 
+			PSTR("Protokoll-Level Rufnr-Server"), ProtokollLevelTlnServ_P, ProtokollLevelTlnServ);
+
 		// KonfigPasswort
 		// --------------
 		if (PharseCheckName_P(http_request, KonfigPasswort_P))
@@ -3505,7 +3477,6 @@ void txp_cgi_config_extern(void *pStruct)
 	{
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
-	char Buf[TlnAdresseMax + 1];
 	uint8_t i;
 	
 	if (!KonfigFreigabe(pStruct))
@@ -3519,13 +3490,13 @@ void txp_cgi_config_extern(void *pStruct)
 
 		#ifdef TXP_ANSCHLUSS
 		
-		CgiFormInputFieldLong_P(PSTR("eigene Rufnummer im ip-telex-Netz:"), NetzRufnummer_P, 10, NetzRufnummer);
+		CgiFormInputFieldULong_P(PSTR("eigene Rufnummer im ip-telex-Netz:"), NetzRufnummer_P, 10, NetzRufnummer);
 		
-		CgiFormInputFieldLong_P(PSTR("Geheimzahl:"), Geheimzahl_P, 6, Geheimzahl);
+		CgiFormInputFieldULong_P(PSTR("Geheimzahl:"), Geheimzahl_P, 6, Geheimzahl);
 		
 		CgiFormCheckbox_P(PSTR("IP-Aktualisierung aktiv:"), DynIPAktiv_P, DynIPAktiv);
 
-		CgiFormInputFieldLong_P(PSTR("Port-Nummer im Netz:"), NetzPort_P, 6, NetzPort);
+		CgiFormInputFieldULong_P(PSTR("Port-Nummer im Netz:"), NetzPort_P, 6, NetzPort);
 		
 		#endif // TXP_ANSCHLUSS
 		
@@ -3540,89 +3511,18 @@ void txp_cgi_config_extern(void *pStruct)
 
 		#ifdef TXP_ANSCHLUSS
 
-		uint32_t Neu;
+		NetzRufnummer = CgiCheckULong_P(http_request, PSTR("Netz-Rufnummer"), NetzRufnummer_P, NetzRufnummer);
+
+		Geheimzahl = CgiCheckULong_P(http_request, PSTR("Geheimzahl"), Geheimzahl_P, Geheimzahl);
+
+		DynIPAktiv = CgiCheckBool_P(http_request, PSTR("DynIPAktualisierung"), DynIPAktiv_P, DynIPAktiv);
+
+		NetzPort = CgiCheckULong_P(http_request, PSTR("Netz-Port"), NetzPort_P, NetzPort);
 		
-		// Eigene Netz-Rufnummer
-		// ---------------------
-		if (PharseCheckName_P(http_request, NetzRufnummer_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, NetzRufnummer_P)], 10);
-			Buf[10] = '\0';
-			Neu = atol(Buf);
-			if (Neu == NetzRufnummer)
-				printf_P(PSTR("<br>Netz-Rufnummer unver&auml;ndert: %s"), Buf);
-			else
-				{
-				printf_P(PSTR("<br>Netz-Rufnummer ge&auml;ndert in: %s"), Buf);
-				changeConfig_P(NetzRufnummer_P, Buf);
-				NetzRufnummer = Neu;
-				}
-			}
+		#endif //def TXP_ANSCHLUSS
 		
-		// Prüfzahl zur eigene Netz-Rufnummer
-		// ----------------------------------
-		if (PharseCheckName_P(http_request, Geheimzahl_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, Geheimzahl_P)], 10);
-			Buf[10] = '\0';
-			Neu = atol(Buf);
-			if (Neu == Geheimzahl)
-				printf_P(PSTR("<br>Geheimzahl unver&auml;ndert: %s"), Buf);
-			else
-				{
-				printf_P(PSTR("<br>Geheimzahl ge&auml;ndert in: %s"), Buf);
-				changeConfig_P(Geheimzahl_P, Buf);
-				Geheimzahl = Neu;
-				}
-			}
-			
-		// Dynamische IP-Aktualisierung
-		// ---------------------------
-		if (PharseCheckName_P(http_request, DynIPAktiv_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, DynIPAktiv_P)], 2);
-			Buf[2] = '\0';
-			Neu = atol(Buf); 
-			}
-		else
-			{
-			Neu = 0;
-			Buf[0] = '0', Buf[1] = '\0';
-			}
-		if (Neu == DynIPAktiv)
-			printf_P(PSTR("<br>DynIPAktualisierung unver&auml;ndert: %u"), Neu);
-		else
-			{
-			changeConfig_P(DynIPAktiv_P, Buf);
-			printf_P(PSTR("<br>DynIPAktualisierung: %s"), Buf);
-			DynIPAktiv = Neu;
-			}
-		
-		// Netz-Port
-		// ---------------------
-		if (PharseCheckName_P(http_request, NetzPort_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, NetzPort_P)], 10);
-			Buf[10] = '\0';
-			Neu = atol(Buf);
-			if (Neu == NetzPort)
-				printf_P(PSTR("<br>Netz-Port unver&auml;ndert: %s"), Buf);
-			else
-				{
-				printf_P(PSTR("<br>Netz-Port ge&auml;ndert in: %s"), Buf);
-				changeConfig_P(NetzPort_P, Buf);
-				NetzPort = Neu;
-				}
-			}
-		
-		#endif // TXP_ANSCHLUSS
-		
-		// URLs der Teilnehmer-Server
-		// --------------------------
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
-			{
 			CgiCheckText_P(http_request, PSTR("Teilnehmer-Server"), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
-			} // for i
 			
 		} // else argc > 0
 		

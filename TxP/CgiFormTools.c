@@ -68,10 +68,10 @@ void CgiFormFieldIntro_P(const char *FieldText, const char *FieldLabel)
 //! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
 //! \param Size Eingabegröße des Feldes ( = Stellenzahl)
 //! \param Value Initialier Wert des Feldes
-void CgiFormInputFieldLong_P(const char *FieldText, const char *FieldLabel, int Size, long Value)
+void CgiFormInputFieldULong_P(const char *FieldText, const char *FieldLabel, int Size, unsigned long Value)
 	{
 	CgiFormFieldIntro_P(FieldText, FieldLabel);
-	printf_P(PSTR("\" type=\"text\" size=\"%d\" value=\"%ld\" maxlength=\"%d\"></td></tr>"), Size, Value, Size);
+	printf_P(PSTR("\" type=\"text\" size=\"%d\" value=\"%lu\" maxlength=\"%d\"></td></tr>"), Size, Value, Size);
 	}
 
 
@@ -178,29 +178,30 @@ void CgiCheckText_P(struct HTTP_REQUEST * http_request, const char *FieldText, c
 //! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
 //! \param Old Aktueller Wert des Feldes
 //! \return Neuer Wert der Variable
-uint16_t CgiCheckUint16_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, uint16_t Old)
+unsigned long CgiCheckULong_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, unsigned long Old)
 	{
-	uint16_t Neu;
+	unsigned long Neu;
 	
 	if (PharseCheckName_P(http_request, FieldLabel))
 		{
 		strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, FieldLabel)], 10);
 		Buf[10] = '\0';
-		Neu = atoi(Buf);
+		Neu = atol(Buf);
+		ltoa(Neu, Buf, 10);
 		printf_P(PSTR("<br>"));
 		printf_P(FieldText);
 		if (Neu == Old)
-			printf_P(PSTR(" unver&auml;ndert: %u"), Neu);
+			printf_P(PSTR(" unver&auml;ndert: %lu"), Neu);
 		else
 			{
-			printf_P(PSTR(" ge&auml;ndert in: %u"), Neu);
+			printf_P(PSTR(" ge&auml;ndert in: %lu"), Neu);
 			changeConfig_P(FieldLabel, Buf);
 			}
 		return Neu;
 		} // if PharseCheckName_P()
 	else
 		return Old;
-	} // CgiCheckUint16_P
+	} // CgiCheckULong_P
 		
 		
 //! Wertet Eingabefeld für Boolsche Werte aus

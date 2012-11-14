@@ -577,8 +577,14 @@ void SMTPDatenVerarbeiten()
 				Protokollieren(SocketInBuf);
 				}
 
+			//! \todo Prüfen ob das funktioniert:
+			strcpy_P(AsciiDruckPuffer, PSTR("\r\nfehlermeldung: "));
+			strcat(AsciiDruckPuffer, SocketInBuf);
+			strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
+			
 			InterneVerbindungBeenden(true);
 			TxpSocketAbbauGeplant = true;
+			SocketInBufUsed = 0; 
 			return;
 			}
 			
@@ -751,15 +757,13 @@ void txp_cgi_email_config(void *pStruct)
 		CgiFormInputFieldText_P(PSTR("SMTP-Server Adresse:"), EmailSMTPServerAdresse_P, TlnAdresseMax, EmailSMTPServerAdresse);
 		CgiFormInputFieldText_P(PSTR("Eigene eMail-Adresse:"), EmailEigeneAdresse_P, TlnAdresseMax, EmailEigeneAdresse);
 		CgiFormInputFieldText_P(PSTR("Kennwort f&uuml;r eMail-Server:"), EmailEigenesPasswort_P, TlnAdresseMax, EmailEigenesPasswort);
-		CgiFormInputFieldLong_P(PSTR("Takt des eMail-Abrufs (Minuten)<br>0 = ausgeschaltet:"), EmailAbfrageTakt_P, 2, EmailAbfrageTakt);
+		CgiFormInputFieldULong_P(PSTR("Takt des eMail-Abrufs (Minuten)<br>0 = ausgeschaltet:"), EmailAbfrageTakt_P, 2, EmailAbfrageTakt);
 		CgiFormCheckbox_P(PSTR("Nur eMails mit +TX+ im Subject drucken:"), EmailAusgabeFilternKennung_P, EmailAusgabeFilternKennung);
 		
 		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
 		}
 	else // argc > 0
 		{
-		uint8_t Neu;
-
 		printf_P(PSTR("neue Einstellungen: <a href=\"txpcfg-email.cgi\">weiter</a>"));
 
 		CgiCheckText_P(http_request, PSTR("POP-Server Adresse"), EmailPOPServerAdresse_P, TlnAdresseMax, EmailPOPServerAdresse);
@@ -770,33 +774,17 @@ void txp_cgi_email_config(void *pStruct)
 		
 		CgiCheckText_P(http_request, PSTR("eigenes Kennwort"), EmailEigenesPasswort_P, TlnAdresseMax, EmailEigenesPasswort);
 		
-		// Abfragetakt
-		// ---------------------
-		if (PharseCheckName_P(http_request, EmailAbfrageTakt_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EmailAbfrageTakt_P)], 10);
-			Buf[10] = '\0';
-			Neu = atol(Buf);
-			
-			if (EmailPOPServerAdresse[0] == '\0'
+		EmailAbfrageTakt = CgiCheckULong_P(http_request, 
+			PSTR("Abfragetakt"), EmailAbfrageTakt_P, EmailAbfrageTakt);
+		
+		if (EmailAbfrageTakt != 0 
+			&& (EmailPOPServerAdresse[0] == '\0'
 				|| EmailEigeneAdresse[0] == '\0'
-				|| EmailEigenesPasswort[0] == '\0')
-				Neu = 0; // ausgeschaltet, da keine sinnvolle Angabe
-			else if (Neu > 0 && Neu < 5)
-				Neu = 5;
-			else if (Neu > 100)
-				Neu = 100;
-				
-			itoa(Neu, Buf, 10); // 10 ist die Basis, nicht die Länge!
-				
-			if (Neu == EmailAbfrageTakt)
-				printf_P(PSTR("<br>Abfragetakt unver&auml;ndert: %s"), Buf);
-			else
-				{
-				printf_P(PSTR("<br>Abfragetakt ge&auml;ndert in: %s"), Buf);
-				changeConfig_P(EmailAbfrageTakt_P, Buf);
-				EmailAbfrageTakt = Neu;
-				}
+				|| EmailEigenesPasswort[0] == '\0'))
+			{
+			printf_P(PSTR("<br>Konfigurationsdaten unvollst&auml;ndig, Abfragetakt auf Null gesetzt."));
+			strcpy_P(Buf, PSTR("0"));
+			changeConfig_P(EmailAbfrageTakt_P, Buf);
 			}
 			
 		// Filtern nach +TX+ im Subject

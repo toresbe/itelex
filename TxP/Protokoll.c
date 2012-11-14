@@ -48,6 +48,10 @@ static bool DruckeUhrzeit;
 	//!< speichert, ob die letzte Zeile ein CR LF enthielt, wenn ja wird die 
 	//!< nächste Zeile mit Datum / Uhrzeit begonnen
 	
+static unsigned long LetzteDruckZeit;
+	//!< Speichert die Zeit des letzten Protokolliervorgangs.
+	//!< Nach 5 Minuten wird eine neue "Kopfzeile" gedruckt.
+	
 	
 //! Schreibt die zwischengespeicherten Daten auf die SD-Karte oder sendet diese an 
 //! die serielle Schnittstelle.
@@ -176,6 +180,7 @@ bool ProtokollSpeichern(bool flush)
 		return false;
 		}
 
+	LetzteDruckZeit = 0;
 	DruckeUhrzeit = true;
 	fat_close_file(fd);
 	Puffer[0] = '\0';
@@ -217,11 +222,14 @@ static bool ProtPraeparieren(int len)
 	if (fs != NULL)
 		{
 		if (Puffer[0] == '\0')
-			{ // Datum protokollieren
+			{ // Datum protokollieren, wenn mehr als 5 Minuten verstrichen
 			CLOCK_GetTime(&Time);
-			sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++\r\n"),
-				  Time.DD, Time.MM, Time.YY);
-			DruckeUhrzeit = true;
+			if (Time.time > LetzteDruckZeit + 5 * 60)
+				{
+				sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++\r\n"),
+					  Time.DD, Time.MM, Time.YY);
+				DruckeUhrzeit = true;
+				}
 			}
 		}
 #endif //defined(MMC)		
@@ -231,6 +239,7 @@ static bool ProtPraeparieren(int len)
 		CLOCK_GetTime(&Time);
 		sprintf_P(Puffer + strlen(Puffer), PSTR("%02d:%02d:%02d,%02d: "), Time.hh, Time.mm, Time.ss, Time.ms);
 		DruckeUhrzeit = false;
+		LetzteDruckZeit = Time.time;
 		}
 
 	return true;
@@ -367,6 +376,7 @@ void ProtokollInit()
 	Idle = true;
 	CLOCK_RegisterCallbackFunction(SpeichernBeiIdle, MINUTE);
 	DruckeUhrzeit = true;
+	LetzteDruckZeit = 0;
 	Protokollieren("Neustart\r\n");
 	}
 	
