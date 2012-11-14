@@ -1192,7 +1192,9 @@ static void SocketBearbeiten()
 
 	// Verbindungsabbruch durch Gegenseite?
 	// --------------------------------------------------
-	if (TxpSocketHandle != NO_SOCKET_USED && CheckSocketState(TxpSocketHandle) == SOCKET_NOT_USE)
+	if (TxpSocketHandle != NO_SOCKET_USED 
+		&& CheckSocketState(TxpSocketHandle) == SOCKET_NOT_USE
+		&& SocketInBufUsed == 0) // Verbindungsabbau verzögern bis Puffer verarbeiet.
 		{ // ID#242 ID#342 ID#314 ************************************************
 		switch (TxpSocketProtokoll)
 			{
@@ -1249,7 +1251,8 @@ static void SocketBearbeiten()
 		&& TxpSocketAbbauGeplant 
 		&& TxpSocketMode == SocketOriginate 
 		&& TimerVal(&TxpSocketAbbauVerzoegerung) > 15 // 1,5 Sekunden nach letzter Sendung...
-		&& SocketOutBufUsed == 0)
+		&& SocketOutBufUsed == 0
+		&& SocketInBufUsed == 0)
 		{ 
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("TxP: Socket wird aktiv geschlossen\r\n" ));
@@ -1267,8 +1270,8 @@ static void SocketBearbeiten()
 		
 	// Auf neue Daten testen
 	// ---------------------------------
-	if (TxpSocketHandle != NO_SOCKET_USED)
-		{
+	if (TxpSocketHandle != NO_SOCKET_USED && SocketInBufUsed < SocketInBufMax)
+		{ // Socket offen und Puffer aufnahmefähig
 		StartTimer(&TxpSocketAbbruchTimer);
 			// so lange Verbindung aufrecht bleibt Timer auf 0
 
@@ -1282,24 +1285,7 @@ static void SocketBearbeiten()
 				ProtokollierenInt_P(PSTR("limitiert auf %d\r\n" ), SocketInBufMax - SocketInBufUsed);
 				}
 			InCount = SocketInBufMax - SocketInBufUsed;
-
-			// HACK: Brutal ausbremsen wenn Puffer randvoll. In der Zwangspause sollte ein Teil der Arbeit erledigt werden
-			if (InCount == 0 && !PufferLeer(&SendePuffer))
-				{
-				TKurzTimer ZwangsPauseTimer;
-				
-				LED_on(ROT);
-				StartTimer(&ZwangsPauseTimer);
-				ProtokollierenInt_P(PSTR("Txp: Zwangspause Anfang, Sendepuffer = %u\r\n"), PufferAnzahl(&SendePuffer));
-				while (TimerVal(&ZwangsPauseTimer) < 50 && !PufferLeer(&SendePuffer))
-					; // absolut nix tun.
-				ProtokollierenInt_P(PSTR("Txp: Zwangspause Ende, Sendepuffer = %u\r\n"), PufferAnzahl(&SendePuffer));
-				LED_off(ROT);
-				} 
-			// Ende HACK
-			
 			}
-			
 			
 		if (InCount > 0) 
 			{
@@ -1315,14 +1301,6 @@ static void SocketBearbeiten()
 				
 			if (Res > 0)
 				SocketInBufUsed += Res;
-				
-			//! \todo folgenden Code wieder löschen dient nur der Fehlerfindung.
-			if (Res == 0 && ProtokollLevel == 3) // Daten explizit
-				{
-				ProtokollierenInt_P(PSTR("TxP: HACK TEST SocketInBuf: (%d)" ), InCount);
-				ProtokollierenPuffer(SocketInBuf + SocketInBufUsed, InCount);
-				Protokollieren_P(PSTR("\r\n"));
-				}		
 				
 			}
 
