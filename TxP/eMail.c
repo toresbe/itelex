@@ -125,18 +125,13 @@ enum {
 // =========================================================================
 //! Filtert aus dem Header die interessanten Zeilen heraus und Druckt nur diese.
 //! Prüft auch auf korrekten Inhalt. Ggf Zeilenumbrüche selber einfügen.
-//! Ist zum Erfolg verdammt. \todo prüfen ob blockieren hilft.
-void MailZeileVerarbeiten(char *Zeile)
+//! \return false, wenn Pufferüberlauf.
+
+bool MailZeileVerarbeiten(char *Zeile)
 	{
 	char *p; 
 	bool DieseZeileDrucken = true;
 	
-	if (ProtokollLevel >= 3)
-		{
-		Protokollieren_P(PSTR("TxP POP: ZeileVerarbeiten: "));
-		ProtokollierenPuffer(Zeile, strlen(Zeile));
-		}
-
 	if (InMailHeader)
 		{
 		p = strstr_P(Zeile, PSTR(":"));
@@ -175,23 +170,27 @@ void MailZeileVerarbeiten(char *Zeile)
 			DieseZeileDrucken = false;
 		} // if InMailHeader
 
-	if (ProtokollLevel >= 3)
-		{
-		if (DieseZeileDrucken)
-			ProtokollierenInt_P(PSTR(" ...druck (Ges. %u)\r\n"), strlen(AsciiDruckPuffer) + strlen(Zeile));
-		else
-			Protokollieren_P(PSTR(" ...ignorieren\r\n"));
-		}
-
 	// jetzt Zeile drucken, um Umbruch und co kümmern sich andere...
 	if (DieseZeileDrucken)
 		{
 		if (strlen(AsciiDruckPuffer) + strlen(Zeile) < AsciiDruckPufferMax)
 			strcat(AsciiDruckPuffer, Zeile);
 		else
-			Protokollieren_P(PSTR("TxP POP: UEBERLAUF AsciiDruckPuffer.\r\n"));
+			return false; // AsciiDruckPuffer würde überlaufen
 		}
-		
+
+	// Erst wenn kein Überlauf droht Protokoll drucken.
+	if (ProtokollLevel >= 3)
+		{
+		Protokollieren_P(PSTR("TxP POP: ZeileVerarbeiten: "));
+		ProtokollierenPuffer(Zeile, strlen(Zeile));
+		if (DieseZeileDrucken)
+			ProtokollierenInt_P(PSTR(" ...druck (Ges. %u)\r\n"), strlen(AsciiDruckPuffer));
+		else
+			Protokollieren_P(PSTR(" ...ignorieren\r\n"));
+		}
+
+	return true;
 	} // MailZeileVerarbeiten()
 		
 	
@@ -403,6 +402,7 @@ void Pop3DatenVerarbeiten()
 					strcpy_P(SocketOutBuf, PSTR("DELE 1\r\n"));
 					ProtokollPhase = Abmelden;
 					strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n\n"));
+					ZeileAnfang = SocketInBufUsed; // SocketInBuf ist komplett bearbeitet.
 					break;
 					}
 				
@@ -411,16 +411,16 @@ void Pop3DatenVerarbeiten()
 				if (p == NULL)
 					{ // es folgt kein CRLF mehr
 					if (SocketInBufUsed < ZeileAnfang + MAXLINELEN)
-						{ // auf vervollständigung der Zeile warten
-						memmove(SocketInBuf, SocketInBuf + ZeileAnfang, SocketInBufUsed - ZeileAnfang);
-						SocketInBufUsed -= ZeileAnfang;
-						return; 
-						}
+						break; // auf vervollständigung der Zeile warten
 					else
 						{ // Zeile ist auch so lang genug zum Verarbeiten
 						if (!MailUnterdruecken)
-							MailZeileVerarbeiten(SocketInBuf + ZeileAnfang);
+							{
 							// Ende ist bereits mit \0 markiert.
+							if (!MailZeileVerarbeiten(SocketInBuf + ZeileAnfang))
+								break; // Verarbeitung des Rests auf später verschieben.
+							}
+						ZeileAnfang = SocketInBufUsed; // SocketInBuf ist komplett bearbeitet.
 						break; // der while-Schleife
 						}
 					} // p == NULL -> kein CRLF in der Zeile
@@ -431,13 +431,22 @@ void Pop3DatenVerarbeiten()
 						{
 						char h = *p; // speichert Zeilen nach ZeilenEnde
 						*p = '\0';
-						MailZeileVerarbeiten(SocketInBuf + ZeileAnfang);
+						bool Erfolg = MailZeileVerarbeiten(SocketInBuf + ZeileAnfang);
 						*p = h; // Zeichen der nächsten Zeile wiederherstellen
+						if (!Erfolg)
+							break;
 						}
 					ZeileAnfang = p - SocketInBuf;
 					}
 				} // while (ZeileAnfang < SocketInBufUsed)
 			
+			if (ZeileAnfang < SocketInBufUsed)
+				{ // Abbruch warum auch immer...
+				memmove(SocketInBuf, SocketInBuf + ZeileAnfang, SocketInBufUsed - ZeileAnfang);
+				SocketInBufUsed -= ZeileAnfang;
+				return; // Sonst wird SocketInBufUsed unten auf Null gesetzt.
+				}
+				
 			break;
 
 		case Abmelden:
