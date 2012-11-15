@@ -171,6 +171,7 @@ bool ProtokollSpeichern(bool flush)
 			return false;
 			}
 			
+		LetzteDruckZeit = 0; // in neuer Datei immer das Datum vorne einfügen.
 		} // neue Datei anlegen.
 	
 	// jetzt muss fd geöffnet sein.
@@ -224,9 +225,9 @@ static bool ProtPraeparieren(int len)
 	if (fs != NULL)
 		{
 		if (Puffer[0] == '\0')
-			{ // Datum protokollieren, wenn mehr als 5 Minuten verstrichen
+			{ // Datum protokollieren, wenn mehr als 60 Sekunden verstrichen
 			CLOCK_GetTime(&Time);
-			if (Time.time > LetzteDruckZeit + 5 * 60)
+			if (Time.time >= LetzteDruckZeit + 60)
 				{
 				sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++\r\n"),
 					  Time.DD, Time.MM, Time.YY);
