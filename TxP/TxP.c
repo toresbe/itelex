@@ -977,7 +977,7 @@ static bool SchreibeZeichenInSendePuffer(char c)
 	{
 	uint8_t Code1, Code2;
 	
-	if (c == '@') 
+	if (c == CodeChrWerDa) 
 		{ // Kennungsgeber besonders behandeln...
 		return PufferSpeich(&SendePuffer, TtyCodeZiUm) && PufferSpeich(&SendePuffer, TtyCodeZiWerDa);
 		}
@@ -2169,11 +2169,28 @@ void AsciiDruckPufferVerarbeiten()
 			else
 				AsciiHilfZeilenanfang++;
 				
-			if (SchreibeZeichenInSendePuffer(AsciiHilfPuffer[ki]))
-				{ // nur im Echo darstellen, wenn es auch gedruckt wurde.
-				if (Modus == ModDirektdruckVerbunden)
-					ZeichenInHtmlSendeText(AsciiHilfPuffer[ki]);
-				}
+			if (AsciiHilfPuffer[ki] == CodeChrWerDa)
+				{ // nur am Ende einer Zeile und des gesamten Puffers auch weitergeben
+				if (AsciiDruckPuffer[0] != '\0')
+					; // noch weitere Daten im Puffer --> KEIN Werda
+				else if (AsciiHilfPuffer[ki+1] == '\r' && AsciiHilfPuffer[ki+2] == '\n' && AsciiHilfPuffer[ki+3] == '\0')
+					{ // Werda am Zeilenende, aber mit WR + ZL --> leztere löschen
+					SchreibeZeichenInSendePuffer(CodeChrWerDa);
+					AsciiHilfPuffer[ki+1] = '\0';
+					} 
+				else if (AsciiHilfPuffer[ki+1] == '\0')
+					SchreibeZeichenInSendePuffer(CodeChrWerDa);
+				else
+					; // Werda nicht am Zeilenende, ignorieren
+				} 
+			else // nicht WerDa
+				{
+				if (SchreibeZeichenInSendePuffer(AsciiHilfPuffer[ki]))
+					{ // nur im Echo darstellen, wenn es auch gedruckt wurde.
+					if (Modus == ModDirektdruckVerbunden)
+						ZeichenInHtmlSendeText(AsciiHilfPuffer[ki]);
+					}
+				} // nicht Werda
 				
 			ki++;
 			}
@@ -2999,15 +3016,32 @@ void txp_cgi_debug( void * pStruct )
 	printf_P(PSTR("Protokollpuffer: %s<br>"), Puffer);
 
 #define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %u"), Var)
-#define PRINTVALHEX(Var) printf_P(PSTR("<br>" #Var " = %X"), Var)
+#define PRINTVALHEX(Var) printf_P(PSTR("<br>" #Var " = %02X"), Var)
 
 	#ifdef TXP_ANSCHLUSS
 	
 	PRINTVAL(Modus);
-	PRINTVAL(Status); // bezüglich TxP-Funktionalität (ist auf TWI-Bus sichtbar)
-	PRINTVAL(Wahlnummer);
-	PRINTVAL(Wahlziffern);
+	PRINTVALHEX(Status); // bezüglich TxP-Funktionalität (ist auf TWI-Bus sichtbar)
 
+	PRINTVAL(TxpSocketMode);
+	PRINTVAL(TxpSocketHandle);
+	PRINTVALHEX(TxpSocketIP);
+	PRINTVAL(TxpSocketAbbauGeplant);
+	PRINTVAL(TimerVal(&TxpSocketAbbruchTimer));
+	PRINTVAL(SocketInBufUsed);
+	PRINTVAL(SocketOutBufUsed);
+	PRINTVAL(TxpSocketProtokoll);
+	PRINTVAL(ProtokollPhase);
+
+	PRINTVAL(SocketAnzahlZeichenGesendet);
+	PRINTVAL(SocketAnzahlZeichenQuittiert);
+	PRINTVAL(SocketAnzahlZeichenEmpfangen);
+
+	printf_P(PSTR("<br>HtmlSendeText: ["));
+	printf(HtmlSendeText);
+	printf_P(PSTR("]<br>AsciiDruckPuffer: ["));
+	printf(AsciiDruckPuffer);
+	
 	PRINTVAL(BusEmpfMark);
 	PRINTVAL(SerUmTickZaehlerEmpf);
 	PRINTVAL(SerUmEmpfBitNr); 
@@ -3034,20 +3068,8 @@ void txp_cgi_debug( void * pStruct )
 		printf_P(PSTR(" %02X"), SendePuffer.Puffer[i]);
 		}
 	
-	PRINTVAL(TxpSocketMode);
-	PRINTVAL(TxpSocketHandle);
-	PRINTVALHEX(TxpSocketIP);
-	PRINTVAL(TxpSocketAbbauGeplant);
-	PRINTVAL(TimerVal(&TxpSocketAbbruchTimer));
-	PRINTVAL(SocketInBufUsed);
-	PRINTVAL(SocketOutBufUsed);
-	PRINTVAL(TxpSocketProtokoll);
-	PRINTVAL(ProtokollPhase);
-	
-	PRINTVAL(SocketAnzahlZeichenGesendet);
-	PRINTVAL(SocketAnzahlZeichenQuittiert);
-	PRINTVAL(SocketAnzahlZeichenEmpfangen);
-	
+	PRINTVAL(Wahlnummer);
+	PRINTVAL(Wahlziffern);
 	PRINTVAL(TimerVal(&WahlPauseTimer));
 	PRINTVAL(TimerVal(&SchreibPauseTimer));
 	PRINTVAL(TimerVal(&BusQuittTimer));
@@ -3067,11 +3089,6 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(Timer0Cnt_Max); Timer0Cnt_Max = 0;
 	PRINTVAL(Timer0Callback_Max); Timer0Callback_Max = 0;
 
-	printf_P(PSTR("<br>HtmlSendeText: ["));
-	printf(HtmlSendeText);
-	printf_P(PSTR("]<br>AsciiDruckPuffer: ["));
-	printf(AsciiDruckPuffer);
-	
 	#endif // TXP_ANSCHLUSS
 	
 	printf_P(PSTR("]<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , ByteCounter, PacketCounter, eth_state_error );
@@ -3255,7 +3272,6 @@ void txp_cgi_config_intern(void *pStruct)
 		CgiFormStartTabbed_P(PSTR("txpcfg-intern.cgi"));
 
 		#ifdef TXP_ANSCHLUSS
-		
 		AdresseZuWahlStr(BusEigenAdresse, Buf);
 		CgiFormInputFieldText_P(PSTR("Netz-Vorwahl f&uuml;r gehende Verbindungen:"), EigeneNummer_P, 2, Buf);
 
@@ -3267,17 +3283,14 @@ void txp_cgi_config_intern(void *pStruct)
 		CgiFormCheckbox_P(PSTR("Alternativ-Suche bei besetzt:"), AlternBeiBes_P, AlternativSucheBeiBesetzt);
 						
 		readConfig_P(DurchwahlTabelle_P, Buf);
-
 		CgiFormInputFieldText_P(PSTR("Durchwahlen:<br>(mit Komma trennen)"), DurchwahlTabelle_P, 30, Buf);
 		
 		#endif // TXP_ANSCHLUSS
 
 		CgiFormInputFieldULong_P(PSTR("Protokoll-Level:"), ProtokollLevel_P, 2, ProtokollLevel);
-
 		CgiFormInputFieldULong_P(PSTR("Protokoll-Level f&uuml;r Teiln-Server:"), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
-
 		CgiFormInputFieldText_P(PSTR("Passwort f&uuml;r Kofigurationsseiten:"), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
-		
+
 		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
 		}
 	else // argc > 0
@@ -3490,15 +3503,10 @@ void txp_cgi_config_extern(void *pStruct)
 		CgiFormStartTabbed_P(PSTR("txpcfg-extern.cgi"));
 
 		#ifdef TXP_ANSCHLUSS
-		
 		CgiFormInputFieldULong_P(PSTR("eigene Rufnummer im ip-telex-Netz:"), NetzRufnummer_P, 10, NetzRufnummer);
-		
 		CgiFormInputFieldULong_P(PSTR("Geheimzahl:"), Geheimzahl_P, 6, Geheimzahl);
-		
 		CgiFormCheckbox_P(PSTR("IP-Aktualisierung aktiv:"), DynIPAktiv_P, DynIPAktiv);
-
 		CgiFormInputFieldULong_P(PSTR("Port-Nummer im Netz:"), NetzPort_P, 6, NetzPort);
-		
 		#endif // TXP_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
@@ -3511,15 +3519,10 @@ void txp_cgi_config_extern(void *pStruct)
 		printf_P(PSTR("neue Einstellungen: <a href=\"txpcfg-extern.cgi\">weiter</a>"));
 
 		#ifdef TXP_ANSCHLUSS
-
 		NetzRufnummer = CgiCheckULong_P(http_request, PSTR("Netz-Rufnummer"), NetzRufnummer_P, NetzRufnummer);
-
 		Geheimzahl = CgiCheckULong_P(http_request, PSTR("Geheimzahl"), Geheimzahl_P, Geheimzahl);
-
 		DynIPAktiv = CgiCheckBool_P(http_request, PSTR("DynIPAktualisierung"), DynIPAktiv_P, DynIPAktiv);
-
 		NetzPort = CgiCheckULong_P(http_request, PSTR("Netz-Port"), NetzPort_P, NetzPort);
-		
 		#endif //def TXP_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)

@@ -31,6 +31,8 @@
 
 	#include "config.h"
 	#include <avr/pgmspace.h>
+	
+	#include "SvnVersion.h"
 
 	#define MAX_FILES_ENTRYS 	32
 
@@ -232,7 +234,18 @@ const char data7[] PROGMEM = {
 	"   O    O      O      O       O O        O      O   O  O   O  O  OO  O    \r\n"
 	"   O    OOOOO  OOOOO  OOOOO  O   O       O      O   O   OOO   O   O  OOOOO\r\n"
 	"__________________________________________________________________________\r\n"
-	"\r\n"
+	"Version " SVNVERSION "\r\n"
+	"Modules:"
+#ifdef TXP_ANSCHLUSS
+	" Txp-Anschluss"
+#endif
+#ifdef TXP_TLNSERVER
+	" Txp-Rufnr-Server"
+#endif
+#ifdef TXP_EMAIL
+	" Txp-Email"
+#endif
+	"\r\n\r\n"
 	"build on AVR-libc version: " __AVR_LIBC_VERSION_STRING__ "/" __AVR_LIBC_DATE_STRING__ 
 	" with avr-gcc " __VERSION__ ", Date: " __DATE__ " " __TIME__ " \r\n"
 	"\r\n"
