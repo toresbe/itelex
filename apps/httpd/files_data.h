@@ -234,20 +234,20 @@ const char data7[] PROGMEM = {
 	"   O    O      O      O       O O        O      O   O  O   O  O  OO  O    \r\n"
 	"   O    OOOOO  OOOOO  OOOOO  O   O       O      O   O   OOO   O   O  OOOOO\r\n"
 	"__________________________________________________________________________\r\n"
-	"Version " SVNVERSION "\r\n"
+	"Version 1.0 Build " SVNVERSION " at Date: " __DATE__ " " __TIME__ "\r\n"
 	"Modules:"
 #ifdef TXP_ANSCHLUSS
 	" Txp-Anschluss"
 #endif
 #ifdef TXP_TLNSERVER
-	" Txp-Rufnr-Server"
+	" Rufnr-Server"
 #endif
 #ifdef TXP_EMAIL
-	" Txp-Email"
+	" Email"
 #endif
 	"\r\n\r\n"
 	"build on AVR-libc version: " __AVR_LIBC_VERSION_STRING__ "/" __AVR_LIBC_DATE_STRING__ 
-	" with avr-gcc " __VERSION__ ", Date: " __DATE__ " " __TIME__ " \r\n"
+	" with avr-gcc " __VERSION__ "\r\n"
 	"\r\n"
 	"(c)2006-2012   Software: Fred Sonnenrein\r\n"
 	"based on OpenMCP by Dirk Brosswick\r\n"

@@ -3124,15 +3124,15 @@ void txp_cgi_msg_Out( void * pStruct )
 					
 	if (Modus == ModDirektdruckVerbunden)
 		{
-		printf_P(PSTR("Druckspiegel:<br><pre>%s&lt;&lt;&lt;%s</pre>"), HtmlSendeText, AsciiDruckPuffer);
+		printf_P(PSTR("Druckspiegel:<br><pre>%s&lt;&lt;&lt;%s%s</pre>"), HtmlSendeText, AsciiHilfPuffer, AsciiDruckPuffer);
 
 		if (ProtokollLevel >= 3)
 			{
 			Protokollieren_P(PSTR("TxP: Direktdruck Abruf Druckspiegel:"));
-			char *p = HtmlSendeText + strlen(HtmlSendeText) - 20;
+			char *p = HtmlSendeText + strlen(HtmlSendeText) - 40;
 			if (p < HtmlSendeText) 
 				p = HtmlSendeText;
-			Protokollieren(p);
+			ProtokollierenPuffer(p, strlen(p));
 			ProtokollierenInt_P(PSTR(" (%u)\r\n"), strlen(HtmlSendeText));
 			}
 
@@ -3178,17 +3178,30 @@ void txp_cgi_msg_In( void * pStruct )
 	    && PharseCheckName_P(http_request, Eingabe_P)
 		&& (Modus == ModRuhe || Modus == ModDirektdruckWarteEinQuitt || Modus == ModDirektdruckVerbunden))
 		{
+		// Text holen...
 		char *EingabeText = http_request->argvalue[PharseGetValue_P(http_request, Eingabe_P)];
+
+		// In den Druckpuffer schieben
 		strncat(AsciiDruckPuffer, EingabeText, AsciiDruckPufferMax - strlen(AsciiDruckPuffer) - 3);
-		AsciiDruckPuffer[AsciiDruckPufferMax-3] = '\0';
-		strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
+		AsciiDruckPuffer[AsciiDruckPufferMax-3] = '\0'; // sicherheitshalber
+		
+		// falls letztes Zeichen ein @ war, ändern in Werda, falls nicht WR und ZL anfügen.
+		if (AsciiDruckPuffer[strlen(AsciiDruckPuffer)-1] == '@')
+			AsciiDruckPuffer[strlen(AsciiDruckPuffer)-1] = CodeChrWerDa;
+		else
+			strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
+			
+		// Ergebnis protokollieren
 		if (ProtokollLevel >= 2)
 			{
 			Protokollieren_P(PSTR("TxP: Direktdruck Eingabe: "));
 			Protokollieren(EingabeText); 
 			Protokollieren_P(PSTR("\r\n"));
 			}
+			
+		// Und Zeit für Verbindungsabbau messen.
 		StartTimer(&HtmlTexteingabeTimer);
+		
 		}
 
 	cgi_PrintHttpheaderStart();
