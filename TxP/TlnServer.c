@@ -381,8 +381,11 @@ static void SocketBearbeiten(int *Socket)
 			{
 			Protokollieren_P(PSTR("TlnSrv: FEHLER: Sendung war nicht vollständig\r\n" ));
 			}
+
+		TCP_sockettable[*Socket].Timeoutcounter = 5; // Timeout auf 5 Sekunden verkürzen, da meist nur eine Anfrage.
+			
 		} // if es gibt was zu senden
-	
+
 	} // SocketBearbeiten()
 
 	
