@@ -1433,10 +1433,10 @@ static void SocketBearbeiten()
 				CloseTCPSocket(TxpSocketHandle);
 				TxpSocketHandle = NO_SOCKET_USED;
 				}
-			StartTimer(&TxpSocketWiederholungVerzoegerung);
 			#ifdef LEDROT_SOCKETERROR
 				LED_on(ROT);
 			#endif //def LEDROT_SOCKETERROR
+			StartTimer(&TxpSocketWiederholungVerzoegerung);
 			}
 			
 		else if (Res < SocketOutBufUsed)
