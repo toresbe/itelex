@@ -415,6 +415,7 @@ static uint8_t SelbstAnrufFehlerZaehler;
 static enum {
 	SelbstAnrufRuhe,
 	SelbstAnrufWarteEmpfang,
+	SelbstAnrufWarteEnde,
 	SelbstAnrufSperre
 	} SelbstAnrufPhase;
 	
@@ -1281,6 +1282,8 @@ static void SocketBearbeiten()
 				TxpSocketAbbauGeplant = false;
 				SocketOutBufUsed = 0;
 				SocketInBufUsed = 0;
+				if (SelbstAnrufPhase == SelbstAnrufWarteEnde)
+					SelbstAnrufPhase = SelbstAnrufRuhe;
 				#ifdef LEDROT_SOCKETERROR
 					LED_off(ROT);
 				#endif //def LEDROT_SOCKETERROR
@@ -1768,6 +1771,8 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 					{
 					SelbstAnrufEmpfangPruefwert = (SocketInBuf[i+2] << 8) + SocketInBuf[i+3]; // erst high, dann low
 					}
+				TxpSocketAbbauGeplant = true;
+				i += 2 + len;
 				}
 				
 			else 
@@ -2886,7 +2891,7 @@ void txp_thread()
 					SelbstAnrufFehlerZaehler++;
 					} // Falsches Echo angekommen
 				StartTimer(&SelbstAnrufTimer);
-				SelbstAnrufPhase = SelbstAnrufRuhe;
+				SelbstAnrufPhase = SelbstAnrufWarteEnde;
 				} // Echo ist angekommen
 			else if (TimerVal(&SelbstAnrufTimer) > 50) 
 				{ // Timeout nach 5 Sekunden
