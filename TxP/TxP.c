@@ -96,7 +96,10 @@ TModus Modus;
 #define TXPC_VERSION '\007' 
 	//!< Version der Kommunikation. Originate schlägt vor, Answer bestätigt.
 	//!< Erst wenn andere Seite mit gleicher Nummer antwortet, ist Protokollversion abgestimmt.
-
+#define TXPC_SELBSTANRUF '\008'
+	//!< Kennung für einen testweisen Selbst-Anruf.
+	
+	
 /* Mustertelegramme zur Übernahme in FsTelnet (MFC-Programm)
 
 	Text1 = _T("07 01 02 01 01 00");                       // Protokoll und Durchwahl
@@ -350,7 +353,7 @@ static uint16_t NetzPort;
 	//!< Gewünschte Port-Nummer im globalen Netz. Kann aus bestimmten Gründen von TXP_PORT (134) abweichen.
 
 static long NetzEigeneIP;
-	//!< Zurückgemeldete IP-Adresse im globalen Netz (nur für Diagnose)
+	//!< Zurückgemeldete IP-Adresse im globalen Netz.
 
 #endif // TXP_ANSCHLUSS
 	
@@ -378,25 +381,44 @@ static int TeilnehmerServerSocket;
 	//!< Wird in ZWEI Situationen benutzt: 
 	//!< a) Dynamische IP-Aktualisierung
 	//!< b) Abfrage einer Teilnehmer-Adresse
-	
+
 	
 #ifdef TXP_ANSCHLUSS
 
 static bool DynIPAktiv;
 	//!< Soll die eigene IP-Adresse auf den Teilnehmer-Server aktualisiert werden?
 	
-static TKurzTimer DynIPAktualisierungTimer;
-	//!< Macht alle 15 Minuten eine Aktualsisierungsmeldung an einen der Teilnehmer-Server (sofern aktiviert).
+static TKurzTimer DynIPTimer;
+	//!< Verschiedene Aufgaben bei der Aktualisierung der eigenen IP auf dem Rufnummern-Server.
 
 static uint16_t DynIPAktualisierungEndzeit;
 	//!< Wann soll die nächste Aktualisierung sein?
 
+static int SelbstAnrufSocket;
+	//!< Handle für ausgehende Verbindungen zum Selbst-Anruf
+	
+static uint16_t SelbstAnrufSendePruefwert;
+	//!< Wert, der testweise an sich selbst gesendet wurde.
+	//!< darf nicht Null sein.
+	
+static uint16_t SelbstAnrufEmpfangPruefwert;
+	//!< Empfangener Wert des Selbstanrufs. Null = noch nichts empfangen.
+	
+static uint8_t SelbstAnrufFehlerZaehler;
+	//!< Zählt die Anzahl der Fehlversuche beim Selbstanruf. Der Dritte führt zu einer Serverabfrage.
+
+
+static enum {
+	Ruhe,
+	SelbstAnruf,
+	ServerAktulisierung
+	} DynIPPhase;
+	
+#endif // TXP_ANSCHLUSS
+	
 	
 //! Sollfrequenz des Aufrufs von txp_timerEvent()
 enum { TxpTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
-
-
-#endif // TXP_ANSCHLUSS
 
 
 enum { DebugMsgMax = 100 } ;
@@ -2776,8 +2798,20 @@ void txp_thread()
 		{
 		// Aktialisierung starten?
 		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
-			&& TimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit
+			&& DynIPPhase == Ruhe
+			&& TimerVal(&DynIPTimer) >= DynIPAktualisierungEndzeit
 			&& TeilnehmerServerSocket == NO_SOCKET_USED)
+			{ // Selbst-Anruf starten
+			
+			}
+	
+		if (DynIPPhase == SelbstAnruf)
+			{
+			// Timeout oder Empfang
+			} 
+			
+
+		if (DynIPPhase == ServerAktulisierung)
 			{
 			if (TeilnehmerServerSocketOeffnen())
 				{ // Verbindung hergestellt.
@@ -2793,7 +2827,7 @@ void txp_thread()
 				}
 			else
 				{ // keine Verbindung hergestellt
-				StartTimer(&DynIPAktualisierungTimer);
+				StartTimer(&DynIPTimer);
 				DynIPAktualisierungEndzeit = 15 * 600 - (KurzTimerCnt & 0x3FF);
 					// in 15 Minuten minus Zufall wieder.
 				
@@ -2910,7 +2944,7 @@ void txp_thread()
 							Protokollieren_P(PSTR("\r\n"));
 							}
 						}
-					StartTimer(&DynIPAktualisierungTimer);
+					StartTimer(&DynIPTimer);
 					DynIPAktualisierungEndzeit = 15 * 600; // in 15 Minuten wieder
 					break;
 
@@ -2918,14 +2952,14 @@ void txp_thread()
 					ProtokollierenTxp_P(PSTR("Fehlermeldung des Teilnehmer-Servers: "));
 					Protokollieren(TSB.PureData);
 					Protokollieren_P(PSTR("\r\n"));
-					StartTimer(&DynIPAktualisierungTimer);
+					StartTimer(&DynIPTimer);
 					DynIPAktualisierungEndzeit = 15 * 600 - (KurzTimerCnt & 0x3FF);
 						// in 15 Minuten minus Zufall wieder.
 					break;
 				
 				default:
 					ProtokollierenTxp_P(PSTR("unerwartete Antwort des Teilnehmer-Servers\r\n" ));
-					StartTimer(&DynIPAktualisierungTimer);
+					StartTimer(&DynIPTimer);
 					DynIPAktualisierungEndzeit = 15 * 600 - (KurzTimerCnt & 0x3FF);
 						// in 15 Minuten minus Zufall wieder.
 					break;
@@ -3171,7 +3205,7 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(TimerVal(&TxpSocketLebenszeichenTimer));
 	PRINTVAL(TimerVal(&TxpThreadCheckTimer));
 
-	PRINTVAL(TimerVal(&DynIPAktualisierungTimer));
+	PRINTVAL(TimerVal(&DynIPTimer));
 	PRINTVAL(DynIPAktualisierungEndzeit);
 
 	PRINTVAL(FalscherCode); FalscherCode = 0;
@@ -3873,6 +3907,9 @@ void txp_init()
 	SocketInBufUsed = 0;
 	
 	NetzEigeneIP = 0;
+
+	DynIPPhase = Ruhe;
+	SelbstAnrufFehlerZaehler = 0;
 	
 	TwiInit();
 
@@ -3881,7 +3918,7 @@ void txp_init()
 	Timer0Cnt_Max = 0;
 	Timer0Callback_Max = 0;
 
-	StartTimer(&DynIPAktualisierungTimer);
+	StartTimer(&DynIPTimer);
 	DynIPAktualisierungEndzeit = 300; // 1/2 Minute 
 		
 	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
