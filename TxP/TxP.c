@@ -225,7 +225,7 @@ static TKurzTimer HtmlDruckspiegelAnzeigeTimer;
 	
 static TKurzTimer HtmlTexteingabeTimer;
 	//!< Zeit seit der letzten Eingabe eines Textes auf der CGI-Seite für Direktdruck oder
-	//!< seit dem letzten lokal eingegebenen Zeichen im Modus ModDirektdruckVerbunden.
+	//!< seit dem letzten lokal eingegebenen Zeichen im Modus ModHtmlChatVerbunden.
 
 
 int TxpSocketHandle;
@@ -535,7 +535,7 @@ void txp_timerEvent(void)
 		
 	if (Modus == ModKommendVerbunden 
 		|| Modus == ModGehendVerbunden 
-		|| Modus == ModDirektdruckVerbunden 
+		|| Modus == ModHtmlChatVerbunden
 		|| Modus == ModPufferDruckUndSchluss)
 		{ // ist Verbunden, also Pegel senden und empfangen
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
@@ -952,7 +952,8 @@ void ModusWechsel(TModus neu)
 			StartTimer(&BusQuittTimer);
 			break;
 
-		case ModDirektdruckWarteEinQuitt: //!< Warte auf Einschalt-Quittung des Endgeräts
+		case ModHtmlChatWarteEinQuitt: 
+		case ModMeldungsdruckWarteEinQuitt:
 			CLR_BIT_Status(StatBit_Frei);
 			CLR_BIT_Status(StatBit_LeitungKennung);
 			CLR_BIT_Status(StatBit_Verbunden);
@@ -974,7 +975,7 @@ void ModusWechsel(TModus neu)
 			SocketSendeFehlerZaehler = 0;
 			break;
 	
-		case ModDirektdruckVerbunden: 
+		case ModHtmlChatVerbunden: 
 			SET_BIT_Status(StatBit_FsMeldBetrieb);
 			SET_BIT_Status(StatBit_FsMeldEin);
 			SET_BIT_Status(StatBit_Verbunden);
@@ -1173,6 +1174,8 @@ static void SocketBearbeiten()
 		{
 		bool Abweisen = true; // Bei berechtigter kommender Verbindung auf false setzen.
 
+		//! \todo Bei SelbstAnruf zweite Kommende Verbindung verzögern...
+		
 		if (ProtokollLevel >= 1)
 			{
 			ProtokollierenTxp_P(PSTR("Server-Socket geoeffnet von IP "));
@@ -1247,6 +1250,7 @@ static void SocketBearbeiten()
 			CloseTCPSocket(NewServerSocket);
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR(" ...ABGEWIESEN\r\n" ));
+			strcpy_P(DebugMsg, PSTR("Zweiter kommender Anruf auf belegtem Telexphone-Socket"));
 			}
 			
 		} // CheckPortRequest(TXP_PORT) != NO_SOCKET_USED
@@ -1462,7 +1466,8 @@ static void SocketBearbeiten()
 				{
 				if (ProtokollLevel >= 1)
 					ProtokollierenTxp_P(PSTR("Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
-					
+				strcpy_P(DebugMsg, PSTR("Mehrfache FEHLER beim Senden ins Netz"));
+	
 				CloseTCPSocket(TxpSocketHandle);
 				TxpSocketHandle = NO_SOCKET_USED;
 				}
@@ -1507,7 +1512,7 @@ static void SocketBearbeiten()
 		{
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("ZEITUEBERSCHREITUNG bei Wiederaufnahme der Verbindung\r\n" ));
-			
+		strcpy_P(DebugMsg, PSTR("Zeitueberschreitung bei Wiederaufnahme der Verbindung"));
 		TxpSocketMode = SocketIdle;
 		TxpSocketAbbauGeplant = false;
 		TxpSocketIP = 0;
@@ -1529,8 +1534,9 @@ void InterneVerbindungBeenden(bool Force)
 		{
 		case ModGehendReserv:
 		case ModGehendWaehlen:
-		case ModDirektdruckWarteEinQuitt:
-		case ModDirektdruckVerbunden: 
+		case ModHtmlChatWarteEinQuitt:
+		case ModHtmlChatVerbunden:
+		case ModMeldungsdruckWarteEinQuitt:
 			if (Force)
 				{
 				BusSenden(BusKdoSchluss);
@@ -1997,7 +2003,8 @@ bool TeilnehmerServerSocketOeffnen()
 			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
 			Protokollieren_P(PSTR(" IP nicht bekannt\r\n"));
 			}
-		}
+		} // for i
+	strcpy_P(DebugMsg, PSTR("Keine Verbindung zu allen Teilnehmer-Servern"));	
 	return false;
 	} // TeilnehmerServerSocketOeffnen()
 
@@ -2070,9 +2077,13 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				return 0; // gut
 				}
 			else
+				{
+				strcpy_P(DebugMsg, PSTR("Keine Verbindung zum Mail-Server fuer Ausgang"));					
 				return 2; // schlecht
+				}
 #else
 			ProtokollierenTxp_P(PSTR("eMail nicht unterstuetzt\r\n" ));
+			strcpy_P(DebugMsg, PSTR("Mail in dieser Version nicht unterstuetzt"));					
 			return 2;
 #endif //ndef TXP_EMAIL		
 			
@@ -2084,6 +2095,8 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			
 		}
 
+	//! \todo Ab hier weiter DebugMsg definieren...
+	
 	// und hier wird geöffet...
 	TxpSocketHandle = Connect2IP(TxpSocketIP, TxpSocketPort); 
 	 
@@ -2174,9 +2187,9 @@ static void RufnummerBeiTlnServerAbfragen()
 void AsciiDruckPufferVerarbeiten()
 	{
 	//! \todo Werda richtig verarbeiten
-	if (Modus != ModDirektdruckVerbunden 
+	if (Modus != ModHtmlChatVerbunden
 		&& Modus != ModKommendVerbunden 
-		&& Modus != ModGehendVerbunden 
+		&& Modus != ModGehendVerbunden
 		&& Modus != ModPufferDruckUndSchluss)
 		return; // Drucken nicht möglich.
 		
@@ -2296,7 +2309,7 @@ void AsciiDruckPufferVerarbeiten()
 				{
 				if (SchreibeZeichenInSendePuffer(AsciiHilfPuffer[ki]))
 					{ // nur im Echo darstellen, wenn es auch gedruckt wurde.
-					if (Modus == ModDirektdruckVerbunden)
+					if (Modus == ModHtmlChatVerbunden)
 						ZeichenInHtmlSendeText(AsciiHilfPuffer[ki]);
 					}
 				} // nicht Werda
@@ -2311,7 +2324,31 @@ void AsciiDruckPufferVerarbeiten()
 
 	} // AsciiDruckPufferVerarbeiten()
 
-	
+
+//! Einschaltung für HTML-Chat oder Meldungsdruck
+bool SonstigeAnwahl()
+	{
+	if (KommendInternAnwaehlen(0)) // keine Durchwahl
+		{ 
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("Einschaltung intern\r\n" ));
+		BusSenden(BusKdoEin);
+		return true;
+		}
+	else
+		{ 
+		if (ProtokollLevel >= 1)
+			Protokollieren_P(PSTR("Einschaltung intern VERSAGT\r\n" ));
+			
+		strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versandt werden"));
+		AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
+		AsciiHilfPuffer[0] = '\0';
+		AsciiHilfZeilenanfang = 0;
+		ModusWechsel(ModWarteGrundstellung);
+		return false;
+		}
+	} // SonstigeAnwahl()
+
 		
 //! Der TelexPhone-client an sich.
 //------------------------------------------------------------------------------------------------------------
@@ -2381,17 +2418,22 @@ void txp_thread()
 					{ // ID#331 ********************************************
 					if (ProtokollLevel >= 1)
 						ProtokollierenTxp_P(PSTR("TWI Einschaltquittung intern / kommend\r\n" ));
-						
 					ModusWechsel(ModKommendVerbunden);
 					SocketSendeQuittung = true;
 					}
 
-				else if (Modus == ModDirektdruckWarteEinQuitt)
+				else if (Modus == ModHtmlChatWarteEinQuitt)
 					{ 
 					if (ProtokollLevel >= 1)
-						ProtokollierenTxp_P(PSTR("TWI Einschaltquittung nach Direktdruck\r\n" ));
-						
-					ModusWechsel(ModDirektdruckVerbunden);
+						ProtokollierenTxp_P(PSTR("TWI Einschaltquittung nach Beginn HTML-Chat\r\n" ));
+					ModusWechsel(ModHtmlChatVerbunden);
+					}
+
+				else if (Modus == ModMeldungsdruckWarteEinQuitt)
+					{ 
+					if (ProtokollLevel >= 1)
+						ProtokollierenTxp_P(PSTR("TWI Einschaltquittung nach Meldungsdruck\r\n" ));
+					ModusWechsel(ModPufferDruckUndSchluss);
 					}
 				
 				else
@@ -2549,7 +2591,7 @@ void txp_thread()
 	    || Modus == ModGehendReserv 
 		|| Modus == ModGehendWaehlen 
 		|| Modus == ModGehendVerbunden 
-		|| Modus == ModDirektdruckVerbunden 
+		|| Modus == ModHtmlChatVerbunden
 		|| Modus == ModPufferDruckUndSchluss)
 		{
 		if (TwiWatchdogCount > 4 * TxpTimerFreq) // nach 4 Sekunden ohne TWI-Kommunikation
@@ -2637,7 +2679,7 @@ void txp_thread()
 				ProtokollierenTxp();
 				ProtokollierenInt_P(PSTR("Anwahl intern an %u VERSAGT\r\n"), Durchwahl);
 				}
-			strcpy_P(DebugMsg, PSTR("Reservierung fuer Einschaltung konnte nicht versand werden"));
+			strcpy_P(DebugMsg, PSTR("Reservierung fuer Einschaltung konnte nicht versandt werden"));
 
 			SendeStopkommando(PSTR("occ\r\n"));
 			
@@ -2731,32 +2773,18 @@ void txp_thread()
 
 	if (Modus == ModRuhe && AsciiDruckPuffer[0] != '\0')
 		{
-		if (KommendInternAnwaehlen(0)) // keine Durchwahl
-			{ 
-			if (ProtokollLevel >= 1)
-				ProtokollierenTxp_P(PSTR("Direktdruck -> Einschaltung intern\r\n" ));
-				
-			BusSenden(BusKdoEin);
-			ModusWechsel(ModDirektdruckWarteEinQuitt);
-			}
-		else
-			{ 
-			if (ProtokollLevel >= 1)
-				ProtokollierenTxp_P(PSTR("Direktdruck -> Einschaltung intern VERSAGT\r\n" ));
-				
-			strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versand werden"));
-			AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
-			AsciiHilfPuffer[0] = '\0';
-			AsciiHilfZeilenanfang = 0;
-			ModusWechsel(ModWarteGrundstellung);
-			}
-		} // if ModRuhe && Text per HTML empfangen
+		if (ProtokollLevel >= 1)
+			ProtokollierenTxp_P(PSTR("Meldungsdruck -> "));
+			
+		if (SonstigeAnwahl())
+			ModusWechsel(ModMeldungsdruckWarteEinQuitt);
+			
+		} // if ModRuhe && Text im DruckPuffer
 		
 	AsciiDruckPufferVerarbeiten();
 	
-	if (Modus == ModDirektdruckVerbunden)
+	if (Modus == ModHtmlChatVerbunden)
 		{ // am Fernschreiber eigegebene Zeichen nach Ascii umwandeln 
-		//! \todo eigentlich nur, wenn es tatsächlich über eine HTML-Seite lief...
 		while (!PufferLeer(&EmpfPuffer))
 			{
 			ZeichenInHtmlSendeText(CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode));
@@ -2772,13 +2800,13 @@ void txp_thread()
 				|| TimerVal(&HtmlTexteingabeTimer) > 1800)) // 3 Minuten nichts eingegeben
 			{
 			if (ProtokollLevel >= 1)
-				ProtokollierenTxp_P(PSTR("Direktdruck-Ruhe --> Ausschaltung intern\r\n" ));
+				ProtokollierenTxp_P(PSTR("HTML-Chat-Ruhe --> Ausschaltung intern\r\n" ));
 				
 			InterneVerbindungBeenden(true);
 			//! \todo ResteDruck wartet auch auf Leerung des Puffers...
 			} // Abschaltung nach 30 Sekunden / 180 Sekunden.
 
-		} // if Modus == ModDirektdruckVerbunden
+		} // if Modus == ModHtmlChatVerbunden
 
 	// ==========================================================================
 	// Abschaltung nach Reste-Druck?
@@ -2821,7 +2849,8 @@ void txp_thread()
 		// Aktialisierung starten?
 		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
 			&& SelbstAnrufPhase == SelbstAnrufRuhe
-			&& TimerVal(&SelbstAnrufTimer) >= 300
+			&& TimerVal(&SelbstAnrufTimer) >= ((SelbstAnrufFehlerZaehler == 0) ? 450 : 100)
+				// ohne Fehler alle 45 Sekunden prüfen, mit Fehler alle 10 Sekunden
 			&& SelbstAnrufSocketHandle == NO_SOCKET_USED
 			&& TeilnehmerServerSocket == NO_SOCKET_USED)
 			{ // Selbst-Anruf starten
@@ -2909,6 +2938,12 @@ void txp_thread()
 			{
 			DynIPAktualisierungEndzeit = TimerVal(&DynIPAktualisierungTimer);
 			SelbstAnrufPhase = SelbstAnrufSperre;
+			SelbstAnrufFehlerZaehler++; // nicht sofort wieder...
+			if (SelbstAnrufFehlerZaehler >= 16)
+				{
+				DynIPAktiv = false;
+				//! \todo Fehlermeldung ausgeben.
+				}
 			}
 			
 		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
@@ -3367,7 +3402,7 @@ void txp_cgi_msg_Out( void * pStruct )
 					"</HEAD>"
 					"<BODY>" ));
 					
-	if (Modus == ModDirektdruckVerbunden)
+	if (Modus == ModHtmlChatVerbunden)
 		{
 		printf_P(PSTR("Druckspiegel:<br><pre>%s&lt;&lt;&lt;%s%s</pre>"), HtmlSendeText, AsciiHilfPuffer, AsciiDruckPuffer);
 
@@ -3421,7 +3456,7 @@ void txp_cgi_msg_In( void * pStruct )
 
 	if ((http_request->argc != 0) 
 	    && PharseCheckName_P(http_request, Eingabe_P)
-		&& (Modus == ModRuhe || Modus == ModDirektdruckWarteEinQuitt || Modus == ModDirektdruckVerbunden))
+		&& (Modus == ModRuhe || Modus == ModHtmlChatWarteEinQuitt || Modus == ModHtmlChatVerbunden))
 		{
 		// Text holen...
 		char *EingabeText = http_request->argvalue[PharseGetValue_P(http_request, Eingabe_P)];
@@ -3439,7 +3474,7 @@ void txp_cgi_msg_In( void * pStruct )
 		// Ergebnis protokollieren
 		if (ProtokollLevel >= 2)
 			{
-			ProtokollierenTxp_P(PSTR("Direktdruck Eingabe: "));
+			ProtokollierenTxp_P(PSTR("HTML-Chat Eingabe: "));
 			Protokollieren(EingabeText); 
 			Protokollieren_P(PSTR("\r\n"));
 			}
@@ -3450,6 +3485,14 @@ void txp_cgi_msg_In( void * pStruct )
 		StartTimer(&HtmlDruckspiegelAnzeigeTimer); 
 			// Für den Fall, dass das Anzeigefenster noch nicht aktualisiert wurde.
 		
+		if (Modus == ModRuhe)
+			{
+			if (ProtokollLevel >= 1)
+				ProtokollierenTxp_P(PSTR("HTML-Chat begonnen -> "));
+				
+			if (SonstigeAnwahl())
+				ModusWechsel(ModHtmlChatWarteEinQuitt);
+			}
 		}
 
 	cgi_PrintHttpheaderStart();

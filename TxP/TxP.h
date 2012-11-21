@@ -71,9 +71,11 @@ typedef enum
 	ModPufferDruckUndSchluss = 18,
 	ModWarteSchlussQuitt = 19,
 	
-	// z.B. über HTML-Seite verursachte direkte Druckausgabe
-	ModDirektdruckWarteEinQuitt = 21, //!< Warte auf Einschalt-Quittung des Endgeräts
-	ModDirektdruckVerbunden = 22, 
+	// über HTML-Seite verursachte direkte Druckausgabe
+	ModHtmlChatWarteEinQuitt = 21, //!< Warte auf Einschalt-Quittung des Endgeräts
+	ModHtmlChatVerbunden = 22, 
+	
+	ModMeldungsdruckWarteEinQuitt = 25, //!< Danach kommt gleich PufferdruckUndSchluss.
 
 	ModDeaktiviert = 31, //!< Durch Tastendruck ausgeschaltet.
 	ModWarteGrundstellung = 32, 

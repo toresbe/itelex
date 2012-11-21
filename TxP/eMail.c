@@ -377,7 +377,7 @@ void Pop3DatenVerarbeiten()
 				}
 			else
 				{ // mindestens eine Meldung im Puffer...
-				strcpy_P(AsciiDruckPuffer, PSTR("\r\nemail empfangen:\r\n")); 
+				strcpy_P(AsciiDruckPuffer, PSTR("\r\n///email empfangen:\r\n")); 
 					// startet sofort den Fernschreiber
 				
 				strcpy_P(SocketOutBuf, PSTR("RETR 1\r\n"));
