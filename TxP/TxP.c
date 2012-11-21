@@ -973,6 +973,8 @@ void ModusWechsel(TModus neu)
 			LED_off(BLAU);
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			BusEmpfMark = true;
+			SendeMark = true;
 			SeriellUmsetzInit();
 			SendenBeschleunigen = false;
 			SocketAnzahlZeichenEmpfangen = 0;
