@@ -149,7 +149,7 @@ bool MailZeileVerarbeiten(char *Zeile)
 			; // Zeile Drucken, siehe unten
 		else if (strncasecmp_P(Zeile, PSTR("subject"), p - Zeile) == 0)
 			{
-			if (EmailAusgabeFilternKennung && strstr_P(p, PSTR("+TX+")) == NULL)
+			if (EmailAusgabeFilternKennung && strstr_P(p, PSTR("+TX+")) == NULL && strstr_P(p, PSTR("+tx+")) == NULL)
 				// Nur Emails-mit Kennung im Subject drucken, aber keine Kennung enthalten...
 				MailUnterdruecken = true;
 				// aber kein return, so wird die Subject-Zeile noch gedruckt.
