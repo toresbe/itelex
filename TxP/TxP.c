@@ -160,10 +160,14 @@ volatile static uint8_t SerUmTickZaehlerSend; //!< Zähler der Einzel-Ticks beim
 
 
 volatile uint16_t KurzTimerCnt;
-//!< Die Timer-Basisvariable
+//!< Die KurzTimer-Basisvariable
 
+volatile uint16_t LangTimerCnt;
+//!< Die LangTimer-Basisvariable
 
 volatile uint8_t KurzTimerVorteilerCnt;
+
+volatile uint16_t LangTimerVorteilerCnt;
 
 
 volatile static uint16_t TwiLebenszeichenZaehler; 
@@ -223,7 +227,7 @@ static TKurzTimer HtmlDruckspiegelAnzeigeTimer;
 	//!< Zeit seit der letzten Anzeige des Druckspiegels. Druckspiegel wird alle 10 Sekunden 
 	//!< abgerufen.
 	
-static TKurzTimer HtmlTexteingabeTimer;
+static TLangTimer HtmlTexteingabeTimer;
 	//!< Zeit seit der letzten Eingabe eines Textes auf der CGI-Seite für Direktdruck oder
 	//!< seit dem letzten lokal eingegebenen Zeichen im Modus ModHtmlChatVerbunden.
 
@@ -369,7 +373,7 @@ enum { KonfigPasswortLen = 10 } ;
 static char KonfigPasswort[KonfigPasswortLen+1];
 	//!< Passwort für den Zugang zu Konfigurationsdaten.
 	
-static TKurzTimer KonfigFreigabeTimer;
+static TLangTimer KonfigFreigabeTimer;
 	//!< Timer zur Messung der Zeit seit letzter Freigabe bzw. Benutzung von freizugebenden Seiten
 	
 static bool KonfigFreigabeErteilt;
@@ -388,7 +392,7 @@ static int TeilnehmerServerSocket;
 static bool DynIPAktiv;
 	//!< Soll die eigene IP-Adresse auf den Teilnehmer-Server aktualisiert werden?
 	
-static TKurzTimer DynIPAktualisierungTimer;
+static TLangTimer DynIPAktualisierungTimer;
 	//!< Verschiedene Aufgaben bei der Aktualisierung der eigenen IP auf dem Rufnummern-Server.
 
 static uint16_t DynIPAktualisierungEndzeit;
@@ -584,6 +588,12 @@ void txp_timerEvent(void)
 		{
 		KurzTimerCnt++;
 		KurzTimerVorteilerCnt = 0;
+		LangTimerVorteilerCnt++;
+		if (LangTimerVorteilerCnt >= KurzTimerFreq * LangTimerTakt)
+			{
+			LangTimerVorteilerCnt = 0;
+			LangTimerCnt++;
+			}
 		}
 		
 	wdt_reset();
@@ -785,14 +795,14 @@ void txp_timerEvent(void)
 		case TasteAus:
 			if (!get_Taste()) // Gedrückt = LOW!
 				{
-				if (KurzTimerVal(&TasteTimer) >= KurzTimerFreq * 2/10) // 2 Zehntel
+				if (KurzTimerVal(&TasteTimer) >= KurzTimerFreq * 1/20) // 0,5 Zehntel
 					{ // ausreichend lang gedrückt
 					TasteZustandIntern = TasteEin;
 					StartKurzTimer(&TasteTimer);
 					
 					// Zugang zur Konfiguration erlauben.
 					KonfigFreigabeErteilt = true;
-					StartKurzTimer(&KonfigFreigabeTimer);
+					StartLangTimer(&KonfigFreigabeTimer);
 					}
 				}
 			else
@@ -1052,7 +1062,7 @@ void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_Verbunden);
 			BusEmpfMark = true;
 			SendeMark = true;
-			StartKurzTimer(&HtmlTexteingabeTimer);
+			StartLangTimer(&HtmlTexteingabeTimer);
 			StartKurzTimer(&HtmlDruckspiegelAnzeigeTimer);
 			break;
 
@@ -2865,7 +2875,7 @@ void txp_thread()
 		while (!PufferLeer(&EmpfPuffer))
 			{
 			ZeichenInHtmlSendeText(CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode));
-			StartKurzTimer(&HtmlTexteingabeTimer);
+			StartLangTimer(&HtmlTexteingabeTimer);
 			}
 
 		if (AsciiDruckPuffer[0] == '\0'
@@ -2874,8 +2884,8 @@ void txp_thread()
 			&& SerUmSendBitNr == SerUmSendWarte
 			&& PufferLeer(&EmpfPuffer)
 			&& (TxpSocketHandle == NO_SOCKET_USED || SocketInBufUsed == 0)
-			&& (KurzTimerVal(&HtmlDruckspiegelAnzeigeTimer) > 30 * KurzTimerFreq // 30 Sekunden keine Anzeige-Abfrage
-				|| KurzTimerVal(&HtmlTexteingabeTimer) > 3 * 60 * KurzTimerFreq)) // 3 Minuten nichts eingegeben
+			&& (KurzTimerVal(&HtmlDruckspiegelAnzeigeTimer) >= 30 * KurzTimerFreq // 30 Sekunden keine Anzeige-Abfrage
+				|| LangTimerVal(&HtmlTexteingabeTimer) >= 5 * LangTimerFakt)) // 5 Minuten nichts eingegeben
 			{
 			if (ProtokollLevel >= 1)
 				ProtokollierenTxp_P(PSTR("HTML-Chat-Ruhe --> Ausschaltung intern\r\n" ));
@@ -3020,7 +3030,7 @@ void txp_thread()
 
 			
 		if (SelbstAnrufPhase == SelbstAnrufSchliessen 
-			&& KurzTimerVal(&SelbstAnrufTimer) >= KurzTimerFreq * 2/10)
+			&& KurzTimerVal(&SelbstAnrufTimer) >= KurzTimerFreq * 1/10)
 			{
 			CloseTCPSocket(SelbstAnrufSocketHandle);
 			SelbstAnrufSocketHandle = NO_SOCKET_USED;
@@ -3031,9 +3041,9 @@ void txp_thread()
 		if (SelbstAnrufPhase == SelbstAnrufRuhe && (SelbstAnrufFehlerZaehler & 3) == 3)
 			// nach drei Fehlversuchen Server-Aktulisierung Starten
 			{
-			DynIPAktualisierungEndzeit = KurzTimerVal(&DynIPAktualisierungTimer) 
-										 + 2 * 60 * KurzTimerFreq;
-										 // mit 2 Minuten Verzögerung
+			DynIPAktualisierungEndzeit = LangTimerVal(&DynIPAktualisierungTimer) 
+										 + 1 * LangTimerFakt;
+										 // mit 1 Minuten Verzögerung
 			SelbstAnrufPhase = SelbstAnrufSperre;
 			SelbstAnrufFehlerZaehler++; // nicht sofort wieder...
 			if (SelbstAnrufFehlerZaehler >= 16)
@@ -3044,7 +3054,7 @@ void txp_thread()
 			}
 			
 		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
-			&& KurzTimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit
+			&& LangTimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit
 			&& TeilnehmerServerSocket == NO_SOCKET_USED)
 			{ // Keine Verbindung laufend, Zeit für Aktualsierung 
 			bool Fehler;
@@ -3072,14 +3082,14 @@ void txp_thread()
 			if (Fehler)
 				{ // keine Verbindung hergestellt
 				DynIPAktualisierungEndzeit 
-					= 15 * 60 * KurzTimerFreq 
-					- ((TxpThreadCount ^ Timer0CallbackCount) & 0x3FF);
+					= 15 * LangTimerFakt 
+					- ((TxpThreadCount ^ Timer0CallbackCount) & 0xF);
 					// in 15 Minuten minus Zufall wieder. 
 					
 				SelbstAnrufPhase = SelbstAnrufSperre;
 				}
 			
-			StartKurzTimer(&DynIPAktualisierungTimer);
+			StartLangTimer(&DynIPAktualisierungTimer);
 			} // Keine Verbindung laufend, Zeit für Aktualsierung ODER Selbstanruf nicht erfolgreich.
 		} // if (DynIPAktiv)
 		
@@ -3192,8 +3202,8 @@ void txp_thread()
 							Protokollieren_P(PSTR("\r\n"));
 							}
 						}
-					StartKurzTimer(&DynIPAktualisierungTimer);
-					DynIPAktualisierungEndzeit = 60U * 60 * KurzTimerFreq; // in einer Stunde wieder
+					StartLangTimer(&DynIPAktualisierungTimer);
+					DynIPAktualisierungEndzeit = 60 * LangTimerFakt; // in einer Stunde wieder
 					StartKurzTimer(&SelbstAnrufTimer);
 					SelbstAnrufPhase = SelbstAnrufRuhe;
 					break;
@@ -3202,9 +3212,9 @@ void txp_thread()
 					ProtokollierenTxp_P(PSTR("Fehlermeldung des Teilnehmer-Servers: "));
 					Protokollieren(TSB.PureData);
 					Protokollieren_P(PSTR("\r\n"));
-					StartKurzTimer(&DynIPAktualisierungTimer);
-					DynIPAktualisierungEndzeit = 15 * 60 * KurzTimerFreq 
-						- ((TxpThreadCount ^ Timer0CallbackCount) & 0x3FF);
+					StartLangTimer(&DynIPAktualisierungTimer);
+					DynIPAktualisierungEndzeit = 15 * LangTimerFakt 
+						- ((TxpThreadCount ^ Timer0CallbackCount) & 0xF);
 						// in 15 Minuten minus Zufall wieder.
 
 					SelbstAnrufPhase = SelbstAnrufSperre;
@@ -3212,9 +3222,9 @@ void txp_thread()
 				
 				default:
 					ProtokollierenTxp_P(PSTR("unerwartete Antwort des Teilnehmer-Servers\r\n" ));
-					StartKurzTimer(&DynIPAktualisierungTimer);
-					DynIPAktualisierungEndzeit = 15 * 60 * KurzTimerFreq 
-						- ((TxpThreadCount ^ Timer0CallbackCount) & 0x3FF);
+					StartLangTimer(&DynIPAktualisierungTimer);
+					DynIPAktualisierungEndzeit = 15 * LangTimerFakt 
+						- ((TxpThreadCount ^ Timer0CallbackCount) & 0xF);
 						// in 15 Minuten minus Zufall wieder.
 
 					SelbstAnrufPhase = SelbstAnrufSperre;
@@ -3260,7 +3270,7 @@ void txp_thread()
 	// Sicherheitslücke durch Überlauf des Konfig-Freigabe-Timers schließen.
 	// ==========================================================================
 	
-	if (KonfigFreigabeErteilt && KurzTimerVal(&KonfigFreigabeTimer) > 5 * 60 * KurzTimerFreq)
+	if (KonfigFreigabeErteilt && LangTimerVal(&KonfigFreigabeTimer) > 5 * LangTimerFakt)
 		KonfigFreigabeErteilt = false;
 	
 	// HACK Status-Signale Seriell
@@ -3334,9 +3344,9 @@ uint8_t KonfigFreigabe(void *pStruct)
 	if (KonfigPasswort[0] == '\0')
 		return true; // ohne Kennwort keine Sperre
 	
-	if (KonfigFreigabeErteilt && KurzTimerVal(&KonfigFreigabeTimer) < 5 * 60 * KurzTimerFreq)
+	if (KonfigFreigabeErteilt && LangTimerVal(&KonfigFreigabeTimer) <= 5 * LangTimerFakt)
 		{ // 5 Minuten lang ist der Zugang erlaubt
-		StartKurzTimer(&KonfigFreigabeTimer);
+		StartLangTimer(&KonfigFreigabeTimer);
 		return true;
 		}
 		
@@ -3361,7 +3371,7 @@ uint8_t KonfigFreigabe(void *pStruct)
 		if (strcmp(EingabeText, KonfigPasswort) == 0)
 			{ // korrekt eingegebenen
 			KonfigFreigabeErteilt = true;
-			StartKurzTimer(&KonfigFreigabeTimer);
+			StartLangTimer(&KonfigFreigabeTimer);
 			http_request->argc = 0; // damit die eigentliche Seite nicht durch die Kennwort-Eingabe verwirrt ist!			
 			return true;
 			}
@@ -3473,7 +3483,7 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(KurzTimerVal(&TxpSocketLebenszeichenTimer));
 	PRINTVAL(KurzTimerVal(&TxpThreadCheckTimer));
 
-	PRINTVAL(KurzTimerVal(&DynIPAktualisierungTimer));
+	PRINTVAL(LangTimerVal(&DynIPAktualisierungTimer));
 	PRINTVAL(DynIPAktualisierungEndzeit);
 
 	PRINTVAL(SelbstAnrufPhase);
@@ -3606,7 +3616,7 @@ void txp_cgi_msg_In( void * pStruct )
 			}
 			
 		// Und Zeit für Verbindungsabbau messen.
-		StartKurzTimer(&HtmlTexteingabeTimer);
+		StartLangTimer(&HtmlTexteingabeTimer);
 		
 		StartKurzTimer(&HtmlDruckspiegelAnzeigeTimer); 
 			// Für den Fall, dass das Anzeigefenster noch nicht aktualisiert wurde.
@@ -4208,8 +4218,8 @@ void txp_init()
 	Timer0Cnt_Max = 0;
 	Timer0Callback_Max = 0;
 
-	StartKurzTimer(&DynIPAktualisierungTimer);
-	DynIPAktualisierungEndzeit = 30 * KurzTimerFreq; // 1/2 Minute 
+	StartLangTimer(&DynIPAktualisierungTimer);
+	DynIPAktualisierungEndzeit = LangTimerFakt / 2; // 1/2 Minute 
 		
 	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 

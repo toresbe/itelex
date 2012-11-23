@@ -202,11 +202,54 @@ extern TTastendruck Tastendruck;
 extern bool WarteTaste();
 extern uint8_t KonfigFreigabe(void *pStruct);
 
+
+//==============================================================================
+
+//! Langzeit-Zeitgeber geeignet von 0,5 Minuten bis 1 Tag.
+typedef struct { uint16_t x; } TLangTimer;
+
+
+extern volatile uint16_t LangTimerCnt;
+
+
+enum { LangTimerTakt = 10 } ; 
+	//!< Takt in Sekunden des Langzeittimers. 
+	//!< Muss ein Teiler von 60 sein.
+	
+enum { LangTimerFakt = 60/LangTimerTakt } ;
+	//!< Faktor zur Umrechnung Minuten -> Takte von #TLangTimer
+	
+//! Startet Langzeit-Messung.
+static inline void StartLangTimer(TLangTimer *t)
+	{
+	uint8_t sreg_tmp = SREG;
+	cli();
+	t->x = LangTimerCnt;
+	SREG = sreg_tmp;
+	}
+	
+
+//! Aktueller Wert einer Langzeit-Messung entsprechend #LangTimerTakt.
+static inline uint16_t LangTimerVal(TLangTimer *t)
+	{
+	uint16_t res;
+	
+	uint8_t sreg_tmp = SREG;
+	cli();
+	res = LangTimerCnt - t->x; // Überlauf wird absichtlich erwartet!
+	SREG = sreg_tmp;
+	return res;
+	}
+		
+	
+//===========================================================================
+
+//! Kurzzeit-Zeitgeber geeignet von x/100 Sekunden bis 10 Minuten.
+typedef struct { uint16_t x; } TKurzTimer;
+	
 extern volatile uint16_t KurzTimerCnt;
 
-typedef uint16_t TKurzTimer;
-
-enum { KurzTimerFreq = 10U } ; 
+enum { KurzTimerFreq = 100 } ; 
 	//!< Frequenz (1/Takt) des Kurzzeittimers. 
 	//!< Muss ein Teiler von #TxpTimerFreq sein.
 	
@@ -216,24 +259,26 @@ static inline void StartKurzTimer(TKurzTimer *t)
 	{
 	uint8_t sreg_tmp = SREG;
 	cli();
-	*t = KurzTimerCnt;
+	t->x = KurzTimerCnt;
 	SREG = sreg_tmp;
 	}
 	
 
-//! Aktueller Wert einer Kurzzeit-Messung in zehntel Sekunden.
+//! Aktueller Wert einer Kurzzeit-Messung in Takten entsprechend #KurzTimerFreq.
 static inline uint16_t KurzTimerVal(TKurzTimer *t)
 	{
 	uint16_t res;
 	
 	uint8_t sreg_tmp = SREG;
 	cli();
-	res = KurzTimerCnt - (*t); // Überlauf wird absichtlich erwartet!
+	res = KurzTimerCnt - t->x; // Überlauf wird absichtlich erwartet!
 	SREG = sreg_tmp;
 	return res;
 	}
 		
 	
+//=============================================================================
+//! Statistische Messung von kurz dauernden Vorgängen.
 typedef struct	
 	{
 	TKurzTimer Messung;

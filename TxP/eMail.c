@@ -83,8 +83,9 @@ static TKurzTimer VervollstaendigungTimer;
 	//!< Misst, ob der POP bzw SMTP-Server fertig ist mit Meldungen ausgeben.
 	
 	
-static TKurzTimer POPWartezeitTimer;
+static TLangTimer POPWartezeitTimer;
 	//!< Zeitmesser für die Email-Abfrage-Takte
+	
 
 static uint16_t POPWartezeitEnde;
 	//!< Ablaufzeit für die Email-Abfrage-Takte. 3 Minuten nach jeder anderen Kommunikation,
@@ -199,7 +200,7 @@ bool MailZeileVerarbeiten(char *Zeile)
 //! 
 void POP3Einleiten()
 	{
-	if (KurzTimerVal(&POPWartezeitTimer) < POPWartezeitEnde)
+	if (LangTimerVal(&POPWartezeitTimer) < POPWartezeitEnde)
 		return;
 		
 	if (EmailAbfrageTakt == 0)
@@ -207,13 +208,13 @@ void POP3Einleiten()
 		
 	if (Modus != ModRuhe || TxpSocketHandle != NO_SOCKET_USED)
 		{
-		StartKurzTimer(&POPWartezeitTimer);
-		POPWartezeitEnde = 3 * 60 * KurzTimerFreq;
+		StartLangTimer(&POPWartezeitTimer);
+		POPWartezeitEnde = 3 * LangTimerFakt;
 		return;
 		}
 
-	StartKurzTimer(&POPWartezeitTimer);
-	POPWartezeitEnde = 3 * 60 * KurzTimerFreq;
+	StartLangTimer(&POPWartezeitTimer);
+	POPWartezeitEnde = 3 * LangTimerFakt;
 		// hier schon, da nach Öffnen immer ein Zeitfenster gestartet wird.
 		
 	// jetzt geht's los...
@@ -226,7 +227,7 @@ void POP3Einleiten()
 		Protokollieren(EmailPOPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 		
-		POPWartezeitEnde = EmailAbfrageTakt * 60 * KurzTimerFreq;
+		POPWartezeitEnde = EmailAbfrageTakt * LangTimerFakt;
 		
 		return;
 		}
@@ -369,8 +370,8 @@ void Pop3DatenVerarbeiten()
 			if ((i < SocketInBufUsed && atoi(SocketInBuf + i) == 0)
 				|| Modus != ModRuhe)
 				{ // nichts im Puffer ODER plötzlich doch belegt...
-				POPWartezeitEnde = EmailAbfrageTakt * 60 * KurzTimerFreq;
-				StartKurzTimer(&POPWartezeitTimer);
+				POPWartezeitEnde = EmailAbfrageTakt * LangTimerFakt;
+				StartLangTimer(&POPWartezeitTimer);
 				strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
 				TxpSocketAbbauGeplant = true;
 				ProtokollPhase = WarteEnde;
@@ -836,9 +837,9 @@ void txp_email_init()
 	else
 		EmailAusgabeFilternKennung = false;
 		
-	POPWartezeitEnde = 60 * KurzTimerFreq; // 1 Minute
+	POPWartezeitEnde = LangTimerFakt; // 1 Minute
 	
-	StartKurzTimer(&POPWartezeitTimer);
+	StartLangTimer(&POPWartezeitTimer);
 	
 	// cgi Registrieren
 	
