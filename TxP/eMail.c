@@ -199,7 +199,7 @@ bool MailZeileVerarbeiten(char *Zeile)
 //! 
 void POP3Einleiten()
 	{
-	if (TimerVal(&POPWartezeitTimer) < POPWartezeitEnde)
+	if (KurzTimerVal(&POPWartezeitTimer) < POPWartezeitEnde)
 		return;
 		
 	if (EmailAbfrageTakt == 0)
@@ -207,13 +207,13 @@ void POP3Einleiten()
 		
 	if (Modus != ModRuhe || TxpSocketHandle != NO_SOCKET_USED)
 		{
-		StartTimer(&POPWartezeitTimer);
-		POPWartezeitEnde = 3 * 600;
+		StartKurzTimer(&POPWartezeitTimer);
+		POPWartezeitEnde = 3 * 60 * KurzTimerFreq;
 		return;
 		}
 
-	StartTimer(&POPWartezeitTimer);
-	POPWartezeitEnde = 3 * 600;
+	StartKurzTimer(&POPWartezeitTimer);
+	POPWartezeitEnde = 3 * 60 * KurzTimerFreq;
 		// hier schon, da nach Öffnen immer ein Zeitfenster gestartet wird.
 		
 	// jetzt geht's los...
@@ -226,7 +226,7 @@ void POP3Einleiten()
 		Protokollieren(EmailPOPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 		
-		POPWartezeitEnde = EmailAbfrageTakt * 600;
+		POPWartezeitEnde = EmailAbfrageTakt * 60 * KurzTimerFreq;
 		
 		return;
 		}
@@ -252,7 +252,7 @@ void POP3Einleiten()
 	ProtokollPhase = AnmeldungName;
 	POPOkEmpfangen = false;
 	
-	StartTimer(&VervollstaendigungTimer);
+	StartKurzTimer(&VervollstaendigungTimer);
 	
 	return;
 	} // POP3Einleiten
@@ -369,8 +369,8 @@ void Pop3DatenVerarbeiten()
 			if ((i < SocketInBufUsed && atoi(SocketInBuf + i) == 0)
 				|| Modus != ModRuhe)
 				{ // nichts im Puffer ODER plötzlich doch belegt...
-				POPWartezeitEnde = EmailAbfrageTakt * 600;
-				StartTimer(&POPWartezeitTimer);
+				POPWartezeitEnde = EmailAbfrageTakt * 60 * KurzTimerFreq;
+				StartKurzTimer(&POPWartezeitTimer);
 				strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
 				TxpSocketAbbauGeplant = true;
 				ProtokollPhase = WarteEnde;
@@ -465,7 +465,7 @@ void Pop3DatenVerarbeiten()
 	if (SocketOutBufUsed != 0)
 		POPOkEmpfangen = false;
 		
-	StartTimer(&VervollstaendigungTimer);
+	StartKurzTimer(&VervollstaendigungTimer);
 	
 	}
 	
@@ -510,7 +510,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 	
 	ProtokollPhase = HalloSagen;
 	
-	StartTimer(&VervollstaendigungTimer);
+	StartKurzTimer(&VervollstaendigungTimer);
 	
 	return true;
 	}
@@ -572,7 +572,7 @@ void SMTPDatenVerarbeiten()
 			{
 			//! \todo bei Änderungen von SocketInBufUsed Timer neu Starten
 			// warte auf ende aller Meldungen des SMTP-Servers.
-			if (TimerVal(&VervollstaendigungTimer) < 20)
+			if (KurzTimerVal(&VervollstaendigungTimer) < 2 * KurzTimerFreq)
 				return;
 			}
 		
@@ -707,7 +707,7 @@ void SMTPDatenVerarbeiten()
 		}
 			
 	SocketOutBufUsed = strlen(SocketOutBuf);
-	StartTimer(&VervollstaendigungTimer);
+	StartKurzTimer(&VervollstaendigungTimer);
 			
 	}
 	
@@ -836,9 +836,9 @@ void txp_email_init()
 	else
 		EmailAusgabeFilternKennung = false;
 		
-	POPWartezeitEnde = 600; // 1 Minute
+	POPWartezeitEnde = 60 * KurzTimerFreq; // 1 Minute
 	
-	StartTimer(&POPWartezeitTimer);
+	StartKurzTimer(&POPWartezeitTimer);
 	
 	// cgi Registrieren
 	

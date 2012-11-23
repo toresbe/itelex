@@ -424,6 +424,9 @@ static enum {
 static bool ProtokollUnterdrueckenWegenSelbstAnruf;
 	//!< Unterdrückt alle regulären Protokoll-Ausgaben während des Selbstanrufs.
 	
+static TZeitUeberwachung SelbstAnrufZeitUeberwachung;
+	//!< Überwachung der Dauer des Selbstanrufs.
+	
 	
 #endif // TXP_ANSCHLUSS
 	
@@ -460,6 +463,67 @@ static inline uint8_t high(uint16_t x)
 	}
 	
 	
+void ZeitUeberwachungInit(TZeitUeberwachung *zue, uint16_t aGrenzwert)
+	{
+	zue->Grenzwert = aGrenzwert;
+	zue->Gestartet = false;
+	zue->Summe = 0;
+	zue->Anzahl = 0;
+	zue->AnzUeberGrenze = 0;
+	zue->Maximum = 0;
+	}
+	
+
+void ZeitUeberwachungStart(TZeitUeberwachung *zue)
+	{
+	StartKurzTimer(&zue->Messung);
+	zue->Gestartet = true;
+	}
+	
+
+bool ZeitUeberwachungEnde(TZeitUeberwachung *zue)
+	{
+	if (!zue->Gestartet)
+		return false;
+	uint16_t Mess = KurzTimerVal(&zue->Messung);
+	zue->Gestartet = false;
+	zue->Summe += Mess;
+	zue->Anzahl++;
+	if (Mess > zue->Maximum)
+		zue->Maximum = Mess;
+	if (Mess > zue->Grenzwert)
+		{
+		zue->AnzUeberGrenze++;
+		return true;
+		}
+	else
+		return false;
+	}
+
+
+void ZeitUeberwachungAbbruch(TZeitUeberwachung *zue)
+	{
+	zue->Gestartet = false;
+	}
+	
+
+	
+
+//! Gibt des aktuellen Stand der Zeitueberwachung aus.
+//----------------------------------------------------	
+//! Ausgabe erfolgt in den #ZeitUeberwachungAusgabePuffer.
+
+char * ZeitUeberwachungAusgabe(TZeitUeberwachung *zue)
+	{
+	static char ZeitUeberwachungAusgabePuffer[75];
+	sprintf_P(ZeitUeberwachungAusgabePuffer, 
+			  PSTR("Summe/Anz = %lu/%u  Max = %u  AnzUeberGrenze = %u"), 
+			  zue->Summe, zue->Anzahl, zue->Maximum, zue->AnzUeberGrenze);
+	return ZeitUeberwachungAusgabePuffer;
+	}
+	
+
+	
 #ifdef TXP_ANSCHLUSS
 	
 //! Initialisiert die serielle Umsetzung 
@@ -473,10 +537,9 @@ static void SeriellUmsetzInit(void)
 	}
 
 
-
-//! Nur für debugging.	
 static uint16_t TxpThreadCount; 
-
+	//!< Für Debugging und Zufallsfaktoren
+	
 	
 //! Protokollzeile einleiten.
 // ---------------------------
@@ -517,7 +580,7 @@ void txp_timerEvent(void)
 	Timer0CallbackCount++;
 
 	KurzTimerVorteilerCnt++;
-	if (KurzTimerVorteilerCnt >= TxpTimerFreq / 10)
+	if (KurzTimerVorteilerCnt >= TxpTimerFreq / KurzTimerFreq)
 		{
 		KurzTimerCnt++;
 		KurzTimerVorteilerCnt = 0;
@@ -525,7 +588,7 @@ void txp_timerEvent(void)
 		
 	wdt_reset();
 	
-	if (TimerVal(&TxpThreadCheckTimer) > 300) // nach 30 Sekunden Reset
+	if (KurzTimerVal(&TxpThreadCheckTimer) > 30 * KurzTimerFreq) // nach 30 Sekunden Reset
 		{ 
 		ProtokollierenTxp_P(PSTR("Reset wegen nicht-Aufruf von txp_thread()\r\n"));
 		ProtokollSpeichern(true);
@@ -533,7 +596,7 @@ void txp_timerEvent(void)
 		}
 		
 #if defined(LEDROT_TXPTHREADBLOCK)
-	if (TimerVal(&TxpThreadCheckTimer) > 5) // nach halber Sekunde geht rot an
+	if (KurzTimerVal(&TxpThreadCheckTimer) > KurzTimerFreq * 5/10) // nach halber Sekunde geht rot an
 		LED_on(ROT);
 #endif //defined(LEDROT_TXPTHREADBLOCK)
 		
@@ -593,7 +656,7 @@ void txp_timerEvent(void)
 				SerUmEmpfMarkZaehl = 0;
 				SerUmTickZaehlerEmpf = 10;
 				} // Abtastung eines Bits abgeschlossen
-			StartTimer(&SchreibPauseTimer);
+			StartKurzTimer(&SchreibPauseTimer);
 			} // if Empfang läuft
 		else // SerUmEmpfBitNr == 0 || SerUmEmpfBitNr == SerUmEmpfFertig
 			{ // Empfang ruht 
@@ -630,9 +693,9 @@ void txp_timerEvent(void)
 			if (SerUmSendBitNr == 8) // Stop-Bit läuft
 				{
 				NeuMark = true;
-				if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 12 : 14)) // 12 und 14 empirisch ermittelt...
+				if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 12 : 14)) // 12 und 14 weil ein weiterer Zyklus in SerUmSendWarte verbracht wird.
 				//if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 12 : 16)) // HACK Wert 16: Simulation zu schneller Sender
-				//if (++SerUmTickZaehlerSend >= ((!get_Taste() || SendenBeschleunigen) ? 12 : 14)) // HACK Test wegen Auswirkung des schnellen Sendens....
+				//if (++SerUmTickZaehlerSend >= ((!get_Taste() || SendenBeschleunigen) ? 12 : 14)) // HACK Test des schnellen Sendens....
 					SerUmSendBitNr = SerUmSendWarte; // fertig für die nächsten Daten
 				}
 			else
@@ -722,26 +785,26 @@ void txp_timerEvent(void)
 		case TasteAus:
 			if (!get_Taste()) // Gedrückt = LOW!
 				{
-				if (TimerVal(&TasteTimer) >= 2) // 2 Zehntel
+				if (KurzTimerVal(&TasteTimer) >= KurzTimerFreq * 2/10) // 2 Zehntel
 					{ // ausreichend lang gedrückt
 					TasteZustandIntern = TasteEin;
-					StartTimer(&TasteTimer);
+					StartKurzTimer(&TasteTimer);
 					
 					// Zugang zur Konfiguration erlauben.
 					KonfigFreigabeErteilt = true;
-					StartTimer(&KonfigFreigabeTimer);
+					StartKurzTimer(&KonfigFreigabeTimer);
 					}
 				}
 			else
 				{
-				StartTimer(&TasteTimer);
+				StartKurzTimer(&TasteTimer);
 				}
 			break;
 
 		case TasteEin: 
 			if (!get_Taste()) // Gedrückt = LOW!
 				{
-				if (TimerVal(&TasteTimer) >= 8) // 0,8 Sekunden
+				if (KurzTimerVal(&TasteTimer) >= KurzTimerFreq * 8/10) // 0,8 Sekunden
 					{ // lang gedrückt
 					TasteZustandIntern = TasteSperr;
 					Tastendruck = Lang;
@@ -768,7 +831,7 @@ void txp_timerEvent(void)
 		default:
 			TasteZustandIntern = TasteSperr;
 			Tastendruck = NichtGedr;
-			StartTimer(&TasteTimer);
+			StartKurzTimer(&TasteTimer);
 			break;
 			
 		} // switch (TasteZustandIntern)
@@ -880,7 +943,7 @@ void ModusWechsel(TModus neu)
 			Wahlziffern = 0;
 			TlnDatenInit(&GewaehlterTln);
 			TlnServerAbfrageWiederholungssperre = true; // wird nach erster Ziffer auf false gesetzt
-			StartTimer(&WahlPauseTimer);
+			StartKurzTimer(&WahlPauseTimer);
 			break;
 	
 		case ModGehendVerbunden:
@@ -894,7 +957,7 @@ void ModusWechsel(TModus neu)
 			LED_on(GELB);
 			LED_off(GRUEN);
 			LED_off(BLAU);
-			StartTimer(&SchreibPauseTimer);
+			StartKurzTimer(&SchreibPauseTimer);
 			break;
 	
 		// Kommend = vom Netz zum internen Anschluss
@@ -935,7 +998,7 @@ void ModusWechsel(TModus neu)
 		case ModKommendWarteEinQuitt: // Warte auf Einschalt-Quittung des Endgeräts
 			SET_BIT_Status(StatBit_FsBefBetrieb);
 			SET_BIT_Status(StatBit_FsBefEin);
-			StartTimer(&BusQuittTimer);
+			StartKurzTimer(&BusQuittTimer);
 			break;
 	
 		case ModKommendVerbunden: 
@@ -944,7 +1007,7 @@ void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_Verbunden);
 			BusEmpfMark = true;
 			SendeMark = true;
-			StartTimer(&SchreibPauseTimer);
+			StartKurzTimer(&SchreibPauseTimer);
 			break;
 	
 		case ModPufferDruckUndSchluss: 
@@ -955,7 +1018,7 @@ void ModusWechsel(TModus neu)
 			CLR_BIT_Status(StatBit_FsBefBetrieb);
 			CLR_BIT_Status(StatBit_FsBefEin);
 			CLR_BIT_Status(StatBit_Verbunden);
-			StartTimer(&BusQuittTimer);
+			StartKurzTimer(&BusQuittTimer);
 			break;
 
 		case ModHtmlChatWarteEinQuitt: 
@@ -989,8 +1052,8 @@ void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_Verbunden);
 			BusEmpfMark = true;
 			SendeMark = true;
-			StartTimer(&HtmlTexteingabeTimer);
-			StartTimer(&HtmlDruckspiegelAnzeigeTimer);
+			StartKurzTimer(&HtmlTexteingabeTimer);
+			StartKurzTimer(&HtmlDruckspiegelAnzeigeTimer);
 			break;
 
 		case ModDeaktiviert:
@@ -1037,7 +1100,7 @@ void SocketBufInit()
 	{
 	SocketInBufUsed = 0;
 	SocketOutBufUsed = 0;
-	StartTimer(&TxpSocketLebenszeichenTimer);
+	StartKurzTimer(&TxpSocketLebenszeichenTimer);
 	}
 	
 	
@@ -1207,8 +1270,8 @@ static void SocketBearbeiten()
 				TxpSocketProtVersion = 0;
 				TxpSocketProtVersionVorschlag = 0; // auf Gegenvorschlag warten
 				TxpSocketProtokoll = TelexPhone; // versuch...
-				StartTimer(&TxpSocketAbbruchTimer);
-				StartTimer(&TxpSocketAbbauVerzoegerung);
+				StartKurzTimer(&TxpSocketAbbruchTimer);
+				StartKurzTimer(&TxpSocketAbbauVerzoegerung);
 				SocketBufInit();
 				ModusWechsel(ModKommendVerbVorstufe);
 				Abweisen = false;
@@ -1231,7 +1294,7 @@ static void SocketBearbeiten()
 				if (ProtokollLevel >= 1)
 					Protokollieren_P(PSTR(" ...Wiederverbindung ok\r\n"));
 				TxpSocketHandle = NewServerSocket;
-				StartTimer(&TxpSocketAbbauVerzoegerung);
+				StartKurzTimer(&TxpSocketAbbauVerzoegerung);
 				Abweisen = false;
 				#ifdef LEDROT_SOCKETERROR
 					LED_off(ROT);
@@ -1318,8 +1381,8 @@ static void SocketBearbeiten()
 			}
 			
 		CloseTCPSocket(TxpSocketHandle);
-		StartTimer(&TxpSocketAbbruchTimer);
-		StartTimer(&TxpSocketWiederholungVerzoegerung);
+		StartKurzTimer(&TxpSocketAbbruchTimer);
+		StartKurzTimer(&TxpSocketWiederholungVerzoegerung);
 		TxpSocketHandle = NO_SOCKET_USED;
 		return; // GGf wieder aufnahme der Verbindung beim nächsten Aufruf dieser funktion...
 		}
@@ -1329,7 +1392,7 @@ static void SocketBearbeiten()
 	if (TxpSocketHandle != NO_SOCKET_USED 
 		&& TxpSocketAbbauGeplant 
 		&& TxpSocketMode == SocketOriginate 
-		&& TimerVal(&TxpSocketAbbauVerzoegerung) > 15 // 1,5 Sekunden nach letzter Sendung...
+		&& KurzTimerVal(&TxpSocketAbbauVerzoegerung) > KurzTimerFreq * 15/10 // 1,5 Sekunden nach letzter Sendung...
 		&& SocketOutBufUsed == 0
 		&& SocketInBufUsed == 0)
 		{ 
@@ -1352,7 +1415,7 @@ static void SocketBearbeiten()
 	// ---------------------------------
 	if (TxpSocketHandle != NO_SOCKET_USED && SocketInBufUsed < SocketInBufMax)
 		{ // Socket offen und Puffer aufnahmefähig
-		StartTimer(&TxpSocketAbbruchTimer);
+		StartKurzTimer(&TxpSocketAbbruchTimer);
 			// so lange Verbindung aufrecht bleibt Timer auf 0
 
 		int InCount = GetBytesInSocketData(TxpSocketHandle);
@@ -1399,7 +1462,7 @@ static void SocketBearbeiten()
 	// --------------------------
 	if (TxpSocketMode != SocketIdle
 		&& TxpSocketProtokoll == TelexPhone
-		&& TimerVal(&TxpSocketLebenszeichenTimer) >= 40
+		&& KurzTimerVal(&TxpSocketLebenszeichenTimer) >= 4 * KurzTimerFreq
 	    && SocketOutBufUsed == 0
 		&& SocketSendeFehlerZaehler == 0
 		&& !TxpSocketAbbauGeplant
@@ -1408,7 +1471,7 @@ static void SocketBearbeiten()
 		SocketOutBuf[0] = TXPC_NULL;
 		SocketOutBuf[1] = 0;
 		SocketOutBufUsed = 2;
-		StartTimer(&TxpSocketLebenszeichenTimer);
+		StartKurzTimer(&TxpSocketLebenszeichenTimer);
 		}
 
 	// Ist ein Neuaufbau der Verbindung erforderlich?
@@ -1417,7 +1480,7 @@ static void SocketBearbeiten()
 		&& TxpSocketHandle == NO_SOCKET_USED 
 		&& SocketOutBufUsed != 0
 		&& !TxpSocketAbbauGeplant
-		&& TimerVal(&TxpSocketWiederholungVerzoegerung) > 20) // 2 Sekunden verzögerung
+		&& KurzTimerVal(&TxpSocketWiederholungVerzoegerung) > 2 * KurzTimerFreq) // 2 Sekunden verzögerung
 		{
 		TxpSocketHandle = Connect2IP(TxpSocketIP, TxpSocketPort); 
 	 
@@ -1428,14 +1491,14 @@ static void SocketBearbeiten()
 				ProtokollierenTxp_P(PSTR("Wieder-Oeffnung des Socket VERSAGT.\r\n"));
 
 			TxpSocketHandle = NO_SOCKET_USED;
-			StartTimer(&TxpSocketWiederholungVerzoegerung);
+			StartKurzTimer(&TxpSocketWiederholungVerzoegerung);
 			return;
 			}
 
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("Wieder-Oeffnung des Socket erfolgreich.\r\n"));
 
-		StartTimer(&TxpSocketAbbauVerzoegerung);
+		StartKurzTimer(&TxpSocketAbbauVerzoegerung);
 			
 		#ifdef LEDROT_SOCKETERROR
 			LED_off(ROT);
@@ -1447,7 +1510,8 @@ static void SocketBearbeiten()
 	// --------------------------------------------------
 	if (TxpSocketHandle != NO_SOCKET_USED 
 		&& SocketOutBufUsed > 0 
-		&& (SocketSendeFehlerZaehler == 0 || TimerVal(&TxpSocketWiederholungVerzoegerung) > 15)) 
+		&& (SocketSendeFehlerZaehler == 0 
+			|| KurzTimerVal(&TxpSocketWiederholungVerzoegerung) > KurzTimerFreq * 15/10)) 
 			// Nach Sendefehlern höchstens alle 1,5 Sekunden senden.
 		{
 		uint16_t SendSize;
@@ -1485,7 +1549,7 @@ static void SocketBearbeiten()
 			#ifdef LEDROT_SOCKETERROR
 				LED_on(ROT);
 			#endif //def LEDROT_SOCKETERROR
-			StartTimer(&TxpSocketWiederholungVerzoegerung);
+			StartKurzTimer(&TxpSocketWiederholungVerzoegerung);
 			}
 			
 		else if (Res < SocketOutBufUsed)
@@ -1496,7 +1560,7 @@ static void SocketBearbeiten()
 			#ifdef LEDROT_SOCKETERROR
 				LED_on(ROT);
 			#endif //def LEDROT_SOCKETERROR
-			StartTimer(&TxpSocketAbbauVerzoegerung);
+			StartKurzTimer(&TxpSocketAbbauVerzoegerung);
 			if (TxpSocketMode == Ascii)
 				TCP_sockettable[TxpSocketHandle].Timeoutcounter = 600; // Timeout auf 10 Minuten verlängern
 			}
@@ -1508,7 +1572,7 @@ static void SocketBearbeiten()
 			#ifdef LEDROT_SOCKETERROR
 				LED_off(ROT);
 			#endif //def LEDROT_SOCKETERROR
-			StartTimer(&TxpSocketAbbauVerzoegerung);
+			StartKurzTimer(&TxpSocketAbbauVerzoegerung);
 			if (TxpSocketMode == Ascii)
 				TCP_sockettable[TxpSocketHandle].Timeoutcounter = 600; // Timeout auf 10 Minuten verlängern
 			}
@@ -1519,7 +1583,7 @@ static void SocketBearbeiten()
 	// -------------------------------------------------
 	if (TxpSocketMode != SocketIdle
 		&& TxpSocketHandle == NO_SOCKET_USED
-		&& TimerVal(&TxpSocketAbbruchTimer) >= 300) // 30 Sekunden.
+		&& KurzTimerVal(&TxpSocketAbbruchTimer) >= 30 * KurzTimerFreq) // 30 Sekunden.
 		{
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("ZEITUEBERSCHREITUNG bei Wiederaufnahme der Verbindung\r\n" ));
@@ -1789,6 +1853,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 					SelbstAnrufEmpfangPruefwert = (SocketInBuf[i+2] << 8) + SocketInBuf[i+3]; // erst high, dann low
 					}
 				TxpSocketAbbauGeplant = true;
+					//! \todo Gleich den Socket schließen probieren...
 				i += 2 + len;
 				}
 				
@@ -1837,7 +1902,7 @@ static void TxpDatenVerarbeiten()
 	//     ODER c) Alles was bisher gesendet wurde schon verarbeitet ist.
 	int InCount = PufferAnzahl(&EmpfPuffer);
 	if (InCount > 20
-	    || (InCount > 0 && ((TimerVal(&SchreibPauseTimer) >= 8) // 0,8 Sekunden Tipp-Pause
+	    || (InCount > 0 && ((KurzTimerVal(&SchreibPauseTimer) >= KurzTimerFreq * 8/10) // 0,8 Sekunden Tipp-Pause
 		                    || (SocketAnzahlZeichenQuittiert == low(SocketAnzahlZeichenGesendet)) // alles was gesendet wurde, ist schon verarbeitet
 						    )
 			)
@@ -1873,7 +1938,8 @@ static void TxpDatenVerarbeiten()
 	// ggf. Anzahl verarbeiteter Zeichen zurückmelden
 	// --------------------------------------------------
 	if ((Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
-		&& (SocketSendeQuittung || TimerVal(&TxpSocketLebenszeichenTimer) > 35)
+		&& (SocketSendeQuittung 
+			|| KurzTimerVal(&TxpSocketLebenszeichenTimer) > KurzTimerFreq * 35/10)
 		&& !TxpSocketAbbauGeplant
 		&& SocketSendeFehlerZaehler == 0
 		&& SocketOutBufUsed < SocketOutBufMax - 4 - 10 // - 10 = Reserve für wichtige Daten
@@ -1884,7 +1950,7 @@ static void TxpDatenVerarbeiten()
 		SocketOutBuf[SocketOutBufUsed++] = 
 			(uint8_t) (low(SocketAnzahlZeichenEmpfangen) - PufferAnzahl(&SendePuffer));
 		SocketSendeQuittung = false;
-		StartTimer(&TxpSocketLebenszeichenTimer);
+		StartKurzTimer(&TxpSocketLebenszeichenTimer);
 		}
 
 	} // TxpDatenVerarbeiten()
@@ -1903,7 +1969,7 @@ static void AsciiDatenVerarbeiten()
 	//     ODER b) 0,5 sekunden nicht getippt wurde.
 	int InCount = PufferAnzahl(&EmpfPuffer);
 	if (InCount > 20
-	    || (InCount > 0 && TimerVal(&SchreibPauseTimer) >= 8) // 0,8 Sekunden Tipp-Pause
+	    || (InCount > 0 && KurzTimerVal(&SchreibPauseTimer) >= KurzTimerFreq * 8/10) // 0,8 Sekunden Tipp-Pause
 		)
 		{ // ID#244 ID#344 ***************************************************************
 		uint8_t ProtAnz = 0;
@@ -1926,7 +1992,7 @@ static void AsciiDatenVerarbeiten()
 			ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet)); // wurde schon erhöht
 			}
 			
-		StartTimer(&TxpSocketLebenszeichenTimer);
+		StartKurzTimer(&TxpSocketLebenszeichenTimer);
 		}
 
 	} // AsciiDatenVerarbeiten()
@@ -2129,8 +2195,8 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 	TxpSocketProtVersion = 0;
 	TxpSocketProtVersionVorschlag = PROTVERSION_AKTUELL;
 	
-	StartTimer(&TxpSocketAbbruchTimer);
-	StartTimer(&TxpSocketAbbauVerzoegerung);
+	StartKurzTimer(&TxpSocketAbbruchTimer);
+	StartKurzTimer(&TxpSocketAbbauVerzoegerung);
 		
 	if (td->AdrArt == AsciiUrl || td->AdrArt == AsciiIP)
 		{ // ID#226 *********************************************
@@ -2380,7 +2446,7 @@ void txp_thread()
 
 	TxpThreadCount++;
 
-	StartTimer(&TxpThreadCheckTimer);
+	StartKurzTimer(&TxpThreadCheckTimer);
 	
 #if defined(LEDROT_TXPTHREADBLOCK)
 	LED_off(ROT); 
@@ -2471,7 +2537,7 @@ void txp_thread()
 					// ID#221 ********************************************
 					Wahlnummer = 10 * Wahlnummer + (Code - BusKdoWahlziffer0);
 					Wahlziffern++;
-					StartTimer(&WahlPauseTimer);
+					StartKurzTimer(&WahlPauseTimer);
 					TlnServerAbfrageWiederholungssperre = false;
 					
 					if (TlnSuche(Wahlnummer, false, &GewaehlterTln))
@@ -2705,13 +2771,13 @@ void txp_thread()
 	if (Modus == ModGehendWaehlen 
 		&& !TlnServerAbfrageWiederholungssperre
 		&& Wahlziffern >= 5
-		&& TimerVal(&WahlPauseTimer) >= 20)
+		&& KurzTimerVal(&WahlPauseTimer) >= 2 * KurzTimerFreq)
 		{ // 2 Sekunden Wahlpause und 5 Ziffern gewählt
 		// ID#231 **************************************************************
 		RufnummerBeiTlnServerAbfragen();
 		}
 		
-	if (Modus == ModWarteSchlussQuitt && TimerVal(&BusQuittTimer) > 30)
+	if (Modus == ModWarteSchlussQuitt && KurzTimerVal(&BusQuittTimer) > 3 * KurzTimerFreq)
 		{ // 3 Sekunden keine Schlussquittung empfangen
 		// ID#412 ****************************************************************
 		if (ProtokollLevel >= 1)
@@ -2720,7 +2786,7 @@ void txp_thread()
 		ModusWechsel(ModWarteGrundstellung);
 		}
 		
-	if (Modus == ModKommendWarteEinQuitt && TimerVal(&BusQuittTimer) > 30)
+	if (Modus == ModKommendWarteEinQuitt && KurzTimerVal(&BusQuittTimer) > 3 * KurzTimerFreq)
 		{ // 3 Sekunden keine Einschalt-Quittung empfangen
 		// ID#332 ***************************************************************
 		if (ProtokollLevel >= 1)
@@ -2799,16 +2865,17 @@ void txp_thread()
 		while (!PufferLeer(&EmpfPuffer))
 			{
 			ZeichenInHtmlSendeText(CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode));
-			StartTimer(&HtmlTexteingabeTimer);
+			StartKurzTimer(&HtmlTexteingabeTimer);
 			}
 
 		if (AsciiDruckPuffer[0] == '\0'
 			&& AsciiHilfPuffer[0] == '\0'
 			&& PufferLeer(&SendePuffer)
+			&& SerUmSendBitNr == SerUmSendWarte
 			&& PufferLeer(&EmpfPuffer)
 			&& (TxpSocketHandle == NO_SOCKET_USED || SocketInBufUsed == 0)
-			&& (TimerVal(&HtmlDruckspiegelAnzeigeTimer) > 300 // 30 Sekunden keine Anzeige-Abfrage
-				|| TimerVal(&HtmlTexteingabeTimer) > 1800)) // 3 Minuten nichts eingegeben
+			&& (KurzTimerVal(&HtmlDruckspiegelAnzeigeTimer) > 30 * KurzTimerFreq // 30 Sekunden keine Anzeige-Abfrage
+				|| KurzTimerVal(&HtmlTexteingabeTimer) > 3 * 60 * KurzTimerFreq)) // 3 Minuten nichts eingegeben
 			{
 			if (ProtokollLevel >= 1)
 				ProtokollierenTxp_P(PSTR("HTML-Chat-Ruhe --> Ausschaltung intern\r\n" ));
@@ -2826,6 +2893,7 @@ void txp_thread()
 	if (Modus == ModPufferDruckUndSchluss 
 		&& AsciiDruckPuffer[0] == '\0' 
 		&& AsciiHilfPuffer[0] == '\0'
+		&& SerUmSendBitNr == SerUmSendWarte
 		&& PufferLeer(&SendePuffer))
 		{ // ID#421 *************************************************************
 		if (ProtokollLevel >= 1)
@@ -2847,6 +2915,7 @@ void txp_thread()
 			ProtokollierenTxp_P(PSTR("Grundstellung erreicht (Socket geschlossen, TWI geschlossen)\r\n" ));
 		ModusWechsel(ModRuhe);
 		ProtokollUnterdrueckenWegenSelbstAnruf = false;
+		ZeitUeberwachungEnde(&SelbstAnrufZeitUeberwachung);
 		#ifdef LEDROT_SOCKETERROR
 			LED_off(ROT);
 		#endif //def LEDROT_SOCKETERROR
@@ -2861,7 +2930,8 @@ void txp_thread()
 		// Aktialisierung starten?
 		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
 			&& SelbstAnrufPhase == SelbstAnrufRuhe
-			&& TimerVal(&SelbstAnrufTimer) >= ((SelbstAnrufFehlerZaehler == 0) ? 450 : 100)
+			&& KurzTimerVal(&SelbstAnrufTimer) 
+				>= ((SelbstAnrufFehlerZaehler == 0) ? 45 * KurzTimerFreq : 10 * KurzTimerFreq)
 				// ohne Fehler alle 45 Sekunden prüfen, mit Fehler alle 10 Sekunden
 			&& SelbstAnrufSocketHandle == NO_SOCKET_USED
 			&& TeilnehmerServerSocket == NO_SOCKET_USED)
@@ -2870,10 +2940,12 @@ void txp_thread()
 				SelbstAnrufPhase = SelbstAnrufSperre;
 			else
 				{ // NetzEigeneIP gültig
-				SelbstAnrufSendePruefwert = TxpThreadCount; //! \todo Mehr zufall...
+				SelbstAnrufSendePruefwert = TxpThreadCount ^ Timer0CallbackCount;
 				if (SelbstAnrufSendePruefwert == 0)
 					SelbstAnrufSendePruefwert = 1;
 				SelbstAnrufEmpfangPruefwert = 0; // als Zeichen, dass noch nichts empfangen wurde.
+				
+				ZeitUeberwachungStart(&SelbstAnrufZeitUeberwachung);
 				
 				SelbstAnrufSocketHandle = Connect2IP(NetzEigeneIP, NetzPort); 
 				if (SelbstAnrufSocketHandle == -1)
@@ -2884,6 +2956,7 @@ void txp_thread()
 
 					SelbstAnrufSocketHandle = NO_SOCKET_USED;
 					SelbstAnrufFehlerZaehler++;
+					ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
 					}
 				else
 					{ // Öffnen erfolgreich.
@@ -2906,10 +2979,11 @@ void txp_thread()
 							ProtokollierenTxp_P(PSTR("Selbst-Anruf Daten-Sendung VERSAGT.\r\n"));
 						SelbstAnrufFehlerZaehler++;
 						SelbstAnrufPhase = SelbstAnrufSchliessen;
+						ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
 						}
 					} // Öffnen von NetzEigeneIP erfolgreich.
 					
-				StartTimer(&SelbstAnrufTimer);
+				StartKurzTimer(&SelbstAnrufTimer);
 				} // NetzEigeneIP gültig
 			} // Selbst-Anruf starten
 				
@@ -2929,33 +3003,37 @@ void txp_thread()
 						ProtokollierenTxp_P(PSTR("Selbst-Anruf FALSCHE Daten empfangen.\r\n"));
 					SelbstAnrufFehlerZaehler++;
 					} // Falsches Echo angekommen
-				StartTimer(&SelbstAnrufTimer);
+				StartKurzTimer(&SelbstAnrufTimer);
 				SelbstAnrufPhase = SelbstAnrufSchliessen;
 				} // Echo ist angekommen
-			else if (TimerVal(&SelbstAnrufTimer) > 50) 
+			else if (KurzTimerVal(&SelbstAnrufTimer) > 5 * KurzTimerFreq) 
 				{ // Timeout nach 5 Sekunden
 				if (ProtokollLevel >= 1)
 					ProtokollierenTxp_P(PSTR("Selbst-Anruf KEIN Echo empfangen.\r\n"));
 				SelbstAnrufFehlerZaehler++;
-				StartTimer(&SelbstAnrufTimer);
+				StartKurzTimer(&SelbstAnrufTimer);
 				SelbstAnrufPhase = SelbstAnrufSchliessen;
+				ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
 				} // Timeout nach 5 Sekunden
 				
 			} // if (SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
 
 			
-		if (SelbstAnrufPhase == SelbstAnrufSchliessen && TimerVal(&SelbstAnrufTimer) >= 2)
+		if (SelbstAnrufPhase == SelbstAnrufSchliessen 
+			&& KurzTimerVal(&SelbstAnrufTimer) >= KurzTimerFreq * 2/10)
 			{
 			CloseTCPSocket(SelbstAnrufSocketHandle);
 			SelbstAnrufSocketHandle = NO_SOCKET_USED;
 			SelbstAnrufPhase = SelbstAnrufWarteEnde;
-			StartTimer(&SelbstAnrufTimer);
+			StartKurzTimer(&SelbstAnrufTimer);
 			}
 			
 		if (SelbstAnrufPhase == SelbstAnrufRuhe && (SelbstAnrufFehlerZaehler & 3) == 3)
-			// nach drei Fehlversuchen ServerAktulisierungStarten
+			// nach drei Fehlversuchen Server-Aktulisierung Starten
 			{
-			DynIPAktualisierungEndzeit = TimerVal(&DynIPAktualisierungTimer);
+			DynIPAktualisierungEndzeit = KurzTimerVal(&DynIPAktualisierungTimer) 
+										 + 2 * 60 * KurzTimerFreq;
+										 // mit 2 Minuten Verzögerung
 			SelbstAnrufPhase = SelbstAnrufSperre;
 			SelbstAnrufFehlerZaehler++; // nicht sofort wieder...
 			if (SelbstAnrufFehlerZaehler >= 16)
@@ -2966,7 +3044,7 @@ void txp_thread()
 			}
 			
 		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
-			&& TimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit
+			&& KurzTimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit
 			&& TeilnehmerServerSocket == NO_SOCKET_USED)
 			{ // Keine Verbindung laufend, Zeit für Aktualsierung 
 			bool Fehler;
@@ -2993,12 +3071,15 @@ void txp_thread()
 				
 			if (Fehler)
 				{ // keine Verbindung hergestellt
-				DynIPAktualisierungEndzeit = 15 * 600 - (KurzTimerCnt & 0x3FF);
-					// in 15 Minuten minus Zufall wieder.
+				DynIPAktualisierungEndzeit 
+					= 15 * 60 * KurzTimerFreq 
+					- ((TxpThreadCount ^ Timer0CallbackCount) & 0x3FF);
+					// in 15 Minuten minus Zufall wieder. 
+					
 				SelbstAnrufPhase = SelbstAnrufSperre;
 				}
 			
-			StartTimer(&DynIPAktualisierungTimer);
+			StartKurzTimer(&DynIPAktualisierungTimer);
 			} // Keine Verbindung laufend, Zeit für Aktualsierung ODER Selbstanruf nicht erfolgreich.
 		} // if (DynIPAktiv)
 		
@@ -3111,9 +3192,9 @@ void txp_thread()
 							Protokollieren_P(PSTR("\r\n"));
 							}
 						}
-					StartTimer(&DynIPAktualisierungTimer);
-					DynIPAktualisierungEndzeit = 36000; // in einer Stunde wieder
-					StartTimer(&SelbstAnrufTimer);
+					StartKurzTimer(&DynIPAktualisierungTimer);
+					DynIPAktualisierungEndzeit = 60U * 60 * KurzTimerFreq; // in einer Stunde wieder
+					StartKurzTimer(&SelbstAnrufTimer);
 					SelbstAnrufPhase = SelbstAnrufRuhe;
 					break;
 
@@ -3121,17 +3202,21 @@ void txp_thread()
 					ProtokollierenTxp_P(PSTR("Fehlermeldung des Teilnehmer-Servers: "));
 					Protokollieren(TSB.PureData);
 					Protokollieren_P(PSTR("\r\n"));
-					StartTimer(&DynIPAktualisierungTimer);
-					DynIPAktualisierungEndzeit = 15 * 600 - (KurzTimerCnt & 0x3FF);
+					StartKurzTimer(&DynIPAktualisierungTimer);
+					DynIPAktualisierungEndzeit = 15 * 60 * KurzTimerFreq 
+						- ((TxpThreadCount ^ Timer0CallbackCount) & 0x3FF);
 						// in 15 Minuten minus Zufall wieder.
+
 					SelbstAnrufPhase = SelbstAnrufSperre;
 					break;
 				
 				default:
 					ProtokollierenTxp_P(PSTR("unerwartete Antwort des Teilnehmer-Servers\r\n" ));
-					StartTimer(&DynIPAktualisierungTimer);
-					DynIPAktualisierungEndzeit = 15 * 600 - (KurzTimerCnt & 0x3FF);
+					StartKurzTimer(&DynIPAktualisierungTimer);
+					DynIPAktualisierungEndzeit = 15 * 60 * KurzTimerFreq 
+						- ((TxpThreadCount ^ Timer0CallbackCount) & 0x3FF);
 						// in 15 Minuten minus Zufall wieder.
+
 					SelbstAnrufPhase = SelbstAnrufSperre;
 					break;
 				
@@ -3175,7 +3260,7 @@ void txp_thread()
 	// Sicherheitslücke durch Überlauf des Konfig-Freigabe-Timers schließen.
 	// ==========================================================================
 	
-	if (KonfigFreigabeErteilt && TimerVal(&KonfigFreigabeTimer) > 5 * 600)
+	if (KonfigFreigabeErteilt && KurzTimerVal(&KonfigFreigabeTimer) > 5 * 60 * KurzTimerFreq)
 		KonfigFreigabeErteilt = false;
 	
 	// HACK Status-Signale Seriell
@@ -3249,9 +3334,9 @@ uint8_t KonfigFreigabe(void *pStruct)
 	if (KonfigPasswort[0] == '\0')
 		return true; // ohne Kennwort keine Sperre
 	
-	if (KonfigFreigabeErteilt && TimerVal(&KonfigFreigabeTimer) < 5 * 600)
+	if (KonfigFreigabeErteilt && KurzTimerVal(&KonfigFreigabeTimer) < 5 * 60 * KurzTimerFreq)
 		{ // 5 Minuten lang ist der Zugang erlaubt
-		StartTimer(&KonfigFreigabeTimer);
+		StartKurzTimer(&KonfigFreigabeTimer);
 		return true;
 		}
 		
@@ -3276,7 +3361,7 @@ uint8_t KonfigFreigabe(void *pStruct)
 		if (strcmp(EingabeText, KonfigPasswort) == 0)
 			{ // korrekt eingegebenen
 			KonfigFreigabeErteilt = true;
-			StartTimer(&KonfigFreigabeTimer);
+			StartKurzTimer(&KonfigFreigabeTimer);
 			http_request->argc = 0; // damit die eigentliche Seite nicht durch die Kennwort-Eingabe verwirrt ist!			
 			return true;
 			}
@@ -3303,11 +3388,22 @@ void txp_cgi_debug( void * pStruct )
 	{
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
-
+	
+	if (http_request->argc != 0 && PharseCheckName_P(http_request, PSTR("reset")) == 0)
+		{ // Bestimmte Werte zurücksetzen
+		DebugMsg[0] = '\0';
+		Timer0Cnt_Min = 255;
+		Timer0Cnt_Max = 0;
+		Timer0Callback_Max = 0;
+		FalscherCode = 0;
+		TwiIsrCount = 0;
+		ZeitUeberwachungInit(&SelbstAnrufZeitUeberwachung, 1 * KurzTimerFreq);
+		
+		}
+	
 	cgi_PrintHttpheaderStart();
 
 	printf_P(PSTR("DebugMsg: %s<br>"), DebugMsg);
-	DebugMsg[0] = '\0';
 
 	extern char Dateiname[]; // aus Protokoll.c
 	printf_P(PSTR("Protokolldatei: %s<br>"), Dateiname);
@@ -3326,7 +3422,7 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(TxpSocketHandle);
 	PRINTVALHEX(TxpSocketIP);
 	PRINTVAL(TxpSocketAbbauGeplant);
-	PRINTVAL(TimerVal(&TxpSocketAbbruchTimer));
+	PRINTVAL(KurzTimerVal(&TxpSocketAbbruchTimer));
 	PRINTVAL(SocketInBufUsed);
 	PRINTVAL(SocketOutBufUsed);
 	PRINTVAL(TxpSocketProtokoll);
@@ -3370,31 +3466,34 @@ void txp_cgi_debug( void * pStruct )
 	
 	PRINTVAL(Wahlnummer);
 	PRINTVAL(Wahlziffern);
-	PRINTVAL(TimerVal(&WahlPauseTimer));
-	PRINTVAL(TimerVal(&SchreibPauseTimer));
-	PRINTVAL(TimerVal(&BusQuittTimer));
+	PRINTVAL(KurzTimerVal(&WahlPauseTimer));
+	PRINTVAL(KurzTimerVal(&SchreibPauseTimer));
+	PRINTVAL(KurzTimerVal(&BusQuittTimer));
 	PRINTVAL(TwiLebenszeichenZaehler); 
-	PRINTVAL(TimerVal(&TxpSocketLebenszeichenTimer));
-	PRINTVAL(TimerVal(&TxpThreadCheckTimer));
+	PRINTVAL(KurzTimerVal(&TxpSocketLebenszeichenTimer));
+	PRINTVAL(KurzTimerVal(&TxpThreadCheckTimer));
 
-	PRINTVAL(TimerVal(&DynIPAktualisierungTimer));
+	PRINTVAL(KurzTimerVal(&DynIPAktualisierungTimer));
 	PRINTVAL(DynIPAktualisierungEndzeit);
 
 	PRINTVAL(SelbstAnrufPhase);
-	PRINTVAL(TimerVal(&SelbstAnrufTimer));
+	PRINTVAL(KurzTimerVal(&SelbstAnrufTimer));
 	PRINTVAL(SelbstAnrufSocketHandle);
 	PRINTVAL(SelbstAnrufSendePruefwert);
 	PRINTVAL(SelbstAnrufEmpfangPruefwert);
 	PRINTVAL(SelbstAnrufFehlerZaehler);
 	
-	PRINTVAL(FalscherCode); FalscherCode = 0;
-	PRINTVAL(TwiIsrCount); TwiIsrCount = 0;
+	printf_P(PSTR("<br>SelbstAnrufZeitUeberwachung: "));
+	printf(ZeitUeberwachungAusgabe(&SelbstAnrufZeitUeberwachung));
+	
+	PRINTVAL(FalscherCode); 
+	PRINTVAL(TwiIsrCount); 
 	PRINTVAL(TxpThreadCount); 
 
-	PRINTVAL(Timer0CallbackCount); //Timer0CallbackCount = 0;
-	PRINTVAL(Timer0Cnt_Min); Timer0Cnt_Min = 255;
-	PRINTVAL(Timer0Cnt_Max); Timer0Cnt_Max = 0;
-	PRINTVAL(Timer0Callback_Max); Timer0Callback_Max = 0;
+	PRINTVAL(Timer0CallbackCount); 
+	PRINTVAL(Timer0Cnt_Min); 
+	PRINTVAL(Timer0Cnt_Max); 
+	PRINTVAL(Timer0Callback_Max); 
 
 	#endif // TXP_ANSCHLUSS
 	
@@ -3462,7 +3561,7 @@ void txp_cgi_msg_Out( void * pStruct )
 	
 	cgi_PrintHttpheaderEnd();
 	
-	StartTimer(&HtmlDruckspiegelAnzeigeTimer);
+	StartKurzTimer(&HtmlDruckspiegelAnzeigeTimer);
 	
 	}
 
@@ -3507,9 +3606,9 @@ void txp_cgi_msg_In( void * pStruct )
 			}
 			
 		// Und Zeit für Verbindungsabbau messen.
-		StartTimer(&HtmlTexteingabeTimer);
+		StartKurzTimer(&HtmlTexteingabeTimer);
 		
-		StartTimer(&HtmlDruckspiegelAnzeigeTimer); 
+		StartKurzTimer(&HtmlDruckspiegelAnzeigeTimer); 
 			// Für den Fall, dass das Anzeigefenster noch nicht aktualisiert wurde.
 		
 		if (Modus == ModRuhe)
@@ -4089,7 +4188,7 @@ void txp_init()
 	TxpSocketMode = SocketIdle;
 	TxpSocketIP = 0;
 	TxpSocketAbbauGeplant = false;
-	StartTimer(&TxpSocketAbbruchTimer);
+	StartKurzTimer(&TxpSocketAbbruchTimer);
 	SocketOutBufUsed = 0;
 	SocketInBufUsed = 0;
 	
@@ -4099,6 +4198,8 @@ void txp_init()
 	SelbstAnrufFehlerZaehler = 0;
 	SelbstAnrufSocketHandle = NO_SOCKET_USED;
 	ProtokollUnterdrueckenWegenSelbstAnruf = false;
+
+	ZeitUeberwachungInit(&SelbstAnrufZeitUeberwachung, 1 * KurzTimerFreq);
 	
 	TwiInit();
 
@@ -4107,8 +4208,8 @@ void txp_init()
 	Timer0Cnt_Max = 0;
 	Timer0Callback_Max = 0;
 
-	StartTimer(&DynIPAktualisierungTimer);
-	DynIPAktualisierungEndzeit = 300; // 1/2 Minute 
+	StartKurzTimer(&DynIPAktualisierungTimer);
+	DynIPAktualisierungEndzeit = 30 * KurzTimerFreq; // 1/2 Minute 
 		
 	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 
@@ -4116,7 +4217,7 @@ void txp_init()
 	if (!timer0_RegisterCallbackFunction(txp_timerEvent))
 		return;
 
-	StartTimer(&TxpThreadCheckTimer);
+	StartKurzTimer(&TxpThreadCheckTimer);
 		
 	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
 	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("txp-msg-out.cgi"));

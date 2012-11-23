@@ -206,8 +206,13 @@ extern volatile uint16_t KurzTimerCnt;
 
 typedef uint16_t TKurzTimer;
 
+enum { KurzTimerFreq = 10U } ; 
+	//!< Frequenz (1/Takt) des Kurzzeittimers. 
+	//!< Muss ein Teiler von #TxpTimerFreq sein.
+	
+	
 //! Startet Kurzzeit-Messung.
-static inline void StartTimer(TKurzTimer *t)
+static inline void StartKurzTimer(TKurzTimer *t)
 	{
 	uint8_t sreg_tmp = SREG;
 	cli();
@@ -217,7 +222,7 @@ static inline void StartTimer(TKurzTimer *t)
 	
 
 //! Aktueller Wert einer Kurzzeit-Messung in zehntel Sekunden.
-static inline uint16_t TimerVal(TKurzTimer *t)
+static inline uint16_t KurzTimerVal(TKurzTimer *t)
 	{
 	uint16_t res;
 	
@@ -228,7 +233,30 @@ static inline uint16_t TimerVal(TKurzTimer *t)
 	return res;
 	}
 		
-		
+	
+typedef struct	
+	{
+	TKurzTimer Messung;
+	bool Gestartet;
+	uint16_t Grenzwert; 
+	uint32_t Summe;
+	uint16_t Anzahl;
+	uint16_t AnzUeberGrenze;
+	uint16_t Maximum;
+	} TZeitUeberwachung;
+	
+	
+extern void ZeitUeberwachungInit(TZeitUeberwachung *zue, uint16_t aGrenzwert);
+
+extern void ZeitUeberwachungStart(TZeitUeberwachung *zue);
+
+extern bool ZeitUeberwachungEnde(TZeitUeberwachung *zue);
+
+extern void ZeitUeberwachungAbbruch(TZeitUeberwachung *zue);
+
+extern char *ZeitUeberwachungAusgabe(TZeitUeberwachung *zue);
+
+	
 extern volatile TPuffer SendePuffer; 
 	
 extern volatile TPuffer EmpfPuffer; 
