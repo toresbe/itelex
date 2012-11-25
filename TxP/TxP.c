@@ -2184,8 +2184,6 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			
 		}
 
-	//! \todo Ab hier weiter DebugMsg definieren...
-	
 	// und hier wird geöffet...
 	TxpSocketHandle = Connect2IP(TxpSocketIP, TxpSocketPort); 
 	 
@@ -2195,6 +2193,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("Socket konnte nicht erstmalig geoeffnet werden\r\n"));
 			
+		strcpy_P(DebugMsg, PSTR("Teilnehmer nicht erreichbar"));
 		TxpSocketHandle = NO_SOCKET_USED;
 		TxpSocketMode = SocketIdle;
 		return 1;
@@ -2225,7 +2224,8 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		if (ProtokollLevel >= 1)
 			{
 			ProtokollierenTxp();
-			ProtokollierenInt_P(PSTR("Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %u\r\n"), td->Durchwahl);
+			ProtokollierenInt_P(PSTR("Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %u"), td->Durchwahl);
+			ProtokollierenInt_P(PSTR(" und Version %u\r\n"), TxpSocketProtVersionVorschlag);
 			}
 
 		TxpSocketProtokoll = TelexPhone;
@@ -2687,7 +2687,8 @@ void txp_thread()
 			{
 			if (ProtokollLevel >= 1)	
 				ProtokollierenTxp_P(PSTR("TWI-Timeout -> Abschaltung\r\n"));
-				
+			strcpy_P(DebugMsg, PSTR("Interne Verbindung unterbrochen"));
+			
 			InterneVerbindungBeenden(true);
 			TxpSocketAbbauGeplant = true;
 			if (SocketOutBufUsed < SocketOutBufMax - 2)
@@ -2827,6 +2828,7 @@ void txp_thread()
 					strcpy_P(AsciiDruckPuffer, PSTR("interne IP: "));
 					iptostr(myIP, AsciiDruckPuffer + strlen(AsciiDruckPuffer));
 					strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
+					//! \todo Datum und sonstige Informationen drucken
 					}
 				break;
 				
@@ -2882,8 +2884,8 @@ void txp_thread()
 
 		if (AsciiDruckPuffer[0] == '\0'
 			&& AsciiHilfPuffer[0] == '\0'
-			&& PufferLeer(&SendePuffer)
 			&& SerUmSendBitNr == SerUmSendWarte
+			&& PufferLeer(&SendePuffer)
 			&& PufferLeer(&EmpfPuffer)
 			&& (TxpSocketHandle == NO_SOCKET_USED || SocketInBufUsed == 0)
 			&& (KurzTimerVal(&HtmlDruckspiegelAnzeigeTimer) >= 30 * KurzTimerFreq // 30 Sekunden keine Anzeige-Abfrage
@@ -2893,7 +2895,6 @@ void txp_thread()
 				ProtokollierenTxp_P(PSTR("HTML-Chat-Ruhe --> Ausschaltung intern\r\n" ));
 				
 			InterneVerbindungBeenden(true);
-			//! \todo ResteDruck wartet auch auf Leerung des Puffers...
 			} // Abschaltung nach 30 Sekunden / 180 Sekunden.
 
 		} // if Modus == ModHtmlChatVerbunden
@@ -3051,7 +3052,7 @@ void txp_thread()
 			if (SelbstAnrufFehlerZaehler >= 16)
 				{
 				DynIPAktiv = false;
-				//! \todo Fehlermeldung ausgeben.
+				strcpy_P(DebugMsg, PSTR("Selbst-Anruf mehrfach versagt, falsche Router-Konfiguration"));
 				}
 			}
 			
@@ -3126,6 +3127,7 @@ void txp_thread()
 				case TLNSERV_AUSKUNFT_NICHTVERG:
 					if (ProtokollLevel >= 2)
 						ProtokollierenTxp_P(PSTR("Teilnehmer-Server meldet 'nicht gefunden'\r\n" ));
+					strcpy_P(DebugMsg, PSTR("gewaehlte Nummer nicht bekannt"));
 					break;
 					
 				case TLNSERV_AUSKUNFT_VERSION1:
@@ -3140,7 +3142,7 @@ void txp_thread()
 						; // weitermachen
 					else if (GewaehlterTln.Nummer != TSB.TlnAuskunft.Nummer)
 						{ // vorhandener Eintrag weicht von 'aktuellem' ab --> Abbruch
-						ProtokollierenTxp_P(PSTR("Teilnehmer-Server meldet andere Nummer als angefragt\r\n"));
+						ProtokollierenTxp_P(PSTR("Teilnehmer-Server meldet ANDERE Nummer als angefragt\r\n"));
 						break;
 						}
 					else if ((GewaehlterTln.Flags & TlnFlag_Lokal) != 0)
@@ -3169,6 +3171,7 @@ void txp_thread()
 							{
 							ProtokollierenTxp();
 							ProtokollierenInt_P(PSTR("Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
+							strcpy_P(DebugMsg, PSTR("internes Rufnummern-Verzeichnis voll"));
 							}
 						} // Aktualisieren ist sinnvoll
 						
@@ -3177,6 +3180,7 @@ void txp_thread()
 						switch (Verbindungsaufbau(&GewaehlterTln))
 							{
 							case 0: 
+								DebugMsg[0] = '\0';
 								break; // erfolgreich
 								
 							case 1: // Socket öffnen nicht erfolgreich
@@ -3273,6 +3277,7 @@ void txp_thread()
 	// ==========================================================================
 	
 	if (KonfigFreigabeErteilt && LangTimerVal(&KonfigFreigabeTimer) > 5 * LangTimerFakt)
+		// Konfig-Freigabe nur 5 Minuten gültig.
 		KonfigFreigabeErteilt = false;
 	
 	// HACK Status-Signale Seriell
@@ -3383,6 +3388,7 @@ uint8_t KonfigFreigabe(void *pStruct)
 			printf_P(PSTR("Kennwort falsch!"));
 			cgi_PrintHttpheaderEnd();
 			KonfigFreigabeErteilt = false;
+			strcpy_P(DebugMsg, PSTR("falsches Konfigurations-Kennwort eingegeben"));
 			return false;
 			}
 		}
@@ -3728,7 +3734,7 @@ void txp_cgi_config_intern(void *pStruct)
 		readConfig_P(DurchwahlTabelle_P, Buf);
 		CgiFormInputFieldText_P(PSTR("Durchwahlen:<br>(mit Komma trennen)"), DurchwahlTabelle_P, 30, Buf);
 		
-		#endif // TXP_ANSCHLUSS
+		#endif //def TXP_ANSCHLUSS
 
 		CgiFormInputFieldULong_P(PSTR("Protokoll-Level:"), ProtokollLevel_P, 2, ProtokollLevel);
 		CgiFormInputFieldULong_P(PSTR("Protokoll-Level f&uuml;r Teiln-Server:"), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
