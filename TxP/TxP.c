@@ -2859,6 +2859,17 @@ void txp_thread()
 		}
 		
 	// ==========================================================================
+	// Diagnosedaten drucken?
+	// ==========================================================================
+
+	if (Modus == ModRuhe && AsciiDruckPuffer[0] == '\0' && DebugMsg[0] != '\0')
+		{ //! \todo Prüfen, ob überhaupt gedruckt werden soll... \todo Endgerät auswählen
+		strncpy(AsciiDruckPuffer, DebugMsg, AsciiDruckPufferMax-1);
+		AsciiDruckPuffer[AsciiDruckPufferMax-1] = '\0';
+		DebugMsg[0] = '\0';
+		}
+
+	// ==========================================================================
 	// Ascii-Text im Puffer z.B. durch Html-Eingabe?
 	// ==========================================================================
 
