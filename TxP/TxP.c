@@ -420,7 +420,6 @@ static enum {
 	SelbstAnrufRuhe,
 	SelbstAnrufWarteEmpfang,
 	SelbstAnrufSchliessen,
-	SelbstAnrufWarteEnde,
 	SelbstAnrufSperre
 	} SelbstAnrufPhase;
 
@@ -1255,8 +1254,6 @@ static void SocketBearbeiten()
 		{
 		bool Abweisen = true; // Bei berechtigter kommender Verbindung auf false setzen.
 
-		//! \todo Bei SelbstAnruf zweite Kommende Verbindung verzögern...
-		
 		if (ProtokollLevel >= 1 && !ProtokollUnterdrueckenWegenSelbstAnruf)
 			{
 			ProtokollierenTxp_P(PSTR("Server-Socket geoeffnet von IP "));
@@ -1367,8 +1364,6 @@ static void SocketBearbeiten()
 				TxpSocketAbbauGeplant = false;
 				SocketOutBufUsed = 0;
 				SocketInBufUsed = 0;
-				if (SelbstAnrufPhase == SelbstAnrufWarteEnde)
-					SelbstAnrufPhase = SelbstAnrufRuhe;
 				#ifdef LEDROT_SOCKETERROR
 					LED_off(ROT);
 				#endif //def LEDROT_SOCKETERROR
@@ -1861,9 +1856,16 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				if (len >= 2 && SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
 					{
 					SelbstAnrufEmpfangPruefwert = (SocketInBuf[i+2] << 8) + SocketInBuf[i+3]; // erst high, dann low
+					// Zur Beschleunigung baut ausnahmsweise der Empfänger die Verbindung ab.
+					CloseTCPSocket(TxpSocketHandle);
+					TxpSocketHandle = NO_SOCKET_USED;
+					TxpSocketMode = SocketIdle;
+					TxpSocketIP = 0;
+					TxpSocketAbbauGeplant = false;
+					SocketOutBufUsed = 0;
+					SocketInBufUsed = 0;
+					ModusWechsel(ModWarteGrundstellung);
 					}
-				TxpSocketAbbauGeplant = true;
-					//! \todo Gleich den Socket schließen probieren...
 				i += 2 + len;
 				}
 				
@@ -2924,7 +2926,6 @@ void txp_thread()
 		if (ProtokollLevel >= 1 && !ProtokollUnterdrueckenWegenSelbstAnruf)
 			ProtokollierenTxp_P(PSTR("Grundstellung erreicht (Socket geschlossen, TWI geschlossen)\r\n" ));
 		ModusWechsel(ModRuhe);
-		ProtokollUnterdrueckenWegenSelbstAnruf = false;
 		ZeitUeberwachungEnde(&SelbstAnrufZeitUeberwachung);
 		#ifdef LEDROT_SOCKETERROR
 			LED_off(ROT);
@@ -3006,6 +3007,7 @@ void txp_thread()
 					if (ProtokollLevel >= 3 && !ProtokollUnterdrueckenWegenSelbstAnruf)
 						ProtokollierenTxp_P(PSTR("Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
 					SelbstAnrufFehlerZaehler = 0;
+					ProtokollUnterdrueckenWegenSelbstAnruf = false;
 					} // Richtiges Echo angekommen
 				else
 					{ // Falsches Echo angekommen
@@ -3029,12 +3031,12 @@ void txp_thread()
 			} // if (SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
 
 			
-		if (SelbstAnrufPhase == SelbstAnrufSchliessen 
-			&& KurzTimerVal(&SelbstAnrufTimer) >= KurzTimerFreq * 1/10)
+		if (SelbstAnrufPhase == SelbstAnrufSchliessen) 
+			// && KurzTimerVal(&SelbstAnrufTimer) >= KurzTimerFreq * 1/30) TEST: ohne Verzögerung
 			{
 			CloseTCPSocket(SelbstAnrufSocketHandle);
 			SelbstAnrufSocketHandle = NO_SOCKET_USED;
-			SelbstAnrufPhase = SelbstAnrufWarteEnde;
+			SelbstAnrufPhase = SelbstAnrufRuhe;
 			StartKurzTimer(&SelbstAnrufTimer);
 			}
 			
@@ -3399,7 +3401,7 @@ void txp_cgi_debug( void * pStruct )
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	
-	if (http_request->argc != 0 && PharseCheckName_P(http_request, PSTR("reset")) == 0)
+	if (http_request->argc != 0 && PharseCheckName_P(http_request, PSTR("reset")) != 0)
 		{ // Bestimmte Werte zurücksetzen
 		DebugMsg[0] = '\0';
 		Timer0Cnt_Min = 255;
@@ -3408,7 +3410,6 @@ void txp_cgi_debug( void * pStruct )
 		FalscherCode = 0;
 		TwiIsrCount = 0;
 		ZeitUeberwachungInit(&SelbstAnrufZeitUeberwachung, 1 * KurzTimerFreq);
-		
 		}
 	
 	cgi_PrintHttpheaderStart();
@@ -3507,7 +3508,9 @@ void txp_cgi_debug( void * pStruct )
 
 	#endif // TXP_ANSCHLUSS
 	
-	printf_P(PSTR("]<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , ByteCounter, PacketCounter, eth_state_error );
+	printf_P(PSTR("<br><a href=\"txp-debug.cgi?reset\">Statiktik-Daten zur&uuml;cksetzen</a>"
+				  "<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , 
+				  ByteCounter, PacketCounter, eth_state_error );
 
 	cgi_PrintHttpheaderEnd();
 
