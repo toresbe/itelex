@@ -443,6 +443,14 @@ enum { DebugMsgMax = 100 } ;
 char DebugMsg[DebugMsgMax];
 	//!< String für außergewöhnliche Fälle
 
+uint8_t	MeldungsdruckLevel;
+	//!< Welche Meldungen sollen auf dem Angeschlossenen Fernschreiber ausgegeben werden:
+	//!< \par 0 = keine
+	//!< \par 1 = interne Fehler die die Funktion beeinträchtigen
+	//!< \par 2 = wie 1 und externe Fehler
+	//!< \par 3 = wie 2 und Bedienungsfehler
+	//!< \par 4 = wie 3 und Statusmeldungen
+
 	
 TTastendruck Tastendruck;
 
@@ -2864,8 +2872,10 @@ void txp_thread()
 
 	if (Modus == ModRuhe && AsciiDruckPuffer[0] == '\0' && DebugMsg[0] != '\0')
 		{ //! \todo Prüfen, ob überhaupt gedruckt werden soll... \todo Endgerät auswählen
-		strncpy(AsciiDruckPuffer, DebugMsg, AsciiDruckPufferMax-1);
-		AsciiDruckPuffer[AsciiDruckPufferMax-1] = '\0';
+		strcpy_P(AsciiDruckPuffer, PSTR("\r\n///meldung: "));
+		strncat(AsciiDruckPuffer, DebugMsg, AsciiDruckPufferMax-30);
+		AsciiDruckPuffer[AsciiDruckPufferMax-30] = '\0';
+		strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
 		DebugMsg[0] = '\0';
 		}
 
@@ -3702,6 +3712,7 @@ const PROGMEM char ProtokollLevelTlnServ_P[] = "PROTLEVELTLNSRV";
 const PROGMEM char Hauptstelle_P[] = "HAUPTSTELLE";
 const PROGMEM char EigeneNummer_P[] = "EIGENENUMMER";
 const PROGMEM char FesteHst_P[] = "FESTEHPST";
+const PROGMEM char MeldungsdruckLevel_P[] = "MELDRUCK";
 const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
 const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
 
@@ -3749,6 +3760,8 @@ void txp_cgi_config_intern(void *pStruct)
 
 		CgiFormInputFieldULong_P(PSTR("Protokoll-Level:"), ProtokollLevel_P, 2, ProtokollLevel);
 		CgiFormInputFieldULong_P(PSTR("Protokoll-Level f&uuml;r Teiln-Server:"), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
+		CgiFormInputFieldULong_P(PSTR("Level f&uuml;r Druckausgabe von Meldungen:"), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
+		
 		CgiFormInputFieldText_P(PSTR("Passwort f&uuml;r Kofigurationsseiten:"), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
 
 		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
@@ -3878,6 +3891,9 @@ void txp_cgi_config_intern(void *pStruct)
 
 		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, 
 			PSTR("Protokoll-Level Rufnr-Server"), ProtokollLevelTlnServ_P, ProtokollLevelTlnServ);
+
+		MeldungsdruckLevel = CgiCheckULong_P(http_request,
+			PSTR("Level f&uuml;r Druckausgabe"), MeldungsdruckLevel_P, MeldungsdruckLevel);
 
 		// KonfigPasswort
 		// --------------
@@ -4195,7 +4211,12 @@ void txp_init()
 	if (readConfig_P(KonfigPasswort_P, KonfigPasswort) != 1)
 		KonfigPasswort[0] = '\0';
 	KonfigFreigabeErteilt = false;
-		
+
+	if (readConfig_P(MeldungsdruckLevel_P, Buf) == 1)
+		MeldungsdruckLevel = atoi(Buf);
+	else
+		MeldungsdruckLevel = 2;
+	
 	// dies müsste eigentlich in Protokoll.c enthalten sein.
 	if (readConfig_P(ProtokollLevel_P, Buf) == 1)
 		ProtokollLevel = atoi(Buf);
