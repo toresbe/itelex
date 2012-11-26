@@ -52,7 +52,7 @@ typedef enum
 
 	// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
 	ModGehendReserv = 1, 
-		//!< Schnittstelle ist angesprochen worden, aber noch ein Einschaltkommando erhalten.
+		//!< Schnittstelle ist angesprochen worden, aber noch kein Einschaltkommando erhalten.
 	ModGehendWaehlen = 2,
 		//!< Einschaltkommando erhalten, Wahlaufforderung gesendet, 
 		//!< ggf. auch schon Wahlziffern empfangen.
@@ -62,6 +62,7 @@ typedef enum
 	// Kommend = vom Netz zum internen Anschluss
 	ModKommendVerbVorstufe = 11, 
 		//!< es wird erst mal abgewartet, was aus der ankommenden Verbindung wird.
+		//!< noch kein interner Teilnehmer angeschaltet.
 	ModKommendEinschalten = 12, 
 		//!< Es wurden Daten oder ein Einschaltkommando (Durchwahl) empfangen.
 	ModKommendWarteEinQuitt = 13, 
@@ -360,6 +361,12 @@ extern uint8_t ProtokollPhase;
 extern void InterneVerbindungBeenden(bool Force);
 	
 extern void SocketBufInit();
+
+enum { DiagnosePufferMax = 200 } ;
+
+extern char DiagnosePuffer[DiagnosePufferMax];
+
+extern bool Diagnoseausgabe_P(const char *msg, uint8_t Level);
 
 extern void AsciiDruckPufferVerarbeiten();
 

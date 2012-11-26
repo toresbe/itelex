@@ -42,8 +42,6 @@ uint8_t ProtokollLevelTlnServ;
 	//!< "Tiefe" der Protokollierung für Teilnehmer-Server: 0 = Aus, 1 = Normal, 2 = Intensiv, 3 = im Detail
 	//!< Auch Protokollierung der Teilnehmer-Server-Abfragen
 
-extern char *DebugMsg;
-
 static bool DruckeUhrzeit;
 	//!< speichert, ob die letzte Zeile ein CR LF enthielt, wenn ja wird die 
 	//!< nächste Zeile mit Datum / Uhrzeit begonnen
@@ -125,7 +123,7 @@ bool ProtokollSpeichern(bool flush)
 					}
 				else 
 					{ // Seek hat versagt --> schließen und dann neue anfangen.
-					sprintf_P(DebugMsg, PSTR("fat_seek_file versagt"));
+					Diagnoseausgabe_P(PSTR("fat_seek_file versagt"), 1);
 					fat_close_file(fd);
 					fd = NULL;
 					}
@@ -144,14 +142,14 @@ bool ProtokollSpeichern(bool flush)
 		Res = fat_get_dir_entry_of_path(fs, "/", &directory);
 		if (!Res)
 			{
-			sprintf_P(DebugMsg, PSTR("fat_get_dir_entry_of_path des Hauptverzeichnis versagt"));
+			Diagnoseausgabe_P(PSTR("fat_get_dir_entry_of_path des Hauptverzeichnis versagt"), 1);
 			return false;
 			}
 			
 		dd = fat_open_dir(fs, &directory);
 		if (dd == NULL)
 			{
-			sprintf_P(DebugMsg, PSTR("fat_open_dir des Hauptverzeichnis versagt"));
+			Diagnoseausgabe_P(PSTR("fat_open_dir des Hauptverzeichnis versagt"), 1);
 			return false;
 			}
 
@@ -160,14 +158,16 @@ bool ProtokollSpeichern(bool flush)
 		
 		if (Res == 0)
 			{
-			sprintf_P(DebugMsg, PSTR("fat_create_file(%s) versagt"), Dateiname);
+			if (Diagnoseausgabe_P(PSTR("fat_create_file versagt fuer "), 1))
+				strcat(DiagnosePuffer, Dateiname);
 			return false;
 			}
 			
 		fd = fat_open_file(fs, &dir_entry); 
 		if (fd == NULL)
 			{
-			sprintf_P(DebugMsg, PSTR("fat_open_file der neuen Datei %s versagt"), Dateiname);
+			if (Diagnoseausgabe_P(PSTR("fat_open_file der neuen Datei versagt fuer "), 1))
+				strcat(DiagnosePuffer, Dateiname);
 			return false;
 			}
 			
@@ -177,7 +177,7 @@ bool ProtokollSpeichern(bool flush)
 	// jetzt muss fd geöffnet sein.
 	if (fat_write_file(fd, (uint8_t*) Puffer, strlen(Puffer)) <= 0)
 		{
-		sprintf_P(DebugMsg, PSTR("fat_write_file versagt"));
+		Diagnoseausgabe_P(PSTR("fat_write_file versagt"), 1);
 		fat_close_file(fd);
 		return false;
 		}

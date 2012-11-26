@@ -1096,11 +1096,11 @@ void TlnBuchInit()
 	if (get_Taste()) // high vom Pullup -> Taste nicht gedrückt
 		{
 		int Res = TlnBuchLadeVonExternEeprom();
-		extern char DebugMsg[];
 		if (Res < 0)
 			{
-			sprintf_P(DebugMsg, PSTR("TxP: Eeprom Ladefehler %d / %02X"), Res, SwTwiLetzterFehler);
-			Protokollieren(DebugMsg);
+			ProtokollierenInt_P(PSTR("TxP: Eeprom Ladefehler %d"), Res);
+			ProtokollierenInt_P(PSTR(" / %02X\r\n"), SwTwiLetzterFehler);
+			Diagnoseausgabe_P(PSTR("Fehler im Zusatz-EEPROM"), 1);
 			}
 		} // if get_Taste()
 		

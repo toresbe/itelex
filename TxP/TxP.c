@@ -438,13 +438,14 @@ static TZeitUeberwachung SelbstAnrufZeitUeberwachung;
 enum { TxpTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
 
 
-enum { DebugMsgMax = 100 } ;
-
-char DebugMsg[DebugMsgMax];
+char DiagnosePuffer[DiagnosePufferMax];
 	//!< String für außergewöhnliche Fälle
+	
+uint8_t DiagnosePufferLevel;
+	//!< Schweregrad der aktuellen Meldung.
 
 uint8_t	MeldungsdruckLevel;
-	//!< Welche Meldungen sollen auf dem Angeschlossenen Fernschreiber ausgegeben werden:
+	//!< Welche Meldungen sollen auf dem angeschlossenen Fernschreiber ausgegeben werden:
 	//!< \par 0 = keine
 	//!< \par 1 = interne Fehler die die Funktion beeinträchtigen
 	//!< \par 2 = wie 1 und externe Fehler
@@ -534,6 +535,30 @@ char * ZeitUeberwachungAusgabe(TZeitUeberwachung *zue)
 	}
 	
 
+//! Speichert einen Diagnosetext.
+//------------------------------------------------------
+//! \param msg Text aus dem Programmspeicher oder NULL zum Löschen des vorhandenen Textes.
+//! \param Level Schweregrad der neuen Meldung. Meldung wird nur gespeichert wenn neuer 
+//! Grad schwerwiegender als bestehender Text. Niedrige Nummer ist wichtiger.
+//! \retval true, wenn neue Meldung gespeichert wurde.
+bool Diagnoseausgabe_P(const char *msg, uint8_t Level)
+	{
+	if (DiagnosePuffer[0] != '\0' && Level > DiagnosePufferLevel)
+		return false; // Neue Meldung ist weniger wichtig als aktuelle.
+	if (msg == NULL)
+		{
+		DiagnosePuffer[0] = '\0';
+		DiagnosePufferLevel = 0;
+		}
+	else
+		{
+		strncpy_P(DiagnosePuffer, msg, DiagnosePufferMax - 1);
+		DiagnosePuffer[DiagnosePufferMax - 1] = '\0';
+		DiagnosePufferLevel = Level;
+		}
+	return true;
+	}
+
 	
 #ifdef TXP_ANSCHLUSS
 	
@@ -574,6 +599,18 @@ static void ProtokollierenTxp_P(const char *s)
 	}
 	
 
+//! Prüft, ob im aktuellen Modus ein TWI-Partner verbunden sein müsste.
+static bool ModusTwiVerbunden()
+	{
+	return (Modus == ModKommendWarteEinQuitt 
+			|| Modus == ModKommendVerbunden 
+			|| Modus == ModGehendReserv 
+			|| Modus == ModGehendWaehlen 
+			|| Modus == ModGehendVerbunden 
+			|| Modus == ModHtmlChatVerbunden
+			|| Modus == ModPufferDruckUndSchluss);
+	}
+	
 	
 volatile static uint8_t Timer0Cnt_Min;
 volatile static uint8_t Timer0Cnt_Max;
@@ -777,7 +814,8 @@ void txp_timerEvent(void)
 			}
 		} // if "Verbunden"
 
-	else if (Modus != ModRuhe && Modus != ModWarteSchlussQuitt && Modus != ModWarteGrundstellung)
+	
+	else if (ModusTwiVerbunden())
 		{ // Lebenszeichen regelmäßig senden
 		if (TwiLebenszeichenZaehler > 0)
 			TwiLebenszeichenZaehler--;
@@ -924,6 +962,7 @@ void ModusWechsel(TModus neu)
 			AsciiDruckPuffer[0] = '\0';
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
+			//! \todo nach Test aktivieren: StartKurzTimer(&SelbstAnrufTimer);
 			break;
 	
 		// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
@@ -1140,6 +1179,7 @@ static bool SchreibeZeichenInSendePuffer(char c)
 		else
 			// Zeichen ist nicht darstellbar, also löschen
 			{
+/*! \todo Fehlermeldung			
 			if (DebugMsg[0] == '\0') // noch leer
 				strcpy_P(DebugMsg, PSTR("?nicht druckbare Zeichen: "));
 			uint8_t l = strlen(DebugMsg);
@@ -1148,6 +1188,7 @@ static bool SchreibeZeichenInSendePuffer(char c)
 				DebugMsg[l] = c;
 				DebugMsg[l+1] = '\0';
 				}
+*/				
 			return false;
 			}
 		} // kein Werda
@@ -1294,7 +1335,7 @@ static void SocketBearbeiten()
 			else
 				{
 				Abweisen = true; // anderweitig belegt
-				if (ProtokollLevel >= 1 && !ProtokollUnterdrueckenWegenSelbstAnruf)
+				if (ProtokollLevel >= 1)
 					Protokollieren_P(PSTR(", anderweitig belegt"));
 				}
 			#ifdef LEDROT_SOCKETERROR
@@ -1336,7 +1377,7 @@ static void SocketBearbeiten()
 			CloseTCPSocket(NewServerSocket);
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR(" ...ABGEWIESEN\r\n" ));
-			strcpy_P(DebugMsg, PSTR("Zweiter kommender Anruf auf belegtem Telexphone-Socket"));
+			Diagnoseausgabe_P(PSTR("Zweiter kommender Anruf auf belegtem Telexphone-Socket"), 4);
 			}
 			
 		} // CheckPortRequest(TXP_PORT) != NO_SOCKET_USED
@@ -1554,7 +1595,7 @@ static void SocketBearbeiten()
 				{
 				if (ProtokollLevel >= 1)
 					ProtokollierenTxp_P(PSTR("Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
-				strcpy_P(DebugMsg, PSTR("Mehrfache FEHLER beim Senden ins Netz"));
+				Diagnoseausgabe_P(PSTR("Mehrfache FEHLER beim Senden ins Netz"), 2);
 	
 				CloseTCPSocket(TxpSocketHandle);
 				TxpSocketHandle = NO_SOCKET_USED;
@@ -1600,7 +1641,7 @@ static void SocketBearbeiten()
 		{
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("ZEITUEBERSCHREITUNG bei Wiederaufnahme der Verbindung\r\n" ));
-		strcpy_P(DebugMsg, PSTR("Zeitueberschreitung bei Wiederaufnahme der Verbindung"));
+		Diagnoseausgabe_P(PSTR("Zeitueberschreitung bei Wiederaufnahme der Verbindung"), 2);
 		TxpSocketMode = SocketIdle;
 		TxpSocketAbbauGeplant = false;
 		TxpSocketIP = 0;
@@ -2101,7 +2142,7 @@ bool TeilnehmerServerSocketOeffnen()
 			Protokollieren_P(PSTR(" IP nicht bekannt\r\n"));
 			}
 		} // for i
-	strcpy_P(DebugMsg, PSTR("Keine Verbindung zu allen Teilnehmer-Servern"));	
+	Diagnoseausgabe_P(PSTR("Keine Verbindung zu allen Teilnehmer-Servern"), 1);	
 	return false;
 	} // TeilnehmerServerSocketOeffnen()
 
@@ -2175,12 +2216,12 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				}
 			else
 				{
-				strcpy_P(DebugMsg, PSTR("Keine Verbindung zum Mail-Server fuer Ausgang"));					
+				Diagnoseausgabe_P(PSTR("Keine Verbindung zum Mail-Server fuer Ausgang"), 2);	
 				return 2; // schlecht
 				}
 #else
 			ProtokollierenTxp_P(PSTR("eMail nicht unterstuetzt\r\n" ));
-			strcpy_P(DebugMsg, PSTR("Mail in dieser Version nicht unterstuetzt"));					
+			Diagnoseausgabe_P(PSTR("Mail in dieser Version nicht unterstuetzt"), 3);
 			return 2;
 #endif //ndef TXP_EMAIL		
 			
@@ -2201,7 +2242,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("Socket konnte nicht erstmalig geoeffnet werden\r\n"));
 			
-		strcpy_P(DebugMsg, PSTR("Teilnehmer nicht erreichbar"));
+		Diagnoseausgabe_P(PSTR("Teilnehmer nicht erreichbar"), 2);
 		TxpSocketHandle = NO_SOCKET_USED;
 		TxpSocketMode = SocketIdle;
 		return 1;
@@ -2437,7 +2478,7 @@ bool SonstigeAnwahl()
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("Einschaltung intern VERSAGT\r\n" ));
 			
-		strcpy_P(DebugMsg, PSTR("Reservierung für Einschaltung konnte nicht versandt werden"));
+		Diagnoseausgabe_P(PSTR("Reservierung für Einschaltung konnte nicht versandt werden"), 1);
 		AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 		AsciiHilfPuffer[0] = '\0';
 		AsciiHilfZeilenanfang = 0;
@@ -2683,19 +2724,13 @@ void txp_thread()
 	// Prüfen, ob TWI-Kommunikation überhaupt noch läuft
 	// ======================================================================
 
-	if (Modus == ModKommendWarteEinQuitt 
-		|| Modus == ModKommendVerbunden 
-	    || Modus == ModGehendReserv 
-		|| Modus == ModGehendWaehlen 
-		|| Modus == ModGehendVerbunden 
-		|| Modus == ModHtmlChatVerbunden
-		|| Modus == ModPufferDruckUndSchluss)
+	if (ModusTwiVerbunden())
 		{
 		if (TwiWatchdogCount > 4 * TxpTimerFreq) // nach 4 Sekunden ohne TWI-Kommunikation
 			{
 			if (ProtokollLevel >= 1)	
 				ProtokollierenTxp_P(PSTR("TWI-Timeout -> Abschaltung\r\n"));
-			strcpy_P(DebugMsg, PSTR("Interne Verbindung unterbrochen"));
+			Diagnoseausgabe_P(PSTR("Interne Verbindung unterbrochen"), 2);
 			
 			InterneVerbindungBeenden(true);
 			TxpSocketAbbauGeplant = true;
@@ -2777,7 +2812,7 @@ void txp_thread()
 				ProtokollierenTxp();
 				ProtokollierenInt_P(PSTR("Anwahl intern an %u VERSAGT\r\n"), Durchwahl);
 				}
-			strcpy_P(DebugMsg, PSTR("Reservierung fuer Einschaltung konnte nicht versandt werden"));
+			Diagnoseausgabe_P(PSTR("Reservierung fuer Einschaltung konnte nicht versandt werden"), 1);
 
 			SendeStopkommando(PSTR("occ\r\n"));
 			
@@ -2870,13 +2905,17 @@ void txp_thread()
 	// Diagnosedaten drucken?
 	// ==========================================================================
 
-	if (Modus == ModRuhe && AsciiDruckPuffer[0] == '\0' && DebugMsg[0] != '\0')
-		{ //! \todo Prüfen, ob überhaupt gedruckt werden soll... \todo Endgerät auswählen
+	if (Modus == ModRuhe 
+		&& AsciiDruckPuffer[0] == '\0' 
+		&& DiagnosePuffer[0] != '\0'
+		&& DiagnosePufferLevel <= MeldungsdruckLevel)
+		{ //! \todo Endgerät auswählen
 		strcpy_P(AsciiDruckPuffer, PSTR("\r\n///meldung: "));
-		strncat(AsciiDruckPuffer, DebugMsg, AsciiDruckPufferMax-30);
+		strncat(AsciiDruckPuffer, DiagnosePuffer, AsciiDruckPufferMax-30);
 		AsciiDruckPuffer[AsciiDruckPufferMax-30] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
-		DebugMsg[0] = '\0';
+		DiagnosePuffer[0] = '\0';
+		DiagnosePufferLevel = 0;
 		}
 
 	// ==========================================================================
@@ -3002,7 +3041,10 @@ void txp_thread()
 					if (PutSocketData_RPE(SelbstAnrufSocketHandle, 4, Buf, RAM) == 4)
 						{
 						if (ProtokollLevel >= 4)
+							{
+							ProtokollSpeichern(true);
 							ProtokollierenTxp_P(PSTR("Selbst-Anruf Daten gesendet.\r\n"));
+							}
 						else
 							ProtokollUnterdrueckenWegenSelbstAnruf = true;
 						}
@@ -3028,6 +3070,12 @@ void txp_thread()
 					{ // Richtiges Echo angekommen
 					if (ProtokollLevel >= 3 && !ProtokollUnterdrueckenWegenSelbstAnruf)
 						ProtokollierenTxp_P(PSTR("Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
+						
+					// ########################## HACK Test:
+					extern char Puffer[]; // der Protokoll-Puffer...
+					ProtokollierenInt_P(PSTR("HACK Test ProtBuf: %u\r\n"), strlen(Puffer));
+					// ########################## HACK Test:
+					
 					SelbstAnrufFehlerZaehler = 0;
 					ProtokollUnterdrueckenWegenSelbstAnruf = false;
 					} // Richtiges Echo angekommen
@@ -3040,6 +3088,16 @@ void txp_thread()
 				StartKurzTimer(&SelbstAnrufTimer);
 				SelbstAnrufPhase = SelbstAnrufSchliessen;
 				} // Echo ist angekommen
+				
+			else if (Modus != ModRuhe && Modus != ModDeaktiviert && Modus != ModKommendVerbVorstufe)
+				{ // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
+				if (ProtokollLevel >= 1)
+					ProtokollierenTxp_P(PSTR("Selbst-Anruf ABGEBROCHEN wegen Modus-Wechsel.\r\n"));
+				StartKurzTimer(&SelbstAnrufTimer);
+				SelbstAnrufPhase = SelbstAnrufSchliessen;
+				ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
+				} // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
+				
 			else if (KurzTimerVal(&SelbstAnrufTimer) > 5 * KurzTimerFreq) 
 				{ // Timeout nach 5 Sekunden
 				if (ProtokollLevel >= 1)
@@ -3052,9 +3110,7 @@ void txp_thread()
 				
 			} // if (SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
 
-			
 		if (SelbstAnrufPhase == SelbstAnrufSchliessen) 
-			// && KurzTimerVal(&SelbstAnrufTimer) >= KurzTimerFreq * 1/30) TEST: ohne Verzögerung
 			{
 			CloseTCPSocket(SelbstAnrufSocketHandle);
 			SelbstAnrufSocketHandle = NO_SOCKET_USED;
@@ -3073,7 +3129,7 @@ void txp_thread()
 			if (SelbstAnrufFehlerZaehler >= 16)
 				{
 				DynIPAktiv = false;
-				strcpy_P(DebugMsg, PSTR("Selbst-Anruf mehrfach versagt, falsche Router-Konfiguration"));
+				Diagnoseausgabe_P(PSTR("Selbst-Anruf mehrfach versagt, falsche Router-Konfiguration"), 1);
 				}
 			}
 			
@@ -3148,7 +3204,7 @@ void txp_thread()
 				case TLNSERV_AUSKUNFT_NICHTVERG:
 					if (ProtokollLevel >= 2)
 						ProtokollierenTxp_P(PSTR("Teilnehmer-Server meldet 'nicht gefunden'\r\n" ));
-					strcpy_P(DebugMsg, PSTR("gewaehlte Nummer nicht bekannt"));
+					Diagnoseausgabe_P(PSTR("gewaehlte Nummer nicht bekannt"), 3);
 					break;
 					
 				case TLNSERV_AUSKUNFT_VERSION1:
@@ -3192,7 +3248,7 @@ void txp_thread()
 							{
 							ProtokollierenTxp();
 							ProtokollierenInt_P(PSTR("Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
-							strcpy_P(DebugMsg, PSTR("internes Rufnummern-Verzeichnis voll"));
+							Diagnoseausgabe_P(PSTR("internes Rufnummern-Verzeichnis voll"), 2);
 							}
 						} // Aktualisieren ist sinnvoll
 						
@@ -3201,7 +3257,7 @@ void txp_thread()
 						switch (Verbindungsaufbau(&GewaehlterTln))
 							{
 							case 0: 
-								DebugMsg[0] = '\0';
+								Diagnoseausgabe_P(NULL, 3);
 								break; // erfolgreich
 								
 							case 1: // Socket öffnen nicht erfolgreich
@@ -3409,7 +3465,7 @@ uint8_t KonfigFreigabe(void *pStruct)
 			printf_P(PSTR("Kennwort falsch!"));
 			cgi_PrintHttpheaderEnd();
 			KonfigFreigabeErteilt = false;
-			strcpy_P(DebugMsg, PSTR("falsches Konfigurations-Kennwort eingegeben"));
+			Diagnoseausgabe_P(PSTR("falsches Konfigurations-Kennwort eingegeben"), 3);
 			return false;
 			}
 		}
@@ -3430,7 +3486,7 @@ void txp_cgi_debug( void * pStruct )
 	
 	if (http_request->argc != 0 && PharseCheckName_P(http_request, PSTR("reset")) != 0)
 		{ // Bestimmte Werte zurücksetzen
-		DebugMsg[0] = '\0';
+		DiagnosePuffer[0] = '\0';
 		Timer0Cnt_Min = 255;
 		Timer0Cnt_Max = 0;
 		Timer0Callback_Max = 0;
@@ -3441,15 +3497,16 @@ void txp_cgi_debug( void * pStruct )
 	
 	cgi_PrintHttpheaderStart();
 
-	printf_P(PSTR("DebugMsg: %s<br>"), DebugMsg);
-
-	extern char Dateiname[]; // aus Protokoll.c
-	printf_P(PSTR("Protokolldatei: %s<br>"), Dateiname);
-	extern char Puffer[]; // aus Protokoll.c
-	printf_P(PSTR("Protokollpuffer: %s<br>"), Puffer);
-
 #define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %u"), Var)
 #define PRINTVALHEX(Var) printf_P(PSTR("<br>" #Var " = %02X"), Var)
+
+	printf_P(PSTR("DiagnosePuffer: %s"), DiagnosePuffer);
+	PRINTVAL(DiagnosePufferLevel);
+
+	extern char Dateiname[]; // aus Protokoll.c
+	printf_P(PSTR("<br>Protokolldatei: %s"), Dateiname);
+	extern char Puffer[]; // aus Protokoll.c
+	printf_P(PSTR("<br>Protokollpuffer: %s"), Puffer);
 
 	#ifdef TXP_ANSCHLUSS
 	
@@ -4134,7 +4191,8 @@ void txp_init()
 	
 	ProtokollInit();
 
-	DebugMsg[0] = '\0';
+	DiagnosePuffer[0] = '\0';
+	DiagnosePufferLevel = 0;
 
 	#ifdef TXP_ANSCHLUSS
 	
