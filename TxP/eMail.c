@@ -111,14 +111,15 @@ enum {
 	AnmeldungStarten = 2,
 	AnmeldungName = 3,
 	AnmeldungKennwort = 4,
-	MailFrom = 5,
-	MailTo = 6,
-	StartData = 7,
-	WarteStart = 8,
-	MailSubject = 9,
-	MailData = 10,
-	Abmelden = 11,
-	WarteEnde = 12
+	EingabeMailTo = 5,
+	MailFrom = 6,
+	MailTo = 7,
+	StartData = 8,
+	WarteStart = 9,
+	MailSubject = 10,
+	MailData = 11,
+	Abmelden = 12,
+	WarteEnde = 13
 	} ; // Konstanten für ProtokollPhase
 
 		
@@ -488,6 +489,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 		Protokollieren_P(PSTR("TxP SMTP: IP zu Url "));
 		Protokollieren(EmailSMTPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
+		//! \todo Diagnoseausgabe_P(
 		return false;
 		}
 	
@@ -500,6 +502,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 		Protokollieren_P(PSTR("TxP SMTP: Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
 		TxpSocketHandle = NO_SOCKET_USED;
 		TxpSocketMode = SocketIdle;
+		//! \todo Diagnoseausgabe_P(
 		return false;
 		}
 
@@ -561,7 +564,9 @@ void SMTPDatenVerarbeiten()
 	if (SocketOutBufUsed != 0)
 		return;
 		
-	if (ProtokollPhase != MailData && ProtokollPhase != MailSubject)
+	if (ProtokollPhase != MailData 
+		&& ProtokollPhase != MailSubject 
+		&& ProtokollPhase != EingabeMailTo)
 		{ // in MailData wird jedes Zeichen sofort gesendet.
 		if (SocketInBufUsed == 0)
 			return;
@@ -580,17 +585,19 @@ void SMTPDatenVerarbeiten()
 		// Abbruch bei Fehlern
 		if (SocketInBuf[0] >= '4')
 			{
+			SocketInBuf[SocketInBufUsed] = '\0';
+			
 			if (ProtokollLevel >= 1)
 				{
 				Protokollieren_P(PSTR("TxP SMTP: Fehlermeldung: "));
-				SocketInBuf[SocketInBufUsed] = '\0';
 				Protokollieren(SocketInBuf);
 				}
 
-			//! \todo Prüfen ob das funktioniert:
-			strcpy_P(AsciiDruckPuffer, PSTR("\r\nfehlermeldung: "));
-			strcat(AsciiDruckPuffer, SocketInBuf);
-			strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
+			if (Diagnoseausgabe_P(PSTR("vom SMTP-Server: "), 2))
+				{
+				strncat(DiagnosePuffer, SocketInBuf, strlen(DiagnosePuffer) - 20);
+				strcat_P(DiagnosePuffer, PSTR("\r\n"));
+				}
 			
 			InterneVerbindungBeenden(true);
 			TxpSocketAbbauGeplant = true;
@@ -599,7 +606,7 @@ void SMTPDatenVerarbeiten()
 			}
 			
 		SocketInBufUsed = 0;
-		} // if ProtokollPhase != MailData
+		} // if (ProtokollPhase != MailData	&& != MailSubject && != EingabeMailTo)
 		
 	SocketOutBuf[0] = '\0';
 		// damit falls nichts in den Puffer geschrieben wird, SocketOutBufUsed auf 0 bleibt.
@@ -625,7 +632,34 @@ void SMTPDatenVerarbeiten()
 		case AnmeldungKennwort:
 			base64_encode(SocketOutBuf, SocketOutBufMax - 10, EmailEigenesPasswort, strlen(EmailEigenesPasswort)); 			
 			strcat_P(SocketOutBuf, PSTR("\r\n"));
-			ProtokollPhase = MailFrom;
+			if (EmailEmpfaenger[0] == '\0')
+				{
+				strcpy_P(AsciiDruckPuffer, PSTR("\r\nemail to:\r\n"));
+				PufferInit(&EmpfPuffer);
+				ProtokollPhase = EingabeMailTo;
+				}
+			else
+				ProtokollPhase = MailFrom;
+			break;
+			
+		case EingabeMailTo:
+			while (!PufferLeer(&EmpfPuffer) && strlen(EmailEmpfaenger) < sizeof(EmailEmpfaenger) - 1)
+				{
+				char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+				if (z == '\r' || z == '\n')
+					{
+					ProtokollPhase = MailFrom;
+					break;
+					}
+				else if (z != '\0' && z != '#')
+					{
+					if (z == '/')
+						z = '@';
+					EmailEmpfaenger[strlen(EmailEmpfaenger) + 1] = '\0';
+					EmailEmpfaenger[strlen(EmailEmpfaenger)] = z;
+					}
+				}
+				
 			break;
 			
 		case MailFrom:
@@ -693,6 +727,7 @@ void SMTPDatenVerarbeiten()
 				
 			SocketOutBuf[SocketOutBufUsed] = '\0';
 			//! \todo Zeile mit einzelnem Punkt abfangen
+			//! \todo Ende mit +++
 			break;
 			
 		case Abmelden:
