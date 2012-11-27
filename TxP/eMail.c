@@ -632,11 +632,12 @@ void SMTPDatenVerarbeiten()
 		case AnmeldungKennwort:
 			base64_encode(SocketOutBuf, SocketOutBufMax - 10, EmailEigenesPasswort, strlen(EmailEigenesPasswort)); 			
 			strcat_P(SocketOutBuf, PSTR("\r\n"));
-			if (EmailEmpfaenger[0] == '\0')
+			if (EmailEmpfaenger[0] == '?')
 				{
 				strcpy_P(AsciiDruckPuffer, PSTR("\r\nemail to:\r\n"));
 				PufferInit(&EmpfPuffer);
 				ProtokollPhase = EingabeMailTo;
+				EmailEmpfaenger[0] = '\0';
 				}
 			else
 				ProtokollPhase = MailFrom;

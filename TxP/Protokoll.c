@@ -420,7 +420,10 @@ void ProtokollRegelblockAbbruch()
 void ProtokollRegelblockLoeschen()
 	{
 	if (RegelblockAktiv)
+		{
 		Puffer[0] = '\0';
+		DruckeUhrzeit = true;
+		}
 	RegelblockAktiv = true;
 	InRegelblock = false;
 	}
