@@ -22,6 +22,16 @@ extern void ProtokollierenMAC(char mac[6]);
 
 extern void ProtokollierenPuffer(char Buf[], uint16_t Len);
 
+extern void ProtokollRegelblockInit();
+
+extern void ProtokollRegelblockStart();
+
+extern void ProtokollRegelblockEnde();
+
+extern void ProtokollRegelblockAbbruch();
+
+extern void ProtokollRegelblockLoeschen();
+
 extern void ProtokollInit();
 
 #endif //ndef __PROTOKOLL_H__

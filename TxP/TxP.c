@@ -424,9 +424,6 @@ static enum {
 	} SelbstAnrufPhase;
 
 
-static bool ProtokollUnterdrueckenWegenSelbstAnruf;
-	//!< Unterdrückt alle regulären Protokoll-Ausgaben während des Selbstanrufs.
-	
 static TZeitUeberwachung SelbstAnrufZeitUeberwachung;
 	//!< Überwachung der Dauer des Selbstanrufs.
 	
@@ -962,7 +959,7 @@ void ModusWechsel(TModus neu)
 			AsciiDruckPuffer[0] = '\0';
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
-			//! \todo nach Test aktivieren: StartKurzTimer(&SelbstAnrufTimer);
+			StartKurzTimer(&SelbstAnrufTimer);
 			break;
 	
 		// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
@@ -1303,12 +1300,14 @@ static void SocketBearbeiten()
 		{
 		bool Abweisen = true; // Bei berechtigter kommender Verbindung auf false setzen.
 
-		if (ProtokollLevel >= 1 && !ProtokollUnterdrueckenWegenSelbstAnruf)
+		if (ProtokollLevel >= 1)
 			{
+			ProtokollRegelblockStart();
 			ProtokollierenTxp_P(PSTR("Server-Socket geoeffnet von IP "));
 			ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
 			Protokollieren_P(PSTR(" / MAC "));
 			ProtokollierenMAC(TCP_sockettable[NewServerSocket].MACadress);
+			ProtokollRegelblockEnde();
 			}
 		
 		if (TxpSocketMode == SocketIdle)
@@ -1316,8 +1315,12 @@ static void SocketBearbeiten()
 			if (Modus == ModRuhe)
 				{ // ID#102 *************************************************
 				// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
-				if (ProtokollLevel >= 1 && !ProtokollUnterdrueckenWegenSelbstAnruf)
+				if (ProtokollLevel >= 1)
+					{
+					ProtokollRegelblockStart();
 					Protokollieren_P(PSTR(" ...neu ok\r\n"));
+					ProtokollRegelblockEnde();
+					}
 				TxpSocketHandle = NewServerSocket;
 				BusVerbPartner = Hauptstelle; // vorbereitet...
 				TxpSocketIP = TCP_sockettable[TxpSocketHandle].SourceIP;
@@ -1405,8 +1408,12 @@ static void SocketBearbeiten()
 				
 			case Ascii:
 				// oder TelexPhone und AbbauGeplant
-				if (ProtokollLevel >= 1 && !ProtokollUnterdrueckenWegenSelbstAnruf)
+				if (ProtokollLevel >= 1)
+					{
+					ProtokollRegelblockStart();
 					ProtokollierenTxp_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
+					ProtokollRegelblockEnde();
+					}
 					
 				TxpSocketMode = SocketIdle;
 				TxpSocketIP = 0;
@@ -1490,15 +1497,17 @@ static void SocketBearbeiten()
 			int Res = GetSocketData(TxpSocketHandle, InCount, SocketInBuf + SocketInBufUsed);
 			
 			if (SocketInBuf[SocketInBufUsed] != TXPC_SELBSTANRUF)
-				ProtokollUnterdrueckenWegenSelbstAnruf = false;
+				ProtokollRegelblockAbbruch();
 				
-			if (ProtokollLevel >= 3 && !ProtokollUnterdrueckenWegenSelbstAnruf) // Daten explizit
+			if (ProtokollLevel >= 3) // Daten explizit
 				{
+				ProtokollRegelblockStart();
 				ProtokollierenTxp();
 				ProtokollierenInt_P(PSTR("Socket Empfang: (%d/" ), InCount);
 				ProtokollierenInt_P(PSTR("%d)"), Res);
 				ProtokollierenPuffer(SocketInBuf + SocketInBufUsed, Res);
 				ProtokollierenInt_P(PSTR(" --> BufUsed %u\r\n"), SocketInBufUsed + Res);
+				ProtokollRegelblockEnde();
 				}		
 				
 			if (Res > 0)
@@ -1686,10 +1695,12 @@ void InterneVerbindungBeenden(bool Force)
 		case ModKommendVerbVorstufe:
 		case ModKommendEinschalten:
 		case ModKommendWarteEinQuitt:
-			if (ProtokollLevel >= 1 && !ProtokollUnterdrueckenWegenSelbstAnruf)
+			if (ProtokollLevel >= 1)
 				{
+				ProtokollRegelblockStart();
 				ProtokollierenTxp();
 				ProtokollierenInt_P(PSTR("Wechsel nach Modus Ruhe (von %d)\r\n"), Modus);
+				ProtokollRegelblockEnde();
 				}
 				
 			if (Modus == ModKommendWarteEinQuitt)
@@ -2984,8 +2995,13 @@ void txp_thread()
 		&& TxpSocketHandle == NO_SOCKET_USED
 		&& TxpSocketMode == SocketIdle)
 		{
-		if (ProtokollLevel >= 1 && !ProtokollUnterdrueckenWegenSelbstAnruf)
+		if (ProtokollLevel >= 1)
+			{
+			ProtokollRegelblockStart();
 			ProtokollierenTxp_P(PSTR("Grundstellung erreicht (Socket geschlossen, TWI geschlossen)\r\n" ));
+			ProtokollRegelblockEnde();
+			}
+			
 		ModusWechsel(ModRuhe);
 		ZeitUeberwachungEnde(&SelbstAnrufZeitUeberwachung);
 		#ifdef LEDROT_SOCKETERROR
@@ -3040,13 +3056,11 @@ void txp_thread()
 					SelbstAnrufPhase = SelbstAnrufWarteEmpfang;
 					if (PutSocketData_RPE(SelbstAnrufSocketHandle, 4, Buf, RAM) == 4)
 						{
-						if (ProtokollLevel >= 4)
-							{
-							ProtokollSpeichern(true);
-							ProtokollierenTxp_P(PSTR("Selbst-Anruf Daten gesendet.\r\n"));
-							}
-						else
-							ProtokollUnterdrueckenWegenSelbstAnruf = true;
+						if (ProtokollLevel < 4)
+							ProtokollRegelblockInit();
+						ProtokollRegelblockStart();
+						ProtokollierenTxp_P(PSTR("Selbst-Anruf Daten gesendet.\r\n"));
+						ProtokollRegelblockEnde();
 						}
 					else
 						{
@@ -3068,16 +3082,16 @@ void txp_thread()
 				{ // Echo ist angekommen
 				if (SelbstAnrufEmpfangPruefwert == SelbstAnrufSendePruefwert)
 					{ // Richtiges Echo angekommen
-					if (ProtokollLevel >= 3 && !ProtokollUnterdrueckenWegenSelbstAnruf)
+					if (ProtokollLevel >= 3)
+						{
+						ProtokollRegelblockStart();
 						ProtokollierenTxp_P(PSTR("Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
-						
-					// ########################## HACK Test:
-					extern char Puffer[]; // der Protokoll-Puffer...
-					ProtokollierenInt_P(PSTR("HACK Test ProtBuf: %u\r\n"), strlen(Puffer));
-					// ########################## HACK Test:
+						ProtokollRegelblockEnde();
+						}
+					if (ProtokollLevel < 4)
+						ProtokollRegelblockLoeschen();
 					
 					SelbstAnrufFehlerZaehler = 0;
-					ProtokollUnterdrueckenWegenSelbstAnruf = false;
 					} // Richtiges Echo angekommen
 				else
 					{ // Falsches Echo angekommen
@@ -4306,7 +4320,6 @@ void txp_init()
 	SelbstAnrufPhase = SelbstAnrufSperre; // da noch keine eigene IP bekannt.
 	SelbstAnrufFehlerZaehler = 0;
 	SelbstAnrufSocketHandle = NO_SOCKET_USED;
-	ProtokollUnterdrueckenWegenSelbstAnruf = false;
 
 	ZeitUeberwachungInit(&SelbstAnrufZeitUeberwachung, 1 * KurzTimerFreq);
 	

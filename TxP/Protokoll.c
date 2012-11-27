@@ -50,6 +50,13 @@ static unsigned long LetzteDruckZeit;
 	//!< Speichert die Zeit des letzten Protokolliervorgangs.
 	//!< Nach 5 Minuten wird eine neue "Kopfzeile" gedruckt.
 	
+static bool RegelblockAktiv;
+	//!< Speichert, ob das Löschen von regelmäßig vorkommenden Meldungen bearbeitet 
+	//!< werden soll.
+	
+static bool InRegelblock;
+	//!< Merker ob die folgenden Meldungen regelmäßig vorkommende Meldungen sind.
+	
 	
 //! Schreibt die zwischengespeicherten Daten auf die SD-Karte oder sendet diese an 
 //! die serielle Schnittstelle.
@@ -73,6 +80,9 @@ bool ProtokollSpeichern(bool flush)
 #endif //defined(MMC)
 
 		{ // Filesystem nicht bereit --> auf RS232 senden.
+		if (!flush && RegelblockAktiv)
+			return true; // nicht ausgeben, da Puffer vielleicht noch gelöscht wird.
+			
 		while (Puffer[0] != '\0')
 			{
 			if (UART_GetBytesinTxBuffer(0) > 3)
@@ -207,7 +217,10 @@ bool ProtokollSpeichern(bool flush)
 static bool ProtPraeparieren(int len)
 	{
 	struct TIME Time;
-	
+
+	if (!InRegelblock)
+		RegelblockAktiv = false;
+		
 	Idle = false;
 	if (len == 0 || len > MaxProtPuffer / 2)
 		return false;
@@ -358,6 +371,60 @@ void ProtokollierenPuffer(char buf[], uint16_t Len)
 		ProtokollierenC('\'');
 	}
 
+
+//! Initialisiert die Bearbeitung von regelmäßig vorkommenden Meldungs-Blöcken.
+//-----------------------------------------------------------------------------
+//! Diese können nachträglich wieder "gelöscht" werden. Folge dieses Funktionsaufrufs ist
+//! Die Speicherung aller bisherigen Meldungen auf der SD-Karte.	
+void ProtokollRegelblockInit()
+	{
+	ProtokollSpeichern(true);
+	RegelblockAktiv = true;
+	InRegelblock = false;
+	}
+
+
+//! Markiert den Beginn eines regelmäßig vorkommenden Meldungs-Blocks.
+//-----------------------------------------------------------------------------
+void ProtokollRegelblockStart()
+	{
+	InRegelblock = RegelblockAktiv;
+	}
+
+
+//! Markiert das Ende eines regelmäßig vorkommenden Meldungs-Blocks.
+//-----------------------------------------------------------------------------
+void ProtokollRegelblockEnde()
+	{
+	InRegelblock = false;
+	}
+	
+
+//! Beendet die Bearbeitung von regelmäßig vorkommenden Meldungs-Blöcken.
+//-----------------------------------------------------------------------------
+//! d.h. auch die vorherigen Meldungen werden doch gedruckt.
+void ProtokollRegelblockAbbruch()
+	{
+	RegelblockAktiv = false;
+	InRegelblock = false;
+	}
+
+	
+//! Löscht die regelmäßig vorkommenden Meldungs-Blöcke wieder aus dem Puffer.
+//-----------------------------------------------------------------------------
+//! Prozedere: Vor der ersten Meldung ProtokollRegelblockInit() aufrufen.
+//! Vor jeder Meldung ProtokollRegelblockStart() und danach ProtokollRegelblockEnde()
+//! aufrufen. Wurde bei Aufruf von ProtokollRegelblockLoeschen() keine andere Meldung
+//! ("Außerhalb" von ProtokollRegelblockStart() und ProtokollRegelblockEnde() ) 
+//! ausgegeben, werden die Meldungen seit ProtokollRegelblockInit() gelöscht.
+void ProtokollRegelblockLoeschen()
+	{
+	if (RegelblockAktiv)
+		Puffer[0] = '\0';
+	RegelblockAktiv = true;
+	InRegelblock = false;
+	}
+
 	
 //! Speichert zwischengespeicherten Protokolltext auf SD-Karte, sobald Ruhe eingekehrt ist.	
 static void SpeichernBeiIdle()
@@ -380,6 +447,8 @@ void ProtokollInit()
 	CLOCK_RegisterCallbackFunction(SpeichernBeiIdle, MINUTE);
 	DruckeUhrzeit = true;
 	LetzteDruckZeit = 0;
+	RegelblockAktiv = false;
+	InRegelblock = false;
 	Protokollieren("Neustart\r\n");
 	}
 	
