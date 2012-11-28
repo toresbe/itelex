@@ -3009,6 +3009,16 @@ void txp_thread()
 		#endif //def LEDROT_SOCKETERROR
 		}
 		
+#ifdef TXP_EMAIL
+
+	// ==========================================================================
+	// Ab und zu mal prüfen, ob es neue Mails gibt.
+	// ==========================================================================
+	
+	POP3Einleiten();
+	
+#endif //def TXP_EMAIL
+	
 	// ======================================================================
 	// Dynamische IP-Aktualisierung starten
 	// ======================================================================
@@ -3018,11 +3028,12 @@ void txp_thread()
 		// Aktialisierung starten?
 		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
 			&& SelbstAnrufPhase == SelbstAnrufRuhe
-			&& KurzTimerVal(&SelbstAnrufTimer) 
-				>= ((SelbstAnrufFehlerZaehler == 0) ? 45 * KurzTimerFreq : 10 * KurzTimerFreq)
-				// ohne Fehler alle 45 Sekunden prüfen, mit Fehler alle 10 Sekunden
 			&& SelbstAnrufSocketHandle == NO_SOCKET_USED
-			&& TeilnehmerServerSocket == NO_SOCKET_USED)
+			&& TxpSocketHandle == NO_SOCKET_USED
+			&& TeilnehmerServerSocket == NO_SOCKET_USED
+			&& KurzTimerVal(&SelbstAnrufTimer) 
+				>= ((SelbstAnrufFehlerZaehler == 0) ? 45 * KurzTimerFreq : 10 * KurzTimerFreq))
+				// ohne Fehler alle 45 Sekunden prüfen, mit Fehler alle 10 Sekunden
 			{ // Selbst-Anruf starten
 			if (NetzEigeneIP == 0)
 				SelbstAnrufPhase = SelbstAnrufSperre;
@@ -3352,16 +3363,6 @@ void txp_thread()
 	// ==========================================================================
 
 	ProtokollSpeichern(false);
-	
-#ifdef TXP_EMAIL
-
-	// ==========================================================================
-	// Ab und zu mal prüfen, ob es neue Mails gibt.
-	// ==========================================================================
-	
-	POP3Einleiten();
-	
-#endif //def TXP_EMAIL
 	
 	// ==========================================================================
 	// Sicherheitslücke durch Überlauf des Konfig-Freigabe-Timers schließen.
