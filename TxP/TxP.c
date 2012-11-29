@@ -401,6 +401,9 @@ static uint16_t DynIPAktualisierungEndzeit;
 static TKurzTimer SelbstAnrufTimer;
 	//!< Verschiedene Aufgaben bei der Aktualisierung der eigenen IP auf dem Rufnummern-Server.
 
+static uint16_t SelbstAnrufPeriode;
+	//!< Abstand der Selbstanrufe in Sekunden.
+	
 	
 static int SelbstAnrufSocketHandle;
 	//!< Handle für ausgehende Verbindungen zum Selbst-Anruf
@@ -3031,9 +3034,10 @@ void txp_thread()
 			&& SelbstAnrufSocketHandle == NO_SOCKET_USED
 			&& TxpSocketHandle == NO_SOCKET_USED
 			&& TeilnehmerServerSocket == NO_SOCKET_USED
+			&& SelbstAnrufPeriode > 0
 			&& KurzTimerVal(&SelbstAnrufTimer) 
-				>= ((SelbstAnrufFehlerZaehler == 0) ? 45 * KurzTimerFreq : 10 * KurzTimerFreq))
-				// ohne Fehler alle 45 Sekunden prüfen, mit Fehler alle 10 Sekunden
+				>= ((SelbstAnrufFehlerZaehler == 0) ? SelbstAnrufPeriode * KurzTimerFreq : 10 * KurzTimerFreq))
+				// ohne Fehler alle xxx Sekunden prüfen, mit Fehler alle 10 Sekunden
 			{ // Selbst-Anruf starten
 			if (NetzEigeneIP == 0)
 				SelbstAnrufPhase = SelbstAnrufSperre;
@@ -4017,6 +4021,8 @@ const PROGMEM char NetzRufnummer_P[] = "NETZRUFNR";
 const PROGMEM char Geheimzahl_P[] = "PIN";
 const PROGMEM char DynIPAktiv_P[] = "DYNIPAKTIV";
 const PROGMEM char NetzPort_P[] = "NETZPORT";
+const PROGMEM char SelbstAnrufPeriode_P[] = "SELBSTANPER";
+
 
 #endif // TXP_ANSCHLUSS
 
@@ -4054,6 +4060,7 @@ void txp_cgi_config_extern(void *pStruct)
 		CgiFormInputFieldULong_P(PSTR("eigene Rufnummer im ip-telex-Netz:"), NetzRufnummer_P, 10, NetzRufnummer);
 		CgiFormInputFieldULong_P(PSTR("Geheimzahl:"), Geheimzahl_P, 6, Geheimzahl);
 		CgiFormCheckbox_P(PSTR("IP-Aktualisierung aktiv:"), DynIPAktiv_P, DynIPAktiv);
+		CgiFormInputFieldULong_P(PSTR("Verbindungstest-Periode:"), SelbstAnrufPeriode_P, 3, SelbstAnrufPeriode);
 		CgiFormInputFieldULong_P(PSTR("Port-Nummer im Netz:"), NetzPort_P, 6, NetzPort);
 		#endif // TXP_ANSCHLUSS
 		
@@ -4070,6 +4077,7 @@ void txp_cgi_config_extern(void *pStruct)
 		NetzRufnummer = CgiCheckULong_P(http_request, PSTR("Netz-Rufnummer"), NetzRufnummer_P, NetzRufnummer);
 		Geheimzahl = CgiCheckULong_P(http_request, PSTR("Geheimzahl"), Geheimzahl_P, Geheimzahl);
 		DynIPAktiv = CgiCheckBool_P(http_request, PSTR("DynIPAktualisierung"), DynIPAktiv_P, DynIPAktiv);
+		SelbstAnrufPeriode = CgiCheckULong_P(http_request, PSTR("Verb-Test Periode"), SelbstAnrufPeriode_P, SelbstAnrufPeriode);
 		NetzPort = CgiCheckULong_P(http_request, PSTR("Netz-Port"), NetzPort_P, NetzPort);
 		#endif //def TXP_ANSCHLUSS
 		
@@ -4268,6 +4276,11 @@ void txp_init()
 	else
 		DynIPAktiv = false;
 		
+	if (readConfig_P(SelbstAnrufPeriode_P, Buf) == 1)
+		SelbstAnrufPeriode = atoi(Buf);
+	else
+		SelbstAnrufPeriode = 45;
+	
 	if (readConfig_P(NetzPort_P, Buf) == 1)
 		NetzPort = atol(Buf);
 	else
