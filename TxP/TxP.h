@@ -312,6 +312,8 @@ enum { AsciiDruckPufferMax = 1000, HtmlSendeTextMax = 400 } ;
 
 extern char AsciiDruckPuffer[AsciiDruckPufferMax+4];
 		
+extern uint8_t AsciiDruckZiel;
+
 		
 extern int TxpSocketHandle;
 	

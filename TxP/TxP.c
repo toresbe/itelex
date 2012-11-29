@@ -208,6 +208,10 @@ char AsciiDruckPuffer[AsciiDruckPufferMax+4];
 static char HtmlSendeText[HtmlSendeTextMax+4];
 	//!< Puffer für zu Anzuzeigenden Text (Endgerät -> Netz), mit Null abgeschlossen
 
+uint8_t AsciiDruckZiel;
+	//!< Endgeräteadresse für spezielle Druckausgaben
+	
+	
 enum { AsciiHilfPufferMax = 100 } ;
 	//!< Größe von AsciiDruckPuffer.
 	
@@ -452,6 +456,10 @@ uint8_t	MeldungsdruckLevel;
 	//!< \par 3 = wie 2 und Bedienungsfehler
 	//!< \par 4 = wie 3 und Statusmeldungen
 
+uint8_t DiagnoseAusgabeZiel;
+	//!< Bei Diagnoseausgabe vorzugsweise zu nutzendes Endgerät, das die 
+	//!< Ursache des Diagnosetextes durch Endgerät verursacht wurde.
+	
 	
 TTastendruck Tastendruck;
 
@@ -549,12 +557,18 @@ bool Diagnoseausgabe_P(const char *msg, uint8_t Level)
 		{
 		DiagnosePuffer[0] = '\0';
 		DiagnosePufferLevel = 0;
+		DiagnoseAusgabeZiel = 0;
 		}
 	else
 		{
 		strncpy_P(DiagnosePuffer, msg, DiagnosePufferMax - 1);
 		DiagnosePuffer[DiagnosePufferMax - 1] = '\0';
 		DiagnosePufferLevel = Level;
+		if (Modus >= ModGehendReserv && Modus < ModKommendVerbVorstufe)
+			// also eine gehende Verbindung
+			DiagnoseAusgabeZiel = (BusVerbPartner >> 1);
+		else
+			DiagnoseAusgabeZiel = 0;
 		}
 	return true;
 	}
@@ -960,6 +974,7 @@ void ModusWechsel(TModus neu)
 			LED_off(GRUEN);
 			LED_off(BLAU);
 			AsciiDruckPuffer[0] = '\0';
+			AsciiDruckZiel = 0;
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
 			StartKurzTimer(&SelbstAnrufTimer);
@@ -1763,6 +1778,8 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				if (Modus == ModKommendVerbVorstufe)
 					// ID#311 *******************************************************
 					ModusWechsel(ModKommendEinschalten);
+					//! \todo Anwahl durch *xx
+					
 
 				TxpSocketAbbauGeplant = false;
 
@@ -2478,9 +2495,9 @@ void AsciiDruckPufferVerarbeiten()
 
 
 //! Einschaltung für HTML-Chat oder Meldungsdruck
-bool SonstigeAnwahl()
+bool SonstigeAnwahl(uint8_t aDurchwahl)
 	{
-	if (KommendInternAnwaehlen(0)) // keine Durchwahl
+	if (KommendInternAnwaehlen(aDurchwahl))
 		{ 
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("Einschaltung intern\r\n" ));
@@ -2495,6 +2512,7 @@ bool SonstigeAnwahl()
 		Diagnoseausgabe_P(PSTR("Reservierung für Einschaltung konnte nicht versandt werden"), 1);
 		AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 		AsciiHilfPuffer[0] = '\0';
+		AsciiDruckZiel = 0;
 		AsciiHilfZeilenanfang = 0;
 		ModusWechsel(ModWarteGrundstellung);
 		return false;
@@ -2923,13 +2941,15 @@ void txp_thread()
 		&& AsciiDruckPuffer[0] == '\0' 
 		&& DiagnosePuffer[0] != '\0'
 		&& DiagnosePufferLevel <= MeldungsdruckLevel)
-		{ //! \todo Endgerät auswählen
+		{ 
+		AsciiDruckZiel = DiagnoseAusgabeZiel;
 		strcpy_P(AsciiDruckPuffer, PSTR("\r\n///meldung: "));
 		strncat(AsciiDruckPuffer, DiagnosePuffer, AsciiDruckPufferMax-30);
 		AsciiDruckPuffer[AsciiDruckPufferMax-30] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
 		DiagnosePuffer[0] = '\0';
 		DiagnosePufferLevel = 0;
+		DiagnoseAusgabeZiel = 0;
 		}
 
 	// ==========================================================================
@@ -2941,8 +2961,11 @@ void txp_thread()
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("Meldungsdruck -> "));
 			
-		if (SonstigeAnwahl())
+		if (SonstigeAnwahl(AsciiDruckZiel))
+			{
 			ModusWechsel(ModMeldungsdruckWarteEinQuitt);
+			AsciiDruckZiel = 0;
+			}
 			
 		} // if ModRuhe && Text im DruckPuffer
 		
@@ -3732,7 +3755,7 @@ void txp_cgi_msg_In( void * pStruct )
 			if (ProtokollLevel >= 1)
 				ProtokollierenTxp_P(PSTR("HTML-Chat begonnen -> "));
 				
-			if (SonstigeAnwahl())
+			if (SonstigeAnwahl(0)) //! \todo bei spezieller Anwahl (z.B. *30* Durchwahl realisieren)
 				ModusWechsel(ModHtmlChatWarteEinQuitt);
 			}
 		}
