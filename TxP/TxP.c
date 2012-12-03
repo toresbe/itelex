@@ -640,6 +640,13 @@ volatile static uint32_t Timer0CallbackCount;
 void txp_timerEvent(void)
 	{
 	uint8_t t0c = TCNT0;
+	
+	if (t0c < Timer0Cnt_Min)
+		Timer0Cnt_Min = t0c;
+	if (t0c > Timer0Cnt_Max)
+		Timer0Cnt_Max = t0c;
+	// Statistik über den Zeitverzug...
+	
 	Timer0CallbackCount++;
 
 	KurzTimerVorteilerCnt++;
@@ -678,12 +685,6 @@ void txp_timerEvent(void)
 		{ // ist Verbunden, also Pegel senden und empfangen
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
 
-		if (t0c < Timer0Cnt_Min)
-			Timer0Cnt_Min = t0c;
-		if (t0c > Timer0Cnt_Max)
-			Timer0Cnt_Max = t0c;
-		// Statistik über den Zeitverzug...
-		
 		if (SerUmEmpfBitNr != SerUmEmpfWarte && SerUmEmpfBitNr != SerUmEmpfFertig)
 			{ // Empfang läuft
 			if (--SerUmTickZaehlerEmpf <= 2)
@@ -806,7 +807,11 @@ void txp_timerEvent(void)
 					{
 					BusSenden(SendeMark ? BusKdoMarkWdh : BusKdoSpaceWdh);
 					TwiLebenszeichenZaehler = TxpTimerFreq * 5/10; // alle 0,5 Sekunden
+					LED_off(ROT);
 					}
+				// HACK:
+				else
+					LED_on(ROT);
 				}
 			} // kein Sendepegel-Wechsel
 
@@ -840,7 +845,12 @@ void txp_timerEvent(void)
 				{
 				BusSenden(BusLebenszeichen);
 				TwiLebenszeichenZaehler = TxpTimerFreq * 5/10; // alle 0,5 Sekunden
+				LED_off(ROT);
 				}
+			// HACK:
+			else
+				LED_on(ROT);
+			
 			}
 		} // if Modus != Ruhe
 
@@ -908,8 +918,8 @@ void txp_timerEvent(void)
 	
 	t0c = TCNT0 - t0c;
 	if (t0c > Timer0Callback_Max)
-		Timer0Callback_Max = t0c;
-	}
+		Timer0Callback_Max = t0c; // Dauer der Funktion txp_timerEvent()
+	} // txp_timerEvent()
 
 	
 //! Speichert ungültige Befehle vom TWI-Bus.
