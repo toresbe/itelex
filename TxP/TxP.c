@@ -616,14 +616,15 @@ static void ProtokollierenTxp_P(const char *s)
 //! Prüft, ob im aktuellen Modus ein TWI-Partner verbunden sein müsste.
 static bool ModusTwiVerbunden()
 	{
-	return (Modus == ModKommendEinschalten //! \todo sollte eigentlich auch ohne gehen...
-			|| Modus == ModKommendWarteEinQuitt 
-			|| Modus == ModKommendVerbunden 
-			|| Modus == ModGehendReserv 
+	return (Modus == ModGehendReserv 
 			|| Modus == ModGehendWaehlen 
 			|| Modus == ModGehendVerbunden 
+			|| Modus == ModKommendWarteEinQuitt 
+			|| Modus == ModKommendVerbunden 
+			|| Modus == ModPufferDruckUndSchluss
+			|| Modus == ModHtmlChatWarteEinQuitt
 			|| Modus == ModHtmlChatVerbunden
-			|| Modus == ModPufferDruckUndSchluss);
+			|| Modus == ModMeldungsdruckWarteEinQuitt);
 	}
 	
 	
@@ -807,11 +808,7 @@ void txp_timerEvent(void)
 					{
 					BusSenden(SendeMark ? BusKdoMarkWdh : BusKdoSpaceWdh);
 					TwiLebenszeichenZaehler = TxpTimerFreq * 5/10; // alle 0,5 Sekunden
-					LED_off(ROT);
 					}
-				// HACK:
-				else
-					LED_on(ROT);
 				}
 			} // kein Sendepegel-Wechsel
 
@@ -834,8 +831,8 @@ void txp_timerEvent(void)
 			}
 		} // if "Verbunden"
 
+	if (ModusTwiVerbunden())
 	
-	else if (ModusTwiVerbunden())
 		{ // Lebenszeichen regelmäßig senden
 		if (TwiLebenszeichenZaehler > 0)
 			TwiLebenszeichenZaehler--;
@@ -845,12 +842,7 @@ void txp_timerEvent(void)
 				{
 				BusSenden(BusLebenszeichen);
 				TwiLebenszeichenZaehler = TxpTimerFreq * 5/10; // alle 0,5 Sekunden
-				LED_off(ROT);
 				}
-			// HACK:
-			else
-				LED_on(ROT);
-			
 			}
 		} // if Modus != Ruhe
 
