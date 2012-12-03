@@ -616,7 +616,8 @@ static void ProtokollierenTxp_P(const char *s)
 //! Prüft, ob im aktuellen Modus ein TWI-Partner verbunden sein müsste.
 static bool ModusTwiVerbunden()
 	{
-	return (Modus == ModKommendWarteEinQuitt 
+	return (Modus == ModKommendEinschalten //! \todo sollte eigentlich auch ohne gehen...
+			|| Modus == ModKommendWarteEinQuitt 
 			|| Modus == ModKommendVerbunden 
 			|| Modus == ModGehendReserv 
 			|| Modus == ModGehendWaehlen 
@@ -2829,13 +2830,13 @@ void txp_thread()
 		{ 
 		if (KommendInternAnwaehlen(Durchwahl)) 
 			{ // ID#321 ********************************************
+			BusSenden(BusKdoEin);
+			ModusWechsel(ModKommendWarteEinQuitt);
 			if (ProtokollLevel >= 1)
 				{
 				ProtokollierenTxp();
 				ProtokollierenInt_P(PSTR("Anwahl intern an %u erfolgt\r\n"), Durchwahl);
 				}
-			BusSenden(BusKdoEin);
-			ModusWechsel(ModKommendWarteEinQuitt);
 			}
 		else
 			{ // ID#322 ********************************************
