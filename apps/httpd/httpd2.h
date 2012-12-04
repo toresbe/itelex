@@ -32,7 +32,9 @@
 		#define REQUEST_BUFFERLEN		162
 	#endif
 
-	#define MAX_HTTP_PARAMS			8
+	// Son 04.12.2012: von 8 auf 12 erhöht.
+	#define MAX_HTTP_PARAMS			12
+	
 
 	/*! \struct HTTP_REQUEST
 	 *  \brief Definiert die Struktur in der Informationen zu einem HTTP-Request stehen.

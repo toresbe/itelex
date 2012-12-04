@@ -831,8 +831,7 @@ void txp_timerEvent(void)
 			}
 		} // if "Verbunden"
 
-	if (ModusTwiVerbunden())
-	
+	else if (ModusTwiVerbunden())
 		{ // Lebenszeichen regelmäßig senden
 		if (TwiLebenszeichenZaehler > 0)
 			TwiLebenszeichenZaehler--;
@@ -1749,7 +1748,7 @@ void InterneVerbindungBeenden(bool Force)
 //! Die Anwahl-Sequenz besteht aus *n* oder *nn*.
 //! \retval 0 keine Anwahl-Sequenz
 //! \retval -1 unvollständige Anwahl-Sequenz
-//! \retval >0 Anwahl-Sequenz, dekodierte Anwahl-Nummer.
+//! \retval >0 Anwahl-Sequenz, dekodierte Anwahl-Nummer als Durchwahl.
 static int16_t AnwahlNummerInAsciiPuffer()
 	{
 	if (AsciiDruckPuffer[0] == '*')
@@ -1758,12 +1757,12 @@ static int16_t AnwahlNummerInAsciiPuffer()
 			{
 			uint8_t Ziffer1 = AsciiDruckPuffer[1] - '0';
 			if (AsciiDruckPuffer[2] == '*')
-				return WahlZuAdresse(Ziffer1, 1);
+				return WahlZuAdresse(Ziffer1, 1) >> 1;
 			else if (AsciiDruckPuffer[2] >= '0' && AsciiDruckPuffer[2] <= '9')
 				{
 				uint8_t Ziffer2 = AsciiDruckPuffer[2] - '0';
 				if (AsciiDruckPuffer[3] == '*')
-					return WahlZuAdresse(10 * Ziffer1 + Ziffer2, 2);
+					return WahlZuAdresse(10 * Ziffer1 + Ziffer2, 2) >> 1;
 				else if (AsciiDruckPuffer[3] == '\0')
 					return -1;
 				else
@@ -2562,7 +2561,7 @@ bool SonstigeAnwahl(uint8_t aDurchwahl)
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("Einschaltung intern VERSAGT\r\n" ));
 			
-		Diagnoseausgabe_P(PSTR("Reservierung für Einschaltung konnte nicht versandt werden"), 1);
+		Diagnoseausgabe_P(PSTR("Reservierung fuer Einschaltung konnte nicht versandt werden"), 1);
 		AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 		AsciiHilfPuffer[0] = '\0';
 		AsciiDruckZiel = 0;
@@ -2963,7 +2962,14 @@ void txp_thread()
 				
 			case ModDeaktiviert:
 				// ID#511 ********************************************************
-				ModusWechsel(ModWarteGrundstellung);
+				if (Tastendruck == Kurz)
+					ModusWechsel(ModWarteGrundstellung);
+				else
+					{
+					ProtokollierenTxp_P(PSTR("Reset durch Tastend\r\n"));
+					ProtokollSpeichern(true);
+					softreset();
+					}
 				break;
 
 			case ModPufferDruckUndSchluss:
@@ -3808,12 +3814,16 @@ void txp_cgi_msg_In( void * pStruct )
 		
 		if (Modus == ModRuhe)
 			{
-			if (ProtokollLevel >= 1)
-				ProtokollierenTxp_P(PSTR("HTML-Chat begonnen -> "));
-
-			int Anwahl = AnwahlNummerInAsciiPuffer();
+			int16_t Anwahl = AnwahlNummerInAsciiPuffer();
 			if (Anwahl < 0)
 				Anwahl = 0;
+			
+			if (ProtokollLevel >= 1)
+				{
+				ProtokollierenTxp();
+				ProtokollierenInt_P(PSTR("HTML-Chat begonnen (Anwahl %u) -> "), Anwahl);
+				}
+				
 			if (SonstigeAnwahl(Anwahl)) 
 				ModusWechsel(ModHtmlChatWarteEinQuitt);
 			}
@@ -3930,10 +3940,6 @@ void txp_cgi_config_intern(void *pStruct)
 
 		printf_P(PSTR("neue Einstellungen: <a href=\"txpcfg-intern.cgi\">weiter</a>"));
 
-		// HACK:
-		ProtokollierenPuffer(http_request->HTTP_LINEBUFFER, REQUEST_BUFFERLEN);
-		Protokollieren_P(PSTR("\r\n"));
-		
 		#ifdef TXP_ANSCHLUSS
 		
 		// Eigene Nummer
@@ -4064,12 +4070,8 @@ void txp_cgi_config_intern(void *pStruct)
 			strncpy(KonfigPasswort, http_request->argvalue[PharseGetValue_P(http_request, KonfigPasswort_P)], KonfigPasswortLen);
 			KonfigPasswort[KonfigPasswortLen] = '\0';
 			changeConfig_P(KonfigPasswort_P, KonfigPasswort);
-			printf_P(PSTR("<br>Kennwort ge&auml;ndert."));
+			printf_P(PSTR("<br>Kennwort ggf. ge&auml;ndert."));
 			}
-			
-		// HACK:
-		ProtokollierenPuffer(http_request->HTTP_LINEBUFFER, REQUEST_BUFFERLEN);
-		Protokollieren_P(PSTR("\r\n"));
 			
 		} // else argc > 0
 		
