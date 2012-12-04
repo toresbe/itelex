@@ -2440,6 +2440,14 @@ void AsciiDruckPufferVerarbeiten()
 				if (AsciiDruckPuffer[dpi] == ' ' || AsciiDruckPuffer[dpi] == '-')
 					UmbruchPosVorschlag = hpi;
 				}
+				
+			else if (AsciiDruckPuffer[dpi] == CodeChrWerDa)
+				{
+				AsciiHilfPuffer[hpi++] = CodeChrWerDa;
+				AsciiDruckPuffer[dpi+1] = '\0'; // Wandlung terminieren.
+				ZeilePos = 0; // damit kein Umbruch eingebaut wird.
+				}
+				
 			else
 				{ // Ersatztabelle benutzten
 				PGM_P p = strchr_P(UebersetzUr, AsciiDruckPuffer[dpi]);
@@ -2879,7 +2887,8 @@ void txp_thread()
 			if (ProtokollLevel >= 1)
 				{
 				ProtokollierenTxp();
-				ProtokollierenInt_P(PSTR("Anwahl intern an %u erfolgt\r\n"), Durchwahl);
+				ProtokollierenInt_P(PSTR("Anwahl intern %u "), Durchwahl);
+				ProtokollierenInt_P(PSTR("verbunden mit %u\r\n"), BusVerbPartner << 1);
 				}
 			}
 		else
@@ -3898,7 +3907,7 @@ void txp_cgi_config_intern(void *pStruct)
 		CgiFormCheckbox_P(PSTR("feste Hauptstelle f&uuml;r kommende Verbindungen:"), FesteHst_P, FesteHauptstelle);
 
 		AdresseZuWahlStr(Hauptstelle, Buf);
-		CgiFormInputFieldText_P(PSTR("intere Duchwahl der Hauptstelle f&uuml;r kommende Verbindungen:"), Hauptstelle_P, 2, Buf);
+		CgiFormInputFieldText_P(PSTR("interne Durchwahl der Hauptstelle f&uuml;r kommende Verbindungen:"), Hauptstelle_P, 2, Buf);
 
 		CgiFormCheckbox_P(PSTR("Alternativ-Suche bei besetzt:"), AlternBeiBes_P, AlternativSucheBeiBesetzt);
 						
@@ -3911,7 +3920,7 @@ void txp_cgi_config_intern(void *pStruct)
 		CgiFormInputFieldULong_P(PSTR("Protokoll-Level f&uuml;r Teiln-Server:"), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
 		CgiFormInputFieldULong_P(PSTR("Level f&uuml;r Druckausgabe von Meldungen:"), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
 		
-		CgiFormInputFieldText_P(PSTR("Passwort f&uuml;r Kofigurationsseiten:"), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
+		CgiFormInputFieldText_P(PSTR("Passwort f&uuml;r Konfigurationsseiten:"), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
 
 		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
 		}
@@ -3921,6 +3930,10 @@ void txp_cgi_config_intern(void *pStruct)
 
 		printf_P(PSTR("neue Einstellungen: <a href=\"txpcfg-intern.cgi\">weiter</a>"));
 
+		// HACK:
+		ProtokollierenPuffer(http_request->HTTP_LINEBUFFER, REQUEST_BUFFERLEN);
+		Protokollieren_P(PSTR("\r\n"));
+		
 		#ifdef TXP_ANSCHLUSS
 		
 		// Eigene Nummer
@@ -4051,7 +4064,12 @@ void txp_cgi_config_intern(void *pStruct)
 			strncpy(KonfigPasswort, http_request->argvalue[PharseGetValue_P(http_request, KonfigPasswort_P)], KonfigPasswortLen);
 			KonfigPasswort[KonfigPasswortLen] = '\0';
 			changeConfig_P(KonfigPasswort_P, KonfigPasswort);
+			printf_P(PSTR("<br>Kennwort ge&auml;ndert."));
 			}
+			
+		// HACK:
+		ProtokollierenPuffer(http_request->HTTP_LINEBUFFER, REQUEST_BUFFERLEN);
+		Protokollieren_P(PSTR("\r\n"));
 			
 		} // else argc > 0
 		
