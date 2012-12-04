@@ -1744,6 +1744,46 @@ void InterneVerbindungBeenden(bool Force)
 	} // InterneVerbindungBeenden()
 	
 
+//! Prüft, ob im AsciiPuffer eine Anwahl-Sequenz enthalten ist.
+// ------------------------------------------------------------
+//! Die Anwahl-Sequenz besteht aus *n* oder *nn*.
+//! \retval 0 keine Anwahl-Sequenz
+//! \retval -1 unvollständige Anwahl-Sequenz
+//! \retval >0 Anwahl-Sequenz, dekodierte Anwahl-Nummer.
+static int16_t AnwahlNummerInAsciiPuffer()
+	{
+	if (AsciiDruckPuffer[0] == '*')
+		{
+		if (AsciiDruckPuffer[1] >= '0' && AsciiDruckPuffer[1] <= '9')
+			{
+			uint8_t Ziffer1 = AsciiDruckPuffer[1] - '0';
+			if (AsciiDruckPuffer[2] == '*')
+				return WahlZuAdresse(Ziffer1, 1);
+			else if (AsciiDruckPuffer[2] >= '0' && AsciiDruckPuffer[2] <= '9')
+				{
+				uint8_t Ziffer2 = AsciiDruckPuffer[2] - '0';
+				if (AsciiDruckPuffer[3] == '*')
+					return WahlZuAdresse(10 * Ziffer1 + Ziffer2, 2);
+				else if (AsciiDruckPuffer[3] == '\0')
+					return -1;
+				else
+					return 0;
+				}
+			else if (AsciiDruckPuffer[2] == '\0')
+				return -1;
+			else
+				return 0;
+			} // zweites Zeichen ist Ziffer
+		else
+			return 0;
+		} // erstes Zeichen ist Stern
+	else if (AsciiDruckPuffer[0] == '\0')
+		return -1;
+	else
+		return 0;
+	} // AnwahlNummerInAsciiPuffer()
+
+
 //! Interpretiert empfangene Daten vom Socket und schiebt diese in den 
 //! EmpfPuffer.
 static void TxpOderAsciiEmpfangVerarbeiten()
@@ -1780,9 +1820,11 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 					
 				if (Modus == ModKommendVerbVorstufe)
 					// ID#311 *******************************************************
-					ModusWechsel(ModKommendEinschalten);
-					//! \todo Anwahl durch *xx
-					
+					{
+					if (AnwahlNummerInAsciiPuffer() >= 0)
+						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
+					// sonst auf weitere Zeichen warten.
+					}
 
 				TxpSocketAbbauGeplant = false;
 
@@ -3609,7 +3651,9 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(KurzTimerVal(&WahlPauseTimer));
 	PRINTVAL(KurzTimerVal(&SchreibPauseTimer));
 	PRINTVAL(KurzTimerVal(&BusQuittTimer));
-	PRINTVAL(TwiLebenszeichenZaehler); 
+	PRINTVAL(TwiLebenszeichenZaehler);
+	PRINTVAL(TwiWatchdogCount);
+	PRINTVAL(BusKollisionZaehler);
 	PRINTVAL(KurzTimerVal(&TxpSocketLebenszeichenTimer));
 	PRINTVAL(KurzTimerVal(&TxpThreadCheckTimer));
 
@@ -3757,8 +3801,11 @@ void txp_cgi_msg_In( void * pStruct )
 			{
 			if (ProtokollLevel >= 1)
 				ProtokollierenTxp_P(PSTR("HTML-Chat begonnen -> "));
-				
-			if (SonstigeAnwahl(0)) //! \todo bei spezieller Anwahl (z.B. *30* Durchwahl realisieren)
+
+			int Anwahl = AnwahlNummerInAsciiPuffer();
+			if (Anwahl < 0)
+				Anwahl = 0;
+			if (SonstigeAnwahl(Anwahl)) 
 				ModusWechsel(ModHtmlChatWarteEinQuitt);
 			}
 		}
