@@ -150,7 +150,7 @@ typedef struct
 	
 	
 enum { TlnFlag_Lokal = 1 } ; 
-	//!< Diese Nummer wird nicht mit anderen Teilnehmern synchronisiert (TODO).
+	//!< Diese Nummer wird nicht mit anderen Teilnehmern synchronisiert.
 	
 enum { TlnFlag_Gesperrt = 2 } ; 
 	//!< Diese Nummer darf nicht bei Abfragen der Teilnehmerliste vom 

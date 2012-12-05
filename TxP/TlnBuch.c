@@ -792,6 +792,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		else
 			{
 			printf_P(PSTR( "</table>Noch keine Eintr&auml;ge vorhanden<p>"
+						   "<a href=\"txp-tlnverz.cgi?load\">gespeicherte Daten wiederherstellen</a><br>"
 						   "<a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></form>" ));
 			}
 

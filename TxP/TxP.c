@@ -597,7 +597,7 @@ static uint16_t TxpThreadCount;
 
 static void ProtokollierenTxp()
 	{
-	ProtokollierenInt_P(PSTR("Txp (%5u): "), TxpThreadCount);
+	ProtokollierenInt_P(PSTR("TxP (%5u): "), TxpThreadCount);
 	}
 	
 
@@ -665,7 +665,7 @@ void txp_timerEvent(void)
 		
 	wdt_reset();
 	
-	if (KurzTimerVal(&TxpThreadCheckTimer) > 30 * KurzTimerFreq) // nach 30 Sekunden Reset
+	if (KurzTimerVal(&TxpThreadCheckTimer) > 90 * KurzTimerFreq) // nach 90 Sekunden Reset
 		{ 
 		ProtokollierenTxp_P(PSTR("Reset wegen nicht-Aufruf von txp_thread()\r\n"));
 		ProtokollSpeichern(true);
@@ -1746,10 +1746,11 @@ void InterneVerbindungBeenden(bool Force)
 //! Prüft, ob im AsciiPuffer eine Anwahl-Sequenz enthalten ist.
 // ------------------------------------------------------------
 //! Die Anwahl-Sequenz besteht aus *n* oder *nn*.
+//! \param InPufferLoeschen wenn true und Anwahl-Sequenz gültig, wird diese aus dem AsciiPuffer gelöscht.
 //! \retval 0 keine Anwahl-Sequenz
 //! \retval -1 unvollständige Anwahl-Sequenz
 //! \retval >0 Anwahl-Sequenz, dekodierte Anwahl-Nummer als Durchwahl.
-static int16_t AnwahlNummerInAsciiPuffer()
+static int16_t AnwahlNummerInAsciiPuffer(bool InPufferLoeschen)
 	{
 	if (AsciiDruckPuffer[0] == '*')
 		{
@@ -1757,12 +1758,20 @@ static int16_t AnwahlNummerInAsciiPuffer()
 			{
 			uint8_t Ziffer1 = AsciiDruckPuffer[1] - '0';
 			if (AsciiDruckPuffer[2] == '*')
+				{
+				if (InPufferLoeschen)
+					memmove(AsciiDruckPuffer, AsciiDruckPuffer + 3, strlen(AsciiDruckPuffer) + 1 - 3);
 				return WahlZuAdresse(Ziffer1, 1) >> 1;
+				}
 			else if (AsciiDruckPuffer[2] >= '0' && AsciiDruckPuffer[2] <= '9')
 				{
 				uint8_t Ziffer2 = AsciiDruckPuffer[2] - '0';
 				if (AsciiDruckPuffer[3] == '*')
+					{
+					if (InPufferLoeschen)
+						memmove(AsciiDruckPuffer, AsciiDruckPuffer + 4, strlen(AsciiDruckPuffer) + 1 - 4);
 					return WahlZuAdresse(10 * Ziffer1 + Ziffer2, 2) >> 1;
+					}
 				else if (AsciiDruckPuffer[3] == '\0')
 					return -1;
 				else
@@ -1822,9 +1831,9 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				if (Modus == ModKommendVerbVorstufe)
 					// ID#311 *******************************************************
 					{
-					if (AnwahlNummerInAsciiPuffer() >= 0)
+					if (AnwahlNummerInAsciiPuffer(false) >= 0)
 						{
-						Durchwahl = AnwahlNummerInAsciiPuffer();
+						Durchwahl = AnwahlNummerInAsciiPuffer(true);
 						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
 						}
 					// sonst auf weitere Zeichen warten.
@@ -2404,7 +2413,6 @@ static void RufnummerBeiTlnServerAbfragen()
 
 void AsciiDruckPufferVerarbeiten()
 	{
-	//! \todo Werda richtig verarbeiten
 	if (Modus != ModHtmlChatVerbunden
 		&& Modus != ModKommendVerbunden 
 		&& Modus != ModGehendVerbunden
@@ -2784,7 +2792,7 @@ void txp_thread()
 							break;
 							
 						case POP3:
-							// todo
+							POP3Abbrechen();
 							break;
 							
 						}
@@ -2856,7 +2864,7 @@ void txp_thread()
 			
 #ifdef TXP_EMAIL
 		case POP3:
-			Pop3DatenVerarbeiten();
+			POP3DatenVerarbeiten();
 			break;
 			
 		case SMTP:
@@ -2961,7 +2969,9 @@ void txp_thread()
 					strcpy_P(AsciiDruckPuffer, PSTR("interne IP: "));
 					iptostr(myIP, AsciiDruckPuffer + strlen(AsciiDruckPuffer));
 					strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
-					//! \todo Datum und sonstige Informationen drucken
+					struct TIME Time;
+					CLOCK_GetTime(&Time);
+					sprintf_P(AsciiDruckPuffer, PSTR("Datum: %02u.%02u.%04u %02u:%02u:%02u\r\n"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 					}
 				break;
 				
@@ -3819,7 +3829,7 @@ void txp_cgi_msg_In( void * pStruct )
 		
 		if (Modus == ModRuhe)
 			{
-			int16_t Anwahl = AnwahlNummerInAsciiPuffer();
+			int16_t Anwahl = AnwahlNummerInAsciiPuffer(true);
 			if (Anwahl < 0)
 				Anwahl = 0;
 			

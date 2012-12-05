@@ -32,7 +32,7 @@
 
 extern void txp_email_init();
 
-extern void Pop3DatenVerarbeiten();
+extern void POP3DatenVerarbeiten();
 			
 extern void SMTPDatenVerarbeiten();
 
@@ -42,6 +42,7 @@ extern void SMTPSchliessen();
 
 extern void POP3Einleiten();
 
+extern void POP3Abbrechen();
 
 
 #endif //def TXP_EMAIL

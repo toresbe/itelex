@@ -297,7 +297,7 @@ QUIT
 #define MAXLINELEN 63
 
 
-void Pop3DatenVerarbeiten()
+void POP3DatenVerarbeiten()
 	{
 	uint16_t i;
 	uint16_t ZeileAnfang;
@@ -472,6 +472,25 @@ void Pop3DatenVerarbeiten()
 	}
 	
 			
+//! Abbruch der Abfrage des POP-Servers.
+// =========================================================================
+//! z.B. durch Drücken der Schluss-taste während des Ausdrucks.
+void POP3Abbrechen()
+	{
+	if (TxpSocketMode != SocketOriginate || TxpSocketProtokoll != POP3)
+		return; // da gibt es nix abzubrechen...
+	if (ProtokollPhase == Abmelden)
+		return; // ist eh gleich vorbei...
+	
+	SocketInBufUsed = 0;
+	AsciiDruckPuffer[0] = '\0'; // AsciiHilfpuffer zwar noch nicht leer, aber Endgerät ist eh aus.
+	
+	if (ProtokollLevel >= 1)
+		Protokollieren_P(PSTR("TxP POP: Abbruch\r\n"));
+	
+	ProtokollPhase = Abmelden;
+	}
+	
 			
 //! Offnet den Socket-Daten für die Kommunikation mit einem SMTP-Server.
 // =========================================================================
@@ -489,7 +508,11 @@ bool SMTPOeffnen(char *EmfaengerName)
 		Protokollieren_P(PSTR("TxP SMTP: IP zu Url "));
 		Protokollieren(EmailSMTPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
-		//! \todo Diagnoseausgabe_P(
+		if (Diagnoseausgabe_P(PSTR("SMTP-Server "), 1))
+			{
+			strncat(DiagnosePuffer, EmailSMTPServerAdresse, strlen(DiagnosePuffer) - 30);
+			strcat_P(DiagnosePuffer, PSTR(": IP nicht ermittelbar"));
+			}
 		return false;
 		}
 	
@@ -502,7 +525,11 @@ bool SMTPOeffnen(char *EmfaengerName)
 		Protokollieren_P(PSTR("TxP SMTP: Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
 		TxpSocketHandle = NO_SOCKET_USED;
 		TxpSocketMode = SocketIdle;
-		//! \todo Diagnoseausgabe_P(
+		if (Diagnoseausgabe_P(PSTR("SMTP-Server "), 1))
+			{
+			strncat(DiagnosePuffer, EmailSMTPServerAdresse, strlen(DiagnosePuffer) - 30);
+			strcat_P(DiagnosePuffer, PSTR(" konnte nicht verbunden werden"));
+			}
 		return false;
 		}
 
@@ -594,10 +621,7 @@ void SMTPDatenVerarbeiten()
 				}
 
 			if (Diagnoseausgabe_P(PSTR("vom SMTP-Server: "), 2))
-				{
 				strncat(DiagnosePuffer, SocketInBuf, strlen(DiagnosePuffer) - 20);
-				strcat_P(DiagnosePuffer, PSTR("\r\n"));
-				}
 			
 			InterneVerbindungBeenden(true);
 			TxpSocketAbbauGeplant = true;
