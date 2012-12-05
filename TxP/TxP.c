@@ -1348,7 +1348,7 @@ static void SocketBearbeiten()
 				TxpSocketAbbauGeplant = false;
 				TxpSocketProtVersion = 0;
 				TxpSocketProtVersionVorschlag = 0; // auf Gegenvorschlag warten
-				TxpSocketProtokoll = TelexPhone; // versuch...
+				TxpSocketProtokoll = Ascii;
 				StartKurzTimer(&TxpSocketAbbruchTimer);
 				StartKurzTimer(&TxpSocketAbbauVerzoegerung);
 				SocketBufInit();
@@ -1773,6 +1773,8 @@ static int16_t AnwahlNummerInAsciiPuffer()
 			else
 				return 0;
 			} // zweites Zeichen ist Ziffer
+		else if (AsciiDruckPuffer[1] == '\0')
+			return -1;
 		else
 			return 0;
 		} // erstes Zeichen ist Stern
@@ -1821,7 +1823,10 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 					// ID#311 *******************************************************
 					{
 					if (AnwahlNummerInAsciiPuffer() >= 0)
+						{
+						Durchwahl = AnwahlNummerInAsciiPuffer();
 						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
+						}
 					// sonst auf weitere Zeichen warten.
 					}
 
@@ -2887,7 +2892,7 @@ void txp_thread()
 				{
 				ProtokollierenTxp();
 				ProtokollierenInt_P(PSTR("Anwahl intern %u "), Durchwahl);
-				ProtokollierenInt_P(PSTR("verbunden mit %u\r\n"), BusVerbPartner << 1);
+				ProtokollierenInt_P(PSTR("verbunden mit %u\r\n"), BusVerbPartner >> 1);
 				}
 			}
 		else
