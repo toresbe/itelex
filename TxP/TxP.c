@@ -2980,11 +2980,7 @@ void txp_thread()
 				if (Tastendruck == Kurz)
 					ModusWechsel(ModWarteGrundstellung);
 				else
-					{
-					ProtokollierenTxp_P(PSTR("Reset durch Tastend\r\n"));
-					ProtokollSpeichern(true);
 					softreset();
-					}
 				break;
 
 			case ModPufferDruckUndSchluss:

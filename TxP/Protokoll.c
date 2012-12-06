@@ -108,6 +108,9 @@ bool ProtokollSpeichern(bool flush)
 	LED_on(ROT); 
 #endif //defined(LEDROT_SDKARTE)
 
+	struct TIME Time;
+	CLOCK_GetTime(&Time);
+
 	if (Dateiname[0] == '\0')
 		fd = NULL;
 	else
@@ -144,8 +147,6 @@ bool ProtokollSpeichern(bool flush)
 	if (fd == NULL)
 		{ // neue Datei anlegen
 		// Dateiname festlegen
-		struct TIME Time;
-		CLOCK_GetTime(&Time);
 		sprintf_P(Dateiname, PSTR("prot_%04u-%02u-%02u_%02d-%02d.txt"), Time.YY, Time.MM, Time.DD, Time.hh, Time.mm);
 		
 		// Basisverzeichnis öffnen
@@ -185,6 +186,22 @@ bool ProtokollSpeichern(bool flush)
 		} // neue Datei anlegen.
 	
 	// jetzt muss fd geöffnet sein.
+	
+	// ggf. Titelzeile mit Datum und Stunde/Minute
+	if (Time.time >= LetzteDruckZeit + 5 * 60)
+		{
+		char Kopfzeile[40];
+		sprintf_P(Kopfzeile, PSTR("\r\n++++++ %02u.%02u.%04u ++++++\r\n"),
+			  Time.DD, Time.MM, Time.YY);
+		if (fat_write_file(fd, (uint8_t*) Kopfzeile, strlen(Kopfzeile)) <= 0)
+			{
+			Diagnoseausgabe_P(PSTR("fat_write_file versagt"), 1);
+			fat_close_file(fd);
+			return false;
+			}
+		}
+	
+	// Inhalt des Puffers ausgeben
 	if (fat_write_file(fd, (uint8_t*) Puffer, strlen(Puffer)) <= 0)
 		{
 		Diagnoseausgabe_P(PSTR("fat_write_file versagt"), 1);
@@ -194,6 +211,8 @@ bool ProtokollSpeichern(bool flush)
 
 	fat_close_file(fd);
 
+	LetzteDruckZeit = Time.time;
+	
 	DruckeUhrzeit = (Puffer[strlen(Puffer)-1] == '\n');
 	
 	Puffer[0] = '\0';
@@ -234,28 +253,11 @@ static bool ProtPraeparieren(int len)
 			return false; // kein Platz mehr.
 		}
 
-#if defined(MMC)
-	if (fs != NULL)
-		{
-		if (Puffer[0] == '\0')
-			{ // Datum protokollieren, wenn mehr als 60 Sekunden verstrichen
-			CLOCK_GetTime(&Time);
-			if (Time.time >= LetzteDruckZeit + 60)
-				{
-				sprintf_P(Puffer, PSTR("\r\n++++++ %02u.%02u.%04u ++++++\r\n"),
-					  Time.DD, Time.MM, Time.YY);
-				DruckeUhrzeit = true;
-				}
-			}
-		}
-#endif //defined(MMC)		
-
 	if (DruckeUhrzeit || Puffer[strlen(Puffer)-1] == '\n')
 		{
 		CLOCK_GetTime(&Time);
 		sprintf_P(Puffer + strlen(Puffer), PSTR("%02d:%02d:%02d,%02d: "), Time.hh, Time.mm, Time.ss, Time.ms);
 		DruckeUhrzeit = false;
-		LetzteDruckZeit = Time.time;
 		}
 
 	return true;
@@ -448,6 +450,8 @@ void ProtokollInit()
 	Dateiname[0] = '\0';
 	Idle = true;
 	CLOCK_RegisterCallbackFunction(SpeichernBeiIdle, MINUTE);
+		// durch den Minutentakt wird alle ein bis zwei Minuten der 
+		// Protokollinhalt gespeichert.
 	DruckeUhrzeit = true;
 	LetzteDruckZeit = 0;
 	RegelblockAktiv = false;
