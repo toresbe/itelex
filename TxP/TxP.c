@@ -3540,6 +3540,22 @@ static const PROGMEM char Kennwort_P[] = "kennw";
 
 uint8_t KonfigFreigabe(void *pStruct)
 	{
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+
+	if (ProtokollLevel >= 3)
+		{
+		char *Ende;
+		ProtokollierenTxp_P(PSTR("cgi-Aufruf: "));
+		if (http_request->argc == 0)
+			Ende = http_request->HTTP_LINEBUFFER;
+		else
+			Ende = http_request->argvalue[http_request->argc - 1];
+		Ende += strlen(Ende);
+		ProtokollierenPuffer(http_request->HTTP_LINEBUFFER, Ende - http_request->HTTP_LINEBUFFER);
+		Protokollieren_P(PSTR("\r\n"));
+		}
+	
 	if (KonfigPasswort[0] == '\0')
 		return true; // ohne Kennwort keine Sperre
 	
@@ -3551,9 +3567,6 @@ uint8_t KonfigFreigabe(void *pStruct)
 		
 	//! \todo Sperre nach Fehlversuchen
 	
-	struct HTTP_REQUEST * http_request;
-	http_request = (struct HTTP_REQUEST *) pStruct;
-
 	if (http_request->argc == 0 || PharseCheckName_P(http_request, Kennwort_P) == 0)
 		{ // Ausgabe der Passwort - Eingabeseite
 		KonfigFreigabeErteilt = false;
