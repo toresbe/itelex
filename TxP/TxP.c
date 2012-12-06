@@ -2971,7 +2971,9 @@ void txp_thread()
 					strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 					struct TIME Time;
 					CLOCK_GetTime(&Time);
-					sprintf_P(AsciiDruckPuffer, PSTR("Datum: %02u.%02u.%04u %02u:%02u:%02u\r\n"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+					sprintf_P(AsciiDruckPuffer + strlen(AsciiDruckPuffer), 
+							  PSTR("Datum: %02u.%02u.%04u %02u:%02u:%02u\r\n"), 
+							  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 					}
 				break;
 				
