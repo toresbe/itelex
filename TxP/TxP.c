@@ -4472,6 +4472,9 @@ void txp_init()
 	if (!timer0_RegisterCallbackFunction(txp_timerEvent))
 		return;
 
+	wdt_enable(WDTO_250MS);  
+		// in txp_timerEvent wird wdt_reset() ausgefährt.
+	
 	StartKurzTimer(&TxpThreadCheckTimer);
 		
 	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
