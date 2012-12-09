@@ -2034,6 +2034,10 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 			// Zahlen: unverarbeitete Daten / neue Daten / Daten insgesamt
 			}
 			
+		if (TxpSocketProtokoll == Ascii && SocketInBufUsed > 0 && SocketInBuf[SocketInBufUsed-1] == '@')
+			SocketInBuf[SocketInBufUsed-1] = CodeChrWerDa;
+			// am Ende des Empfangs ein @ durch Werda ersetzen.
+			
 		} // if GetBytesInSocketData > 0
 	} // TxpOderAsciiEmpfangVerarbeiten()
 

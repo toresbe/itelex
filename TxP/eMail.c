@@ -245,6 +245,9 @@ void POP3Einleiten()
 		return;
 		}
 
+	if (ProtokollLevel >= 2)
+		Protokollieren_P(PSTR("TxP POP: Socket zum Server erfolgreich geoeffnet\r\n"));
+		
 	SocketBufInit();
 	
 	TxpSocketMode = SocketOriginate;

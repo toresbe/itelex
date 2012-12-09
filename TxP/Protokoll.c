@@ -188,7 +188,7 @@ bool ProtokollSpeichern(bool flush)
 	// jetzt muss fd geöffnet sein.
 	
 	// ggf. Titelzeile mit Datum und Stunde/Minute
-	if (Time.time >= LetzteDruckZeit + 5 * 60)
+	if (Time.time >= LetzteDruckZeit + 3 * 60)
 		{
 		char Kopfzeile[40];
 		sprintf_P(Kopfzeile, PSTR("\r\n++++++ %02u.%02u.%04u ++++++\r\n"),
