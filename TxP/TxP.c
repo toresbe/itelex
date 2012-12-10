@@ -1211,7 +1211,33 @@ static bool SchreibeZeichenInSendePuffer(char c)
 		} // kein Werda
 	}
 			
-			
+
+//! Prüft ob von außen kommende Durchwahl erlaubt ist und wendet ggf. auch 
+//! DurchwahlTabelle an.
+//-----------------------------------------------------------------------			
+//! \param aDurchwahl Zeiger auf Variable mit gewählter Durchwahl.
+//! \retval true Durchwahl war zugelassen.
+static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
+	{
+	if (*aDurchwahl == 0)
+		return true;
+		
+	// Prüfen, ob Durchwahl freigegeben ist. Freigegeben ist diese, wenn 
+	// zwischen 1 und 9 oder wenn direkte Durchwahl in DurchwahlTabelle enthalten.
+	if (*aDurchwahl <= 9 && DurchwahlTabelle[*aDurchwahl] > 0)
+		{
+		*aDurchwahl = DurchwahlTabelle[*aDurchwahl];
+		return true;
+		}
+		
+	for (uint8_t i = 0 ; i < 9 ; i++)
+		if (*aDurchwahl == DurchwahlTabelle[i])
+			return true;
+	
+	return false;
+	}
+	
+
 //! Bei kommenden Verbindungen aller Art (TelexPhone, HTML) passenden internen 
 //! Empfänger ermitteln und anwählen.
 //-----------------------------------------------------------------------------			
@@ -1224,7 +1250,7 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 	int16_t Stat;
 	uint8_t TestVerbParter = 0;
 	
-	// zuerst Durchwahl prüfen...
+	// Durchwahl prüfen...
 	if (aDurchwahl * 2 >= BusAdrMin && aDurchwahl * 2 <= BusAdrEndgeraetMax)
 		{
 		TestVerbParter = aDurchwahl * 2;
@@ -1834,7 +1860,15 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 					if (AnwahlNummerInAsciiPuffer(false) >= 0)
 						{
 						Durchwahl = AnwahlNummerInAsciiPuffer(true);
-						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
+						if (ExternDurchwahlPruefen(&Durchwahl))
+							ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
+						else
+							{ 
+							//! \todo Abweisen
+							Durchwahl = 0;
+							ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
+							}
+							
 						}
 					// sonst auf weitere Zeichen warten.
 					}
@@ -1850,10 +1884,18 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				
 			else if (c == TXPC_DURCHWAHL)
 				{ // ID#312 **************************************************************
+				TxpSocketProtokoll = TelexPhone;
 				if (Modus == ModKommendVerbVorstufe)
 					{
 					Durchwahl = SocketInBuf[i+2];
-					ModusWechsel(ModKommendEinschalten);
+					if (ExternDurchwahlPruefen(&Durchwahl))
+						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
+					else
+						{ 
+						//! \todo Abweisen
+						Durchwahl = 0;
+						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
+						}
 					}
 				i += 2 + (uint8_t) SocketInBuf[i+1];
 				TxpSocketAbbauGeplant = false;
@@ -1928,6 +1970,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				
 			else if (c == TXPC_QUITT)
 				{ 
+				TxpSocketProtokoll = TelexPhone;
 				uint8_t len = SocketInBuf[i+1];
 				if (Modus == ModKommendVerbVorstufe)
 					{ // ID#312 **************************************************
@@ -1946,6 +1989,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				
 			else if (c == TXPC_VERSION)
 				{ 
+				TxpSocketProtokoll = TelexPhone;
 				uint8_t len = SocketInBuf[i+1];
 				if (len >= 1)
 					{
@@ -2010,7 +2054,10 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 			else 
 				{ // unbekannter Code --> ignorieren EINSCHLIEßLICH Daten
 				// ID#245 ID#313 ID#346 ********************************************************
-				i += 2 + (uint8_t) SocketInBuf[i+1];
+				if (TxpSocketProtokoll == TelexPhone)
+					i += 2 + (uint8_t) SocketInBuf[i+1];
+				else
+					i++;
 				}
 				
 			} // while (i < SocketInBufUsed)
@@ -2895,7 +2942,7 @@ void txp_thread()
 		}
 
 	if (Modus == ModKommendEinschalten)
-		{ 
+		{
 		if (KommendInternAnwaehlen(Durchwahl)) 
 			{ // ID#321 ********************************************
 			BusSenden(BusKdoEin);
@@ -3844,10 +3891,16 @@ void txp_cgi_msg_In( void * pStruct )
 		
 		if (Modus == ModRuhe)
 			{
-			int16_t Anwahl = AnwahlNummerInAsciiPuffer(true);
-			if (Anwahl < 0)
-				Anwahl = 0;
+			uint8_t Anwahl;
 			
+			if (AnwahlNummerInAsciiPuffer(false) > 0)
+				Anwahl = AnwahlNummerInAsciiPuffer(true);
+			else
+				Anwahl = 0;
+		
+			if (!ExternDurchwahlPruefen(&Anwahl))
+				Anwahl = 0;
+				
 			if (ProtokollLevel >= 1)
 				{
 				ProtokollierenTxp();
@@ -3856,6 +3909,7 @@ void txp_cgi_msg_In( void * pStruct )
 				
 			if (SonstigeAnwahl(Anwahl)) 
 				ModusWechsel(ModHtmlChatWarteEinQuitt);
+				
 			}
 		}
 
