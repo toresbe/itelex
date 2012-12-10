@@ -1219,6 +1219,8 @@ static bool SchreibeZeichenInSendePuffer(char c)
 //! \retval true Durchwahl war zugelassen.
 static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	{
+	ProtokollierenInt_P(PSTR("Durchwahl-Anfrage %u\r\n"), *aDurchwahl);
+	
 	if (*aDurchwahl == 0)
 		return true;
 		
@@ -1226,13 +1228,17 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	// zwischen 1 und 9 oder wenn direkte Durchwahl in DurchwahlTabelle enthalten.
 	if (*aDurchwahl <= 9 && DurchwahlTabelle[*aDurchwahl] > 0)
 		{
-		*aDurchwahl = DurchwahlTabelle[*aDurchwahl];
+		*aDurchwahl = DurchwahlTabelle[*aDurchwahl - 1] >> 1;
+		ProtokollierenInt_P(PSTR("Durchwahl aus Tabelle umgesetzt %u\r\n"), *aDurchwahl);
 		return true;
 		}
 		
 	for (uint8_t i = 0 ; i < 9 ; i++)
-		if (*aDurchwahl == DurchwahlTabelle[i])
+		if (*aDurchwahl == DurchwahlTabelle[i] >> 1)
+			{
+			ProtokollierenInt_P(PSTR("Durchwahl in Tabelle gefunden %u\r\n"), *aDurchwahl);
 			return true;
+			}
 	
 	return false;
 	}
