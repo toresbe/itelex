@@ -14,6 +14,7 @@
 #include "TlnBuch.h"
 #include "SwTwi.h"
 #include "Protokoll.h"
+#include "BusKomm.h" // für WahlZuAdresse()
 
 #include "CgiFormTools.h"
 
@@ -862,7 +863,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		{ 
 		// neuen Einfügen oder geänderten Aktualisieren
 		// ==================================================
-		bool Ok = true; // nur wenn gesetzt, wird auch gespeichert
+		bool DatenOk = true; // nur wenn gesetzt, wird auch gespeichert
 		uint32_t AltNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, AltNummer_P)]);
 		uint32_t NeuNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Nummer_P)]);
 			//! \todo Umstellen auf CgiCheckULong...
@@ -885,7 +886,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		if (TD.Nummer == 0)
 			{
 			printf_P(PSTR("<b>Rufnummer 0 nicht erlaubt!</b><br>"));
-			Ok = false;
+			DatenOk = false;
 			}
 		else
 			{
@@ -945,10 +946,19 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
 				strncpy(Hilf, http_request->argvalue[PharseGetValue_P(http_request, Durchwahl_P)], 2);
 				Hilf[2] = '\0';
+				// Leerzeichen löschen:
+				if (Hilf[1] == ' ')
+					Hilf[1] = '\0';
+				if (Hilf[0] == ' ')
+					{
+					Hilf[0] = Hilf[1];
+					Hilf[1] = '\0';
+					}
 				TD.Durchwahl = WahlZuAdresse(atoi(Hilf), strlen(Hilf)) >> 1;
 				if (TD.Durchwahl == 110) 
 					TD.Durchwahl = 0; // eingabe von WahlZuAdresse(0) = 110
-				printf_P(PSTR("Port %u Durchwahl %u<br>"), TD.Port, TD.Durchwahl);
+				AdresseZuWahlStr(TD.Durchwahl, Hilf);
+				printf_P(PSTR("Port %u Durchwahl %s (%u)<br>"), TD.Port, Hilf, TD.Durchwahl);
 				}
 				
 			else if (strcmp_P(TypStr, TypAscii_P) == 0)
@@ -980,26 +990,26 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			else
 				{
 				printf_P(PSTR("<b>Unbekannter Typ!</b><br>"));
-				Ok = false;
+				DatenOk = false;
 				}
 			}
 
 		if (TD.AdrArt != TxpDynIP)
 			TD.DynPin = 0; // Datenschutz.
 			
-		if (Ok && TD.AdrArt == Geloescht && AltNummer == 0)
+		if (DatenOk && TD.AdrArt == Geloescht && AltNummer == 0)
 			{ // einen neuen Lösch-Eintrag anzulegen ist doof
 			printf_P(PSTR("<b>keine &Auml;nderung</b><br>"));
-			Ok = false;
+			DatenOk = false;
 			}
 			
-		if (Ok && TD.Nummer != AltNummer && TlnSuche(TD.Nummer, false, NULL))
+		if (DatenOk && TD.Nummer != AltNummer && TlnSuche(TD.Nummer, false, NULL))
 			{
 			printf_P(PSTR("<b>Rufnummer ist bereits vergeben, &Auml;nderung nicht gespeichert</b><br>"));
-			Ok = false;
+			DatenOk = false;
 			}
 			
-		if (Ok)
+		if (DatenOk)
 			{ // speichern oder löschen
 			struct TIME CurTime;
 			CLOCK_GetTime(&CurTime);
@@ -1022,7 +1032,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				{ // TlnHinzufuegen() == false
 				printf_P(PSTR("<b>Teilnehmerliste voll, Eintrag nicht gespeichert</b><br>"));
 				}
-			} // if Ok
+			} // if DatenOk
 		Zurueck = true;
 		} // if (PharseCheckName_P(http_request, Nummer_P)) ; also neuen Einfügen oder geänderten Aktualisieren
 		

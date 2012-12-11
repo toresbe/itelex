@@ -40,7 +40,7 @@ extern uint8_t SwTwiResultat; // = Anzahl erfolgreich übertragener SwTwiDaten
 typedef enum {
 	KeinFehler       = 0x00,
 	UnbekanntesKdo   = 0x01,
-	KeineAntwort     = 0x02,
+	SlaveOhneAntwort = 0x02,
 	SlaveAbbruch     = 0x03,
 	ArbitLost        = 0x04,
 	StoerungSDA      = 0x11,

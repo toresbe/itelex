@@ -488,7 +488,7 @@ void SwTwiMain()
 				if (!Ack)
 					{
 					Stop(false);
-					SwTwiLetzterFehler = KeineAntwort;
+					SwTwiLetzterFehler = SlaveOhneAntwort;
 					SwTwiModus = Beendet;
 					return;
 					}
@@ -575,7 +575,7 @@ void SwTwiMain()
 						if (!Ack)
 							{
 							Stop(false);
-							SwTwiLetzterFehler = KeineAntwort; // hä... sollte eigentlich nicht sein
+							SwTwiLetzterFehler = SlaveOhneAntwort; // hä... sollte eigentlich nicht sein
 							SwTwiModus = Beendet;
 							return;
 							}

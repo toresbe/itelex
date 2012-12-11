@@ -1769,7 +1769,7 @@ void InterneVerbindungBeenden(bool Force)
 				ProtokollierenTxp();
 				ProtokollierenInt_P(PSTR("Wechsel nach Modus PufferDruckUndSchluss (von %d)\r\n"), Modus);
 				}
-			BusSenden(BusKdoSchluss);
+			//! \todo was sollte denn das hier?: BusSenden(BusKdoSchluss);
 			ModusWechsel(ModPufferDruckUndSchluss);
 			break;
 		}
@@ -2845,6 +2845,7 @@ void txp_thread()
 								}
 							break;
 							
+#ifdef TXP_EMAIL
 						case SMTP:
 							SMTPSchliessen();
 							break;
@@ -2852,6 +2853,7 @@ void txp_thread()
 						case POP3:
 							POP3Abbrechen();
 							break;
+#endif //def TXP_EMAIL
 							
 						}
 					}
@@ -3946,7 +3948,7 @@ void AdresseZuWahlStr(uint8_t Adr, char* Buf)
 	
 	if (AnzZif == 0)
 		{
-		Buf[0] = '0';
+		Buf[0] = '-';
 		Buf[1] = '\0'; // ungültige Nummer
 		}
 	else

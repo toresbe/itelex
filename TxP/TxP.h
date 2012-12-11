@@ -333,8 +333,10 @@ extern bool TxpSocketAbbauGeplant;
 typedef enum {
 	TelexPhone,		//!< Das eigene Protokoll
 	Ascii,			//!< Ascii, also telnet
+#ifdef TXP_EMAIL
 	POP3,			//!< Mail-Abfrage
-	SMTP			//!< Mail-Sendung
+	SMTP,			//!< Mail-Sendung
+#endif //def TXP_EMAIL
 	} TTxpSocketProtokoll; 
 	//!< Was geht über den Socket 'rüber.
 	
