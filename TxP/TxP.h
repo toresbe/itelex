@@ -359,6 +359,7 @@ extern char SocketOutBuf[SocketOutBufMax+4]; //!< TCP-Sendepuffer
 
 extern uint8_t ProtokollPhase;
 	
+extern void AdresseZuWahlStr(uint8_t Adr, char* Buf);
 
 extern void InterneVerbindungBeenden(bool Force);
 	

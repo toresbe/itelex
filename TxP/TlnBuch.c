@@ -667,6 +667,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	TTlnDaten TD;
+	char Hilf[10];
 	bool Zurueck = false; // wird auf true gesetzt, wenn ein "zurück"-Text gedruckt werden soll.
 
 	static PROGMEM const char Edit_P[] = "edit";
@@ -739,12 +740,13 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						iptostr(TD.IPAdr, TD.Adresse);
 						// weiter mit TxpUrl!
 					case TxpUrl:
+						AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
 						printf_P(PSTR(
 							"<td align=\"left\">TelexPhone</td>"
 							"<td align=\"left\">%s</td>" // Adresse
 							"<td align=\"center\">%u</td>" // Port
-					   		"<td align=\"center\">%u</td>" // Durchwahl
-							), TD.Adresse, TD.Port, TD.Durchwahl);
+					   		"<td align=\"center\">%s</td>" // Durchwahl
+							), TD.Adresse, TD.Port, Hilf);
 						break;
 
 					case AsciiIP:
@@ -846,7 +848,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			iptostr(TD.IPAdr, TD.Adresse);
 		CgiFormInputFieldText_P(PSTR("Adresse:"), Adresse_P, TlnAdresseMax-1, TD.Adresse);
 		CgiFormInputFieldULong_P(PSTR("Port:"), Port_P, 5, TD.Port);
-		CgiFormInputFieldULong_P(PSTR("Durchwahl:"), Durchwahl_P, 3, TD.Durchwahl);
+		AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
+		CgiFormInputFieldText_P(PSTR("Durchwahl:"), Durchwahl_P, 2, Hilf);
 
 		if (TD.Nummer == 0)
 			CgiFormFinish_P(PSTR("Hinzuf&uuml;gen"));
@@ -940,7 +943,11 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					printf_P(PSTR("TelexPhone: IP %s "), TD.Adresse);
 					}
 				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
-				TD.Durchwahl = atoi(http_request->argvalue[PharseGetValue_P(http_request, Durchwahl_P)]);
+				strncpy(Hilf, http_request->argvalue[PharseGetValue_P(http_request, Durchwahl_P)], 2);
+				Hilf[2] = '\0';
+				TD.Durchwahl = WahlZuAdresse(atoi(Hilf), strlen(Hilf)) >> 1;
+				if (TD.Durchwahl == 110) 
+					TD.Durchwahl = 0; // eingabe von WahlZuAdresse(0) = 110
 				printf_P(PSTR("Port %u Durchwahl %u<br>"), TD.Port, TD.Durchwahl);
 				}
 				

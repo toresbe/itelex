@@ -1216,6 +1216,7 @@ static bool SchreibeZeichenInSendePuffer(char c)
 //! DurchwahlTabelle an.
 //-----------------------------------------------------------------------			
 //! \param aDurchwahl Zeiger auf Variable mit gewählter Durchwahl.
+//! Werte von 101 bis 109 sind einstellige Ziffern, siehe WahlZuAdresse()
 //! \retval true Durchwahl war zugelassen.
 static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	{
@@ -1226,9 +1227,9 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 		
 	// Prüfen, ob Durchwahl freigegeben ist. Freigegeben ist diese, wenn 
 	// zwischen 1 und 9 oder wenn direkte Durchwahl in DurchwahlTabelle enthalten.
-	if (*aDurchwahl <= 9 && DurchwahlTabelle[*aDurchwahl] > 0)
+	if (*aDurchwahl >= 101 && *aDurchwahl <= 109 && DurchwahlTabelle[*aDurchwahl - 101] > 0)
 		{
-		*aDurchwahl = DurchwahlTabelle[*aDurchwahl - 1] >> 1;
+		*aDurchwahl = DurchwahlTabelle[*aDurchwahl - 101] >> 1;
 		ProtokollierenInt_P(PSTR("Durchwahl aus Tabelle umgesetzt %u\r\n"), *aDurchwahl);
 		return true;
 		}
@@ -3944,7 +3945,10 @@ void AdresseZuWahlStr(uint8_t Adr, char* Buf)
 	Wahl = AdresseZuWahl(Adr, &AnzZif);
 	
 	if (AnzZif == 0)
-		Buf[0] = '\0'; // ungültige Nummer
+		{
+		Buf[0] = '0';
+		Buf[1] = '\0'; // ungültige Nummer
+		}
 	else
 		{
 		itoa(Wahl, Buf, 10); // 10 ist die Basis für Dezimal!
