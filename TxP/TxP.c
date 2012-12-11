@@ -1717,6 +1717,28 @@ static void SocketBearbeiten()
 	} // SocketBearbeiten()
 
 
+//! Sende Schluss-Kommando, wenn Gerät noch "online".
+//---------------------------------------------------
+static void SendeBusKdoSchluss()
+	{
+	if (BusVerbPartner == 0)
+		return;
+	int16_t Stat = GetStatus(BusVerbPartner);
+	if (Stat < 0)
+		{
+		ProtokollierenTxp_P(PSTR("FEHLER: interner Verbindungspartner "));
+		ProtokollierenInt_P(PSTR("%u nicht mehr erreichbar.\r\n"), BusVerbPartner);
+		}
+	else if (BIT_IS_SET(Stat, StatBit_Frei))
+		{
+		ProtokollierenTxp_P(PSTR("FEHLER: interner Verbindungspartner "));
+		ProtokollierenInt_P(PSTR("%u ist schon frei.\r\n"), BusVerbPartner);
+		}
+	else
+		BusSenden(BusKdoSchluss); // dies ist der Gut-Fall.
+	}
+
+
 //! Interner Statuswechsel bei Ende-befehl (Socket geschlossen oder anderes Ende-Kommando)
 //! \param Force alle schwebenden Zustände (z.B. Wahlzustand) auch zum Abschluss bringen.
 void InterneVerbindungBeenden(bool Force)
@@ -1730,7 +1752,7 @@ void InterneVerbindungBeenden(bool Force)
 		case ModMeldungsdruckWarteEinQuitt:
 			if (Force)
 				{
-				BusSenden(BusKdoSchluss);
+				SendeBusKdoSchluss();
 				ModusWechsel(ModWarteSchlussQuitt);
 				}
 			// sonst in diesen Zuständen ist normalerweise kein Socket offen.
@@ -1757,7 +1779,7 @@ void InterneVerbindungBeenden(bool Force)
 				}
 				
 			if (Modus == ModKommendWarteEinQuitt)
-				BusSenden(BusKdoSchluss);
+				SendeBusKdoSchluss();
 				
 			ModusWechsel(ModWarteGrundstellung); 
 			break;
@@ -2814,7 +2836,7 @@ void txp_thread()
 				AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 				AsciiHilfPuffer[0] = '\0';
 				AsciiHilfZeilenanfang = 0;
-					
+				
 				ModusWechsel(ModWarteGrundstellung);
 				
 				break;
@@ -3050,7 +3072,7 @@ void txp_thread()
 				if (ProtokollLevel >= 1)
 					ProtokollierenTxp_P(PSTR("Taste gedruckt --> Reste-Druck abgebrochen\r\n" ));
 					
-				BusSenden(BusKdoSchluss);
+				SendeBusKdoSchluss();
 				ModusWechsel(ModWarteSchlussQuitt);
 				AsciiDruckPuffer[0] = '\0';
 				AsciiHilfPuffer[0] = '\0';
@@ -3142,7 +3164,7 @@ void txp_thread()
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("Reste gedruckt --> Ausschaltung intern\r\n" ));
 			
-		BusSenden(BusKdoSchluss);
+		SendeBusKdoSchluss();
 		ModusWechsel(ModWarteSchlussQuitt);
 		}
 
@@ -3160,7 +3182,8 @@ void txp_thread()
 			ProtokollierenTxp_P(PSTR("Grundstellung erreicht (Socket geschlossen, TWI geschlossen)\r\n" ));
 			ProtokollRegelblockEnde();
 			}
-			
+
+		BusVerbPartner = 0;
 		ModusWechsel(ModRuhe);
 		ZeitUeberwachungEnde(&SelbstAnrufZeitUeberwachung);
 		#ifdef LEDROT_SOCKETERROR
