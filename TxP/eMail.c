@@ -224,7 +224,7 @@ void POP3Einleiten()
 	ServerIP = DNS_ResolveName(EmailPOPServerAdresse); 
 	if (ServerIP == -1)
 		{
-		Protokollieren_P(PSTR("TxP POP: IP zu Url "));
+		Protokollieren_P(PSTR("TxP POP: ! IP zu Url "));
 		Protokollieren(EmailPOPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 		
@@ -239,7 +239,7 @@ void POP3Einleiten()
 	if (TxpSocketHandle == -1)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
-		Protokollieren_P(PSTR("TxP POP: Socket zum Server konnte nicht geoeffnet werden\r\n"));
+		Protokollieren_P(PSTR("TxP POP: ! Socket zum Server konnte nicht geoeffnet werden\r\n"));
 		TxpSocketHandle = NO_SOCKET_USED;
 		TxpSocketMode = SocketIdle;
 		return;
@@ -324,7 +324,7 @@ void POP3DatenVerarbeiten()
 		{
 		if (ProtokollLevel >= 1)
 			{
-			Protokollieren_P(PSTR("TxP POP: Fehlermeldung: "));
+			Protokollieren_P(PSTR("TxP POP: ! Fehlermeldung: "));
 			Protokollieren(SocketInBuf);
 			}
 
@@ -489,7 +489,7 @@ void POP3Abbrechen()
 	AsciiDruckPuffer[0] = '\0'; // AsciiHilfpuffer zwar noch nicht leer, aber Endgerät ist eh aus.
 	
 	if (ProtokollLevel >= 1)
-		Protokollieren_P(PSTR("TxP POP: Abbruch\r\n"));
+		Protokollieren_P(PSTR("TxP POP: ! Abbruch\r\n"));
 	
 	ProtokollPhase = Abmelden;
 	}
@@ -508,7 +508,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 	ServerIP = DNS_ResolveName(EmailSMTPServerAdresse); 
 	if (ServerIP == -1)
 		{
-		Protokollieren_P(PSTR("TxP SMTP: IP zu Url "));
+		Protokollieren_P(PSTR("TxP SMTP: ! IP zu Url "));
 		Protokollieren(EmailSMTPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 		if (Diagnoseausgabe_P(PSTR("SMTP-Server "), 1))
@@ -525,7 +525,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 	if (TxpSocketHandle == -1)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
-		Protokollieren_P(PSTR("TxP SMTP: Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
+		Protokollieren_P(PSTR("TxP SMTP: ! Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
 		TxpSocketHandle = NO_SOCKET_USED;
 		TxpSocketMode = SocketIdle;
 		if (Diagnoseausgabe_P(PSTR("SMTP-Server "), 1))
@@ -619,7 +619,7 @@ void SMTPDatenVerarbeiten()
 			
 			if (ProtokollLevel >= 1)
 				{
-				Protokollieren_P(PSTR("TxP SMTP: Fehlermeldung: "));
+				Protokollieren_P(PSTR("TxP SMTP: ! Fehlermeldung: "));
 				Protokollieren(SocketInBuf);
 				}
 

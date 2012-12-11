@@ -667,7 +667,7 @@ void txp_timerEvent(void)
 	
 	if (KurzTimerVal(&TxpThreadCheckTimer) > 90 * KurzTimerFreq) // nach 90 Sekunden Reset
 		{ 
-		ProtokollierenTxp_P(PSTR("Reset wegen nicht-Aufruf von txp_thread()\r\n"));
+		ProtokollierenTxp_P(PSTR("! Reset wegen nicht-Aufruf von txp_thread()\r\n"));
 		ProtokollSpeichern(true);
 		softreset();
 		}
@@ -1220,7 +1220,8 @@ static bool SchreibeZeichenInSendePuffer(char c)
 //! \retval true Durchwahl war zugelassen.
 static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	{
-	ProtokollierenInt_P(PSTR("Durchwahl-Anfrage %u\r\n"), *aDurchwahl);
+	if (ProtokollLevel >= 4)
+		ProtokollierenInt_P(PSTR("Durchwahl-Anfrage %u\r\n"), *aDurchwahl);
 	
 	if (*aDurchwahl == 0)
 		return true;
@@ -1230,14 +1231,16 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	if (*aDurchwahl >= 101 && *aDurchwahl <= 109 && DurchwahlTabelle[*aDurchwahl - 101] > 0)
 		{
 		*aDurchwahl = DurchwahlTabelle[*aDurchwahl - 101] >> 1;
-		ProtokollierenInt_P(PSTR("Durchwahl aus Tabelle umgesetzt %u\r\n"), *aDurchwahl);
+		if (ProtokollLevel >= 4)
+			ProtokollierenInt_P(PSTR("Durchwahl aus Tabelle umgesetzt %u\r\n"), *aDurchwahl);
 		return true;
 		}
 		
 	for (uint8_t i = 0 ; i < 9 ; i++)
 		if (*aDurchwahl == DurchwahlTabelle[i] >> 1)
 			{
-			ProtokollierenInt_P(PSTR("Durchwahl in Tabelle gefunden %u\r\n"), *aDurchwahl);
+			if (ProtokollLevel >= 4)
+				ProtokollierenInt_P(PSTR("Durchwahl in Tabelle gefunden %u\r\n"), *aDurchwahl);
 			return true;
 			}
 	
@@ -1392,7 +1395,7 @@ static void SocketBearbeiten()
 				{
 				Abweisen = true; // anderweitig belegt
 				if (ProtokollLevel >= 1)
-					Protokollieren_P(PSTR(", anderweitig belegt"));
+					Protokollieren_P(PSTR(", anderweitig belegt!"));
 				}
 			#ifdef LEDROT_SOCKETERROR
 				LED_off(ROT);
@@ -1416,7 +1419,7 @@ static void SocketBearbeiten()
 				{
 				Abweisen = true; 
 				if (ProtokollLevel >= 1)
-					Protokollieren_P(PSTR(", andere kommende Verbindung besteht"));
+					Protokollieren_P(PSTR(", andere kommende Verbindung besteht!"));
 				}
 			} // (TxpSocketMode == SocketAnswer && TxpSocketIP == NO_SOCKET_USED)
 			
@@ -1424,7 +1427,7 @@ static void SocketBearbeiten()
 			{ // TxpSocketMode == SocketOriginate || TxpSocketHandle bereits belegt
 			Abweisen = true; // anderweitig belegt
 			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR(", Verbindung besteht"));
+				Protokollieren_P(PSTR(", Verbindung besteht!"));
 			}
 		
 		if (Abweisen)
@@ -1432,7 +1435,7 @@ static void SocketBearbeiten()
 			PutSocketData_RPE(NewServerSocket, 7, PSTR("\004\005occ\r\n"), FLASH); // 004 = TXPC_STOP
 			CloseTCPSocket(NewServerSocket);
 			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR(" ...ABGEWIESEN\r\n" ));
+				Protokollieren_P(PSTR(" ! ...ABGEWIESEN\r\n" ));
 			Diagnoseausgabe_P(PSTR("Zweiter kommender Anruf auf belegtem Telexphone-Socket"), 4);
 			}
 			
@@ -1450,7 +1453,7 @@ static void SocketBearbeiten()
 				if (!TxpSocketAbbauGeplant)
 					{
 					if (ProtokollLevel >= 1)
-						ProtokollierenTxp_P(PSTR("Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n" ));
+						ProtokollierenTxp_P(PSTR("! Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n" ));
 			
 					#ifdef LEDROT_SOCKETERROR
 						LED_on(ROT);
@@ -1480,7 +1483,7 @@ static void SocketBearbeiten()
 				
 			default:
 				if (!TxpSocketAbbauGeplant)
-					ProtokollierenTxp_P(PSTR("Socket wurde von Gegenstelle GETRENNT\r\n" ));
+					ProtokollierenTxp_P(PSTR("! Socket wurde von Gegenstelle GETRENNT\r\n" ));
 					
 				else if (ProtokollLevel >= 1)
 					ProtokollierenTxp_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
@@ -1539,7 +1542,7 @@ static void SocketBearbeiten()
 			if (ProtokollLevel >= 1) 
 				{
 				ProtokollierenTxp();
-				ProtokollierenInt_P(PSTR("Socket Empfang drohender Ueberlauf: Empfang von %d " ), InCount);
+				ProtokollierenInt_P(PSTR("! Socket Empfang drohender Ueberlauf: Empfang von %d " ), InCount);
 				ProtokollierenInt_P(PSTR("limitiert auf %d\r\n" ), SocketInBufMax - SocketInBufUsed);
 				}
 			InCount = SocketInBufMax - SocketInBufUsed;
@@ -1604,7 +1607,7 @@ static void SocketBearbeiten()
 			{ 
 			// Verbindung konnte nicht aufgebaut werden
 			if (ProtokollLevel >= 1)
-				ProtokollierenTxp_P(PSTR("Wieder-Oeffnung des Socket VERSAGT.\r\n"));
+				ProtokollierenTxp_P(PSTR("! Wieder-Oeffnung des Socket VERSAGT.\r\n"));
 
 			TxpSocketHandle = NO_SOCKET_USED;
 			StartKurzTimer(&TxpSocketWiederholungVerzoegerung);
@@ -1656,7 +1659,7 @@ static void SocketBearbeiten()
 			if (SocketSendeFehlerZaehler >= 10)
 				{
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
+					ProtokollierenTxp_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
 				Diagnoseausgabe_P(PSTR("Mehrfache FEHLER beim Senden ins Netz"), 2);
 	
 				CloseTCPSocket(TxpSocketHandle);
@@ -1702,7 +1705,7 @@ static void SocketBearbeiten()
 		&& KurzTimerVal(&TxpSocketAbbruchTimer) >= 30 * KurzTimerFreq) // 30 Sekunden.
 		{
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("ZEITUEBERSCHREITUNG bei Wiederaufnahme der Verbindung\r\n" ));
+			ProtokollierenTxp_P(PSTR("! ZEITUEBERSCHREITUNG bei Wiederaufnahme der Verbindung\r\n" ));
 		Diagnoseausgabe_P(PSTR("Zeitueberschreitung bei Wiederaufnahme der Verbindung"), 2);
 		TxpSocketMode = SocketIdle;
 		TxpSocketAbbauGeplant = false;
@@ -1726,13 +1729,13 @@ static void SendeBusKdoSchluss()
 	int16_t Stat = GetStatus(BusVerbPartner);
 	if (Stat < 0)
 		{
-		ProtokollierenTxp_P(PSTR("FEHLER: interner Verbindungspartner "));
-		ProtokollierenInt_P(PSTR("%u nicht mehr erreichbar.\r\n"), BusVerbPartner);
+		ProtokollierenTxp();
+		ProtokollierenInt_P(PSTR("! interner Verbindungspartner %u NICHT MEHR ERREICHBAR.\r\n"), BusVerbPartner);
 		}
 	else if (BIT_IS_SET(Stat, StatBit_Frei))
 		{
-		ProtokollierenTxp_P(PSTR("FEHLER: interner Verbindungspartner "));
-		ProtokollierenInt_P(PSTR("%u ist schon frei.\r\n"), BusVerbPartner);
+		ProtokollierenTxp();
+		ProtokollierenInt_P(PSTR("! interner Verbindungspartner %u ist SCHON FREI.\r\n"), BusVerbPartner);
 		}
 	else
 		BusSenden(BusKdoSchluss); // dies ist der Gut-Fall.
@@ -1791,7 +1794,6 @@ void InterneVerbindungBeenden(bool Force)
 				ProtokollierenTxp();
 				ProtokollierenInt_P(PSTR("Wechsel nach Modus PufferDruckUndSchluss (von %d)\r\n"), Modus);
 				}
-			//! \todo was sollte denn das hier?: BusSenden(BusKdoSchluss);
 			ModusWechsel(ModPufferDruckUndSchluss);
 			break;
 		}
@@ -2299,14 +2301,14 @@ bool TeilnehmerServerSocketOeffnen()
 			TeilnehmerServerSocket = NO_SOCKET_USED;
 			if (ProtokollLevelTlnServ >= 1)
 				{
-				ProtokollierenTxp_P(PSTR("Verbindungsversuch an Teilnehmer-Server "));
+				ProtokollierenTxp_P(PSTR("! Verbindungsversuch an Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
 				Protokollieren_P(PSTR(" GESCHEITERT\r\n"));
 				}
 			}
 		else
 			{
-			ProtokollierenTxp_P(PSTR("Teilnehmer-Server "));
+			ProtokollierenTxp_P(PSTR("! Teilnehmer-Server "));
 			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
 			Protokollieren_P(PSTR(" IP nicht bekannt\r\n"));
 			}
@@ -2364,7 +2366,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				{
 				if (ProtokollLevel >= 1)
 					{
-					ProtokollierenTxp_P(PSTR("IP zu Url "));
+					ProtokollierenTxp_P(PSTR("! IP zu Url "));
 					Protokollieren(td->Adresse);
 					Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 					}
@@ -2389,14 +2391,14 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				return 2; // schlecht
 				}
 #else
-			ProtokollierenTxp_P(PSTR("eMail nicht unterstuetzt\r\n" ));
+			ProtokollierenTxp_P(PSTR("! eMail nicht unterstuetzt\r\n" ));
 			Diagnoseausgabe_P(PSTR("Mail in dieser Version nicht unterstuetzt"), 3);
 			return 2;
 #endif //ndef TXP_EMAIL		
 			
 		default:
 			if (ProtokollLevel >= 1)
-				ProtokollierenTxp_P(PSTR("Teilnehmer ist GELOESCHT\r\n" ));
+				ProtokollierenTxp_P(PSTR("! Teilnehmer ist GELOESCHT\r\n" ));
 				
 			return 2;
 			
@@ -2409,7 +2411,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("Socket konnte nicht erstmalig geoeffnet werden\r\n"));
+			ProtokollierenTxp_P(PSTR("! Socket konnte nicht erstmalig geoeffnet werden\r\n"));
 			
 		Diagnoseausgabe_P(PSTR("Teilnehmer nicht erreichbar"), 2);
 		TxpSocketHandle = NO_SOCKET_USED;
@@ -2652,7 +2654,7 @@ bool SonstigeAnwahl(uint8_t aDurchwahl)
 	else
 		{ 
 		if (ProtokollLevel >= 1)
-			Protokollieren_P(PSTR("Einschaltung intern VERSAGT\r\n" ));
+			Protokollieren_P(PSTR("! Einschaltung intern VERSAGT\r\n" ));
 			
 		Diagnoseausgabe_P(PSTR("Reservierung fuer Einschaltung konnte nicht versandt werden"), 1);
 		AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
@@ -2827,7 +2829,7 @@ void txp_thread()
 				if (Modus != ModWarteSchlussQuitt)
 					{
 					if (ProtokollLevel >= 1)
-						ProtokollierenTxp_P(PSTR("Schlussquittung ohne Aufforderung\r\n"));
+						ProtokollierenTxp_P(PSTR("! Schlussquittung ohne Aufforderung\r\n"));
 						
 					FalschCodeEmpfangen(Code);
 					}
@@ -2908,7 +2910,7 @@ void txp_thread()
 		if (TwiWatchdogCount > 4 * TxpTimerFreq) // nach 4 Sekunden ohne TWI-Kommunikation
 			{
 			if (ProtokollLevel >= 1)	
-				ProtokollierenTxp_P(PSTR("TWI-Timeout -> Abschaltung\r\n"));
+				ProtokollierenTxp_P(PSTR("! TWI-Timeout -> Abschaltung\r\n"));
 			Diagnoseausgabe_P(PSTR("Interne Verbindung unterbrochen"), 2);
 			
 			InterneVerbindungBeenden(true);
@@ -2956,7 +2958,7 @@ void txp_thread()
 #endif //def TXP_EMAIL
 		
 		default:
-			ProtokollierenTxp_P(PSTR("ILLEGALES Protokoll\r\n"));
+			ProtokollierenTxp_P(PSTR("! ILLEGALES Protokoll\r\n"));
 			TxpSocketProtokoll = Ascii;
 			break;
 		}
@@ -2990,7 +2992,7 @@ void txp_thread()
 			if (ProtokollLevel >= 1)
 				{
 				ProtokollierenTxp();
-				ProtokollierenInt_P(PSTR("Anwahl intern an %u VERSAGT\r\n"), Durchwahl);
+				ProtokollierenInt_P(PSTR("! Anwahl intern an %u VERSAGT\r\n"), Durchwahl);
 				}
 			Diagnoseausgabe_P(PSTR("Reservierung fuer Einschaltung konnte nicht versandt werden"), 1);
 
@@ -3017,7 +3019,7 @@ void txp_thread()
 		{ // 3 Sekunden keine Schlussquittung empfangen
 		// ID#412 ****************************************************************
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("Timeout beim Warten auf die Schlussquittung\r\n" ));
+			ProtokollierenTxp_P(PSTR("! Timeout beim Warten auf die Schlussquittung\r\n" ));
 			
 		ModusWechsel(ModWarteGrundstellung);
 		}
@@ -3026,7 +3028,7 @@ void txp_thread()
 		{ // 3 Sekunden keine Einschalt-Quittung empfangen
 		// ID#332 ***************************************************************
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("Timeout beim Warten auf die Einschaltquittung\r\n" ));
+			ProtokollierenTxp_P(PSTR("! Timeout beim Warten auf die Einschaltquittung\r\n" ));
 			
 		InterneVerbindungBeenden(true);
 		SendeStopkommando(PSTR("err\r\n"));
@@ -3234,7 +3236,7 @@ void txp_thread()
 					{ 
 					// Verbindung konnte nicht aufgebaut werden
 					if (ProtokollLevel >= 1)
-						ProtokollierenTxp_P(PSTR("Selbst-Anruf oeffnen des Socket VERSAGT.\r\n"));
+						ProtokollierenTxp_P(PSTR("! Selbst-Anruf oeffnen des Socket VERSAGT.\r\n"));
 
 					SelbstAnrufSocketHandle = NO_SOCKET_USED;
 					SelbstAnrufFehlerZaehler++;
@@ -3259,7 +3261,7 @@ void txp_thread()
 					else
 						{
 						if (ProtokollLevel >= 1)
-							ProtokollierenTxp_P(PSTR("Selbst-Anruf Daten-Sendung VERSAGT.\r\n"));
+							ProtokollierenTxp_P(PSTR("! Selbst-Anruf Daten-Sendung VERSAGT.\r\n"));
 						SelbstAnrufFehlerZaehler++;
 						SelbstAnrufPhase = SelbstAnrufSchliessen;
 						ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
@@ -3279,7 +3281,7 @@ void txp_thread()
 					if (ProtokollLevel >= 3)
 						{
 						ProtokollRegelblockStart();
-						ProtokollierenTxp_P(PSTR("Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
+						ProtokollierenTxp_P(PSTR("! Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
 						ProtokollRegelblockEnde();
 						}
 					if (ProtokollLevel < 4)
@@ -3290,7 +3292,7 @@ void txp_thread()
 				else
 					{ // Falsches Echo angekommen
 					if (ProtokollLevel >= 1)
-						ProtokollierenTxp_P(PSTR("Selbst-Anruf FALSCHE Daten empfangen.\r\n"));
+						ProtokollierenTxp_P(PSTR("! Selbst-Anruf FALSCHE Daten empfangen.\r\n"));
 					SelbstAnrufFehlerZaehler++;
 					} // Falsches Echo angekommen
 				StartKurzTimer(&SelbstAnrufTimer);
@@ -3300,7 +3302,7 @@ void txp_thread()
 			else if (Modus != ModRuhe && Modus != ModDeaktiviert && Modus != ModKommendVerbVorstufe)
 				{ // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("Selbst-Anruf ABGEBROCHEN wegen Modus-Wechsel.\r\n"));
+					ProtokollierenTxp_P(PSTR("! Selbst-Anruf ABGEBROCHEN wegen Modus-Wechsel.\r\n"));
 				StartKurzTimer(&SelbstAnrufTimer);
 				SelbstAnrufPhase = SelbstAnrufSchliessen;
 				ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
@@ -3309,7 +3311,7 @@ void txp_thread()
 			else if (KurzTimerVal(&SelbstAnrufTimer) > 5 * KurzTimerFreq) 
 				{ // Timeout nach 5 Sekunden
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("Selbst-Anruf KEIN Echo empfangen.\r\n"));
+					ProtokollierenTxp_P(PSTR("! Selbst-Anruf KEIN Echo empfangen.\r\n"));
 				SelbstAnrufFehlerZaehler++;
 				StartKurzTimer(&SelbstAnrufTimer);
 				SelbstAnrufPhase = SelbstAnrufSchliessen;
@@ -3427,12 +3429,12 @@ void txp_thread()
 						; // weitermachen
 					else if (GewaehlterTln.Nummer != TSB.TlnAuskunft.Nummer)
 						{ // vorhandener Eintrag weicht von 'aktuellem' ab --> Abbruch
-						ProtokollierenTxp_P(PSTR("Teilnehmer-Server meldet ANDERE Nummer als angefragt\r\n"));
+						ProtokollierenTxp_P(PSTR("! Teilnehmer-Server meldet ANDERE Nummer als angefragt\r\n"));
 						break;
 						}
 					else if ((GewaehlterTln.Flags & TlnFlag_Lokal) != 0)
 						{ // Privater Eintrag --> nicht ändern
-						ProtokollierenTxp_P(PSTR("im lokalen Telefonbuch als 'Privat' gekennzeichnet\r\n"));
+						ProtokollierenTxp_P(PSTR("! im lokalen Telefonbuch als 'Privat' gekennzeichnet\r\n"));
 						break;
 						}
 
@@ -3455,7 +3457,7 @@ void txp_thread()
 						if (!TlnHinzufuegen(&GewaehlterTln))
 							{
 							ProtokollierenTxp();
-							ProtokollierenInt_P(PSTR("Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
+							ProtokollierenInt_P(PSTR("! Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
 							Diagnoseausgabe_P(PSTR("internes Rufnummern-Verzeichnis voll"), 2);
 							}
 						} // Aktualisieren ist sinnvoll
@@ -3500,7 +3502,7 @@ void txp_thread()
 					break;
 
 				case TLNSERV_FEHLER:
-					ProtokollierenTxp_P(PSTR("Fehlermeldung des Teilnehmer-Servers: "));
+					ProtokollierenTxp_P(PSTR("! Fehlermeldung des Teilnehmer-Servers: "));
 					Protokollieren(TSB.PureData);
 					Protokollieren_P(PSTR("\r\n"));
 					StartLangTimer(&DynIPAktualisierungTimer);
@@ -3512,7 +3514,7 @@ void txp_thread()
 					break;
 				
 				default:
-					ProtokollierenTxp_P(PSTR("unerwartete Antwort des Teilnehmer-Servers\r\n" ));
+					ProtokollierenTxp_P(PSTR("! unerwartete Antwort des Teilnehmer-Servers\r\n" ));
 					StartLangTimer(&DynIPAktualisierungTimer);
 					DynIPAktualisierungEndzeit = 15 * LangTimerFakt 
 						- ((TxpThreadCount ^ Timer0CallbackCount) & 0xF);

@@ -103,24 +103,24 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 		if (TD.Flags & TlnFlag_Lokal)
 			{
 			if (ProtokollLevelTlnServ >= 1)
-				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld schon vorhanden, aber LOKAL\r\n"), TD.Nummer);
+				ProtokollierenInt_P(PSTR("TlnSrv: ! Teilnehmer %ld schon vorhanden, aber LOKAL\r\n"), TD.Nummer);
 			return false;
 			}
 		else if (TD.Flags & TlnFlag_Gesperrt)
 			{
 			if (ProtokollLevelTlnServ >= 1)
-				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld schon vorhanden, aber noch nicht freigegeben\r\n"), TD.Nummer);
+				ProtokollierenInt_P(PSTR("TlnSrv: ! Teilnehmer %ld schon vorhanden, aber noch nicht freigegeben\r\n"), TD.Nummer);
 			return false;
 			}
 		else if (TD.AdrArt != TxpDynIP)
 			{
 			if (ProtokollLevelTlnServ >= 1)
-				ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld schon vorhanden, aber nicht Typ 'dynamisch'\r\n"), TD.Nummer);
+				ProtokollierenInt_P(PSTR("TlnSrv: ! Teilnehmer %ld schon vorhanden, aber nicht Typ 'dynamisch'\r\n"), TD.Nummer);
 			return false;
 			}
 		else if (tsb->SelbstAkt.Pin != TD.DynPin)
 			{
-			ProtokollierenInt_P(PSTR("TlnSrv: Teilnehmer %ld schon vorhanden, aber falsche Pin gesendet\r\n"), TD.Nummer);
+			ProtokollierenInt_P(PSTR("TlnSrv: ! Teilnehmer %ld schon vorhanden, aber falsche Pin gesendet\r\n"), TD.Nummer);
 				// immer speichern, auch bei abgeschaltetem Protokoll.
 			return false;
 			}
@@ -149,7 +149,7 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 				}
 			else
 				{ // speichern war nicht erfolgreich
-				ProtokollierenInt_P(PSTR("TlnSrv: Aenderung Teilnehmer %ld konnte nicht gespeichert werden\r\n"), TD.Nummer);
+				ProtokollierenInt_P(PSTR("TlnSrv: ! Aenderung Teilnehmer %ld konnte nicht gespeichert werden\r\n"), TD.Nummer);
 				return false;
 				}
 			} // Aktualisierung erforderlich
@@ -177,11 +177,12 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 				ProtokollierenIPAdr(TlnIP);
 				ProtokollierenInt_P(PSTR(" Port %u (noch gesperrt!)\r\n"), TD.Port);
 				}
+			//! \todo Meldung ausgeben.
 			return true;
 			}
 		else
 			{ // speichern war nicht erfolgreich
-			ProtokollierenInt_P(PSTR("TlnSrv: Neuer Teilnehmer %ld konnte nicht gespeichert werden\r\n"), TD.Nummer);
+			ProtokollierenInt_P(PSTR("TlnSrv: ! Neuer Teilnehmer %ld konnte nicht gespeichert werden\r\n"), TD.Nummer);
 			return false;
 			}
 		} // Neuanlage erforderlich
@@ -267,7 +268,7 @@ static void SocketBearbeiten(int *Socket)
 						OutCount = FehlerRueckmelden(PSTR("forbidden"), 0);	
 						if (ProtokollLevelTlnServ >= 1)
 							{
-							Protokollieren_P(PSTR("TlnSrv: abgewiesene Anfrage war von IP "));
+							Protokollieren_P(PSTR("TlnSrv: ! abgewiesene Anfrage war von IP "));
 							ProtokollierenIPAdr(MeldeIP);
 							Protokollieren_P(PSTR("\r\n"));
 							}
@@ -306,7 +307,7 @@ static void SocketBearbeiten(int *Socket)
 						TlnServBuf.DataLen = 0;
 						OutCount = 2 + TlnServBuf.DataLen;
 						if (ProtokollLevelTlnServ >= 2) 
-							Protokollieren_P(PSTR(" ...nicht gefunden oder gesperrt\r\n"));
+							Protokollieren_P(PSTR(" ! ...nicht gefunden oder gesperrt\r\n"));
 						}
 					}
 				break;
@@ -321,7 +322,7 @@ static void SocketBearbeiten(int *Socket)
 			
 		if (ProtokollLevelTlnServ >= 1 && OutCount > 0 && TlnServBuf.Code == TLNSERV_FEHLER)
 			{
-			Protokollieren_P(PSTR("TlnSrv: Error "));
+			Protokollieren_P(PSTR("TlnSrv: ! Error "));
 			Protokollieren(TlnServBuf.PureData);
 			Protokollieren_P(PSTR("\r\n"));
 			}
@@ -369,7 +370,7 @@ static void SocketBearbeiten(int *Socket)
 			if (SocketSendeFehlerZaehler >= 10)
 				{
 				if (ProtokollLevelTlnServ >= 1)
-					Protokollieren_P(PSTR("TlnSrv: Mehrfache Fehler beim Senden ins Netz, Socket wird geschlossen\r\n" ));
+					Protokollieren_P(PSTR("TlnSrv: ! Mehrfache Fehler beim Senden ins Netz, Socket wird geschlossen\r\n" ));
 				CloseTCPSocket(*Socket);
 				*Socket = NO_SOCKET_USED;
 				}
@@ -379,7 +380,7 @@ static void SocketBearbeiten(int *Socket)
 			}
 		else if (Res < OutCount)
 			{
-			Protokollieren_P(PSTR("TlnSrv: FEHLER: Sendung war nicht vollständig\r\n" ));
+			Protokollieren_P(PSTR("TlnSrv: ! Sendung war NICHT VOLLSTAENDIG\r\n" ));
 			}
 
 		TCP_sockettable[*Socket].Timeoutcounter = 5; // Timeout auf 5 Sekunden verkürzen, da meist nur eine Anfrage.
@@ -439,7 +440,7 @@ void txp_tlnserv_thread()
 		else
 			{ 
 			if (ProtokollLevelTlnServ >= 1)
-				Protokollieren_P(PSTR(" ...ABGEWIESEN\r\n" ));
+				Protokollieren_P(PSTR(" ! ...ABGEWIESEN\r\n" ));
 			uint8_t OutCount = FehlerRueckmelden(PSTR("occupied"), 0);
 			PutSocketData_RPE(NewServerSocket, OutCount, TlnServBuf.Buf, RAM);
 			CloseTCPSocket(NewServerSocket);

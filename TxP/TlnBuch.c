@@ -1116,7 +1116,7 @@ void TlnBuchInit()
 		int Res = TlnBuchLadeVonExternEeprom();
 		if (Res < 0)
 			{
-			ProtokollierenInt_P(PSTR("TxP: Eeprom Ladefehler %d"), Res);
+			ProtokollierenInt_P(PSTR("TxP: ! Eeprom Ladefehler %d"), Res);
 			ProtokollierenInt_P(PSTR(" / %02X\r\n"), SwTwiLetzterFehler);
 			Diagnoseausgabe_P(PSTR("Fehler im Zusatz-EEPROM"), 1);
 			}
