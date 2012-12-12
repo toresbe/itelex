@@ -4372,8 +4372,15 @@ void cgi_SdDirectory(void *pStruct)
 	if (http_request->argc != 0 && PharseCheckName_P(http_request, PSTR("del")))
 		{
 		char *FileToDelete = http_request->argvalue[PharseGetValue_P(http_request, PSTR("del"))];
-		printf_P(PSTR("File %s deleted<p>"), FileToDelete);
-		//! \todo jetzt auch löschen...
+		struct fat_dir_entry_struct dir_entry;
+		
+		if (fat_get_dir_entry_of_path(fs, FileToDelete, &dir_entry))
+			if (fat_delete_file(fs, &dir_entry))
+				printf_P(PSTR("File %s deleted<p>"), FileToDelete);
+			else				
+				printf_P(PSTR("File %s NOT deleted<p>"), FileToDelete);
+		else				
+			printf_P(PSTR("File %s NOT found<p>"), FileToDelete);
 		}
 
 	// Wenn nur filename dann Stammverzeichniss wählen, wenn nicht Verzeichnis wählen
@@ -4381,14 +4388,15 @@ void cgi_SdDirectory(void *pStruct)
 		{
 		fat_get_dir_entry_of_path(fs, "/" , &directory);
 		BaseDir = NULL;
-		printf_P(PSTR("<b>Content of /:</b><p>"));
+		printf_P(PSTR("<b>Content of /:"));
 		}
 	else
 		{
 		BaseDir = http_request->argvalue[PharseGetValue_P(http_request, PSTR("dir"))];
 		fat_get_dir_entry_of_path(fs, BaseDir, &directory);
-		printf_P(PSTR("<b>Content of %s:</b><p>"), BaseDir);
+		printf_P(PSTR("<b>Content of %s:"), BaseDir);
 		}
+	printf_P(PSTR("</b> (%lu free)<br>"), fat_get_fs_free(fs));
 		
 	// Verzeichbnis öffnen
 	dd = fat_open_dir(fs, &directory);
@@ -4414,17 +4422,17 @@ void cgi_SdDirectory(void *pStruct)
 			else
 				{ // normale Datei
 				if (BaseDir == NULL)
-					printf_P(PSTR("<a href =\"%s\">%s</a> %ld <a href =\"sddir.cgi?del=%s\">delete</a><br>"), 
+					printf_P(PSTR("<a href =\"%s\">%s</a> %ld <small><a href =\"sddir.cgi?del=%s\">delete</a></small><br>"), 
 									          dir_entry.long_name, 
 											       dir_entry.long_name, 
-												          dir_entry.file_size,         dir_entry.long_name);
+												          dir_entry.file_size,                dir_entry.long_name);
 				else
-					printf_P(PSTR("<a href =\"%s/%s\">%s</a> %ld <a href =\"sddir.cgi?dir=%s&del=%s/%s\">delete</a><br>"), 
+					printf_P(PSTR("<a href =\"%s/%s\">%s</a> %ld <small><a href =\"sddir.cgi?dir=%s&del=%s/%s\">delete</a></small><br>"), 
 											  BaseDir, 
 											     dir_entry.long_name, 
 												      dir_entry.long_name, 
-													         dir_entry.file_size,         BaseDir,BaseDir, 
-															                                        dir_entry.long_name);
+													         dir_entry.file_size,               BaseDir,BaseDir, 
+															                                            dir_entry.long_name);
 				}
 			}
 		fat_close_dir(dd);
