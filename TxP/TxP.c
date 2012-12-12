@@ -1876,7 +1876,10 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				int alen = strlen(AsciiDruckPuffer);
 				if (alen < AsciiDruckPufferMax-2)
 					{
-					AsciiDruckPuffer[alen] = c;
+					if (c == '@' && i == SocketInBufUsed - 1) // das Zeichen war ein @ und es war das letzte des Empfangs
+						AsciiDruckPuffer[alen] = CodeChrWerDa;
+					else
+						AsciiDruckPuffer[alen] = c;
 					AsciiDruckPuffer[alen+1] = '\0';
 					i++;
 					SocketAnzahlZeichenEmpfangen++;
@@ -1983,7 +1986,8 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				{
 				uint8_t len = SocketInBuf[i+1];
 				int alen = strlen(AsciiDruckPuffer);
-				if (len + alen < AsciiDruckPufferMax-1)
+				if (i + 2 + len <= SocketInBufUsed // Vollständiges Kommando mit Daten empfangen
+					&& len + alen < AsciiDruckPufferMax-1) // und Daten passen noch in den Puffer...
 					{
 					strncpy(AsciiDruckPuffer + alen, SocketInBuf + i + 2, len);
 					AsciiDruckPuffer[len + alen] = '\0';
@@ -4363,6 +4367,14 @@ void cgi_SdDirectory(void *pStruct)
 
 	struct fat_dir_entry_struct directory;
 	struct fat_dir_struct* dd;
+	
+	// Löschkommando?
+	if (http_request->argc != 0 && PharseCheckName_P(http_request, PSTR("del")))
+		{
+		char *FileToDelete = http_request->argvalue[PharseGetValue_P(http_request, PSTR("del"))];
+		printf_P(PSTR("File %s deleted<p>"), FileToDelete);
+		//! \todo jetzt auch löschen...
+		}
 
 	// Wenn nur filename dann Stammverzeichniss wählen, wenn nicht Verzeichnis wählen
 	if (http_request->argc == 0 || !PharseCheckName_P(http_request, PSTR("dir")))
@@ -4390,16 +4402,29 @@ void cgi_SdDirectory(void *pStruct)
 			if ((dir_entry.attributes & FAT_ATTRIB_DIR) != 0)
 				{
 				if (BaseDir == NULL)
-					printf_P(PSTR("<a href =\"sddir.cgi?dir=%s\">%s</a> DIR<br>"), dir_entry.long_name, dir_entry.long_name);
+					printf_P(PSTR("<a href =\"sddir.cgi?dir=%s\">%s</a> DIR<br>"), 
+														    dir_entry.long_name, 
+															     dir_entry.long_name);
 				else
-					printf_P(PSTR("<a href =\"sddir.cgi?dir=%s/%s\">%s</a> DIR<br>"), BaseDir, dir_entry.long_name, dir_entry.long_name);
+					printf_P(PSTR("<a href =\"sddir.cgi?dir=%s/%s\">%s</a> DIR<br>"), 
+															BaseDir, 
+															   dir_entry.long_name, 
+															        dir_entry.long_name);
 				}
 			else
 				{ // normale Datei
 				if (BaseDir == NULL)
-					printf_P(PSTR("<a href =\"%s\">%s</a> %ld<br>"), dir_entry.long_name, dir_entry.long_name, dir_entry.file_size);
+					printf_P(PSTR("<a href =\"%s\">%s</a> %ld <a href =\"sddir.cgi?del=%s\">delete</a><br>"), 
+									          dir_entry.long_name, 
+											       dir_entry.long_name, 
+												          dir_entry.file_size,         dir_entry.long_name);
 				else
-					printf_P(PSTR("<a href =\"%s/%s\">%s</a> %ld<br>"), BaseDir, dir_entry.long_name, dir_entry.long_name, dir_entry.file_size);
+					printf_P(PSTR("<a href =\"%s/%s\">%s</a> %ld <a href =\"sddir.cgi?dir=%s&del=%s/%s\">delete</a><br>"), 
+											  BaseDir, 
+											     dir_entry.long_name, 
+												      dir_entry.long_name, 
+													         dir_entry.file_size,         BaseDir,BaseDir, 
+															                                        dir_entry.long_name);
 				}
 			}
 		fat_close_dir(dd);
