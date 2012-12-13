@@ -227,6 +227,8 @@ void POP3Einleiten()
 		Protokollieren_P(PSTR("TxP POP: ! IP zu Url "));
 		Protokollieren(EmailPOPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
+
+		//! \todo Diagnose 
 		
 		POPWartezeitEnde = EmailAbfrageTakt * LangTimerFakt;
 		
@@ -242,6 +244,9 @@ void POP3Einleiten()
 		Protokollieren_P(PSTR("TxP POP: ! Socket zum Server konnte nicht geoeffnet werden\r\n"));
 		TxpSocketHandle = NO_SOCKET_USED;
 		TxpSocketMode = SocketIdle;
+
+		//! \todo Diagnose 
+		
 		return;
 		}
 
