@@ -2433,6 +2433,12 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 	StartKurzTimer(&TxpSocketAbbruchTimer);
 	StartKurzTimer(&TxpSocketAbbauVerzoegerung);
 		
+	Diagnoseausgabe_P(NULL, 2); 
+		// ggf Meldung "nicht erreichbar" wieder löschen.
+		// dies kann eintreten, wenn zuerst verbindung zu einer alten IP-Adresse 
+		// vergeblich versucht wird, dann die aktualisierung vom Teilnehmer-Server
+		// kommt und dann die Verbindung erfolgreich hergestellt wird.
+	
 	if (td->AdrArt == AsciiUrl || td->AdrArt == AsciiIP)
 		{ // ID#226 *********************************************
 		BusSenden(BusQuittEin);
@@ -2661,6 +2667,8 @@ bool SonstigeAnwahl(uint8_t aDurchwahl)
 			Protokollieren_P(PSTR("! Einschaltung intern VERSAGT\r\n" ));
 			
 		Diagnoseausgabe_P(PSTR("Reservierung fuer Einschaltung konnte nicht versandt werden"), 1);
+			//! \todo bei Besetzt andere Meldung ausgeben.
+			
 		AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 		AsciiHilfPuffer[0] = '\0';
 		AsciiDruckZiel = 0;
@@ -2915,7 +2923,7 @@ void txp_thread()
 			{
 			if (ProtokollLevel >= 1)	
 				ProtokollierenTxp_P(PSTR("! TWI-Timeout -> Abschaltung\r\n"));
-			Diagnoseausgabe_P(PSTR("Interne Verbindung unterbrochen"), 2);
+			Diagnoseausgabe_P(PSTR("Interne Verbindung unterbrochen"), 1);
 			
 			InterneVerbindungBeenden(true);
 			TxpSocketAbbauGeplant = true;
@@ -2999,6 +3007,7 @@ void txp_thread()
 				ProtokollierenInt_P(PSTR("! Anwahl intern an %u VERSAGT\r\n"), Durchwahl);
 				}
 			Diagnoseausgabe_P(PSTR("Reservierung fuer Einschaltung konnte nicht versandt werden"), 1);
+				//!  \todo bei Besetzt andere Meldung.
 
 			SendeStopkommando(PSTR("occ\r\n"));
 			
@@ -3343,7 +3352,7 @@ void txp_thread()
 			if (SelbstAnrufFehlerZaehler >= 16)
 				{
 				DynIPAktiv = false;
-				Diagnoseausgabe_P(PSTR("Selbst-Anruf mehrfach versagt, falsche Router-Konfiguration"), 1);
+				Diagnoseausgabe_P(PSTR("Selbst-Anruf mehrfach versagt, falsche Router-Konfiguration?"), 1);
 				}
 			}
 			
