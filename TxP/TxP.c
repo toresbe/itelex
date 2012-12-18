@@ -1569,7 +1569,7 @@ static void SocketBearbeiten()
 			if (Res > 0)
 				{
 				SocketInBufUsed += Res;
-				if (TxpSocketMode == Ascii)
+				if (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == POP3 || TxpSocketProtokoll == SMTP)
 					TCP_sockettable[TxpSocketHandle].Timeoutcounter = 600; // Timeout auf 10 Minuten verlängern
 				}
 				
@@ -1680,7 +1680,7 @@ static void SocketBearbeiten()
 				LED_on(ROT);
 			#endif //def LEDROT_SOCKETERROR
 			StartKurzTimer(&TxpSocketAbbauVerzoegerung);
-			if (TxpSocketMode == Ascii)
+			if (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == POP3 || TxpSocketProtokoll == SMTP)
 				TCP_sockettable[TxpSocketHandle].Timeoutcounter = 600; // Timeout auf 10 Minuten verlängern
 			}
 			
@@ -1692,7 +1692,7 @@ static void SocketBearbeiten()
 				LED_off(ROT);
 			#endif //def LEDROT_SOCKETERROR
 			StartKurzTimer(&TxpSocketAbbauVerzoegerung);
-			if (TxpSocketMode == Ascii)
+			if (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == POP3 || TxpSocketProtokoll == SMTP)
 				TCP_sockettable[TxpSocketHandle].Timeoutcounter = 600; // Timeout auf 10 Minuten verlängern
 			}
 			
@@ -3212,7 +3212,8 @@ void txp_thread()
 	// Ab und zu mal prüfen, ob es neue Mails gibt.
 	// ==========================================================================
 	
-	POP3Einleiten();
+	if (SelbstAnrufPhase == SelbstAnrufRuhe || SelbstAnrufPhase == SelbstAnrufSperre)
+		POP3Einleiten();
 	
 #endif //def TXP_EMAIL
 	
