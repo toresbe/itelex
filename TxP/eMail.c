@@ -124,7 +124,7 @@ enum {
 
 		
 //! Bearbeitet das Drucken von empfangenen Mails.
-// =========================================================================
+// ------------------------------------------------
 //! Filtert aus dem Header die interessanten Zeilen heraus und Druckt nur diese.
 //! Prüft auch auf korrekten Inhalt. Ggf Zeilenumbrüche selber einfügen.
 //! \return false, wenn Pufferüberlauf.
@@ -310,6 +310,9 @@ void POP3DatenVerarbeiten()
 	uint16_t i;
 	uint16_t ZeileAnfang;
 	char *p;
+	bool UeberlaufDroht = false; 
+		// falls der Puffer droht überzulaufen, muss durch Weglassen von
+		// Text Platz gemacht werden.
 	
 	if (SocketOutBufUsed != 0)
 		return;
@@ -399,8 +402,8 @@ void POP3DatenVerarbeiten()
 			break;
 			
 		case MailData:
-			if (AsciiDruckPuffer[0] != '\0')
-				return; // es wird noch gedruckt, also nichts neues Drucken...
+			//HACKif (AsciiDruckPuffer[0] != '\0')
+			//HACK	return; // es wird noch gedruckt, also nichts neues Drucken...
 				
 			// Empfang in einzelne Zeilen zerlegen und verarbeiten...
 			ZeileAnfang = 0;
@@ -428,7 +431,10 @@ void POP3DatenVerarbeiten()
 							{
 							// Ende ist bereits mit \0 markiert.
 							if (!MailZeileVerarbeiten(SocketInBuf + ZeileAnfang))
+								{
+								UeberlaufDroht = true;
 								break; // Verarbeitung des Rests auf später verschieben.
+								}
 							}
 						ZeileAnfang = SocketInBufUsed; // SocketInBuf ist komplett bearbeitet.
 						break; // der while-Schleife
@@ -444,16 +450,31 @@ void POP3DatenVerarbeiten()
 						bool Erfolg = MailZeileVerarbeiten(SocketInBuf + ZeileAnfang);
 						*p = h; // Zeichen der nächsten Zeile wiederherstellen
 						if (!Erfolg)
+							{
+							UeberlaufDroht = true;
 							break;
+							}
 						}
 					ZeileAnfang = p - SocketInBuf;
 					}
 				} // while (ZeileAnfang < SocketInBufUsed)
 			
-			if (ZeileAnfang < SocketInBufUsed)
+			if (ZeileAnfang > 0 && ZeileAnfang < SocketInBufUsed)
 				{ // Abbruch warum auch immer...
 				memmove(SocketInBuf, SocketInBuf + ZeileAnfang, SocketInBufUsed - ZeileAnfang);
 				SocketInBufUsed -= ZeileAnfang;
+				return; // Sonst wird SocketInBufUsed unten auf Null gesetzt.
+				}
+				
+			if (UeberlaufDroht && SocketInBufUsed > SocketInBufMax - 20)
+				{ // mindestens 20 Zeichen Platz lassen. Aber die letzen 60 Zeichen beibehalten.
+				int AnzahlZuLoschen = SocketInBufUsed - (SocketInBufMax - 20);
+				int LoeschPosition = SocketInBufMax - 60; // Konstante, macht der Compiler weg...
+				int Rest = SocketInBufUsed - LoeschPosition - AnzahlZuLoschen;
+				memmove(SocketInBuf + LoeschPosition, 
+						SocketInBuf + LoeschPosition + AnzahlZuLoschen, 
+					    Rest);
+				SocketInBufUsed -= AnzahlZuLoschen;
 				return; // Sonst wird SocketInBufUsed unten auf Null gesetzt.
 				}
 				
@@ -492,6 +513,8 @@ void POP3Abbrechen()
 	
 	SocketInBufUsed = 0;
 	AsciiDruckPuffer[0] = '\0'; // AsciiHilfpuffer zwar noch nicht leer, aber Endgerät ist eh aus.
+
+	strcpy_P(SocketOutBuf, PSTR("DELE 1\r\n"));
 	
 	if (ProtokollLevel >= 1)
 		Protokollieren_P(PSTR("TxP POP: ! Abbruch\r\n"));

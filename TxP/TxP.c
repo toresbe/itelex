@@ -1569,7 +1569,7 @@ static void SocketBearbeiten()
 			if (Res > 0)
 				{
 				SocketInBufUsed += Res;
-				if (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == POP3 || TxpSocketProtokoll == SMTP)
+				if (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == SMTP)
 					TCP_sockettable[TxpSocketHandle].Timeoutcounter = 600; // Timeout auf 10 Minuten verlängern
 				}
 				
@@ -1680,7 +1680,7 @@ static void SocketBearbeiten()
 				LED_on(ROT);
 			#endif //def LEDROT_SOCKETERROR
 			StartKurzTimer(&TxpSocketAbbauVerzoegerung);
-			if (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == POP3 || TxpSocketProtokoll == SMTP)
+			if (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == SMTP)
 				TCP_sockettable[TxpSocketHandle].Timeoutcounter = 600; // Timeout auf 10 Minuten verlängern
 			}
 			
@@ -1692,7 +1692,7 @@ static void SocketBearbeiten()
 				LED_off(ROT);
 			#endif //def LEDROT_SOCKETERROR
 			StartKurzTimer(&TxpSocketAbbauVerzoegerung);
-			if (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == POP3 || TxpSocketProtokoll == SMTP)
+			if (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == SMTP)
 				TCP_sockettable[TxpSocketHandle].Timeoutcounter = 600; // Timeout auf 10 Minuten verlängern
 			}
 			
