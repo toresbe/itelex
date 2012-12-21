@@ -45,6 +45,117 @@
 #include "FifoPuffer.h"
 
 
+// Einstellungen für Bedingte Kompilierung
+// ================================================================
+
+// Was soll LED rot anzeigen?
+//---------------------------
+//#define LEDROT_EXTEEPROM
+//#define LEDROT_SDKARTE
+#define LEDROT_TXPTHREADBLOCK
+//#define LEDROT_SOCKETERROR
+//#define LEDROT_UNERWARTET  // noch ungenutzt
+
+
+// Port-Definitionen
+// ================================================================
+
+DEFPORTINPULL(Taste, B, 3);
+
+DEFPORTOUT(RTS, D, 4)
+
+DEFPORTIN(CTS, D, 5)
+
+
+// Konstanten
+// ================================================================
+
+//! Der TCP-Port für die TelexPhone-Kommunikation
+#define TXP_PORT 134
+
+//! Der TCP-Port für die TelexPhone-Rumnummernverwaltung
+#define TXP_TLNSERV_PORT 11811
+
+
+enum { // Konstanten...
+	TlnAdresseMax = 40,
+	//!< maximale Länge der Verbindungsadresse.
+	//!< Nicht ändern, da auch der Datenaustausch mit dem Teilnehmer-Server
+	//!< betroffen wäre (Kompatibilitätsprobleme) (siehe #TTlnDaten)
+	
+	TlnNameMax = 40, 
+	//!< maximale Länge des Teilnehmer-Namens
+	//!< Nicht ändern, da auch der Datenaustausch mit dem Teilnehmer-Server
+	//!< betroffen wäre (Kompatibilitätsprobleme) (siehe #TTlnDaten)
+
+	AsciiDruckPufferMax = 1000,
+	//!< Puffergröße für Textpuffer bei Umsetzung ASCII -> Baudot.
+
+	HtmlSendeTextMax = 400,
+	//!< Puffergröße für Textpuffer bei HTML-Kommunikation (Druckspiegel)
+
+	SocketInBufMax = 2500,
+	//!< Größe des TCP-Empfangspuffers
+
+	SocketOutBufMax = 2500,
+	//!< Größe des TCP-Sendepuffers
+
+	DiagnosePufferMax = 200,
+	//!< Größe des Puffers für zu druckende Diagnosemeldungen.
+	
+	TlnFlag_Lokal = 1,
+	//!< Diese Nummer wird nicht mit anderen Teilnehmern synchronisiert.
+	//!< Für #Flags in #TTlnDaten. Bitmaske!
+	
+	TlnFlag_Gesperrt = 2,
+	//!< Diese Nummer darf nicht bei Abfragen der Teilnehmerliste vom 
+	//!< Teilnehmer-Server gemeldet werden.
+	//!< Für #Flags in #TTlnDaten. Bitmaske!
+	
+
+	// Kommandos für Kommunikation mit Teilnehmer-Server ("Auskunft") und der
+	// Teilnehmer-Server untereinander.
+
+	TLNSERV_SELBSTAKT = 0x01,
+	//!< Meldung eines Teilnehmer an den Teilnehmer-Server als Wunsch die eigene 
+	//!< IP-Adresse zu aktualisieren.
+	
+	TLNSERV_IPRUECKMELD = 0x02,
+	//!< Meldung des Teilnehmer-Server an den Teilnehmer als Rückmeldung der 
+	//!< nun gespeicherten IP-Adresse. Antwort auf #TLNSERV_SELBSTAKT.
+
+	TLNSERV_ABFRAGE = 0x03,
+	//!< Meldung eines Teilnehmer an den Teilnehmer-Server als Wunsch die
+	//!< IP-Adresse eines anderen Teilnehmers zu erfragen.
+	
+	TLNSERV_AUSKUNFT_NICHTVERG = 0x04,
+	//!< Meldung des Teilnehmer-Server an den Teilnehmer als Rückmeldung dass
+	//!< durch #TLNSERV_ABFRAGE gewünschter Teilnehmer nicht gespeichert ist.
+
+	TLNSERV_AUSKUNFT_VERSION1 = 0x05,
+	//!< Meldung des Teilnehmer-Server an den Teilnehmer als Rückmeldung der
+	//!< kompletten Daten des durch #TLNSERV_ABFRAGE gewünschten Teilnehmers.
+
+	TLNSERV_FEHLER = 0xFF,
+	//!< Allgemeine Fehlermeldung.
+	
+	LangTimerTakt = 10,
+	//!< Takt in Sekunden des Langzeittimers. 
+	//!< Muss ein Teiler von 60 sein.
+	
+	LangTimerFakt = 60/LangTimerTakt,
+	//!< Faktor zur Umrechnung Minuten -> Takte von #TLangTimer
+	
+	KurzTimerFreq = 100,
+	//!< Frequenz (1/Takt) des Kurzzeittimers. 
+	//!< Muss ein Teiler von #TxpTimerFreq sein.
+	
+	} ; // Ende Konstanten
+	
+
+// Typdefinitionen
+// ================================================================
+
 typedef enum
 	{
 	ModRuhe = 0, 
@@ -85,13 +196,6 @@ typedef enum
 	
 	} TModus;
 	
-	
-extern TModus Modus;
-
-extern void ModusWechsel(TModus neu);
-
-
-DEFPORTINPULL(Taste, B, 3);
 
 typedef enum { 
 	NichtGedr, //!< nicht gedrückt.
@@ -99,11 +203,22 @@ typedef enum {
 	Lang  //!< lang gedrückt ( > 0,8 Sekunden)
 	} TTastendruck; //!< Art des Tastendrucks
 
-//! Der TCP-Port für die TelexPhone-Kommunikation
-#define TXP_PORT 134
+typedef enum { 
+	SocketIdle, //!< Unbenutzt
+	SocketOriginate, //!< Ausgehende Verbindung
+	SocketAnswer //!< Kommende Verbindung
+	} TTxpSocketMode; //!< Speichert Sollzustand der Txp-Verbindung
+	
+typedef enum {
+	TelexPhone,		//!< Das eigene Protokoll
+	Ascii,			//!< Ascii, also telnet
+#ifdef TXP_EMAIL
+	POP3,			//!< Mail-Abfrage
+	SMTP,			//!< Mail-Sendung
+#endif //def TXP_EMAIL
+	} TTxpSocketProtokoll; //!< Was geht über den Socket 'rüber.
+	
 
-//! Der TCP-Port für die TelexPhone-Rumnummernverwaltung
-#define TXP_TLNSERV_PORT 11811
 
 //! Typ eines Teilnehmers
 typedef enum 
@@ -120,19 +235,11 @@ typedef enum
 	} TTlnAdresseArt;
 	
 
-enum { TlnAdresseMax = 40 } ; 
-	//!< maximale Länge der Verbindungsadresse.
-	//!< Nicht ändern, da auch der Datenaustausch mit dem Teilnehmer-Server
-	//!< betroffen wäre (Kompatibilitätsprobleme) (siehe #TTlnDaten)
-
-enum { TlnNameMax = 40 } ; //!< maximale Länge des Teilnehmer-Namens
-	//!< Nicht ändern, da auch der Datenaustausch mit dem Teilnehmer-Server
-	//!< betroffen wäre (Kompatibilitätsprobleme) (siehe #TTlnDaten)
-
-	
 //! Datenstruktur für alle Informationen eines Teilnehmers.
 //! Achtung: Bei Änderungen berücksichtigen, dass auch der Datenaustausch 
 //! mit dem Teilnehmer-Server über dieses Format läuft.
+//! d.h. bei notwendigen Erweitungen diese Struktur als "Version1" beibehalten
+//! und neue Struktur für "Version2" definieren.
 	
 typedef struct
 	{
@@ -148,78 +255,142 @@ typedef struct
 	uint32_t Datum; //!< letzte Änderung der Adresse
 	} TTlnDaten;
 	
-	
-enum { TlnFlag_Lokal = 1 } ; 
-	//!< Diese Nummer wird nicht mit anderen Teilnehmern synchronisiert.
-	
-enum { TlnFlag_Gesperrt = 2 } ; 
-	//!< Diese Nummer darf nicht bei Abfragen der Teilnehmerliste vom 
-	//!< Teilnehmer-Server gemeldet werden.
 
-
-// Daten / Datenstrukturen für Datenaustausch mit Teilnehmer-Server ("Auskunft")
-#define TLNSERV_SELBSTAKT 0x01
-#define TLNSERV_IPRUECKMELD 0x02
-#define TLNSERV_ABFRAGE 0x03
-#define TLNSERV_AUSKUNFT_NICHTVERG 0x04
-#define TLNSERV_AUSKUNFT_VERSION1 0x05 // definiert das Datenformat
-#define TLNSERV_FEHLER 0xFF
+//! Datenstruktur für alle Kommunikation mit Teilnehmer-Server.
+// ------------------------------------------------------------
+//! Achtung: Änderungen vermeiden, um Kompatibilität zu wahren.
+//! Als Union definiert, um im selben Format unterschiedliche Informationen zu tauschen.
 
 typedef union
 	{
-	char Buf[50]; // 50 Zeichen für Diagnosetexte...
+	char Buf[50]; //!< zum Direktzugriff beim Block-Schreiben und -Lesen
 	struct
 		{
-		uint8_t Code;
-		uint8_t DataLen;
+		uint8_t Code; //!< Kennung des Datenblocks (Bedeutung). Eine der Konstanten TLNSERV_*
+		uint8_t DataLen; //!< Länge des Datenblocks.
 		union
 			{
-			char PureData[1];
+			char PureData[1]; 
+				//!< Für direkten Zugriff auf den Nutzdatenblock. Wird auch verwendet 
+				//!< als Speicher für Textmeldungen bei #Code == #TLNSERV_FEHLER.
 			struct 
 				{
-				uint32_t RufNr;
-				uint16_t Pin; //!< Geheimzahl für DynIP-Aktualisierung
-				uint16_t Port;
-				} SelbstAkt;
+				uint32_t RufNr; //!< Eingene globale Rufnummer.
+				uint16_t Pin; //!< Geheimzahl für DynIP-Aktualisierung.
+				uint16_t Port; //!< gewünschter Port im WWW.
+				} SelbstAkt; //!< Gültig bei #Code == #TLNSERV_SELBSTAKT
 			struct
 				{
-				long EmpfIP;
-				} IpRueckm;
+				long EmpfIP; //!< Vom Netz gemeldete globale IP des Absenders der Selbstaktualisierung.
+				} IpRueckm; //!< Gültig bei #Code == #TLNSERV_IPRUECKMELD
 			struct 
 				{
-				uint32_t RufNr;
-				} TlnAbfr;
+				uint32_t RufNr; //!< globale Telefonnummer.
+				} TlnAbfr; //!< Gültig bei #Code == #TLNSERV_ABFRAGE
 			// für Code == TLNSERV_AUSKUNFT_NICHTVERG keine Daten.
-			TTlnDaten TlnAuskunft; // Version 1 = aktuelle Version
+			TTlnDaten TlnAuskunft; //!< Gültig bei #Code == #TLNSERV_AUSKUNFT_VERSION1
 			} ;
 		} ;
 	} TTlnServBuf; 
 
-
-extern void txp_init( void );
-
-
-extern TTastendruck Tastendruck;
-extern bool WarteTaste();
-extern uint8_t KonfigFreigabe(void *pStruct);
-
-
-//==============================================================================
-
+	
 //! Langzeit-Zeitgeber geeignet von 0,5 Minuten bis 1 Tag.
 typedef struct { uint16_t x; } TLangTimer;
 
+//! Kurzzeit-Zeitgeber geeignet von x/100 Sekunden bis 10 Minuten.
+typedef struct { uint16_t x; } TKurzTimer;
+	
+//! Statistische Messung von kurz dauernden Vorgängen.
+typedef struct	
+	{
+	TKurzTimer Messung;
+	bool Gestartet;
+	uint16_t Grenzwert; 
+	uint32_t Summe;
+	uint16_t Anzahl;
+	uint16_t AnzUeberGrenze;
+	uint16_t Maximum;
+	} TZeitUeberwachung;
+	
+	
+// Variablen
+// ================================================================
+	
+extern TModus Modus;
 
+extern TTastendruck Tastendruck;
+
+//! die tatsächlich laufende Variable für #TLangTimer
 extern volatile uint16_t LangTimerCnt;
 
+//! die tatsächlich laufende Variable für #TKurzTimer
+extern volatile uint16_t KurzTimerCnt;
 
-enum { LangTimerTakt = 10 } ; 
-	//!< Takt in Sekunden des Langzeittimers. 
-	//!< Muss ein Teiler von 60 sein.
+extern volatile TPuffer SendePuffer; 
 	
-enum { LangTimerFakt = 60/LangTimerTakt } ;
-	//!< Faktor zur Umrechnung Minuten -> Takte von #TLangTimer
+extern volatile TPuffer EmpfPuffer; 
+
+extern char AsciiDruckPuffer[AsciiDruckPufferMax+4];
+		
+extern uint8_t AsciiDruckZiel;
+
+extern int TxpSocketHandle;
+
+extern TTxpSocketMode TxpSocketMode;
+
+extern bool TxpSocketAbbauGeplant;
+
+extern TKurzTimer TxpSocketAbbruchTimer;
 	
+extern TTxpSocketProtokoll TxpSocketProtokoll;
+
+extern uint16_t SocketInBufUsed; //!< Benutzter Teil des TCP-Empfangspuffers
+
+extern uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
+
+extern uint8_t ProtokollPhase;
+
+extern char SocketInBuf[SocketInBufMax+4]; //!< TCP-Empfangspuffer
+
+extern char SocketOutBuf[SocketOutBufMax+4]; //!< TCP-Sendepuffer
+	
+extern char DiagnosePuffer[DiagnosePufferMax];
+
+	
+
+
+// globale Funktionen
+// ================================================================
+
+extern void ModusWechsel(TModus neu);
+
+extern void txp_init( void );
+
+extern bool WarteTaste();
+
+extern void AdresseZuWahlStr(uint8_t Adr, char* Buf);
+
+extern void InterneVerbindungBeenden(bool Force);
+	
+extern void SocketBufInit();
+
+extern uint8_t KonfigFreigabe(void *pStruct);
+
+extern void ZeitUeberwachungInit(TZeitUeberwachung *zue, uint16_t aGrenzwert);
+
+extern void ZeitUeberwachungStart(TZeitUeberwachung *zue);
+
+extern bool ZeitUeberwachungEnde(TZeitUeberwachung *zue);
+
+extern void ZeitUeberwachungAbbruch(TZeitUeberwachung *zue);
+
+extern char *ZeitUeberwachungAusgabe(TZeitUeberwachung *zue);
+
+extern bool Diagnoseausgabe_P(const char *msg, uint8_t Level);
+
+extern void AsciiDruckPufferVerarbeiten();
+
+
 //! Startet Langzeit-Messung.
 static inline void StartLangTimer(TLangTimer *t)
 	{
@@ -241,20 +412,8 @@ static inline uint16_t LangTimerVal(TLangTimer *t)
 	SREG = sreg_tmp;
 	return res;
 	}
-		
-	
-//===========================================================================
 
-//! Kurzzeit-Zeitgeber geeignet von x/100 Sekunden bis 10 Minuten.
-typedef struct { uint16_t x; } TKurzTimer;
-	
-extern volatile uint16_t KurzTimerCnt;
 
-enum { KurzTimerFreq = 100 } ; 
-	//!< Frequenz (1/Takt) des Kurzzeittimers. 
-	//!< Muss ein Teiler von #TxpTimerFreq sein.
-	
-	
 //! Startet Kurzzeit-Messung.
 static inline void StartKurzTimer(TKurzTimer *t)
 	{
@@ -278,117 +437,6 @@ static inline uint16_t KurzTimerVal(TKurzTimer *t)
 	}
 		
 	
-//=============================================================================
-//! Statistische Messung von kurz dauernden Vorgängen.
-typedef struct	
-	{
-	TKurzTimer Messung;
-	bool Gestartet;
-	uint16_t Grenzwert; 
-	uint32_t Summe;
-	uint16_t Anzahl;
-	uint16_t AnzUeberGrenze;
-	uint16_t Maximum;
-	} TZeitUeberwachung;
-	
-	
-extern void ZeitUeberwachungInit(TZeitUeberwachung *zue, uint16_t aGrenzwert);
-
-extern void ZeitUeberwachungStart(TZeitUeberwachung *zue);
-
-extern bool ZeitUeberwachungEnde(TZeitUeberwachung *zue);
-
-extern void ZeitUeberwachungAbbruch(TZeitUeberwachung *zue);
-
-extern char *ZeitUeberwachungAusgabe(TZeitUeberwachung *zue);
-
-	
-extern volatile TPuffer SendePuffer; 
-	
-extern volatile TPuffer EmpfPuffer; 
-
-enum { AsciiDruckPufferMax = 1000, HtmlSendeTextMax = 400 } ;
-	//!< Puffergrößen für Textpuffer bei HTML-Kommunikation
-
-extern char AsciiDruckPuffer[AsciiDruckPufferMax+4];
-		
-extern uint8_t AsciiDruckZiel;
-
-		
-extern int TxpSocketHandle;
-	
-typedef enum { 
-	SocketIdle, //!< Unbenutzt
-	SocketOriginate, //!< Ausgehende Verbindung
-	SocketAnswer //!< Kommende Verbindung
-	} TTxpSocketMode; 
-	//!< Speichert Sollzustand der Txp-Verbindung
-
-extern TTxpSocketMode TxpSocketMode;
-
-
-extern bool TxpSocketAbbauGeplant;
-
-	
-typedef enum {
-	TelexPhone,		//!< Das eigene Protokoll
-	Ascii,			//!< Ascii, also telnet
-#ifdef TXP_EMAIL
-	POP3,			//!< Mail-Abfrage
-	SMTP,			//!< Mail-Sendung
-#endif //def TXP_EMAIL
-	} TTxpSocketProtokoll; 
-	//!< Was geht über den Socket 'rüber.
-	
-
-extern TKurzTimer TxpSocketAbbruchTimer;
-	
-extern TTxpSocketProtokoll TxpSocketProtokoll;
-
-
-enum { SocketInBufMax = 2500 } ; //!< Größe des TCP-Empfangspuffers
-
-extern uint16_t SocketInBufUsed; //!< Benutzter Teil des TCP-Empfangspuffers
-
-extern char SocketInBuf[SocketInBufMax+4]; //!< TCP-Empfangspuffer
-
-	
-enum { SocketOutBufMax = 2500 } ; //!< Größe des TCP-Sendepuffers
-
-extern uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
-
-extern char SocketOutBuf[SocketOutBufMax+4]; //!< TCP-Sendepuffer
-
-extern uint8_t ProtokollPhase;
-	
-extern void AdresseZuWahlStr(uint8_t Adr, char* Buf);
-
-extern void InterneVerbindungBeenden(bool Force);
-	
-extern void SocketBufInit();
-
-enum { DiagnosePufferMax = 200 } ;
-
-extern char DiagnosePuffer[DiagnosePufferMax];
-
-extern bool Diagnoseausgabe_P(const char *msg, uint8_t Level);
-
-extern void AsciiDruckPufferVerarbeiten();
-
-
-DEFPORTOUT(RTS, D, 4)
-
-DEFPORTIN(CTS, D, 5)
-
-	
-// Was soll LED rot anzeigen?
-//---------------------------
-//#define LEDROT_EXTEEPROM
-//#define LEDROT_SDKARTE
-#define LEDROT_TXPTHREADBLOCK
-//#define LEDROT_SOCKETERROR
-//#define LEDROT_UNERWARTET  // noch ungenutzt
-
 #endif //def TELEXPHONE
 	
 #endif /* _TXP_H_ */

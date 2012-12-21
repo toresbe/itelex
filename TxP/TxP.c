@@ -1395,7 +1395,7 @@ static void SocketBearbeiten()
 				{
 				Abweisen = true; // anderweitig belegt
 				if (ProtokollLevel >= 1)
-					Protokollieren_P(PSTR(", anderweitig belegt!"));
+					Protokollieren_P(PSTR(", anderweitig belegt"));
 				}
 			#ifdef LEDROT_SOCKETERROR
 				LED_off(ROT);
@@ -1427,12 +1427,12 @@ static void SocketBearbeiten()
 			{ // TxpSocketMode == SocketOriginate || TxpSocketHandle bereits belegt
 			Abweisen = true; // anderweitig belegt
 			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR(", Verbindung besteht!"));
+				Protokollieren_P(PSTR(", Verbindung besteht"));
 			}
 		
 		if (Abweisen)
 			{ // ID#213 ID#225 ***************************************************
-			PutSocketData_RPE(NewServerSocket, 7, PSTR("\004\005occ\r\n"), FLASH); // 004 = TXPC_STOP
+			PutSocketData_RPE(NewServerSocket, 7, PSTR("\004\006occ \r\n"), FLASH); // 004 = TXPC_STOP
 			CloseTCPSocket(NewServerSocket);
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR(" ! ...ABGEWIESEN\r\n" ));

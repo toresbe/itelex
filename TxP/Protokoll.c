@@ -35,6 +35,9 @@ enum { MaxDateigroesse = 100000UL } ; //!< Maximale Dateigröße. Bei überschre
 
 bool Idle; //!< Speichert, ob es zu protokollierende Ereignisse gab.
 
+bool SdGestoert;
+	//!< Wenn die SD Karte zwar aktiv ist aber schreiben nicht möglich ist.
+	
 uint8_t ProtokollLevel;
 	//!< "Tiefe" der Protokollierung für "normale" Abläufe: 0 = Aus, 1 = Normal, 2 = Intensiv, 3 = im Detail
 
@@ -75,7 +78,7 @@ bool ProtokollSpeichern(bool flush)
 	struct fat_dir_entry_struct dir_entry;
 	uint8_t Res;
 
-	if  (fs == NULL) 
+	if  (fs == NULL || SdGestoert) 
 
 #endif //defined(MMC)
 
@@ -137,6 +140,8 @@ bool ProtokollSpeichern(bool flush)
 				else 
 					{ // Seek hat versagt --> schließen und dann neue anfangen.
 					Diagnoseausgabe_P(PSTR("fat_seek_file versagt"), 1);
+						// hier wird SdGestoert nicht gesetzt, vielleicht funktioniert 
+						// es ja in einer neuen Datei.
 					fat_close_file(fd);
 					fd = NULL;
 					}
@@ -154,6 +159,10 @@ bool ProtokollSpeichern(bool flush)
 		if (!Res)
 			{
 			Diagnoseausgabe_P(PSTR("fat_get_dir_entry_of_path des Hauptverzeichnis versagt"), 1);
+			SdGestoert = true;
+#if defined(LEDROT_SDKARTE)
+			LED_off(ROT); 
+#endif //defined(LEDROT_SDKARTE)
 			return false;
 			}
 			
@@ -161,6 +170,10 @@ bool ProtokollSpeichern(bool flush)
 		if (dd == NULL)
 			{
 			Diagnoseausgabe_P(PSTR("fat_open_dir des Hauptverzeichnis versagt"), 1);
+			SdGestoert = true;
+#if defined(LEDROT_SDKARTE)
+			LED_off(ROT); 
+#endif //defined(LEDROT_SDKARTE)
 			return false;
 			}
 
@@ -171,6 +184,10 @@ bool ProtokollSpeichern(bool flush)
 			{
 			if (Diagnoseausgabe_P(PSTR("fat_create_file versagt fuer "), 1))
 				strcat(DiagnosePuffer, Dateiname);
+			SdGestoert = true;
+#if defined(LEDROT_SDKARTE)
+			LED_off(ROT); 
+#endif //defined(LEDROT_SDKARTE)
 			return false;
 			}
 			
@@ -179,10 +196,16 @@ bool ProtokollSpeichern(bool flush)
 			{
 			if (Diagnoseausgabe_P(PSTR("fat_open_file der neuen Datei versagt fuer "), 1))
 				strcat(DiagnosePuffer, Dateiname);
+			SdGestoert = true;
+#if defined(LEDROT_SDKARTE)
+			LED_off(ROT); 
+#endif //defined(LEDROT_SDKARTE)
 			return false;
 			}
 			
-		LetzteDruckZeit = 0; // in neuer Datei immer das Datum vorne einfügen.
+		LetzteDruckZeit = 0; 
+			// in neuer Datei immer das Datum vorne einfügen.
+			// Damit wird in der neuen Datei auch immer ein Schreibtest gemacht.
 		} // neue Datei anlegen.
 	
 	// jetzt muss fd geöffnet sein.
@@ -196,8 +219,12 @@ bool ProtokollSpeichern(bool flush)
 		if (fat_write_file(fd, (uint8_t*) Kopfzeile, strlen(Kopfzeile)) <= 0)
 			{
 			Diagnoseausgabe_P(PSTR("fat_write_file versagt"), 1);
+			SdGestoert = true;
 			fat_close_file(fd);
 			return false;
+#if defined(LEDROT_SDKARTE)
+			LED_off(ROT); 
+#endif //defined(LEDROT_SDKARTE)
 			}
 		}
 	
@@ -205,7 +232,12 @@ bool ProtokollSpeichern(bool flush)
 	if (fat_write_file(fd, (uint8_t*) Puffer, strlen(Puffer)) <= 0)
 		{
 		Diagnoseausgabe_P(PSTR("fat_write_file versagt"), 1);
+			// Kein SdGestoert = true, da es vielleicht in der nächsten Datei funktioniert.
 		fat_close_file(fd);
+		Dateiname[0] = '\0';
+#if defined(LEDROT_SDKARTE)
+		LED_off(ROT); 
+#endif //defined(LEDROT_SDKARTE)
 		return false;
 		}
 
@@ -449,6 +481,7 @@ void ProtokollInit()
 	Puffer[0] = '\0';
 	Dateiname[0] = '\0';
 	Idle = true;
+	SdGestoert = false;
 	CLOCK_RegisterCallbackFunction(SpeichernBeiIdle, MINUTE);
 		// durch den Minutentakt wird alle ein bis zwei Minuten der 
 		// Protokollinhalt gespeichert.

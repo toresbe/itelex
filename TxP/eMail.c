@@ -359,6 +359,7 @@ void POP3DatenVerarbeiten()
 			strcat(SocketOutBuf, EmailEigeneAdresse);
 			strcat_P(SocketOutBuf, PSTR("\r\n"));
 			ProtokollPhase = AnmeldungKennwort;
+			SocketInBufUsed = 0;
 			break;
 			
 		case AnmeldungKennwort:
@@ -366,11 +367,13 @@ void POP3DatenVerarbeiten()
 			strcat(SocketOutBuf, EmailEigenesPasswort);
 			strcat_P(SocketOutBuf, PSTR("\r\n"));
 			ProtokollPhase = StartData;
+			SocketInBufUsed = 0;
 			break;
 
 		case StartData:
 			strcpy_P(SocketOutBuf, PSTR("STAT\r\n"));
 			ProtokollPhase = WarteStart;
+			SocketInBufUsed = 0;
 			break;
 			
 		case WarteStart:
@@ -399,6 +402,7 @@ void POP3DatenVerarbeiten()
 				MailUnterdruecken = false;
 				}
 				
+			SocketInBufUsed = 0;
 			break;
 			
 		case MailData:
@@ -463,10 +467,9 @@ void POP3DatenVerarbeiten()
 				{ // Abbruch warum auch immer...
 				memmove(SocketInBuf, SocketInBuf + ZeileAnfang, SocketInBufUsed - ZeileAnfang);
 				SocketInBufUsed -= ZeileAnfang;
-				return; // Sonst wird SocketInBufUsed unten auf Null gesetzt.
 				}
 				
-			if (UeberlaufDroht && SocketInBufUsed > SocketInBufMax - 20)
+			else if (UeberlaufDroht && SocketInBufUsed > SocketInBufMax - 20)
 				{ // mindestens 20 Zeichen Platz lassen. Aber die letzen 60 Zeichen beibehalten.
 				int AnzahlZuLoschen = SocketInBufUsed - (SocketInBufMax - 20);
 				int LoeschPosition = SocketInBufMax - 60; // Konstante, macht der Compiler weg...
@@ -475,7 +478,6 @@ void POP3DatenVerarbeiten()
 						SocketInBuf + LoeschPosition + AnzahlZuLoschen, 
 					    Rest);
 				SocketInBufUsed -= AnzahlZuLoschen;
-				return; // Sonst wird SocketInBufUsed unten auf Null gesetzt.
 				}
 				
 			break;
@@ -484,14 +486,15 @@ void POP3DatenVerarbeiten()
 			strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
 			TxpSocketAbbauGeplant = true;
 			ProtokollPhase = WarteEnde;
+			SocketInBufUsed = 0;
 			break;
 			
 		case WarteEnde:
+			SocketInBufUsed = 0;
 			break;
 
 		}
 			
-	SocketInBufUsed = 0; // alle Eingabedaten verarbeitet. Falls nicht, muss vorher herausgesprungen werden.
 	SocketOutBufUsed = strlen(SocketOutBuf);
 	if (SocketOutBufUsed != 0)
 		POPOkEmpfangen = false;
