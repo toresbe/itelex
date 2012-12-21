@@ -70,14 +70,15 @@ DEFPORTIN(CTS, D, 5)
 // Konstanten
 // ================================================================
 
-//! Der TCP-Port für die TelexPhone-Kommunikation
-#define TXP_PORT 134
 
-//! Der TCP-Port für die TelexPhone-Rumnummernverwaltung
-#define TXP_TLNSERV_PORT 11811
+//! Nur Konstanten-Definitionen.
+enum { 
+	TXP_PORT = 134,
+	//!< Der TCP-Port für die TelexPhone-Kommunikation.
 
-
-enum { // Konstanten...
+	TXP_TLNSERV_PORT = 11811,
+	//!< Der TCP-Port für die Kommunikation mit den Teilnehmer-Servern.
+	
 	TlnAdresseMax = 40,
 	//!< maximale Länge der Verbindungsadresse.
 	//!< Nicht ändern, da auch der Datenaustausch mit dem Teilnehmer-Server
@@ -156,6 +157,7 @@ enum { // Konstanten...
 // Typdefinitionen
 // ================================================================
 
+//! Aktuelle Betriebsart der TxP-Anwendung.
 typedef enum
 	{
 	ModRuhe = 0, 
@@ -197,28 +199,32 @@ typedef enum
 	} TModus;
 	
 
+//! Art des Tastendrucks.
 typedef enum { 
 	NichtGedr, //!< nicht gedrückt.
 	Kurz, //!< kurz gedrückt ( < 0,8 Sekunden)
 	Lang  //!< lang gedrückt ( > 0,8 Sekunden)
-	} TTastendruck; //!< Art des Tastendrucks
+	} TTastendruck; 
 
+	
+//! Sollzustand der bestehenden Txp-Verbindung (Socket)
 typedef enum { 
 	SocketIdle, //!< Unbenutzt
 	SocketOriginate, //!< Ausgehende Verbindung
 	SocketAnswer //!< Kommende Verbindung
-	} TTxpSocketMode; //!< Speichert Sollzustand der Txp-Verbindung
+	} TTxpSocketMode; 
 	
-typedef enum {
+	
+ //! Was geht über den Socket 'rüber.	
+ typedef enum {
 	TelexPhone,		//!< Das eigene Protokoll
 	Ascii,			//!< Ascii, also telnet
 #ifdef TXP_EMAIL
 	POP3,			//!< Mail-Abfrage
 	SMTP,			//!< Mail-Sendung
 #endif //def TXP_EMAIL
-	} TTxpSocketProtokoll; //!< Was geht über den Socket 'rüber.
+	} TTxpSocketProtokoll;
 	
-
 
 //! Typ eines Teilnehmers
 typedef enum 
