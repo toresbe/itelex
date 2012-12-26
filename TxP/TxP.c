@@ -231,10 +231,10 @@ static TKurzTimer HtmlDruckspiegelAnzeigeTimer;
 	//!< Zeit seit der letzten Anzeige des Druckspiegels. Druckspiegel wird alle 10 Sekunden 
 	//!< abgerufen.
 	
-static TLangTimer HtmlTexteingabeTimer;
-	//!< Zeit seit der letzten Eingabe eines Textes auf der CGI-Seite für Direktdruck oder
-	//!< seit dem letzten lokal eingegebenen Zeichen im Modus ModHtmlChatVerbunden.
-
+static TLangTimer BeideRuhigTimer;
+	//!< Zeit seit letztem Druck zum oder Schreibempfang vom Endgerät.
+	//!< Abschaltung nach 10 Minuten Ruhe.
+	
 
 int TxpSocketHandle;
 	//!< Verweis auf Socket für Txp-Kommunikation. Istzustand. Wenn ungültig, aber TxpSocketMode
@@ -1009,6 +1009,7 @@ void ModusWechsel(TModus neu)
 			SocketAnzahlZeichenGesendet = 0;
 			SocketAnzahlZeichenQuittiert = 0;
 			SocketSendeFehlerZaehler = 0;
+			StartLangTimer(&BeideRuhigTimer);
 			break;
 	
 		case ModGehendWaehlen:
@@ -1031,6 +1032,7 @@ void ModusWechsel(TModus neu)
 			LED_off(GRUEN);
 			LED_off(BLAU);
 			StartKurzTimer(&SchreibPauseTimer);
+			StartLangTimer(&BeideRuhigTimer);
 			break;
 	
 		// Kommend = vom Netz zum internen Anschluss
@@ -1072,6 +1074,7 @@ void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_FsBefBetrieb);
 			SET_BIT_Status(StatBit_FsBefEin);
 			StartKurzTimer(&BusQuittTimer);
+			StartLangTimer(&BeideRuhigTimer);
 			break;
 	
 		case ModKommendVerbunden: 
@@ -1081,10 +1084,12 @@ void ModusWechsel(TModus neu)
 			BusEmpfMark = true;
 			SendeMark = true;
 			StartKurzTimer(&SchreibPauseTimer);
+			StartLangTimer(&BeideRuhigTimer);
 			break;
 	
 		case ModPufferDruckUndSchluss: 
 			CLR_BIT_Status(StatBit_Verbunden);
+			StartLangTimer(&BeideRuhigTimer);
 			break;
 		
 		case ModWarteSchlussQuitt:
@@ -1117,6 +1122,7 @@ void ModusWechsel(TModus neu)
 			SocketAnzahlZeichenGesendet = 0;
 			SocketAnzahlZeichenQuittiert = 0;
 			SocketSendeFehlerZaehler = 0;
+			StartLangTimer(&BeideRuhigTimer);
 			break;
 	
 		case ModHtmlChatVerbunden: 
@@ -1125,8 +1131,8 @@ void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_Verbunden);
 			BusEmpfMark = true;
 			SendeMark = true;
-			StartLangTimer(&HtmlTexteingabeTimer);
 			StartKurzTimer(&HtmlDruckspiegelAnzeigeTimer);
+			StartLangTimer(&BeideRuhigTimer);
 			break;
 
 		case ModDeaktiviert:
@@ -1569,8 +1575,6 @@ static void SocketBearbeiten()
 			if (Res > 0)
 				{
 				SocketInBufUsed += Res;
-				if (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == SMTP)
-					TCP_sockettable[TxpSocketHandle].Timeoutcounter = 600; // Timeout auf 10 Minuten verlängern
 				}
 				
 			}
@@ -1680,8 +1684,6 @@ static void SocketBearbeiten()
 				LED_on(ROT);
 			#endif //def LEDROT_SOCKETERROR
 			StartKurzTimer(&TxpSocketAbbauVerzoegerung);
-			if (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == SMTP)
-				TCP_sockettable[TxpSocketHandle].Timeoutcounter = 600; // Timeout auf 10 Minuten verlängern
 			}
 			
 		else // Puffer erfolgreich vollständig gesendet.
@@ -1692,12 +1694,14 @@ static void SocketBearbeiten()
 				LED_off(ROT);
 			#endif //def LEDROT_SOCKETERROR
 			StartKurzTimer(&TxpSocketAbbauVerzoegerung);
-			if (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == SMTP)
-				TCP_sockettable[TxpSocketHandle].Timeoutcounter = 600; // Timeout auf 10 Minuten verlängern
 			}
 			
 		} // if es gibt was zu senden
 
+	// Bei Ascii oder Mail den Timeout auf 'deaktivieren'
+	if (ModusTwiVerbunden() && (TxpSocketProtokoll == Ascii || TxpSocketProtokoll == POP3 || TxpSocketProtokoll == SMTP))
+		TCP_sockettable[TxpSocketHandle].Timeoutcounter = 30; 
+		
 	// Abbruch wenn zu lange keine Verbindung besteht...
 	// -------------------------------------------------
 	if (TxpSocketMode != SocketIdle
@@ -1800,6 +1804,47 @@ void InterneVerbindungBeenden(bool Force)
 	} // InterneVerbindungBeenden()
 	
 
+//! Schließt Verbindung nach draußen.
+static void ExterneVerbindungBeenden()
+	{
+	if (TxpSocketMode != SocketIdle)
+		{
+		switch (TxpSocketProtokoll)
+			{
+			case Ascii:
+				TxpSocketAbbauGeplant = true;
+				break;
+				
+			case TelexPhone:
+				TxpSocketAbbauGeplant = true;
+				if (SocketOutBufUsed < SocketOutBufMax - 2)
+					{
+					SocketOutBuf[SocketOutBufUsed++] = TXPC_ENDE;
+					SocketOutBuf[SocketOutBufUsed++] = 0;
+					}
+				break;
+				
+#ifdef TXP_EMAIL
+			case SMTP:
+				SMTPSchliessen();
+				break;
+				
+			case POP3:
+				POP3Abbrechen();
+				break;
+#endif //def TXP_EMAIL
+				
+			}
+		}
+						
+	// Html-Puffer löschen
+	AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
+	AsciiHilfPuffer[0] = '\0';
+	AsciiHilfZeilenanfang = 0;
+
+	}
+	
+	
 //! Prüft, ob im AsciiPuffer eine Anwahl-Sequenz enthalten ist.
 // ------------------------------------------------------------
 //! Die Anwahl-Sequenz besteht aus *n* oder *nn*.
@@ -2129,7 +2174,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 static void TxpDatenVerarbeiten()
 	{
 	TxpOderAsciiEmpfangVerarbeiten();
-		
+	
 	// vom Endgerät empfangene Daten übersetzen
 	// --------------------------------------------------
 	// es wird gesendet, wenn es was zu senden gibt 
@@ -2137,6 +2182,10 @@ static void TxpDatenVerarbeiten()
 	//     ODER b) 0,5 sekunden nicht getippt wurde
 	//     ODER c) Alles was bisher gesendet wurde schon verarbeitet ist.
 	int InCount = PufferAnzahl(&EmpfPuffer);
+	
+	if (InCount > 0 || !PufferLeer(&SendePuffer))
+		StartLangTimer(&BeideRuhigTimer);
+	
 	if (InCount > 20
 	    || (InCount > 0 && ((KurzTimerVal(&SchreibPauseTimer) >= KurzTimerFreq * 8/10) // 0,8 Sekunden Tipp-Pause
 		                    || (SocketAnzahlZeichenQuittiert == low(SocketAnzahlZeichenGesendet)) // alles was gesendet wurde, ist schon verarbeitet
@@ -2197,13 +2246,17 @@ static void TxpDatenVerarbeiten()
 static void AsciiDatenVerarbeiten()
 	{
 	TxpOderAsciiEmpfangVerarbeiten();
-		
+
 	// vom Endgerät empfangene Daten übersetzen
 	// --------------------------------------------------
 	// es wird gesendet, wenn es was zu senden gibt 
 	// UND      a) es viel zu senden gibt 
 	//     ODER b) 0,5 sekunden nicht getippt wurde.
 	int InCount = PufferAnzahl(&EmpfPuffer);
+	
+	if (InCount > 0 || !PufferLeer(&SendePuffer))
+		StartLangTimer(&BeideRuhigTimer);
+	
 	if (InCount > 20
 	    || (InCount > 0 && KurzTimerVal(&SchreibPauseTimer) >= KurzTimerFreq * 8/10) // 0,8 Sekunden Tipp-Pause
 		)
@@ -2865,40 +2918,9 @@ void txp_thread()
 				if (Modus != ModRuhe)
 					{
 					BusSenden(BusQuittSchluss);
-
-					switch (TxpSocketProtokoll)
-						{
-						case Ascii:
-							TxpSocketAbbauGeplant = true;
-							break;
-							
-						case TelexPhone:
-							TxpSocketAbbauGeplant = true;
-							if (SocketOutBufUsed < SocketOutBufMax - 2)
-								{
-								SocketOutBuf[SocketOutBufUsed++] = TXPC_ENDE;
-								SocketOutBuf[SocketOutBufUsed++] = 0;
-								}
-							break;
-							
-#ifdef TXP_EMAIL
-						case SMTP:
-							SMTPSchliessen();
-							break;
-							
-						case POP3:
-							POP3Abbrechen();
-							break;
-#endif //def TXP_EMAIL
-							
-						}
+					ExterneVerbindungBeenden();
 					}
-						
-				// Html-Puffer löschen
-				AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
-				AsciiHilfPuffer[0] = '\0';
-				AsciiHilfZeilenanfang = 0;
-
+					
 				ModusWechsel(ModWarteGrundstellung);
 					
 				break;
@@ -3047,7 +3069,16 @@ void txp_thread()
 		SendeStopkommando(PSTR("err\r\n"));
 		}
 		
+	if (ModusTwiVerbunden() && LangTimerVal(&BeideRuhigTimer) > 10 * LangTimerFakt)
+		{
+		if (ProtokollLevel >= 1)
+			ProtokollierenTxp_P(PSTR("Abbau wegen 10 Minuten Funkstille!\r\n"));
 
+		InterneVerbindungBeenden(true);
+		ExterneVerbindungBeenden();
+		ModusWechsel(ModWarteGrundstellung);
+		}
+	
 	// ==========================================================================
 	// Tastendruck?
 	// ==========================================================================
@@ -3146,7 +3177,7 @@ void txp_thread()
 		while (!PufferLeer(&EmpfPuffer))
 			{
 			ZeichenInHtmlSendeText(CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode));
-			StartLangTimer(&HtmlTexteingabeTimer);
+			StartLangTimer(&BeideRuhigTimer);
 			}
 
 		if (AsciiDruckPuffer[0] == '\0'
@@ -3156,7 +3187,7 @@ void txp_thread()
 			&& PufferLeer(&EmpfPuffer)
 			&& (TxpSocketHandle == NO_SOCKET_USED || SocketInBufUsed == 0)
 			&& (KurzTimerVal(&HtmlDruckspiegelAnzeigeTimer) >= 30 * KurzTimerFreq // 30 Sekunden keine Anzeige-Abfrage
-				|| LangTimerVal(&HtmlTexteingabeTimer) >= 5 * LangTimerFakt)) // 5 Minuten nichts eingegeben
+				|| LangTimerVal(&BeideRuhigTimer) >= 5 * LangTimerFakt)) // 5 Minuten nichts eingegeben
 			{
 			if (ProtokollLevel >= 1)
 				ProtokollierenTxp_P(PSTR("HTML-Chat-Ruhe --> Ausschaltung intern\r\n" ));
@@ -3932,8 +3963,7 @@ void txp_cgi_msg_In( void * pStruct )
 			}
 			
 		// Und Zeit für Verbindungsabbau messen.
-		StartLangTimer(&HtmlTexteingabeTimer);
-		
+		StartLangTimer(&BeideRuhigTimer);
 		StartKurzTimer(&HtmlDruckspiegelAnzeigeTimer); 
 			// Für den Fall, dass das Anzeigefenster noch nicht aktualisiert wurde.
 		

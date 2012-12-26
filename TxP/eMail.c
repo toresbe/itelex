@@ -469,6 +469,9 @@ void POP3DatenVerarbeiten()
 				SocketInBufUsed -= ZeileAnfang;
 				}
 				
+			else if (ZeileAnfang >= SocketInBufUsed)
+				SocketInBufUsed = 0;
+				
 			else if (UeberlaufDroht && SocketInBufUsed > SocketInBufMax - 20)
 				{ // mindestens 20 Zeichen Platz lassen. Aber die letzen 60 Zeichen beibehalten.
 				int AnzahlZuLoschen = SocketInBufUsed - (SocketInBufMax - 20);
