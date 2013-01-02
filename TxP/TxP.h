@@ -125,18 +125,38 @@ enum {
 	//!< Meldung des Teilnehmer-Server an den Teilnehmer als Rückmeldung der 
 	//!< nun gespeicherten IP-Adresse. Antwort auf #TLNSERV_SELBSTAKT.
 
-	TLNSERV_ABFRAGE = 0x03,
+	TLNSERV_ABFRAGE_VERSION1 = 0x03,
 	//!< Meldung eines Teilnehmer an den Teilnehmer-Server als Wunsch die
 	//!< IP-Adresse eines anderen Teilnehmers zu erfragen.
 	
 	TLNSERV_AUSKUNFT_NICHTVERG = 0x04,
 	//!< Meldung des Teilnehmer-Server an den Teilnehmer als Rückmeldung dass
-	//!< durch #TLNSERV_ABFRAGE gewünschter Teilnehmer nicht gespeichert ist.
+	//!< durch #TLNSERV_ABFRAGE_VERSION1 gewünschter Teilnehmer nicht gespeichert ist.
 
 	TLNSERV_AUSKUNFT_VERSION1 = 0x05,
 	//!< Meldung des Teilnehmer-Server an den Teilnehmer als Rückmeldung der
-	//!< kompletten Daten des durch #TLNSERV_ABFRAGE gewünschten Teilnehmers.
+	//!< kompletten Daten des durch #TLNSERV_ABFRAGE_VERSION1 gewünschten Teilnehmers.
+	//!< wird auch zur Synchronisation der Teilnehmer-Server untereinander
+	//!< verwendet.
+	
+	TLNSERV_SYNC_TOTALABFRAGE = 0x06,
+	//!< Leitet eine vollständige Abfrage aller synchronisationsrelevanten 
+	//!< Einträge ein, z.B. weil ein Teilnehmer-Server neu gestartet wurde.
+	
+	TLNSERV_SYNC_ANMELDUNG = 0x07,
+	//!< Erste Meldung eines Teilnehmer-Servers, der neue oder geänderte Einträge
+	//!< weitermelden will.
+	
+	TLNSERV_SYNC_QUITTUNG = 0x08,
+	//!< Rückmeldung des Teilnehmer-Servers, der einen Datensatz empfangen hat,
+	//!< sobald er Empfangsbereit für weitere Datensätze ist.
 
+	TLNSERV_SYNC_ENDE = 0x09,
+	//!< Meldung des sendenden Teilnehmer-Servers, sobald keine weiteren Datensätze
+	//!< zu senden sind. \n
+	//!< Oder Meldung des empfangenden Teilnehmer-Servers, wenn dieser keine 
+	//!< weiteren Datensätze verarbeiten kann.
+	
 	TLNSERV_FEHLER = 0xFF,
 	//!< Allgemeine Fehlermeldung.
 	
@@ -278,7 +298,8 @@ typedef union
 			{
 			char PureData[1]; 
 				//!< Für direkten Zugriff auf den Nutzdatenblock. Wird auch verwendet 
-				//!< als Speicher für Textmeldungen bei #Code == #TLNSERV_FEHLER.
+				//!< als Speicher für Textmeldungen bei #Code == #TLNSERV_FEHLER
+				//!< und bei #Code == #TLNSERV_SYNC_ENDE.
 			struct 
 				{
 				uint32_t RufNr; //!< Eingene globale Rufnummer.
@@ -292,9 +313,17 @@ typedef union
 			struct 
 				{
 				uint32_t RufNr; //!< globale Telefonnummer.
-				} TlnAbfr; //!< Gültig bei #Code == #TLNSERV_ABFRAGE
-			// für Code == TLNSERV_AUSKUNFT_NICHTVERG keine Daten.
+				} TlnAbfr; //!< Gültig bei #Code == #TLNSERV_ABFRAGE_VERSION1
 			TTlnDaten TlnAuskunft; //!< Gültig bei #Code == #TLNSERV_AUSKUNFT_VERSION1
+			struct
+				{
+				uint8_t Version; //!< Welches Datenformat soll verwendet werden?
+				uint32_t Geheimzahl; //!< PIN, für alle Teilnehmer-Server gültig und gleich.
+				} SyncAnmeldung; //!< Gültig bei #Code == #TLNSERV_SYNC_TOTALABFRAGE
+					//!< und bei #Code == #TLNSERV_SYNC_ANMELDUNG 
+				
+			// für Code == TLNSERV_SYNC_QUITTUNG keine Daten.
+			// für Code == TLNSERV_AUSKUNFT_NICHTVERG keine Daten.
 			} ;
 		} ;
 	} TTlnServBuf; 

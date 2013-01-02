@@ -276,7 +276,7 @@ static void SocketBearbeiten(int *Socket)
 					}
 				break;
 				
-			case TLNSERV_ABFRAGE:
+			case TLNSERV_ABFRAGE_VERSION1:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.TlnAbfr))
 					OutCount = FehlerRueckmelden(PSTR("request not enough data: %u"), TlnServBuf.DataLen);
 				else

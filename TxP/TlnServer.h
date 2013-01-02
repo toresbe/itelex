@@ -30,6 +30,8 @@
 	
 	#ifdef TXP_TLNSERVER
 	
+	uint32_t TlnServSyncGeheimzahl;
+	
 	extern void txp_tlnserv_thread( void );
 	extern void txp_tlnserv_init( void );
 	

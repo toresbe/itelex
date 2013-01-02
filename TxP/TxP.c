@@ -2540,7 +2540,7 @@ static void RufnummerBeiTlnServerAbfragen()
 		// Telegramm senden
 		TTlnServBuf TSB;
 		
-		TSB.Code = TLNSERV_ABFRAGE;
+		TSB.Code = TLNSERV_ABFRAGE_VERSION1;
 		TSB.DataLen = sizeof(TSB.TlnAbfr);
 		TSB.TlnAbfr.RufNr = Wahlnummer;
 		PutSocketData_RPE(TeilnehmerServerSocket, 2 + TSB.DataLen, TSB.Buf, RAM);
@@ -4288,6 +4288,8 @@ const PROGMEM char SelbstAnrufPeriode_P[] = "SELBSTANPER";
 const PROGMEM char RufnrServerAdr1_P[] = "RUFNRSERV1";
 const PROGMEM char RufnrServerAdr2_P[] = "RUFNRSERV2";
 const PROGMEM char RufnrServerAdr3_P[] = "RUFNRSERV3";
+const PROGMEM char TlnServSyncGeheimzahl_P[] = "SYNCPIN";
+
 const char* RufnrServerAdr_P[] = { RufnrServerAdr1_P, RufnrServerAdr2_P, RufnrServerAdr3_P } ; // liegt dann zwar im RAM, ist aber halt so...
 	
 	
@@ -4325,6 +4327,10 @@ void txp_cgi_config_extern(void *pStruct)
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 			CgiFormInputFieldText_P(PSTR("Adresse des Teilnehmer-Server:"), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
 
+		#ifdef TXP_TLNSERVER
+		CgiFormInputFieldULong_P(PSTR("Geheimzahl f&uuml;r Server-Synchronisierung"), TlnServSyncGeheimzahl_P, 10, TlnServSyncGeheimzahl);
+		#endif //def TXP_TLNSERVER
+		
 		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
 		}
 	else // argc > 0
@@ -4341,6 +4347,10 @@ void txp_cgi_config_extern(void *pStruct)
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 			CgiCheckText_P(http_request, PSTR("Teilnehmer-Server"), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
+
+		#ifdef TXP_TLNSERVER
+		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, PSTR("Geheimzahl f&uuml;r Server-Synchronisierung"), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl);
+		#endif //def TXP_TLNSERVER
 			
 		} // else argc > 0
 		
