@@ -88,7 +88,41 @@ static uint8_t SocketSendeFehlerZaehler;
 static TTlnServBuf TlnServBuf;
 	//!< Lokaler Puffer für alle Anfragen an den Teilnehmerauskunft-Server
 
+uint32_t TlnServSyncGeheimzahl;	
+	//!< Geheimzahl zur generellen Freigabe der Aufnahme von Teilnehmer-Einträgen beim
+	//!< Empfangenden Server.
 	
+static uint32_t TlnServSyncStichzeit[ANZ_TEILNEHMER_SERVER];
+	//!< Wann wurden zuletzt Teilnehmer-Einträge an den jeweiligen anderen Server 
+	//!< \b gesendet.
+	
+static uint32_t TlnBuchLetzteAenderung;
+	//!< Wann wurden zuletzt Teilnehmer-Einträge geändert, die zu synchronisieren sind.
+
+static uint32_t SyncAusgabeStichzeit;
+	//!< Für den aktuell laufenden Synchronisationsvorgang gültiges "Grenzdatum" für
+	//!< zu sendende Einträge.
+
+
+static TKurzTimer SyncWarteTimer;
+	//!< Wartezeit bis zur nächsten aktiven Aktion des Teilnehmerauskunft-Servers.
+	
+static uint16_t SyncWarteEnde;
+	//!< Wie lange soll bis zur nächsten Aktion gewartet werden.
+	//!< \n 20 Sekunden bis zur initialen Abholung von den Akuellen Daten nach Neustart eines
+	//!< Teilnehmerauskunft-Servers.
+	//!< \n 30 Sekunden bis zur Sendung von aktualisierten Teilnehmer-Daten an den folgenden 
+	//!< Teilnehmerauskunft-Server.
+	//!< \n 10 Sekunden nach einem nicht erfolgreichen Verbindungsaufbau zu einem
+	//!< Partner-Teilnehmerauskunft-Server.
+	//!< \n 8 Minuten nach erfolgreicher Synchronisation an den ersten 
+	//!< Partner-Teilnehmerauskunft-Server bis zur Sendung an den nächsten Partner-Teilnehmerauskunft-Server.
+
+static bool InitialAbfrageStarten;
+	//!< nach Reset true, bis erfolgreich von einem anderen Teilnehmerauskunft-Server 
+	//!< alle Daten abgeholt worden sind.
+	
+
 //! Bearbeitet die Aktualisierungsmeldung im eigenen Telefonbuch.
 //---------------------------------------------------------------
 //! \retval true, wenn Meldung akzeptiert wurde.
@@ -137,7 +171,7 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 			CLOCK_GetTime(&CurTime);
 			TD.Datum = CurTime.time;
 			
-			if (TlnHinzufuegen(&TD))
+			if (TlnHinzufuegen(&TD) >= 0)
 				{
 				if (ProtokollLevelTlnServ >= 1)
 					{
@@ -145,6 +179,7 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 					ProtokollierenIPAdr(TlnIP);
 					ProtokollierenInt_P(PSTR(" Port %u\r\n"), TD.Port);
 					}
+				TlnServTlnbuchEintragGeaendert(&TD);
 				return true;
 				}
 			else
@@ -169,7 +204,7 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 		CLOCK_GetTime(&CurTime);
 		TD.Datum = CurTime.time;
 
-		if (TlnHinzufuegen(&TD))
+		if (TlnHinzufuegen(&TD) >= 0)
 			{
 			if (ProtokollLevelTlnServ >= 1)
 				{
@@ -177,7 +212,8 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 				ProtokollierenIPAdr(TlnIP);
 				ProtokollierenInt_P(PSTR(" Port %u (noch gesperrt!)\r\n"), TD.Port);
 				}
-			//! \todo Meldung ausgeben.
+			Diagnoseausgabe_P(PSTR("Neuer Teilnehmer angemeldet"), 1);
+			TlnServTlnbuchEintragGeaendert(&TD); // da er neu war, muss er geändert worden sein.
 			return true;
 			}
 		else
@@ -198,6 +234,30 @@ static uint8_t FehlerRueckmelden(PGM_P Text, int val)
 	TlnServBuf.DataLen = strlen(TlnServBuf.PureData) + 1;
 	return TlnServBuf.DataLen + 3; // Code + Len + Text + \0
 	}
+	
+	
+//! Wird aufgerufen, wenn ein Eintrag im eigenen Telefonbuch geändert wird.
+//---------------------------------------------------------------------------
+//! Ziel ist, die Synchronisation dieses geänderten Eintrags anzustoßen.
+void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln)
+	{
+	if (Tln->Flags & TlnFlag_Lokal)
+		return;
+		
+	if (TlnBuchLetzteAenderung < Tln->Datum)
+		TlnBuchLetzteAenderung = Tln->Datum;
+		
+	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+		{
+		if (TlnServSyncStichzeit[i] > Tln->Datum)
+			TlnServSyncStichzeit[i] = Tln->Datum; 
+			// dies kommt nur dann vor, wenn bereits eine Synchronisation stattfand,
+			// die Datenbasis dafür aber bereits veraltet war.
+		}
+		
+	//! \todo bei Empfang von Synchronisation den Sender "ausklammern". 
+		
+	} // TlnServTlnbuchEintragGeaendert()
 	
 	
 //! Socket für Teilnehmerauskunft-Server bearbeiten.
@@ -311,13 +371,36 @@ static void SocketBearbeiten(int *Socket)
 						}
 					}
 				break;
-	
+
+			case TLNSERV_AUSKUNFT_VERSION1:
+				//! \todo Daten speichern, wenn authentifiziert.
+				//! \todo QUITTUNG  senden.
+				break;
+				
+			case TLNSERV_SYNC_TOTALABFRAGE:
+				//! \todo Kennwort prüfen
+				//! \todo wenn ok ersten Datensatz senden.
+				break; 
+				
+			case TLNSERV_SYNC_ANMELDUNG:
+				//! \todo Kennwort prüfen
+				//! \todo wenn ok Quittung senden.
+				break;
+			
+			case TLNSERV_SYNC_QUITTUNG:
+				//! \todo nächsten Datensatz senden.
+				break;
+			
+			case TLNSERV_SYNC_ENDE:
+				//! \todo Verbindung abbauen.
+				break;
+				
 			case TLNSERV_IPRUECKMELD: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			case TLNSERV_AUSKUNFT_NICHTVERG: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
-			case TLNSERV_AUSKUNFT_VERSION1: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			default:
 				OutCount = FehlerRueckmelden(PSTR("unknown code %02X"), TlnServBuf.Code);
 				break;
+
 			}
 			
 		if (ProtokollLevelTlnServ >= 1 && OutCount > 0 && TlnServBuf.Code == TLNSERV_FEHLER)
@@ -453,6 +536,24 @@ void txp_tlnserv_thread()
 
 	//! \todo Prüfen, ob die System-Timeouts immer richtig wirken...
 	
+	// ==========================================================================
+	// Neue Aktionen starten?
+	// ==========================================================================
+	if (KurzTimerVal(&SyncWarteTimer) > SyncWarteEnde
+		&& TlnServerOutSocket == NO_SOCKET_USED
+		&& TlnServerInSocket == NO_SOCKET_USED)
+		{
+		if (InitialAbfrageStarten)
+			{
+			//! \todo InitialAbfrageStarten
+			}
+		else
+			{
+			// ermitteln, welcher Server als nächstes Daten zugeschickt bekommt.
+			// Daten zuschicken.
+			}
+		} // kein Socket offen und Timer abgelaufen.
+	
 	} // txp_tlnserv_thread
 	
 	
@@ -498,7 +599,17 @@ void txp_tlnserv_init()
 	RegisterTCPPort(TXP_TLNSERV_PORT);
 	
 	printf_P( PSTR("Txp TlnServer Port %u.\r\n") , TXP_TLNSERV_PORT );
+	
+	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+		{
+		TlnServSyncStichzeit[i] = 0;
+		}
+	TlnBuchLetzteAenderung = 0;
 
+	StartKurzTimer(&SyncWarteTimer);
+	SyncWarteEnde = 10 * KurzTimerFreq; // 10 Sekunden
+	InitialAbfrageStarten = true;
+	
 	THREAD_RegisterThread( txp_tlnserv_thread, PSTR("TlnSrv"));
 	}
 

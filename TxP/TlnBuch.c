@@ -12,6 +12,7 @@
 
 #include "TxP.h"
 #include "TlnBuch.h"
+#include "TlnServer.h"
 #include "SwTwi.h"
 #include "Protokoll.h"
 #include "BusKomm.h" // für WahlZuAdresse()
@@ -86,62 +87,84 @@ static uint8_t TlnEintragGroesse(TTlnDaten *Tln)
 	
 	
 //! Füllt die Daten in TlnBuch.
-static void TlnEintragen(TTlnDaten *Tln, char *BuchP)
+//! \retval true bei Änderung
+static bool TlnEintragen(TTlnDaten *Tln, char *BuchP)
 	{
 	void *p;
+	bool Res = false;
 	
 	p = BuchP;
-	*((uint32_t *) p) = Tln->Nummer; 					p += 4;
-	*((uint8_t *) p) = TlnEintragGroesse(Tln);			p += 1;
-	*((uint16_t *) p) = Tln->Flags;						p += 2;
-	*((uint8_t *) p) = (uint8_t) Tln->AdrArt;			p += 1;
-	strcpy(p, Tln->Name);								p += strlen(Tln->Name)+1;
-	*((uint32_t *) p) = Tln->Datum; 					p += 4;
+#define EINTRAG(typ, wert, size)			\
+	{										\
+	if (!Res && *((typ *) p) != (wert))		\
+		Res = true;							\
+	*((typ *) p) = (wert);					\
+	p += size;								\
+	}
+	
+#define EINTRAGSTR(wert)					\
+	{										\
+	if (!Res && strcmp(p, (wert)) != 0)		\
+		Res = true;							\
+	strcpy(p, (wert));						\
+	p += strlen(wert)+1;					\
+	}
+	
+	
+	EINTRAG(uint32_t, Tln->Nummer, 4)
+	EINTRAG(uint8_t, TlnEintragGroesse(Tln), 1)
+	EINTRAG(uint16_t, Tln->Flags, 2)
+	EINTRAG(uint8_t, (uint8_t) Tln->AdrArt, 1)
+	EINTRAGSTR(Tln->Name)
+	EINTRAG(uint32_t, Tln->Datum, 4)
+	
 	switch (Tln->AdrArt)
 		{
 		case Geloescht: 
 			break;
 			
 		case TxpUrl:
-			strcpy(p, Tln->Adresse);					p += strlen(Tln->Adresse)+1;
-			*((uint16_t *) p) = Tln->Port;				p += 2;
-			*((uint8_t *) p) = Tln->Durchwahl;			p += 1;
+			EINTRAGSTR(Tln->Adresse)
+			EINTRAG(uint16_t, Tln->Port, 2)
+			EINTRAG(uint8_t, Tln->Durchwahl, 1)
 			break;
 			
 		case TxpIP:
 		case TxpDynIP:
-			*((long *) p) = Tln->IPAdr;					p += 4;
-			*((uint16_t *) p) = Tln->Port;				p += 2;
-			*((uint8_t *) p) = Tln->Durchwahl;			p += 1;
+			EINTRAG(long, Tln->IPAdr, 4)
+			EINTRAG(uint16_t, Tln->Port, 2)
+			EINTRAG(uint8_t, Tln->Durchwahl, 1)
 			if (Tln->AdrArt == TxpDynIP)
 				{
-				*((uint16_t *) p) = Tln->DynPin;		p += 2;
+				EINTRAG(uint16_t, Tln->DynPin, 2)
 				}
 			break;
 		
 		case AsciiUrl:
-			strcpy(p, Tln->Adresse);					p += strlen(Tln->Adresse)+1;
-			*((uint16_t *) p) = Tln->Port;				p += 2;
+			EINTRAGSTR(Tln->Adresse)
+			EINTRAG(uint16_t, Tln->Port, 2)
 			break;
 			
 		case AsciiIP:
-			*((long *) p) = Tln->IPAdr;					p += 4;
-			*((uint16_t *) p) = Tln->Port;				p += 2;
+			EINTRAG(long, Tln->IPAdr, 4)
+			EINTRAG(uint16_t, Tln->Port, 2)
 			break;
 		
 		case eMail:
-			strcpy(p, Tln->Adresse);					p += strlen(Tln->Adresse)+1;
+			EINTRAGSTR(Tln->Adresse)
 			break;
 			
 		default:
 			*((uint8_t *) (p-5)) = (uint8_t) Geloescht; // nachträglich auf gelöscht ändern
+			Res = true;
 			Tln->AdrArt = Geloescht;
 			break;
 		}
 
 	while (((char*)p - BuchP) != TlnEintragGroesse(Tln))
 		; // Endlosschleife zur Fehlererkennung.
-	
+		
+	return Res;
 	} // TlnEintragen
 	
 	
@@ -272,10 +295,11 @@ bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln)
 // ------------------------------------
 //! ggf. wird ein alter Eintrag gelöscht
 //! \param[in] Neuer / zu ändernder Tln 
-//! \retval true falls erfolgreich
-//! \retval false Speicher voll.
+//! \retval 1 Eintrag hinzugefügt oder aktualisiert.
+//! \retval 0 Eintrag unverändert.
+//! \retval -1 Speicher voll.
 
-bool TlnHinzufuegen(TTlnDaten *Tln)
+int8_t TlnHinzufuegen(TTlnDaten *Tln)
 	{
 	char *p;
 	
@@ -284,10 +308,10 @@ bool TlnHinzufuegen(TTlnDaten *Tln)
 	if (p == NULL)
 		{
 		if (TlnBuchMemUsed + NeuGr >= TlnBuchMemMax)
-			return false;
+			return -1;
 		TlnEintragen(Tln, TlnBuch + TlnBuchMemUsed);
 		TlnBuchMemUsed += NeuGr;
-		return true;
+		return 1;
 		}
 		
 	uint8_t AltGr = *((uint8_t *) (p + TBOffsGroesse));
@@ -297,25 +321,22 @@ bool TlnHinzufuegen(TTlnDaten *Tln)
 			return false;
 		memmove(p + NeuGr, p + AltGr, TlnBuchMemUsed - (p - TlnBuch) - AltGr);
 		TlnBuchMemUsed += NeuGr - AltGr;
+		TlnEintragen(Tln, p);
+		return 1;
 		}
-	TlnEintragen(Tln, p);
-	return true;
+	else
+		return TlnEintragen(Tln, p) ? 1 : 0;
 	}
-
-
-//! Zeiger für TlnListerStart und TlnListerNaechster.
-//---------------------------------------------------
-//! Zeigt auf nächsten Eintrag, der durch TlnListerNaechster geliefert wird.
-static char *ListerP = TlnBuch;
 
 
 //! Startet die sequentielle Abfrage aller Teilnehmereinträge.
 //------------------------------------------------------------
 //! \retval true wenn es mindestens einen Eintrag gibt.
-bool TlnListerStart()
+bool TlnListerStart(TTlnListerDat *ldp)
 	{
-	ListerP = TlnBuch;
-	return ListerP < TlnBuch + TlnBuchMemUsed;
+	//! (*ldp) zeigt auf nächsten Eintrag, der durch TlnListerNaechster geliefert wird.
+	(*ldp) = TlnBuch;
+	return (*ldp) < TlnBuch + TlnBuchMemUsed;
 	}
 	
 
@@ -323,12 +344,12 @@ bool TlnListerStart()
 //------------------------------------------------------------
 //! \param[out] Tln gefundener Eintrag.
 //! \retval true wenn ein weiterer Eintrag gefunden wurde.
-bool TlnListerNaechster(TTlnDaten *Tln)
+bool TlnListerNaechster(TTlnListerDat *ldp, TTlnDaten *Tln)
 	{
-	if (ListerP >= TlnBuch + TlnBuchMemUsed)
+	if ((*ldp) >= TlnBuch + TlnBuchMemUsed)
 		return false;
-	TlnLesen(Tln, ListerP);
-	ListerP += *((uint8_t *) (ListerP+4));
+	TlnLesen(Tln, (*ldp));
+	(*ldp) += *((uint8_t *) ((*ldp)+4));
 	return true;
 	}
 
@@ -720,9 +741,11 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		struct TIME Time;
 		CLOCK_GetTime(&Time); // holt auch die aktuelle Zeitzone
 		
-		if (TlnListerStart())
+		TTlnListerDat LD;
+		
+		if (TlnListerStart(&LD))
 			{
-			while (TlnListerNaechster(&TD))
+			while (TlnListerNaechster(&LD, &TD))
 				{
 				printf_P(PSTR("<tr><td align=\"right\">%ld</td>"), TD.Nummer); // Nummer
 				printf_P(PSTR("<td align=\"left\">%s</td><td>&#160;"), TD.Name); // name
@@ -1015,21 +1038,31 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			CLOCK_GetTime(&CurTime);
 			TD.Datum = CurTime.time;
 			
-			if (TlnHinzufuegen(&TD))
+			int8_t Res = TlnHinzufuegen(&TD);
+			if (Res >= 0)
 				{
-				printf_P(PSTR("Eintrag gespeichert<br>"));
+				if (Res > 0)
+					{
+					printf_P(PSTR("Eintrag gespeichert<br>"));
+#ifdef TXP_TLNSERVER
+					TlnServTlnbuchEintragGeaendert(&TD);
+#endif //def TXP_TLNSERVER
+					}
+				else
+					printf_P(PSTR("Eintrag unver&auml;ndert<br>"));
+				
 				if (TD.Nummer != AltNummer && AltNummer != 0)
 					{
 					TD.Nummer = AltNummer;
 					TD.AdrArt = Geloescht;
-					if (!TlnHinzufuegen(&TD))
+					if (TlnHinzufuegen(&TD) < 0)
 						{
 						printf_P(PSTR("<b>Alte Nummer %ld konnte nicht gel&ouml;scht werden!</b><br>"), AltNummer);	
 						}
 					}
 				}
 			else
-				{ // TlnHinzufuegen() == false
+				{ // TlnHinzufuegen() < 0
 				printf_P(PSTR("<b>Teilnehmerliste voll, Eintrag nicht gespeichert</b><br>"));
 				}
 			} // if DatenOk

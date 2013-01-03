@@ -159,6 +159,7 @@ enum {
 	
 	TLNSERV_FEHLER = 0xFF,
 	//!< Allgemeine Fehlermeldung.
+
 	
 	LangTimerTakt = 10,
 	//!< Takt in Sekunden des Langzeittimers. 
@@ -170,6 +171,9 @@ enum {
 	KurzTimerFreq = 100,
 	//!< Frequenz (1/Takt) des Kurzzeittimers. 
 	//!< Muss ein Teiler von #TxpTimerFreq sein.
+
+	ANZ_TEILNEHMER_SERVER = 3,
+	//!< Anzahl der Links zu Teilnehmer-Servern.
 	
 	} ; // Ende Konstanten
 	
@@ -391,6 +395,10 @@ extern char SocketOutBuf[SocketOutBufMax+4]; //!< TCP-Sendepuffer
 	
 extern char DiagnosePuffer[DiagnosePufferMax];
 
+extern char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
+
+extern long TeilnehmerServerIP[ANZ_TEILNEHMER_SERVER];
+	
 	
 
 

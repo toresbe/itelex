@@ -366,11 +366,13 @@ static long NetzEigeneIP;
 #endif // TXP_ANSCHLUSS
 	
 
-#define ANZ_TEILNEHMER_SERVER 3
-	
-static char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
-	//!< URL's oder IP's der Teilnehmer-Server.
+char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
+	//!< URLs oder IPs der Teilnehmer-Server.
 
+long TeilnehmerServerIP[ANZ_TEILNEHMER_SERVER];
+	//!< letzte IPs des jeweiligen Teilnehmer-Servers.
+	
+	
 enum { KonfigPasswortLen = 10 } ;
 	//!< maximale Länge des Passworts für den Zugang zu Konfigurationsdaten.
 
@@ -2332,19 +2334,17 @@ bool TeilnehmerServerSocketOeffnen()
 	
 	for (ServerI = 0 ; ServerI < ANZ_TEILNEHMER_SERVER ; ServerI++)
 		{
-		long tsIP;
-		
 		if (TeilnehmerServerAdresse[ServerI][0] == '\0')
 			continue; // leere Adresse
 			
-		tsIP = strtoip(TeilnehmerServerAdresse[ServerI]);	// Annahme: eine IP-Adresse angegeben
+		TeilnehmerServerIP[ServerI] = strtoip(TeilnehmerServerAdresse[ServerI]);	// Annahme: eine IP-Adresse angegeben
 		
-		if (tsIP == 0) // ist es doch eine Url?
-			tsIP = DNS_ResolveName(TeilnehmerServerAdresse[ServerI]); 
+		if (TeilnehmerServerIP[ServerI] == 0) // ist es doch eine Url?
+			TeilnehmerServerIP[ServerI] = DNS_ResolveName(TeilnehmerServerAdresse[ServerI]); 
 			
-		if (tsIP != -1)
+		if (TeilnehmerServerIP[ServerI] != -1)
 			{
-			TeilnehmerServerSocket = Connect2IP(tsIP, TXP_TLNSERV_PORT);
+			TeilnehmerServerSocket = Connect2IP(TeilnehmerServerIP[ServerI], TXP_TLNSERV_PORT);
 			if (TeilnehmerServerSocket != -1)
 				{
 				if (ProtokollLevelTlnServ >= 2)
@@ -3499,12 +3499,18 @@ void txp_thread()
 						GewaehlterTln.Durchwahl = TSB.TlnAuskunft.Durchwahl;
 						GewaehlterTln.Datum = TSB.TlnAuskunft.Datum;
 
-						if (!TlnHinzufuegen(&GewaehlterTln))
+						Res = TlnHinzufuegen(&GewaehlterTln);
+						if (Res < 0)
 							{
 							ProtokollierenTxp();
 							ProtokollierenInt_P(PSTR("! Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
 							Diagnoseausgabe_P(PSTR("internes Rufnummern-Verzeichnis voll"), 2);
 							}
+#ifdef TXP_TLNSERVER							
+						else if (Res > 0)
+							TlnServTlnbuchEintragGeaendert(&GewaehlterTln);
+#endif //def TXP_TLNSERVER
+
 						} // Aktualisieren ist sinnvoll
 						
 					if (Modus == ModGehendWaehlen && TxpSocketMode == SocketIdle && TSB.TlnAuskunft.Nummer == Wahlnummer)
@@ -4346,7 +4352,10 @@ void txp_cgi_config_extern(void *pStruct)
 		#endif //def TXP_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+			{
 			CgiCheckText_P(http_request, PSTR("Teilnehmer-Server"), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
+			TeilnehmerServerIP[i] = 0;
+			}
 
 		#ifdef TXP_TLNSERVER
 		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, PSTR("Geheimzahl f&uuml;r Server-Synchronisierung"), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl);
@@ -4586,10 +4595,13 @@ void txp_init()
 	#endif // TXP_ANSCHLUSS
 		
 	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+		{
 		if (readConfig_P(RufnrServerAdr_P[i], TeilnehmerServerAdresse[i]) == 1)
 			; // ok
 		else
 			TeilnehmerServerAdresse[i][0] = '\0';
+		TeilnehmerServerIP[i] = 0;
+		}
 
 	if (readConfig_P(KonfigPasswort_P, KonfigPasswort) != 1)
 		KonfigPasswort[0] = '\0';
