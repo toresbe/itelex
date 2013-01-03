@@ -130,7 +130,6 @@ static bool InitialAbfrageStarten;
 static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 	{
 	TTlnDaten TD;
-	struct TIME CurTime;
 	
 	if (TlnSuche(tsb->SelbstAkt.RufNr, false, &TD))
 		{ // Eintrag ist schon vorhanden
@@ -168,10 +167,8 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 			{ // jetzt wirklich aktualisieren
 			TD.IPAdr = TlnIP;
 			TD.Port = tsb->SelbstAkt.Port;
-			CLOCK_GetTime(&CurTime);
-			TD.Datum = CurTime.time;
 			
-			if (TlnHinzufuegen(&TD) >= 0)
+			if (TlnHinzufuegen(&TD, true) >= 0)
 				{
 				if (ProtokollLevelTlnServ >= 1)
 					{
@@ -201,10 +198,8 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 		TD.IPAdr = TlnIP;
 		TD.Port = tsb->SelbstAkt.Port;
 		TD.DynPin = tsb->SelbstAkt.Pin;
-		CLOCK_GetTime(&CurTime);
-		TD.Datum = CurTime.time;
 
-		if (TlnHinzufuegen(&TD) >= 0)
+		if (TlnHinzufuegen(&TD, true) >= 0)
 			{
 			if (ProtokollLevelTlnServ >= 1)
 				{

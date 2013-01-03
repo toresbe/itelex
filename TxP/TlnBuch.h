@@ -15,7 +15,7 @@ extern void TlnDatenInit(TTlnDaten *Tln);
 
 extern bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln);
 
-extern int8_t TlnHinzufuegen(TTlnDaten *Tln);	
+extern int8_t TlnHinzufuegen(TTlnDaten *Tln, bool DatumAktualisieren);	
 
 //! Datentyp für die Speicherung der aktuellen Lister-Position
 typedef char* TTlnListerDat; 

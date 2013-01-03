@@ -3497,9 +3497,10 @@ void txp_thread()
 						GewaehlterTln.IPAdr = TSB.TlnAuskunft.IPAdr;
 						GewaehlterTln.Port = TSB.TlnAuskunft.Port;
 						GewaehlterTln.Durchwahl = TSB.TlnAuskunft.Durchwahl;
-						GewaehlterTln.Datum = TSB.TlnAuskunft.Datum;
+						if (GewaehlterTln.Datum < TSB.TlnAuskunft.Datum)
+							GewaehlterTln.Datum = TSB.TlnAuskunft.Datum;
 
-						Res = TlnHinzufuegen(&GewaehlterTln);
+						Res = TlnHinzufuegen(&GewaehlterTln, false);
 						if (Res < 0)
 							{
 							ProtokollierenTxp();

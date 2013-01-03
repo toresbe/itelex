@@ -88,9 +88,10 @@ static uint8_t TlnEintragGroesse(TTlnDaten *Tln)
 	
 //! Füllt die Daten in TlnBuch.
 //! \retval true bei Änderung
-static bool TlnEintragen(TTlnDaten *Tln, char *BuchP)
+static bool TlnEintragen(TTlnDaten *Tln, char *BuchP, bool DatumAktualisieren)
 	{
 	void *p;
+	uint32_t *DatumP;
 	bool Res = false;
 	
 	p = BuchP;
@@ -116,6 +117,7 @@ static bool TlnEintragen(TTlnDaten *Tln, char *BuchP)
 	EINTRAG(uint16_t, Tln->Flags, 2)
 	EINTRAG(uint8_t, (uint8_t) Tln->AdrArt, 1)
 	EINTRAGSTR(Tln->Name)
+	DatumP = p;
 	EINTRAG(uint32_t, Tln->Datum, 4)
 	
 	switch (Tln->AdrArt)
@@ -163,6 +165,14 @@ static bool TlnEintragen(TTlnDaten *Tln, char *BuchP)
 
 	while (((char*)p - BuchP) != TlnEintragGroesse(Tln))
 		; // Endlosschleife zur Fehlererkennung.
+		
+	if (Res && DatumAktualisieren)
+		{
+		struct TIME CurTime;
+		CLOCK_GetTime(&CurTime);
+		Tln->Datum = CurTime.time;
+		*DatumP = CurTime.time;
+		}
 		
 	return Res;
 	} // TlnEintragen
@@ -299,7 +309,7 @@ bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln)
 //! \retval 0 Eintrag unverändert.
 //! \retval -1 Speicher voll.
 
-int8_t TlnHinzufuegen(TTlnDaten *Tln)
+int8_t TlnHinzufuegen(TTlnDaten *Tln, bool DatumAktualisieren)
 	{
 	char *p;
 	
@@ -309,7 +319,7 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln)
 		{
 		if (TlnBuchMemUsed + NeuGr >= TlnBuchMemMax)
 			return -1;
-		TlnEintragen(Tln, TlnBuch + TlnBuchMemUsed);
+		TlnEintragen(Tln, TlnBuch + TlnBuchMemUsed, DatumAktualisieren);
 		TlnBuchMemUsed += NeuGr;
 		return 1;
 		}
@@ -321,11 +331,11 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln)
 			return false;
 		memmove(p + NeuGr, p + AltGr, TlnBuchMemUsed - (p - TlnBuch) - AltGr);
 		TlnBuchMemUsed += NeuGr - AltGr;
-		TlnEintragen(Tln, p);
+		TlnEintragen(Tln, p, DatumAktualisieren);
 		return 1;
 		}
 	else
-		return TlnEintragen(Tln, p) ? 1 : 0;
+		return TlnEintragen(Tln, p, DatumAktualisieren) ? 1 : 0;
 	}
 
 
@@ -1034,11 +1044,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			
 		if (DatenOk)
 			{ // speichern oder löschen
-			struct TIME CurTime;
-			CLOCK_GetTime(&CurTime);
-			TD.Datum = CurTime.time;
-			
-			int8_t Res = TlnHinzufuegen(&TD);
+			int8_t Res = TlnHinzufuegen(&TD, true);
 			if (Res >= 0)
 				{
 				if (Res > 0)
@@ -1055,7 +1061,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					{
 					TD.Nummer = AltNummer;
 					TD.AdrArt = Geloescht;
-					if (TlnHinzufuegen(&TD) < 0)
+					if (TlnHinzufuegen(&TD, true) < 0)
 						{
 						printf_P(PSTR("<b>Alte Nummer %ld konnte nicht gel&ouml;scht werden!</b><br>"), AltNummer);	
 						}
