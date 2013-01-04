@@ -3465,7 +3465,7 @@ void txp_thread()
 				case TLNSERV_AUSKUNFT_VERSION1:
 					if (ProtokollLevel >= 2)
 						{
-						ProtokollierenTxp_P(PSTR("Teilnehmer-Server meldet IP gefunden: " ));
+						ProtokollierenTxp_P(PSTR("Teilnehmer-Server meldet Eintrag gefunden: " ));
 						ProtokollierenIPAdr(TSB.TlnAuskunft.IPAdr);
 						Protokollieren_P(PSTR("\r\n"));
 						}
@@ -4594,7 +4594,14 @@ void txp_init()
 		NetzPort = TXP_PORT;
 		
 	#endif // TXP_ANSCHLUSS
-		
+	
+	#ifdef TXP_TLNSERVER
+	if (readConfig_P(TlnServSyncGeheimzahl_P, Buf) == 1)
+		TlnServSyncGeheimzahl = atol(Buf);
+	else
+		TlnServSyncGeheimzahl = 0;
+	#endif //def TXP_TLNSERVER
+	
 	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
 		if (readConfig_P(RufnrServerAdr_P[i], TeilnehmerServerAdresse[i]) == 1)
