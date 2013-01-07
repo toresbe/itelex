@@ -80,6 +80,9 @@ typedef struct
 		//!< Für den aktuell laufenden Synchronisationsvorgang gültiges "Grenzdatum" für
 		//!< zu sendende Einträge.
 	bool Freigabe; //!< Korrekte Autentifizierung empfangen.
+	bool AusgabeGestartet; //!< gespeicherte Adressen werden an den Gegenüber gesendet.
+	TTlnListerDat AusgabeLister; //!< Daten für die Ausgabe (welcher Datensatz wurde zuletzt gesendet)
+	long AusgabeStichdatum; //!< Nur Einträge, die neuer sind als X werden gesendet.
 	} TTlnServKanal;
 
 
@@ -128,6 +131,14 @@ static bool InitialAbfrageStarten;
 	//!< nach Reset true, bis erfolgreich von einem anderen Teilnehmerauskunft-Server 
 	//!< alle Daten abgeholt worden sind.
 	
+	
+	
+static void KanalInit(TTlnServKanal* k, int aSocket)
+	{
+	k->Socket = aSocket;
+	k->Freigabe = false;
+	k->AusgabeGestartet = false;
+	}
 	
 
 //! Bearbeitet die Aktualisierungsmeldung im eigenen Telefonbuch.
@@ -410,13 +421,37 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				break;
 				
 			case TLNSERV_SYNC_TOTALABFRAGE:
-				//! \todo Kennwort prüfen
-				//! \todo wenn ok ersten Datensatz senden.
+				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SyncAnmeldung))
+					OutCount = FehlerRueckmelden(PSTR("login not enough data: %u"), TlnServBuf.DataLen);
+				else if (TlnServBuf.SyncAnmeldung.Geheimzahl != TlnServSyncGeheimzahl)
+					{
+					OutCount = FehlerRueckmelden(PSTR("wrong authentification"), 0);
+					// TODO Alarmmeldung
+					}
+				else
+					{
+					Kanal->Freigabe = true;
+					//! \todo ersten Datensatz senden.
+					}
 				break; 
 				
 			case TLNSERV_SYNC_ANMELDUNG:
-				//! \todo Kennwort prüfen
-				//! \todo wenn ok Quittung senden.
+				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SyncAnmeldung))
+					OutCount = FehlerRueckmelden(PSTR("login not enough data: %u"), TlnServBuf.DataLen);
+				else if (TlnServBuf.SyncAnmeldung.Geheimzahl != TlnServSyncGeheimzahl)
+					{
+					OutCount = FehlerRueckmelden(PSTR("wrong authentification"), 0);
+					// TODO Alarmmeldung
+					}
+				else
+					{
+					Kanal->Freigabe = true;
+					
+					// Quittung senden:
+					TlnServBuf.Code = TLNSERV_SYNC_QUITTUNG;
+					TlnServBuf.DataLen = 0;
+					OutCount = 2 + TlnServBuf.DataLen;
+					}
 				break;
 			
 			case TLNSERV_SYNC_QUITTUNG:
@@ -548,10 +583,9 @@ void txp_tlnserv_thread()
 			{
 			if (ProtokollLevelTlnServ >= 2)
 				Protokollieren_P(PSTR(" ...ok\r\n"));
-			TlnServerIn.Socket = NewServerSocket;
+			KanalInit(&TlnServerIn, NewServerSocket);
 			SocketSendeFehlerZaehler = 0;
 			SocketSendeSperrZaehler = 0;
-			TlnServerIn.Freigabe = false;
 			}
 		else
 			{ 
@@ -579,13 +613,13 @@ void txp_tlnserv_thread()
 		if (InitialAbfrageStarten)
 			{
 			//! \todo InitialAbfrageStarten
-			TlnServerOut.Freigabe = false;
+			KanalInit(&TlnServerOut, 0); 
 			}
 		else
 			{
 			// ermitteln, welcher Server als nächstes Daten zugeschickt bekommt.
 			// Daten zuschicken.
-			TlnServerOut.Freigabe = false;
+			KanalInit(&TlnServerOut, 0); 
 			}
 		} // kein Socket offen und Timer abgelaufen.
 	

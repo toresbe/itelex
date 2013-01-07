@@ -2320,8 +2320,56 @@ static void ZeichenInHtmlSendeText(char c)
 #endif // TXP_ANSCHLUSS
 
 
-//! Verbindung zu einem Teilnehmer-Server herstellen.
-// --------------------------------------------------
+//! Verbindung zu einem konkreten Teilnehmer-Server herstellen.
+// ------------------------------------------------------------
+//! \param ServerI Index-Nummer des Teilnehmer-Servers (0 bis ANZ_TEILNEHMER_SERVER-1)
+//! \return Socket-Handle bei Erfolg, -1 bei Fehler
+
+int TeilnehmerServerSocketOeffnen1(int ServerI)
+	{
+	int Res;
+	
+	if (TeilnehmerServerAdresse[ServerI][0] == '\0')
+		return -1;
+		
+	TeilnehmerServerIP[ServerI] = strtoip(TeilnehmerServerAdresse[ServerI]);	// Annahme: eine IP-Adresse angegeben
+	
+	if (TeilnehmerServerIP[ServerI] == 0) // ist es doch eine Url?
+		TeilnehmerServerIP[ServerI] = DNS_ResolveName(TeilnehmerServerAdresse[ServerI]); 
+		
+	if (TeilnehmerServerIP[ServerI] != -1)
+		{
+		Res = Connect2IP(TeilnehmerServerIP[ServerI], TXP_TLNSERV_PORT);
+		if (Res != -1)
+			{
+			if (ProtokollLevelTlnServ >= 2)
+				{
+				ProtokollierenTxp_P(PSTR("Verbindung an Teilnehmer-Server "));
+				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
+				Protokollieren_P(PSTR(" hergestellt\r\n"));
+				}
+			return Res;
+			}
+		if (ProtokollLevelTlnServ >= 1)
+			{
+			ProtokollierenTxp_P(PSTR("! Verbindungsversuch an Teilnehmer-Server "));
+			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
+			Protokollieren_P(PSTR(" GESCHEITERT\r\n"));
+			}
+		return -1;
+		}
+	else
+		{
+		ProtokollierenTxp_P(PSTR("! Teilnehmer-Server "));
+		Protokollieren(TeilnehmerServerAdresse[ServerI]); 
+		Protokollieren_P(PSTR(" IP nicht bekannt\r\n"));
+		return -1;
+		}
+	}
+	
+
+//! Verbindung zu einem der gespeicherten Teilnehmer-Server herstellen.
+// -------------------------------------------------------------------
 //! \param NONE
 //! \return Erfolgreich
 
@@ -2334,42 +2382,11 @@ bool TeilnehmerServerSocketOeffnen()
 	
 	for (ServerI = 0 ; ServerI < ANZ_TEILNEHMER_SERVER ; ServerI++)
 		{
-		if (TeilnehmerServerAdresse[ServerI][0] == '\0')
-			continue; // leere Adresse
-			
-		TeilnehmerServerIP[ServerI] = strtoip(TeilnehmerServerAdresse[ServerI]);	// Annahme: eine IP-Adresse angegeben
-		
-		if (TeilnehmerServerIP[ServerI] == 0) // ist es doch eine Url?
-			TeilnehmerServerIP[ServerI] = DNS_ResolveName(TeilnehmerServerAdresse[ServerI]); 
-			
-		if (TeilnehmerServerIP[ServerI] != -1)
-			{
-			TeilnehmerServerSocket = Connect2IP(TeilnehmerServerIP[ServerI], TXP_TLNSERV_PORT);
-			if (TeilnehmerServerSocket != -1)
-				{
-				if (ProtokollLevelTlnServ >= 2)
-					{
-					ProtokollierenTxp_P(PSTR("Verbindung an Teilnehmer-Server "));
-					Protokollieren(TeilnehmerServerAdresse[ServerI]); 
-					Protokollieren_P(PSTR(" hergestellt\r\n"));
-					}
-				return true;
-				}
-			TeilnehmerServerSocket = NO_SOCKET_USED;
-			if (ProtokollLevelTlnServ >= 1)
-				{
-				ProtokollierenTxp_P(PSTR("! Verbindungsversuch an Teilnehmer-Server "));
-				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
-				Protokollieren_P(PSTR(" GESCHEITERT\r\n"));
-				}
-			}
-		else
-			{
-			ProtokollierenTxp_P(PSTR("! Teilnehmer-Server "));
-			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
-			Protokollieren_P(PSTR(" IP nicht bekannt\r\n"));
-			}
-		} // for i
+		TeilnehmerServerSocket = TeilnehmerServerSocketOeffnen1(ServerI);
+		if (TeilnehmerServerSocket != -1)
+			return true; // Erfolg.
+		} // for ServerI
+	TeilnehmerServerSocket = NO_SOCKET_USED;
 	Diagnoseausgabe_P(PSTR("Keine Verbindung zu allen Teilnehmer-Servern"), 1);	
 	return false;
 	} // TeilnehmerServerSocketOeffnen()

@@ -399,7 +399,6 @@ extern char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
 
 extern long TeilnehmerServerIP[ANZ_TEILNEHMER_SERVER];
 	
-	
 
 
 // globale Funktionen
@@ -432,6 +431,8 @@ extern char *ZeitUeberwachungAusgabe(TZeitUeberwachung *zue);
 extern bool Diagnoseausgabe_P(const char *msg, uint8_t Level);
 
 extern void AsciiDruckPufferVerarbeiten();
+
+extern int TeilnehmerServerSocketOeffnen1(int ServerI);
 
 
 //! Startet Langzeit-Messung.

@@ -122,7 +122,11 @@ enum {
 	WarteEnde = 13
 	} ; // Konstanten für ProtokollPhase
 
-		
+	
+static bool Zeilenanfang;
+	//!< Speichert in manchen Phasen, ob in der aktuellen Zeile bereits etwas eingegeben wurde.
+	
+	
 //! Bearbeitet das Drucken von empfangenen Mails.
 // ------------------------------------------------
 //! Filtert aus dem Header die interessanten Zeilen heraus und Druckt nur diese.
@@ -631,7 +635,7 @@ void SMTPDatenVerarbeiten()
 	if (ProtokollPhase != MailData 
 		&& ProtokollPhase != MailSubject 
 		&& ProtokollPhase != EingabeMailTo)
-		{ // in MailData wird jedes Zeichen sofort gesendet.
+		{ // in diesen Phasen wird jedes Zeichen sofort gesendet.
 		if (SocketInBufUsed == 0)
 			return;
 			
@@ -710,8 +714,13 @@ void SMTPDatenVerarbeiten()
 				char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
 				if (z == '\r' || z == '\n')
 					{
-					ProtokollPhase = MailFrom;
-					break;
+					if (strlen(EmailEmpfaenger) == 0)
+						; // WR / ZL am Zeilenanfang ignorieren
+					else
+						{
+						ProtokollPhase = MailFrom;
+						break;
+						}
 					}
 				else if (z != '\0' && z != '#')
 					{
@@ -753,6 +762,7 @@ void SMTPDatenVerarbeiten()
 			// Aufforderung für Subject-Eingabe:
 			strcpy_P(AsciiDruckPuffer, PSTR("\r\nbetreff:\r\n"));
 			ProtokollPhase = MailSubject;
+			Zeilenanfang = true;
 			break;
 			
 		case MailSubject:
@@ -761,19 +771,27 @@ void SMTPDatenVerarbeiten()
 				char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
 				if (z == '\r' || z == '\n')
 					{
-					strcpy_P(SocketOutBuf + SocketOutBufUsed, PSTR(" +TX+\r\n\r\n"));
-						// Ende der Subject-Zeile + Einleitung des Body
-					SocketOutBufUsed = strlen(SocketOutBuf);
-					
-					ProtokollPhase = MailData;
-					
-					// Aufforderung für Body-Eingabe:
-					strcpy_P(AsciiDruckPuffer, PSTR("\r\ntext:\r\n"));
-					PufferInit(&EmpfPuffer);
-					break;
+					if (Zeilenanfang)
+						; // WR / ZL am Zeilenanfang ignorieren
+					else
+						{
+						strcpy_P(SocketOutBuf + SocketOutBufUsed, PSTR(" +TX+\r\n\r\n"));
+							// Ende der Subject-Zeile + Einleitung des Body
+						SocketOutBufUsed = strlen(SocketOutBuf);
+						
+						ProtokollPhase = MailData;
+						
+						// Aufforderung für Body-Eingabe:
+						strcpy_P(AsciiDruckPuffer, PSTR("\r\ntext:\r\n"));
+						PufferInit(&EmpfPuffer);
+						break;
+						}
 					}
 				else if (z != '\0' && z != '#')
+					{
 					SocketOutBuf[SocketOutBufUsed++] = z;
+					Zeilenanfang = false;
+					}
 				}
 				
 			SocketOutBuf[SocketOutBufUsed] = '\0';
