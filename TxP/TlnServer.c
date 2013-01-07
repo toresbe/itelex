@@ -613,13 +613,13 @@ void txp_tlnserv_thread()
 		if (InitialAbfrageStarten)
 			{
 			//! \todo InitialAbfrageStarten
-			KanalInit(&TlnServerOut, 0); 
+			//KanalInit(&TlnServerOut, 0); 
 			}
 		else
 			{
 			// ermitteln, welcher Server als nächstes Daten zugeschickt bekommt.
 			// Daten zuschicken.
-			KanalInit(&TlnServerOut, 0); 
+			//KanalInit(&TlnServerOut, 0); 
 			}
 		} // kein Socket offen und Timer abgelaufen.
 	

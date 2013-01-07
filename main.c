@@ -81,12 +81,15 @@ void main( void )
 	apps_init();
 
 #if defined(TXPnet)
-	LED_off(2);
 	LED_on(3);
 #endif	
 	
 	// Module initialisieren ( cmd, cgi .... )
 	modul_init();
+	
+#if defined(TXPnet)
+	LED_off(2);
+#endif	
 	
 	// User-Module initialisieren
 	txp_init();
