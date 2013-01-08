@@ -558,6 +558,8 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					{
 					Protokollieren_P(PSTR("TlnSrv: Ende Kennung empfangen, Socket wird geschlossen\r\n"));
 					}		
+				if (Kanal == &TlnServerOut)
+					InitialAbfrageStarten = false;
 				CloseTCPSocket(Kanal->Socket);
 				Kanal->Socket = NO_SOCKET_USED;
 				break;
@@ -701,33 +703,37 @@ void txp_tlnserv_thread()
 	// ==========================================================================
 	// Neue Aktionen starten?
 	// ==========================================================================
-	if (KurzTimerVal(&SyncWarteTimer) > SyncWarteEnde
-		&& TlnServerOut.Socket == NO_SOCKET_USED
-		&& TlnServerIn.Socket == NO_SOCKET_USED)
+	if (KurzTimerVal(&SyncWarteTimer) > SyncWarteEnde)
 		{
-		if (InitialAbfrageStarten)
+		if (TlnServerOut.Socket == NO_SOCKET_USED
+			&& TlnServerIn.Socket == NO_SOCKET_USED)
 			{
-			if (TlnServSyncOeffnen())
+			if (InitialAbfrageStarten)
 				{
-				TlnServBuf.Code = TLNSERV_SYNC_TOTALABFRAGE;
-				TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
-				TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
-				TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
-				SocketDatenSenden(&TlnServerOut, 2 + TlnServBuf.DataLen);
-				}
+				if (TlnServSyncOeffnen())
+					{
+					TlnServBuf.Code = TLNSERV_SYNC_TOTALABFRAGE;
+					TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
+					TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
+					TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
+					SocketDatenSenden(&TlnServerOut, 2 + TlnServBuf.DataLen);
+					}
+				else
+					{
+					StartKurzTimer(&SyncWarteTimer);
+					SyncWarteEnde = 30 * KurzTimerFreq; // 30 Sekunden
+					}
+				} // if InitialAbfrageStarten
 			else
 				{
-				StartKurzTimer(&SyncWarteTimer);
-				SyncWarteEnde = 30 * KurzTimerFreq; // 30 Sekunden
+				// ermitteln, welcher Server als nächstes Daten zugeschickt bekommt.
+				// Daten zuschicken.
+				//KanalInit(&TlnServerOut, 0); 
 				}
-			} // if InitialAbfrageStarten
+			} // kein Socket offen 
 		else
-			{
-			// ermitteln, welcher Server als nächstes Daten zugeschickt bekommt.
-			// Daten zuschicken.
-			//KanalInit(&TlnServerOut, 0); 
-			}
-		} // kein Socket offen und Timer abgelaufen.
+			StartKurzTimer(&SyncWarteTimer); // wieder Warten bis alle Verbindungen geschlossen
+		} // if Wartezeit abgelaufen.
 	
 	} // txp_tlnserv_thread
 	
