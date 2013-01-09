@@ -245,7 +245,7 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 
 void TlnDatenInit(TTlnDaten *Tln)
 	{
-	memchr(Tln, 0, sizeof(TTlnDaten));
+	memset(Tln, 0, sizeof(TTlnDaten));
 	}
 	
 	
