@@ -288,6 +288,7 @@ static int TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 			{
 			Protokollieren_P(PSTR("TlnSrv: Starte Ausgabe der Teilnehmer-Eintraege\r\n"));
 			}
+		Kanal->AusgabeGestartet = true;
 		}
 		
 	while (TlnListerNaechster(&Kanal->AusgabeLister, &TlnServBuf.TlnAuskunft))
@@ -717,6 +718,7 @@ void txp_tlnserv_thread()
 					TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
 					TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
 					SocketDatenSenden(&TlnServerOut, 2 + TlnServBuf.DataLen);
+					TlnServerOut.Freigabe = true; // wer anruft weiß wen er anruft.
 					}
 				else
 					{
