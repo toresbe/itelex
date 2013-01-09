@@ -183,6 +183,7 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 	{
 	void *p;
 	p = BuchP;
+	TlnDatenInit(Tln);
 	Tln->Nummer = *((uint32_t *) p); 					p += 4;
 														p += 1;
     Tln->Flags = *((uint16_t *) p);						p += 2;															
@@ -244,16 +245,7 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 
 void TlnDatenInit(TTlnDaten *Tln)
 	{
-	Tln->Nummer = 0;
-	Tln->Name[0] = '\0';
-	Tln->Flags = 0;
-	Tln->AdrArt = 0; 
-	Tln->Adresse[0] = '\0';
-	Tln->IPAdr = 0;
-	Tln->Port = 0; 
-	Tln->Durchwahl = 0; 
-	Tln->DynPin = 0;
-	Tln->Datum = 0;
+	memchr(Tln, 0, sizeof(TTlnDaten));
 	}
 	
 	

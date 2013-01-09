@@ -76,10 +76,14 @@ extern struct TCP_SOCKET TCP_sockettable[];
 typedef struct
 	{
 	int Socket; //!< der Handle zum Socket
+	int ListeIdx; //!< Welcher der Einträge aus TeilnehmerServerAdresse ist verbunden.
+		//!< -1 bei kommenden Verbindungen.
 	uint32_t SyncAusgabeStichzeit;
 		//!< Für den aktuell laufenden Synchronisationsvorgang gültiges "Grenzdatum" für
 		//!< zu sendende Einträge.
 	bool Freigabe; //!< Korrekte Autentifizierung empfangen.
+	bool IstInitialAbfrage; //!< Dieser Kanal wurde geöffnet, um das Teilnehmer-Verzeichnis nach 
+						    //!< Neustart zu initialisieren.
 	bool AusgabeGestartet; //!< gespeicherte Adressen werden an den Gegenüber gesendet.
 	TTlnListerDat AusgabeLister; //!< Daten für die Ausgabe (welcher Datensatz wurde zuletzt gesendet)
 	long AusgabeStichdatum; //!< Nur Einträge, die neuer sind als X werden gesendet.
@@ -137,8 +141,10 @@ static bool InitialAbfrageStarten;
 static void KanalInit(TTlnServKanal* k, int aSocket)
 	{
 	k->Socket = aSocket;
+	k->ListeIdx = -1;
 	k->Freigabe = false;
 	k->AusgabeGestartet = false;
+	k->IstInitialAbfrage = false;
 	}
 	
 
@@ -241,12 +247,11 @@ static bool TlnAktualisierung(TTlnServBuf *tsb, long TlnIP)
 	}
 	
 	
-static uint8_t FehlerRueckmelden(PGM_P Text, int val)
+static void FehlerRueckmelden(PGM_P Text, int val)
 	{
 	TlnServBuf.Code = TLNSERV_FEHLER;
 	sprintf_P(TlnServBuf.PureData, Text, val);
 	TlnServBuf.DataLen = strlen(TlnServBuf.PureData) + 1;
-	return TlnServBuf.DataLen + 3; // Code + Len + Text + \0
 	}
 	
 	
@@ -277,9 +282,8 @@ void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln)
 // Den nächsten Eintrag des Teilnehmer-Verzeichnisses senden.
 // ----------------------------------------------------------
 // ...wenn nicht lokal und Datum jünger als #AusgabeStichdatum.
-// \retval Anzahl der zu sendenden Bytes.
 	
-static int TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
+static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 	{
 	if (!Kanal->AusgabeGestartet)
 		{
@@ -304,7 +308,7 @@ static int TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 			TlnServBuf.Code = TLNSERV_AUSKUNFT_VERSION1;
 			// TlnServBuf-TlnAuskunft ist bereits gefüllt.
 			TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
-			return 2 + TlnServBuf.DataLen;
+			return;
 			}
 		}
 
@@ -316,23 +320,22 @@ static int TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 	TlnServBuf.Code = TLNSERV_SYNC_ENDE;
 	TlnServBuf.PureData[0] = '\0';
 	TlnServBuf.DataLen = 1;
-	return 2 + TlnServBuf.DataLen;
 	} // TlnDatensatzSyncSenden()
 		
 		
 //! Senden der Daten zum Socket.
 
-static void SocketDatenSenden(TTlnServKanal *Kanal, uint16_t OutCount)
+static void SocketDatenSenden(TTlnServKanal *Kanal)
 	{
-	if (OutCount > 0 && SocketSendeSperrZaehler == 0) //! \todo && !HaltSocketOut
+	if (SocketSendeSperrZaehler == 0) //! \todo && !HaltSocketOut
 		{
-		int Res = PutSocketData_RPE(Kanal->Socket, OutCount, TlnServBuf.Buf, RAM);
+		int Res = PutSocketData_RPE(Kanal->Socket, 2 + TlnServBuf.DataLen, TlnServBuf.Buf, RAM);
 		// SocketLebenszeichenZaehler = 0; 
 
 		if (ProtokollLevelTlnServ >= 3)
 			{
-			ProtokollierenInt_P(PSTR("TlnSrv: Socket Sendung: (%u)" ), OutCount);
-			ProtokollierenPuffer(TlnServBuf.Buf, OutCount);
+			ProtokollierenInt_P(PSTR("TlnSrv: Socket Sendung: (%u)" ), 2 + TlnServBuf.DataLen);
+			ProtokollierenPuffer(TlnServBuf.Buf, 2 + TlnServBuf.DataLen);
 			ProtokollierenInt_P(PSTR(" --> Res %d\r\n" ), Res);
 			}
 
@@ -345,12 +348,13 @@ static void SocketDatenSenden(TTlnServKanal *Kanal, uint16_t OutCount)
 					Protokollieren_P(PSTR("TlnSrv: ! Mehrfache Fehler beim Senden ins Netz, Socket wird geschlossen\r\n" ));
 				CloseTCPSocket(Kanal->Socket);
 				Kanal->Socket = NO_SOCKET_USED;
+				SyncWarteEnde = 60 * KurzTimerFreq; // 60 Sekunden warten.
 				}
 			else
 				SocketSendeSperrZaehler = 1000; // 1 Sekunde für nächsten Versuch warten. 
 					//! \todo Wirkliche Zeitabhängigkeit
 			}
-		else if (Res < OutCount)
+		else if (Res < 2 + TlnServBuf.DataLen)
 			{
 			Protokollieren_P(PSTR("TlnSrv: ! Sendung war NICHT VOLLSTAENDIG\r\n" ));
 			}
@@ -381,8 +385,8 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 	// Auf neue Daten testen
 	// ---------------------------------
 	int InCount = GetBytesInSocketData(Kanal->Socket);
-	uint16_t OutCount = 0;
-	
+	bool Senden = false;
+
 	if (InCount > 0) 
 		{
 		TTlnDaten TD;
@@ -405,7 +409,10 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 			{
 			case TLNSERV_SELBSTAKT:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SelbstAkt))
-					OutCount = FehlerRueckmelden(PSTR("update not enough data: %u"), TlnServBuf.DataLen);
+					{
+					FehlerRueckmelden(PSTR("update not enough data: %u"), TlnServBuf.DataLen);
+					Senden = true;
+					}
 				else
 					{
 					long MeldeIP = TCP_sockettable[Kanal->Socket].SourceIP;
@@ -422,11 +429,12 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						TlnServBuf.Code = TLNSERV_IPRUECKMELD;
 						TlnServBuf.DataLen = sizeof(TlnServBuf.IpRueckm);
 						TlnServBuf.IpRueckm.EmpfIP = MeldeIP;
-						OutCount = 2 + TlnServBuf.DataLen;
+						Senden = true;
 						}
 					else
 						{
-						OutCount = FehlerRueckmelden(PSTR("forbidden"), 0);	
+						FehlerRueckmelden(PSTR("forbidden"), 0);
+						Senden = true;
 						if (ProtokollLevelTlnServ >= 1)
 							{
 							Protokollieren_P(PSTR("TlnSrv: ! abgewiesene Anfrage war von IP "));
@@ -439,7 +447,10 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				
 			case TLNSERV_ABFRAGE_VERSION1:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.TlnAbfr))
-					OutCount = FehlerRueckmelden(PSTR("request not enough data: %u"), TlnServBuf.DataLen);
+					{
+					FehlerRueckmelden(PSTR("request not enough data: %u"), TlnServBuf.DataLen);
+					Senden = true;
+					}
 				else
 					{
 					uint32_t RufNr = TlnServBuf.TlnAbfr.RufNr;
@@ -458,15 +469,15 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 							TlnServBuf.TlnAuskunft.AdrArt = TxpIP;
 						TlnServBuf.TlnAuskunft.DynPin = 0; // Datenschutz
 						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
-						OutCount = 2 + TlnServBuf.DataLen;
-						if (ProtokollLevelTlnServ >= 2 && OutCount > 2)
+						Senden = true;
+						if (ProtokollLevelTlnServ >= 2)
 							Protokollieren_P(PSTR(" ...gefunden\r\n"));
 						}
 					else
 						{ // Nummer nicht gefunden
 						TlnServBuf.Code = TLNSERV_AUSKUNFT_NICHTVERG;
 						TlnServBuf.DataLen = 0;
-						OutCount = 2 + TlnServBuf.DataLen;
+						Senden = true;
 						if (ProtokollLevelTlnServ >= 2) 
 							Protokollieren_P(PSTR(" ! ...nicht gefunden oder gesperrt\r\n"));
 						}
@@ -475,9 +486,15 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 
 			case TLNSERV_AUSKUNFT_VERSION1:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.TlnAuskunft))
-					OutCount = FehlerRueckmelden(PSTR("update not enough data: %u"), TlnServBuf.DataLen);
+					{
+					FehlerRueckmelden(PSTR("update not enough data: %u"), TlnServBuf.DataLen);
+					Senden = true;
+					}
 				else if (!Kanal->Freigabe)
-					OutCount = FehlerRueckmelden(PSTR("no authentification"), 0);
+					{
+					FehlerRueckmelden(PSTR("no authentification"), 0);
+					Senden = true;
+					}
 				else
 					{
 					Res = TlnHinzufuegen(&TlnServBuf.TlnAuskunft, false);
@@ -485,7 +502,8 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						{
 						ProtokollierenInt_P(PSTR("TlnSrv: ! Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), TlnServBuf.TlnAuskunft.Nummer);
 						Diagnoseausgabe_P(PSTR("internes Rufnummern-Verzeichnis voll"), 2);
-						OutCount = FehlerRueckmelden(PSTR("abort"), 0);	
+						FehlerRueckmelden(PSTR("abort"), 0);	
+						Senden = true;
 						}
 					else
 						{ // noch alles gut
@@ -503,17 +521,21 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						// Antwort generieren:
 						TlnServBuf.Code = TLNSERV_SYNC_QUITTUNG;
 						TlnServBuf.DataLen = 0;
-						OutCount = 2 + TlnServBuf.DataLen;
+						Senden = true;
 						}
 					} // SyncFreigabe ok
 				break;
 				
 			case TLNSERV_SYNC_TOTALABFRAGE:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SyncAnmeldung))
-					OutCount = FehlerRueckmelden(PSTR("login not enough data: %u"), TlnServBuf.DataLen);
+					{
+					FehlerRueckmelden(PSTR("login not enough data: %u"), TlnServBuf.DataLen);
+					Senden = true;
+					}
 				else if (TlnServBuf.SyncAnmeldung.Geheimzahl != TlnServSyncGeheimzahl)
 					{
-					OutCount = FehlerRueckmelden(PSTR("wrong authentification"), 0);
+					FehlerRueckmelden(PSTR("wrong authentification"), 0);
+					Senden = true;
 					Diagnoseausgabe_P("Teilnehmer-Server Anmeldung mit falscher Geheimzahl", 1);
 					}
 				else
@@ -521,16 +543,21 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					Kanal->Freigabe = true;
 					Kanal->AusgabeStichdatum = 0; // = alle 
 					Kanal->AusgabeGestartet = false; // wird aber gleich gestartet
-					OutCount = TlnDatensatzSyncSenden(Kanal);
+					TlnDatensatzSyncSenden(Kanal);
+					Senden = true;
 					}
 				break; 
 				
 			case TLNSERV_SYNC_ANMELDUNG:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SyncAnmeldung))
-					OutCount = FehlerRueckmelden(PSTR("login not enough data: %u"), TlnServBuf.DataLen);
+					{
+					FehlerRueckmelden(PSTR("login not enough data: %u"), TlnServBuf.DataLen);
+					Senden = true;
+					}
 				else if (TlnServBuf.SyncAnmeldung.Geheimzahl != TlnServSyncGeheimzahl)
 					{
-					OutCount = FehlerRueckmelden(PSTR("wrong authentification"), 0);
+					FehlerRueckmelden(PSTR("wrong authentification"), 0);
+					Senden = true;
 					Diagnoseausgabe_P("Teilnehmer-Server Anmeldung mit falscher Geheimzahl", 1);
 					}
 				else
@@ -540,51 +567,70 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					// Quittung senden:
 					TlnServBuf.Code = TLNSERV_SYNC_QUITTUNG;
 					TlnServBuf.DataLen = 0;
-					OutCount = 2 + TlnServBuf.DataLen;
+					Senden = true;
 					}
 				break;
 			
 			case TLNSERV_SYNC_QUITTUNG:
 				if (!Kanal->Freigabe)
-					OutCount = FehlerRueckmelden(PSTR("no authentification"), 0);
+					{
+					FehlerRueckmelden(PSTR("no authentification"), 0);
+					Senden = true;
+					}
 				else if (!Kanal->AusgabeGestartet)
-					OutCount = FehlerRueckmelden(PSTR("unexpected acknowledge"), 0);
+					{
+					FehlerRueckmelden(PSTR("unexpected acknowledge"), 0);
+					Senden = true;
+					}
 				else
-					OutCount = TlnDatensatzSyncSenden(Kanal);
+					{
+					TlnDatensatzSyncSenden(Kanal);
+					Senden = true;
+					}
 				
 				break;
 			
 			case TLNSERV_SYNC_ENDE:
+				CloseTCPSocket(Kanal->Socket);
+				Kanal->Socket = NO_SOCKET_USED;
 				if (ProtokollLevelTlnServ >= 2) 
 					{
 					Protokollieren_P(PSTR("TlnSrv: Ende Kennung empfangen, Socket wird geschlossen\r\n"));
 					}		
-				if (Kanal == &TlnServerOut)
+				if (Kanal->IstInitialAbfrage)
+					{
 					InitialAbfrageStarten = false;
-				CloseTCPSocket(Kanal->Socket);
-				Kanal->Socket = NO_SOCKET_USED;
+					if (ProtokollLevelTlnServ >= 1) 
+						{
+						Protokollieren_P(PSTR("TlnSrv: Initiale Abfrage erfolgreich beendet\r\n"));
+						}		
+					}
+				SyncWarteEnde = 120 * KurzTimerFreq; // 2 Minuten warten.
 				break;
 				
 			case TLNSERV_FEHLER:
+				CloseTCPSocket(Kanal->Socket);
+				Kanal->Socket = NO_SOCKET_USED;
 				if (ProtokollLevelTlnServ >= 1) 
 					{
 					Protokollieren_P(PSTR("TlnSrv: Fehlermeldung empfangen, Socket wird geschlossen: "));
 					Protokollieren(TlnServBuf.PureData);
 					Protokollieren_P(PSTR("\r\n"));
 					}		
-				CloseTCPSocket(Kanal->Socket);
-				Kanal->Socket = NO_SOCKET_USED;
+				SyncWarteEnde = 30 * KurzTimerFreq; // 30 Sekunden warten.					
+					//! \todo Mehrfache fehlversuche Zählen und irgendwann nicht mehr versuchen
 				break;
 			
 			case TLNSERV_IPRUECKMELD: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			case TLNSERV_AUSKUNFT_NICHTVERG: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			default:
-				OutCount = FehlerRueckmelden(PSTR("unknown code %02X"), TlnServBuf.Code);
+				FehlerRueckmelden(PSTR("unknown code %02X"), TlnServBuf.Code);
+				Senden = true;
 				break;
 
 			}
 			
-		if (ProtokollLevelTlnServ >= 1 && OutCount > 0 && TlnServBuf.Code == TLNSERV_FEHLER)
+		if (ProtokollLevelTlnServ >= 1 && Senden && TlnServBuf.Code == TLNSERV_FEHLER)
 			{
 			Protokollieren_P(PSTR("TlnSrv: ! Error "));
 			Protokollieren(TlnServBuf.PureData);
@@ -611,12 +657,14 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 			Protokollieren_P(PSTR("TlnSrv: Socket wurde von Gegenstelle geschlossen\r\n" ));
 		CloseTCPSocket(Kanal->Socket);
 		Kanal->Socket = NO_SOCKET_USED;
+		// da ursache nicht bekannt, kein SyncWarteEnde = X * KurzTimerFreq; // X Sekunden warten.		
 		return;
 		}
 		
 	// Daten ggf. ins Netz senden
 	// --------------------------------------------------
-	SocketDatenSenden(Kanal, OutCount);
+	if (Senden)
+		SocketDatenSenden(Kanal);
 	
 	} // SocketBearbeiten()
 
@@ -630,12 +678,76 @@ static bool TlnServSyncOeffnen()
 	if (NewSock != -1)
 		{
 		KanalInit(&TlnServerOut, NewSock); 
+		TlnServerOut.ListeIdx = 2; // HACK
 		return true;
 		}
 	else
 		return false;
 	
 	} // TlnServSyncOeffnen()
+	
+	
+	
+static bool InitialAbfrageKanalOeffnen()
+	{
+	if (TlnServSyncOeffnen())
+		{
+		TlnServBuf.Code = TLNSERV_SYNC_TOTALABFRAGE;
+		TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
+		TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
+		TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
+		SocketDatenSenden(&TlnServerOut);
+		TlnServerOut.Freigabe = true; // wer anruft weiß wen er anruft.
+		TlnServerOut.IstInitialAbfrage = true;
+		return true;
+		}
+	else
+		return false;
+	}
+
+
+static bool SyncMeldungKanalOeffnen()
+	{
+	uint8_t i;
+	
+	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+		{
+		if (TlnServSyncStichzeit[i] > TlnBuchLetzteAenderung)
+			continue;
+			
+		if (TeilnehmerServerAdresse[i][0] == '\0')
+			continue;
+
+		int NewSock = TeilnehmerServerSocketOeffnen1(i);
+			// da wird auch Protokoll geschrieben.
+			
+		if (NewSock != -1)
+			{
+			struct TIME CurTime;
+			CLOCK_GetTime(&CurTime);
+			KanalInit(&TlnServerOut, NewSock); 
+			TlnServBuf.Code = TLNSERV_SYNC_ANMELDUNG;
+			TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
+			TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
+			TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
+			SocketDatenSenden(&TlnServerOut);
+			TlnServerOut.ListeIdx = i;
+			TlnServerOut.Freigabe = true; // der Anrufer ist immer ok
+			TlnServerOut.AusgabeStichdatum = TlnServSyncStichzeit[i];
+			TlnServSyncStichzeit[i] = CurTime.time; //! \todo Muss wieder auf AusgabeStichdatum zurückgesetzt werden, wenn Fehler passiert.
+			TlnListerStart(&TlnServerOut.AusgabeLister);
+			if (ProtokollLevelTlnServ >= 2)
+				{
+				Protokollieren_P(PSTR("TlnSrv: Starte Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"));
+				}
+			TlnServerOut.AusgabeGestartet = true;
+			return true;
+			}
+		// sonst den nächsten probieren...
+		}
+		
+	return false; // weil nix zu tun ist...
+	}
 	
 	
 //! Der TelexPhone-Rufnummernserver-Client an sich.
@@ -689,8 +801,8 @@ void txp_tlnserv_thread()
 			{ 
 			if (ProtokollLevelTlnServ >= 1)
 				Protokollieren_P(PSTR(" ! ...ABGEWIESEN\r\n" ));
-			uint8_t OutCount = FehlerRueckmelden(PSTR("occupied"), 0);
-			PutSocketData_RPE(NewServerSocket, OutCount, TlnServBuf.Buf, RAM);
+			FehlerRueckmelden(PSTR("occupied"), 0);
+			PutSocketData_RPE(NewServerSocket, 2 + TlnServBuf.DataLen, TlnServBuf.Buf, RAM);
 			CloseTCPSocket(NewServerSocket);
 			}
 		}
@@ -704,38 +816,31 @@ void txp_tlnserv_thread()
 	// ==========================================================================
 	// Neue Aktionen starten?
 	// ==========================================================================
-	if (KurzTimerVal(&SyncWarteTimer) > SyncWarteEnde)
+
+	if (TlnServerOut.Socket != NO_SOCKET_USED 
+		|| TlnServerIn.Socket != NO_SOCKET_USED
+		|| TlnServSyncGeheimzahl == 0) // ist nicht als Teilnehmer-Server konfiguriert
+		StartKurzTimer(&SyncWarteTimer); // Warten bis alle Verbindungen geschlossen sind
+
+	else if (KurzTimerVal(&SyncWarteTimer) > SyncWarteEnde)
 		{
-		if (TlnServerOut.Socket == NO_SOCKET_USED
-			&& TlnServerIn.Socket == NO_SOCKET_USED)
+		if (InitialAbfrageStarten)
 			{
-			if (InitialAbfrageStarten)
+			if (!InitialAbfrageKanalOeffnen())
 				{
-				if (TlnServSyncOeffnen())
-					{
-					TlnServBuf.Code = TLNSERV_SYNC_TOTALABFRAGE;
-					TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
-					TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
-					TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
-					SocketDatenSenden(&TlnServerOut, 2 + TlnServBuf.DataLen);
-					TlnServerOut.Freigabe = true; // wer anruft weiß wen er anruft.
-					}
-				else
-					{
-					StartKurzTimer(&SyncWarteTimer);
-					SyncWarteEnde = 30 * KurzTimerFreq; // 30 Sekunden
-					}
-				} // if InitialAbfrageStarten
-			else
-				{
-				// ermitteln, welcher Server als nächstes Daten zugeschickt bekommt.
-				// Daten zuschicken.
-				//KanalInit(&TlnServerOut, 0); 
+				SyncWarteEnde = 30 * KurzTimerFreq; // 30 Sekunden
 				}
-			} // kein Socket offen 
+			StartKurzTimer(&SyncWarteTimer);
+			}
 		else
-			StartKurzTimer(&SyncWarteTimer); // wieder Warten bis alle Verbindungen geschlossen
-		} // if Wartezeit abgelaufen.
+			{
+			if (!SyncMeldungKanalOeffnen())
+				{
+				SyncWarteEnde = 10 * KurzTimerFreq; // 10 Sekunden
+				}
+			StartKurzTimer(&SyncWarteTimer);
+			}
+		} // kein Socket offen und Wartezeit abgelaufen.
 	
 	} // txp_tlnserv_thread
 	
@@ -775,9 +880,7 @@ void txp_tlnserv_init()
 	*/
 
 	TlnServerIn.Socket = NO_SOCKET_USED;
-	TlnServerIn.Freigabe = false;
 	TlnServerOut.Socket = NO_SOCKET_USED;
-	TlnServerOut.Freigabe = false;
 	
 	SocketSendeSperrZaehler = 0;
 	SocketSendeFehlerZaehler = 0;
