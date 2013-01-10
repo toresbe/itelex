@@ -3814,7 +3814,8 @@ void txp_cgi_debug( void * pStruct )
 	printf_P(PSTR("]<br>AsciiDruckPuffer: ["));
 	printf(AsciiDruckPuffer);
 	printf_P(PSTR("]"));
-	
+
+	/*
 	PRINTVAL(BusEmpfMark);
 	PRINTVAL(SerUmTickZaehlerEmpf);
 	PRINTVAL(SerUmEmpfBitNr); 
@@ -3845,6 +3846,8 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(Wahlziffern);
 	PRINTVAL(KurzTimerVal(&WahlPauseTimer));
 	PRINTVAL(KurzTimerVal(&SchreibPauseTimer));
+	*/
+	
 	PRINTVAL(KurzTimerVal(&BusQuittTimer));
 	PRINTVAL(TwiLebenszeichenZaehler);
 	PRINTVAL(TwiWatchdogCount);
@@ -3874,6 +3877,10 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(Timer0Cnt_Max); 
 	PRINTVAL(Timer0Callback_Max); 
 
+#ifdef TXP_TLNSERVER
+	TlnServDebugPrint();
+#endif //def TXP_TLNSERVER
+	
 	#endif // TXP_ANSCHLUSS
 	
 	printf_P(PSTR("<br><a href=\"txp-debug.cgi?reset\">Statiktik-Daten zur&uuml;cksetzen</a>"

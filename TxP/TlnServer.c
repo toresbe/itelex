@@ -87,6 +87,7 @@ typedef struct
 	bool AusgabeGestartet; //!< gespeicherte Adressen werden an den Gegenüber gesendet.
 	TTlnListerDat AusgabeLister; //!< Daten für die Ausgabe (welcher Datensatz wurde zuletzt gesendet)
 	long AusgabeStichdatum; //!< Nur Einträge, die neuer sind als X werden gesendet.
+	bool Fertig; //!< true, wenn Auftrag erfüllt. Sonst wäre ein vorzeitiges Ende ein Fehler.
 	} TTlnServKanal;
 
 
@@ -145,6 +146,7 @@ static void KanalInit(TTlnServKanal* k, int aSocket)
 	k->Freigabe = false;
 	k->AusgabeGestartet = false;
 	k->IstInitialAbfrage = false;
+	k->Fertig = false;
 	}
 	
 
@@ -320,6 +322,7 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 	TlnServBuf.Code = TLNSERV_SYNC_ENDE;
 	TlnServBuf.PureData[0] = '\0';
 	TlnServBuf.DataLen = 1;
+	Kanal->Fertig = true;
 	} // TlnDatensatzSyncSenden()
 		
 		
@@ -443,6 +446,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 							}
 						}
 					}
+				Kanal->Fertig = true; // mehr wird da nicht kommen.
 				break;
 				
 			case TLNSERV_ABFRAGE_VERSION1:
@@ -482,6 +486,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 							Protokollieren_P(PSTR(" ! ...nicht gefunden oder gesperrt\r\n"));
 						}
 					}
+				Kanal->Fertig = true; // mehr wird da nicht kommen.
 				break;
 
 			case TLNSERV_AUSKUNFT_VERSION1:
@@ -599,6 +604,14 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					}		
 				if (Kanal->IstInitialAbfrage)
 					{
+					struct TIME CurTime;
+					CLOCK_GetTime(&CurTime);
+					for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+						{
+						TlnServSyncStichzeit[i] = CurTime.time - 60 * 60; 
+							// relativ neue Einträge (nicht älter als eine Stunde 
+							// doch weiterverteilen.
+						}
 					InitialAbfrageStarten = false;
 					if (ProtokollLevelTlnServ >= 1) 
 						{
@@ -617,8 +630,14 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					Protokollieren(TlnServBuf.PureData);
 					Protokollieren_P(PSTR("\r\n"));
 					}		
-				SyncWarteEnde = 30 * KurzTimerFreq; // 30 Sekunden warten.					
+				SyncWarteEnde = 30 * KurzTimerFreq; // 30 Sekunden warten.
+				if (Kanal->ListeIdx >= 0)
+					{
+					TlnServSyncStichzeit[Kanal->ListeIdx] = Kanal->AusgabeStichdatum; 
+						//!< wegen des Fehlers alles noch mal senden.
 					//! \todo Mehrfache fehlversuche Zählen und irgendwann nicht mehr versuchen
+					}
+					
 				break;
 			
 			case TLNSERV_IPRUECKMELD: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
@@ -657,6 +676,15 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 			Protokollieren_P(PSTR("TlnSrv: Socket wurde von Gegenstelle geschlossen\r\n" ));
 		CloseTCPSocket(Kanal->Socket);
 		Kanal->Socket = NO_SOCKET_USED;
+		if (!Kanal->Fertig && Kanal->ListeIdx >= 0)
+			{ // unerwartetes Ende...
+			if (Kanal->AusgabeGestartet)
+				TlnServSyncStichzeit[Kanal->ListeIdx] = Kanal->AusgabeStichdatum; 
+				
+				//!< wegen des Fehlers alles noch mal senden.
+			//! \todo Mehrfache fehlversuche Zählen und irgendwann nicht mehr versuchen
+			}
+		
 		// da ursache nicht bekannt, kein SyncWarteEnde = X * KurzTimerFreq; // X Sekunden warten.		
 		return;
 		}
@@ -734,13 +762,14 @@ static bool SyncMeldungKanalOeffnen()
 			TlnServerOut.ListeIdx = i;
 			TlnServerOut.Freigabe = true; // der Anrufer ist immer ok
 			TlnServerOut.AusgabeStichdatum = TlnServSyncStichzeit[i];
-			TlnServSyncStichzeit[i] = CurTime.time; //! \todo Muss wieder auf AusgabeStichdatum zurückgesetzt werden, wenn Fehler passiert.
+			TlnServerOut.AusgabeGestartet = true;
+			TlnServSyncStichzeit[i] = CurTime.time; 
+				//! Wird wieder auf AusgabeStichdatum zurückgesetzt werden, wenn Fehler passiert.
 			TlnListerStart(&TlnServerOut.AusgabeLister);
 			if (ProtokollLevelTlnServ >= 2)
 				{
 				Protokollieren_P(PSTR("TlnSrv: Starte Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"));
 				}
-			TlnServerOut.AusgabeGestartet = true;
 			return true;
 			}
 		// sonst den nächsten probieren...
@@ -846,6 +875,38 @@ void txp_tlnserv_thread()
 	
 	
 // ================================================================================	
+
+//! Gibt relevante Prozessdaten auf der HTML-Seite "Debug-Info" aus
+void TlnServDebugPrint()
+	{
+	
+#define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %u"), Var)
+	
+	struct TIME Time;
+	uint8_t i;
+	
+	CLOCK_GetTime(&Time); // holt auch die aktuelle Zeitzone
+
+	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+		{
+		Time.time = TlnServSyncStichzeit[i];
+		CLOCK_decode_time(&Time);
+			
+		printf_P(PSTR("<td>TlnServSyncStichzeit[%d] = %02u.%02u.%04u %02d:%02d:%02d"), i, Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+		}
+		
+	Time.time = TlnBuchLetzteAenderung;
+	CLOCK_decode_time(&Time);
+			
+	printf_P(PSTR("<td>TlnBuchLetzteAenderung = %02u.%02u.%04u %02d:%02d:%02d"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+	
+	PRINTVAL(KurzTimerVal(&SyncWarteTimer));
+	PRINTVAL(SyncWarteEnde);
+	PRINTVAL(InitialAbfrageStarten);
+#undef PRINTVAL
+	}
+	
+
 
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Initialisiert den Teilnehmerauskunft-Server-clinet und registriert den Port auf welchen dieser lauschen soll.

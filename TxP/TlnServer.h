@@ -37,6 +37,8 @@
 	
 	extern void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln);
 	
+	extern void TlnServDebugPrint();
+	
 	#endif //def TXP_TLNSERVER
 	
 #endif /* _TLNSERVER_H_ */
