@@ -608,7 +608,10 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					CLOCK_GetTime(&CurTime);
 					for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 						{
-						TlnServSyncStichzeit[i] = CurTime.time - 60 * 60; 
+						if (i == Kanal->ListeIdx)
+							TlnServSyncStichzeit[i] = CurTime.time; 
+						else
+							TlnServSyncStichzeit[i] = CurTime.time - 60 * 60; 
 							// relativ neue Einträge (nicht älter als eine Stunde 
 							// doch weiterverteilen.
 						}
@@ -697,40 +700,30 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 	} // SocketBearbeiten()
 
 	
-//! Verbindung zu einem Teilnehmer-Server öffnen
-static bool TlnServSyncOeffnen()
-	{
-	int NewSock = TeilnehmerServerSocketOeffnen1(2); // HACK erst mal nur den dritten anwählen...
-		// da wird auch Protokoll geschrieben.
-		
-	if (NewSock != -1)
-		{
-		KanalInit(&TlnServerOut, NewSock); 
-		TlnServerOut.ListeIdx = 2; // HACK
-		return true;
-		}
-	else
-		return false;
-	
-	} // TlnServSyncOeffnen()
-	
-	
-	
+
 static bool InitialAbfrageKanalOeffnen()
 	{
-	if (TlnServSyncOeffnen())
+	for (int8_t i = ANZ_TEILNEHMER_SERVER - 1 ; i >= 0 ; i--)
 		{
-		TlnServBuf.Code = TLNSERV_SYNC_TOTALABFRAGE;
-		TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
-		TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
-		TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
-		SocketDatenSenden(&TlnServerOut);
-		TlnServerOut.Freigabe = true; // wer anruft weiß wen er anruft.
-		TlnServerOut.IstInitialAbfrage = true;
-		return true;
+		int NewSock = TeilnehmerServerSocketOeffnen1(i); 
+			// da wird auch Protokoll geschrieben.
+			
+		if (NewSock != -1)
+			{
+			KanalInit(&TlnServerOut, NewSock); 
+			TlnServerOut.ListeIdx = i; // HACK
+			TlnServBuf.Code = TLNSERV_SYNC_TOTALABFRAGE;
+			TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
+			TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
+			TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
+			SocketDatenSenden(&TlnServerOut);
+			TlnServerOut.Freigabe = true; // wer anruft weiß wen er anruft.
+			TlnServerOut.IstInitialAbfrage = true;
+			return true;
+			}
 		}
-	else
-		return false;
+		
+	return false;
 	}
 
 
@@ -892,13 +885,13 @@ void TlnServDebugPrint()
 		Time.time = TlnServSyncStichzeit[i];
 		CLOCK_decode_time(&Time);
 			
-		printf_P(PSTR("<td>TlnServSyncStichzeit[%d] = %02u.%02u.%04u %02d:%02d:%02d"), i, Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+		printf_P(PSTR("<br>TlnServSyncStichzeit[%d] = %02u.%02u.%04u %02d:%02d:%02d"), i, Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 		}
 		
 	Time.time = TlnBuchLetzteAenderung;
 	CLOCK_decode_time(&Time);
 			
-	printf_P(PSTR("<td>TlnBuchLetzteAenderung = %02u.%02u.%04u %02d:%02d:%02d"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+	printf_P(PSTR("<br>TlnBuchLetzteAenderung = %02u.%02u.%04u %02d:%02d:%02d"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 	
 	PRINTVAL(KurzTimerVal(&SyncWarteTimer));
 	PRINTVAL(SyncWarteEnde);
