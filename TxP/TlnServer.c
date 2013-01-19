@@ -157,9 +157,9 @@ static void ProtokollierenTlnSrv(TTlnServKanal *Kanal)
 	if (Kanal != NULL)
 		{
 		if (Kanal == &TlnServerIn)
-			ProtokollierenInt_P(PSTR("TlnSrv(I,%d): "), Kanal->ListeIdx);
+			ProtokollierenInt_P(PSTR("TlnSrv(e,%d): "), Kanal->ListeIdx);
 		else
-			ProtokollierenInt_P(PSTR("TlnSrv(O,%d): "), Kanal->ListeIdx);
+			ProtokollierenInt_P(PSTR("TlnSrv(s,%d): "), Kanal->ListeIdx);
 		}
 	else
 		Protokollieren_P(PSTR("TlnSrv(-): "));
@@ -742,6 +742,10 @@ static bool InitialAbfrageKanalOeffnen()
 			{
 			KanalInit(&TlnServerOut, NewSock); 
 			TlnServerOut.ListeIdx = i; // HACK
+			if (ProtokollLevelTlnServ >= 2)
+				{
+				ProtokollierenTlnServ_P(&TlnServerOut, PSTR("Socket geoeffnet, initiale Abfrage nach Reset begonnen\r\n"));
+				}
 			TlnServBuf.Code = TLNSERV_SYNC_TOTALABFRAGE;
 			TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
 			TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
@@ -777,11 +781,6 @@ static bool SyncMeldungKanalOeffnen()
 			struct TIME CurTime;
 			CLOCK_GetTime(&CurTime);
 			KanalInit(&TlnServerOut, NewSock); 
-			TlnServBuf.Code = TLNSERV_SYNC_ANMELDUNG;
-			TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
-			TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
-			TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
-			SocketDatenSenden(&TlnServerOut);
 			TlnServerOut.ListeIdx = i;
 			TlnServerOut.Freigabe = true; // der Anrufer ist immer ok
 			TlnServerOut.AusgabeStichdatum = TlnServSyncStichzeit[i];
@@ -791,8 +790,14 @@ static bool SyncMeldungKanalOeffnen()
 			TlnListerStart(&TlnServerOut.AusgabeLister);
 			if (ProtokollLevelTlnServ >= 2)
 				{
-				ProtokollierenTlnServ_P(&TlnServerOut, PSTR("Starte Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"));
+				ProtokollierenTlnServ_P(&TlnServerOut, PSTR("Socket geoeffnet zur Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"));
 				}
+				
+			TlnServBuf.Code = TLNSERV_SYNC_ANMELDUNG;
+			TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
+			TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
+			TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
+			SocketDatenSenden(&TlnServerOut);
 			return true;
 			}
 		// sonst den nächsten probieren...
@@ -830,21 +835,12 @@ void txp_tlnserv_thread()
 
 	// auf neue Verbindungsanfrage testen
 	int NewServerSocket = CheckPortRequest(TXP_TLNSERV_PORT);
+	bool Ok = false;
+	
 	if (NewServerSocket != NO_SOCKET_USED)
 		{
-		if (ProtokollLevelTlnServ >= 2
-			|| (ProtokollLevelTlnServ >= 1 && TlnServerIn.Socket != NO_SOCKET_USED))
-			{
-			ProtokollierenTlnServ_P(&TlnServerIn, PSTR("Server-Socket geoeffnet von IP "));
-			ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
-			Protokollieren_P(PSTR(" / MAC "));
-			ProtokollierenMAC(TCP_sockettable[NewServerSocket].MACadress);
-			}
-		
 		if (TlnServerIn.Socket == NO_SOCKET_USED)
 			{
-			if (ProtokollLevelTlnServ >= 2)
-				Protokollieren_P(PSTR(" ...ok\r\n"));
 			KanalInit(&TlnServerIn, NewServerSocket);
 			SocketSendeFehlerZaehler = 0;
 			SocketSendeSperrZaehler = 0;
@@ -854,15 +850,27 @@ void txp_tlnserv_thread()
 					TlnServerIn.ListeIdx = i;
 					break;
 					}
+			Ok = true;
 			}
 		else
 			{ 
-			if (ProtokollLevelTlnServ >= 1)
-				Protokollieren_P(PSTR("! ...ABGEWIESEN\r\n" ));
 			FehlerRueckmelden(PSTR("occupied"), 0);
 			PutSocketData_RPE(NewServerSocket, 2 + TlnServBuf.DataLen, TlnServBuf.Buf, RAM);
-			CloseTCPSocket(NewServerSocket);
+			Ok = false;
 			}
+
+		if (ProtokollLevelTlnServ >= (Ok ? 2 : 1))
+			{
+			ProtokollierenTlnServ_P(&TlnServerIn, PSTR("Server-Socket geoeffnet von IP "));
+			ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
+			Protokollieren_P(PSTR(" / MAC "));
+			ProtokollierenMAC(TCP_sockettable[NewServerSocket].MACadress);
+			Protokollieren_P(Ok ? PSTR(" ...ok\r\n") : PSTR("! ...ABGEWIESEN wegen besetzt\r\n" ));
+			}
+			
+		if (!Ok)
+			CloseTCPSocket(NewServerSocket);
+
 		}
 
 	// ==========================================================================
@@ -983,7 +991,21 @@ void txp_tlnserv_init()
 		{
 		TlnServSyncStichzeit[i] = 0;
 		}
+		
+		
 	TlnBuchLetzteAenderung = 0;
+	TTlnDaten TD;
+	TlnDatenInit(&TD);
+
+	TTlnListerDat LD;
+	if (TlnListerStart(&LD))
+		{
+		while (TlnListerNaechster(&LD, &TD))
+			{
+			if (TD.Datum > TlnBuchLetzteAenderung && ((TD.Flags & TlnFlag_Lokal) == 0))
+				TlnBuchLetzteAenderung = TD.Datum;
+			}
+		}
 
 	StartKurzTimer(&SyncWarteTimer);
 	SyncWarteEnde = 10 * KurzTimerFreq; // 10 Sekunden
@@ -996,7 +1018,4 @@ void txp_tlnserv_init()
 #endif //def TXP_TLNSERVER
 
 #endif //def TELEXPHONE
-
-			
-
 
