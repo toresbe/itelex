@@ -434,6 +434,7 @@ extern void AsciiDruckPufferVerarbeiten();
 
 extern int TeilnehmerServerSocketOeffnen1(int ServerI);
 
+extern uint16_t Zufallswert(uint16_t Maske);
 
 //! Startet Langzeit-Messung.
 static inline void StartLangTimer(TLangTimer *t)

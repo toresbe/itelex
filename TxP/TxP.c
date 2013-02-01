@@ -383,7 +383,7 @@ static TLangTimer KonfigFreigabeTimer;
 	//!< Timer zur Messung der Zeit seit letzter Freigabe bzw. Benutzung von freizugebenden Seiten
 	
 static bool KonfigFreigabeErteilt;
-	//!< Damit Überlauf des #KonfigFreigabeTimer nicht zur wieder-Freigabe führt.
+	//!< Damit Überlauf des #KonfigFreigabeTimer nicht zur Wieder-Freigabe führt.
 	
 	
 static int TeilnehmerServerSocket;
@@ -410,6 +410,8 @@ static TKurzTimer SelbstAnrufTimer;
 static uint16_t SelbstAnrufPeriode;
 	//!< Abstand der Selbstanrufe in Sekunden.
 	
+static uint16_t SelbstAnrufEndzeit;
+	//!< Wann soll der nächste Selbstanruf sein.
 	
 static int SelbstAnrufSocketHandle;
 	//!< Handle für ausgehende Verbindungen zum Selbst-Anruf
@@ -543,8 +545,30 @@ char * ZeitUeberwachungAusgabe(TZeitUeberwachung *zue)
 			  zue->Summe, zue->Anzahl, zue->Maximum, zue->AnzUeberGrenze);
 	return ZeitUeberwachungAusgabePuffer;
 	}
-	
 
+
+static uint16_t TxpThreadCount; 
+	//!< Für Debugging und Zufallsfaktoren
+	
+	
+//! Ermittelt einen Pseudo-Zufallswert aus verschiedenen Systemvariablen
+//----------------------------------------------------------------------
+//! \param Maske (sollte 2^n-1 sein) begrenzt den Wertebereich.
+//! \return Den (zufällig) errechneten Wert.	
+
+uint16_t Zufallswert(uint16_t Maske)
+	{
+	uint16_t x;
+	x = (TwiLebenszeichenZaehler * 23)
+		^ (TwiWatchdogCount * 31)
+		^ (TwiIsrCount * 47)
+		^ (TxpThreadCount * 83)
+		^ (ByteCounter * 101);
+	return x & Maske;
+	}
+	
+	
+	
 //! Speichert einen Diagnosetext.
 //------------------------------------------------------
 //! \param msg Text aus dem Programmspeicher oder NULL zum Löschen des vorhandenen Textes.
@@ -589,10 +613,6 @@ static void SeriellUmsetzInit(void)
 	}
 
 
-static uint16_t TxpThreadCount; 
-	//!< Für Debugging und Zufallsfaktoren
-	
-	
 //! Protokollzeile einleiten.
 // ---------------------------
 //! Schreibt "Txp (xxx):" in den Puffer mit xxx = Zykluszaehler von txp_thread.
@@ -3278,9 +3298,7 @@ void txp_thread()
 			&& TxpSocketHandle == NO_SOCKET_USED
 			&& TeilnehmerServerSocket == NO_SOCKET_USED
 			&& SelbstAnrufPeriode > 0
-			&& KurzTimerVal(&SelbstAnrufTimer) 
-				>= ((SelbstAnrufFehlerZaehler == 0) ? SelbstAnrufPeriode * KurzTimerFreq : 10 * KurzTimerFreq))
-				// ohne Fehler alle xxx Sekunden prüfen, mit Fehler alle 10 Sekunden
+			&& KurzTimerVal(&SelbstAnrufTimer) > SelbstAnrufEndzeit)
 			{ // Selbst-Anruf starten
 			if (NetzEigeneIP == 0)
 				SelbstAnrufPhase = SelbstAnrufSperre;
@@ -3331,6 +3349,7 @@ void txp_thread()
 					} // Öffnen von NetzEigeneIP erfolgreich.
 					
 				StartKurzTimer(&SelbstAnrufTimer);
+				SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x7);
 				} // NetzEigeneIP gültig
 			} // Selbst-Anruf starten
 				
@@ -3350,12 +3369,14 @@ void txp_thread()
 						ProtokollRegelblockLoeschen();
 					
 					SelbstAnrufFehlerZaehler = 0;
+					SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
 					} // Richtiges Echo angekommen
 				else
 					{ // Falsches Echo angekommen
 					if (ProtokollLevel >= 1)
 						ProtokollierenTxp_P(PSTR("! Selbst-Anruf FALSCHE Daten empfangen.\r\n"));
 					SelbstAnrufFehlerZaehler++;
+					SelbstAnrufEndzeit = 5 * KurzTimerFreq + Zufallswert(0x37);					
 					} // Falsches Echo angekommen
 				StartKurzTimer(&SelbstAnrufTimer);
 				SelbstAnrufPhase = SelbstAnrufSchliessen;
@@ -3366,6 +3387,7 @@ void txp_thread()
 				if (ProtokollLevel >= 1)
 					ProtokollierenTxp_P(PSTR("! Selbst-Anruf ABGEBROCHEN wegen Modus-Wechsel.\r\n"));
 				StartKurzTimer(&SelbstAnrufTimer);
+				SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
 				SelbstAnrufPhase = SelbstAnrufSchliessen;
 				ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
 				} // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
@@ -3376,6 +3398,7 @@ void txp_thread()
 					ProtokollierenTxp_P(PSTR("! Selbst-Anruf KEIN Echo empfangen.\r\n"));
 				SelbstAnrufFehlerZaehler++;
 				StartKurzTimer(&SelbstAnrufTimer);
+				SelbstAnrufEndzeit = 10 * KurzTimerFreq + Zufallswert(0x37);					
 				SelbstAnrufPhase = SelbstAnrufSchliessen;
 				ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
 				} // Timeout nach 5 Sekunden
@@ -3395,7 +3418,7 @@ void txp_thread()
 			{
 			DynIPAktualisierungEndzeit = LangTimerVal(&DynIPAktualisierungTimer) 
 										 + 1 * LangTimerFakt;
-										 // mit 1 Minuten Verzögerung
+										 // gleich mit 1 Minuten Verzögerung
 			SelbstAnrufPhase = SelbstAnrufSperre;
 			SelbstAnrufFehlerZaehler++; // nicht sofort wieder...
 			if (SelbstAnrufFehlerZaehler >= 16)
@@ -3433,9 +3456,7 @@ void txp_thread()
 				
 			if (Fehler)
 				{ // keine Verbindung hergestellt
-				DynIPAktualisierungEndzeit 
-					= 15 * LangTimerFakt 
-					- ((TxpThreadCount ^ Timer0CallbackCount) & 0xF);
+				DynIPAktualisierungEndzeit = 15 * LangTimerFakt - Zufallswert(0xF);
 					// in 15 Minuten minus Zufall wieder. 
 					
 				SelbstAnrufPhase = SelbstAnrufSperre;
@@ -3565,7 +3586,8 @@ void txp_thread()
 							}
 						}
 					StartLangTimer(&DynIPAktualisierungTimer);
-					DynIPAktualisierungEndzeit = 60 * LangTimerFakt; // in einer Stunde wieder
+					DynIPAktualisierungEndzeit = 60 * LangTimerFakt - Zufallswert(0x3F); 
+						// in einer Stunde wieder
 					StartKurzTimer(&SelbstAnrufTimer);
 					SelbstAnrufPhase = SelbstAnrufRuhe;
 					break;
@@ -3575,8 +3597,7 @@ void txp_thread()
 					Protokollieren(TSB.PureData);
 					Protokollieren_P(PSTR("\r\n"));
 					StartLangTimer(&DynIPAktualisierungTimer);
-					DynIPAktualisierungEndzeit = 15 * LangTimerFakt 
-						- ((TxpThreadCount ^ Timer0CallbackCount) & 0xF);
+					DynIPAktualisierungEndzeit = 15 * LangTimerFakt - Zufallswert(0xF);
 						// in 15 Minuten minus Zufall wieder.
 
 					SelbstAnrufPhase = SelbstAnrufSperre;
@@ -3585,8 +3606,7 @@ void txp_thread()
 				default:
 					ProtokollierenTxp_P(PSTR("! unerwartete Antwort des Teilnehmer-Servers\r\n" ));
 					StartLangTimer(&DynIPAktualisierungTimer);
-					DynIPAktualisierungEndzeit = 15 * LangTimerFakt 
-						- ((TxpThreadCount ^ Timer0CallbackCount) & 0xF);
+					DynIPAktualisierungEndzeit = 15 * LangTimerFakt - Zufallswert(0xF);
 						// in 15 Minuten minus Zufall wieder.
 
 					SelbstAnrufPhase = SelbstAnrufSperre;
