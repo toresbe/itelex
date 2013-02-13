@@ -296,6 +296,10 @@ char SocketOutBuf[SocketOutBufMax+4]; //!< TCP-Sendepuffer
 uint8_t ProtokollPhase;
 	//!< für POP3 und SMTP ein Speicher für den aktuellen Kommunikationsschritt
 
+	
+bool TlnBuchOffen;	
+	//!< Soll das Teilnehmer-Verzeichnis offen sein oder nicht?
+	
 
 static uint16_t SocketAnzahlZeichenGesendet;
 	//!< Anzahl Baudot- oder Ascii-Codes, die bisher an die Gegenstelle gesendet worden sind.
@@ -371,6 +375,14 @@ char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
 
 long TeilnehmerServerIP[ANZ_TEILNEHMER_SERVER];
 	//!< letzte IPs des jeweiligen Teilnehmer-Servers.
+
+static uint8_t TeilnehmerServerFehlerZaehler[ANZ_TEILNEHMER_SERVER];
+	//!< Zählt die Probleme bei Verbindungen mit einem Teilnehmer-Server.
+	//!< Nach 5 Problemen wird der Server eine Stunde lang nicht benutzt.
+	
+static TLangTimer TeilnehmerServerSperrTimer[ANZ_TEILNEHMER_SERVER];
+	//!< Wird nach dem 5. Problem mit einem Server gestartet. Nächster Verbindungsversuch
+	//!< wird erst nach einer Stunde zugelassen.
 	
 	
 enum { KonfigPasswortLen = 10 } ;
@@ -392,6 +404,9 @@ static int TeilnehmerServerSocket;
 	//!< a) Dynamische IP-Aktualisierung
 	//!< b) Abfrage einer Teilnehmer-Adresse
 
+static uint8_t AktTlnServerTabI;
+	//!< Tabellenindex des aktuell geöffneten Teilnehmer-Servers (#TeilnehmerServerSocket)
+	
 	
 #ifdef TXP_ANSCHLUSS
 
@@ -2343,7 +2358,7 @@ static void ZeichenInHtmlSendeText(char c)
 //! Verbindung zu einem konkreten Teilnehmer-Server herstellen.
 // ------------------------------------------------------------
 //! \param ServerI Index-Nummer des Teilnehmer-Servers (0 bis ANZ_TEILNEHMER_SERVER-1)
-//! \return Socket-Handle bei Erfolg, -1 bei Fehler
+//! \return Socket-Handle bei Erfolg, -1 bei Fehler oder bei "weigerung".
 
 int TeilnehmerServerSocketOeffnen1(int ServerI)
 	{
@@ -2352,6 +2367,22 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 	if (TeilnehmerServerAdresse[ServerI][0] == '\0')
 		return -1;
 		
+	if (TeilnehmerServerFehlerZaehler[ServerI] >= 5)
+		{
+		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= 60 * LangTimerFakt)
+			// noch keine Stunde um, also nicht versuchen.
+			{
+			ProtokollierenTxp_P(PSTR("Teilnehmer-Server "));
+			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
+			Protokollieren_P(PSTR(" wegen Fehlern noch gesperrt.\r\n"));
+			return -1;
+			}
+		StartLangTimer(&TeilnehmerServerSperrTimer[ServerI]);
+		}
+		
+	if (TeilnehmerServerFehlerZaehler[ServerI] > 0)
+		TeilnehmerServerFehlerZaehler[ServerI]--; // läuft im Erfolgsfall langsam wieder auf Null.
+	
 	TeilnehmerServerIP[ServerI] = strtoip(TeilnehmerServerAdresse[ServerI]);	// Annahme: eine IP-Adresse angegeben
 	
 	if (TeilnehmerServerIP[ServerI] == 0) // ist es doch eine Url?
@@ -2375,6 +2406,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 			ProtokollierenTxp_P(PSTR("! Verbindungsversuch an Teilnehmer-Server "));
 			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
 			Protokollieren_P(PSTR(" GESCHEITERT\r\n"));
+			TeilnehmerServerFehlerSpeichern(ServerI);
 			}
 		return -1;
 		}
@@ -2383,11 +2415,26 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 		ProtokollierenTxp_P(PSTR("! Teilnehmer-Server "));
 		Protokollieren(TeilnehmerServerAdresse[ServerI]); 
 		Protokollieren_P(PSTR(" IP nicht bekannt\r\n"));
+		TeilnehmerServerFehlerSpeichern(ServerI);
 		return -1;
 		}
 	}
 	
 
+//! Speichern von Fehlern an Teilnehmer-Servern.
+// -------------------------------------------------------------------
+//! \param ServerI Tabellenindex des Servers.
+
+void TeilnehmerServerFehlerSpeichern(int ServerI)
+	{
+	if (ServerI >= 0 && ServerI < ANZ_TEILNEHMER_SERVER)
+		{
+		StartLangTimer(&TeilnehmerServerSperrTimer[ServerI]);
+		TeilnehmerServerFehlerZaehler[ServerI]++; 
+		}
+	}
+	
+	
 //! Verbindung zu einem der gespeicherten Teilnehmer-Server herstellen.
 // -------------------------------------------------------------------
 //! \param NONE
@@ -2404,7 +2451,10 @@ bool TeilnehmerServerSocketOeffnen()
 		{
 		TeilnehmerServerSocket = TeilnehmerServerSocketOeffnen1(ServerI);
 		if (TeilnehmerServerSocket != -1)
+			{
+			AktTlnServerTabI = ServerI;
 			return true; // Erfolg.
+			}
 		} // for ServerI
 	TeilnehmerServerSocket = NO_SOCKET_USED;
 	Diagnoseausgabe_P(PSTR("Keine Verbindung zu allen Teilnehmer-Servern"), 1);	
@@ -3449,6 +3499,7 @@ void txp_thread()
 					{
 					CloseTCPSocket(TeilnehmerServerSocket);
 					TeilnehmerServerSocket = NO_SOCKET_USED;
+					TeilnehmerServerFehlerSpeichern(AktTlnServerTabI);
 					}
 				}
 			else 
@@ -3901,6 +3952,12 @@ void txp_cgi_debug( void * pStruct )
 	TlnServDebugPrint();
 #endif //def TXP_TLNSERVER
 	
+	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+		{
+		printf_P(PSTR("<br>TlnServFehler zu Nr. %d = %d Fehler, Sperre-Timer %d"), 
+				 i, TeilnehmerServerFehlerZaehler[i], LangTimerVal(&TeilnehmerServerSperrTimer[i]));
+		}
+	
 	#endif // TXP_ANSCHLUSS
 	
 	printf_P(PSTR("<br><a href=\"txp-debug.cgi?reset\">Statiktik-Daten zur&uuml;cksetzen</a>"
@@ -4087,6 +4144,7 @@ void AdresseZuWahlStr(uint8_t Adr, char* Buf)
 
 	
 const PROGMEM char KonfigPasswort_P[] = "CFGPASS";
+const PROGMEM char TlnBuchOffen_P[] = "TLNBUCHOFFEN";
 const PROGMEM char ProtokollLevel_P[] = "PROTLEVEL";
 const PROGMEM char ProtokollLevelTlnServ_P[] = "PROTLEVELTLNSRV";
 
@@ -4147,6 +4205,8 @@ void txp_cgi_config_intern(void *pStruct)
 		CgiFormInputFieldULong_P(PSTR("Level f&uuml;r Druckausgabe von Meldungen:"), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
 		
 		CgiFormInputFieldText_P(PSTR("Passwort f&uuml;r Konfigurationsseiten:"), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
+		
+		CgiFormCheckbox_P(PSTR("Teilnehmer-Verzeichnis f&uuml;r alle sichtbar:"), TlnBuchOffen_P, TlnBuchOffen);
 
 		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
 		}
@@ -4197,6 +4257,7 @@ void txp_cgi_config_intern(void *pStruct)
 		
 		// Feste Hauptstelle
 		// ------------------
+		//! \todo Umstellen auf CgiCheckBool_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, bool Old)
 		if (PharseCheckName_P(http_request, FesteHst_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, FesteHst_P)], 2);
@@ -4219,6 +4280,7 @@ void txp_cgi_config_intern(void *pStruct)
 			
 		// AlternativSucheBeiBesetzt
 		// -------------------------
+		//! \todo Umstellen auf CgiCheckBool_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, bool Old)
 		if (PharseCheckName_P(http_request, AlternBeiBes_P))
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, AlternBeiBes_P)], 2);
@@ -4289,6 +4351,8 @@ void txp_cgi_config_intern(void *pStruct)
 			printf_P(PSTR("<br>Kennwort ggf. ge&auml;ndert."));
 			}
 			
+		TlnBuchOffen = CgiCheckBool_P(http_request, PSTR("Tln-Verzeichnis offen"), TlnBuchOffen_P, TlnBuchOffen);
+		
 		} // else argc > 0
 		
 	cgi_PrintHttpheaderEnd();
@@ -4653,12 +4717,19 @@ void txp_init()
 		else
 			TeilnehmerServerAdresse[i][0] = '\0';
 		TeilnehmerServerIP[i] = 0;
+		TeilnehmerServerFehlerZaehler[i] = 0;
+		StartLangTimer(&TeilnehmerServerSperrTimer[i]);
 		}
 
 	if (readConfig_P(KonfigPasswort_P, KonfigPasswort) != 1)
 		KonfigPasswort[0] = '\0';
 	KonfigFreigabeErteilt = false;
 
+	if (readConfig_P(TlnBuchOffen_P, Buf) == 1)
+		TlnBuchOffen = atoi(Buf);
+	else
+		TlnBuchOffen = true;
+	
 	if (readConfig_P(MeldungsdruckLevel_P, Buf) == 1)
 		MeldungsdruckLevel = atoi(Buf);
 	else
@@ -4677,6 +4748,7 @@ void txp_init()
 		ProtokollLevelTlnServ = 1;
 		
 	TeilnehmerServerSocket = NO_SOCKET_USED;
+	AktTlnServerTabI = 0;
 
 	#ifdef TXP_ANSCHLUSS
 	

@@ -389,6 +389,8 @@ extern uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
 
 extern uint8_t ProtokollPhase;
 
+extern bool TlnBuchOffen;
+
 extern char SocketInBuf[SocketInBufMax+4]; //!< TCP-Empfangspuffer
 
 extern char SocketOutBuf[SocketOutBufMax+4]; //!< TCP-Sendepuffer
@@ -399,7 +401,6 @@ extern char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
 
 extern long TeilnehmerServerIP[ANZ_TEILNEHMER_SERVER];
 	
-
 
 // globale Funktionen
 // ================================================================
@@ -433,6 +434,8 @@ extern bool Diagnoseausgabe_P(const char *msg, uint8_t Level);
 extern void AsciiDruckPufferVerarbeiten();
 
 extern int TeilnehmerServerSocketOeffnen1(int ServerI);
+
+extern void TeilnehmerServerFehlerSpeichern(int ServerI);
 
 extern uint16_t Zufallswert(uint16_t Maske);
 

@@ -714,7 +714,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	
 	cgi_PrintHttpheaderStart();
 
-	if (http_request->argc != 0 && !KonfigFreigabe(pStruct))
+	if ((http_request->argc != 0 || !TlnBuchOffen) && !KonfigFreigabe(pStruct))
+		// bei Änderungen oder bei nicht offenem Telefonbuch nach dem Kennwort fragen.
 		return;
 
 	if ( http_request->argc == 0 )

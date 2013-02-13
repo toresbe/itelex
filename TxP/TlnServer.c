@@ -381,7 +381,8 @@ static void SocketDatenSenden(TTlnServKanal *Kanal)
 					ProtokollierenTlnServ_P(Kanal, PSTR("! Mehrfache Fehler beim Senden ins Netz, Socket wird geschlossen\r\n" ));
 				CloseTCPSocket(Kanal->Socket);
 				Kanal->Socket = NO_SOCKET_USED;
-				SyncWarteEnde = 60 * KurzTimerFreq; // 60 Sekunden warten.
+				SyncWarteEnde = (60 - Zufallswert(0xF)) * KurzTimerFreq; // 60 Sekunden warten.
+				TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
 				}
 			else
 				SocketSendeSperrZaehler = 1000; // 1 Sekunde für nächsten Versuch warten. 
@@ -615,6 +616,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				else if (!Kanal->AusgabeGestartet)
 					{
 					FehlerRueckmelden(PSTR("unexpected acknowledge"), 0);
+					TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
 					Senden = true;
 					}
 				else
@@ -651,7 +653,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						ProtokollierenTlnServ_P(Kanal, PSTR("Initiale Abfrage erfolgreich beendet\r\n"));
 						}		
 					}
-				SyncWarteEnde = 120 * KurzTimerFreq; // 2 Minuten warten.
+				SyncWarteEnde = (120 - Zufallswert(0x3F)) * KurzTimerFreq; // 2 Minuten warten.
 				break;
 				
 			case TLNSERV_FEHLER:
@@ -663,12 +665,12 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					Protokollieren(TlnServBuf.PureData);
 					Protokollieren_P(PSTR("\r\n"));
 					}		
-				SyncWarteEnde = 30 * KurzTimerFreq; // 30 Sekunden warten.
+				SyncWarteEnde = (30 + Zufallswert(0xF)) * KurzTimerFreq; // 30 Sekunden warten.
 				if (Kanal->ListeIdx >= 0)
 					{
 					TlnServSyncStichzeit[Kanal->ListeIdx] = Kanal->AusgabeStichdatum; 
 						//!< wegen des Fehlers alles noch mal senden.
-					//! \todo Mehrfache fehlversuche Zählen und irgendwann nicht mehr versuchen
+					TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
 					}
 					
 				break;
@@ -713,9 +715,9 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 			{ // unerwartetes Ende...
 			if (Kanal->AusgabeGestartet)
 				TlnServSyncStichzeit[Kanal->ListeIdx] = Kanal->AusgabeStichdatum; 
-				
 				//!< wegen des Fehlers alles noch mal senden.
-			//! \todo Mehrfache fehlversuche Zählen und irgendwann nicht mehr versuchen
+				
+			TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
 			}
 		
 		// da ursache nicht bekannt, kein SyncWarteEnde = X * KurzTimerFreq; // X Sekunden warten.		
@@ -741,7 +743,7 @@ static bool InitialAbfrageKanalOeffnen()
 		if (NewSock != -1)
 			{
 			KanalInit(&TlnServerOut, NewSock); 
-			TlnServerOut.ListeIdx = i; // HACK
+			TlnServerOut.ListeIdx = i; 
 			if (ProtokollLevelTlnServ >= 2)
 				{
 				ProtokollierenTlnServ_P(&TlnServerOut, PSTR("Socket geoeffnet, initiale Abfrage nach Reset begonnen\r\n"));
@@ -894,7 +896,7 @@ void txp_tlnserv_thread()
 			{
 			if (!InitialAbfrageKanalOeffnen())
 				{
-				SyncWarteEnde = 30 * KurzTimerFreq; // 30 Sekunden
+				SyncWarteEnde = (30 + Zufallswert(0xF)) * KurzTimerFreq;
 				}
 			StartKurzTimer(&SyncWarteTimer);
 			}
@@ -902,7 +904,7 @@ void txp_tlnserv_thread()
 			{
 			if (!SyncMeldungKanalOeffnen())
 				{
-				SyncWarteEnde = 10 * KurzTimerFreq; // 10 Sekunden
+				SyncWarteEnde = (20 + Zufallswert(0x7)) * KurzTimerFreq;
 				}
 			StartKurzTimer(&SyncWarteTimer);
 			}
