@@ -2367,7 +2367,8 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 	if (TeilnehmerServerAdresse[ServerI][0] == '\0')
 		return -1;
 		
-	if (TeilnehmerServerFehlerZaehler[ServerI] >= 5)
+	if (TeilnehmerServerFehlerZaehler[ServerI] >= 4 * 2)
+		// * 2 wegen "doppelter" Zählung in TeilnehmerServerFehlerSpeichern().
 		{
 		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= 60 * LangTimerFakt)
 			// noch keine Stunde um, also nicht versuchen.
@@ -2377,12 +2378,11 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 			Protokollieren_P(PSTR(" wegen Fehlern noch gesperrt.\r\n"));
 			return -1;
 			}
+		TeilnehmerServerFehlerZaehler[ServerI] -= 2; 
+			// Nach Zeitablauf nicht nur einmal probieren...
 		StartLangTimer(&TeilnehmerServerSperrTimer[ServerI]);
 		}
 		
-	if (TeilnehmerServerFehlerZaehler[ServerI] > 0)
-		TeilnehmerServerFehlerZaehler[ServerI]--; // läuft im Erfolgsfall langsam wieder auf Null.
-	
 	TeilnehmerServerIP[ServerI] = strtoip(TeilnehmerServerAdresse[ServerI]);	// Annahme: eine IP-Adresse angegeben
 	
 	if (TeilnehmerServerIP[ServerI] == 0) // ist es doch eine Url?
@@ -2399,6 +2399,8 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
 				Protokollieren_P(PSTR(" hergestellt\r\n"));
 				}
+			if (TeilnehmerServerFehlerZaehler[ServerI] > 0)
+				TeilnehmerServerFehlerZaehler[ServerI]--; // läuft im Erfolgsfall langsam wieder auf Null.
 			return Res;
 			}
 		if (ProtokollLevelTlnServ >= 1)
@@ -2406,8 +2408,8 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 			ProtokollierenTxp_P(PSTR("! Verbindungsversuch an Teilnehmer-Server "));
 			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
 			Protokollieren_P(PSTR(" GESCHEITERT\r\n"));
-			TeilnehmerServerFehlerSpeichern(ServerI);
 			}
+		TeilnehmerServerFehlerSpeichern(ServerI);
 		return -1;
 		}
 	else
@@ -2423,6 +2425,8 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 
 //! Speichern von Fehlern an Teilnehmer-Servern.
 // -------------------------------------------------------------------
+//! Nur Aufrufen, wenn Öffnen erfolgreich war, dann aber kritische Fehler
+//! aufgetreten sind, die sich voraussichtlich wiederholen.
 //! \param ServerI Tabellenindex des Servers.
 
 void TeilnehmerServerFehlerSpeichern(int ServerI)
@@ -2430,7 +2434,11 @@ void TeilnehmerServerFehlerSpeichern(int ServerI)
 	if (ServerI >= 0 && ServerI < ANZ_TEILNEHMER_SERVER)
 		{
 		StartLangTimer(&TeilnehmerServerSperrTimer[ServerI]);
-		TeilnehmerServerFehlerZaehler[ServerI]++; 
+		TeilnehmerServerFehlerZaehler[ServerI] += 2; 
+			// Plus 2, da bei jedem erfolgreichen öffnen der Zähler wieder um 1 
+			// dekrementiert wird. Damit Fehler, die wiederholbar erst bei der Datenübertragung
+			// auftreten registriert werden, muss diese dekrementierung "aufgeholt"
+			// werden.
 		}
 	}
 	

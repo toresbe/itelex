@@ -669,8 +669,10 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				if (Kanal->ListeIdx >= 0)
 					{
 					TlnServSyncStichzeit[Kanal->ListeIdx] = Kanal->AusgabeStichdatum; 
-						//!< wegen des Fehlers alles noch mal senden.
+						// wegen des Fehlers alles noch mal senden.
 					TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
+						// und Fehler merken, so dass bei Wiederholung der Fehlermeldung 
+						// dieser Server bald nicht mehr berücksichtigt wird.
 					}
 					
 				break;
