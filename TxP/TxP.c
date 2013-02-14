@@ -2373,9 +2373,12 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= 60 * LangTimerFakt)
 			// noch keine Stunde um, also nicht versuchen.
 			{
-			ProtokollierenTxp_P(PSTR("Teilnehmer-Server "));
-			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
-			Protokollieren_P(PSTR(" wegen Fehlern noch gesperrt.\r\n"));
+			if (ProtokollLevelTlnServ >= 3)
+				{
+				ProtokollierenTxp_P(PSTR("Teilnehmer-Server "));
+				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
+				Protokollieren_P(PSTR(" wegen Fehlern noch gesperrt.\r\n"));
+				}
 			return -1;
 			}
 		TeilnehmerServerFehlerZaehler[ServerI] -= 2; 

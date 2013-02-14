@@ -91,12 +91,14 @@ typedef struct
 	} TTlnServKanal;
 
 
-static TTlnServKanal TlnServerIn;
-	//!< Handle für eingehende TlnAbfrage-Verbindungen ("Server")
-	
-static TTlnServKanal TlnServerOut;
-	//!< Handle für ausgehende TlnServer-Verbindungen ("Client") -> für Synchronisation mehrerer Server
+enum { AnzTlnServKanaele = 4 } ;
 
+
+static TTlnServKanal TlnServer[AnzTlnServKanaele];
+	//!< Teilnehmer-Server kanäle ein- und ausgehende TlnAbfrage-Verbindungen.
+	//!< Für ausgehende Verbindungen wird nur Index 0 verwendet, für kommende
+	//!< Verbindungen der jeweils freie.
+	
 static uint16_t SocketSendeSperrZaehler;
 	//!< Zählt nach Sendefehlern herunter und verhindert solange neue Sendeversuche.
 	
@@ -156,10 +158,8 @@ static void ProtokollierenTlnSrv(TTlnServKanal *Kanal)
 	{
 	if (Kanal != NULL)
 		{
-		if (Kanal == &TlnServerIn)
-			ProtokollierenInt_P(PSTR("TlnSrv(e,%d): "), Kanal->ListeIdx);
-		else
-			ProtokollierenInt_P(PSTR("TlnSrv(s,%d): "), Kanal->ListeIdx);
+		ProtokollierenInt_P(PSTR("TlnSrv(%d,"), Kanal - TlnServer);
+		ProtokollierenInt_P(PSTR("%c): "), 'A' + Kanal->ListeIdx);
 		}
 	else
 		Protokollieren_P(PSTR("TlnSrv(-): "));
@@ -737,6 +737,9 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 
 static bool InitialAbfrageKanalOeffnen()
 	{
+	if (TlnServer[0].Socket != NO_SOCKET_USED)
+		return false;
+	
 	for (int8_t i = ANZ_TEILNEHMER_SERVER - 1 ; i >= 0 ; i--)
 		{
 		int NewSock = TeilnehmerServerSocketOeffnen1(i); 
@@ -744,19 +747,19 @@ static bool InitialAbfrageKanalOeffnen()
 			
 		if (NewSock != -1)
 			{
-			KanalInit(&TlnServerOut, NewSock); 
-			TlnServerOut.ListeIdx = i; 
+			KanalInit(&TlnServer[0], NewSock); 
+			TlnServer[0].ListeIdx = i; 
 			if (ProtokollLevelTlnServ >= 2)
 				{
-				ProtokollierenTlnServ_P(&TlnServerOut, PSTR("Socket geoeffnet, initiale Abfrage nach Reset begonnen\r\n"));
+				ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Socket geoeffnet, initiale Abfrage nach Reset begonnen\r\n"));
 				}
 			TlnServBuf.Code = TLNSERV_SYNC_TOTALABFRAGE;
 			TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
 			TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
 			TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
-			SocketDatenSenden(&TlnServerOut);
-			TlnServerOut.Freigabe = true; // wer anruft weiß wen er anruft.
-			TlnServerOut.IstInitialAbfrage = true;
+			SocketDatenSenden(&TlnServer[0]);
+			TlnServer[0].Freigabe = true; // wer anruft weiß wen er anruft.
+			TlnServer[0].IstInitialAbfrage = true;
 			return true;
 			}
 		}
@@ -769,6 +772,9 @@ static bool SyncMeldungKanalOeffnen()
 	{
 	uint8_t i;
 	
+	if (TlnServer[0].Socket != NO_SOCKET_USED)
+		return false;
+		
 	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
 		if (TlnServSyncStichzeit[i] > TlnBuchLetzteAenderung)
@@ -784,24 +790,24 @@ static bool SyncMeldungKanalOeffnen()
 			{
 			struct TIME CurTime;
 			CLOCK_GetTime(&CurTime);
-			KanalInit(&TlnServerOut, NewSock); 
-			TlnServerOut.ListeIdx = i;
-			TlnServerOut.Freigabe = true; // der Anrufer ist immer ok
-			TlnServerOut.AusgabeStichdatum = TlnServSyncStichzeit[i];
-			TlnServerOut.AusgabeGestartet = true;
+			KanalInit(&TlnServer[0], NewSock); 
+			TlnServer[0].ListeIdx = i;
+			TlnServer[0].Freigabe = true; // der Anrufer ist immer ok
+			TlnServer[0].AusgabeStichdatum = TlnServSyncStichzeit[i];
+			TlnServer[0].AusgabeGestartet = true;
 			TlnServSyncStichzeit[i] = CurTime.time; 
 				//! Wird wieder auf AusgabeStichdatum zurückgesetzt werden, wenn Fehler passiert.
-			TlnListerStart(&TlnServerOut.AusgabeLister);
+			TlnListerStart(&TlnServer[0].AusgabeLister);
 			if (ProtokollLevelTlnServ >= 2)
 				{
-				ProtokollierenTlnServ_P(&TlnServerOut, PSTR("Socket geoeffnet zur Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"));
+				ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Socket geoeffnet zur Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"));
 				}
 				
 			TlnServBuf.Code = TLNSERV_SYNC_ANMELDUNG;
 			TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
 			TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
 			TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
-			SocketDatenSenden(&TlnServerOut);
+			SocketDatenSenden(&TlnServer[0]);
 			return true;
 			}
 		// sonst den nächsten probieren...
@@ -823,15 +829,15 @@ static bool SyncMeldungKanalOeffnen()
 
 void txp_tlnserv_thread()
 	{
+	uint8_t i;
+	
 	// ======================================================================
 	// Socket Empfang und Sendung
 	// ======================================================================
 
-	if (TlnServerOut.Socket != NO_SOCKET_USED)
-		SocketBearbeiten(&TlnServerOut);
-		
-	if (TlnServerIn.Socket != NO_SOCKET_USED)
-		SocketBearbeiten(&TlnServerIn);
+	for (i = 0 ; i < AnzTlnServKanaele ; i++)
+		if (TlnServer[i].Socket != NO_SOCKET_USED)
+			SocketBearbeiten(&TlnServer[i]);
 		
 	// ==========================================================================
 	// Neuer Anruf vom Ethernet?
@@ -843,33 +849,37 @@ void txp_tlnserv_thread()
 	
 	if (NewServerSocket != NO_SOCKET_USED)
 		{
-		if (TlnServerIn.Socket == NO_SOCKET_USED)
+		for (i = 0 ; i < AnzTlnServKanaele ; i++)
+			if (TlnServer[i].Socket == NO_SOCKET_USED)
+				break;
+				
+		if (i >= AnzTlnServKanaele)
 			{
-			KanalInit(&TlnServerIn, NewServerSocket);
-			SocketSendeFehlerZaehler = 0;
-			SocketSendeSperrZaehler = 0;
-			for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
-				if (TeilnehmerServerIP[i] == TCP_sockettable[NewServerSocket].SourceIP)
-					{
-					TlnServerIn.ListeIdx = i;
-					break;
-					}
-			Ok = true;
-			}
-		else
-			{ 
 			FehlerRueckmelden(PSTR("occupied"), 0);
 			PutSocketData_RPE(NewServerSocket, 2 + TlnServBuf.DataLen, TlnServBuf.Buf, RAM);
 			Ok = false;
 			}
+		else
+			{
+			KanalInit(&TlnServer[i], NewServerSocket);
+			SocketSendeFehlerZaehler = 0;
+			SocketSendeSperrZaehler = 0;
+			for (uint8_t k = 0 ; k < ANZ_TEILNEHMER_SERVER ; k++)
+				if (TeilnehmerServerIP[k] == TCP_sockettable[NewServerSocket].SourceIP)
+					{
+					TlnServer[i].ListeIdx = k;
+					break;
+					}
+			Ok = true;
+			}
 
 		if (ProtokollLevelTlnServ >= (Ok ? 2 : 1))
 			{
-			ProtokollierenTlnServ_P(&TlnServerIn, PSTR("Server-Socket geoeffnet von IP "));
+			ProtokollierenTlnServ_P(&TlnServer[i], PSTR("Server-Socket geoeffnet von IP "));
 			ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
 			Protokollieren_P(PSTR(" / MAC "));
 			ProtokollierenMAC(TCP_sockettable[NewServerSocket].MACadress);
-			Protokollieren_P(Ok ? PSTR(" ...ok\r\n") : PSTR("! ...ABGEWIESEN wegen besetzt\r\n" ));
+			Protokollieren_P(Ok ? PSTR(" ...ok\r\n") : PSTR("! ...ABGEWIESEN wegen alle besetzt\r\n" ));
 			}
 			
 		if (!Ok)
@@ -887,10 +897,10 @@ void txp_tlnserv_thread()
 	// Neue Aktionen starten?
 	// ==========================================================================
 
-	if (TlnServerOut.Socket != NO_SOCKET_USED 
-		|| TlnServerIn.Socket != NO_SOCKET_USED
+	if (TlnServer[0].Socket != NO_SOCKET_USED 
+		|| TlnServer[1].Socket != NO_SOCKET_USED
 		|| TlnServSyncGeheimzahl == 0) // ist nicht als Teilnehmer-Server konfiguriert
-		StartKurzTimer(&SyncWarteTimer); // Warten bis alle Verbindungen geschlossen sind
+		StartKurzTimer(&SyncWarteTimer); // Warten bis mindestens zwei Verbindungen geschlossen sind
 
 	else if (KurzTimerVal(&SyncWarteTimer) > SyncWarteEnde)
 		{
@@ -958,11 +968,12 @@ void TlnServDebugPrint()
 
 void txp_tlnserv_init()
 	{
+	uint8_t i;
+	
 	// EEPROM auslesen
 	/*
 	
 	char Buf[TlnAdresseMax];
-	uint8_t i;
 
 	if (readConfig_P(EigeneNummer_P, Buf) == 1)
 		BusEigenAdresse = WahlZuAdresse(atoi(Buf), strlen(Buf));
@@ -981,8 +992,8 @@ void txp_tlnserv_init()
 	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
 	*/
 
-	TlnServerIn.Socket = NO_SOCKET_USED;
-	TlnServerOut.Socket = NO_SOCKET_USED;
+	for (i = 0 ; i < AnzTlnServKanaele ; i++)
+		TlnServer[i].Socket = NO_SOCKET_USED;
 	
 	SocketSendeSperrZaehler = 0;
 	SocketSendeFehlerZaehler = 0;
@@ -991,7 +1002,7 @@ void txp_tlnserv_init()
 	
 	printf_P( PSTR("Txp TlnServer Port %u.\r\n") , TXP_TLNSERV_PORT );
 	
-	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
 		TlnServSyncStichzeit[i] = 0;
 		}
