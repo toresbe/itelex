@@ -590,7 +590,7 @@ gccversion :
 	@$(CC) --version
 
 # Program the device.  
-program: $(TARGET).hex $(TARGET).eep
+program: all
 #	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
 #	sleep 3
 #	avarice -2 -D -j com2 -x

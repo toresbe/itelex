@@ -178,8 +178,9 @@ enum {
 	GlobRufnrMinZiffern = 5,
 	//!< Mindestanzahl der Ziffern von global gültigen Rufnummern
 	
-	GlobRufnrMinWert = 10 ^ GlobRufnrMinZiffern,
+	GlobRufnrMinWert = 10000UL,
 	//!< Mindestwert der Nummer von global gültigen Rufnummern
+	//!< Ziffernzahl muss #GlobRufnrMinZiffern entsprechen.
 	
 	} ; // Ende Konstanten
 	

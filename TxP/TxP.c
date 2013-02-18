@@ -4466,7 +4466,7 @@ void txp_cgi_config_extern(void *pStruct)
 		#ifdef TXP_ANSCHLUSS
 		NetzRufnummer = CgiCheckULong_P(http_request, PSTR("Netz-Rufnummer"), NetzRufnummer_P, NetzRufnummer);
 		if (NetzRufnummer < GlobRufnrMinWert)
-			printf_P(PSTR("&lt;=== zu wenig Ziffern!"));
+			printf_P(PSTR("<big><b>&lt;=== zu wenig Ziffern!</b></big>"));
 		Geheimzahl = CgiCheckULong_P(http_request, PSTR("Geheimzahl"), Geheimzahl_P, Geheimzahl);
 		DynIPAktiv = CgiCheckBool_P(http_request, PSTR("DynIPAktualisierung"), DynIPAktiv_P, DynIPAktiv);
 		SelbstAnrufPeriode = CgiCheckULong_P(http_request, PSTR("Verb-Test Periode"), SelbstAnrufPeriode_P, SelbstAnrufPeriode);
