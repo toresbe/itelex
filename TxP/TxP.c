@@ -2945,7 +2945,7 @@ void txp_thread()
 					
 					if (TlnSuche(Wahlnummer, false, &GewaehlterTln))
 						{ // ID#222 ********************************************
-						bool RufnummerServerAbfrage = (Wahlziffern >= 5 && (GewaehlterTln.Flags & TlnFlag_Lokal) == 0);
+						bool RufnummerServerAbfrage = (Wahlziffern >= GlobRufnrMinZiffern && (GewaehlterTln.Flags & TlnFlag_Lokal) == 0);
 						
 						if (ProtokollLevel >= 1)
 							{
@@ -3350,7 +3350,7 @@ void txp_thread()
 	// Dynamische IP-Aktualisierung starten
 	// ======================================================================
 	
-	if (DynIPAktiv)
+	if (DynIPAktiv && NetzRufnummer >= GlobRufnrMinWert)
 		{
 		// Aktialisierung starten?
 		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
@@ -4465,6 +4465,8 @@ void txp_cgi_config_extern(void *pStruct)
 
 		#ifdef TXP_ANSCHLUSS
 		NetzRufnummer = CgiCheckULong_P(http_request, PSTR("Netz-Rufnummer"), NetzRufnummer_P, NetzRufnummer);
+		if (NetzRufnummer < GlobRufnrMinWert)
+			printf_P(PSTR("&lt;=== zu wenig Ziffern!"));
 		Geheimzahl = CgiCheckULong_P(http_request, PSTR("Geheimzahl"), Geheimzahl_P, Geheimzahl);
 		DynIPAktiv = CgiCheckBool_P(http_request, PSTR("DynIPAktualisierung"), DynIPAktiv_P, DynIPAktiv);
 		SelbstAnrufPeriode = CgiCheckULong_P(http_request, PSTR("Verb-Test Periode"), SelbstAnrufPeriode_P, SelbstAnrufPeriode);
@@ -4480,7 +4482,7 @@ void txp_cgi_config_extern(void *pStruct)
 		#ifdef TXP_TLNSERVER
 		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, PSTR("Geheimzahl f&uuml;r Server-Synchronisierung"), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl);
 		#endif //def TXP_TLNSERVER
-			
+
 		} // else argc > 0
 		
 	cgi_PrintHttpheaderEnd();

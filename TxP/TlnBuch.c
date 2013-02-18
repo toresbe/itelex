@@ -336,9 +336,12 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, bool DatumAktualisieren)
 //! \retval true wenn es mindestens einen Eintrag gibt.
 bool TlnListerStart(TTlnListerDat *ldp)
 	{
-	//! (*ldp) zeigt auf nächsten Eintrag, der durch TlnListerNaechster geliefert wird.
-	(*ldp) = TlnBuch;
-	return (*ldp) < TlnBuch + TlnBuchMemUsed;
+	//! ldp->Pos zeigt auf nächsten Eintrag, der durch TlnListerNaechster geliefert wird.
+	ldp->Pos = TlnBuch;
+	if (ldp->Pos >= TlnBuch + TlnBuchMemUsed)
+		return false;
+	memcpy(ldp->Ref, ldp->Pos, sizeof(ldp->Ref));
+	return true;
 	}
 	
 
@@ -348,11 +351,23 @@ bool TlnListerStart(TTlnListerDat *ldp)
 //! \retval true wenn ein weiterer Eintrag gefunden wurde.
 bool TlnListerNaechster(TTlnListerDat *ldp, TTlnDaten *Tln)
 	{
-	if ((*ldp) >= TlnBuch + TlnBuchMemUsed)
-		return false;
-	TlnLesen(Tln, (*ldp));
-	(*ldp) += *((uint8_t *) ((*ldp)+4));
-	return true;
+	while (true)
+		{
+		if (ldp->Pos >= TlnBuch + TlnBuchMemUsed)
+			return false;
+
+		if (memcmp(ldp->Ref, ldp->Pos, sizeof(ldp->Ref)) != 0)
+			ldp->Pos = TlnBuch; // zur Not halt nochmal von vorn...
+			
+		TlnLesen(Tln, ldp->Pos);
+		ldp->Pos += *((uint8_t *) (ldp->Pos + 4));
+		if (ldp->Pos < TlnBuch + TlnBuchMemUsed)
+			memcpy(ldp->Ref, ldp->Pos, sizeof(ldp->Ref));
+			
+		if (Tln->Nummer != 0)
+			return true;
+			// Eintränge mit Nummer = 0 gleich überspringen
+		}
 	}
 
 	

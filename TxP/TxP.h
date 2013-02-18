@@ -175,6 +175,12 @@ enum {
 	ANZ_TEILNEHMER_SERVER = 3,
 	//!< Anzahl der Links zu Teilnehmer-Servern.
 	
+	GlobRufnrMinZiffern = 5,
+	//!< Mindestanzahl der Ziffern von global gültigen Rufnummern
+	
+	GlobRufnrMinWert = 10 ^ GlobRufnrMinZiffern,
+	//!< Mindestwert der Nummer von global gültigen Rufnummern
+	
 	} ; // Ende Konstanten
 	
 

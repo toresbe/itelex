@@ -159,7 +159,10 @@ static void ProtokollierenTlnSrv(TTlnServKanal *Kanal)
 	if (Kanal != NULL)
 		{
 		ProtokollierenInt_P(PSTR("TlnSrv(%d,"), Kanal - TlnServer);
-		ProtokollierenInt_P(PSTR("%c): "), 'A' + Kanal->ListeIdx);
+		if (Kanal->ListeIdx >= 0)
+			ProtokollierenInt_P(PSTR("%c): "), 'A' + Kanal->ListeIdx);
+		else
+			Protokollieren_P(PSTR("?): "));
 		}
 	else
 		Protokollieren_P(PSTR("TlnSrv(-): "));
@@ -188,7 +191,13 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 	{
 	TTlnDaten TD;
 	
-	if (TlnSuche(tsb->SelbstAkt.RufNr, false, &TD))
+	if (tsb->SelbstAkt.RufNr < GlobRufnrMinWert)
+		{
+		if (ProtokollLevelTlnServ >= 1)
+			ProtokollierenTlnServInt_P(Kanal, PSTR("! Rufnummer %lu zu wenig Ziffern\r\n"), tsb->SelbstAkt.RufNr);
+		return false;
+		}
+	else if (TlnSuche(tsb->SelbstAkt.RufNr, false, &TD))
 		{ // Eintrag ist schon vorhanden
 		if (TD.Flags & TlnFlag_Lokal)
 			{
@@ -329,8 +338,9 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 		
 	while (TlnListerNaechster(&Kanal->AusgabeLister, &TlnServBuf.TlnAuskunft))
 		{
-		// wenn nicht lokal, dann senden...
+		// wenn nicht lokal UND gültige Nummer UND Datum jünger als Grenzwert, dann senden...
 		if ((TlnServBuf.TlnAuskunft.Flags & TlnFlag_Lokal) == 0
+			&& TlnServBuf.TlnAuskunft.Nummer >= GlobRufnrMinWert
 		    && TlnServBuf.TlnAuskunft.Datum >= Kanal->AusgabeStichdatum)
 			{
 			if (ProtokollLevelTlnServ >= 2)
@@ -572,7 +582,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					{
 					FehlerRueckmelden(PSTR("wrong authentification"), 0);
 					Senden = true;
-					Diagnoseausgabe_P("Teilnehmer-Server Anmeldung mit falscher Geheimzahl", 1);
+					Diagnoseausgabe_P(PSTR("Teilnehmer-Server Anmeldung mit falscher Geheimzahl"), 1);
 					}
 				else
 					{
@@ -594,7 +604,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					{
 					FehlerRueckmelden(PSTR("wrong authentification"), 0);
 					Senden = true;
-					Diagnoseausgabe_P("Teilnehmer-Server Anmeldung mit falscher Geheimzahl", 1);
+					Diagnoseausgabe_P(PSTR("Teilnehmer-Server Anmeldung mit falscher Geheimzahl"), 1);
 					}
 				else
 					{
@@ -644,7 +654,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 							TlnServSyncStichzeit[i] = CurTime.time; 
 						else
 							TlnServSyncStichzeit[i] = CurTime.time - 60 * 60; 
-							// relativ neue Einträge (nicht älter als eine Stunde 
+							// relativ neue Einträge (nicht älter als eine Stunde) 
 							// doch weiterverteilen.
 						}
 					InitialAbfrageStarten = false;
@@ -710,7 +720,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 	if (CheckSocketState(Kanal->Socket) == SOCKET_NOT_USE)
 		{
 		if (ProtokollLevelTlnServ >= 2)
-			ProtokollierenTlnServ_P(Kanal, PSTR("Socket wurde von Gegenstelle geschlossen\r\n" ));
+			ProtokollierenTlnServ_P(Kanal, PSTR("Socket wurde von Gegenstelle geschlossen\r\n"));
 		CloseTCPSocket(Kanal->Socket);
 		Kanal->Socket = NO_SOCKET_USED;
 		if (!Kanal->Fertig && Kanal->ListeIdx >= 0)
