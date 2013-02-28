@@ -1059,7 +1059,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					{
 					printf_P(PSTR("Eintrag gespeichert<br>"));
 #ifdef TXP_TLNSERVER
-					TlnServTlnbuchEintragGeaendert(&TD);
+					TlnServTlnbuchEintragGeaendert(&TD, -1); // -1: Änderung kommt von keinem Server
 #endif //def TXP_TLNSERVER
 					}
 				else

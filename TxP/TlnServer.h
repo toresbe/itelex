@@ -35,7 +35,7 @@
 	extern void txp_tlnserv_thread( void );
 	extern void txp_tlnserv_init( void );
 	
-	extern void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln);
+	extern void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln, int8_t VonServer);
 	
 	extern void TlnServDebugPrint();
 	

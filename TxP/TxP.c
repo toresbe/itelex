@@ -3609,7 +3609,8 @@ void txp_thread()
 							}
 #ifdef TXP_TLNSERVER							
 						else if (Res > 0)
-							TlnServTlnbuchEintragGeaendert(&GewaehlterTln);
+							TlnServTlnbuchEintragGeaendert(&GewaehlterTln, -1); 
+								// -1: Geänderter Eintrag kommt nicht durch einen Sync-Vorgang 
 #endif //def TXP_TLNSERVER
 
 						} // Aktualisieren ist sinnvoll

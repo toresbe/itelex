@@ -88,6 +88,10 @@ typedef struct
 	TTlnListerDat AusgabeLister; //!< Daten für die Ausgabe (welcher Datensatz wurde zuletzt gesendet)
 	long AusgabeStichdatum; //!< Nur Einträge, die neuer sind als X werden gesendet.
 	bool Fertig; //!< true, wenn Auftrag erfüllt. Sonst wäre ein vorzeitiges Ende ein Fehler.
+	uint8_t SendeFehlerZaehler;	//!< Zählt bis 10 bei nicht erfolgreichen Sendeversuchen auf dem Socket.
+	TKurzTimer WiederholungVerzoegerung;
+		//!< Bei spontanem Verbindungsabbau oder Sendestörung wird 2 Sekunden auf den nächsten 
+		//!< Versuch gewartet.
 	} TTlnServKanal;
 
 
@@ -99,11 +103,6 @@ static TTlnServKanal TlnServer[AnzTlnServKanaele];
 	//!< Für ausgehende Verbindungen wird nur Index 0 verwendet, für kommende
 	//!< Verbindungen der jeweils freie.
 	
-static uint16_t SocketSendeSperrZaehler;
-	//!< Zählt nach Sendefehlern herunter und verhindert solange neue Sendeversuche.
-	
-static uint8_t SocketSendeFehlerZaehler;
-	//!< Zählt bis 10 bei nicht erfolgreichen Sendeversuchen auf dem Socket.
 		
 static TTlnServBuf TlnServBuf;
 	//!< Lokaler Puffer für alle Anfragen an den Teilnehmerauskunft-Server. 
@@ -149,6 +148,7 @@ static void KanalInit(TTlnServKanal* k, int aSocket)
 	k->AusgabeGestartet = false;
 	k->IstInitialAbfrage = false;
 	k->Fertig = false;
+	k->SendeFehlerZaehler = 0;
 	}
 	
 	
@@ -242,7 +242,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 					ProtokollierenIPAdr(TlnIP);
 					ProtokollierenInt_P(PSTR(" Port %u\r\n"), TD.Port);
 					}
-				TlnServTlnbuchEintragGeaendert(&TD);
+				TlnServTlnbuchEintragGeaendert(&TD, -1); // -1: Änderung kommt von keinem Server
 				return true;
 				}
 			else
@@ -274,7 +274,8 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 				ProtokollierenInt_P(PSTR(" Port %u (noch gesperrt!)\r\n"), TD.Port);
 				}
 			Diagnoseausgabe_P(PSTR("Neuer Teilnehmer angemeldet"), 1);
-			TlnServTlnbuchEintragGeaendert(&TD); // da er neu war, muss er geändert worden sein.
+			TlnServTlnbuchEintragGeaendert(&TD, -1); // da er neu war, muss er geändert worden sein.
+				// -1: Kein Sync-Vorgang
 			return true;
 			}
 		else
@@ -299,23 +300,39 @@ static void FehlerRueckmelden(PGM_P Text, int val)
 //! Wird aufgerufen, wenn ein Eintrag im eigenen Telefonbuch geändert wird.
 //---------------------------------------------------------------------------
 //! Ziel ist, die Synchronisation dieses geänderten Eintrags anzustoßen.
-void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln)
+void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln, int8_t VonServer)
 	{
 	if (Tln->Flags & TlnFlag_Lokal)
 		return;
 		
+	bool SyncStichzeitWarOk = false;
+	if (VonServer >= 0 
+		&& VonServer < ANZ_TEILNEHMER_SERVER
+		&& TlnServSyncStichzeit[VonServer] > TlnBuchLetzteAenderung)
+		SyncStichzeitWarOk = true; 
+		// d.h. die Daten des Servers, von dem eine ggf. Aktualisierung gerade
+		// empfangen worden sind, waren bisher aktuell.
+	    
 	if (TlnBuchLetzteAenderung < Tln->Datum)
 		TlnBuchLetzteAenderung = Tln->Datum;
 		
 	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
-		if (TlnServSyncStichzeit[i] > Tln->Datum)
+		if (TlnServSyncStichzeit[i] > Tln->Datum && i != VonServer)
 			TlnServSyncStichzeit[i] = Tln->Datum; 
 			// dies kommt nur dann vor, wenn bereits eine Synchronisation stattfand,
 			// die Datenbasis dafür aber bereits veraltet war.
-		}
+			// -> SyncStichzeit wird nach hinten (alt) korrigiert.
+			
+		else if (i == VonServer 
+				 && SyncStichzeitWarOk
+				 && TlnServSyncStichzeit[i] <= TlnBuchLetzteAenderung)
+			TlnServSyncStichzeit[i] = TlnBuchLetzteAenderung + 1;
+			// dieser Server muss nicht aktualisiert werden, da von diesem Server
+			// gerade die Daten empfangen werden und er vorher aus eigener Sicht 
+			// keine Aktualisierung empfangen brauchte.
 		
-	//! \todo bei Empfang von Synchronisation den Sender "ausklammern". 
+		}
 		
 	} // TlnServTlnbuchEintragGeaendert()
 	
@@ -370,7 +387,9 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 
 static void SocketDatenSenden(TTlnServKanal *Kanal)
 	{
-	if (SocketSendeSperrZaehler == 0) //! \todo && !HaltSocketOut
+	if (Kanal->SendeFehlerZaehler == 0
+		|| KurzTimerVal(&Kanal->WiederholungVerzoegerung) > KurzTimerFreq * 15/10)
+
 		{
 		int Res = PutSocketData_RPE(Kanal->Socket, 2 + TlnServBuf.DataLen, TlnServBuf.Buf, RAM);
 		// SocketLebenszeichenZaehler = 0; 
@@ -384,8 +403,8 @@ static void SocketDatenSenden(TTlnServKanal *Kanal)
 
 		if (Res <= 0)
 			{
-			SocketSendeFehlerZaehler++;
-			if (SocketSendeFehlerZaehler >= 10)
+			Kanal->SendeFehlerZaehler++;
+			if (Kanal->SendeFehlerZaehler >= 10)
 				{
 				if (ProtokollLevelTlnServ >= 1)
 					ProtokollierenTlnServ_P(Kanal, PSTR("! Mehrfache Fehler beim Senden ins Netz, Socket wird geschlossen\r\n" ));
@@ -394,9 +413,7 @@ static void SocketDatenSenden(TTlnServKanal *Kanal)
 				SyncWarteEnde = (60 - Zufallswert(0xF)) * KurzTimerFreq; // 60 Sekunden warten.
 				TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
 				}
-			else
-				SocketSendeSperrZaehler = 1000; // 1 Sekunde für nächsten Versuch warten. 
-					//! \todo Wirkliche Zeitabhängigkeit
+			StartKurzTimer(&Kanal->WiederholungVerzoegerung);				
 			}
 		else if (Res < 2 + TlnServBuf.DataLen)
 			{
@@ -422,10 +439,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 	{
 	if (Kanal->Socket == NO_SOCKET_USED)
 		return;
-		
-	if (SocketSendeSperrZaehler > 0)
-		SocketSendeSperrZaehler--; //! \todo dies gehört eigentlich in eine Timer-Funktion
-	
+
 	// Auf neue Daten testen
 	// ---------------------------------
 	int InCount = GetBytesInSocketData(Kanal->Socket);
@@ -557,7 +571,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 							{
 							if (ProtokollLevelTlnServ >= 1)
 								ProtokollierenTlnServInt_P(Kanal, PSTR("Datensatz vom Teilnehmer-Server mit Nr %lu empfangen und gespeichert\r\n"), TlnServBuf.TlnAuskunft.Nummer);
-							TlnServTlnbuchEintragGeaendert(&TlnServBuf.TlnAuskunft);
+							TlnServTlnbuchEintragGeaendert(&TlnServBuf.TlnAuskunft, Kanal->ListeIdx);
 							}
 						else // Res == 0
 							{
@@ -705,17 +719,6 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 
 		} // if GetBytesInSocketData > 0
 		
-	/*/ ggf Lebenszeichen erzeugen
-	// --------------------------
-	if (SocketLebenszeichenZaehler > 4 * TxpTimerFreq 
-	    && SocketOutBufUsed == 0
-		&& SocketSendeSperrZaehler == 0)
-		{ // alle 4 Sekunden ein Lebenszeichen
-		SocketOutBuf[0] = TXPC_NULL;
-		SocketOutBuf[1] = 0;
-		SocketOutBufUsed = 2;
-		} */
-
 	// soll offene Verbindung geschlossen werden?
 	if (CheckSocketState(Kanal->Socket) == SOCKET_NOT_USE)
 		{
@@ -872,8 +875,6 @@ void txp_tlnserv_thread()
 		else
 			{
 			KanalInit(&TlnServer[i], NewServerSocket);
-			SocketSendeFehlerZaehler = 0;
-			SocketSendeSperrZaehler = 0;
 			for (uint8_t k = 0 ; k < ANZ_TEILNEHMER_SERVER ; k++)
 				if (TeilnehmerServerIP[k] == TCP_sockettable[NewServerSocket].SourceIP)
 					{
@@ -1004,9 +1005,6 @@ void txp_tlnserv_init()
 
 	for (i = 0 ; i < AnzTlnServKanaele ; i++)
 		TlnServer[i].Socket = NO_SOCKET_USED;
-	
-	SocketSendeSperrZaehler = 0;
-	SocketSendeFehlerZaehler = 0;
 	
 	RegisterTCPPort(TXP_TLNSERV_PORT);
 	
