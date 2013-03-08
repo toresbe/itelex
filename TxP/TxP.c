@@ -3770,7 +3770,8 @@ static uint8_t DurchwahlTabelleDekodieren(char *s)
 
 //! Kann am Anfang jeder cgi-Funktion aufgerufen werden, um Zugang zu der Funktion erst nach Kennwort-Eingabe zu erlauben.
 // -----------------------------------------------------------------------------------------------------------------------
-//! \param 	pStruct	Struktur auf den HTTP_Request
+//! \param 	pStruct	Struktur auf den HTTP_Request. Nei NULL wird nur die Variable abgefragt, es gibt keine "Ersatzausgabe" 
+//! des Passwort-Abfragefensters.
 //! \retval true, wenn Zugriff erfolgen darf.
 
 static const PROGMEM char Kennwort_P[] = "kennw";
@@ -3780,7 +3781,7 @@ uint8_t KonfigFreigabe(void *pStruct)
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 
-	if (ProtokollLevel >= 3)
+	if (ProtokollLevel >= 3 && http_request != NULL)
 		{
 		char *Ende;
 		ProtokollierenTxp_P(PSTR("cgi-Aufruf: "));
@@ -3801,6 +3802,10 @@ uint8_t KonfigFreigabe(void *pStruct)
 		StartLangTimer(&KonfigFreigabeTimer);
 		return true;
 		}
+		
+	if (http_request == NULL)
+		// ohne Bezug auf HTML-Abfrage keine Chance
+		return false;
 		
 	//! \todo Sperre nach Fehlversuchen
 	

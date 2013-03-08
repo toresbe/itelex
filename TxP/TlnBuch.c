@@ -709,6 +709,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	char Hilf[10];
 	bool Zurueck = false; // wird auf true gesetzt, wenn ein "zurück"-Text gedruckt werden soll.
 
+	static PROGMEM const char AlleZeigen_P[] = "allezeigen";
 	static PROGMEM const char Edit_P[] = "edit";
 	static PROGMEM const char Nummer_P[] = "nummer";
 	static PROGMEM const char AltNummer_P[] = "altnummer";
@@ -729,17 +730,36 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	
 	cgi_PrintHttpheaderStart();
 
-	if ((http_request->argc != 0 || !TlnBuchOffen) && !KonfigFreigabe(pStruct))
-		// bei Änderungen oder bei nicht offenem Telefonbuch nach dem Kennwort fragen.
+	if (http_request->argc != 0 && !KonfigFreigabe(pStruct))
+		// bei Änderungen nach dem Kennwort fragen.
+		return;
+		
+	if (!TlnBuchOffen
+		#ifdef TXP_TLNSERVER
+		&& TlnServSyncGeheimzahl == 0 
+		#endif //def TXP_TLNSERVER
+		&& !KonfigFreigabe(pStruct))
+		// wenn nicht offen und kein Server und nicht Kennwort eingegeben -> Ende
 		return;
 
-	if ( http_request->argc == 0 )
+	if (http_request->argc == 0 || PharseCheckName_P(http_request, AlleZeigen_P))
 		{ 
+		// Anzeige der Teilnehmerliste...
+		//   wenn TlnBuchOffen 
+		//	 oder wenn KonfigFreigabe erteilt immer vollständige Liste
+		//	 sonst wenn TlnServer aktiv zumindest die öffentlichen Einträge
+		
 		// Startseite = Liste
 		// ==================================================
+		printf_P(PSTR("<form action=\"txp-tlnverz.cgi\">"));
+		
+		if (TlnBuchOffen || KonfigFreigabe(NULL)) // NULL fragt nicht wieder nach einem Kennwort
+			printf_P(PSTR("<h3>Teilnehmerverzeichnis</h3>"));
+		else
+			printf_P(PSTR("<h3>&Ouml;ffentliches Teilnehmerverzeichnis</h3>"
+						  "<a href=\"txp-tlnverz.cgi?allezeigen\">vollst&auml;ndiges Verzeichniuss</a><br>"));
+		
 		printf_P(PSTR(
-			"<form action=\"txp-tlnverz.cgi\">"
-			"<h3>Teilnehmerverzeichnis</h3>"
 			"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 			"<tr>"
    			"<th align=\"right\">Rufnummer</th>" // Nummer
@@ -765,6 +785,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			{
 			while (TlnListerNaechster(&LD, &TD))
 				{
+				if (!TlnBuchOffen && (TD.Flags & TlnFlag_Lokal) != 0 && !KonfigFreigabe(NULL))
+					continue; // Private Einträge nicht darstellen.
+				
 				printf_P(PSTR("<tr><td align=\"right\">%ld</td>"), TD.Nummer); // Nummer
 				printf_P(PSTR("<td align=\"left\">%s</td><td>&#160;"), TD.Name); // name
 				if ((TD.Flags & TlnFlag_Lokal) != 0)
@@ -815,7 +838,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					default:
 						printf_P(PSTR("<td align=\"left\">gel&ouml;scht</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"));
 						break;
-					}
+					} // switch (TD.AdrArt)
 					
 				// Datum / Uhrzeit...
 				Time.time = TD.Datum;
@@ -824,7 +847,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u %02d:%02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 				
 				printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">&Auml;ndern</a></td></tr>"), TD.Nummer);
-				}
+				
+				} // while (TlnListerNaechster(&LD, &TD))
+				
 			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
 						   "<td><a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></td>"
 						   "</table>"
