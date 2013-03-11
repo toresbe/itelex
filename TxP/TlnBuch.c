@@ -754,10 +754,12 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		printf_P(PSTR("<form action=\"txp-tlnverz.cgi\">"));
 		
 		if (TlnBuchOffen || KonfigFreigabe(NULL)) // NULL fragt nicht wieder nach einem Kennwort
-			printf_P(PSTR("<h3>Teilnehmerverzeichnis</h3>"));
+			printf_P(PSTR("<h3>Teilnehmerverzeichnis</h3><br>"));
 		else
-			printf_P(PSTR("<h3>&Ouml;ffentliches Teilnehmerverzeichnis</h3>"
-						  "<a href=\"txp-tlnverz.cgi?allezeigen\">vollst&auml;ndiges Verzeichniuss</a><br>"));
+			printf_P(PSTR("<h3>&Ouml;ffentliches Teilnehmerverzeichnis</h3><br>"));
+		
+		if (!KonfigFreigabe(NULL))
+			printf_P(PSTR("<a href=\"txp-tlnverz.cgi?allezeigen\">vollst&auml;ndiges Verzeichniss</a><br>"));
 		
 		printf_P(PSTR(
 			"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
@@ -808,10 +810,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
 						printf_P(PSTR(
 							"<td align=\"left\">TelexPhone</td>"
-							"<td align=\"left\">%s</td>" // Adresse
+							"<td align=\"left\"><a href=\"http://%s\" target=\"_blank\">%s</a></td>" // Adresse
 							"<td align=\"center\">%u</td>" // Port
 					   		"<td align=\"center\">%s</td>" // Durchwahl
-							), TD.Adresse, TD.Port, Hilf);
+							), TD.Adresse, TD.Adresse, TD.Port, Hilf);
 						break;
 
 					case AsciiIP:
@@ -846,17 +848,24 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				
 				printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u %02d:%02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 				
-				printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">&Auml;ndern</a></td></tr>"), TD.Nummer);
+				if (KonfigFreigabe(NULL))
+					printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">&Auml;ndern</a></td></tr>"), TD.Nummer);
+				else
+					printf_P(PSTR("<td>&#160:</td></tr>"));
 				
 				} // while (TlnListerNaechster(&LD, &TD))
-				
-			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
-						   "<td><a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></td>"
-						   "</table>"
-						   "<a href=\"txp-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a><br>"
-						   "<a href=\"txp-tlnverz.cgi?load\">alle &Auml;nderungen verwerfen</a><br>"
-						   "<a href=\"txp-tlnverz.cgi?clear\">komplett l&ouml;schen</a><br>"
-						   "</form>") );
+
+			if (KonfigFreigabe(NULL))
+				printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
+							   "<td><a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></td>"
+							   "</table>"
+							   "<a href=\"txp-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a><br>"
+							   "<a href=\"txp-tlnverz.cgi?load\">alle &Auml;nderungen verwerfen</a><br>"
+							   "<a href=\"txp-tlnverz.cgi?clear\">komplett l&ouml;schen</a><br>"
+							   "</form>") );
+			else
+				printf_P(PSTR( "</table></form>") );
+			
 			} // Teilnehmerverzeichnis nicht leer
 		else
 			{
