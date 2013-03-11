@@ -754,10 +754,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		printf_P(PSTR("<form action=\"txp-tlnverz.cgi\">"));
 		
 		if (TlnBuchOffen || KonfigFreigabe(NULL)) // NULL fragt nicht wieder nach einem Kennwort
-			printf_P(PSTR("<h3>Teilnehmerverzeichnis</h3><br>"));
+			printf_P(PSTR("<h3>Teilnehmerverzeichniss</h3><br>"));
 		else
-			printf_P(PSTR("<h3>&Ouml;ffentliches Teilnehmerverzeichnis</h3><br>"));
-		
+			printf_P(PSTR("<h3>&Ouml;ffentliches Teilnehmerverzeichniss</h3><br>"));
+
 		if (!KonfigFreigabe(NULL))
 			printf_P(PSTR("<a href=\"txp-tlnverz.cgi?allezeigen\">vollst&auml;ndiges Verzeichniss</a><br>"));
 		
@@ -851,7 +851,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				if (KonfigFreigabe(NULL))
 					printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">&Auml;ndern</a></td></tr>"), TD.Nummer);
 				else
-					printf_P(PSTR("<td>&#160:</td></tr>"));
+					printf_P(PSTR("<td>&#160;</td></tr>"));
 				
 				} // while (TlnListerNaechster(&LD, &TD))
 
