@@ -78,6 +78,7 @@ typedef struct
 	int Socket; //!< der Handle zum Socket
 	int ListeIdx; //!< Welcher der Einträge aus TeilnehmerServerAdresse ist verbunden.
 		//!< -1 bei kommenden Verbindungen.
+	uint32_t NutzungZaehler; //!< Zählt, wie oft dieser Kanal geöffnet wurde.
 	uint32_t SyncAusgabeStichzeit;
 		//!< Für den aktuell laufenden Synchronisationsvorgang gültiges "Grenzdatum" für
 		//!< zu sendende Einträge.
@@ -137,6 +138,7 @@ static uint16_t SyncWarteEnde;
 static bool InitialAbfrageStarten;
 	//!< nach Reset true, bis erfolgreich von einem anderen Teilnehmerauskunft-Server 
 	//!< alle Daten abgeholt worden sind.
+	//!< \todo: Für jeden TlnServer ab und zu (Tage) eine Komplett-Abfrage durchführen.
 	
 	
 	
@@ -149,6 +151,7 @@ static void KanalInit(TTlnServKanal* k, int aSocket)
 	k->IstInitialAbfrage = false;
 	k->Fertig = false;
 	k->SendeFehlerZaehler = 0;
+	k->NutzungZaehler++;
 	}
 	
 	
@@ -360,6 +363,14 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 			&& TlnServBuf.TlnAuskunft.Nummer >= GlobRufnrMinWert
 		    && TlnServBuf.TlnAuskunft.Datum >= Kanal->AusgabeStichdatum)
 			{
+			// aber Nicht senden, wenn gelöscht und Löschdatum älter als 30 Tage
+			if (TlnServBuf.TlnAuskunft.AdrArt == Geloescht 
+				&& TlnServBuf.TlnAuskunft.Datum + 30L * 24 * 60 * 60 < TlnBuchLetzteAenderung)
+				{
+				ProtokollierenTlnServInt_P(Kanal, PSTR("Als geloescht markierter Teilnehmer-Eintrag %lu uebersprungen\r\n"), TlnServBuf.TlnAuskunft.Nummer);
+				continue;
+				}
+			
 			if (ProtokollLevelTlnServ >= 2)
 				{
 				ProtokollierenTlnServInt_P(Kanal, PSTR("Sende Teilnehmer-Eintrag %lu\r\n"), TlnServBuf.TlnAuskunft.Nummer);
@@ -954,8 +965,11 @@ void TlnServDebugPrint()
 		Time.time = TlnServSyncStichzeit[i];
 		CLOCK_decode_time(&Time);
 			
-		printf_P(PSTR("<br>TlnServSyncStichzeit[%d] = %02u.%02u.%04u %02d:%02d:%02d"), i, Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+		printf_P(PSTR("<br>TlnServSyncStichzeit(%s) = %02u.%02u.%04u %02d:%02d:%02d"), TeilnehmerServerAdresse[i], Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 		}
+		
+	for (i = 0 ; i < AnzTlnServKanaele ; i++)
+		printf_P(PSTR("<br>TlnServerKanal %d wurde %lu mal genutzt."), i, TlnServer[i].NutzungZaehler);
 		
 	Time.time = TlnBuchLetzteAenderung;
 	CLOCK_decode_time(&Time);
@@ -1004,7 +1018,10 @@ void txp_tlnserv_init()
 	*/
 
 	for (i = 0 ; i < AnzTlnServKanaele ; i++)
+		{
 		TlnServer[i].Socket = NO_SOCKET_USED;
+		TlnServer[i].NutzungZaehler = 0;
+		}
 	
 	RegisterTCPPort(TXP_TLNSERV_PORT);
 	

@@ -3528,6 +3528,18 @@ void txp_thread()
 			} // Keine Verbindung laufend, Zeit für Aktualsierung ODER Selbstanruf nicht erfolgreich.
 		} // if (DynIPAktiv)
 		
+	if (SelbstAnrufSocketHandle != NO_SOCKET_USED && CheckSocketState(SelbstAnrufSocketHandle) == SOCKET_NOT_USE)
+		{
+		//! \todo Prüfen, ob dies ungerechtfertigt passiert...
+		if (ProtokollLevel >= 1)
+			ProtokollierenTxp_P(PSTR("Selbst-Anruf-Socket durch Timeout geschlossen!\r\n" ));
+		CloseTCPSocket(SelbstAnrufSocketHandle);
+		SelbstAnrufSocketHandle = NO_SOCKET_USED;
+		SelbstAnrufPhase = SelbstAnrufRuhe;
+		StartKurzTimer(&SelbstAnrufTimer);
+		SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq + Zufallswert(0x7);
+		}
+			
 	// ======================================================================
 	// Antworten vom Teilnehmer-Server auswerten
 	// ======================================================================
@@ -4489,6 +4501,10 @@ void txp_cgi_config_extern(void *pStruct)
 		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, PSTR("Geheimzahl f&uuml;r Server-Synchronisierung"), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl);
 		#endif //def TXP_TLNSERVER
 
+		if (SelbstAnrufPhase == SelbstAnrufSperre)
+			SelbstAnrufPhase = SelbstAnrufRuhe;
+		SelbstAnrufFehlerZaehler = 0;
+			
 		} // else argc > 0
 		
 	cgi_PrintHttpheaderEnd();
