@@ -2358,9 +2358,10 @@ static void ZeichenInHtmlSendeText(char c)
 //! Verbindung zu einem konkreten Teilnehmer-Server herstellen.
 // ------------------------------------------------------------
 //! \param ServerI Index-Nummer des Teilnehmer-Servers (0 bis ANZ_TEILNEHMER_SERVER-1)
+//! \param Grund Grund des Öffnens des Teilnehmer-Servers, nur für Protokollierung
 //! \return Socket-Handle bei Erfolg, -1 bei Fehler oder bei "weigerung".
 
-int TeilnehmerServerSocketOeffnen1(int ServerI)
+int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 	{
 	int Res;
 	
@@ -2377,7 +2378,9 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 				{
 				ProtokollierenTxp_P(PSTR("Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
-				Protokollieren_P(PSTR(" wegen Fehlern noch gesperrt.\r\n"));
+				Protokollieren_P(PSTR(" wegen Fehlern noch gesperrt! (Oeffnung fuer "));
+				Protokollieren_P(Grund);
+				Protokollieren_P(PSTR(")\r\n"));
 				}
 			return -1;
 			}
@@ -2400,7 +2403,9 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 				{
 				ProtokollierenTxp_P(PSTR("Verbindung an Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
-				Protokollieren_P(PSTR(" hergestellt\r\n"));
+				Protokollieren_P(PSTR(" hergestellt fuer "));
+				Protokollieren_P(Grund);
+				Protokollieren_P(PSTR(".\r\n"));
 				}
 			if (TeilnehmerServerFehlerZaehler[ServerI] > 0)
 				TeilnehmerServerFehlerZaehler[ServerI]--; // läuft im Erfolgsfall langsam wieder auf Null.
@@ -2410,7 +2415,9 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 			{
 			ProtokollierenTxp_P(PSTR("! Verbindungsversuch an Teilnehmer-Server "));
 			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
-			Protokollieren_P(PSTR(" GESCHEITERT\r\n"));
+			Protokollieren_P(PSTR(" GESCHEITERT (Oeffnung fuer "));
+			Protokollieren_P(Grund);
+			Protokollieren_P(PSTR(")\r\n"));
 			}
 		TeilnehmerServerFehlerSpeichern(ServerI);
 		return -1;
@@ -2419,7 +2426,9 @@ int TeilnehmerServerSocketOeffnen1(int ServerI)
 		{
 		ProtokollierenTxp_P(PSTR("! Teilnehmer-Server "));
 		Protokollieren(TeilnehmerServerAdresse[ServerI]); 
-		Protokollieren_P(PSTR(" IP nicht bekannt\r\n"));
+		Protokollieren_P(PSTR(" IP nicht bekannt (Oeffnung fuer "));
+		Protokollieren_P(Grund);
+		Protokollieren_P(PSTR(")\r\n"));
 		TeilnehmerServerFehlerSpeichern(ServerI);
 		return -1;
 		}
@@ -2448,10 +2457,10 @@ void TeilnehmerServerFehlerSpeichern(int ServerI)
 	
 //! Verbindung zu einem der gespeicherten Teilnehmer-Server herstellen.
 // -------------------------------------------------------------------
-//! \param NONE
+//! \param Grund Grund des Öffnens des Teilnehmer-Servers, nur für Protokollierung
 //! \return Erfolgreich
 
-bool TeilnehmerServerSocketOeffnen()
+bool TeilnehmerServerSocketOeffnen(PGM_P Grund)
 	{
 	if (TeilnehmerServerSocket != NO_SOCKET_USED)
 		return true; // ist schon offen...
@@ -2460,7 +2469,7 @@ bool TeilnehmerServerSocketOeffnen()
 	
 	for (ServerI = 0 ; ServerI < ANZ_TEILNEHMER_SERVER ; ServerI++)
 		{
-		TeilnehmerServerSocket = TeilnehmerServerSocketOeffnen1(ServerI);
+		TeilnehmerServerSocket = TeilnehmerServerSocketOeffnen1(ServerI, Grund);
 		if (TeilnehmerServerSocket != -1)
 			{
 			AktTlnServerTabI = ServerI;
@@ -2633,7 +2642,7 @@ static void RufnummerBeiTlnServerAbfragen()
 	if (ProtokollLevel >= 2)
 		ProtokollierenTxp_P(PSTR("Abfrage bei Teilnehmer-Servern\r\n" ));
 
-	if (TeilnehmerServerSocketOeffnen())
+	if (TeilnehmerServerSocketOeffnen(PSTR("Rufnummer-Abfrage")))
 		{ // Verbindung hergestellt.
 		// Telegramm senden
 		TTlnServBuf TSB;
@@ -3495,7 +3504,7 @@ void txp_thread()
 			{ // Keine Verbindung laufend, Zeit für Aktualsierung 
 			bool Fehler;
 			
-			if (TeilnehmerServerSocketOeffnen())
+			if (TeilnehmerServerSocketOeffnen(PSTR("Selbstaktualisierung")))
 				{ // Verbindung hergestellt.
 				// Telegramm senden
 				TTlnServBuf TSB;

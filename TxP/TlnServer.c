@@ -766,7 +766,7 @@ static bool InitialAbfrageKanalOeffnen()
 	
 	for (int8_t i = ANZ_TEILNEHMER_SERVER - 1 ; i >= 0 ; i--)
 		{
-		int NewSock = TeilnehmerServerSocketOeffnen1(i); 
+		int NewSock = TeilnehmerServerSocketOeffnen1(i, PSTR("Initialabfrage")); 
 			// da wird auch Protokoll geschrieben.
 			
 		if (NewSock != -1)
@@ -807,7 +807,7 @@ static bool SyncMeldungKanalOeffnen()
 		if (TeilnehmerServerAdresse[i][0] == '\0')
 			continue;
 
-		int NewSock = TeilnehmerServerSocketOeffnen1(i);
+		int NewSock = TeilnehmerServerSocketOeffnen1(i, PSTR("Sync-Meldung"));
 			// da wird auch Protokoll geschrieben.
 			
 		if (NewSock != -1)

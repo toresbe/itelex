@@ -440,7 +440,7 @@ extern bool Diagnoseausgabe_P(const char *msg, uint8_t Level);
 
 extern void AsciiDruckPufferVerarbeiten();
 
-extern int TeilnehmerServerSocketOeffnen1(int ServerI);
+extern int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund);
 
 extern void TeilnehmerServerFehlerSpeichern(int ServerI);
 
