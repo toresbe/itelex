@@ -46,7 +46,7 @@
 #define IS_BROADCAST_ADDR( ip, mask ) ( ( ip & ~mask ) == ~mask)
 
 // Schaut ob Ziel-IP in diesen Subnet liegt 
-#define IS_ADDR_IN_MY_SUBNET( ip, mask ) ( ( ip & ~mask ) == ( myIP & ~mask ) )
+#define IS_ADDR_IN_MY_SUBNET( ip, mask ) ( ( ip & mask ) == ( myIP & mask ) )
 
 	extern long myIP;
 	extern long Netmask;
