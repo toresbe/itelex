@@ -589,6 +589,7 @@ sizeafter:
 gccversion : 
 	@$(CC) --version
 
+	
 # Program the device.  
 program: all
 #	$(AVRDUDE) $(AVRDUDE_FLAGS) $(AVRDUDE_WRITE_FLASH) $(AVRDUDE_WRITE_EEPROM)
@@ -597,6 +598,11 @@ program: all
 #	mode com1: BAUD=9600 PARITY=N DATA=8 STOP=1 to=off xon=off odsr=off octs=off dtr=on rts=on idsr=off
 	fboot.exe /C1 /B38400 /P$(TARGET).hex /V$(TARGET).hex
 
+	
+# Program the device via COM2
+program_com2: all
+	fboot.exe /C2 /B38400 /P$(TARGET).hex /V$(TARGET).hex
+	
 	
 # Write the fuses
 fuses:
