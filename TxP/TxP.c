@@ -378,7 +378,11 @@ long TeilnehmerServerIP[ANZ_TEILNEHMER_SERVER];
 
 static uint8_t TeilnehmerServerFehlerZaehler[ANZ_TEILNEHMER_SERVER];
 	//!< Zählt die Probleme bei Verbindungen mit einem Teilnehmer-Server.
-	//!< Nach 5 Problemen wird der Server eine Stunde lang nicht benutzt.
+	//!< Nach 5 Problemen wird der Server drei Stunden lang nicht benutzt.
+	
+static bool TeilnehmerServerAlleNichtErreichbar;
+	//!< Speichert ob kein Teilnehmer-Server erreichbar ist. Damit die entsprechende Meldung
+	//!< nur einmal ausgegeben wird.
 	
 static TLangTimer TeilnehmerServerSperrTimer[ANZ_TEILNEHMER_SERVER];
 	//!< Wird nach dem 5. Problem mit einem Server gestartet. Nächster Verbindungsversuch
@@ -2371,8 +2375,8 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 	if (TeilnehmerServerFehlerZaehler[ServerI] >= 4 * 2)
 		// * 2 wegen "doppelter" Zählung in TeilnehmerServerFehlerSpeichern().
 		{
-		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= 60 * LangTimerFakt)
-			// noch keine Stunde um, also nicht versuchen.
+		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= (TeilnehmerServerAlleNichtErreichbar ? 20 * LangTimerFakt : 180 * LangTimerFakt))
+			// Wenn alle Server nicht erreichbar, alle 20 Minuten probieren, sonst alle 3 Stunden
 			{
 			if (ProtokollLevelTlnServ >= 3)
 				{
@@ -2409,6 +2413,12 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 				}
 			if (TeilnehmerServerFehlerZaehler[ServerI] > 0)
 				TeilnehmerServerFehlerZaehler[ServerI]--; // läuft im Erfolgsfall langsam wieder auf Null.
+				
+			if (TeilnehmerServerAlleNichtErreichbar)
+				Diagnoseausgabe_P(PSTR("Teilnehmer-Server wieder erreicht"), 1);	
+				
+			TeilnehmerServerAlleNichtErreichbar = false;
+				
 			return Res;
 			}
 		if (ProtokollLevelTlnServ >= 1)
@@ -2476,8 +2486,10 @@ bool TeilnehmerServerSocketOeffnen(PGM_P Grund)
 			return true; // Erfolg.
 			}
 		} // for ServerI
+		
 	TeilnehmerServerSocket = NO_SOCKET_USED;
-	Diagnoseausgabe_P(PSTR("Keine Verbindung zu allen Teilnehmer-Servern"), 1);	
+	Diagnoseausgabe_P(PSTR("Kein Teilnehmer-Server erreichbar"), 1);	
+	TeilnehmerServerAlleNichtErreichbar = true;
 	return false;
 	} // TeilnehmerServerSocketOeffnen()
 
@@ -3135,6 +3147,7 @@ void txp_thread()
 				ProtokollierenTxp();
 				ProtokollierenInt_P(PSTR("! Anwahl intern an %u VERSAGT\r\n"), Durchwahl);
 				}
+				
 			Diagnoseausgabe_P(PSTR("Reservierung fuer Einschaltung konnte nicht versandt werden"), 1);
 				//!  \todo bei Besetzt andere Meldung.
 
@@ -3992,9 +4005,10 @@ void txp_cgi_debug( void * pStruct )
 	
 	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
-		printf_P(PSTR("<br>TlnServFehler zu Nr. %d = %d Fehler, Sperre-Timer %d"), 
+		printf_P(PSTR("<br>TeilnehmerServerFehlerZaehler(%d) = %d, Sperre-Timer %d"), 
 				 i, TeilnehmerServerFehlerZaehler[i], LangTimerVal(&TeilnehmerServerSperrTimer[i]));
 		}
+	PRINTVAL(TeilnehmerServerAlleNichtErreichbar);
 	
 	#endif // TXP_ANSCHLUSS
 	
@@ -4764,6 +4778,7 @@ void txp_init()
 		TeilnehmerServerFehlerZaehler[i] = 0;
 		StartLangTimer(&TeilnehmerServerSperrTimer[i]);
 		}
+	TeilnehmerServerAlleNichtErreichbar = false;
 
 	if (readConfig_P(KonfigPasswort_P, KonfigPasswort) != 1)
 		KonfigPasswort[0] = '\0';
