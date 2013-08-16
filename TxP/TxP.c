@@ -1119,6 +1119,17 @@ void ModusWechsel(TModus neu)
 			break;
 	
 		case ModKommendVerbunden: 
+			//!HACK
+			if (ProtokollLevel >= 4)
+				{
+				ProtokollierenInt_P(PSTR("!HACK: SocketInBufUsed %u\r\n"), SocketInBufUsed);
+				ProtokollierenInt_P(PSTR("!HACK: SocketOutBufUsed %u\r\n"), SocketOutBufUsed);
+				}
+			strcpy(SocketOutBuf + SocketOutBufUsed, "hack-out 1234");
+			SocketOutBufUsed += strlen(SocketOutBuf + SocketOutBufUsed);
+			strcpy(SocketInBuf + SocketInBufUsed, "hack-out 1234");
+			SocketInBufUsed += strlen(SocketInBuf + SocketInBufUsed);
+			
 			SET_BIT_Status(StatBit_FsMeldBetrieb);
 			SET_BIT_Status(StatBit_FsMeldEin);
 			SET_BIT_Status(StatBit_Verbunden);
