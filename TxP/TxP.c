@@ -1119,17 +1119,6 @@ void ModusWechsel(TModus neu)
 			break;
 	
 		case ModKommendVerbunden: 
-			//!HACK
-			if (ProtokollLevel >= 4)
-				{
-				ProtokollierenInt_P(PSTR("!HACK: SocketInBufUsed %u\r\n"), SocketInBufUsed);
-				ProtokollierenInt_P(PSTR("!HACK: SocketOutBufUsed %u\r\n"), SocketOutBufUsed);
-				}
-			strcpy(SocketOutBuf + SocketOutBufUsed, "hack-out 1234");
-			SocketOutBufUsed += strlen(SocketOutBuf + SocketOutBufUsed);
-			strcpy(SocketInBuf + SocketInBufUsed, "hack-out 1234");
-			SocketInBufUsed += strlen(SocketInBuf + SocketInBufUsed);
-			
 			SET_BIT_Status(StatBit_FsMeldBetrieb);
 			SET_BIT_Status(StatBit_FsMeldEin);
 			SET_BIT_Status(StatBit_Verbunden);
@@ -2862,6 +2851,31 @@ bool SonstigeAnwahl(uint8_t aDurchwahl)
 	} // SonstigeAnwahl()
 
 		
+//! Speichert Datum und Uhrzeit im Puffer, so dass diese beim Sender und Empfänger gedruckt werden
+static void DatumUhrzeitDrucken()
+	{
+	char Text[20];
+	struct TIME Time;
+
+	// Zeit holen
+	CLOCK_GetTime(&Time);
+	sprintf_P(Text, PSTR("\r\n\%02u.%02u.%04u  %02d:%02d:%02d\r\n"),
+			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+	
+	PufferSpeich(&SendePuffer, TtyCodeZiUm);
+	PufferSpeich(&EmpfPuffer, TtyCodeZiUm);
+	for (uint8_t i = 0 ; i < strlen(Text) ; i++)
+		{
+		uint8_t Code = ZeichenZuCode(Text[i], ZiMode);
+		if (Code != 255)
+			{
+			PufferSpeich(&SendePuffer, Code);
+			PufferSpeich(&EmpfPuffer, Code);
+			}
+		}
+	} // DatumUhrzeitDrucken()
+	
+	
 //! Der TelexPhone-client an sich.
 //------------------------------------------------------------------------------------------------------------
 //! Diese Funktion wird zyklisch aufgerufen und hat folgende Aufgaben:
@@ -2932,6 +2946,7 @@ void txp_thread()
 						ProtokollierenTxp_P(PSTR("TWI Einschaltquittung intern / kommend\r\n" ));
 					ModusWechsel(ModKommendVerbunden);
 					SocketSendeQuittung = true;
+					DatumUhrzeitDrucken();
 					}
 
 				else if (Modus == ModHtmlChatWarteEinQuitt)
