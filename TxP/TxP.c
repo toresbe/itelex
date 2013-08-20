@@ -2959,8 +2959,8 @@ static void DatumUhrzeitDrucken()
 
 	// Zeit holen
 	CLOCK_GetTime(&Time);
-	sprintf_P(Text, PSTR("%02u.%02u.%04u  %02d:%02d:%02d\r\n"),
-			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+	sprintf_P(Text, PSTR("%02u.%02u.%04u  %02d:%02d\r\n"),
+			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm);
 	
 	for (uint8_t i = 0 ; i < 7 ; i++)
 		PufferSpeich(&EmpfPuffer, TtyCodeBuUm);
