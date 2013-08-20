@@ -165,7 +165,7 @@ enum {
 	//!< Takt in Sekunden des Langzeittimers. 
 	//!< Muss ein Teiler von 60 sein.
 	
-	LangTimerFakt = 60/LangTimerTakt,
+	LangTimerMinuteFaktor = 60/LangTimerTakt,
 	//!< Faktor zur Umrechnung Minuten -> Takte von #TLangTimer
 	
 	KurzTimerFreq = 100,

@@ -86,18 +86,23 @@ TModus Modus;
 //   * ein Byte Länge folgender Daten (kann 0 sein).
 //   * zugehörige Daten
 
-#define TXPC_NULL 0x00 //!< Füllzeichen
-#define TXPC_DURCHWAHL 0x01 //!< Startzeichen, Datenblock enthält ein Byte Durchwahl 
-#define TXPC_BAUDOT_DATA 0x02 //!< Datenblock mit puren Baudot-Codes
-#define TXPC_ENDE 0x03 //!< Beabsichtigter Verbindungsabbau.
-#define TXPC_STOP 0x04 //!< Es können noch Daten angehängt werden. Ursache: Besetzt oder Störung
-// \005 freigehalten für ^E = WerDa.
-#define TXPC_QUITT 0x06 //!< Meldet Empfangsbereitschaft und Anzahl bereits verarbeiteter Zeichen.
-#define TXPC_VERSION 0x07 
-	//!< Version der Kommunikation. Originate schlägt vor, Answer bestätigt.
-	//!< Erst wenn andere Seite mit gleicher Nummer antwortet, ist Protokollversion abgestimmt.
-#define TXPC_SELBSTANRUF 0x08
-	//!< Kennung für einen testweisen Selbst-Anruf.
+//! Nur Konstanten-Definitionen.
+enum { 
+	TXPC_NULL = 0x00, //!< Füllzeichen
+	TXPC_DURCHWAHL = 0x01, //!< Startzeichen, Datenblock enthält ein Byte Durchwahl 
+	TXPC_BAUDOT_DATA = 0x02, //!< Datenblock mit puren Baudot-Codes
+	TXPC_ENDE = 0x03, //!< Beabsichtigter Verbindungsabbau.
+	TXPC_STOP = 0x04, //!< Es können noch Daten angehängt werden. Ursache: Besetzt oder Störung
+	// \005 freigehalten für ^E = WerDa.
+	TXPC_QUITT = 0x06, //!< Meldet Empfangsbereitschaft und Anzahl bereits verarbeiteter Zeichen.
+	TXPC_VERSION = 0x07, 
+		//!< Version der Kommunikation. Originate schlägt vor, Answer bestätigt.
+		//!< Erst wenn andere Seite mit gleicher Nummer antwortet, ist Protokollversion abgestimmt.
+	TXPC_SELBSTANRUF = 0x08, //!< Kennung für einen testweisen Selbst-Anruf.
+	TXPC_FERNKONFIG = 0x09, 
+		//!< Telegramm für Änderungen an Teilnehmer-Einstellungen aus der Ferne.
+		//!< Inhalt: 1 Byte Länge inkl. PIN und Kennung, 2 Byte PIN der Gegenstelle, 1 Byte Kennung TXPC_FKK_xxx, x Byte Daten
+	} ;
 	
 	
 /* Mustertelegramme zur Übernahme in FsTelnet (MFC-Programm)
@@ -1936,6 +1941,73 @@ static int16_t AnwahlNummerInAsciiPuffer(bool InPufferLoeschen)
 		return 0;
 	} // AnwahlNummerInAsciiPuffer()
 
+	
+//! Schreibt ein Ende-Kommando mit Zusatztext in den Socket-Sendepuffer
+//---------------------------------------------------------------------
+static void SendeStopkommando(PGM_P s)
+	{
+	uint8_t len = strlen_P(s);
+	if (SocketOutBufUsed + 2 + len < SocketOutBufMax - 10) // - 10 = Reserve für wichtige Daten
+		{
+		SocketOutBuf[SocketOutBufUsed++] = TXPC_STOP;
+		SocketOutBuf[SocketOutBufUsed++] = len;
+		strcpy_P(SocketOutBuf + SocketOutBufUsed, s);
+		SocketOutBufUsed += len;
+		}
+	TxpSocketAbbauGeplant = true;
+	}
+	
+
+const char* RufnrServerAdr_P[]; // Vorwärts-Deklaration
+
+	
+//! Bearbeitet Telegramme mit Daten für Fernkonfiguration
+//-------------------------------------------------------
+static bool FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
+	{
+	enum {
+		FKK_TEILNEHMERSERVER1 = 0x11,
+		FKK_TEILNEHMERSERVER2 = 0x12,
+		FKK_TEILNEHMERSERVER3 = 0x13,
+		} ;
+		
+	if (SocketInBufUsed < i + 2 + len)
+		return false; // nicht vollständig.
+		
+	uint16_t Pin = (SocketInBuf[i+2] << 8) + SocketInBuf[i+3];
+	
+	if (Pin != Geheimzahl)
+		return false; // verboten.
+	
+	uint8_t FKKennung = SocketInBuf[i+4];
+	switch (FKKennung)
+		{
+		case FKK_TEILNEHMERSERVER1:
+		case FKK_TEILNEHMERSERVER2:
+		case FKK_TEILNEHMERSERVER3:
+			{ // für neue Variable
+			uint8_t SvrI = FKKennung - FKK_TEILNEHMERSERVER1;
+			strncpy(TeilnehmerServerAdresse[SvrI], SocketInBuf + i + 5, TlnAdresseMax-1);
+			TeilnehmerServerIP[SvrI] = 0;
+			changeConfig_P(RufnrServerAdr_P[SvrI], TeilnehmerServerAdresse[SvrI]);
+			break;
+			}
+			
+		default:
+			return false; // falsche ID
+		}
+
+	// hier darf man nur bei Erfolg ankommen.
+	SocketOutBuf[SocketOutBufUsed++] = TXPC_QUITT;
+	SocketOutBuf[SocketOutBufUsed++] = 1;
+	SocketOutBuf[SocketOutBufUsed++] = FKKennung;
+	
+	ProtokollierenTxp();
+	ProtokollierenInt_P(PSTR("Fernkonfig Kenn=%d ok\r\n"), FKKennung);
+	
+	return true;
+	}
+	
 
 //! Interpretiert empfangene Daten vom Socket und schiebt diese in den 
 //! EmpfPuffer.
@@ -2172,6 +2244,21 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				i += 2 + len;
 				}
 				
+			else if (c == TXPC_FERNKONFIG)
+				{ 
+				uint8_t len = SocketInBuf[i+1];
+				
+				if (!FernKonfigTelegrammBearbeiten(i, len))
+					{
+					SendeStopkommando(PSTR("fernkonferr"));
+					ProtokollierenTxp();
+					ProtokollierenInt_P(PSTR("Fernkonfig !Fehler Len=%d"), len);
+					ProtokollierenInt_P(PSTR(" Kenn=%d\r\n"), (len >= 4) ? SocketInBuf[i+4] : 0);
+					}
+					
+				i += 2 + len;
+				}
+				
 			else 
 				{ // unbekannter Code --> ignorieren EINSCHLIEßLICH Daten
 				// ID#245 ID#313 ID#346 ********************************************************
@@ -2328,21 +2415,6 @@ static void AsciiDatenVerarbeiten()
 	} // AsciiDatenVerarbeiten()
 	
 
-//! Schreibt ein Ende-Kommando mit Zusatztext in den Socket-Sendepuffer
-static void SendeStopkommando(PGM_P s)
-	{
-	uint8_t len = strlen_P(s);
-	if (SocketOutBufUsed + 2 + len < SocketOutBufMax - 10) // - 10 = Reserve für wichtige Daten
-		{
-		SocketOutBuf[SocketOutBufUsed++] = TXPC_STOP;
-		SocketOutBuf[SocketOutBufUsed++] = len;
-		strcpy_P(SocketOutBuf + SocketOutBufUsed, s);
-		SocketOutBufUsed += len;
-		}
-	TxpSocketAbbauGeplant = true;
-	}
-	
-	
 //! Schiebt ein Zeichen in den Anzeigepuffer für HTML-Betrieb.
 static void ZeichenInHtmlSendeText(char c)
 	{
@@ -2375,7 +2447,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 	if (TeilnehmerServerFehlerZaehler[ServerI] >= 4 * 2)
 		// * 2 wegen "doppelter" Zählung in TeilnehmerServerFehlerSpeichern().
 		{
-		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= (TeilnehmerServerAlleNichtErreichbar ? 20 * LangTimerFakt : 180 * LangTimerFakt))
+		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= (TeilnehmerServerAlleNichtErreichbar ? 20 * LangTimerMinuteFaktor : 180 * LangTimerMinuteFaktor))
 			// Wenn alle Server nicht erreichbar, alle 20 Minuten probieren, sonst alle 3 Stunden
 			{
 			if (ProtokollLevelTlnServ >= 3)
@@ -3223,7 +3295,7 @@ void txp_thread()
 		SendeStopkommando(PSTR("err\r\n"));
 		}
 		
-	if (ModusTwiVerbunden() && LangTimerVal(&BeideRuhigTimer) > 10 * LangTimerFakt)
+	if (ModusTwiVerbunden() && LangTimerVal(&BeideRuhigTimer) > 10 * LangTimerMinuteFaktor)
 		{
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("Abbau wegen 10 Minuten Funkstille!\r\n"));
@@ -3341,7 +3413,7 @@ void txp_thread()
 			&& PufferLeer(&EmpfPuffer)
 			&& (TxpSocketHandle == NO_SOCKET_USED || SocketInBufUsed == 0)
 			&& (KurzTimerVal(&HtmlDruckspiegelAnzeigeTimer) >= 30 * KurzTimerFreq // 30 Sekunden keine Anzeige-Abfrage
-				|| LangTimerVal(&BeideRuhigTimer) >= 5 * LangTimerFakt)) // 5 Minuten nichts eingegeben
+				|| LangTimerVal(&BeideRuhigTimer) >= 5 * LangTimerMinuteFaktor)) // 5 Minuten nichts eingegeben
 			{
 			if (ProtokollLevel >= 1)
 				ProtokollierenTxp_P(PSTR("HTML-Chat-Ruhe --> Ausschaltung intern\r\n" ));
@@ -3534,7 +3606,7 @@ void txp_thread()
 			// nach drei Fehlversuchen Server-Aktulisierung Starten
 			{
 			DynIPAktualisierungEndzeit = LangTimerVal(&DynIPAktualisierungTimer) 
-										 + 1 * LangTimerFakt;
+										 + 1 * LangTimerMinuteFaktor;
 										 // gleich mit 1 Minuten Verzögerung
 			SelbstAnrufPhase = SelbstAnrufSperre;
 			SelbstAnrufFehlerZaehler++; // nicht sofort wieder...
@@ -3574,7 +3646,7 @@ void txp_thread()
 				
 			if (Fehler)
 				{ // keine Verbindung hergestellt
-				DynIPAktualisierungEndzeit = 15 * LangTimerFakt - Zufallswert(0xF);
+				DynIPAktualisierungEndzeit = 15 * LangTimerMinuteFaktor - Zufallswert(0xF);
 					// in 15 Minuten minus Zufall wieder. 
 					
 				SelbstAnrufPhase = SelbstAnrufSperre;
@@ -3717,7 +3789,7 @@ void txp_thread()
 							}
 						}
 					StartLangTimer(&DynIPAktualisierungTimer);
-					DynIPAktualisierungEndzeit = 60 * LangTimerFakt - Zufallswert(0x3F); 
+					DynIPAktualisierungEndzeit = 60 * LangTimerMinuteFaktor - Zufallswert(0x3F); 
 						// in einer Stunde wieder
 					StartKurzTimer(&SelbstAnrufTimer);
 					SelbstAnrufPhase = SelbstAnrufRuhe;
@@ -3728,7 +3800,7 @@ void txp_thread()
 					Protokollieren(TSB.PureData);
 					Protokollieren_P(PSTR("\r\n"));
 					StartLangTimer(&DynIPAktualisierungTimer);
-					DynIPAktualisierungEndzeit = 15 * LangTimerFakt - Zufallswert(0xF);
+					DynIPAktualisierungEndzeit = 15 * LangTimerMinuteFaktor - Zufallswert(0xF);
 						// in 15 Minuten minus Zufall wieder.
 
 					SelbstAnrufPhase = SelbstAnrufSperre;
@@ -3737,7 +3809,7 @@ void txp_thread()
 				default:
 					ProtokollierenTxp_P(PSTR("! unerwartete Antwort des Teilnehmer-Servers\r\n" ));
 					StartLangTimer(&DynIPAktualisierungTimer);
-					DynIPAktualisierungEndzeit = 15 * LangTimerFakt - Zufallswert(0xF);
+					DynIPAktualisierungEndzeit = 15 * LangTimerMinuteFaktor - Zufallswert(0xF);
 						// in 15 Minuten minus Zufall wieder.
 
 					SelbstAnrufPhase = SelbstAnrufSperre;
@@ -3773,7 +3845,7 @@ void txp_thread()
 	// Sicherheitslücke durch Überlauf des Konfig-Freigabe-Timers schließen.
 	// ==========================================================================
 	
-	if (KonfigFreigabeErteilt && LangTimerVal(&KonfigFreigabeTimer) > 5 * LangTimerFakt)
+	if (KonfigFreigabeErteilt && LangTimerVal(&KonfigFreigabeTimer) > 5 * LangTimerMinuteFaktor)
 		// Konfig-Freigabe nur 5 Minuten gültig.
 		KonfigFreigabeErteilt = false;
 	
@@ -3865,7 +3937,7 @@ uint8_t KonfigFreigabe(void *pStruct)
 	if (KonfigPasswort[0] == '\0')
 		return true; // ohne Kennwort keine Sperre
 	
-	if (KonfigFreigabeErteilt && LangTimerVal(&KonfigFreigabeTimer) <= 5 * LangTimerFakt)
+	if (KonfigFreigabeErteilt && LangTimerVal(&KonfigFreigabeTimer) <= 5 * LangTimerMinuteFaktor)
 		{ // 5 Minuten lang ist der Zugang erlaubt
 		StartLangTimer(&KonfigFreigabeTimer);
 		return true;
@@ -4871,7 +4943,7 @@ void txp_init()
 	Timer0Callback_Max = 0;
 
 	StartLangTimer(&DynIPAktualisierungTimer);
-	DynIPAktualisierungEndzeit = LangTimerFakt / 2; // 1/2 Minute 
+	DynIPAktualisierungEndzeit = LangTimerMinuteFaktor / 2; // 1/2 Minute 
 		
 	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 

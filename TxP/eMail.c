@@ -214,12 +214,12 @@ void POP3Einleiten()
 	if (Modus != ModRuhe || TxpSocketHandle != NO_SOCKET_USED)
 		{
 		StartLangTimer(&POPWartezeitTimer);
-		POPWartezeitEnde = 3 * LangTimerFakt;
+		POPWartezeitEnde = 3 * LangTimerMinuteFaktor;
 		return;
 		}
 
 	StartLangTimer(&POPWartezeitTimer);
-	POPWartezeitEnde = 3 * LangTimerFakt;
+	POPWartezeitEnde = 3 * LangTimerMinuteFaktor;
 		// hier schon, da nach Öffnen immer ein Zeitfenster gestartet wird.
 		
 	// jetzt geht's los...
@@ -234,7 +234,7 @@ void POP3Einleiten()
 
 		//! \todo Diagnose 
 		
-		POPWartezeitEnde = EmailAbfrageTakt * LangTimerFakt;
+		POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
 		
 		return;
 		}
@@ -389,7 +389,7 @@ void POP3DatenVerarbeiten()
 			if ((i < SocketInBufUsed && atoi(SocketInBuf + i) == 0)
 				|| Modus != ModRuhe)
 				{ // nichts im Puffer ODER plötzlich doch belegt...
-				POPWartezeitEnde = EmailAbfrageTakt * LangTimerFakt;
+				POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
 				StartLangTimer(&POPWartezeitTimer);
 				strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
 				TxpSocketAbbauGeplant = true;
@@ -952,7 +952,7 @@ void txp_email_init()
 	else
 		EmailAusgabeFilternKennung = false;
 		
-	POPWartezeitEnde = LangTimerFakt; // 1 Minute
+	POPWartezeitEnde = LangTimerMinuteFaktor; // 1 Minute
 	
 	StartLangTimer(&POPWartezeitTimer);
 	
