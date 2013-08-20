@@ -1967,7 +1967,8 @@ const char* RufnrServerAdr_P[]; // Vorwärts-Deklaration
 	
 //! Bearbeitet Telegramme mit Daten für Fernkonfiguration
 //-------------------------------------------------------
-static bool FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
+// \retval 0 für ok, sonst verschiedene Fehlernummern.
+static uint8_t FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 	{
 	enum {
 		FKK_TEILNEHMERSERVER1 = 0x11,
@@ -1976,12 +1977,12 @@ static bool FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 		} ;
 		
 	if (SocketInBufUsed < i + 2 + len)
-		return false; // nicht vollständig.
+		return 1; // nicht vollständig.
 		
-	uint16_t Pin = *((uint16_t *)(SocketInBuf[i+2]));
+	uint16_t Pin = *((uint16_t *)(SocketInBuf + i + 2));
 	
 	if (Pin != Geheimzahl)
-		return false; // verboten.
+		return 2; // verboten.
 	
 	uint8_t FKKennung = SocketInBuf[i+4];
 	switch (FKKennung)
@@ -1998,7 +1999,7 @@ static bool FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 			}
 			
 		default:
-			return false; // falsche ID
+			return 3; // falsche ID
 		}
 
 	// hier darf man nur bei Erfolg ankommen.
@@ -2010,7 +2011,7 @@ static bool FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 	ProtokollierenTxp();
 	ProtokollierenInt_P(PSTR("Fernkonfig Kenn=%d ok\r\n"), FKKennung);
 	
-	return true;
+	return 0;
 	}
 	
 
@@ -2254,13 +2255,16 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 			else if (c == TXPC_FERNKONFIG)
 				{ 
 				uint8_t len = SocketInBuf[i+1];
-				
-				if (!FernKonfigTelegrammBearbeiten(i, len))
+				uint8_t Res = FernKonfigTelegrammBearbeiten(i, len);
+					// 0 = ok, anderes = Fehlercode
+
+				if (Res != 0)
 					{
 					SendeStopkommando(PSTR("fernkonferr"));
 					ProtokollierenTxp();
-					ProtokollierenInt_P(PSTR("Fernkonfig !Fehler Len=%d"), len);
-					ProtokollierenInt_P(PSTR(" Kenn=%d\r\n"), (len >= 4) ? SocketInBuf[i+4] : 0);
+					ProtokollierenInt_P(PSTR("Fernkonfig !Fehler Code=%d"), Res);
+					ProtokollierenInt_P(PSTR(" Len=%d"), len);
+					ProtokollierenInt_P(PSTR(" Kenn=%02X\r\n"), (len >= 4) ? SocketInBuf[i+4] : 0);
 					}
 					
 				i += 2 + len;

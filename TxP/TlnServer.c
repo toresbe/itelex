@@ -337,8 +337,8 @@ void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln, int8_t VonServer)
 			
 		else if (i == VonServer 
 				 && SyncStichzeitWarOk
-				 && TlnServSyncStichzeit[i] <= TlnBuchLetzteAenderung)
-			TlnServSyncStichzeit[i] = TlnBuchLetzteAenderung + 1;
+				 && TlnServSyncStichzeit[i] < TlnBuchLetzteAenderung)
+			TlnServSyncStichzeit[i] = TlnBuchLetzteAenderung;
 			// dieser Server muss nicht aktualisiert werden, da von diesem Server
 			// gerade die Daten empfangen werden und er vorher aus eigener Sicht 
 			// keine Aktualisierung empfangen brauchte.
@@ -685,11 +685,16 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						{
 						if (i == Kanal->ListeIdx)
 							TlnServSyncStichzeit[i] = CurTime.time; 
-						else
-							TlnServSyncStichzeit[i] = CurTime.time - 60 * 60; 
+							
+						else 
+							{
+							uint32_t EineStundeVorher = CurTime.time - 60L * 60;
+								// die Subtraktion würde aus uint32 leider int32 machen...
+							if (TlnServSyncStichzeit[i] < EineStundeVorher)
+								TlnServSyncStichzeit[i] = EineStundeVorher; 
 							// relativ neue Einträge (nicht älter als eine Stunde) 
-							// doch weiterverteilen.
-							//! \todo Bessere Strategie für diesen Fall erarbeiten.
+							// doch weiterverteilen, falls nicht schon geschehen.
+							}
 						}
 						
 					if (ProtokollLevelTlnServ >= 1) 
@@ -773,7 +778,6 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 	} // SocketBearbeiten()
 
 	
-
 static bool VollAbfrageKanalOeffnen()
 	{
 	if (TlnServer[0].Socket != NO_SOCKET_USED)
@@ -814,7 +818,7 @@ static int8_t NaechsterAktivSyncTlnServerIndex()
 	{
 	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
-		if (TlnServSyncStichzeit[i] > TlnBuchLetzteAenderung)
+		if (TlnServSyncStichzeit[i] >= TlnBuchLetzteAenderung)
 			continue;
 			
 		if (!TeilnehmerServerVerfuegbar(i, NULL))
@@ -1077,7 +1081,7 @@ void txp_tlnserv_init()
 
 	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
-		TlnServSyncStichzeit[i] = TlnBuchLetzteAenderung + 1; // 1, damit nach Reset scheinbar keine Synchronisationen erforderlich sind.
+		TlnServSyncStichzeit[i] = TlnBuchLetzteAenderung; // 1, damit nach Reset scheinbar keine Synchronisationen erforderlich sind.
 		}
 		
 	StartKurzTimer(&SyncWarteTimer);
