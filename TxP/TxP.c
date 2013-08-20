@@ -2859,13 +2859,19 @@ static void DatumUhrzeitDrucken()
 
 	// Zeit holen
 	CLOCK_GetTime(&Time);
-	sprintf_P(Text, PSTR("\r\n%02u.%02u.%04u  %02d:%02d:%02d\r\n"),
+	sprintf_P(Text, PSTR("%02u.%02u.%04u  %02d:%02d:%02d\r\n"),
 			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 	
+	for (uint8_t i = 0 ; i < 7 ; i++)
+		PufferSpeich(&EmpfPuffer, TtyCodeBuUm);
+			// EmpfPuffer wird an Gegenstelle gesendet, die muss erst anlaufen, daher als "Überbrückung" ein paar ZL
+	PufferSpeich(&SendePuffer, TtyCodeWR);
+	PufferSpeich(&EmpfPuffer, TtyCodeWR);
+	PufferSpeich(&SendePuffer, TtyCodeZL);
+	PufferSpeich(&EmpfPuffer, TtyCodeZL);
 	PufferSpeich(&SendePuffer, TtyCodeZiUm);
 	PufferSpeich(&EmpfPuffer, TtyCodeZiUm);
-	PufferSpeich(&SendePuffer, TtyCodeZiUm);
-	PufferSpeich(&EmpfPuffer, TtyCodeZiUm);
+	
 	for (uint8_t i = 0 ; i < strlen(Text) ; i++)
 		{
 		uint8_t Code = ZeichenZuCode(Text[i], ZiMode);
