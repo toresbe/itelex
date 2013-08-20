@@ -340,7 +340,7 @@ typedef union
 	} TTlnServBuf; 
 
 	
-//! Langzeit-Zeitgeber geeignet von 0,5 Minuten bis 1 Tag.
+//! Langzeit-Zeitgeber geeignet von 0,5 Minuten bis 5 Tage.
 typedef struct { uint16_t x; } TLangTimer;
 
 //! Kurzzeit-Zeitgeber geeignet von x/100 Sekunden bis 10 Minuten.
@@ -439,6 +439,8 @@ extern char *ZeitUeberwachungAusgabe(TZeitUeberwachung *zue);
 extern bool Diagnoseausgabe_P(const char *msg, uint8_t Level);
 
 extern void AsciiDruckPufferVerarbeiten();
+
+extern bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund);
 
 extern int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund);
 

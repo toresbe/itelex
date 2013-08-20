@@ -83,7 +83,7 @@ typedef struct
 		//!< Für den aktuell laufenden Synchronisationsvorgang gültiges "Grenzdatum" für
 		//!< zu sendende Einträge.
 	bool Freigabe; //!< Korrekte Autentifizierung empfangen.
-	bool IstInitialAbfrage; //!< Dieser Kanal wurde geöffnet, um das Teilnehmer-Verzeichnis nach 
+	bool IstVollAbfrage; //!< Dieser Kanal wurde geöffnet, um das Teilnehmer-Verzeichnis nach 
 						    //!< Neustart zu initialisieren.
 	bool AusgabeGestartet; //!< gespeicherte Adressen werden an den Gegenüber gesendet.
 	TTlnListerDat AusgabeLister; //!< Daten für die Ausgabe (welcher Datensatz wurde zuletzt gesendet)
@@ -97,10 +97,12 @@ typedef struct
 
 
 enum { AnzTlnServKanaele = 4 } ;
+	//!< Anzahl der möglichen TCP-Sockets, die gleichzeitig in Verbindung mit 
+	//!< Teilnehmer-Server Aufgaben geöffnet sein können.
 
 
 static TTlnServKanal TlnServer[AnzTlnServKanaele];
-	//!< Teilnehmer-Server kanäle ein- und ausgehende TlnAbfrage-Verbindungen.
+	//!< Teilnehmer-Server kanäle ein- und ausgehende TlnAbfrage-Verbindungen (Sockets).
 	//!< Für ausgehende Verbindungen wird nur Index 0 verwendet, für kommende
 	//!< Verbindungen der jeweils freie.
 	
@@ -135,12 +137,18 @@ static uint16_t SyncWarteEnde;
 	//!< \n 8 Minuten nach erfolgreicher Synchronisation an den ersten 
 	//!< Partner-Teilnehmerauskunft-Server bis zur Sendung an den nächsten Partner-Teilnehmerauskunft-Server.
 
-static bool InitialAbfrageStarten;
-	//!< nach Reset true, bis erfolgreich von einem anderen Teilnehmerauskunft-Server 
+	
+static TLangTimer VollAbfrageTimer;
+	//!< nach Reset 1 Minute, bis erfolgreich von einem anderen Teilnehmerauskunft-Server 
 	//!< alle Daten abgeholt worden sind.
-	//!< \todo: Für jeden TlnServer ab und zu (Tage) eine Komplett-Abfrage durchführen.
+	//!< Danach 2 bis 4 Tage für regelmäßige Vergleiche "zur Sicherheit"
 	
+static uint16_t VollAbfrageTimerEnde;
+	//!< Ende der Wartezeit für Vollabfrage. Siehe #VollAbfrageTimer.
 	
+static uint8_t VollAbfrageServerIndex;
+	//!< Partner für die nächste Vollabfrage.
+		
 	
 static void KanalInit(TTlnServKanal* k, int aSocket)
 	{
@@ -148,7 +156,7 @@ static void KanalInit(TTlnServKanal* k, int aSocket)
 	k->ListeIdx = -1;
 	k->Freigabe = false;
 	k->AusgabeGestartet = false;
-	k->IstInitialAbfrage = false;
+	k->IstVollAbfrage = false;
 	k->Fertig = false;
 	k->SendeFehlerZaehler = 0;
 	k->NutzungZaehler++;
@@ -669,7 +677,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					{
 					ProtokollierenTlnServ_P(Kanal, PSTR("Ende Kennung empfangen, Socket wird geschlossen\r\n"));
 					}		
-				if (Kanal->IstInitialAbfrage)
+				if (Kanal->IstVollAbfrage)
 					{
 					struct TIME CurTime;
 					CLOCK_GetTime(&CurTime);
@@ -681,13 +689,20 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 							TlnServSyncStichzeit[i] = CurTime.time - 60 * 60; 
 							// relativ neue Einträge (nicht älter als eine Stunde) 
 							// doch weiterverteilen.
+							//! \todo Bessere Strategie für diesen Fall erarbeiten.
 						}
-					InitialAbfrageStarten = false;
+						
 					if (ProtokollLevelTlnServ >= 1) 
 						{
-						ProtokollierenTlnServ_P(Kanal, PSTR("Initiale Abfrage erfolgreich beendet\r\n"));
+						ProtokollierenTlnServ_P(Kanal, PSTR("Vollabfrage erfolgreich beendet\r\n"));
 						}		
+						
+					StartLangTimer(&VollAbfrageTimer);
+					VollAbfrageTimerEnde = 24 * 60 * LangTimerMinuteFaktor 
+											+ Zufallswert(0x1F) * 30 * LangTimerMinuteFaktor;
+						// nächste Voll-Abfrage in 1 Tag + (0-15) Stunden.
 					}
+					
 				SyncWarteEnde = (120 - Zufallswert(0x3F)) * KurzTimerFreq; // 2 Minuten warten.
 				break;
 				
@@ -759,85 +774,95 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 
 	
 
-static bool InitialAbfrageKanalOeffnen()
+static bool VollAbfrageKanalOeffnen()
 	{
 	if (TlnServer[0].Socket != NO_SOCKET_USED)
 		return false;
-	
-	for (int8_t i = ANZ_TEILNEHMER_SERVER - 1 ; i >= 0 ; i--)
+
+	int NewSock = TeilnehmerServerSocketOeffnen1(VollAbfrageServerIndex, PSTR("Vollabfrage")); 
+		// da wird auch Protokoll geschrieben.
+		
+	if (NewSock != -1)
 		{
-		int NewSock = TeilnehmerServerSocketOeffnen1(i, PSTR("Initialabfrage")); 
-			// da wird auch Protokoll geschrieben.
-			
-		if (NewSock != -1)
+		KanalInit(&TlnServer[0], NewSock); 
+		TlnServer[0].ListeIdx = VollAbfrageServerIndex; 
+		if (ProtokollLevelTlnServ >= 2)
 			{
-			KanalInit(&TlnServer[0], NewSock); 
-			TlnServer[0].ListeIdx = i; 
-			if (ProtokollLevelTlnServ >= 2)
-				{
-				ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Socket geoeffnet, initiale Abfrage nach Reset begonnen\r\n"));
-				}
-			TlnServBuf.Code = TLNSERV_SYNC_TOTALABFRAGE;
-			TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
-			TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
-			TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
-			SocketDatenSenden(&TlnServer[0]);
-			TlnServer[0].Freigabe = true; // wer anruft weiß wen er anruft.
-			TlnServer[0].IstInitialAbfrage = true;
-			return true;
+			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Socket geoeffnet, volle Abfrage begonnen\r\n"));
 			}
+		TlnServBuf.Code = TLNSERV_SYNC_TOTALABFRAGE;
+		TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
+		TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
+		TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
+		SocketDatenSenden(&TlnServer[0]);
+		TlnServer[0].Freigabe = true; // wer anruft weiß wen er anruft.
+		TlnServer[0].IstVollAbfrage = true;
 		}
+
+	VollAbfrageServerIndex++;
+	if (VollAbfrageServerIndex >= ANZ_TEILNEHMER_SERVER)
+		VollAbfrageServerIndex = 0;
 		
 	return false;
 	}
 
 
-static bool SyncMeldungKanalOeffnen()
+//! Ermittelt, welcher Teilnehmer-Server-Index für die nächste "aktive" Synchronisation dran ist.
+//-----------------------------------------------------------------------------------------------
+//! \retval -1 wenn alle aktuell oder gesperrt.
+static int8_t NaechsterAktivSyncTlnServerIndex()
 	{
-	uint8_t i;
-	
-	if (TlnServer[0].Socket != NO_SOCKET_USED)
-		return false;
-		
-	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
 		if (TlnServSyncStichzeit[i] > TlnBuchLetzteAenderung)
 			continue;
 			
-		if (TeilnehmerServerAdresse[i][0] == '\0')
+		if (!TeilnehmerServerVerfuegbar(i, NULL))
 			continue;
 
-		int NewSock = TeilnehmerServerSocketOeffnen1(i, PSTR("Sync-Meldung"));
-			// da wird auch Protokoll geschrieben.
-			
-		if (NewSock != -1)
-			{
-			struct TIME CurTime;
-			CLOCK_GetTime(&CurTime);
-			KanalInit(&TlnServer[0], NewSock); 
-			TlnServer[0].ListeIdx = i;
-			TlnServer[0].Freigabe = true; // der Anrufer ist immer ok
-			TlnServer[0].AusgabeStichdatum = TlnServSyncStichzeit[i];
-			TlnServer[0].AusgabeGestartet = true;
-			TlnServSyncStichzeit[i] = CurTime.time; 
-				//! Wird wieder auf AusgabeStichdatum zurückgesetzt werden, wenn Fehler passiert.
-			TlnListerStart(&TlnServer[0].AusgabeLister);
-			if (ProtokollLevelTlnServ >= 2)
-				{
-				ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Socket geoeffnet zur Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"));
-				}
-				
-			TlnServBuf.Code = TLNSERV_SYNC_ANMELDUNG;
-			TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
-			TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
-			TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
-			SocketDatenSenden(&TlnServer[0]);
-			return true;
-			}
-		// sonst den nächsten probieren...
+		return i;
 		}
 		
-	return false; // weil nix zu tun ist...
+	return -1;
+	}
+
+	
+//! Öffnet den vorbestimmten Kanal zum aktiven Synchronisieren.
+//-------------------------------------------------------------
+static bool AktivSyncMeldungKanalOeffnen(uint8_t ServerI)
+	{
+	if (TeilnehmerServerAdresse[ServerI][0] == '\0')
+		return false;
+
+	int NewSock = TeilnehmerServerSocketOeffnen1(ServerI, PSTR("Sync-Meldung"));
+	// da wird auch Protokoll geschrieben.
+			
+	if (NewSock != -1)
+		{
+		struct TIME CurTime;
+		CLOCK_GetTime(&CurTime);
+		KanalInit(&TlnServer[0], NewSock); 
+		TlnServer[0].ListeIdx = ServerI;
+		TlnServer[0].Freigabe = true; // der Anrufer ist immer ok
+		TlnServer[0].AusgabeStichdatum = TlnServSyncStichzeit[ServerI];
+		TlnServer[0].AusgabeGestartet = true;
+		TlnServSyncStichzeit[ServerI] = CurTime.time; 
+			//! Wird wieder auf AusgabeStichdatum zurückgesetzt werden, wenn Fehler passiert.
+		TlnListerStart(&TlnServer[0].AusgabeLister);
+		if (ProtokollLevelTlnServ >= 2)
+			{
+			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Socket geoeffnet zur Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"));
+			}
+			
+		TlnServBuf.Code = TLNSERV_SYNC_ANMELDUNG;
+		TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
+		TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
+		TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
+		SocketDatenSenden(&TlnServer[0]);
+		return true;
+		}
+		
+	return false; // Fehler beim Öffnen.
 	}
 	
 	
@@ -926,22 +951,29 @@ void txp_tlnserv_thread()
 
 	else if (KurzTimerVal(&SyncWarteTimer) > SyncWarteEnde)
 		{
-		if (InitialAbfrageStarten)
-			{
-			if (!InitialAbfrageKanalOeffnen())
-				{
-				SyncWarteEnde = (30 + Zufallswert(0xF)) * KurzTimerFreq;
-				}
-			StartKurzTimer(&SyncWarteTimer);
-			}
-		else
-			{
-			if (!SyncMeldungKanalOeffnen())
+		int8_t AktivSyncServerI = NaechsterAktivSyncTlnServerIndex();
+		if (AktivSyncServerI >= 0)
+			{ // erst mal neue Einträge weiter melden
+			if (!AktivSyncMeldungKanalOeffnen(AktivSyncServerI))
 				{
 				SyncWarteEnde = (20 + Zufallswert(0x7)) * KurzTimerFreq;
 				}
 			StartKurzTimer(&SyncWarteTimer);
 			}
+			
+		else if (LangTimerVal(&VollAbfrageTimer) >= VollAbfrageTimerEnde)
+			{ // mal zur Sicherheit andere Server befragen.
+			StartLangTimer(&VollAbfrageTimer);
+			VollAbfrageTimerEnde = 60 * LangTimerMinuteFaktor; 
+				// die eine Stunde gilt nur im Fehlerfall, im Erfolgsfall wird ein Tag gewartet.
+			
+			if (!VollAbfrageKanalOeffnen())
+				{
+				SyncWarteEnde = (30 + Zufallswert(0xF)) * KurzTimerFreq;
+				}
+			StartKurzTimer(&SyncWarteTimer);
+			}
+		
 		} // kein Socket offen und Wartezeit abgelaufen.
 	
 	} // txp_tlnserv_thread
@@ -978,11 +1010,13 @@ void TlnServDebugPrint()
 	
 	PRINTVAL(KurzTimerVal(&SyncWarteTimer));
 	PRINTVAL(SyncWarteEnde);
-	PRINTVAL(InitialAbfrageStarten);
+	PRINTVAL(LangTimerVal(&VollAbfrageTimer));
+	PRINTVAL(VollAbfrageTimerEnde);
+	PRINTVAL(VollAbfrageServerIndex);
+
 #undef PRINTVAL
 	}
 	
-
 
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Initialisiert den Teilnehmerauskunft-Server-clinet und registriert den Port auf welchen dieser lauschen soll.
@@ -1027,12 +1061,6 @@ void txp_tlnserv_init()
 	
 	printf_P( PSTR("Txp TlnServer Port %u.\r\n") , TXP_TLNSERV_PORT );
 	
-	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
-		{
-		TlnServSyncStichzeit[i] = 0;
-		}
-		
-		
 	TlnBuchLetzteAenderung = 0;
 	TTlnDaten TD;
 	TlnDatenInit(&TD);
@@ -1047,9 +1075,17 @@ void txp_tlnserv_init()
 			}
 		}
 
+	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+		{
+		TlnServSyncStichzeit[i] = TlnBuchLetzteAenderung + 1; // 1, damit nach Reset scheinbar keine Synchronisationen erforderlich sind.
+		}
+		
 	StartKurzTimer(&SyncWarteTimer);
 	SyncWarteEnde = 10 * KurzTimerFreq; // 10 Sekunden
-	InitialAbfrageStarten = true;
+	
+	StartLangTimer(&VollAbfrageTimer);
+	VollAbfrageTimerEnde = 1 * LangTimerMinuteFaktor;
+	VollAbfrageServerIndex = ANZ_TEILNEHMER_SERVER - 1;
 	
 	THREAD_RegisterThread( txp_tlnserv_thread, PSTR("TlnSrv"));
 	}

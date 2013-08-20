@@ -70,6 +70,10 @@
 #include "Protokoll.h"
 #include "TlnServer.h"
 #include "eMail.h"
+#include "SvnVersion.h"
+
+
+const PROGMEM char SvnVersion_P[] = SVNVERSION;
 
 
 #ifdef TXP_ANSCHLUSS
@@ -1974,7 +1978,7 @@ static bool FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 	if (SocketInBufUsed < i + 2 + len)
 		return false; // nicht vollständig.
 		
-	uint16_t Pin = (SocketInBuf[i+2] << 8) + SocketInBuf[i+3];
+	uint16_t Pin = *((uint16_t *)(SocketInBuf[i+2]));
 	
 	if (Pin != Geheimzahl)
 		return false; // verboten.
@@ -1999,7 +2003,8 @@ static bool FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 
 	// hier darf man nur bei Erfolg ankommen.
 	SocketOutBuf[SocketOutBufUsed++] = TXPC_QUITT;
-	SocketOutBuf[SocketOutBufUsed++] = 1;
+	SocketOutBuf[SocketOutBufUsed++] = 2;
+	SocketOutBuf[SocketOutBufUsed++] = 0;
 	SocketOutBuf[SocketOutBufUsed++] = FKKennung;
 	
 	ProtokollierenTxp();
@@ -2208,11 +2213,13 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 						TxpSocketProtVersionVorschlag = ProtVorschlag;
 						}
 						
-					if (TxpSocketProtVersion == 0 && SocketOutBufUsed < SocketOutBufMax - 3) // noch nichts festgelegt, also Gegenvorschlag senden.
+					if (TxpSocketProtVersion == 0 && SocketOutBufUsed < SocketOutBufMax - 10) // noch nichts festgelegt, also Gegenvorschlag senden.
 						{
 						SocketOutBuf[SocketOutBufUsed++] = TXPC_VERSION;
-						SocketOutBuf[SocketOutBufUsed++] = 1;
+						SocketOutBuf[SocketOutBufUsed++] = 1 + strlen_P(SvnVersion_P) + 1;
 						SocketOutBuf[SocketOutBufUsed++] = TxpSocketProtVersionVorschlag;
+						strcpy_P(SocketOutBuf + SocketOutBufUsed, SvnVersion_P);
+						SocketOutBufUsed += strlen_P(SvnVersion_P) + 1;
 						
 						if (ProtokollLevel >= 2)
 							{
@@ -2431,18 +2438,15 @@ static void ZeichenInHtmlSendeText(char c)
 #endif // TXP_ANSCHLUSS
 
 
-//! Verbindung zu einem konkreten Teilnehmer-Server herstellen.
-// ------------------------------------------------------------
+//! Prüft, ob ein Socket benutzbar ist und nicht wegen Fehlern gesperrt ist
+//-------------------------------------------------------------------------
 //! \param ServerI Index-Nummer des Teilnehmer-Servers (0 bis ANZ_TEILNEHMER_SERVER-1)
-//! \param Grund Grund des Öffnens des Teilnehmer-Servers, nur für Protokollierung
-//! \return Socket-Handle bei Erfolg, -1 bei Fehler oder bei "weigerung".
-
-int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
+//! \param Grund Grund des Öffnens des Teilnehmer-Servers, nur für Protokollierung. NULL verhindert Protokollierung.
+//! \retval true, wenn Verbindung vorraussichtlich erfolgreich sein wird.
+bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund)
 	{
-	int Res;
-	
 	if (TeilnehmerServerAdresse[ServerI][0] == '\0')
-		return -1;
+		return false;
 		
 	if (TeilnehmerServerFehlerZaehler[ServerI] >= 4 * 2)
 		// * 2 wegen "doppelter" Zählung in TeilnehmerServerFehlerSpeichern().
@@ -2458,12 +2462,33 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 				Protokollieren_P(Grund);
 				Protokollieren_P(PSTR(")\r\n"));
 				}
-			return -1;
+			return false;
 			}
-		TeilnehmerServerFehlerZaehler[ServerI] -= 2; 
-			// Nach Zeitablauf nicht nur einmal probieren...
-		StartLangTimer(&TeilnehmerServerSperrTimer[ServerI]);
 		}
+		
+	return true;
+	}
+	
+
+//! Verbindung zu einem konkreten Teilnehmer-Server herstellen.
+// ------------------------------------------------------------
+//! \param ServerI Index-Nummer des Teilnehmer-Servers (0 bis ANZ_TEILNEHMER_SERVER-1)
+//! \param Grund Grund des Öffnens des Teilnehmer-Servers, nur für Protokollierung
+//! \return Socket-Handle bei Erfolg, -1 bei Fehler oder bei "weigerung".
+int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
+	{
+	int Res;
+
+	if (!TeilnehmerServerVerfuegbar(ServerI, Grund))
+		return -1;
+		
+	if (TeilnehmerServerAdresse[ServerI][0] == '\0')
+		return -1;
+		
+	if (TeilnehmerServerFehlerZaehler[ServerI] >= 2)
+		TeilnehmerServerFehlerZaehler[ServerI] -= 2; 
+
+	StartLangTimer(&TeilnehmerServerSperrTimer[ServerI]);
 		
 	TeilnehmerServerIP[ServerI] = strtoip(TeilnehmerServerAdresse[ServerI]);	// Annahme: eine IP-Adresse angegeben
 	
@@ -2493,6 +2518,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 				
 			return Res;
 			}
+			
 		if (ProtokollLevelTlnServ >= 1)
 			{
 			ProtokollierenTxp_P(PSTR("! Verbindungsversuch an Teilnehmer-Server "));
@@ -2501,6 +2527,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 			Protokollieren_P(Grund);
 			Protokollieren_P(PSTR(")\r\n"));
 			}
+			
 		TeilnehmerServerFehlerSpeichern(ServerI);
 		return -1;
 		}
@@ -2704,13 +2731,14 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 
 		TxpSocketProtokoll = TelexPhone;
 		
-		SocketOutBuf[0] = TXPC_VERSION;
-		SocketOutBuf[1] = 1;
-		SocketOutBuf[2] = TxpSocketProtVersionVorschlag;
-		SocketOutBuf[3] = TXPC_DURCHWAHL;
-		SocketOutBuf[4] = 1;
-		SocketOutBuf[5] = td->Durchwahl;
-		SocketOutBufUsed = 6;
+		SocketOutBuf[SocketOutBufUsed++] = TXPC_VERSION;
+		SocketOutBuf[SocketOutBufUsed++] = 1 + strlen_P(SvnVersion_P) + 1;
+		SocketOutBuf[SocketOutBufUsed++] = TxpSocketProtVersionVorschlag;
+		strcpy_P(SocketOutBuf + SocketOutBufUsed, SvnVersion_P);
+		SocketOutBufUsed += strlen_P(SvnVersion_P) + 1;
+		SocketOutBuf[SocketOutBufUsed++] = TXPC_DURCHWAHL;
+		SocketOutBuf[SocketOutBufUsed++] = 1;
+		SocketOutBuf[SocketOutBufUsed++] = td->Durchwahl;
 		
 		return 0;
 		}
