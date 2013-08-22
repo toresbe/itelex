@@ -35,6 +35,7 @@
  * \date	05-14-2008: Delayfunktion hinzugefügt.
  * \date	02-18-2010: Unixzeit decoding hinzugefügt.
  * \date	09-26-2010: Unixzeit encoding hinzugefügt.
+ * \date    20-09-2013: Sommerzeit-Umstellung abschaltbar (Fred Sonnenrein)
  *
  * @{
  */
@@ -89,6 +90,7 @@ void CLOCK_init(void)
 		time.uptime=0;
 		time.time=0;
 		time.timezone=0;
+		time.use_summertime = 1;
 
 		CLOCK_decode_time( &time );
 		
@@ -489,7 +491,7 @@ void CLOCK_decode_time( struct TIME * Timestruct )
 		}
 	}
 
-	if (summertime)
+	if (summertime && Timestruct->use_summertime)
 	{
 		Timestruct->hh++;              // add one hour
 		if ( Timestruct->hh == 24)

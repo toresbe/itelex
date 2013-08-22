@@ -296,12 +296,14 @@ bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln)
 //! Einfügen eines Adressbuch-Eintrags.
 // ------------------------------------
 //! ggf. wird ein alter Eintrag gelöscht
-//! \param[in] Neuer / zu ändernder Tln 
+//! \param[in] Tln Neuer / zu ändernder Teilnehmereintrag.
+//! \param[in] Modus siehe #TTlnHinzufuegenModus.
 //! \retval 1 Eintrag hinzugefügt oder aktualisiert.
+//! \retval 2 Vorhandener Eintrag ist neuer als der zu speichernde!
 //! \retval 0 Eintrag unverändert.
 //! \retval -1 Speicher voll.
 
-int8_t TlnHinzufuegen(TTlnDaten *Tln, bool DatumAktualisieren)
+int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus Modus)
 	{
 	char *p;
 	
@@ -311,23 +313,37 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, bool DatumAktualisieren)
 		{
 		if (TlnBuchMemUsed + NeuGr >= TlnBuchMemMax)
 			return -1;
-		TlnEintragen(Tln, TlnBuch + TlnBuchMemUsed, DatumAktualisieren);
+		TlnEintragen(Tln, TlnBuch + TlnBuchMemUsed, Modus);
 		TlnBuchMemUsed += NeuGr;
 		return 1;
+		}
+		
+	if (Modus == TlnHinzNurNeuereUebernehmen)
+		{
+		TTlnDaten BisherEintrag;
+		TlnLesen(&BisherEintrag, p);
+		if (BisherEintrag.Datum > Tln->Datum)
+			return 2;
+			
+		if (BisherEintrag.Datum == Tln->Datum)
+			{
+			//! \todo auch andere Daten vergleichen ???
+			return 0;
+			}
 		}
 		
 	uint8_t AltGr = *((uint8_t *) (p + TBOffsGroesse));
 	if (NeuGr != AltGr)
 		{
 		if (TlnBuchMemUsed + NeuGr - AltGr >= TlnBuchMemMax)
-			return false;
+			return -1;
 		memmove(p + NeuGr, p + AltGr, TlnBuchMemUsed - (p - TlnBuch) - AltGr);
 		TlnBuchMemUsed += NeuGr - AltGr;
-		TlnEintragen(Tln, p, DatumAktualisieren);
+		TlnEintragen(Tln, p, Modus == TlnHinzDatumAktualisieren); // muss klappen ;-)
 		return 1;
 		}
 	else
-		return TlnEintragen(Tln, p, DatumAktualisieren) ? 1 : 0;
+		return TlnEintragen(Tln, p, Modus == TlnHinzDatumAktualisieren) ? 1 : 0;
 	}
 
 
@@ -780,6 +796,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		
 		struct TIME Time;
 		CLOCK_GetTime(&Time); // holt auch die aktuelle Zeitzone
+		uint32_t AktZeit = Time.time;
 		
 		TTlnListerDat LD;
 		
@@ -789,6 +806,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				{
 				if (!TlnBuchOffen && (TD.Flags & TlnFlag_Lokal) != 0 && !KonfigFreigabe(NULL))
 					continue; // Private Einträge nicht darstellen.
+					
+				if (TD.AdrArt == Geloescht && TD.Datum < AktZeit - 7L * 24 * 60 * 60) // Mehr als 7 Tage alte Einträge mit "gelöscht" nicht mehr darstellen.
+					continue;
 				
 				printf_P(PSTR("<tr><td align=\"right\">%ld</td>"), TD.Nummer); // Nummer
 				printf_P(PSTR("<td align=\"left\">%s</td><td>&#160;"), TD.Name); // name
@@ -1086,7 +1106,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			
 		if (DatenOk)
 			{ // speichern oder löschen
-			int8_t Res = TlnHinzufuegen(&TD, true);
+			int8_t Res = TlnHinzufuegen(&TD, TlnHinzDatumAktualisieren);
 			if (Res >= 0)
 				{
 				if (Res > 0)
@@ -1103,7 +1123,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					{
 					TD.Nummer = AltNummer;
 					TD.AdrArt = Geloescht;
-					if (TlnHinzufuegen(&TD, true) < 0)
+					if (TlnHinzufuegen(&TD, TlnHinzDatumAktualisieren) < 0)
 						{
 						printf_P(PSTR("<b>Alte Nummer %ld konnte nicht gel&ouml;scht werden!</b><br>"), AltNummer);	
 						}

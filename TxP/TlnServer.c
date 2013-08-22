@@ -79,15 +79,13 @@ typedef struct
 	int ListeIdx; //!< Welcher der Einträge aus TeilnehmerServerAdresse ist verbunden.
 		//!< -1 bei kommenden Verbindungen.
 	uint32_t NutzungZaehler; //!< Zählt, wie oft dieser Kanal geöffnet wurde.
-	uint32_t SyncAusgabeStichzeit;
-		//!< Für den aktuell laufenden Synchronisationsvorgang gültiges "Grenzdatum" für
-		//!< zu sendende Einträge.
 	bool Freigabe; //!< Korrekte Autentifizierung empfangen.
 	bool IstVollAbfrage; //!< Dieser Kanal wurde geöffnet, um das Teilnehmer-Verzeichnis nach 
 						    //!< Neustart zu initialisieren.
 	bool AusgabeGestartet; //!< gespeicherte Adressen werden an den Gegenüber gesendet.
+	uint16_t AnzahlAktualisiert; //!< Zählt die durch den Abgleich geänderten Einträge.
 	TTlnListerDat AusgabeLister; //!< Daten für die Ausgabe (welcher Datensatz wurde zuletzt gesendet)
-	long AusgabeStichdatum; //!< Nur Einträge, die neuer sind als X werden gesendet.
+	long AusgabeStichdatum; //!< Nur Einträge, die neuer oder gleich alt als X sind werden gesendet.
 	bool Fertig; //!< true, wenn Auftrag erfüllt. Sonst wäre ein vorzeitiges Ende ein Fehler.
 	uint8_t SendeFehlerZaehler;	//!< Zählt bis 10 bei nicht erfolgreichen Sendeversuchen auf dem Socket.
 	TKurzTimer WiederholungVerzoegerung;
@@ -117,7 +115,8 @@ uint32_t TlnServSyncGeheimzahl;
 	
 static uint32_t TlnServSyncStichzeit[ANZ_TEILNEHMER_SERVER];
 	//!< Wann wurden zuletzt Teilnehmer-Einträge an den jeweiligen anderen Server 
-	//!< \b gesendet.
+	//!< \b gesendet. Beim nächsten Synchronisieren werden die Einträge gesendet, die 
+	//!< neuer oder gleich alt sind.
 	
 static uint32_t TlnBuchLetzteAenderung;
 	//!< Wann wurden zuletzt Teilnehmer-Einträge geändert, die zu synchronisieren sind.
@@ -143,7 +142,7 @@ static TLangTimer VollAbfrageTimer;
 	//!< alle Daten abgeholt worden sind.
 	//!< Danach 2 bis 4 Tage für regelmäßige Vergleiche "zur Sicherheit"
 	
-static uint16_t VollAbfrageTimerEnde;
+uint16_t VollAbfrageTimerEnde; // für HACK bei Taste wurde static entfernt.
 	//!< Ende der Wartezeit für Vollabfrage. Siehe #VollAbfrageTimer.
 	
 static uint8_t VollAbfrageServerIndex;
@@ -159,6 +158,7 @@ static void KanalInit(TTlnServKanal* k, int aSocket)
 	k->IstVollAbfrage = false;
 	k->Fertig = false;
 	k->SendeFehlerZaehler = 0;
+	k->AnzahlAktualisiert = 0;
 	k->NutzungZaehler++;
 	}
 	
@@ -245,7 +245,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 			TD.IPAdr = TlnIP;
 			TD.Port = tsb->SelbstAkt.Port;
 			
-			if (TlnHinzufuegen(&TD, true) >= 0)
+			if (TlnHinzufuegen(&TD, TlnHinzDatumAktualisieren) >= 0)
 				{
 				if (ProtokollLevelTlnServ >= 1)
 					{
@@ -254,6 +254,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 					ProtokollierenInt_P(PSTR(" Port %u\r\n"), TD.Port);
 					}
 				TlnServTlnbuchEintragGeaendert(&TD, -1); // -1: Änderung kommt von keinem Server
+				Kanal->AnzahlAktualisiert++;
 				return true;
 				}
 			else
@@ -276,7 +277,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 		TD.Port = tsb->SelbstAkt.Port;
 		TD.DynPin = tsb->SelbstAkt.Pin;
 
-		if (TlnHinzufuegen(&TD, true) >= 0)
+		if (TlnHinzufuegen(&TD, TlnHinzDatumAktualisieren) >= 0)
 			{
 			if (ProtokollLevelTlnServ >= 1)
 				{
@@ -311,6 +312,7 @@ static void FehlerRueckmelden(PGM_P Text, int val)
 //! Wird aufgerufen, wenn ein Eintrag im eigenen Telefonbuch geändert wird.
 //---------------------------------------------------------------------------
 //! Ziel ist, die Synchronisation dieses geänderten Eintrags anzustoßen.
+
 void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln, int8_t VonServer)
 	{
 	if (Tln->Flags & TlnFlag_Lokal)
@@ -337,8 +339,8 @@ void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln, int8_t VonServer)
 			
 		else if (i == VonServer 
 				 && SyncStichzeitWarOk
-				 && TlnServSyncStichzeit[i] < TlnBuchLetzteAenderung)
-			TlnServSyncStichzeit[i] = TlnBuchLetzteAenderung;
+				 && TlnServSyncStichzeit[i] <= TlnBuchLetzteAenderung)
+			TlnServSyncStichzeit[i] = TlnBuchLetzteAenderung + 1;
 			// dieser Server muss nicht aktualisiert werden, da von diesem Server
 			// gerade die Daten empfangen werden und er vorher aus eigener Sicht 
 			// keine Aktualisierung empfangen brauchte.
@@ -371,9 +373,9 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 			&& TlnServBuf.TlnAuskunft.Nummer >= GlobRufnrMinWert
 		    && TlnServBuf.TlnAuskunft.Datum >= Kanal->AusgabeStichdatum)
 			{
-			// aber Nicht senden, wenn gelöscht und Löschdatum älter als 30 Tage
+			// aber Nicht senden, wenn gelöscht und Löschdatum älter als 20 Tage
 			if (TlnServBuf.TlnAuskunft.AdrArt == Geloescht 
-				&& TlnServBuf.TlnAuskunft.Datum + 30L * 24 * 60 * 60 < TlnBuchLetzteAenderung)
+				&& TlnServBuf.TlnAuskunft.Datum + 20L * 24 * 60 * 60 < TlnBuchLetzteAenderung)
 				{
 				ProtokollierenTlnServInt_P(Kanal, PSTR("Als geloescht markierter Teilnehmer-Eintrag %lu uebersprungen\r\n"), TlnServBuf.TlnAuskunft.Nummer);
 				continue;
@@ -403,6 +405,7 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 		
 		
 //! Senden der Daten zum Socket.
+//------------------------------
 
 static void SocketDatenSenden(TTlnServKanal *Kanal)
 	{
@@ -576,26 +579,52 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					}
 				else
 					{
-					Res = TlnHinzufuegen(&TlnServBuf.TlnAuskunft, false);
+					Res = TlnHinzufuegen(&TlnServBuf.TlnAuskunft, TlnHinzNurNeuereUebernehmen);
 					if (Res < 0)
 						{
-						ProtokollierenTlnServInt_P(Kanal, PSTR("! Datensatz vom Teilnehmer-Server mit Nr %lu konnte nicht gespeichert werden\r\n"), TlnServBuf.TlnAuskunft.Nummer);
+						ProtokollierenTlnServInt_P(Kanal, 
+							PSTR("! Datensatz vom Teilnehmer-Server mit Nr %lu konnte nicht gespeichert werden\r\n"), 
+							TlnServBuf.TlnAuskunft.Nummer);
 						Diagnoseausgabe_P(PSTR("internes Rufnummern-Verzeichnis voll"), 2);
 						FehlerRueckmelden(PSTR("abort"), 0);	
 						Senden = true;
 						}
 					else
 						{ // noch alles gut
-						if (Res > 0)
-							{
+						if (Res == 1)
+							{ // gespeichert...
 							if (ProtokollLevelTlnServ >= 1)
-								ProtokollierenTlnServInt_P(Kanal, PSTR("Datensatz vom Teilnehmer-Server mit Nr %lu empfangen und gespeichert\r\n"), TlnServBuf.TlnAuskunft.Nummer);
+								ProtokollierenTlnServInt_P(Kanal, 
+									PSTR("! Datensatz vom Teilnehmer-Server mit Nr %lu empfangen und gespeichert \r\n"), 
+									TlnServBuf.TlnAuskunft.Nummer);
 							TlnServTlnbuchEintragGeaendert(&TlnServBuf.TlnAuskunft, Kanal->ListeIdx);
+							Kanal->AnzahlAktualisiert++;
+							}
+						else if (Res == 2)
+							{ // vorhandener ist aktueller als gesendeter!
+							if (ProtokollLevelTlnServ >= 1)
+								ProtokollierenTlnServInt_P(Kanal, 
+									PSTR("! veralteter Datensatz vom Teilnehmer-Server mit Nr %lu empfangen\r\n"), 
+									TlnServBuf.TlnAuskunft.Nummer);
+								
+							uint32_t RufNr = TlnServBuf.TlnAbfr.RufNr;
+						
+							// Telefonbuch abfragen
+							if (TlnSuche(RufNr, false, &TD))
+								{
+								TlnServTlnbuchEintragGeaendert(&TD, -1); 
+									// bewirkt, dass das Stichdatum ALLER TlnServer zurückgesetzt wird,
+									// damit der Server, der den veralteten Datensatz gesendet hat
+									// auch den korrekten Stand erhält.
+								}
 							}
 						else // Res == 0
 							{
 							if (ProtokollLevelTlnServ >= 2)
-								ProtokollierenTlnServInt_P(Kanal, PSTR("Datensatz vom Teilnehmer-Server mit Nr %lu empfangen, keine Aenderung\r\n"), TlnServBuf.TlnAuskunft.Nummer);
+								ProtokollierenTlnServInt_P(Kanal, 
+									PSTR("Datensatz vom Teilnehmer-Server mit Nr %lu empfangen, keine Aenderung\r\n"), 
+									TlnServBuf.TlnAuskunft.Nummer); 
+									// kann eigentlich nicht sein, da vorher nicht gefunden...
 							}
 						// Antwort generieren:
 						TlnServBuf.Code = TLNSERV_SYNC_QUITTUNG;
@@ -676,37 +705,42 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				if (ProtokollLevelTlnServ >= 2) 
 					{
 					ProtokollierenTlnServ_P(Kanal, PSTR("Ende Kennung empfangen, Socket wird geschlossen\r\n"));
-					}		
+					}
+					
 				if (Kanal->IstVollAbfrage)
-					{
-					struct TIME CurTime;
-					CLOCK_GetTime(&CurTime);
-					for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
-						{
-						if (i == Kanal->ListeIdx)
-							TlnServSyncStichzeit[i] = CurTime.time; 
-							
-						else 
+					{ 
+					if (Kanal->AnzahlAktualisiert > 0)
+						{ // Es wurde was verändert im eigenen Verzeichnis.
+						struct TIME CurTime;
+						CLOCK_GetTime(&CurTime);
+						for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 							{
-							uint32_t EineStundeVorher = CurTime.time - 60L * 60;
-								// die Subtraktion würde aus uint32 leider int32 machen...
-							if (TlnServSyncStichzeit[i] < EineStundeVorher)
-								TlnServSyncStichzeit[i] = EineStundeVorher; 
-							// relativ neue Einträge (nicht älter als eine Stunde) 
-							// doch weiterverteilen, falls nicht schon geschehen.
-							}
-						}
+							if (i == Kanal->ListeIdx)
+								TlnServSyncStichzeit[i] = CurTime.time; 
+							
+							else 
+								{
+								uint32_t EineStundeVorher = CurTime.time - 60L * 60;
+									// die Subtraktion würde aus uint32 leider int32 machen...
+								if (TlnServSyncStichzeit[i] < EineStundeVorher)
+									TlnServSyncStichzeit[i] = EineStundeVorher; 
+								// relativ neue Einträge (nicht älter als eine Stunde) 
+								// doch weiterverteilen, falls nicht schon geschehen.
+								} // else anderer Server
+							} // for i
+						} // if (Kanal->AnzahlAktualisiert > 0)
 						
 					if (ProtokollLevelTlnServ >= 1) 
 						{
-						ProtokollierenTlnServ_P(Kanal, PSTR("Vollabfrage erfolgreich beendet\r\n"));
+						ProtokollierenTlnServ_P(Kanal, PSTR("Vollabfrage erfolgreich beendet"));
+						ProtokollierenInt_P(PSTR(" mit %d geaenderten / aktualisierten Eintraegen\r\n"), Kanal->AnzahlAktualisiert);
 						}		
 						
 					StartLangTimer(&VollAbfrageTimer);
-					VollAbfrageTimerEnde = 24 * 60 * LangTimerMinuteFaktor 
+					VollAbfrageTimerEnde = 20 * 60 * LangTimerMinuteFaktor 
 											+ Zufallswert(0x1F) * 30 * LangTimerMinuteFaktor;
-						// nächste Voll-Abfrage in 1 Tag + (0-15) Stunden.
-					}
+						// nächste Voll-Abfrage in 20,0 bis 35,5 Stunden.
+					} // if (Kanal->IstVollAbfrage)
 					
 				SyncWarteEnde = (120 - Zufallswert(0x3F)) * KurzTimerFreq; // 2 Minuten warten.
 				break;
@@ -761,7 +795,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 			{ // unerwartetes Ende...
 			if (Kanal->AusgabeGestartet)
 				TlnServSyncStichzeit[Kanal->ListeIdx] = Kanal->AusgabeStichdatum; 
-				//!< wegen des Fehlers alles noch mal senden.
+					// wegen des Fehlers alles noch mal senden.
 				
 			TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
 			}
@@ -792,7 +826,7 @@ static bool VollAbfrageKanalOeffnen()
 		TlnServer[0].ListeIdx = VollAbfrageServerIndex; 
 		if (ProtokollLevelTlnServ >= 2)
 			{
-			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Socket geoeffnet, volle Abfrage begonnen\r\n"));
+			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Socket geoeffnet, Vollabfrage begonnen\r\n"));
 			}
 		TlnServBuf.Code = TLNSERV_SYNC_TOTALABFRAGE;
 		TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
@@ -818,7 +852,7 @@ static int8_t NaechsterAktivSyncTlnServerIndex()
 	{
 	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
-		if (TlnServSyncStichzeit[i] >= TlnBuchLetzteAenderung)
+		if (TlnServSyncStichzeit[i] > TlnBuchLetzteAenderung)
 			continue;
 			
 		if (!TeilnehmerServerVerfuegbar(i, NULL))
@@ -956,11 +990,12 @@ void txp_tlnserv_thread()
 	else if (KurzTimerVal(&SyncWarteTimer) > SyncWarteEnde)
 		{
 		int8_t AktivSyncServerI = NaechsterAktivSyncTlnServerIndex();
-		if (AktivSyncServerI >= 0)
-			{ // erst mal neue Einträge weiter melden
+		if (AktivSyncServerI >= 0
+			&& LangTimerVal(&VollAbfrageTimer) < VollAbfrageTimerEnde + 60 * LangTimerMinuteFaktor)
+			{ // erst mal neue Einträge weiter melden, es sei denn dass Vollabfrage mehr als eine Stunde überfällig
 			if (!AktivSyncMeldungKanalOeffnen(AktivSyncServerI))
 				{
-				SyncWarteEnde = (20 + Zufallswert(0x7)) * KurzTimerFreq;
+				SyncWarteEnde = (20 + Zufallswert(0x7)) * KurzTimerFreq; // bei Fehler möglichst bald den nächsten benutzen.
 				}
 			StartKurzTimer(&SyncWarteTimer);
 			}
@@ -968,16 +1003,16 @@ void txp_tlnserv_thread()
 		else if (LangTimerVal(&VollAbfrageTimer) >= VollAbfrageTimerEnde)
 			{ // mal zur Sicherheit andere Server befragen.
 			StartLangTimer(&VollAbfrageTimer);
-			VollAbfrageTimerEnde = 60 * LangTimerMinuteFaktor; 
-				// die eine Stunde gilt nur im Fehlerfall, im Erfolgsfall wird ein Tag gewartet.
+			VollAbfrageTimerEnde = 5 * LangTimerMinuteFaktor; 
+				// die fünf Minuten gelten nur im Fehlerfall, im Erfolgsfall wird ein Tag gewartet.
 			
 			if (!VollAbfrageKanalOeffnen())
 				{
-				SyncWarteEnde = (30 + Zufallswert(0xF)) * KurzTimerFreq;
+				SyncWarteEnde = (30 + Zufallswert(0xF)) * KurzTimerFreq; // bei Fehler möglichst bald den nächsten benutzen.
 				}
 			StartKurzTimer(&SyncWarteTimer);
 			}
-		
+					
 		} // kein Socket offen und Wartezeit abgelaufen.
 	
 	} // txp_tlnserv_thread
@@ -1081,7 +1116,7 @@ void txp_tlnserv_init()
 
 	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
-		TlnServSyncStichzeit[i] = TlnBuchLetzteAenderung; // 1, damit nach Reset scheinbar keine Synchronisationen erforderlich sind.
+		TlnServSyncStichzeit[i] = TlnBuchLetzteAenderung + 1; // 1, damit nach Reset scheinbar keine Synchronisationen erforderlich sind.
 		}
 		
 	StartKurzTimer(&SyncWarteTimer);

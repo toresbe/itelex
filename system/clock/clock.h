@@ -11,6 +11,7 @@
 ///	\par Uebersicht
 ///		Stellt funktionen bereit um eine genaue Zeit zu realisieren und funktionen
 /// um Zeitgesteuert eigene Funktionen die man hinterlegt aufzurufen
+/// Sonnenrein, 20.09.2013: Sommerzeit-Darstellung abschaltbar.
 //****************************************************************************/
 /*
  *  This program is free software; you can redistribute it and/or modify
@@ -82,6 +83,7 @@
 		volatile char timezone;				/*!< Zeitzone */
 		volatile unsigned long uptime;		/*!< Laufzeit in Sekunden seid dem letzten Reset */
 		volatile unsigned long time;		/*!< UTC */
+		volatile unsigned char use_summertime; /*!< automatische Sommerzeit-Darstellung */
 	};
 
 	/*! \struct CALLBACK

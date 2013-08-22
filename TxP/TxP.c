@@ -914,6 +914,10 @@ void txp_timerEvent(void)
 					// Zugang zur Konfiguration erlauben.
 					KonfigFreigabeErteilt = true;
 					StartLangTimer(&KonfigFreigabeTimer);
+					
+					// HACK: Vollabgleich des TlnServers vorziehen
+					extern uint16_t VollAbfrageTimerEnde; 
+					VollAbfrageTimerEnde = 0;
 					}
 				}
 			else
@@ -1311,6 +1315,7 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 //! \param aDurchwahl Bevorzugstes Endgerät lokal. 0 bei keiner Bevorzugung.
 //! \retval true Ein Endgerät gefunden und erfolgreich Reserviert.
 //! \retval false Intern alle in Frage kommenden Endgeräte besetzt.
+
 static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 	{
 	int16_t Stat;
@@ -2942,7 +2947,7 @@ bool SonstigeAnwahl(uint8_t aDurchwahl)
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("! Einschaltung intern VERSAGT\r\n" ));
 			
-		Diagnoseausgabe_P(PSTR("Reservierung fuer Einschaltung konnte nicht versandt werden"), 1);
+		Diagnoseausgabe_P(PSTR("Anschluss intern besetzt."), 1);
 			//! \todo bei Besetzt andere Meldung ausgeben.
 			
 		AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
@@ -2955,7 +2960,8 @@ bool SonstigeAnwahl(uint8_t aDurchwahl)
 	} // SonstigeAnwahl()
 
 		
-//! Speichert Datum und Uhrzeit im Puffer, so dass diese beim Sender und Empfänger gedruckt werden
+//! Speichert Datum und Uhrzeit im Puffer, so dass diese beim Sender und Empfänger gedruckt werden.
+//-------------------------------------------------------------------------------------------------
 static void DatumUhrzeitDrucken()
 	{
 	char Text[20];
@@ -3772,7 +3778,7 @@ void txp_thread()
 						if (GewaehlterTln.Datum < TSB.TlnAuskunft.Datum)
 							GewaehlterTln.Datum = TSB.TlnAuskunft.Datum;
 
-						Res = TlnHinzufuegen(&GewaehlterTln, false);
+						Res = TlnHinzufuegen(&GewaehlterTln, TlnHinzKopieren);
 						if (Res < 0)
 							{
 							ProtokollierenTxp();
@@ -3780,9 +3786,11 @@ void txp_thread()
 							Diagnoseausgabe_P(PSTR("internes Rufnummern-Verzeichnis voll"), 2);
 							}
 #ifdef TXP_TLNSERVER							
-						else if (Res > 0)
+						else if (Res > 0) // Erfolg, denn Meldung 2 kann hier nicht kommen.
+							{
 							TlnServTlnbuchEintragGeaendert(&GewaehlterTln, -1); 
 								// -1: Geänderter Eintrag kommt nicht durch einen Sync-Vorgang 
+							}
 #endif //def TXP_TLNSERVER
 
 						} // Aktualisieren ist sinnvoll

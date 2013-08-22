@@ -410,7 +410,7 @@ void POP3DatenVerarbeiten()
 			break;
 			
 		case MailData:
-			//HACKif (AsciiDruckPuffer[0] != '\0')
+			//HACK if (AsciiDruckPuffer[0] != '\0')
 			//HACK	return; // es wird noch gedruckt, also nichts neues Drucken...
 				
 			// Empfang in einzelne Zeilen zerlegen und verarbeiten...
