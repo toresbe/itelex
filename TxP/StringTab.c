@@ -2,7 +2,10 @@
 #include <avr\pgmspace.h>
 #include "string.h"
 
-//nun werden die Grunddefinitionen angelegt 
+
+// Zu folgenden Konstrukten siehe auch http://www.nongnu.org/avr-libc/user-manual/FAQ.html#faq_rom_array 
+
+// nun werden die Grunddefinitionen angelegt 
 
 #include "StringTab.h" 
 
