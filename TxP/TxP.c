@@ -71,7 +71,7 @@
 #include "TlnServer.h"
 #include "eMail.h"
 #include "SvnVersion.h"
-
+#include "StringTab.h"
 
 const PROGMEM char SvnVersion_P[] = SVNVERSION;
 
@@ -1497,7 +1497,7 @@ static void SocketBearbeiten()
 			CloseTCPSocket(NewServerSocket);
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR(" ! ...ABGEWIESEN\r\n" ));
-			Diagnoseausgabe_P(PSTR("Zweiter kommender Anruf auf belegtem Telexphone-Socket"), 4);
+			Diagnoseausgabe_P(ISTR(ZweiterAnruf), 4);
 			}
 			
 		} // CheckPortRequest(TXP_PORT) != NO_SOCKET_USED
@@ -1719,7 +1719,7 @@ static void SocketBearbeiten()
 				{
 				if (ProtokollLevel >= 1)
 					ProtokollierenTxp_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
-				Diagnoseausgabe_P(PSTR("Mehrfache FEHLER beim Senden ins Netz"), 2);
+				Diagnoseausgabe_P(ISTR(MehrfacheSendeFehler), 2);
 	
 				CloseTCPSocket(TxpSocketHandle);
 				TxpSocketHandle = NO_SOCKET_USED;
@@ -1765,7 +1765,7 @@ static void SocketBearbeiten()
 		{
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("! ZEITUEBERSCHREITUNG bei Wiederaufnahme der Verbindung\r\n" ));
-		Diagnoseausgabe_P(PSTR("Zeitueberschreitung bei Wiederaufnahme der Verbindung"), 2);
+		Diagnoseausgabe_P(ISTR(ZeitueberschreitungWiederaufnahme), 2);
 		TxpSocketMode = SocketIdle;
 		TxpSocketAbbauGeplant = false;
 		TxpSocketIP = 0;
@@ -2521,7 +2521,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 				TeilnehmerServerFehlerZaehler[ServerI]--; // läuft im Erfolgsfall langsam wieder auf Null.
 				
 			if (TeilnehmerServerAlleNichtErreichbar)
-				Diagnoseausgabe_P(PSTR("Teilnehmer-Server wieder erreicht"), 1);	
+				Diagnoseausgabe_P(ISTR(TeilnehmerServerWiederErreichbar), 1);	
 				
 			TeilnehmerServerAlleNichtErreichbar = false;
 				
@@ -2596,7 +2596,7 @@ bool TeilnehmerServerSocketOeffnen(PGM_P Grund)
 		} // for ServerI
 		
 	TeilnehmerServerSocket = NO_SOCKET_USED;
-	Diagnoseausgabe_P(PSTR("Kein Teilnehmer-Server erreichbar"), 1);	
+	Diagnoseausgabe_P(ISTR(KeinTeilnehmerServerErreichbar), 1);	
 	TeilnehmerServerAlleNichtErreichbar = true;
 	return false;
 	} // TeilnehmerServerSocketOeffnen()
@@ -2671,7 +2671,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				}
 			else
 				{
-				Diagnoseausgabe_P(PSTR("Keine Verbindung zum Mail-Server fuer Ausgang"), 2);	
+				Diagnoseausgabe_P(PSTR("Keine Verbindung zum Mail-Server fuer Ausgang"), 2);	//! \todo Hier Ende der Extraktion der Strings
 				return 2; // schlecht
 				}
 #else
