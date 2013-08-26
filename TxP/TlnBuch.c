@@ -18,6 +18,7 @@
 #include "BusKomm.h" // für WahlZuAdresse()
 
 #include "CgiFormTools.h"
+#include "StringTab.h"
 
 #ifdef TELEXPHONE
 
@@ -725,6 +726,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	char Hilf[10];
 	bool Zurueck = false; // wird auf true gesetzt, wenn ein "zurück"-Text gedruckt werden soll.
 
+	// folgende Namen sind nur Intern und nicht zu übersetzen.
 	static PROGMEM const char AlleZeigen_P[] = "allezeigen";
 	static PROGMEM const char Edit_P[] = "edit";
 	static PROGMEM const char Nummer_P[] = "nummer";
@@ -734,10 +736,6 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	static PROGMEM const char Port_P[] = "port";
 	static PROGMEM const char Durchwahl_P[] = "durchwahl";
 	static PROGMEM const char Typ_P[] = "type";
-	static PROGMEM const char TypGeloescht_P[] = "geloescht";
-	static PROGMEM const char TypAscii_P[] = "Ascii";
-	static PROGMEM const char TypTxp_P[] = "TelexPhone";
-	static PROGMEM const char TypEMail_P[] = "eMail";
 	static PROGMEM const char Lokal_P[] = "local";
 	static PROGMEM const char Gesperrt_P[] = "lock";
 	static PROGMEM const char Save_P[] = "save";
@@ -926,7 +924,12 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 		CgiFormCheckbox_P(PSTR("gesperrt:"), Gesperrt_P, (TD.Flags & TlnFlag_Gesperrt) != 0);
 
-		const char *TypSelList[] = { TypGeloescht_P, TypTxp_P, TypAscii_P, TypEMail_P } ;
+		char *TypSelList[4];
+		TypSelList[0] = ISTR(TypGeloescht);
+		TypSelList[1] = ISTR(TypTxp);
+		TypSelList[2] = ISTR(TypAscii);
+		TypSelList[3] = ISTR(TypEMail);
+		
 		uint8_t TypSelNr;
 		switch (TD.AdrArt)
 			{
@@ -1010,7 +1013,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		if ((TD.Flags & TlnFlag_Gesperrt) != 0)
 			printf_P(PSTR("gesperrt<br>"));
 
-		if (TD.Adresse[0] == '\0' || strcmp_P(TypStr, TypGeloescht_P) == 0)
+		if (TD.Adresse[0] == '\0' || strcmp_P(TypStr, ISTR(TypGeloescht)) == 0)
 			// Leere Adresse --> löschen
 			{
 			TD.AdrArt = Geloescht;
@@ -1020,7 +1023,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			{
 			TD.IPAdr = strtoip(TD.Adresse);
 			
-			if (strcmp_P(TypStr, TypTxp_P) == 0)
+			if (strcmp_P(TypStr, ISTR(TypTxp)) == 0)
 				{
 				if (TD.IPAdr == 0)
 					{
@@ -1056,7 +1059,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P(PSTR("Port %u Durchwahl %s (%u)<br>"), TD.Port, Hilf, TD.Durchwahl);
 				}
 				
-			else if (strcmp_P(TypStr, TypAscii_P) == 0)
+			else if (strcmp_P(TypStr, ISTR(TypAscii)) == 0)
 				{
 				if (TD.IPAdr == 0)
 					{
@@ -1074,7 +1077,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P(PSTR("Port %u<br>"), TD.Port);
 				}
 
-			else if (strcmp_P(TypStr, TypEMail_P) == 0)
+			else if (strcmp_P(TypStr, ISTR(TypEMail)) == 0)
 				{
 				printf_P(PSTR("eMail: Adresse %s<br>"), TD.Adresse);
 				TD.AdrArt = eMail;

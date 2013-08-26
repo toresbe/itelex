@@ -32,11 +32,13 @@ _STRTABENTRY(MehrfacheSendeFehler, "Mehrfache FEHLER beim Senden ins Netz")
 _STRTABENTRY(ZeitueberschreitungWiederaufnahme, "Zeitueberschreitung bei Wiederaufnahme der Verbindung")
 _STRTABENTRY(TeilnehmerServerWiederErreichbar, "Teilnehmer-Server wieder erreicht")
 _STRTABENTRY(KeinTeilnehmerServerErreichbar, "Kein Teilnehmer-Server erreichbar")
+
+// für TlnBuch.h:
+_STRTABENTRY(TypGeloescht, "geloescht")
+_STRTABENTRY(TypAscii, "Ascii")
+_STRTABENTRY(TypTxp, "i-Telex")
+_STRTABENTRY(TypEMail, "eMail")
 /*
-_STRTABENTRY(, )
-_STRTABENTRY(, )
-_STRTABENTRY(, )
-_STRTABENTRY(, )
 _STRTABENTRY(, )
 _STRTABENTRY(, )
 _STRTABENTRY(, )
