@@ -38,6 +38,8 @@
 #include "apps/httpd/httpd2_pharse.h"
 #include "system/config/eeconfig.h"
 
+#include "TxP/StringTab.h"
+
 
 //! Einleitung eines durch Tabelle strukturieten CGI-Eingabeformulares
 //--------------------------------------------------------------------
@@ -58,7 +60,7 @@ void CgiFormFieldIntro_P(const char *FieldText, const char *FieldLabel)
 	{
 	printf_P(PSTR("<tr><td align=\"right\">"));
 	printf_P(FieldText);
-	printf_P(PSTR("</td><td><input name=\""));
+	printf_P(PSTR(":</td><td><input name=\""));
 	printf_P(FieldLabel);
 	}
 
@@ -114,7 +116,7 @@ void CgiFormDropdown_P(const char *FieldText, const char *FieldLabel, uint8_t NI
 	{
 	printf_P(PSTR("<tr><td align=\"right\">"));
 	printf_P(FieldText);
-	printf_P(PSTR("</td><td><select name=\""));
+	printf_P(PSTR(":</td><td><select name=\""));
 	printf_P(FieldLabel);
 	printf_P(PSTR("\" size=\"1\">"));
 	for (uint8_t i = 0 ; i < NItems ; i++)
@@ -160,10 +162,14 @@ void CgiCheckText_P(struct HTTP_REQUEST * http_request, const char *FieldText, c
 		printf_P(PSTR("<br>"));
 		printf_P(FieldText);
 		if (strcmp(Buf, Value) == 0)
-			printf_P(PSTR(" unver&auml;ndert: %s"), Buf);
+			{
+			printf_P(ISTR(Unveraendert));
+			printf_P(PSTR(": %s"), Buf);
+			}
 		else
 			{
-			printf_P(PSTR(" ge&auml;ndert in: %s"), Buf);
+			printf_P(ISTR(GeaendertIn));
+			printf_P(PSTR(": %s"), Buf);
 			changeConfig_P(FieldLabel, Buf);
 			strcpy(Value, Buf);
 			}
@@ -191,10 +197,14 @@ unsigned long CgiCheckULong_P(struct HTTP_REQUEST * http_request, const char *Fi
 		printf_P(PSTR("<br>"));
 		printf_P(FieldText);
 		if (Neu == Old)
-			printf_P(PSTR(" unver&auml;ndert: %lu"), Neu);
+			{
+			printf_P(ISTR(Unveraendert));
+			printf_P(PSTR(": %lu"), Neu);
+			}
 		else
 			{
-			printf_P(PSTR(" ge&auml;ndert in: %lu"), Neu);
+			printf_P(ISTR(GeaendertIn));
+			printf_P(PSTR(": %lu"), Neu);
 			changeConfig_P(FieldLabel, Buf);
 			}
 		return Neu;
@@ -229,11 +239,15 @@ bool CgiCheckBool_P(struct HTTP_REQUEST * http_request, const char *FieldText, c
 	printf_P(PSTR("<br>"));
 	printf_P(FieldText);
 	if (Neu == Old)
-		printf_P(PSTR(" unver&auml;ndert: %u"), Neu);
+		{
+		printf_P(ISTR(Unveraendert));
+		printf_P(PSTR(": %u"), Neu);
+		}
 	else
 		{
+		printf_P(ISTR(GeaendertIn));
+		printf_P(PSTR(": %u"), Neu);
 		changeConfig_P(FieldLabel, Buf);
-		printf_P(PSTR(" ge&auml;ndert in: %u"), Neu);
 		}
 	return Neu;
 	}

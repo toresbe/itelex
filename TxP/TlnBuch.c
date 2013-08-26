@@ -298,13 +298,13 @@ bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln)
 // ------------------------------------
 //! ggf. wird ein alter Eintrag gelöscht
 //! \param[in] Tln Neuer / zu ändernder Teilnehmereintrag.
-//! \param[in] Modus siehe #TTlnHinzufuegenModus.
+//! \param[in] HinzModus siehe #TTlnHinzufuegenModus.
 //! \retval 1 Eintrag hinzugefügt oder aktualisiert.
 //! \retval 2 Vorhandener Eintrag ist neuer als der zu speichernde!
 //! \retval 0 Eintrag unverändert.
 //! \retval -1 Speicher voll.
 
-int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus Modus)
+int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus HinzModus)
 	{
 	char *p;
 	
@@ -314,12 +314,12 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus Modus)
 		{
 		if (TlnBuchMemUsed + NeuGr >= TlnBuchMemMax)
 			return -1;
-		TlnEintragen(Tln, TlnBuch + TlnBuchMemUsed, Modus);
+		TlnEintragen(Tln, TlnBuch + TlnBuchMemUsed, HinzModus);
 		TlnBuchMemUsed += NeuGr;
 		return 1;
 		}
 		
-	if (Modus == TlnHinzNurNeuereUebernehmen)
+	if (HinzModus == TlnHinzNurNeuereUebernehmen)
 		{
 		TTlnDaten BisherEintrag;
 		TlnLesen(&BisherEintrag, p);
@@ -340,11 +340,11 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus Modus)
 			return -1;
 		memmove(p + NeuGr, p + AltGr, TlnBuchMemUsed - (p - TlnBuch) - AltGr);
 		TlnBuchMemUsed += NeuGr - AltGr;
-		TlnEintragen(Tln, p, Modus == TlnHinzDatumAktualisieren); // muss klappen ;-)
+		TlnEintragen(Tln, p, HinzModus == TlnHinzDatumAktualisieren); // muss klappen ;-)
 		return 1;
 		}
 	else
-		return TlnEintragen(Tln, p, Modus == TlnHinzDatumAktualisieren) ? 1 : 0;
+		return TlnEintragen(Tln, p, HinzModus == TlnHinzDatumAktualisieren) ? 1 : 0;
 	}
 
 
@@ -768,27 +768,18 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		printf_P(PSTR("<form action=\"txp-tlnverz.cgi\">"));
 		
 		if (TlnBuchOffen || KonfigFreigabe(NULL)) // NULL fragt nicht wieder nach einem Kennwort
-			printf_P(PSTR("<h3>Teilnehmerverzeichniss</h3><br>"));
+			printf_P(ISTR(UeberschriftTeilnehmerverzeichnis));
 		else
-			printf_P(PSTR("<h3>&Ouml;ffentliches Teilnehmerverzeichniss</h3><br>"));
+			printf_P(ISTR(UeberschriftOeffentlichesTeilnehmerverzeichnis));
 
 		if (!KonfigFreigabe(NULL))
-			printf_P(PSTR("<a href=\"txp-tlnverz.cgi?allezeigen\">vollst&auml;ndiges Verzeichniss</a><br>"));
+			{
+			printf_P(PSTR("<a href=\"txp-tlnverz.cgi?allezeigen\">"));
+			printf_P(ISTR(VollstaendigesTeilnehmerverzeichnis));
+			printf_P(PSTR("</a><br>"));
+			}
 		
-		printf_P(PSTR(
-			"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
-			"<tr>"
-   			"<th align=\"right\">Rufnummer</th>" // Nummer
-   			"<th align=\"left\">Name</th>" // Name
-   			"<th align=\"center\">Besond.</th>" // Flags
-   			"<th align=\"left\">Typ</th>" // Typ
-			"<th align=\"left\">Adresse</th>" // Adresse
-			"<th align=\"center\">Port</th>" // Port
-			"<th align=\"center\">Durchwahl</th>" // Durchwahl
-			"<th align=\"center\">letzte<br>Aktualisierung</th>" // Datum / Uhrzeit
-			"<th align=\"left\">Aktion</th>" // in dieser Spalte sind die Buttons
-			"</tr>"			
-			));
+		printf_P(ISTR(TeilnehmerverzeichnisHtmlKopf));
 			
 		TlnDatenInit(&TD);
 		
@@ -811,12 +802,23 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P(PSTR("<tr><td align=\"right\">%ld</td>"), TD.Nummer); // Nummer
 				printf_P(PSTR("<td align=\"left\">%s</td><td>&#160;"), TD.Name); // name
 				if ((TD.Flags & TlnFlag_Lokal) != 0)
-					printf_P(PSTR("Lokal "));
+					{
+					printf_P(ISTR(TlnverzAttrLokal));
+					printf_P(PSTR(" "));
+					}
 				if ((TD.Flags & TlnFlag_Gesperrt) != 0)
-					printf_P(PSTR("gesperrt "));
+					{
+					printf_P(ISTR(TlnverzAttrGesperrt));
+					printf_P(PSTR(" "));
+					}
 				if (TD.AdrArt == TxpDynIP)
-					printf_P(PSTR("DynIP "));
-				printf_P(PSTR("</td>")); // Ende Besonderheiten
+					{
+					printf_P(ISTR(TlnverzAttrDyn));
+					printf_P(PSTR(" "));
+					}
+					
+				printf_P(PSTR("</td>" // Ende Besonderheiten
+						      "<td align=\"left\">")); // Beginn Typ
 				
 				switch (TD.AdrArt)
 					{
@@ -826,8 +828,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						// weiter mit TxpUrl!
 					case TxpUrl:
 						AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
-						printf_P(PSTR(
-							"<td align=\"left\">TelexPhone</td>"
+						printf_P(ISTR(TypTxp));
+						printf_P(PSTR("</td>"
 							"<td align=\"left\"><a href=\"http://%s\" target=\"_blank\">%s</a></td>" // Adresse
 							"<td align=\"center\">%u</td>" // Port
 					   		"<td align=\"center\">%s</td>" // Durchwahl
@@ -838,8 +840,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						iptostr(TD.IPAdr, TD.Adresse);
 						// weiter mit AsciiUrl!
 					case AsciiUrl:
-						printf_P(PSTR(
-							"<td align=\"left\">Ascii</td>"
+						printf_P(ISTR(TypAscii));
+						printf_P(PSTR("</td>"
 							"<td align=\"left\">%s</td>" // Adresse
 							"<td align=\"center\">%u</td>" // Port
 					   		"<td>&#160;</td>" // Durchwahl
@@ -847,8 +849,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						break;
 
 					case eMail:
-						printf_P(PSTR(
-							"<td align=\"left\">eMail</td>"
+						printf_P(ISTR(TypEMail));
+						printf_P(PSTR("</td>"
 							"<td align=\"left\">%s</td>" // Adresse
 							"<td align=\"center\">&#160;</td>" // Port
 					   		"<td>&#160;</td>" // Durchwahl
@@ -856,7 +858,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						break;
 
 					default:
-						printf_P(PSTR("<td align=\"left\">gel&ouml;scht</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"));
+						printf_P(ISTR(TypGeloescht));
+						printf_P(PSTR("</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"));
 						break;
 					} // switch (TD.AdrArt)
 					
@@ -867,29 +870,33 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u %02d:%02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 				
 				if (KonfigFreigabe(NULL))
-					printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">&Auml;ndern</a></td></tr>"), TD.Nummer);
+					{
+					printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">"), TD.Nummer);
+					printf_P(ISTR(AktionAendern));
+					printf_P(PSTR("</a></td></tr>"));
+					}
 				else
 					printf_P(PSTR("<td>&#160;</td></tr>"));
 				
 				} // while (TlnListerNaechster(&LD, &TD))
 
 			if (KonfigFreigabe(NULL))
+				{
 				printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
-							   "<td><a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></td>"
-							   "</table>"
-							   "<a href=\"txp-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a><br>"
-							   "<a href=\"txp-tlnverz.cgi?load\">alle &Auml;nderungen verwerfen</a><br>"
-							   "<a href=\"txp-tlnverz.cgi?clear\">komplett l&ouml;schen</a><br>"
-							   "</form>") );
+							   "<td><a href=\"txp-tlnverz.cgi?edit=0\">"));
+				printf_P(ISTR(AktionHinzufuegen));
+				printf_P(PSTR("</a></td></tr></table>"));
+				printf_P(ISTR(TeilnehmerverzeichnisAktionenOffen));
+				printf_P(PSTR("</form>"));
+				}
 			else
 				printf_P(PSTR( "</table></form>") );
 			
 			} // Teilnehmerverzeichnis nicht leer
 		else
 			{
-			printf_P(PSTR( "</table>Noch keine Eintr&auml;ge vorhanden<p>"
-						   "<a href=\"txp-tlnverz.cgi?load\">gespeicherte Daten wiederherstellen</a><br>"
-						   "<a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></form>" ));
+			printf_P(PSTR("</table>"));
+			printf_P(ISTR(TeilnehmerverzeichnisAktionenLeerOffen));
 			}
 
 		} // argc == 0 --> gesamte Liste ausgeben
@@ -914,17 +921,17 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 		CgiFormStartTabbed_P(PSTR("txp-tlnverz.cgi"));
 
-		CgiFormInputFieldULong_P(PSTR("Rufnummer:"), Nummer_P, 10, TD.Nummer);
+		CgiFormInputFieldULong_P(ISTR(Rufnummer), Nummer_P, 10, TD.Nummer);
 
 		printf_P(PSTR("<input name=\"altnummer\" type=\"hidden\" value=\"%ld\">"), TD.Nummer);
 
-		CgiFormInputFieldText_P(PSTR("Name:"), Name_P, TlnNameMax-1, TD.Name);
+		CgiFormInputFieldText_P(ISTR(Name), Name_P, TlnNameMax-1, TD.Name);
 	
-		CgiFormCheckbox_P(PSTR("nur Lokal:"), Lokal_P, (TD.Flags & TlnFlag_Lokal) != 0);
+		CgiFormCheckbox_P(ISTR(TlnverzAttrLokal), Lokal_P, (TD.Flags & TlnFlag_Lokal) != 0);
 
-		CgiFormCheckbox_P(PSTR("gesperrt:"), Gesperrt_P, (TD.Flags & TlnFlag_Gesperrt) != 0);
+		CgiFormCheckbox_P(ISTR(TlnverzAttrGesperrt), Gesperrt_P, (TD.Flags & TlnFlag_Gesperrt) != 0);
 
-		char *TypSelList[4];
+		const char *TypSelList[4];
 		TypSelList[0] = ISTR(TypGeloescht);
 		TypSelList[1] = ISTR(TypTxp);
 		TypSelList[2] = ISTR(TypAscii);
@@ -945,15 +952,15 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		
 		if (TD.AdrArt == TxpIP || TD.AdrArt == TxpDynIP || TD.AdrArt == AsciiIP)
 			iptostr(TD.IPAdr, TD.Adresse);
-		CgiFormInputFieldText_P(PSTR("Adresse:"), Adresse_P, TlnAdresseMax-1, TD.Adresse);
-		CgiFormInputFieldULong_P(PSTR("Port:"), Port_P, 5, TD.Port);
+		CgiFormInputFieldText_P(ISTR(Adresse), Adresse_P, TlnAdresseMax-1, TD.Adresse);
+		CgiFormInputFieldULong_P(ISTR(Port), Port_P, 5, TD.Port);
 		AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
-		CgiFormInputFieldText_P(PSTR("Durchwahl:"), Durchwahl_P, 2, Hilf);
+		CgiFormInputFieldText_P(ISTR(Durchwahl), Durchwahl_P, 2, Hilf);
 
 		if (TD.Nummer == 0)
-			CgiFormFinish_P(PSTR("Hinzuf&uuml;gen"));
+			CgiFormFinish_P(ISTR(AktionHinzufuegen));
 		else
-			CgiFormFinish_P(PSTR("&Auml;ndern"));
+			CgiFormFinish_P(ISTR(AktionAendern));
 		Zurueck = true;
 		} // Ändern oder Neu
 
@@ -983,18 +990,19 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 		if (TD.Nummer == 0)
 			{
-			printf_P(PSTR("<b>Rufnummer 0 nicht erlaubt!</b><br>"));
+			printf_P(ISTR(Rufnummer0NichtErlaubt));
 			DatenOk = false;
 			}
 		else
 			{
-			printf_P(PSTR("Teilnehmereintrag:<br>Rufnummer: %ld "), TD.Nummer);
+			printf_P(ISTR(MeldungTlneintragRufnummer), TD.Nummer);
 			if (AltNummer == 0)
-				printf_P(PSTR("hinzuf&uuml;gen"));
+				printf_P(ISTR(AktionHinzufuegen));
 			else if (AltNummer != TD.Nummer)
-				printf_P(PSTR("ehem. %ld"), AltNummer);
+				printf_P(ISTR(EhemalsLong), AltNummer);
 			printf_P(PSTR("<br>"));
-			printf_P(PSTR("Name: %s<br>"), TD.Name);
+			printf_P(ISTR(Name));
+			printf_P(PSTR(": %s<br>"), TD.Name);
 			}
 		
 		if (PharseCheckName_P(http_request, Lokal_P))
@@ -1003,7 +1011,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				TD.Flags |= TlnFlag_Lokal;
 			}
 		if ((TD.Flags & TlnFlag_Lokal) != 0)
-			printf_P(PSTR("nur Lokal<br>"));
+			{
+			printf_P(ISTR(TlnverzAttrLokal));
+			printf_P(PSTR("<br>"));
+			}
 
 		if (PharseCheckName_P(http_request, Gesperrt_P))
 			{
@@ -1011,13 +1022,17 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				TD.Flags |= TlnFlag_Gesperrt;
 			}
 		if ((TD.Flags & TlnFlag_Gesperrt) != 0)
-			printf_P(PSTR("gesperrt<br>"));
+			{
+			printf_P(ISTR(TlnverzAttrGesperrt));
+			printf_P(PSTR("<br>"));
+			}
 
 		if (TD.Adresse[0] == '\0' || strcmp_P(TypStr, ISTR(TypGeloescht)) == 0)
 			// Leere Adresse --> löschen
 			{
 			TD.AdrArt = Geloescht;
-			printf_P(PSTR("gel&ouml;scht<br>"));
+			printf_P(ISTR(TypGeloescht));
+			printf_P(PSTR("<br>"));
 			}
 		else
 			{
@@ -1028,7 +1043,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				if (TD.IPAdr == 0)
 					{
 					TD.AdrArt = TxpUrl;
-					printf_P(PSTR("TelexPhone: Url %s "), TD.Adresse);
+					printf_P(ISTR(TypTxp));
+					printf_P(ISTR(UrlZusatz), TD.Adresse);
 					}
 				else
 					{
@@ -1039,7 +1055,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					else
 						TD.AdrArt = TxpIP;
 					iptostr(TD.IPAdr, TD.Adresse); // und wieder zurück wandeln
-					printf_P(PSTR("TelexPhone: IP %s "), TD.Adresse);
+					printf_P(ISTR(TypTxp));
+					printf_P(ISTR(IPZusatz), TD.Adresse);
 					}
 				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
 				strncpy(Hilf, http_request->argvalue[PharseGetValue_P(http_request, Durchwahl_P)], 2);
@@ -1056,7 +1073,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				if (TD.Durchwahl == 110) 
 					TD.Durchwahl = 0; // eingabe von WahlZuAdresse(0) = 110
 				AdresseZuWahlStr(TD.Durchwahl, Hilf);
-				printf_P(PSTR("Port %u Durchwahl %s (%u)<br>"), TD.Port, Hilf, TD.Durchwahl);
+				printf_P(ISTR(Port));
+				printf_P(PSTR(" %u "), TD.Port);
+				printf_P(ISTR(Durchwahl));
+				printf_P(PSTR(" %s (%u)<br>"), Hilf, TD.Durchwahl);
 				}
 				
 			else if (strcmp_P(TypStr, ISTR(TypAscii)) == 0)
@@ -1064,22 +1084,28 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				if (TD.IPAdr == 0)
 					{
 					TD.AdrArt = AsciiUrl;
-					printf_P(PSTR("Ascii: Url %s "), TD.Adresse);
+					printf_P(ISTR(TypAscii));
+					printf_P(ISTR(UrlZusatz), TD.Adresse);
 					}
 				else
 					{
 					TD.AdrArt = AsciiIP;
 					iptostr(TD.IPAdr, TD.Adresse); // und wieder zurück wandeln
-					printf_P(PSTR("Ascii: IP %s "), TD.Adresse);
+					printf_P(ISTR(TypAscii));
+					printf_P(ISTR(IPZusatz), TD.Adresse);
 					}
 				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
 				TD.Durchwahl = 0;
-				printf_P(PSTR("Port %u<br>"), TD.Port);
+				printf_P(ISTR(Port));
+				printf_P(PSTR(" %u<br>"), TD.Port);
 				}
 
 			else if (strcmp_P(TypStr, ISTR(TypEMail)) == 0)
 				{
-				printf_P(PSTR("eMail: Adresse %s<br>"), TD.Adresse);
+				printf_P(ISTR(TypEMail));
+				printf_P(PSTR(": "));
+				printf_P(ISTR(Adresse));
+				printf_P(PSTR(" %s<br>"), TD.Adresse);
 				TD.AdrArt = eMail;
 				TD.Port = 0;
 				TD.Durchwahl = 0;
@@ -1087,7 +1113,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				
 			else
 				{
-				printf_P(PSTR("<b>Unbekannter Typ!</b><br>"));
+				printf_P(ISTR(TypUnbekannt));
 				DatenOk = false;
 				}
 			}
@@ -1097,13 +1123,13 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			
 		if (DatenOk && TD.AdrArt == Geloescht && AltNummer == 0)
 			{ // einen neuen Lösch-Eintrag anzulegen ist doof
-			printf_P(PSTR("<b>keine &Auml;nderung</b><br>"));
+			printf_P(ISTR(KeineAenderung));
 			DatenOk = false;
 			}
 			
 		if (DatenOk && TD.Nummer != AltNummer && TlnSuche(TD.Nummer, false, NULL))
 			{
-			printf_P(PSTR("<b>Rufnummer ist bereits vergeben, &Auml;nderung nicht gespeichert</b><br>"));
+			printf_P(ISTR(RufnummerDoppelt));
 			DatenOk = false;
 			}
 			
@@ -1114,13 +1140,13 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				{
 				if (Res > 0)
 					{
-					printf_P(PSTR("Eintrag gespeichert<br>"));
+					printf_P(ISTR(EintragGespeichert));
 #ifdef TXP_TLNSERVER
 					TlnServTlnbuchEintragGeaendert(&TD, -1); // -1: Änderung kommt von keinem Server
 #endif //def TXP_TLNSERVER
 					}
 				else
-					printf_P(PSTR("Eintrag unver&auml;ndert<br>"));
+					printf_P(ISTR(EintragUnveraendert));
 				
 				if (TD.Nummer != AltNummer && AltNummer != 0)
 					{
@@ -1128,13 +1154,13 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					TD.AdrArt = Geloescht;
 					if (TlnHinzufuegen(&TD, TlnHinzDatumAktualisieren) < 0)
 						{
-						printf_P(PSTR("<b>Alte Nummer %ld konnte nicht gel&ouml;scht werden!</b><br>"), AltNummer);	
+						printf_P(ISTR(AlteNummerNichtGeloescht), AltNummer);	
 						}
 					}
 				}
 			else
 				{ // TlnHinzufuegen() < 0
-				printf_P(PSTR("<b>Teilnehmerliste voll, Eintrag nicht gespeichert</b><br>"));
+				printf_P(ISTR(TeilnehmerlisteVoll));
 				}
 			} // if DatenOk
 		Zurueck = true;
@@ -1146,9 +1172,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		// ==================================================
 		int Res = TlnBuchSpeichereAufExternEeprom();
 		if (Res < 0)
-			printf_P(PSTR("<b>Fehler beim Speichern (Codes %d / %02X)</b>"), Res, SwTwiLetzterFehler);
+			printf_P(ISTR(EepromSpeicherFehler), Res, SwTwiLetzterFehler);
 		else
-			printf_P(PSTR("Erfolgreich gespeichert (%d Bytes)"), Res);
+			printf_P(ISTR(EepromSpeicherErfolg), Res);
 		Zurueck = true;
 		}
 		
@@ -1158,9 +1184,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		// ==================================================
 		int Res = TlnBuchLadeVonExternEeprom();
 		if (Res < 0)
-			printf_P(PSTR("<b>Fehler beim Laden (Codes %d / %02X)</b>"), Res, SwTwiLetzterFehler);
+			printf_P(ISTR(EepromLadenFehler), Res, SwTwiLetzterFehler);
 		else
-			printf_P(PSTR("Erfolgreich geladen (%d Bytes)"), Res);
+			printf_P(ISTR(EepromLadenErfolg), Res);
 		Zurueck = true;
 		}
 		
@@ -1168,7 +1194,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		{ 
 		// komplett löschen
 		// ==================================================
-		printf_P(PSTR("komplett gel&ouml;scht"));
+		printf_P(ISTR(KomplettGeloescht));
 		TlnBuchMemUsed = 0;
 		Zurueck = true;
 		}
@@ -1177,12 +1203,12 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		{ 
 		// nicht erkannt
 		// ==================================================
-		printf_P(PSTR("Fehler: ungueltiger CGI-Aufruf: %s"), http_request->HTTP_LINEBUFFER);
+		printf_P(ISTR(UngueltigerCgiAufruf), http_request->HTTP_LINEBUFFER);
 		Zurueck = true;
 		}
 		
 	if (Zurueck)
-		printf_P(PSTR("<br>Zur&uuml;ck zum <a href=\"txp-tlnverz.cgi\">Teilnehmer-Verzeichnis</a>"));
+		printf_P(ISTR(ZurueckZumTeilnehmerverzeichnis));
 	
 	cgi_PrintHttpheaderEnd();
 
@@ -1222,7 +1248,7 @@ void TlnBuchInit()
 			{
 			ProtokollierenInt_P(PSTR("TxP: ! Eeprom Ladefehler %d"), Res);
 			ProtokollierenInt_P(PSTR(" / %02X\r\n"), SwTwiLetzterFehler);
-			Diagnoseausgabe_P(PSTR("Fehler im Zusatz-EEPROM"), 1);
+			Diagnoseausgabe_P(ISTR(ZusatzEepromFehler), 1);
 			}
 		} // if get_Taste()
 		
@@ -1231,5 +1257,4 @@ void TlnBuchInit()
 	}
 	
 
-	
 #endif //def TELEXPHONE

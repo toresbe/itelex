@@ -285,7 +285,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 				ProtokollierenIPAdr(TlnIP);
 				ProtokollierenInt_P(PSTR(" Port %u (noch gesperrt!)\r\n"), TD.Port);
 				}
-			Diagnoseausgabe_P(PSTR("Neuer Teilnehmer angemeldet"), 1);
+			Diagnoseausgabe_P(PSTR(/*$NeuTeilnehmer*/ "Neuer Teilnehmer angemeldet"), 1);
 			TlnServTlnbuchEintragGeaendert(&TD, -1); // da er neu war, muss er geändert worden sein.
 				// -1: Kein Sync-Vorgang
 			return true;
@@ -380,7 +380,10 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 				ProtokollierenTlnServInt_P(Kanal, PSTR("Als geloescht markierter Teilnehmer-Eintrag %lu uebersprungen\r\n"), TlnServBuf.TlnAuskunft.Nummer);
 				continue;
 				}
-			
+		
+			if (!Kanal->Freigabe)
+				TlnServBuf.TlnAuskunft.DynPin = 0;
+				
 			if (ProtokollLevelTlnServ >= 2)
 				{
 				ProtokollierenTlnServInt_P(Kanal, PSTR("Sende Teilnehmer-Eintrag %lu\r\n"), TlnServBuf.TlnAuskunft.Nummer);
@@ -585,7 +588,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						ProtokollierenTlnServInt_P(Kanal, 
 							PSTR("! Datensatz vom Teilnehmer-Server mit Nr %lu konnte nicht gespeichert werden\r\n"), 
 							TlnServBuf.TlnAuskunft.Nummer);
-						Diagnoseausgabe_P(PSTR("internes Rufnummern-Verzeichnis voll"), 2);
+						Diagnoseausgabe_P(PSTR(/*$TeilnehmerlisteVoll*/ "internes Rufnummern-Verzeichnis voll"), 2); //directory
 						FehlerRueckmelden(PSTR("abort"), 0);	
 						Senden = true;
 						}
@@ -640,11 +643,19 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					FehlerRueckmelden(PSTR("login not enough data: %u"), TlnServBuf.DataLen);
 					Senden = true;
 					}
+				else if (TlnServBuf.SyncAnmeldung.Geheimzahl == 0) 
+					{ // anonyme Anmeldung, es werden keine DynPin gesendet.
+					Kanal->Freigabe = false;
+					Kanal->AusgabeStichdatum = 0; // = alle 
+					Kanal->AusgabeGestartet = false; // wird aber gleich gestartet
+					TlnDatensatzSyncSenden(Kanal);
+					Senden = true;
+					}
 				else if (TlnServBuf.SyncAnmeldung.Geheimzahl != TlnServSyncGeheimzahl)
 					{
+					Diagnoseausgabe_P(PSTR(/*$ServerAnmeldungFalscheGeheimzahl*/ "Teilnehmer-Server Anmeldung mit falscher Geheimzahl"), 1);
 					FehlerRueckmelden(PSTR("wrong authentification"), 0);
 					Senden = true;
-					Diagnoseausgabe_P(PSTR("Teilnehmer-Server Anmeldung mit falscher Geheimzahl"), 1);
 					}
 				else
 					{
@@ -666,7 +677,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					{
 					FehlerRueckmelden(PSTR("wrong authentification"), 0);
 					Senden = true;
-					Diagnoseausgabe_P(PSTR("Teilnehmer-Server Anmeldung mit falscher Geheimzahl"), 1);
+					Diagnoseausgabe_P(PSTR(/*$ServerAnmeldungFalscheGeheimzahl*/ "Teilnehmer-Server Anmeldung mit falscher Geheimzahl"), 1);
 					}
 				else
 					{

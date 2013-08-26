@@ -21,7 +21,7 @@ typedef enum {
 	TlnHinzKopieren, //!< alle Daten werden so übernommen wie sie sind.
 	} TTlnHinzufuegenModus;
 	
-extern int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus Modus);	
+extern int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus HinzModus);	
 
 //! Datentyp für die Speicherung der aktuellen Lister-Position
 typedef struct

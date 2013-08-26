@@ -2671,12 +2671,12 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				}
 			else
 				{
-				Diagnoseausgabe_P(PSTR("Keine Verbindung zum Mail-Server fuer Ausgang"), 2);	//! \todo Hier Ende der Extraktion der Strings
+				Diagnoseausgabe_P(ISTR(KeineVerbindungZumMailServerAusgang), 2);
 				return 2; // schlecht
 				}
 #else
 			ProtokollierenTxp_P(PSTR("! eMail nicht unterstuetzt\r\n" ));
-			Diagnoseausgabe_P(PSTR("Mail in dieser Version nicht unterstuetzt"), 3);
+			Diagnoseausgabe_P(ISTR(MailNichtInDieserVersion), 3);
 			return 2;
 #endif //ndef TXP_EMAIL		
 			
@@ -2697,7 +2697,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("! Socket konnte nicht erstmalig geoeffnet werden\r\n"));
 			
-		Diagnoseausgabe_P(PSTR("Teilnehmer nicht erreichbar"), 2);
+		Diagnoseausgabe_P(ISTR(TeilnehmerNichtErreichbar), 2);
 		TxpSocketHandle = NO_SOCKET_USED;
 		TxpSocketMode = SocketIdle;
 		return 1;
@@ -2947,8 +2947,7 @@ bool SonstigeAnwahl(uint8_t aDurchwahl)
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("! Einschaltung intern VERSAGT\r\n" ));
 			
-		Diagnoseausgabe_P(PSTR("Anschluss intern besetzt."), 1);
-			//! \todo bei Besetzt andere Meldung ausgeben.
+		Diagnoseausgabe_P(ISTR(AnschlussInternBesetzt), 1);
 			
 		AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 		AsciiHilfPuffer[0] = '\0';
@@ -3208,7 +3207,7 @@ void txp_thread()
 			{
 			if (ProtokollLevel >= 1)	
 				ProtokollierenTxp_P(PSTR("! TWI-Timeout -> Abschaltung\r\n"));
-			Diagnoseausgabe_P(PSTR("Interne Verbindung unterbrochen"), 1);
+			Diagnoseausgabe_P(ISTR(TWITimeout), 1);
 			
 			InterneVerbindungBeenden(true);
 			TxpSocketAbbauGeplant = true;
@@ -3292,7 +3291,7 @@ void txp_thread()
 				ProtokollierenInt_P(PSTR("! Anwahl intern an %u VERSAGT\r\n"), Durchwahl);
 				}
 				
-			Diagnoseausgabe_P(PSTR("Reservierung fuer Einschaltung konnte nicht versandt werden"), 1);
+			Diagnoseausgabe_P(ISTR(AnschlussInternBesetzt), 1);
 				//!  \todo bei Besetzt andere Meldung.
 
 			SendeStopkommando(PSTR("occ\r\n"));
@@ -3358,13 +3357,14 @@ void txp_thread()
 				else
 					{
 					AlternativSucheBeiBesetzt = true; // damit auf jeden Fall gedruckt wird!
-					strcpy_P(AsciiDruckPuffer, PSTR("interne IP: "));
+					strcpy_P(AsciiDruckPuffer, ISTR(DiagInterneIP));
 					iptostr(myIP, AsciiDruckPuffer + strlen(AsciiDruckPuffer));
 					strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 					struct TIME Time;
 					CLOCK_GetTime(&Time);
+					sprintf_P(AsciiDruckPuffer + strlen(AsciiDruckPuffer), ISTR(Datum));
 					sprintf_P(AsciiDruckPuffer + strlen(AsciiDruckPuffer), 
-							  PSTR("Datum: %02u.%02u.%04u %02u:%02u:%02u\r\n"), 
+							  PSTR(": %02u.%02u.%04u %02u:%02u:%02u\r\n"), 
 							  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 					}
 				break;
@@ -3408,7 +3408,7 @@ void txp_thread()
 		&& DiagnosePufferLevel <= MeldungsdruckLevel)
 		{ 
 		AsciiDruckZiel = DiagnoseAusgabeZiel;
-		strcpy_P(AsciiDruckPuffer, PSTR("\r\n///meldung: "));
+		strcpy_P(AsciiDruckPuffer, ISTR(DiagnoseEinleitung));
 		strncat(AsciiDruckPuffer, DiagnosePuffer, AsciiDruckPufferMax-30);
 		AsciiDruckPuffer[AsciiDruckPufferMax-30] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
@@ -3651,7 +3651,7 @@ void txp_thread()
 			if (SelbstAnrufFehlerZaehler >= 16)
 				{
 				DynIPAktiv = false;
-				Diagnoseausgabe_P(PSTR("Selbst-Anruf mehrfach versagt, falsche Router-Konfiguration?"), 1);
+				Diagnoseausgabe_P(ISTR(SelbstAnrufMehrfachVersagt), 1);
 				}
 			}
 			
@@ -3737,7 +3737,7 @@ void txp_thread()
 				case TLNSERV_AUSKUNFT_NICHTVERG:
 					if (ProtokollLevel >= 2)
 						ProtokollierenTxp_P(PSTR("Teilnehmer-Server meldet 'nicht gefunden'\r\n" ));
-					Diagnoseausgabe_P(PSTR("gewaehlte Nummer nicht bekannt"), 3);
+					Diagnoseausgabe_P(ISTR(NummerNichtBekannt), 3);
 					break;
 					
 				case TLNSERV_AUSKUNFT_VERSION1:
@@ -3783,7 +3783,7 @@ void txp_thread()
 							{
 							ProtokollierenTxp();
 							ProtokollierenInt_P(PSTR("! Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
-							Diagnoseausgabe_P(PSTR("internes Rufnummern-Verzeichnis voll"), 2);
+							Diagnoseausgabe_P(ISTR(InternesVerzeichnisVoll), 2);
 							}
 #ifdef TXP_TLNSERVER							
 						else if (Res > 0) // Erfolg, denn Meldung 2 kann hier nicht kommen.
@@ -3994,8 +3994,8 @@ uint8_t KonfigFreigabe(void *pStruct)
 		KonfigFreigabeErteilt = false;
 		cgi_PrintHttpheaderStart();
 		CgiFormStartTabbed_P(PSTR("txpcfg-intern.cgi"));
-		CgiFormInputFieldText_P(PSTR("Seite gesperrt! Kennwort :"), Kennwort_P, KonfigPasswortLen, NULL);
-		CgiFormFinish_P(PSTR("Freigeben"));
+		CgiFormInputFieldText_P(ISTR(KennwortAbfrage), Kennwort_P, KonfigPasswortLen, NULL);
+		CgiFormFinish_P(ISTR(Freigeben));
 		cgi_PrintHttpheaderEnd();
 		return false;
 		}
@@ -4015,7 +4015,7 @@ uint8_t KonfigFreigabe(void *pStruct)
 			printf_P(PSTR("Kennwort falsch!"));
 			cgi_PrintHttpheaderEnd();
 			KonfigFreigabeErteilt = false;
-			Diagnoseausgabe_P(PSTR("falsches Konfigurations-Kennwort eingegeben"), 3);
+			Diagnoseausgabe_P(ISTR(FalschesKonfigKennwortEingegeben), 3);
 			return false;
 			}
 		}
@@ -4193,7 +4193,8 @@ void txp_cgi_msg_Out( void * pStruct )
 					
 	if (Modus == ModHtmlChatVerbunden)
 		{
-		printf_P(PSTR("Druckspiegel:<br><pre>%s&lt;&lt;&lt;%s%s</pre>"), HtmlSendeText, AsciiHilfPuffer, AsciiDruckPuffer);
+		printf_P(ISTR(Druckspiegel));
+		printf_P(PSTR("<br><pre>%s&lt;&lt;&lt;%s%s</pre>"), HtmlSendeText, AsciiHilfPuffer, AsciiDruckPuffer);
 
 		if (ProtokollLevel >= 3)
 			{
@@ -4209,7 +4210,7 @@ void txp_cgi_msg_Out( void * pStruct )
 
 	else if (Modus == ModRuhe)
 		{
-		printf_P(PSTR("Texteingabe startet Fernschreiber"));
+		printf_P(ISTR(TexteingabeStartetFernschreiber));
 		HtmlSendeText[0] = '\0';
 		if (ProtokollLevel >= 3)
 			ProtokollierenTxp_P(PSTR("Direktdruck Abruf Druckspiegel (aus)\r\n"));
@@ -4217,7 +4218,7 @@ void txp_cgi_msg_Out( void * pStruct )
 		
 	else
 		{
-		printf_P(PSTR("Interface ist belegt, bitte warten."));
+		printf_P(ISTR(AndereVerbindungBesteht));
 		if (ProtokollLevel >= 3)
 			ProtokollierenTxp_P(PSTR("Direktdruck Abruf Druckspiegel (belegt)\r\n"));
 		}
@@ -4298,12 +4299,14 @@ void txp_cgi_msg_In( void * pStruct )
 		}
 
 	cgi_PrintHttpheaderStart();
-	printf_P(PSTR(
-		"<form action=\"txp-msg-in.cgi\">"
-		"Eingabe: <input name=\"Eingabe\" type=\"text\" size=\"65\" value=\"\" maxlength=\"65\">"
-		"<input type=\"submit\" value=\" Absenden \">"
-		"<a href=\"txp-msg-out.cgi\" target=\"MsgOut\">Aktualisieren</a>"
-		"</form>"));
+	printf_P(PSTR("<form action=\"txp-msg-in.cgi\">"));
+	printf_P(ISTR(HtmlTextEingabe));
+	printf_P(PSTR("<input name=\"Eingabe\" type=\"text\" size=\"65\" value=\"\" maxlength=\"65\">"
+				  "<input type=\"submit\" value=\""));
+	printf_P(ISTR(HtmlTextEingabeAbsenden));
+	printf_P(PSTR(" \"><a href=\"txp-msg-out.cgi\" target=\"MsgOut\">"));
+	printf_P(ISTR(HtmlTextEingabeAktualisieren));
+	printf_P(PSTR("</a></form>"));
 	cgi_PrintHttpheaderEnd();
 	}
 	
@@ -4384,35 +4387,38 @@ void txp_cgi_config_intern(void *pStruct)
 
 		#ifdef TXP_ANSCHLUSS
 		AdresseZuWahlStr(BusEigenAdresse, Buf);
-		CgiFormInputFieldText_P(PSTR("Netz-Vorwahl f&uuml;r gehende Verbindungen:"), EigeneNummer_P, 2, Buf);
+		CgiFormInputFieldText_P(ISTR(EigeneAmtsnummer), EigeneNummer_P, 2, Buf);
 
-		CgiFormCheckbox_P(PSTR("feste Hauptstelle f&uuml;r kommende Verbindungen:"), FesteHst_P, FesteHauptstelle);
+		CgiFormCheckbox_P(ISTR(FesteHauptstelle), FesteHst_P, FesteHauptstelle);
 
 		AdresseZuWahlStr(Hauptstelle, Buf);
-		CgiFormInputFieldText_P(PSTR("interne Durchwahl der Hauptstelle f&uuml;r kommende Verbindungen:"), Hauptstelle_P, 2, Buf);
+		CgiFormInputFieldText_P(ISTR(FesteHauptstelleNummer), Hauptstelle_P, 2, Buf);
 
-		CgiFormCheckbox_P(PSTR("Alternativ-Suche bei besetzt:"), AlternBeiBes_P, AlternativSucheBeiBesetzt);
+		CgiFormCheckbox_P(ISTR(AlternativSucheBeiBesetzt), AlternBeiBes_P, AlternativSucheBeiBesetzt);
 						
 		readConfig_P(DurchwahlTabelle_P, Buf);
-		CgiFormInputFieldText_P(PSTR("Durchwahlen:<br>(mit Komma trennen)"), DurchwahlTabelle_P, 30, Buf);
+		CgiFormInputFieldText_P(ISTR(DurchwahlenListe), DurchwahlTabelle_P, 30, Buf);
 		
 		#endif //def TXP_ANSCHLUSS
 
-		CgiFormInputFieldULong_P(PSTR("Protokoll-Level:"), ProtokollLevel_P, 2, ProtokollLevel);
-		CgiFormInputFieldULong_P(PSTR("Protokoll-Level f&uuml;r Teiln-Server:"), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
-		CgiFormInputFieldULong_P(PSTR("Level f&uuml;r Druckausgabe von Meldungen:"), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
+		CgiFormInputFieldULong_P(ISTR(ProtokollLevel), ProtokollLevel_P, 2, ProtokollLevel);
+		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
+		CgiFormInputFieldULong_P(ISTR(DiagnoseLevel), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
 		
-		CgiFormInputFieldText_P(PSTR("Passwort f&uuml;r Konfigurationsseiten:"), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
+		CgiFormInputFieldText_P(ISTR(KonfigPasswort), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
 		
-		CgiFormCheckbox_P(PSTR("Teilnehmer-Verzeichnis f&uuml;r alle sichtbar:"), TlnBuchOffen_P, TlnBuchOffen);
+		CgiFormCheckbox_P(ISTR(TlnVerzeichnisOffen), TlnBuchOffen_P, TlnBuchOffen);
 
-		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
+		CgiFormFinish_P(ISTR(EinstellungenUebernehmen));
 		}
 	else // argc > 0
 		{
 		uint8_t Neu;
 
-		printf_P(PSTR("neue Einstellungen: <a href=\"txpcfg-intern.cgi\">weiter</a>"));
+		printf_P(ISTR(NeueEinstellungen));
+		printf_P(PSTR("<a href=\"txpcfg-intern.cgi\">"));
+		printf_P(ISTR(Weiter));
+		printf_P(PSTR("</a>"));
 
 		#ifdef TXP_ANSCHLUSS
 		
@@ -4423,16 +4429,22 @@ void txp_cgi_config_intern(void *pStruct)
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EigeneNummer_P)], 2);
 			Buf[2] = '\0';
 			Neu = WahlZuAdresse(atoi(Buf), strlen(Buf));
+			printf_P(PSTR("<br>"));
+			printf_P(ISTR(EigeneAmtsnummer));
 			if (Neu == BusEigenAdresse)
-				printf_P(PSTR("<br>Netz-Vorwahl unver&auml;ndert: %s"), Buf);
+				{
+				printf_P(ISTR(Unveraendert));
+				printf_P(PSTR(": %s"), Buf);
+				}
 			else if (Modus == ModRuhe && BusEigenAdressePruefenUndSetzen(Neu))
 				{
 				AdresseZuWahlStr(Neu, Buf);
 				changeConfig_P(EigeneNummer_P, Buf);
-				printf_P(PSTR("<br>Netz-Vorwahl: %s"), Buf);
+				printf_P(ISTR(GeaendertIn));
+				printf_P(PSTR(": %s"), Buf);
 				}
 			else
-				printf_P(PSTR("<br>Netz-Vorwahl konnte nicht ge&auml;ndert werden"));
+				printf_P(ISTR(KonnteNichtGeaendertWerden));
 			}
 		
 		// Nummer Hauptstelle
@@ -4442,62 +4454,30 @@ void txp_cgi_config_intern(void *pStruct)
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, Hauptstelle_P)], 2);
 			Buf[2] = '\0';
 			Neu = WahlZuAdresse(atoi(Buf), strlen(Buf));
+			printf_P(PSTR("<br>"));
+			printf_P(ISTR(FesteHauptstelleNummer));
 			if (Neu == Hauptstelle)
-				printf_P(PSTR("<br>Hauptstelle unver&auml;ndert: %s"), Buf);
+				{
+				printf_P(ISTR(Unveraendert));
+				printf_P(PSTR(": %s"), Buf);
+				}
 			else
 				{
 				AdresseZuWahlStr(Neu, Buf);
 				changeConfig_P(Hauptstelle_P, Buf);
-				printf_P(PSTR("<br>Hauptstelle: %s"), Buf);
 				Hauptstelle = Neu;
+				printf_P(ISTR(GeaendertIn));
+				printf_P(PSTR(": %s"), Buf);
 				}
 			}
 		
 		// Feste Hauptstelle
 		// ------------------
-		//! \todo Umstellen auf CgiCheckBool_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, bool Old)
-		if (PharseCheckName_P(http_request, FesteHst_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, FesteHst_P)], 2);
-			Buf[2] = '\0';
-			Neu = atoi(Buf) != 0; 
-			}
-		else
-			{
-			Neu = false;
-			Buf[0] = '0', Buf[1] = '\0';
-			}
-		if (Neu == FesteHauptstelle)
-			printf_P(PSTR("<br>FesteHauptstelle unver&auml;ndert: %u"), Neu);
-		else
-			{
-			changeConfig_P(FesteHst_P, Buf);
-			printf_P(PSTR("<br>Feste Hauptstelle: %s"), Buf);
-			FesteHauptstelle = Neu;
-			}
+		CgiCheckBool_P(http_request, ISTR(FesteHauptstelle), FesteHst_P, FesteHauptstelle);
 			
 		// AlternativSucheBeiBesetzt
 		// -------------------------
-		//! \todo Umstellen auf CgiCheckBool_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, bool Old)
-		if (PharseCheckName_P(http_request, AlternBeiBes_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, AlternBeiBes_P)], 2);
-			Buf[2] = '\0';
-			Neu = atoi(Buf) != 0; 
-			}
-		else
-			{
-			Neu = false;
-			Buf[0] = '0', Buf[1] = '\0';
-			}
-		if (Neu == AlternativSucheBeiBesetzt)
-			printf_P(PSTR("<br>AlternativSucheBeiBesetzt unver&auml;ndert: %u"), Neu);
-		else
-			{
-			changeConfig_P(AlternBeiBes_P, Buf);
-			printf_P(PSTR("<br>Alternativ-Suche bei Besetzt: %s"), Buf);
-			AlternativSucheBeiBesetzt = Neu;
-			}
+		CgiCheckBool_P(http_request, ISTR(AlternativSucheBeiBesetzt), AlternBeiBes_P, AlternativSucheBeiBesetzt);
 			
 		// DurchwahlTabelle
 		// ----------------
@@ -4522,22 +4502,26 @@ void txp_cgi_config_intern(void *pStruct)
 					AdresseZuWahlStr(DurchwahlTabelle[i], Buf + len + 1);
 					}
 				changeConfig_P(DurchwahlTabelle_P, Buf);
-				printf_P(PSTR("<br>Durchwahlen: %s"), Buf);
+				printf_P(PSTR("<br>"));
+				printf_P(ISTR(DurchwahlenListe));
+				printf_P(ISTR(GeaendertIn));
+				printf_P(PSTR(": %s"), Buf);
 				}
 			else
-				printf_P(PSTR("<br>Durchwahlen unver&auml;ndert: %s"), Buf);
+				{
+				printf_P(PSTR("<br>"));
+				printf_P(ISTR(DurchwahlenListe));
+				printf_P(ISTR(Unveraendert));
+				}
 			}
 		
 		#endif // TXP_ANSCHLUSS
 		
-		ProtokollLevel = CgiCheckULong_P(http_request, 
-			PSTR("Protokoll-Level"), ProtokollLevel_P, ProtokollLevel);
+		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel), ProtokollLevel_P, ProtokollLevel);
 
-		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, 
-			PSTR("Protokoll-Level Rufnr-Server"), ProtokollLevelTlnServ_P, ProtokollLevelTlnServ);
+		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, ISTR(ProtokollLevelTlnServer), ProtokollLevelTlnServ_P, ProtokollLevelTlnServ);
 
-		MeldungsdruckLevel = CgiCheckULong_P(http_request,
-			PSTR("Level f&uuml;r Druckausgabe"), MeldungsdruckLevel_P, MeldungsdruckLevel);
+		MeldungsdruckLevel = CgiCheckULong_P(http_request, ISTR(DiagnoseLevel), MeldungsdruckLevel_P, MeldungsdruckLevel);
 
 		// KonfigPasswort
 		// --------------
@@ -4546,10 +4530,10 @@ void txp_cgi_config_intern(void *pStruct)
 			strncpy(KonfigPasswort, http_request->argvalue[PharseGetValue_P(http_request, KonfigPasswort_P)], KonfigPasswortLen);
 			KonfigPasswort[KonfigPasswortLen] = '\0';
 			changeConfig_P(KonfigPasswort_P, KonfigPasswort);
-			printf_P(PSTR("<br>Kennwort ggf. ge&auml;ndert."));
+			printf_P(ISTR(KennwortGgfGeaendert));
 			}
 			
-		TlnBuchOffen = CgiCheckBool_P(http_request, PSTR("Tln-Verzeichnis offen"), TlnBuchOffen_P, TlnBuchOffen);
+		TlnBuchOffen = CgiCheckBool_P(http_request, ISTR(TlnVerzeichnisOffen), TlnBuchOffen_P, TlnBuchOffen);
 		
 		} // else argc > 0
 		
@@ -4698,7 +4682,7 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 	
 	cgi_PrintHttpheaderStart();
 
-	printf_P(PSTR("Status der angeschlossenen TWI-Module:<p>"));
+	printf_P(PSTR(/*$TwiTlnListeAnfang*/ "Status der angeschlossenen TWI-Module:<p>"));
 	for (uint8_t AnzZif = 1 ; AnzZif <= 2 ; AnzZif++)
 		for (uint8_t Wahl = 0 ; Wahl <= ((AnzZif == 1) ? 9 : 99) ; Wahl++)
 			{
@@ -4707,10 +4691,10 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 			int16_t Stat = ((BusNr == BusEigenAdresse) ? Status : GetStatus(BusNr));
 			if (Stat >= 0)
 				{
-				printf_P(PSTR("Nummer %s Status %02X<br>"), Buf, Stat);
+				printf_P(PSTR(/*$TwiTlnListeEintrag*/ "Nummer %s Status %02X<br>"), Buf, Stat);
 				}
 			}
-	printf_P(PSTR("+++fertig"));
+	printf_P(PSTR(/*$TwiTlnListeEnde*/ "+++fertig"));
 
 	cgi_PrintHttpheaderEnd();
 	
