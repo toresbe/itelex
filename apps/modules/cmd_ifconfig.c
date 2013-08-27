@@ -142,7 +142,7 @@ void cgi_network( void * pStruct )
 #ifdef DHCP
 		readConfig_P( PSTR("DHCP"), IP );
   		printf_P( PSTR( "<tr>"
-					   	"<td align=\"right\">DHCP aktivieren</td>"
+					   	"<td align=\"right\">DHCP active</td>"
 					    "<td><input type=\"checkbox\" name=\"DHCP\" value=\"on\" " )); 
 		if ( !strcmp_P( IP, PSTR("on") ) )
 						printf_P( PSTR("checked"));
@@ -152,13 +152,13 @@ void cgi_network( void * pStruct )
 		if ( readConfig_P ( PSTR("IP"), IP ) != 1 )
 			iptostr ( myIP, IP );
   		printf_P( PSTR(	"<tr>"
-					   	"<td align=\"right\">IP-Adresse</td>"
+					   	"<td align=\"right\">IP address</td>"
   						"<td><input name=\"IP\" type=\"text\" size=\"15\" value=\"%s\" maxlength=\"15\"></td>"
   						"</tr>") , IP );
 		if ( readConfig_P ( PSTR("MASK"), IP ) != 1 )
 			iptostr ( Netmask, IP );		
   		printf_P( PSTR(	"<tr>"
-					   	"<td align=\"right\">Netzwerkmaske</td>"
+					   	"<td align=\"right\">Netmask</td>"
   						"<td><input name=\"MASK\" type=\"text\" size=\"15\" value=\"%s\" maxlength=\"15\"></td>"
   						"</tr>") , IP );
 		if ( readConfig_P ( PSTR("GATE"), IP ) != 1 )
@@ -182,7 +182,7 @@ void cgi_network( void * pStruct )
 						"<td><input name=\"MAC\" type=\"text\" size=\"17\" value=\"%s\" maxlength=\"17\"></td>"
   						"</tr>"
 		  				"<tr>"
-   						"<td></td><td><input type=\"submit\" value=\" Einstellung &Uuml;bernehmen \"></td>"
+   						"<td></td><td><input type=\"submit\" value=\" Save changes \"></td>"
   						"</tr>"
 					   	"</table>"
 						"</form>") , IP );
@@ -207,7 +207,7 @@ void cgi_network( void * pStruct )
 		#endif
 		if ( PharseCheckName_P( http_request, MAC_NP ) )
 			changeConfig_P( MAC_NP, http_request->argvalue[ PharseGetValue_P ( http_request, MAC_NP ) ] );
-		printf_P( PSTR("Einstellungen uebernommen!\r\n"));
+		printf_P( PSTR("Settings saved, reboot necessary to take effect!\r\n"));
 	}
 	
 	cgi_PrintHttpheaderEnd();
