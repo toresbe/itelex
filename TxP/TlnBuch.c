@@ -948,7 +948,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			case eMail:		TypSelNr = 3; break;
 			default: 		TypSelNr = 0; break;
 			}
-		CgiFormDropdown_P(PSTR("Typ:"), Typ_P, 4, TypSelList, TypSelNr);
+		CgiFormDropdown_P(ISTR(Typ), Typ_P, 4, TypSelList, TypSelNr);
 		
 		if (TD.AdrArt == TxpIP || TD.AdrArt == TxpDynIP || TD.AdrArt == AsciiIP)
 			iptostr(TD.IPAdr, TD.Adresse);
@@ -1072,7 +1072,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				TD.Durchwahl = WahlZuAdresse(atoi(Hilf), strlen(Hilf)) >> 1;
 				if (TD.Durchwahl == 110) 
 					TD.Durchwahl = 0; // eingabe von WahlZuAdresse(0) = 110
-				AdresseZuWahlStr(TD.Durchwahl, Hilf);
+				AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
 				printf_P(ISTR(Port));
 				printf_P(PSTR(" %u "), TD.Port);
 				printf_P(ISTR(Durchwahl));
@@ -1160,7 +1160,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				}
 			else
 				{ // TlnHinzufuegen() < 0
+				printf_P(PSTR("<b>"));
 				printf_P(ISTR(TeilnehmerlisteVoll));
+				printf_P(PSTR("</b><br>"));
 				}
 			} // if DatenOk
 		Zurueck = true;

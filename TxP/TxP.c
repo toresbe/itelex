@@ -4145,15 +4145,16 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(Timer0Cnt_Max); 
 	PRINTVAL(Timer0Callback_Max); 
 
+	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+		{
+		printf_P(PSTR("<br>TeilnehmerServerFehlerZaehler(%s) = %d, Sperre-Timer %d"), 
+				 TeilnehmerServerAdresse[i], TeilnehmerServerFehlerZaehler[i], LangTimerVal(&TeilnehmerServerSperrTimer[i]));
+		}
+		
 #ifdef TXP_TLNSERVER
 	TlnServDebugPrint();
 #endif //def TXP_TLNSERVER
-	
-	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
-		{
-		printf_P(PSTR("<br>TeilnehmerServerFehlerZaehler(%d) = %d, Sperre-Timer %d"), 
-				 i, TeilnehmerServerFehlerZaehler[i], LangTimerVal(&TeilnehmerServerSperrTimer[i]));
-		}
+		
 	PRINTVAL(TeilnehmerServerAlleNichtErreichbar);
 	
 	#endif // TXP_ANSCHLUSS
@@ -4558,12 +4559,12 @@ void txp_cgi_config_sperren(void *pStruct)
 
 	if (KonfigPasswort[0] == '\0')
 		{
-		printf_P(PSTR("zun&auml;chst Passwort in <a href=\"txpcfg-intern.cgi\" target=\"main\">Einstellungen im lokalen TxP-System</a> eingeben!"));
+		printf_P(ISTR(InternesKennwortFehlt));
 		}
 	else
 		{
 		KonfigFreigabeErteilt = false;
-		printf_P(PSTR("Konfigurationsseiten sind nun gesperrt. Zur Freigabe wieder das Passwort eingeben oder Taste der Baugruppe 2 x dr&uuml;cken."));
+		printf_P(ISTR(GesperrtBestaetigung));
 		}
 
 	cgi_PrintHttpheaderEnd();
@@ -4577,7 +4578,6 @@ const PROGMEM char Geheimzahl_P[] = "PIN";
 const PROGMEM char DynIPAktiv_P[] = "DYNIPAKTIV";
 const PROGMEM char NetzPort_P[] = "NETZPORT";
 const PROGMEM char SelbstAnrufPeriode_P[] = "SELBSTANPER";
-
 
 #endif // TXP_ANSCHLUSS
 
@@ -4614,44 +4614,47 @@ void txp_cgi_config_extern(void *pStruct)
 		CgiFormStartTabbed_P(PSTR("txpcfg-extern.cgi"));
 
 		#ifdef TXP_ANSCHLUSS
-		CgiFormInputFieldULong_P(PSTR("eigene Rufnummer im ip-telex-Netz:"), NetzRufnummer_P, 10, NetzRufnummer);
-		CgiFormInputFieldULong_P(PSTR("Geheimzahl:"), Geheimzahl_P, 6, Geheimzahl);
-		CgiFormCheckbox_P(PSTR("IP-Aktualisierung aktiv:"), DynIPAktiv_P, DynIPAktiv);
-		CgiFormInputFieldULong_P(PSTR("Verbindungstest-Periode:"), SelbstAnrufPeriode_P, 3, SelbstAnrufPeriode);
-		CgiFormInputFieldULong_P(PSTR("Port-Nummer im Netz:"), NetzPort_P, 6, NetzPort);
+		CgiFormInputFieldULong_P(ISTR(ITelexRufnummer), NetzRufnummer_P, 10, NetzRufnummer);
+		CgiFormInputFieldULong_P(ISTR(RufnrServerAnmeldGeheimzahl), Geheimzahl_P, 6, Geheimzahl);
+		CgiFormCheckbox_P(ISTR(DynIPAktiv), DynIPAktiv_P, DynIPAktiv);
+		CgiFormInputFieldULong_P(ISTR(VerbindungstestPeriode), SelbstAnrufPeriode_P, 3, SelbstAnrufPeriode);
+		CgiFormInputFieldULong_P(ISTR(OeffentlichePortNr), NetzPort_P, 6, NetzPort);
 		#endif // TXP_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
-			CgiFormInputFieldText_P(PSTR("Adresse des Teilnehmer-Server:"), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
+			CgiFormInputFieldText_P(ISTR(RufnrServerAdr), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
 
 		#ifdef TXP_TLNSERVER
-		CgiFormInputFieldULong_P(PSTR("Geheimzahl f&uuml;r Server-Synchronisierung"), TlnServSyncGeheimzahl_P, 10, TlnServSyncGeheimzahl);
+		CgiFormInputFieldULong_P(ISTR(TlnServSyncGeheimzahl), TlnServSyncGeheimzahl_P, 10, TlnServSyncGeheimzahl);
 		#endif //def TXP_TLNSERVER
 		
-		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
+		CgiFormFinish_P(ISTR(EinstellungenUebernehmen));
 		}
 	else // argc > 0
 		{
-		printf_P(PSTR("neue Einstellungen: <a href=\"txpcfg-extern.cgi\">weiter</a>"));
+		printf_P(ISTR(NeueEinstellungen));
+		printf_P(PSTR("<a href=\"txpcfg-extern.cgi\">"));
+		printf_P(ISTR(Weiter));
+		printf_P(PSTR("</a>"));
 
 		#ifdef TXP_ANSCHLUSS
-		NetzRufnummer = CgiCheckULong_P(http_request, PSTR("Netz-Rufnummer"), NetzRufnummer_P, NetzRufnummer);
+		NetzRufnummer = CgiCheckULong_P(http_request, ISTR(ITelexRufnummer), NetzRufnummer_P, NetzRufnummer);
 		if (NetzRufnummer < GlobRufnrMinWert)
-			printf_P(PSTR("<big><b>&lt;=== zu wenig Ziffern!</b></big>"));
-		Geheimzahl = CgiCheckULong_P(http_request, PSTR("Geheimzahl"), Geheimzahl_P, Geheimzahl);
-		DynIPAktiv = CgiCheckBool_P(http_request, PSTR("DynIPAktualisierung"), DynIPAktiv_P, DynIPAktiv);
-		SelbstAnrufPeriode = CgiCheckULong_P(http_request, PSTR("Verb-Test Periode"), SelbstAnrufPeriode_P, SelbstAnrufPeriode);
-		NetzPort = CgiCheckULong_P(http_request, PSTR("Netz-Port"), NetzPort_P, NetzPort);
+			printf_P(ISTR(ITelexRufnummerZuKurz));
+		Geheimzahl = CgiCheckULong_P(http_request, ISTR(RufnrServerAnmeldGeheimzahl), Geheimzahl_P, Geheimzahl);
+		DynIPAktiv = CgiCheckBool_P(http_request, ISTR(DynIPAktiv), DynIPAktiv_P, DynIPAktiv);
+		SelbstAnrufPeriode = CgiCheckULong_P(http_request, ISTR(VerbindungstestPeriode), SelbstAnrufPeriode_P, SelbstAnrufPeriode);
+		NetzPort = CgiCheckULong_P(http_request, ISTR(OeffentlichePortNr), NetzPort_P, NetzPort);
 		#endif //def TXP_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 			{
-			CgiCheckText_P(http_request, PSTR("Teilnehmer-Server"), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
-			TeilnehmerServerIP[i] = 0;
+			CgiCheckText_P(http_request, ISTR(RufnrServerAdr), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
+			TeilnehmerServerIP[i] = 0; // damit diese neu ermittelt wird.
 			}
 
 		#ifdef TXP_TLNSERVER
-		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, PSTR("Geheimzahl f&uuml;r Server-Synchronisierung"), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl);
+		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl);
 		#endif //def TXP_TLNSERVER
 
 		if (SelbstAnrufPhase == SelbstAnrufSperre)
@@ -4682,7 +4685,7 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 	
 	cgi_PrintHttpheaderStart();
 
-	printf_P(PSTR(/*$TwiTlnListeAnfang*/ "Status der angeschlossenen TWI-Module:<p>"));
+	printf_P(ISTR(TwiTlnListeAnfang));
 	for (uint8_t AnzZif = 1 ; AnzZif <= 2 ; AnzZif++)
 		for (uint8_t Wahl = 0 ; Wahl <= ((AnzZif == 1) ? 9 : 99) ; Wahl++)
 			{
@@ -4691,10 +4694,10 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 			int16_t Stat = ((BusNr == BusEigenAdresse) ? Status : GetStatus(BusNr));
 			if (Stat >= 0)
 				{
-				printf_P(PSTR(/*$TwiTlnListeEintrag*/ "Nummer %s Status %02X<br>"), Buf, Stat);
+				printf_P(ISTR(TwiTlnListeEintrag), Buf, Stat);
 				}
 			}
-	printf_P(PSTR(/*$TwiTlnListeEnde*/ "+++fertig"));
+	printf_P(ISTR(TwiTlnListeEnde));
 
 	cgi_PrintHttpheaderEnd();
 	

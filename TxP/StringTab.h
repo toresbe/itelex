@@ -13,12 +13,20 @@
 #define STRINGTAB_H_PUR
 	// als Merker, dass StringTab.h normal "included" ist.
 
-enum { 
-	// bewirkt die Definition von Konstanten, und zwar
-
+	// bewirkt die Definition von Konstanten
+	// mit dem folgenden Makro _STRTABENTRY ...
 #define _STRTABENTRY(name, text) stridx_ ## name ,
-	// nur stridx_... ,
+	// wird aus 
+	// _STRTABENTRY(Rufnummer, "Rufnummer")
+	// _STRTABENTRY(Name, "Name")
+	// nur 
+	// stridx_Rufnummer,
+	// stridx_Name,
 
+enum { 
+	// Definition der Konstanten stridx_xxx in der gleichen Reihenfolge wie die 
+	// Zeiger auf entsprechende Strings in StringTab.c in IStrList[]
+	
 #endif //ndef _STRTABENTRY()
 
 
@@ -43,7 +51,7 @@ _STRTABENTRY(DiagnoseEinleitung, "\r\n///meldung: ")
 _STRTABENTRY(SelbstAnrufMehrfachVersagt, "Selbst-Anruf mehrfach versagt, falsche Router-Konfiguration?")
 _STRTABENTRY(NummerNichtBekannt, "gewaehlte Nummer nicht bekannt")
 _STRTABENTRY(InternesVerzeichnisVoll, "internes Rufnummern-Verzeichnis voll")
-_STRTABENTRY(KennwortAbfrage, "Seite gesperrt! Kennwort :")
+_STRTABENTRY(KennwortAbfrage, "Seite gesperrt! Kennwort")
 _STRTABENTRY(Freigeben, "Freigeben")
 _STRTABENTRY(FalschesKonfigKennwortEingegeben, "falsches Konfigurations-Kennwort eingegeben")
 _STRTABENTRY(Druckspiegel, "Druckspiegel")
@@ -52,38 +60,53 @@ _STRTABENTRY(AndereVerbindungBesteht, "Es besteht bereits eine andere Verbindung
 _STRTABENTRY(HtmlTextEingabe, "Eingabe: ")
 _STRTABENTRY(HtmlTextEingabeAbsenden, " Absenden ")
 _STRTABENTRY(HtmlTextEingabeAktualisieren, "Aktualisieren")
-_STRTABENTRY(EigeneAmtsnummer, "Netz-Vorwahl f&uuml;r gehende Verbindungen: ")
-_STRTABENTRY(FesteHauptstelle, "feste Hauptstelle f&uuml;r kommende Verbindungen: ")
-_STRTABENTRY(FesteHauptstelleNummer, "interne Durchwahl der Hauptstelle f&uuml;r kommende Verbindungen: ")
-_STRTABENTRY(AlternativSucheBeiBesetzt, "Alternativ-Suche bei besetzt: ")
-_STRTABENTRY(DurchwahlenListe, "Durchwahlen:<br>(mit Komma trennen) ")
-_STRTABENTRY(ProtokollLevel, "Protokoll-Level: ")
-_STRTABENTRY(ProtokollLevelTlnServer, "Protokoll-Level f&uuml;r Teiln-Server: ")
-_STRTABENTRY(DiagnoseLevel, "Level f&uuml;r Druckausgabe von Meldungen: ")
-_STRTABENTRY(KonfigPasswort, "Passwort f&uuml;r Konfigurationsseiten: ")
-_STRTABENTRY(TlnVerzeichnisOffen, "Teilnehmer-Verzeichnis f&uuml;r alle sichtbar: ")
-_STRTABENTRY(EinstellungenUebernehmen, "Einstellung &Uuml;bernehmen")
+_STRTABENTRY(EigeneAmtsnummer, "Netz-Vorwahl f&uuml;r gehende Verbindungen")
+_STRTABENTRY(FesteHauptstelle, "feste Hauptstelle f&uuml;r kommende Verbindungen")
+_STRTABENTRY(FesteHauptstelleNummer, "interne Durchwahl der Hauptstelle f&uuml;r kommende Verbindungen")
+_STRTABENTRY(AlternativSucheBeiBesetzt, "Alternativ-Suche bei besetzt")
+_STRTABENTRY(DurchwahlenListe, "Durchwahlen (mit Komma trennen)")
+_STRTABENTRY(ProtokollLevel, "Tiefe der Protokollierung an serieller Schnittstelle")
+_STRTABENTRY(ProtokollLevelTlnServer, "Tiefe der Protokollierung f&uuml;r Teiln-Server")
+_STRTABENTRY(DiagnoseLevel, "Level f&uuml;r Druckausgabe von Meldungen")
+_STRTABENTRY(KonfigPasswort, "Passwort f&uuml;r Konfigurationsseiten")
+_STRTABENTRY(TlnVerzeichnisOffen, "Teilnehmer-Verzeichnis f&uuml;r alle sichtbar")
 _STRTABENTRY(NeueEinstellungen, "neue Einstellungen: ")
 _STRTABENTRY(Weiter, "weiter")
-_STRTABENTRY(KonnteNichtGeaendertWerden, "konnte nicht ge&auml;ndert werden")
+_STRTABENTRY(KonnteNichtGeaendertWerden, " konnte nicht ge&auml;ndert werden")
 _STRTABENTRY(KennwortGgfGeaendert, "<br>Kennwort ggf. ge&auml;ndert.")
+// ungeprüft:
+_STRTABENTRY(InternesKennwortFehlt, "zun&auml;chst Passwort in <a href=\"txpcfg-intern.cgi\" target=\"main\">Einstellungen im lokalen TxP-System</a> eingeben!")
+_STRTABENTRY(GesperrtBestaetigung, "Konfigurationsseiten sind nun gesperrt. Zur Freigabe wieder das Passwort eingeben oder Taste der Baugruppe 2 x dr&uuml;cken.")
+_STRTABENTRY(ITelexRufnummer, "eigene Rufnummer im i-telex-Netz")
+_STRTABENTRY(ITelexRufnummerZuKurz, "<big><b>&lt;=== zu wenig Ziffern!</b></big>")
+_STRTABENTRY(RufnrServerAnmeldGeheimzahl, "Geheimzahl zur Anmeldung beim Rufnummern-Server")
+_STRTABENTRY(DynIPAktiv, "Dynamische IP-Aktualisierung aktiv")
+_STRTABENTRY(VerbindungstestPeriode, "Verbindungstest-Periode")
+_STRTABENTRY(OeffentlichePortNr, "&ouml;ffentliche Port-Nummer")
+_STRTABENTRY(RufnrServerAdr, "Adresse des Teilnehmer-Server")
+_STRTABENTRY(TlnServSyncGeheimzahl, "Geheimzahl f&uuml;r Server-Synchronisierung")
+_STRTABENTRY(TwiTlnListeAnfang, "Status der angeschlossenen TWI-Module:<p>")
+_STRTABENTRY(TwiTlnListeEintrag, "Nummer %s Status %02X<br>")
+_STRTABENTRY(TwiTlnListeEnde, "+++fertig")
 /*
+_STRTABENTRY(, )
+_STRTABENTRY(, )
 */
 
 // für CgiFormTools.c:
-_STRTABENTRY(Unveraendert, "unver&auml;ndert")
-_STRTABENTRY(GeaendertIn, "ge&auml;ndert in")
+_STRTABENTRY(Unveraendert, " unver&auml;ndert")
+_STRTABENTRY(GeaendertIn, " ge&auml;ndert in")
+_STRTABENTRY(EinstellungenUebernehmen, "Einstellung &Uuml;bernehmen")
 /*
-_STRTABENTRY(, )
 _STRTABENTRY(, )
 _STRTABENTRY(, )
 _STRTABENTRY(, )
 */
 
-// für TlnBuch.h:
+// für TlnBuch.c:
 _STRTABENTRY(UeberschriftTeilnehmerverzeichnis, "<h3>Teilnehmerverzeichnis</h3><br>")
 _STRTABENTRY(UeberschriftOeffentlichesTeilnehmerverzeichnis, "<h3>&Ouml;ffentliches Teilnehmerverzeichnis</h3><br>")
-_STRTABENTRY(VollstaendigesTeilnehmerverzeichnis, "vollst&auml;ndiges Verzeichniss")
+_STRTABENTRY(VollstaendigesTeilnehmerverzeichnis, "zeige vollst&auml;ndiges Verzeichnis")
 _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 	"<tr>"
@@ -113,6 +136,7 @@ _STRTABENTRY(Port, "Port")
 _STRTABENTRY(Durchwahl, "Durchwahl")
 _STRTABENTRY(TlnverzAttrLokal, "Lokal")
 _STRTABENTRY(TlnverzAttrGesperrt, "gesperrt")
+_STRTABENTRY(Typ, "Typ")
 _STRTABENTRY(TlnverzAttrDyn, "DynIP")
 _STRTABENTRY(TypGeloescht, "geloescht")
 _STRTABENTRY(TypAscii, "Ascii")
@@ -131,7 +155,6 @@ _STRTABENTRY(RufnummerDoppelt, "<b>Rufnummer ist bereits vergeben, &Auml;nderung
 _STRTABENTRY(EintragGespeichert, "Eintrag gespeichert<br>")
 _STRTABENTRY(EintragUnveraendert, "Eintrag unver&auml;ndert<br>")
 _STRTABENTRY(AlteNummerNichtGeloescht, "<b>Alte Nummer %ld konnte nicht gel&ouml;scht werden!</b><br>")
-_STRTABENTRY(TeilnehmerlisteVoll, "<b>Teilnehmerliste voll, Eintrag nicht gespeichert</b><br>")
 _STRTABENTRY(EepromSpeicherFehler, "<b>Fehler beim Speichern (Codes %d / %02X)</b>")
 _STRTABENTRY(EepromSpeicherErfolg, "Erfolgreich gespeichert (%d Bytes)")
 _STRTABENTRY(EepromLadenFehler, "<b>Fehler beim Laden (Codes %d / %02X)</b>")
@@ -140,6 +163,14 @@ _STRTABENTRY(KomplettGeloescht, "komplett gel&ouml;scht")
 _STRTABENTRY(UngueltigerCgiAufruf, "Fehler: ungueltiger CGI-Aufruf: %s")
 _STRTABENTRY(ZurueckZumTeilnehmerverzeichnis, "<br>Zur&uuml;ck zum <a href=\"txp-tlnverz.cgi\">Teilnehmer-Verzeichnis</a>")
 _STRTABENTRY(ZusatzEepromFehler, "Fehler im Zusatz-EEPROM")
+
+
+// für TlnServer.c
+// ungeprüft:
+_STRTABENTRY(NeuTeilnehmer, "Neuer Teilnehmer angemeldet")
+_STRTABENTRY(TeilnehmerlisteVoll, "Rufnummern-Verzeichnis voll, nicht gespeichert")
+_STRTABENTRY(ServerAnmeldungFalscheGeheimzahl, "Teilnehmer-Server Anmeldung mit falscher Geheimzahl")
+
 
 // ==================================
 // Ende der Stringtabelle

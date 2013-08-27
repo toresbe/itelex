@@ -24,6 +24,8 @@
 #include "Protokoll.h"
 #include "TxP.h"
 
+#include "StringTab.h" //!\todo Umstellung noch nicht erfolgt, da Umstellung nur selten eintretende Diagnosedrucke betrifft.
+
 
 enum { MaxProtPuffer = 512 }; //!< Länge des Protokoll-Puffers
 

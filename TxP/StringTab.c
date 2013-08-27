@@ -11,23 +11,43 @@
 
 
 // nun werden die Strings selbst in den Programmspeicher definiert
-
-#define _STRTABENTRY(name, text) PROGMEM const char str_ ## name [] = text ;
+// ---------------------------------------------------------------
+	// mit dem folgenden Makro _STRTABENTRY ...
+#define _STRTABENTRY(name, text) const PROGMEM char str_ ## name [] = text ;
+	// wird aus 
+	// _STRTABENTRY(Rufnummer, "Rufnummer")
+	// _STRTABENTRY(Name, "Name")
+	// dann
+	// const PROGMEM char str_Rufnummer [] = "Rufnummer" ;
+	// const PROGMEM char str_Name [] = "Name" ;
 
 #include "StringTab.h"
+	// hier stehen die "echten" _STRTABENTRY(xxx, "yyy") drin.
 
 #undef _STRTABENTRY
 
 
 // hier wird die Tabelle aller Zeiger auf die Strings angelegt
-
+// ---------------------------------------------------------------
+	// mit dem folgenden Makro _STRTABENTRY ...
 #define _STRTABENTRY(name, text) str_ ## name ,
+	// wird aus 
+	// _STRTABENTRY(Rufnummer, "Rufnummer")
+	// _STRTABENTRY(Name, "Name")
+	// dann nur
+	// str_Rufnummer,
+	// str_Name,
 
-PROGMEM const PGM_P IStrList[] = { 
+const PROGMEM PGM_P IStrList[] = { 
 
 #include "StringTab.h"
+	// hier stehen die "echten" _STRTABENTRY(xxx, "yyy") drin.
+	
+	// da bereits Enum-Konstanten der Form stridx_xxx bereits in der gleichen Reihenfolge 
+	// definiert sind, ist nun sichergestellt, dass IStrList[stridx_xxx) nun ein Zeiger auf "yyy" enthält.
 
-} ;
+} ; // Ende von IStrList[]
+
 
 #undef _STRTABENTRY
 

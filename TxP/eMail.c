@@ -55,6 +55,8 @@
 
 #include "eMail.h"
 
+#include "StringTab.h" //!\todo Umstellung noch unfertig.
+
 
 static char EmailPOPServerAdresse[TlnAdresseMax];
 	//!< URL des Email-Servers für Abruf.
