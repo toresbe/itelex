@@ -46,9 +46,9 @@
 //! \param FormName Dateiname der CGI-Auswertung (im PROGMEM)
 void CgiFormStartTabbed_P(const char *FormName)
 	{
-	printf_P(PSTR("<form action=\"\""));
-	printf_P(FormName);
-	printf_P(PSTR("><table border=\"0\" cellpadding=\"5\" cellspacing=\"0\">"));
+	printf_P(PSTR("<form action=\""));
+	printf_P(FormName); 
+	printf_P(PSTR("\"><table border=\"0\" cellpadding=\"5\" cellspacing=\"0\">"));
 	}
 	
 

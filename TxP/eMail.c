@@ -55,7 +55,7 @@
 
 #include "eMail.h"
 
-#include "StringTab.h" //!\todo Umstellung noch unfertig.
+#include "StringTab.h" 
 
 
 static char EmailPOPServerAdresse[TlnAdresseMax];
@@ -399,7 +399,7 @@ void POP3DatenVerarbeiten()
 				}
 			else
 				{ // mindestens eine Meldung im Puffer...
-				strcpy_P(AsciiDruckPuffer, PSTR("\r\n///email empfangen:\r\n")); 
+				strcpy_P(AsciiDruckPuffer, ISTR(MailEmpfangStartzeile)); 
 					// startet sofort den Fernschreiber
 				
 				strcpy_P(SocketOutBuf, PSTR("RETR 1\r\n"));
@@ -551,10 +551,10 @@ bool SMTPOeffnen(char *EmfaengerName)
 		Protokollieren_P(PSTR("TxP SMTP: ! IP zu Url "));
 		Protokollieren(EmailSMTPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
-		if (Diagnoseausgabe_P(PSTR("SMTP-Server "), 1))
+		if (Diagnoseausgabe_P(ISTR(SMTPFehlerAnfang), 1))
 			{
 			strncat(DiagnosePuffer, EmailSMTPServerAdresse, strlen(DiagnosePuffer) - 30);
-			strcat_P(DiagnosePuffer, PSTR(": IP nicht ermittelbar"));
+			strcat_P(DiagnosePuffer, ISTR(SMTPFehlerIPNichtErmittelbar));
 			}
 		return false;
 		}
@@ -568,10 +568,10 @@ bool SMTPOeffnen(char *EmfaengerName)
 		Protokollieren_P(PSTR("TxP SMTP: ! Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
 		TxpSocketHandle = NO_SOCKET_USED;
 		TxpSocketMode = SocketIdle;
-		if (Diagnoseausgabe_P(PSTR("SMTP-Server "), 1))
+		if (Diagnoseausgabe_P(ISTR(SMTPFehlerAnfang), 1))
 			{
 			strncat(DiagnosePuffer, EmailSMTPServerAdresse, strlen(DiagnosePuffer) - 30);
-			strcat_P(DiagnosePuffer, PSTR(" konnte nicht verbunden werden"));
+			strcat_P(DiagnosePuffer, ISTR(SMTPFehlerNotConnected));
 			}
 		return false;
 		}
@@ -663,7 +663,7 @@ void SMTPDatenVerarbeiten()
 				Protokollieren(SocketInBuf);
 				}
 
-			if (Diagnoseausgabe_P(PSTR("vom SMTP-Server: "), 2))
+			if (Diagnoseausgabe_P(ISTR(SMTPFehlerDirekt), 2))
 				strncat(DiagnosePuffer, SocketInBuf, strlen(DiagnosePuffer) - 20);
 			
 			InterneVerbindungBeenden(true);
@@ -762,7 +762,7 @@ void SMTPDatenVerarbeiten()
 			strcat_P(SocketOutBuf, PSTR(">\r\nContent-Type: text/plain; charset=us-ascii\r\nSubject: ")); 
 			
 			// Aufforderung für Subject-Eingabe:
-			strcpy_P(AsciiDruckPuffer, PSTR("\r\nbetreff:\r\n"));
+			strcpy_P(AsciiDruckPuffer, ISTR(MailEingabeBetreff));
 			ProtokollPhase = MailSubject;
 			Zeilenanfang = true;
 			break;
@@ -784,7 +784,7 @@ void SMTPDatenVerarbeiten()
 						ProtokollPhase = MailData;
 						
 						// Aufforderung für Body-Eingabe:
-						strcpy_P(AsciiDruckPuffer, PSTR("\r\ntext:\r\n"));
+						strcpy_P(AsciiDruckPuffer, ISTR(MailEingabeText));
 						PufferInit(&EmpfPuffer);
 						break;
 						}
@@ -869,10 +869,14 @@ const PROGMEM char EmailAusgabeFilternKennung_P[] = "EMAILFILTERKENNUNG";
  
 void txp_cgi_email_config(void *pStruct)
 	{
+	static TSprache Sprache;
+	
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	char Buf[TlnAdresseMax+5];
 
+	PruefeSprache(pStruct, &Sprache);
+	
 	if (!KonfigFreigabe(pStruct))
 		return;
 	
@@ -882,43 +886,51 @@ void txp_cgi_email_config(void *pStruct)
 		{
 		CgiFormStartTabbed_P(PSTR("txpcfg-email.cgi"));
 
-		CgiFormInputFieldText_P(PSTR("POP-Server Adresse:"), EmailPOPServerAdresse_P, TlnAdresseMax, EmailPOPServerAdresse);
-		CgiFormInputFieldText_P(PSTR("SMTP-Server Adresse:"), EmailSMTPServerAdresse_P, TlnAdresseMax, EmailSMTPServerAdresse);
-		CgiFormInputFieldText_P(PSTR("Eigene eMail-Adresse:"), EmailEigeneAdresse_P, TlnAdresseMax, EmailEigeneAdresse);
-		CgiFormInputFieldText_P(PSTR("Kennwort f&uuml;r eMail-Server:"), EmailEigenesPasswort_P, TlnAdresseMax, EmailEigenesPasswort);
-		CgiFormInputFieldULong_P(PSTR("Takt des eMail-Abrufs (Minuten)<br>0 = ausgeschaltet:"), EmailAbfrageTakt_P, 2, EmailAbfrageTakt);
-		CgiFormCheckbox_P(PSTR("Nur eMails mit +TX+ im Subject drucken:"), EmailAusgabeFilternKennung_P, EmailAusgabeFilternKennung);
+		CgiFormInputFieldText_P(ISTR(EmailKonfigPopServer), EmailPOPServerAdresse_P, TlnAdresseMax, EmailPOPServerAdresse);
+		CgiFormInputFieldText_P(ISTR(EmailKonfigSmtpServer), EmailSMTPServerAdresse_P, TlnAdresseMax, EmailSMTPServerAdresse);
+		CgiFormInputFieldText_P(ISTR(EmailKonfigEigeneAdresse), EmailEigeneAdresse_P, TlnAdresseMax, EmailEigeneAdresse);
+		CgiFormInputFieldText_P(ISTR(EmailKonfigKennwort), EmailEigenesPasswort_P, TlnAdresseMax, EmailEigenesPasswort);
+		CgiFormInputFieldULong_P(ISTR(EmailKonfigAbfragetakt), EmailAbfrageTakt_P, 2, EmailAbfrageTakt);
+		CgiFormCheckbox_P(ISTR(EmailKonfigFilterNurTX), EmailAusgabeFilternKennung_P, EmailAusgabeFilternKennung);
+
+		// HACK zum Test der Sprache-Angabe:
+		CgiFormInputFieldULong_P(PSTR("Sprache"), PSTR("nux"), 2, Sprache);
 		
-		CgiFormFinish_P(PSTR("Einstellung &Uuml;bernehmen"));
+		CgiFormFinish_P(ISTR(EinstellungenUebernehmen));
 		}
 	else // argc > 0
 		{
-		printf_P(PSTR("neue Einstellungen: <a href=\"txpcfg-email.cgi\">weiter</a>"));
+		printf_P(ISTR(NeueEinstellungen));
+		printf_P(PSTR("<a href=\"txpcfg-email.cgi\">"));
+		printf_P(ISTR(Weiter));
+		printf_P(PSTR("</a>"));
 
-		CgiCheckText_P(http_request, PSTR("POP-Server Adresse"), EmailPOPServerAdresse_P, TlnAdresseMax, EmailPOPServerAdresse);
+		// HACK zum Test der Sprache-Angabe:
+		printf_P(PSTR("Sprache=%d<br>"), Sprache);
 		
-		CgiCheckText_P(http_request, PSTR("SMTP-Server Adresse"), EmailSMTPServerAdresse_P, TlnAdresseMax, EmailSMTPServerAdresse);
+		CgiCheckText_P(http_request, ISTR(EmailKonfigPopServer), EmailPOPServerAdresse_P, TlnAdresseMax, EmailPOPServerAdresse);
 		
-		CgiCheckText_P(http_request, PSTR("eigene Adresse"), EmailEigeneAdresse_P, TlnAdresseMax, EmailEigeneAdresse);
+		CgiCheckText_P(http_request, ISTR(EmailKonfigSmtpServer), EmailSMTPServerAdresse_P, TlnAdresseMax, EmailSMTPServerAdresse);
 		
-		CgiCheckText_P(http_request, PSTR("eigenes Kennwort"), EmailEigenesPasswort_P, TlnAdresseMax, EmailEigenesPasswort);
+		CgiCheckText_P(http_request, ISTR(EmailKonfigEigeneAdresse), EmailEigeneAdresse_P, TlnAdresseMax, EmailEigeneAdresse);
 		
-		EmailAbfrageTakt = CgiCheckULong_P(http_request, 
-			PSTR("Abfragetakt"), EmailAbfrageTakt_P, EmailAbfrageTakt);
+		CgiCheckText_P(http_request, ISTR(EmailKonfigKennwort), EmailEigenesPasswort_P, TlnAdresseMax, EmailEigenesPasswort);
+		
+		EmailAbfrageTakt = CgiCheckULong_P(http_request, ISTR(EmailKonfigAbfragetakt), EmailAbfrageTakt_P, EmailAbfrageTakt);
 		
 		if (EmailAbfrageTakt != 0 
 			&& (EmailPOPServerAdresse[0] == '\0'
 				|| EmailEigeneAdresse[0] == '\0'
 				|| EmailEigenesPasswort[0] == '\0'))
 			{
-			printf_P(PSTR("<br>Konfigurationsdaten unvollst&auml;ndig, Abfragetakt auf Null gesetzt."));
+			printf_P(ISTR(EmailKonfigFehler));
 			strcpy_P(Buf, PSTR("0"));
 			changeConfig_P(EmailAbfrageTakt_P, Buf);
 			}
 			
 		// Filtern nach +TX+ im Subject
 		// ----------------------------
-		EmailAusgabeFilternKennung = CgiCheckBool_P(http_request, PSTR("Email-Filterung"), EmailAusgabeFilternKennung_P, EmailAusgabeFilternKennung);
+		EmailAusgabeFilternKennung = CgiCheckBool_P(http_request, ISTR(EmailKonfigFilterNurTX), EmailAusgabeFilternKennung_P, EmailAusgabeFilternKennung);
 		
 		} // else argc > 0
 		

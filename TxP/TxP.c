@@ -3950,30 +3950,17 @@ static uint8_t DurchwahlTabelleDekodieren(char *s)
 
 //! Kann am Anfang jeder cgi-Funktion aufgerufen werden, um Zugang zu der Funktion erst nach Kennwort-Eingabe zu erlauben.
 // -----------------------------------------------------------------------------------------------------------------------
-//! \param 	pStruct	Struktur auf den HTTP_Request. Nei NULL wird nur die Variable abgefragt, es gibt keine "Ersatzausgabe" 
+//! \param 	pStruct	Struktur auf den HTTP_Request. Bei NULL wird nur die Variable abgefragt, es gibt keine "Ersatzausgabe" 
 //! des Passwort-Abfragefensters.
 //! \retval true, wenn Zugriff erfolgen darf.
 
-static const PROGMEM char Kennwort_P[] = "kennw";
-
-uint8_t KonfigFreigabe(void *pStruct)
+bool KonfigFreigabe(void *pStruct)
 	{
+	static const PROGMEM char Kennwort_P[] = "kennw";
+	
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 
-	if (ProtokollLevel >= 3 && http_request != NULL)
-		{
-		char *Ende;
-		ProtokollierenTxp_P(PSTR("cgi-Aufruf: "));
-		if (http_request->argc == 0)
-			Ende = http_request->HTTP_LINEBUFFER;
-		else
-			Ende = http_request->argvalue[http_request->argc - 1];
-		Ende += strlen(Ende);
-		ProtokollierenPuffer(http_request->HTTP_LINEBUFFER, Ende - http_request->HTTP_LINEBUFFER);
-		Protokollieren_P(PSTR("\r\n"));
-		}
-	
 	if (KonfigPasswort[0] == '\0')
 		return true; // ohne Kennwort keine Sperre
 	
@@ -3993,9 +3980,9 @@ uint8_t KonfigFreigabe(void *pStruct)
 		{ // Ausgabe der Passwort - Eingabeseite
 		KonfigFreigabeErteilt = false;
 		cgi_PrintHttpheaderStart();
-		CgiFormStartTabbed_P(PSTR("txpcfg-intern.cgi"));
+		CgiFormStartTabbed_P(PSTR("")); //! \todo Formularname mit Sprache
 		CgiFormInputFieldText_P(ISTR(KennwortAbfrage), Kennwort_P, KonfigPasswortLen, NULL);
-		CgiFormFinish_P(ISTR(Freigeben));
+		CgiFormFinish_P(ISTR(KennwortFreigeben));
 		cgi_PrintHttpheaderEnd();
 		return false;
 		}
@@ -4012,7 +3999,7 @@ uint8_t KonfigFreigabe(void *pStruct)
 		else
 			{
 			cgi_PrintHttpheaderStart();
-			printf_P(PSTR("Kennwort falsch!"));
+			printf_P(ISTR(KennwortFalsch));
 			cgi_PrintHttpheaderEnd();
 			KonfigFreigabeErteilt = false;
 			Diagnoseausgabe_P(ISTR(FalschesKonfigKennwortEingegeben), 3);
@@ -4020,6 +4007,57 @@ uint8_t KonfigFreigabe(void *pStruct)
 			}
 		}
 	}
+	
+	
+//! Kann am Anfang jeder cgi-Funktion aufgerufen werden, um eine Sprachselektion zu ermöglichen. 
+// -----------------------------------------------------------------------------------------------------------------------
+//! \param 	pStruct	Struktur auf den HTTP_Request. Die Sprachangabe muss als "spr=de" oder "spr=en" erfolgt
+//! sein. Ist die Sprachangabe das einzige Attribut des CGI-Requests wird die Anzahl der Parameter
+//! des CGI Requests auf Null gesetzt.
+//! \retval true, wenn eine Angabe gefunden wurde.
+
+bool PruefeSprache(void *pStruct, TSprache *Sprache)
+	{
+	static const PROGMEM char Sprache_P[] = "spr";
+	
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+	
+	// Eigentlich hat das folgende gar nix mit dem Sprachprüfen zu tun, hier ist aber eine geeignete Stelle
+	// für eine Protokollierung der CGI-Aufrufe.
+	if (ProtokollLevel >= 3 && http_request != NULL)
+		{
+		char *Ende;
+		ProtokollierenTxp_P(PSTR("cgi-Aufruf: "));
+		if (http_request->argc == 0)
+			Ende = http_request->HTTP_LINEBUFFER;
+		else
+			Ende = http_request->argvalue[http_request->argc - 1];
+		Ende += strlen(Ende);
+		ProtokollierenPuffer(http_request->HTTP_LINEBUFFER, Ende - http_request->HTTP_LINEBUFFER);
+		Protokollieren_P(PSTR("\r\n"));
+		}
+	
+	if (http_request->argc == 0)
+		return false; // da kann man nix finden.
+		
+	if (PharseCheckName_P(http_request, Sprache_P) == 0)
+		return false; // keine Sprachangabe in der Abfrage enthalten.
+	
+	char *SprachAngabe = http_request->argvalue[PharseGetValue_P(http_request, Sprache_P)];
+	if (strcmp_P(SprachAngabe, PSTR("de")) == 0)
+		*Sprache = Deutsch;
+	else if (strcmp_P(SprachAngabe, PSTR("en")) == 0)
+		*Sprache = Englisch;
+	else
+		return false;
+		
+	if (http_request->argc == 1)
+		http_request->argc = 0; 
+			// damit die nur-sprache-Angabe dazu führt, dass die "Grundseite" der CGI-Funktion dargestellt wird.
+	
+	return true;
+	} // PruefeSprache()
 	
 	
 /*------------------------------------------------------------------------------------------------------------*/
@@ -4181,8 +4219,12 @@ void txp_cgi_debug( void * pStruct )
 
 void txp_cgi_msg_Out( void * pStruct )
 	{
-	//struct HTTP_REQUEST * http_request;
-	//http_request = (struct HTTP_REQUEST *) pStruct;
+	static TSprache Sprache;
+	
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+	
+	PruefeSprache(pStruct, &Sprache);	
 
 	printf_P( PSTR(	"<HTML>"
 					"<HEAD>"
@@ -4241,6 +4283,10 @@ void txp_cgi_msg_Out( void * pStruct )
 void txp_cgi_msg_In( void * pStruct )
 	{
 	static const PROGMEM char Eingabe_P[] = "Eingabe";
+
+	static TSprache Sprache;
+
+	PruefeSprache(pStruct, &Sprache);	
 	
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
@@ -4373,10 +4419,14 @@ const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
  
 void txp_cgi_config_intern(void *pStruct)
 	{
+	static TSprache Sprache;
+	
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	char Buf[35];
 
+	PruefeSprache(pStruct, &Sprache);	
+	
 	if (!KonfigFreigabe(pStruct))
 		return;
 	
@@ -4552,9 +4602,13 @@ void txp_cgi_config_intern(void *pStruct)
  
 void txp_cgi_config_sperren(void *pStruct)
 	{
+	static TSprache Sprache;
+	
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 
+	PruefeSprache(pStruct, &Sprache);	
+	
 	cgi_PrintHttpheaderStart();
 
 	if (KonfigPasswort[0] == '\0')
@@ -4600,10 +4654,14 @@ const char* RufnrServerAdr_P[] = { RufnrServerAdr1_P, RufnrServerAdr2_P, RufnrSe
  
 void txp_cgi_config_extern(void *pStruct)
 	{
+	static TSprache Sprache;
+	
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	uint8_t i;
 	
+	PruefeSprache(pStruct, &Sprache);
+
 	if (!KonfigFreigabe(pStruct))
 		return;
 	
@@ -4679,9 +4737,13 @@ void txp_cgi_config_extern(void *pStruct)
 
 void txp_cgi_TwiTlnListe(void *pStruct)
 	{
+	static TSprache Sprache;
+	
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	char Buf[10];
+	
+	PruefeSprache(pStruct, &Sprache);
 	
 	cgi_PrintHttpheaderStart();
 

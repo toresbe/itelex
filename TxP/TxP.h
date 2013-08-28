@@ -246,6 +246,12 @@ typedef enum {
 	} TTxpSocketMode; 
 	
 	
+typedef enum {
+	Deutsch,
+	Englisch,
+	} TSprache;
+	
+	
  //! Was geht über den Socket 'rüber.	
  typedef enum {
 	TelexPhone,		//!< Das eigene Protokoll
@@ -408,6 +414,8 @@ extern char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
 
 extern long TeilnehmerServerIP[ANZ_TEILNEHMER_SERVER];
 	
+extern TSprache LokaleSprache;
+	
 
 // globale Funktionen
 // ================================================================
@@ -424,7 +432,9 @@ extern void InterneVerbindungBeenden(bool Force);
 	
 extern void SocketBufInit();
 
-extern uint8_t KonfigFreigabe(void *pStruct);
+extern bool KonfigFreigabe(void *pStruct);
+
+extern bool PruefeSprache(void *pStruct, TSprache *Sprache);
 
 extern void ZeitUeberwachungInit(TZeitUeberwachung *zue, uint16_t aGrenzwert);
 

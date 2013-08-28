@@ -55,7 +55,7 @@ const char files1[] PROGMEM = "index.html";
 const char data1[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
-	"<TITLE>TxP2-Net - Das Internet-Interface zum TelexPhone 2</TITLE>"
+	"<TITLE>i-Telex</TITLE>"
 	"</HEAD>"
 	"<frameset rows=\"64,40,*"
 	#ifdef HTTPSERVER_STATS
@@ -82,7 +82,7 @@ const char data2[] PROGMEM = {
 	"<HTML>"
 	"<BODY text=\"#0000C0\" style=\"background-image:url(lochstreifen-hg.png)\">"
 	"<span style=\"font: bold 40px 'Courier New','Lucida Console',monospace; \"><b>"
-	"TxP2-Net - Das Internet-Interface zum TelexPhone"
+	"i-Telex - ToIP - telex over internet"
 	"</b></span>"
 	"</BODY>"
 	"</HTML>"
@@ -154,9 +154,10 @@ const char data4[] PROGMEM = {
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
-	"<a href=\"info.html\"target=\"main\">Informationen</a>"
+	"<a href=\"info.html\"target=\"main\">Info</a>"
 	#if defined(TELEXPHONE)
-	" / <a href=\"txp-menu.html\">TelexPhone</a>"
+	" / <a href=\"txp-menu-de.html\">i-Telex (DE)</a>"
+	" / <a href=\"txp-menu-en.html\">i-Telex (EN)</a>"
 	#endif
 	#if defined(HTTPSERVER_STREAM)
 		" / <a href=\"stream.html\">Stream</a>"
@@ -226,21 +227,21 @@ const char data7[] PROGMEM = {
 	"<BODY>"
 	"<pre><p>"
 	"  Welcome to\r\n"
-	"__________________________________________________________________________\r\n"
-	" OOOOO  OOOOO  O      OOOOO  O   O       OOOO   O   O   OOO   O   O  OOOOO\r\n"
-	"   O    O      O      O       O O        O   O  O   O  O   O  OO  O  O    \r\n"
-	" .........................................................................\r\n"
-	"   O    OOO    O      OOO      O    OOO  OOOO   OOOOO  O   O  O O O  OOO  \r\n"
-	"   O    O      O      O       O O        O      O   O  O   O  O  OO  O    \r\n"
-	"   O    OOOOO  OOOOO  OOOOO  O   O       O      O   O   OOO   O   O  OOOOO\r\n"
-	"__________________________________________________________________________\r\n"
-	"Version 1.0 Build " SVNVERSION " at Date: " __DATE__ " " __TIME__ "\r\n"
+	"______________________________________________\r\n"
+	"  OOO      OOOOO  OOOOO  O      OOOOO  O   O  \r\n"
+	"   O         O    O      O      O       O O   \r\n"
+	" .............................................\r\n"
+	"   O   OOO   O    OOO    O      OOO      O    \r\n"
+	"   O         O    O      O      O       O O   \r\n"
+	"  OOO        O    OOOOO  OOOOO  OOOOO  O   O  \r\n"
+	"______________________________________________\r\n"
+	"Build " SVNVERSION " at Date: " __DATE__ " " __TIME__ "\r\n"
 	"Modules:"
 #ifdef TXP_ANSCHLUSS
-	" Txp-Anschluss"
+	" i-Telex"
 #endif
 #ifdef TXP_TLNSERVER
-	" Rufnr-Server"
+	" Nameserver"
 #endif
 #ifdef TXP_EMAIL
 	" Email"
@@ -249,7 +250,7 @@ const char data7[] PROGMEM = {
 	"build on AVR-libc version: " __AVR_LIBC_VERSION_STRING__ "/" __AVR_LIBC_DATE_STRING__ 
 	" with avr-gcc " __VERSION__ "\r\n"
 	"\r\n"
-	"(c)2006-2012   Software: Fred Sonnenrein\r\n"
+	"(c)2006-2013   Software: Fred Sonnenrein\r\n"
 	"based on OpenMCP by Dirk Brosswick\r\n"
 	"</pre></p>"
 	"</BODY>"
@@ -284,19 +285,19 @@ const char data10[] PROGMEM = {
 
 #if defined(TELEXPHONE)
 
-const char files11[] PROGMEM = "txp-menu.html";
-const char data11[] PROGMEM = {
+const char TxpMainMenuDeName[] PROGMEM = "txp-menu-de.html";
+const char TxpMainMenuDeText[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"mainmenu.html\">zur&uuml;ck</a>"
-	" / <a href=\"txp-msg.html\" target=\"main\">Nachricht senden</a>"
-	" / <a href=\"txp-tlnverz.cgi\" target=\"main\">Teilnehmer-Verzeichnis</a>"
-	" / <a href=\"txpcfg-menu.html\">TxP-Einstellungen</a>"
+	" / <a href=\"txp-msg-de.html\" target=\"main\">Nachricht senden</a>"
+	" / <a href=\"txp-tlnverz.cgi?spr=de\" target=\"main\">Teilnehmer-Verzeichnis</a>"
+	" / <a href=\"txpcfg-menu-de.html\">iTelex-Einstellungen</a>"
 	" / <a href=\"txp-debug.cgi\" target=\"main\">Debug-Infos</a>"
-	" / <a href=\"txp-twitlnliste.cgi\" target=\"main\">Bus-Tln-Liste</a>"
+	" / <a href=\"txp-twitlnliste.cgi?spr=de\" target=\"main\">Bus-Tln-Liste</a>"
 #if defined(MMC)
 	" / <a href=\"sddir.cgi\" target=\"main\">SD-Karte</a>"
 #endif //defined(MMC)
@@ -304,33 +305,90 @@ const char data11[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n" } ;
 
-const char files13[] PROGMEM = "txpcfg-menu.html";
-const char data13[] PROGMEM = {
+const char TxpMainMenuEnName[] PROGMEM = "txp-menu-en.html";
+const char TxpMainMenuEnText[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
-	"<a href=\"txp-menu.html\">zur&uuml;ck</a>"
-	" / <a href=\"txpcfg-intern.cgi\" target=\"main\">Einstellungen im lokalen TxP-System</a>"
-	" / <a href=\"txpcfg-extern.cgi\" target=\"main\">Einstellungen im ip-telex-Netz</a>"
+	"<a href=\"mainmenu.html\">back</a>"
+	" / <a href=\"txp-msg-en.html\" target=\"main\">Send message</a>"
+	" / <a href=\"txp-tlnverz.cgi?spr=en\" target=\"main\">Directory</a>"
+	" / <a href=\"txpcfg-menu-en.html\">iTelex settings</a>"
+	" / <a href=\"txp-debug.cgi\" target=\"main\">debug info</a>"
+	" / <a href=\"txp-twitlnliste.cgi?spr=en\" target=\"main\">list of modules</a>"
+#if defined(MMC)
+	" / <a href=\"sddir.cgi\" target=\"main\">SD card</a>"
+#endif //defined(MMC)
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n" } ;
+
+const char TxpCfgMenuDeName[] PROGMEM = "txpcfg-menu-de.html";
+const char TxpCfgMenuDeText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"txp-menu-de.html\">zur&uuml;ck</a>"
+	" / <a href=\"txpcfg-intern.cgi&spr=de\" target=\"main\">Einstellungen im lokalen TxP-System</a>"
+	" / <a href=\"txpcfg-extern.cgi&spr=de\" target=\"main\">Einstellungen im i-Telex-Netz</a>"
 #ifdef TXP_EMAIL
-	" / <a href=\"txpcfg-email.cgi\" target=\"main\">eMail-Einstellungen</a>"
+	" / <a href=\"txpcfg-email.cgi&spr=de\" target=\"main\">eMail-Einstellungen</a>"
 #endif //def TXP_EMAIL	
-	" / <a href=\"txpcfg-sperren.cgi\" target=\"main\">Sperren</a>"
+	" / <a href=\"txpcfg-sperren.cgi&spr=de\" target=\"main\">Sperren</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n" } ;
 
 	
-const char files12[] PROGMEM = "txp-msg.html";
-const char data12[] PROGMEM = {
+const char TxpCfgMenuEnName[] PROGMEM = "txpcfg-menu-en.html";
+const char TxpCfgMenuEnText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"txp-menu-en.html\">back</a>"
+	" / <a href=\"txpcfg-intern.cgi&spr=en\" target=\"main\">local settings</a>"
+	" / <a href=\"txpcfg-extern.cgi&spr=en\" target=\"main\">i-Telex network settings</a>"
+#ifdef TXP_EMAIL
+	" / <a href=\"txpcfg-email.cgi&spr=en\" target=\"main\">eMail settings</a>"
+#endif //def TXP_EMAIL	
+	" / <a href=\"txpcfg-sperren.cgi&spr=en\" target=\"main\">lock</a>"
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n" } ;
+
+	
+const char TxpChatDeName[] PROGMEM = "txp-msg-de.html";
+const char TxpChatDeText[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
 	"</HEAD>"
 	"<frameset rows=\"*,60\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
-	"<frame src=\"txp-msg-out.cgi\" name=\"MsgOut\" scrolling=\"auto\">"
-	"<frame src=\"txp-msg-in.cgi\" name=\"MsgIn\" scrolling=\"no\">"
+	"<frame src=\"txp-msg-out.cgi&spr=de\" name=\"MsgOut\" scrolling=\"auto\">"
+	"<frame src=\"txp-msg-in.cgi&spr=de\" name=\"MsgIn\" scrolling=\"no\">"
+	"<noframes>"
+	"<body>"
+	"<p>Ihr Browser unterstützt keine Frames!</p>"
+	"</body>"
+	"</noframes>"
+	"</frameset>"
+	"</HTML>"
+	"\r\n\r\n" } ;
+
+	
+const char TxpChatEnName[] PROGMEM = "txp-msg-en.html";
+const char TxpChatEnText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"</HEAD>"
+	"<frameset rows=\"*,60\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
+	"<frame src=\"txp-msg-out.cgi&spr=en\" name=\"MsgOut\" scrolling=\"auto\">"
+	"<frame src=\"txp-msg-in.cgi&spr=en\" name=\"MsgIn\" scrolling=\"no\">"
 	"<noframes>"
 	"<body>"
 	"<p>Ihr Browser unterstützt keine Frames!</p>"
@@ -364,9 +422,12 @@ FILES files[] = {
 	{ files10, data10, TEXT, sizeof( data10 ) - 1 },
 #endif
 #if defined(TELEXPHONE)
-	{ files11, data11, TEXT, sizeof( data11 ) - 1 },
-	{ files12, data12, TEXT, sizeof( data12 ) - 1 },
-	{ files13, data13, TEXT, sizeof( data13 ) - 1 },
+	{ TxpMainMenuDeName, TxpMainMenuDeText, TEXT, sizeof( TxpMainMenuDeText ) - 1 },
+	{ TxpMainMenuEnName, TxpMainMenuEnText, TEXT, sizeof( TxpMainMenuEnText ) - 1 },
+	{ TxpCfgMenuDeName, TxpCfgMenuDeText, TEXT, sizeof( TxpCfgMenuDeText ) - 1 },
+	{ TxpCfgMenuEnName, TxpCfgMenuEnText, TEXT, sizeof( TxpCfgMenuEnText ) - 1 },
+	{ TxpChatDeName, TxpChatDeText, TEXT, sizeof( TxpChatDeText ) - 1 },
+	{ TxpChatEnName, TxpChatEnText, TEXT, sizeof( TxpChatEnText ) - 1 },
 #endif
 	{ lochstr_hg_filename, lochstreifen_hg, PNG, sizeof( lochstreifen_hg ) },
 	{ 0,0,0,0 }

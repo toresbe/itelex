@@ -13,10 +13,10 @@
 // nun werden die Strings selbst in den Programmspeicher definiert
 // ---------------------------------------------------------------
 	// mit dem folgenden Makro _STRTABENTRY ...
-#define _STRTABENTRY(name, text) const PROGMEM char str_ ## name [] = text ;
+#define _STRTABENTRY(name, text_de, text_en) const PROGMEM char str_ ## name [] = text_de ;
 	// wird aus 
-	// _STRTABENTRY(Rufnummer, "Rufnummer")
-	// _STRTABENTRY(Name, "Name")
+	// _STRTABENTRY(Rufnummer, "Rufnummer", "Number")
+	// _STRTABENTRY(Name, "Name", "Name")
 	// dann
 	// const PROGMEM char str_Rufnummer [] = "Rufnummer" ;
 	// const PROGMEM char str_Name [] = "Name" ;
@@ -30,10 +30,10 @@
 // hier wird die Tabelle aller Zeiger auf die Strings angelegt
 // ---------------------------------------------------------------
 	// mit dem folgenden Makro _STRTABENTRY ...
-#define _STRTABENTRY(name, text) str_ ## name ,
+#define _STRTABENTRY(name, text_de, text_en) str_ ## name ,
 	// wird aus 
-	// _STRTABENTRY(Rufnummer, "Rufnummer")
-	// _STRTABENTRY(Name, "Name")
+	// _STRTABENTRY(Rufnummer, "Rufnummer", "Number")
+	// _STRTABENTRY(Name, "Name", "Name")
 	// dann nur
 	// str_Rufnummer,
 	// str_Name,

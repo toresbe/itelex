@@ -314,7 +314,8 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus HinzModus)
 		{
 		if (TlnBuchMemUsed + NeuGr >= TlnBuchMemMax)
 			return -1;
-		TlnEintragen(Tln, TlnBuch + TlnBuchMemUsed, HinzModus);
+		TlnEintragen(Tln, TlnBuch + TlnBuchMemUsed, true); 
+			// da es ein neuer Eintrag ist, muss dieser auf jeden Fall ein neues Datum haben
 		TlnBuchMemUsed += NeuGr;
 		return 1;
 		}
@@ -720,12 +721,6 @@ int TlnBuchSpeichereAufExternEeprom()
 //! CGI-Funktion für die Anzeige des Teilnehmerverzeichnisses.
 void TlnBuch_Anzeige_CGI(void *pStruct)
 	{
-	struct HTTP_REQUEST * http_request;
-	http_request = (struct HTTP_REQUEST *) pStruct;
-	TTlnDaten TD;
-	char Hilf[10];
-	bool Zurueck = false; // wird auf true gesetzt, wenn ein "zurück"-Text gedruckt werden soll.
-
 	// folgende Namen sind nur Intern und nicht zu übersetzen.
 	static PROGMEM const char AlleZeigen_P[] = "allezeigen";
 	static PROGMEM const char Edit_P[] = "edit";
@@ -741,6 +736,16 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	static PROGMEM const char Save_P[] = "save";
 	static PROGMEM const char Clear_P[] = "clear";
 	static PROGMEM const char Load_P[] = "load";
+
+	static TSprache Sprache;
+
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+	TTlnDaten TD;
+	char Hilf[10];
+	bool Zurueck = false; // wird auf true gesetzt, wenn ein "zurück"-Text gedruckt werden soll.
+
+	PruefeSprache(pStruct, &Sprache);	
 	
 	cgi_PrintHttpheaderStart();
 
