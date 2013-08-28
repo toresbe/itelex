@@ -156,8 +156,8 @@ const char data4[] PROGMEM = {
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"info.html\"target=\"main\">Info</a>"
 	#if defined(TELEXPHONE)
-	" / <a href=\"txp-menu-de.html\">i-Telex (DE)</a>"
-	" / <a href=\"txp-menu-en.html\">i-Telex (EN)</a>"
+	" / <a href=\"txp-menu-de.html\">i-Telex (Deutsch)</a>"
+	" / <a href=\"txp-menu-en.html\">i-Telex (English)</a>"
 	#endif
 	#if defined(HTTPSERVER_STREAM)
 		" / <a href=\"stream.html\">Stream</a>"
@@ -314,8 +314,8 @@ const char TxpMainMenuEnText[] PROGMEM = {
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"mainmenu.html\">back</a>"
 	" / <a href=\"txp-msg-en.html\" target=\"main\">Send message</a>"
-	" / <a href=\"txp-tlnverz.cgi?spr=en\" target=\"main\">Directory</a>"
-	" / <a href=\"txpcfg-menu-en.html\">iTelex settings</a>"
+	" / <a href=\"txp-tlnverz.cgi?spr=en\" target=\"main\">Subscriber directory</a>"
+	" / <a href=\"txpcfg-menu-en.html\">i-Telex settings</a>"
 	" / <a href=\"txp-debug.cgi\" target=\"main\">debug info</a>"
 	" / <a href=\"txp-twitlnliste.cgi?spr=en\" target=\"main\">list of modules</a>"
 #if defined(MMC)
@@ -333,12 +333,12 @@ const char TxpCfgMenuDeText[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"txp-menu-de.html\">zur&uuml;ck</a>"
-	" / <a href=\"txpcfg-intern.cgi&spr=de\" target=\"main\">Einstellungen im lokalen TxP-System</a>"
-	" / <a href=\"txpcfg-extern.cgi&spr=de\" target=\"main\">Einstellungen im i-Telex-Netz</a>"
+	" / <a href=\"txpcfg-intern.cgi?spr=de\" target=\"main\">Einstellungen im lokalen TxP-System</a>"
+	" / <a href=\"txpcfg-extern.cgi?spr=de\" target=\"main\">Einstellungen im i-Telex-Netz</a>"
 #ifdef TXP_EMAIL
-	" / <a href=\"txpcfg-email.cgi&spr=de\" target=\"main\">eMail-Einstellungen</a>"
+	" / <a href=\"txpcfg-email.cgi?spr=de\" target=\"main\">eMail-Einstellungen</a>"
 #endif //def TXP_EMAIL	
-	" / <a href=\"txpcfg-sperren.cgi&spr=de\" target=\"main\">Sperren</a>"
+	" / <a href=\"txpcfg-sperren.cgi?spr=de\" target=\"main\">Sperren</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n" } ;
@@ -352,12 +352,12 @@ const char TxpCfgMenuEnText[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"txp-menu-en.html\">back</a>"
-	" / <a href=\"txpcfg-intern.cgi&spr=en\" target=\"main\">local settings</a>"
-	" / <a href=\"txpcfg-extern.cgi&spr=en\" target=\"main\">i-Telex network settings</a>"
+	" / <a href=\"txpcfg-intern.cgi?spr=en\" target=\"main\">local settings</a>"
+	" / <a href=\"txpcfg-extern.cgi?spr=en\" target=\"main\">i-Telex network settings</a>"
 #ifdef TXP_EMAIL
-	" / <a href=\"txpcfg-email.cgi&spr=en\" target=\"main\">eMail settings</a>"
+	" / <a href=\"txpcfg-email.cgi?spr=en\" target=\"main\">eMail settings</a>"
 #endif //def TXP_EMAIL	
-	" / <a href=\"txpcfg-sperren.cgi&spr=en\" target=\"main\">lock</a>"
+	" / <a href=\"txpcfg-sperren.cgi?spr=en\" target=\"main\">lock</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n" } ;
@@ -369,8 +369,8 @@ const char TxpChatDeText[] PROGMEM = {
 	"<HEAD>"
 	"</HEAD>"
 	"<frameset rows=\"*,60\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
-	"<frame src=\"txp-msg-out.cgi&spr=de\" name=\"MsgOut\" scrolling=\"auto\">"
-	"<frame src=\"txp-msg-in.cgi&spr=de\" name=\"MsgIn\" scrolling=\"no\">"
+	"<frame src=\"txp-msg-out.cgi?spr=de\" name=\"MsgOut\" scrolling=\"auto\">"
+	"<frame src=\"txp-msg-in.cgi?spr=de\" name=\"MsgIn\" scrolling=\"no\">"
 	"<noframes>"
 	"<body>"
 	"<p>Ihr Browser unterstützt keine Frames!</p>"
@@ -387,8 +387,8 @@ const char TxpChatEnText[] PROGMEM = {
 	"<HEAD>"
 	"</HEAD>"
 	"<frameset rows=\"*,60\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
-	"<frame src=\"txp-msg-out.cgi&spr=en\" name=\"MsgOut\" scrolling=\"auto\">"
-	"<frame src=\"txp-msg-in.cgi&spr=en\" name=\"MsgIn\" scrolling=\"no\">"
+	"<frame src=\"txp-msg-out.cgi?spr=en\" name=\"MsgOut\" scrolling=\"auto\">"
+	"<frame src=\"txp-msg-in.cgi?spr=en\" name=\"MsgIn\" scrolling=\"no\">"
 	"<noframes>"
 	"<body>"
 	"<p>Ihr Browser unterstützt keine Frames!</p>"

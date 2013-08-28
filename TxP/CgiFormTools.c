@@ -153,7 +153,7 @@ static char Buf[255];
 //! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
 //! \param Size Eingabegröße des Feldes ( = Zeichenzahl)
 //! \param Value Aktueller Wert des Feldes
-void CgiCheckText_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, int Size, char *Value)
+void CgiCheckText_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, int Size, char *Value, TSprache Sprache)
 	{
 	if (PharseCheckName_P(http_request, FieldLabel))
 		{
@@ -163,12 +163,12 @@ void CgiCheckText_P(struct HTTP_REQUEST * http_request, const char *FieldText, c
 		printf_P(FieldText);
 		if (strcmp(Buf, Value) == 0)
 			{
-			printf_P(ISTR(Unveraendert));
+			printf_P(ISTR(Unveraendert, Sprache));
 			printf_P(PSTR(": %s"), Buf);
 			}
 		else
 			{
-			printf_P(ISTR(GeaendertIn));
+			printf_P(ISTR(GeaendertIn, Sprache));
 			printf_P(PSTR(": %s"), Buf);
 			changeConfig_P(FieldLabel, Buf);
 			strcpy(Value, Buf);
@@ -184,7 +184,7 @@ void CgiCheckText_P(struct HTTP_REQUEST * http_request, const char *FieldText, c
 //! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
 //! \param Old Aktueller Wert des Feldes
 //! \return Neuer Wert der Variable
-unsigned long CgiCheckULong_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, unsigned long Old)
+unsigned long CgiCheckULong_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, unsigned long Old, TSprache Sprache)
 	{
 	unsigned long Neu;
 	
@@ -198,12 +198,12 @@ unsigned long CgiCheckULong_P(struct HTTP_REQUEST * http_request, const char *Fi
 		printf_P(FieldText);
 		if (Neu == Old)
 			{
-			printf_P(ISTR(Unveraendert));
+			printf_P(ISTR(Unveraendert, Sprache));
 			printf_P(PSTR(": %lu"), Neu);
 			}
 		else
 			{
-			printf_P(ISTR(GeaendertIn));
+			printf_P(ISTR(GeaendertIn, Sprache));
 			printf_P(PSTR(": %lu"), Neu);
 			changeConfig_P(FieldLabel, Buf);
 			}
@@ -221,7 +221,7 @@ unsigned long CgiCheckULong_P(struct HTTP_REQUEST * http_request, const char *Fi
 //! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
 //! \param Old Aktueller Wert der Variable
 //! \return Neuer Wert der Variable
-bool CgiCheckBool_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, bool Old)
+bool CgiCheckBool_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, bool Old, TSprache Sprache)
 	{
 	bool Neu;
 	
@@ -240,12 +240,12 @@ bool CgiCheckBool_P(struct HTTP_REQUEST * http_request, const char *FieldText, c
 	printf_P(FieldText);
 	if (Neu == Old)
 		{
-		printf_P(ISTR(Unveraendert));
+		printf_P(ISTR(Unveraendert, Sprache));
 		printf_P(PSTR(": %u"), Neu);
 		}
 	else
 		{
-		printf_P(ISTR(GeaendertIn));
+		printf_P(ISTR(GeaendertIn, Sprache));
 		printf_P(PSTR(": %u"), Neu);
 		changeConfig_P(FieldLabel, Buf);
 		}

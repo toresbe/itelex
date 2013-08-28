@@ -749,7 +749,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	
 	cgi_PrintHttpheaderStart();
 
-	if (http_request->argc != 0 && !KonfigFreigabe(pStruct))
+	if (http_request->argc != 0 && !KonfigFreigabe(pStruct, Sprache))
 		// bei Änderungen nach dem Kennwort fragen.
 		return;
 		
@@ -757,7 +757,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		#ifdef TXP_TLNSERVER
 		&& TlnServSyncGeheimzahl == 0 
 		#endif //def TXP_TLNSERVER
-		&& !KonfigFreigabe(pStruct))
+		&& !KonfigFreigabe(pStruct, Sprache))
 		// wenn nicht offen und kein Server und nicht Kennwort eingegeben -> Ende
 		return;
 
@@ -772,19 +772,19 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		// ==================================================
 		printf_P(PSTR("<form action=\"txp-tlnverz.cgi\">"));
 		
-		if (TlnBuchOffen || KonfigFreigabe(NULL)) // NULL fragt nicht wieder nach einem Kennwort
-			printf_P(ISTR(UeberschriftTeilnehmerverzeichnis));
+		if (TlnBuchOffen || KonfigFreigabe(NULL, 0)) // NULL fragt nicht wieder nach einem Kennwort
+			printf_P(ISTR(UeberschriftTeilnehmerverzeichnis, Sprache));
 		else
-			printf_P(ISTR(UeberschriftOeffentlichesTeilnehmerverzeichnis));
+			printf_P(ISTR(UeberschriftOeffentlichesTeilnehmerverzeichnis, Sprache));
 
-		if (!KonfigFreigabe(NULL))
+		if (!KonfigFreigabe(NULL, 0))
 			{
 			printf_P(PSTR("<a href=\"txp-tlnverz.cgi?allezeigen\">"));
-			printf_P(ISTR(VollstaendigesTeilnehmerverzeichnis));
+			printf_P(ISTR(VollstaendigesTeilnehmerverzeichnis, Sprache));
 			printf_P(PSTR("</a><br>"));
 			}
 		
-		printf_P(ISTR(TeilnehmerverzeichnisHtmlKopf));
+		printf_P(ISTR(TeilnehmerverzeichnisHtmlKopf, Sprache));
 			
 		TlnDatenInit(&TD);
 		
@@ -798,7 +798,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			{
 			while (TlnListerNaechster(&LD, &TD))
 				{
-				if (!TlnBuchOffen && (TD.Flags & TlnFlag_Lokal) != 0 && !KonfigFreigabe(NULL))
+				if (!TlnBuchOffen && (TD.Flags & TlnFlag_Lokal) != 0 && !KonfigFreigabe(NULL, 0))
 					continue; // Private Einträge nicht darstellen.
 					
 				if (TD.AdrArt == Geloescht && TD.Datum < AktZeit - 7L * 24 * 60 * 60) // Mehr als 7 Tage alte Einträge mit "gelöscht" nicht mehr darstellen.
@@ -808,17 +808,17 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P(PSTR("<td align=\"left\">%s</td><td>&#160;"), TD.Name); // name
 				if ((TD.Flags & TlnFlag_Lokal) != 0)
 					{
-					printf_P(ISTR(TlnverzAttrLokal));
+					printf_P(ISTR(TlnverzAttrLokal, Sprache));
 					printf_P(PSTR(" "));
 					}
 				if ((TD.Flags & TlnFlag_Gesperrt) != 0)
 					{
-					printf_P(ISTR(TlnverzAttrGesperrt));
+					printf_P(ISTR(TlnverzAttrGesperrt, Sprache));
 					printf_P(PSTR(" "));
 					}
 				if (TD.AdrArt == TxpDynIP)
 					{
-					printf_P(ISTR(TlnverzAttrDyn));
+					printf_P(ISTR(TlnverzAttrDyn, Sprache));
 					printf_P(PSTR(" "));
 					}
 					
@@ -833,7 +833,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						// weiter mit TxpUrl!
 					case TxpUrl:
 						AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
-						printf_P(ISTR(TypTxp));
+						printf_P(ISTR(TypTxp, Sprache));
 						printf_P(PSTR("</td>"
 							"<td align=\"left\"><a href=\"http://%s\" target=\"_blank\">%s</a></td>" // Adresse
 							"<td align=\"center\">%u</td>" // Port
@@ -845,7 +845,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						iptostr(TD.IPAdr, TD.Adresse);
 						// weiter mit AsciiUrl!
 					case AsciiUrl:
-						printf_P(ISTR(TypAscii));
+						printf_P(ISTR(TypAscii, Sprache));
 						printf_P(PSTR("</td>"
 							"<td align=\"left\">%s</td>" // Adresse
 							"<td align=\"center\">%u</td>" // Port
@@ -854,7 +854,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						break;
 
 					case eMail:
-						printf_P(ISTR(TypEMail));
+						printf_P(ISTR(TypEMail, Sprache));
 						printf_P(PSTR("</td>"
 							"<td align=\"left\">%s</td>" // Adresse
 							"<td align=\"center\">&#160;</td>" // Port
@@ -863,7 +863,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 						break;
 
 					default:
-						printf_P(ISTR(TypGeloescht));
+						printf_P(ISTR(TypGeloescht, Sprache));
 						printf_P(PSTR("</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"));
 						break;
 					} // switch (TD.AdrArt)
@@ -874,10 +874,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				
 				printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u %02d:%02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 				
-				if (KonfigFreigabe(NULL))
+				if (KonfigFreigabe(NULL, 0))
 					{
 					printf_P(PSTR("<td><a href=\"txp-tlnverz.cgi?edit=%ld\">"), TD.Nummer);
-					printf_P(ISTR(AktionAendern));
+					printf_P(ISTR(AktionAendern, Sprache));
 					printf_P(PSTR("</a></td></tr>"));
 					}
 				else
@@ -885,13 +885,13 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				
 				} // while (TlnListerNaechster(&LD, &TD))
 
-			if (KonfigFreigabe(NULL))
+			if (KonfigFreigabe(NULL, 0))
 				{
 				printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
 							   "<td><a href=\"txp-tlnverz.cgi?edit=0\">"));
-				printf_P(ISTR(AktionHinzufuegen));
+				printf_P(ISTR(AktionHinzufuegen, Sprache));
 				printf_P(PSTR("</a></td></tr></table>"));
-				printf_P(ISTR(TeilnehmerverzeichnisAktionenOffen));
+				printf_P(ISTR(TeilnehmerverzeichnisAktionenOffen, Sprache));
 				printf_P(PSTR("</form>"));
 				}
 			else
@@ -901,7 +901,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		else
 			{
 			printf_P(PSTR("</table>"));
-			printf_P(ISTR(TeilnehmerverzeichnisAktionenLeerOffen));
+			printf_P(ISTR(TeilnehmerverzeichnisAktionenLeerOffen, Sprache));
 			}
 
 		} // argc == 0 --> gesamte Liste ausgeben
@@ -926,21 +926,21 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 		CgiFormStartTabbed_P(PSTR("txp-tlnverz.cgi"));
 
-		CgiFormInputFieldULong_P(ISTR(Rufnummer), Nummer_P, 10, TD.Nummer);
+		CgiFormInputFieldULong_P(ISTR(Rufnummer, Sprache), Nummer_P, 10, TD.Nummer);
 
 		printf_P(PSTR("<input name=\"altnummer\" type=\"hidden\" value=\"%ld\">"), TD.Nummer);
 
-		CgiFormInputFieldText_P(ISTR(Name), Name_P, TlnNameMax-1, TD.Name);
+		CgiFormInputFieldText_P(ISTR(Name, Sprache), Name_P, TlnNameMax-1, TD.Name);
 	
-		CgiFormCheckbox_P(ISTR(TlnverzAttrLokal), Lokal_P, (TD.Flags & TlnFlag_Lokal) != 0);
+		CgiFormCheckbox_P(ISTR(TlnverzAttrLokal, Sprache), Lokal_P, (TD.Flags & TlnFlag_Lokal) != 0);
 
-		CgiFormCheckbox_P(ISTR(TlnverzAttrGesperrt), Gesperrt_P, (TD.Flags & TlnFlag_Gesperrt) != 0);
+		CgiFormCheckbox_P(ISTR(TlnverzAttrGesperrt, Sprache), Gesperrt_P, (TD.Flags & TlnFlag_Gesperrt) != 0);
 
 		const char *TypSelList[4];
-		TypSelList[0] = ISTR(TypGeloescht);
-		TypSelList[1] = ISTR(TypTxp);
-		TypSelList[2] = ISTR(TypAscii);
-		TypSelList[3] = ISTR(TypEMail);
+		TypSelList[0] = ISTR(TypGeloescht, Sprache);
+		TypSelList[1] = ISTR(TypTxp, Sprache);
+		TypSelList[2] = ISTR(TypAscii, Sprache);
+		TypSelList[3] = ISTR(TypEMail, Sprache);
 		
 		uint8_t TypSelNr;
 		switch (TD.AdrArt)
@@ -953,19 +953,19 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			case eMail:		TypSelNr = 3; break;
 			default: 		TypSelNr = 0; break;
 			}
-		CgiFormDropdown_P(ISTR(Typ), Typ_P, 4, TypSelList, TypSelNr);
+		CgiFormDropdown_P(ISTR(Typ, Sprache), Typ_P, 4, TypSelList, TypSelNr);
 		
 		if (TD.AdrArt == TxpIP || TD.AdrArt == TxpDynIP || TD.AdrArt == AsciiIP)
 			iptostr(TD.IPAdr, TD.Adresse);
-		CgiFormInputFieldText_P(ISTR(Adresse), Adresse_P, TlnAdresseMax-1, TD.Adresse);
-		CgiFormInputFieldULong_P(ISTR(Port), Port_P, 5, TD.Port);
+		CgiFormInputFieldText_P(ISTR(Adresse, Sprache), Adresse_P, TlnAdresseMax-1, TD.Adresse);
+		CgiFormInputFieldULong_P(ISTR(Port, Sprache), Port_P, 5, TD.Port);
 		AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
-		CgiFormInputFieldText_P(ISTR(Durchwahl), Durchwahl_P, 2, Hilf);
+		CgiFormInputFieldText_P(ISTR(Durchwahl, Sprache), Durchwahl_P, 2, Hilf);
 
 		if (TD.Nummer == 0)
-			CgiFormFinish_P(ISTR(AktionHinzufuegen));
+			CgiFormFinish_P(ISTR(AktionHinzufuegen, Sprache));
 		else
-			CgiFormFinish_P(ISTR(AktionAendern));
+			CgiFormFinish_P(ISTR(AktionAendern, Sprache));
 		Zurueck = true;
 		} // Ändern oder Neu
 
@@ -995,18 +995,18 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 		if (TD.Nummer == 0)
 			{
-			printf_P(ISTR(Rufnummer0NichtErlaubt));
+			printf_P(ISTR(Rufnummer0NichtErlaubt, Sprache));
 			DatenOk = false;
 			}
 		else
 			{
-			printf_P(ISTR(MeldungTlneintragRufnummer), TD.Nummer);
+			printf_P(ISTR(MeldungTlneintragRufnummer, Sprache), TD.Nummer);
 			if (AltNummer == 0)
-				printf_P(ISTR(AktionHinzufuegen));
+				printf_P(ISTR(AktionHinzufuegen, Sprache));
 			else if (AltNummer != TD.Nummer)
-				printf_P(ISTR(EhemalsLong), AltNummer);
+				printf_P(ISTR(EhemalsLong, Sprache), AltNummer);
 			printf_P(PSTR("<br>"));
-			printf_P(ISTR(Name));
+			printf_P(ISTR(Name, Sprache));
 			printf_P(PSTR(": %s<br>"), TD.Name);
 			}
 		
@@ -1017,7 +1017,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			}
 		if ((TD.Flags & TlnFlag_Lokal) != 0)
 			{
-			printf_P(ISTR(TlnverzAttrLokal));
+			printf_P(ISTR(TlnverzAttrLokal, Sprache));
 			printf_P(PSTR("<br>"));
 			}
 
@@ -1028,28 +1028,28 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			}
 		if ((TD.Flags & TlnFlag_Gesperrt) != 0)
 			{
-			printf_P(ISTR(TlnverzAttrGesperrt));
+			printf_P(ISTR(TlnverzAttrGesperrt, Sprache));
 			printf_P(PSTR("<br>"));
 			}
 
-		if (TD.Adresse[0] == '\0' || strcmp_P(TypStr, ISTR(TypGeloescht)) == 0)
+		if (TD.Adresse[0] == '\0' || strcmp_P(TypStr, ISTR(TypGeloescht, Sprache)) == 0)
 			// Leere Adresse --> löschen
 			{
 			TD.AdrArt = Geloescht;
-			printf_P(ISTR(TypGeloescht));
+			printf_P(ISTR(TypGeloescht, Sprache));
 			printf_P(PSTR("<br>"));
 			}
 		else
 			{
 			TD.IPAdr = strtoip(TD.Adresse);
 			
-			if (strcmp_P(TypStr, ISTR(TypTxp)) == 0)
+			if (strcmp_P(TypStr, ISTR(TypTxp, Sprache)) == 0)
 				{
 				if (TD.IPAdr == 0)
 					{
 					TD.AdrArt = TxpUrl;
-					printf_P(ISTR(TypTxp));
-					printf_P(ISTR(UrlZusatz), TD.Adresse);
+					printf_P(ISTR(TypTxp, Sprache));
+					printf_P(ISTR(UrlZusatz, Sprache), TD.Adresse);
 					}
 				else
 					{
@@ -1060,8 +1060,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					else
 						TD.AdrArt = TxpIP;
 					iptostr(TD.IPAdr, TD.Adresse); // und wieder zurück wandeln
-					printf_P(ISTR(TypTxp));
-					printf_P(ISTR(IPZusatz), TD.Adresse);
+					printf_P(ISTR(TypTxp, Sprache));
+					printf_P(ISTR(IPZusatz, Sprache), TD.Adresse);
 					}
 				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
 				strncpy(Hilf, http_request->argvalue[PharseGetValue_P(http_request, Durchwahl_P)], 2);
@@ -1078,38 +1078,38 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				if (TD.Durchwahl == 110) 
 					TD.Durchwahl = 0; // eingabe von WahlZuAdresse(0) = 110
 				AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
-				printf_P(ISTR(Port));
+				printf_P(ISTR(Port, Sprache));
 				printf_P(PSTR(" %u "), TD.Port);
-				printf_P(ISTR(Durchwahl));
+				printf_P(ISTR(Durchwahl, Sprache));
 				printf_P(PSTR(" %s (%u)<br>"), Hilf, TD.Durchwahl);
 				}
 				
-			else if (strcmp_P(TypStr, ISTR(TypAscii)) == 0)
+			else if (strcmp_P(TypStr, ISTR(TypAscii, Sprache)) == 0)
 				{
 				if (TD.IPAdr == 0)
 					{
 					TD.AdrArt = AsciiUrl;
-					printf_P(ISTR(TypAscii));
-					printf_P(ISTR(UrlZusatz), TD.Adresse);
+					printf_P(ISTR(TypAscii, Sprache));
+					printf_P(ISTR(UrlZusatz, Sprache), TD.Adresse);
 					}
 				else
 					{
 					TD.AdrArt = AsciiIP;
 					iptostr(TD.IPAdr, TD.Adresse); // und wieder zurück wandeln
-					printf_P(ISTR(TypAscii));
-					printf_P(ISTR(IPZusatz), TD.Adresse);
+					printf_P(ISTR(TypAscii, Sprache));
+					printf_P(ISTR(IPZusatz, Sprache), TD.Adresse);
 					}
 				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
 				TD.Durchwahl = 0;
-				printf_P(ISTR(Port));
+				printf_P(ISTR(Port, Sprache));
 				printf_P(PSTR(" %u<br>"), TD.Port);
 				}
 
-			else if (strcmp_P(TypStr, ISTR(TypEMail)) == 0)
+			else if (strcmp_P(TypStr, ISTR(TypEMail, Sprache)) == 0)
 				{
-				printf_P(ISTR(TypEMail));
+				printf_P(ISTR(TypEMail, Sprache));
 				printf_P(PSTR(": "));
-				printf_P(ISTR(Adresse));
+				printf_P(ISTR(Adresse, Sprache));
 				printf_P(PSTR(" %s<br>"), TD.Adresse);
 				TD.AdrArt = eMail;
 				TD.Port = 0;
@@ -1118,7 +1118,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				
 			else
 				{
-				printf_P(ISTR(TypUnbekannt));
+				printf_P(ISTR(TypUnbekannt, Sprache));
 				DatenOk = false;
 				}
 			}
@@ -1128,13 +1128,13 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			
 		if (DatenOk && TD.AdrArt == Geloescht && AltNummer == 0)
 			{ // einen neuen Lösch-Eintrag anzulegen ist doof
-			printf_P(ISTR(KeineAenderung));
+			printf_P(ISTR(KeineAenderung, Sprache));
 			DatenOk = false;
 			}
 			
 		if (DatenOk && TD.Nummer != AltNummer && TlnSuche(TD.Nummer, false, NULL))
 			{
-			printf_P(ISTR(RufnummerDoppelt));
+			printf_P(ISTR(RufnummerDoppelt, Sprache));
 			DatenOk = false;
 			}
 			
@@ -1145,13 +1145,13 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				{
 				if (Res > 0)
 					{
-					printf_P(ISTR(EintragGespeichert));
+					printf_P(ISTR(EintragGespeichert, Sprache));
 #ifdef TXP_TLNSERVER
 					TlnServTlnbuchEintragGeaendert(&TD, -1); // -1: Änderung kommt von keinem Server
 #endif //def TXP_TLNSERVER
 					}
 				else
-					printf_P(ISTR(EintragUnveraendert));
+					printf_P(ISTR(EintragUnveraendert, Sprache));
 				
 				if (TD.Nummer != AltNummer && AltNummer != 0)
 					{
@@ -1159,14 +1159,14 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					TD.AdrArt = Geloescht;
 					if (TlnHinzufuegen(&TD, TlnHinzDatumAktualisieren) < 0)
 						{
-						printf_P(ISTR(AlteNummerNichtGeloescht), AltNummer);	
+						printf_P(ISTR(AlteNummerNichtGeloescht, Sprache), AltNummer);	
 						}
 					}
 				}
 			else
 				{ // TlnHinzufuegen() < 0
 				printf_P(PSTR("<b>"));
-				printf_P(ISTR(TeilnehmerlisteVoll));
+				printf_P(ISTR(TeilnehmerlisteVoll, Sprache));
 				printf_P(PSTR("</b><br>"));
 				}
 			} // if DatenOk
@@ -1179,9 +1179,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		// ==================================================
 		int Res = TlnBuchSpeichereAufExternEeprom();
 		if (Res < 0)
-			printf_P(ISTR(EepromSpeicherFehler), Res, SwTwiLetzterFehler);
+			printf_P(ISTR(EepromSpeicherFehler, Sprache), Res, SwTwiLetzterFehler);
 		else
-			printf_P(ISTR(EepromSpeicherErfolg), Res);
+			printf_P(ISTR(EepromSpeicherErfolg, Sprache), Res);
 		Zurueck = true;
 		}
 		
@@ -1191,9 +1191,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		// ==================================================
 		int Res = TlnBuchLadeVonExternEeprom();
 		if (Res < 0)
-			printf_P(ISTR(EepromLadenFehler), Res, SwTwiLetzterFehler);
+			printf_P(ISTR(EepromLadenFehler, Sprache), Res, SwTwiLetzterFehler);
 		else
-			printf_P(ISTR(EepromLadenErfolg), Res);
+			printf_P(ISTR(EepromLadenErfolg, Sprache), Res);
 		Zurueck = true;
 		}
 		
@@ -1201,7 +1201,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		{ 
 		// komplett löschen
 		// ==================================================
-		printf_P(ISTR(KomplettGeloescht));
+		printf_P(ISTR(KomplettGeloescht, Sprache));
 		TlnBuchMemUsed = 0;
 		Zurueck = true;
 		}
@@ -1210,12 +1210,12 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		{ 
 		// nicht erkannt
 		// ==================================================
-		printf_P(ISTR(UngueltigerCgiAufruf), http_request->HTTP_LINEBUFFER);
+		printf_P(ISTR(UngueltigerCgiAufruf, Sprache), http_request->HTTP_LINEBUFFER);
 		Zurueck = true;
 		}
 		
 	if (Zurueck)
-		printf_P(ISTR(ZurueckZumTeilnehmerverzeichnis));
+		printf_P(ISTR(ZurueckZumTeilnehmerverzeichnis, Sprache));
 	
 	cgi_PrintHttpheaderEnd();
 
@@ -1255,7 +1255,7 @@ void TlnBuchInit()
 			{
 			ProtokollierenInt_P(PSTR("TxP: ! Eeprom Ladefehler %d"), Res);
 			ProtokollierenInt_P(PSTR(" / %02X\r\n"), SwTwiLetzterFehler);
-			Diagnoseausgabe_P(ISTR(ZusatzEepromFehler), 1);
+			Diagnoseausgabe_P(ISTR(ZusatzEepromFehler, LokaleSprache), 1);
 			}
 		} // if get_Taste()
 		

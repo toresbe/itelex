@@ -35,21 +35,21 @@ enum {
 // ==================================
 
 // für TxP.c:
-_STRTABENTRY(ZweiterAnruf, "Zweiter kommender Anruf auf belegtem Telexphone-Socket", "")
-_STRTABENTRY(MehrfacheSendeFehler, "Mehrfache Fehler beim Senden ins Netz", "")
-_STRTABENTRY(ZeitueberschreitungWiederaufnahme, "Zeitueberschreitung bei Wiederaufnahme der Verbindung", "")
-_STRTABENTRY(KeinTeilnehmerServerErreichbar, "Kein Teilnehmer-Server erreichbar", "")
-_STRTABENTRY(TeilnehmerServerWiederErreichbar, "Teilnehmer-Server wieder erreicht", "")
-_STRTABENTRY(KeineVerbindungZumMailServerAusgang, "Keine Verbindung zum Mail-Server fuer Ausgang", "")
-_STRTABENTRY(MailNichtInDieserVersion, "Mail in dieser Version nicht unterstuetzt", "")
-_STRTABENTRY(TeilnehmerNichtErreichbar, "Teilnehmer nicht erreichbar", "")
+_STRTABENTRY(ZweiterAnruf, "Zweiter kommender Anruf auf belegtem i-Telex-Socket", "Second incoming call on busy i-telex socket")
+_STRTABENTRY(MehrfacheSendeFehler, "Mehrfache Fehler beim Senden ins Netz", "Multiple errors while sending on network")
+_STRTABENTRY(ZeitueberschreitungWiederaufnahme, "Zeitueberschreitung bei Wiederaufnahme der Verbindung", "Timeout while waiting for a reconnection")
+_STRTABENTRY(KeinTeilnehmerServerErreichbar, "Kein Teilnehmer-Server erreichbar", "No subscriber server available")
+_STRTABENTRY(TeilnehmerServerWiederErreichbar, "Teilnehmer-Server wieder erreicht", "Subsriber server available again")
+_STRTABENTRY(KeineVerbindungZumMailServerAusgang, "Keine Verbindung zum Mail-Server fuer Ausgang", "No connection to server for outgoing mails")
+_STRTABENTRY(MailNichtInDieserVersion, "Mail in dieser Version nicht unterstuetzt", "Mail not supported in this version")
+_STRTABENTRY(TeilnehmerNichtErreichbar, "Teilnehmer nicht erreichbar", "Subscriber not available")
 _STRTABENTRY(AnschlussInternBesetzt, "Anschluss intern besetzt", "")
 _STRTABENTRY(TWITimeout, "Interne Verbindung unterbrochen", "")
 _STRTABENTRY(DiagInterneIP, "interne IP: ", "")
 _STRTABENTRY(Datum, "Datum", "Date")
-_STRTABENTRY(DiagnoseEinleitung, "\r\n///interne meldung: ", "\r\n///internal message:")
+_STRTABENTRY(DiagnoseEinleitung, "\r\n///interne meldung: ", "\r\n///internal message: ")
 _STRTABENTRY(SelbstAnrufMehrfachVersagt, "Selbst-Anruf mehrfach versagt, falsche Router-Konfiguration?", "")
-_STRTABENTRY(NummerNichtBekannt, "gewaehlte Nummer nicht bekannt", "")
+_STRTABENTRY(NummerNichtBekannt, "gewaehlte Nummer nicht bekannt", "dialled number is unknown")
 _STRTABENTRY(InternesVerzeichnisVoll, "internes Rufnummern-Verzeichnis voll", "")
 _STRTABENTRY(KennwortAbfrage, "Seite gesperrt! Bitte Kennwort eingeben", "")
 _STRTABENTRY(KennwortFreigeben, "Freigeben", "")
@@ -59,7 +59,7 @@ _STRTABENTRY(Druckspiegel, "Druckspiegel", "")
 _STRTABENTRY(TexteingabeStartetFernschreiber, "Texteingabe startet Fernschreiber", "")
 _STRTABENTRY(AndereVerbindungBesteht, "Es besteht bereits eine andere Verbindung, bitte warten.", "")
 _STRTABENTRY(HtmlTextEingabe, "Eingabe: ", "Enter text: ")
-_STRTABENTRY(HtmlTextEingabeAbsenden, " Absenden ", " Submit ")
+_STRTABENTRY(HtmlTextEingabeAbsenden, " Absenden ", " Send ")
 _STRTABENTRY(HtmlTextEingabeAktualisieren, "Aktualisieren", "Refresh")
 _STRTABENTRY(EigeneAmtsnummer, "Netz-Vorwahl f&uuml;r gehende Verbindungen", "")
 _STRTABENTRY(FesteHauptstelle, "feste Hauptstelle f&uuml;r kommende Verbindungen", "")
@@ -86,11 +86,11 @@ _STRTABENTRY(TlnServSyncGeheimzahl, "Geheimzahl f&uuml;r Server-Synchronisierung
 // ungeprüft:
 _STRTABENTRY(TwiTlnListeAnfang, "Status der angeschlossenen TWI-Module:<p>", "")
 _STRTABENTRY(TwiTlnListeEintrag, "Nummer %s Status %02X<br>", "Number %s status %02X<br>")
-_STRTABENTRY(TwiTlnListeEnde, "+++fertig", "+++finish")
+_STRTABENTRY(TwiTlnListeEnde, "+++fertig", "+++end")
 
 // für CgiFormTools.c und sonst häufig verwendet:
 _STRTABENTRY(NeueEinstellungen, "Die neuen Einstellungen sind: ", "The new settings are: ")
-_STRTABENTRY(Weiter, "weiter", "next")
+_STRTABENTRY(Weiter, "weiter", "continue")
 _STRTABENTRY(Unveraendert, " unver&auml;ndert", " unchanged")
 _STRTABENTRY(GeaendertIn, " ge&auml;ndert in", " changed to")
 _STRTABENTRY(EinstellungenUebernehmen, "Einstellung &Uuml;bernehmen", "Submit changes")
@@ -203,10 +203,15 @@ _STRTABENTRY(SMTPFehlerDirekt, "Meldung vom eMail-Ausgang-Server: ", "")
 #undef _STRTABENTRY
 	// Hilfsmakro löschen
 
-extern PGM_P GetIStr(uint16_t stri);
+typedef enum {
+	Deutsch,
+	Englisch,
+	} TSprache;
+	
+extern PGM_P GetIStr(uint16_t stri, TSprache Sprache);
 	// Funktion für die Ermittlung eines Strings aus dem Index
 
-#define ISTR(name) GetIStr(stridx_ ## name)
+#define ISTR(name, Sprache) GetIStr(stridx_ ## name, Sprache)
 	// Vereinfachendes Hilfsmakro
 
 #endif // def STRINGTAB_H_PUR

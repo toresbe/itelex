@@ -44,6 +44,8 @@
 #include "Defports.h"
 #include "FifoPuffer.h"
 
+#include "TxP/StringTab.h"
+
 
 // Einstellungen für Bedingte Kompilierung
 // ================================================================
@@ -246,12 +248,6 @@ typedef enum {
 	} TTxpSocketMode; 
 	
 	
-typedef enum {
-	Deutsch,
-	Englisch,
-	} TSprache;
-	
-	
  //! Was geht über den Socket 'rüber.	
  typedef enum {
 	TelexPhone,		//!< Das eigene Protokoll
@@ -432,7 +428,7 @@ extern void InterneVerbindungBeenden(bool Force);
 	
 extern void SocketBufInit();
 
-extern bool KonfigFreigabe(void *pStruct);
+extern bool KonfigFreigabe(void *pStruct, TSprache Sprache);
 
 extern bool PruefeSprache(void *pStruct, TSprache *Sprache);
 

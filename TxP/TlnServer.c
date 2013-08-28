@@ -288,7 +288,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 				ProtokollierenIPAdr(TlnIP);
 				ProtokollierenInt_P(PSTR(" Port %u (noch gesperrt!)\r\n"), TD.Port);
 				}
-			Diagnoseausgabe_P(ISTR(NeuTeilnehmer), 1);
+			Diagnoseausgabe_P(ISTR(NeuTeilnehmer, LokaleSprache), 1);
 			TlnServTlnbuchEintragGeaendert(&TD, -1); // da er neu war, muss er geändert worden sein.
 				// -1: Kein Sync-Vorgang
 			return true;
@@ -591,7 +591,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						ProtokollierenTlnServInt_P(Kanal, 
 							PSTR("! Datensatz vom Teilnehmer-Server mit Nr %lu konnte nicht gespeichert werden\r\n"), 
 							TlnServBuf.TlnAuskunft.Nummer);
-						Diagnoseausgabe_P(ISTR(TeilnehmerlisteVoll), 2); 
+						Diagnoseausgabe_P(ISTR(TeilnehmerlisteVoll, LokaleSprache), 2); 
 						FehlerRueckmelden(PSTR("abort"), 0);	
 						Senden = true;
 						}
@@ -656,7 +656,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					}
 				else if (TlnServBuf.SyncAnmeldung.Geheimzahl != TlnServSyncGeheimzahl)
 					{
-					Diagnoseausgabe_P(ISTR(ServerAnmeldungFalscheGeheimzahl), 1);
+					Diagnoseausgabe_P(ISTR(ServerAnmeldungFalscheGeheimzahl, LokaleSprache), 1);
 					FehlerRueckmelden(PSTR("wrong authentification"), 0);
 					Senden = true;
 					}
@@ -680,7 +680,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					{
 					FehlerRueckmelden(PSTR("wrong authentification"), 0);
 					Senden = true;
-					Diagnoseausgabe_P(ISTR(ServerAnmeldungFalscheGeheimzahl), 1);
+					Diagnoseausgabe_P(ISTR(ServerAnmeldungFalscheGeheimzahl, LokaleSprache), 1);
 					}
 				else
 					{

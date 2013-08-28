@@ -410,6 +410,8 @@ static TLangTimer KonfigFreigabeTimer;
 static bool KonfigFreigabeErteilt;
 	//!< Damit Überlauf des #KonfigFreigabeTimer nicht zur Wieder-Freigabe führt.
 	
+TSprache LokaleSprache;
+	//!< Sprache für nicht CGI-Seiten
 	
 static int TeilnehmerServerSocket;
 	//!< Handle für ausgehende Verbindungen zum Teilnehmer-Server
@@ -1497,7 +1499,7 @@ static void SocketBearbeiten()
 			CloseTCPSocket(NewServerSocket);
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR(" ! ...ABGEWIESEN\r\n" ));
-			Diagnoseausgabe_P(ISTR(ZweiterAnruf), 4);
+			Diagnoseausgabe_P(ISTR(ZweiterAnruf, LokaleSprache), 4);
 			}
 			
 		} // CheckPortRequest(TXP_PORT) != NO_SOCKET_USED
@@ -1719,7 +1721,7 @@ static void SocketBearbeiten()
 				{
 				if (ProtokollLevel >= 1)
 					ProtokollierenTxp_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
-				Diagnoseausgabe_P(ISTR(MehrfacheSendeFehler), 2);
+				Diagnoseausgabe_P(ISTR(MehrfacheSendeFehler, LokaleSprache), 2);
 	
 				CloseTCPSocket(TxpSocketHandle);
 				TxpSocketHandle = NO_SOCKET_USED;
@@ -1765,7 +1767,7 @@ static void SocketBearbeiten()
 		{
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("! ZEITUEBERSCHREITUNG bei Wiederaufnahme der Verbindung\r\n" ));
-		Diagnoseausgabe_P(ISTR(ZeitueberschreitungWiederaufnahme), 2);
+		Diagnoseausgabe_P(ISTR(ZeitueberschreitungWiederaufnahme, LokaleSprache), 2);
 		TxpSocketMode = SocketIdle;
 		TxpSocketAbbauGeplant = false;
 		TxpSocketIP = 0;
@@ -2521,7 +2523,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 				TeilnehmerServerFehlerZaehler[ServerI]--; // läuft im Erfolgsfall langsam wieder auf Null.
 				
 			if (TeilnehmerServerAlleNichtErreichbar)
-				Diagnoseausgabe_P(ISTR(TeilnehmerServerWiederErreichbar), 1);	
+				Diagnoseausgabe_P(ISTR(TeilnehmerServerWiederErreichbar, LokaleSprache), 1);	
 				
 			TeilnehmerServerAlleNichtErreichbar = false;
 				
@@ -2596,7 +2598,7 @@ bool TeilnehmerServerSocketOeffnen(PGM_P Grund)
 		} // for ServerI
 		
 	TeilnehmerServerSocket = NO_SOCKET_USED;
-	Diagnoseausgabe_P(ISTR(KeinTeilnehmerServerErreichbar), 1);	
+	Diagnoseausgabe_P(ISTR(KeinTeilnehmerServerErreichbar, LokaleSprache), 1);	
 	TeilnehmerServerAlleNichtErreichbar = true;
 	return false;
 	} // TeilnehmerServerSocketOeffnen()
@@ -2671,7 +2673,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				}
 			else
 				{
-				Diagnoseausgabe_P(ISTR(KeineVerbindungZumMailServerAusgang), 2);
+				Diagnoseausgabe_P(ISTR(KeineVerbindungZumMailServerAusgang, LokaleSprache), 2);
 				return 2; // schlecht
 				}
 #else
@@ -2697,7 +2699,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		if (ProtokollLevel >= 1)
 			ProtokollierenTxp_P(PSTR("! Socket konnte nicht erstmalig geoeffnet werden\r\n"));
 			
-		Diagnoseausgabe_P(ISTR(TeilnehmerNichtErreichbar), 2);
+		Diagnoseausgabe_P(ISTR(TeilnehmerNichtErreichbar, LokaleSprache), 2);
 		TxpSocketHandle = NO_SOCKET_USED;
 		TxpSocketMode = SocketIdle;
 		return 1;
@@ -2947,7 +2949,7 @@ bool SonstigeAnwahl(uint8_t aDurchwahl)
 		if (ProtokollLevel >= 1)
 			Protokollieren_P(PSTR("! Einschaltung intern VERSAGT\r\n" ));
 			
-		Diagnoseausgabe_P(ISTR(AnschlussInternBesetzt), 1);
+		Diagnoseausgabe_P(ISTR(AnschlussInternBesetzt, LokaleSprache), 1);
 			
 		AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 		AsciiHilfPuffer[0] = '\0';
@@ -3207,7 +3209,7 @@ void txp_thread()
 			{
 			if (ProtokollLevel >= 1)	
 				ProtokollierenTxp_P(PSTR("! TWI-Timeout -> Abschaltung\r\n"));
-			Diagnoseausgabe_P(ISTR(TWITimeout), 1);
+			Diagnoseausgabe_P(ISTR(TWITimeout, LokaleSprache), 1);
 			
 			InterneVerbindungBeenden(true);
 			TxpSocketAbbauGeplant = true;
@@ -3291,7 +3293,7 @@ void txp_thread()
 				ProtokollierenInt_P(PSTR("! Anwahl intern an %u VERSAGT\r\n"), Durchwahl);
 				}
 				
-			Diagnoseausgabe_P(ISTR(AnschlussInternBesetzt), 1);
+			Diagnoseausgabe_P(ISTR(AnschlussInternBesetzt, LokaleSprache), 1);
 				//!  \todo bei Besetzt andere Meldung.
 
 			SendeStopkommando(PSTR("occ\r\n"));
@@ -3357,12 +3359,12 @@ void txp_thread()
 				else
 					{
 					AlternativSucheBeiBesetzt = true; // damit auf jeden Fall gedruckt wird!
-					strcpy_P(AsciiDruckPuffer, ISTR(DiagInterneIP));
+					strcpy_P(AsciiDruckPuffer, ISTR(DiagInterneIP, LokaleSprache));
 					iptostr(myIP, AsciiDruckPuffer + strlen(AsciiDruckPuffer));
 					strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 					struct TIME Time;
 					CLOCK_GetTime(&Time);
-					sprintf_P(AsciiDruckPuffer + strlen(AsciiDruckPuffer), ISTR(Datum));
+					sprintf_P(AsciiDruckPuffer + strlen(AsciiDruckPuffer), ISTR(Datum, LokaleSprache));
 					sprintf_P(AsciiDruckPuffer + strlen(AsciiDruckPuffer), 
 							  PSTR(": %02u.%02u.%04u %02u:%02u:%02u\r\n"), 
 							  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
@@ -3408,7 +3410,7 @@ void txp_thread()
 		&& DiagnosePufferLevel <= MeldungsdruckLevel)
 		{ 
 		AsciiDruckZiel = DiagnoseAusgabeZiel;
-		strcpy_P(AsciiDruckPuffer, ISTR(DiagnoseEinleitung));
+		strcpy_P(AsciiDruckPuffer, ISTR(DiagnoseEinleitung, LokaleSprache));
 		strncat(AsciiDruckPuffer, DiagnosePuffer, AsciiDruckPufferMax-30);
 		AsciiDruckPuffer[AsciiDruckPufferMax-30] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
@@ -3651,7 +3653,7 @@ void txp_thread()
 			if (SelbstAnrufFehlerZaehler >= 16)
 				{
 				DynIPAktiv = false;
-				Diagnoseausgabe_P(ISTR(SelbstAnrufMehrfachVersagt), 1);
+				Diagnoseausgabe_P(ISTR(SelbstAnrufMehrfachVersagt, LokaleSprache), 1);
 				}
 			}
 			
@@ -3737,7 +3739,7 @@ void txp_thread()
 				case TLNSERV_AUSKUNFT_NICHTVERG:
 					if (ProtokollLevel >= 2)
 						ProtokollierenTxp_P(PSTR("Teilnehmer-Server meldet 'nicht gefunden'\r\n" ));
-					Diagnoseausgabe_P(ISTR(NummerNichtBekannt), 3);
+					Diagnoseausgabe_P(ISTR(NummerNichtBekannt, LokaleSprache), 3);
 					break;
 					
 				case TLNSERV_AUSKUNFT_VERSION1:
@@ -3783,7 +3785,7 @@ void txp_thread()
 							{
 							ProtokollierenTxp();
 							ProtokollierenInt_P(PSTR("! Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
-							Diagnoseausgabe_P(ISTR(InternesVerzeichnisVoll), 2);
+							Diagnoseausgabe_P(ISTR(InternesVerzeichnisVoll, LokaleSprache), 2);
 							}
 #ifdef TXP_TLNSERVER							
 						else if (Res > 0) // Erfolg, denn Meldung 2 kann hier nicht kommen.
@@ -3954,7 +3956,7 @@ static uint8_t DurchwahlTabelleDekodieren(char *s)
 //! des Passwort-Abfragefensters.
 //! \retval true, wenn Zugriff erfolgen darf.
 
-bool KonfigFreigabe(void *pStruct)
+bool KonfigFreigabe(void *pStruct, TSprache Sprache)
 	{
 	static const PROGMEM char Kennwort_P[] = "kennw";
 	
@@ -3981,8 +3983,8 @@ bool KonfigFreigabe(void *pStruct)
 		KonfigFreigabeErteilt = false;
 		cgi_PrintHttpheaderStart();
 		CgiFormStartTabbed_P(PSTR("")); //! \todo Formularname mit Sprache
-		CgiFormInputFieldText_P(ISTR(KennwortAbfrage), Kennwort_P, KonfigPasswortLen, NULL);
-		CgiFormFinish_P(ISTR(KennwortFreigeben));
+		CgiFormInputFieldText_P(ISTR(KennwortAbfrage, Sprache), Kennwort_P, KonfigPasswortLen, NULL);
+		CgiFormFinish_P(ISTR(KennwortFreigeben, Sprache));
 		cgi_PrintHttpheaderEnd();
 		return false;
 		}
@@ -3999,10 +4001,10 @@ bool KonfigFreigabe(void *pStruct)
 		else
 			{
 			cgi_PrintHttpheaderStart();
-			printf_P(ISTR(KennwortFalsch));
+			printf_P(ISTR(KennwortFalsch, Sprache));
 			cgi_PrintHttpheaderEnd();
 			KonfigFreigabeErteilt = false;
-			Diagnoseausgabe_P(ISTR(FalschesKonfigKennwortEingegeben), 3);
+			Diagnoseausgabe_P(ISTR(FalschesKonfigKennwortEingegeben, Sprache), 3);
 			return false;
 			}
 		}
@@ -4236,7 +4238,7 @@ void txp_cgi_msg_Out( void * pStruct )
 					
 	if (Modus == ModHtmlChatVerbunden)
 		{
-		printf_P(ISTR(Druckspiegel));
+		printf_P(ISTR(Druckspiegel, Sprache));
 		printf_P(PSTR("<br><pre>%s&lt;&lt;&lt;%s%s</pre>"), HtmlSendeText, AsciiHilfPuffer, AsciiDruckPuffer);
 
 		if (ProtokollLevel >= 3)
@@ -4253,7 +4255,7 @@ void txp_cgi_msg_Out( void * pStruct )
 
 	else if (Modus == ModRuhe)
 		{
-		printf_P(ISTR(TexteingabeStartetFernschreiber));
+		printf_P(ISTR(TexteingabeStartetFernschreiber, Sprache));
 		HtmlSendeText[0] = '\0';
 		if (ProtokollLevel >= 3)
 			ProtokollierenTxp_P(PSTR("Direktdruck Abruf Druckspiegel (aus)\r\n"));
@@ -4261,7 +4263,7 @@ void txp_cgi_msg_Out( void * pStruct )
 		
 	else
 		{
-		printf_P(ISTR(AndereVerbindungBesteht));
+		printf_P(ISTR(AndereVerbindungBesteht, Sprache));
 		if (ProtokollLevel >= 3)
 			ProtokollierenTxp_P(PSTR("Direktdruck Abruf Druckspiegel (belegt)\r\n"));
 		}
@@ -4347,12 +4349,12 @@ void txp_cgi_msg_In( void * pStruct )
 
 	cgi_PrintHttpheaderStart();
 	printf_P(PSTR("<form action=\"txp-msg-in.cgi\">"));
-	printf_P(ISTR(HtmlTextEingabe));
+	printf_P(ISTR(HtmlTextEingabe, Sprache));
 	printf_P(PSTR("<input name=\"Eingabe\" type=\"text\" size=\"65\" value=\"\" maxlength=\"65\">"
 				  "<input type=\"submit\" value=\""));
-	printf_P(ISTR(HtmlTextEingabeAbsenden));
+	printf_P(ISTR(HtmlTextEingabeAbsenden, Sprache));
 	printf_P(PSTR(" \"><a href=\"txp-msg-out.cgi\" target=\"MsgOut\">"));
-	printf_P(ISTR(HtmlTextEingabeAktualisieren));
+	printf_P(ISTR(HtmlTextEingabeAktualisieren, Sprache));
 	printf_P(PSTR("</a></form>"));
 	cgi_PrintHttpheaderEnd();
 	}
@@ -4427,7 +4429,7 @@ void txp_cgi_config_intern(void *pStruct)
 
 	PruefeSprache(pStruct, &Sprache);	
 	
-	if (!KonfigFreigabe(pStruct))
+	if (!KonfigFreigabe(pStruct, Sprache))
 		return;
 	
 	cgi_PrintHttpheaderStart();
@@ -4438,37 +4440,37 @@ void txp_cgi_config_intern(void *pStruct)
 
 		#ifdef TXP_ANSCHLUSS
 		AdresseZuWahlStr(BusEigenAdresse, Buf);
-		CgiFormInputFieldText_P(ISTR(EigeneAmtsnummer), EigeneNummer_P, 2, Buf);
+		CgiFormInputFieldText_P(ISTR(EigeneAmtsnummer, Sprache), EigeneNummer_P, 2, Buf);
 
-		CgiFormCheckbox_P(ISTR(FesteHauptstelle), FesteHst_P, FesteHauptstelle);
+		CgiFormCheckbox_P(ISTR(FesteHauptstelle, Sprache), FesteHst_P, FesteHauptstelle);
 
 		AdresseZuWahlStr(Hauptstelle, Buf);
-		CgiFormInputFieldText_P(ISTR(FesteHauptstelleNummer), Hauptstelle_P, 2, Buf);
+		CgiFormInputFieldText_P(ISTR(FesteHauptstelleNummer, Sprache), Hauptstelle_P, 2, Buf);
 
-		CgiFormCheckbox_P(ISTR(AlternativSucheBeiBesetzt), AlternBeiBes_P, AlternativSucheBeiBesetzt);
+		CgiFormCheckbox_P(ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P, AlternativSucheBeiBesetzt);
 						
 		readConfig_P(DurchwahlTabelle_P, Buf);
-		CgiFormInputFieldText_P(ISTR(DurchwahlenListe), DurchwahlTabelle_P, 30, Buf);
+		CgiFormInputFieldText_P(ISTR(DurchwahlenListe, Sprache), DurchwahlTabelle_P, 30, Buf);
 		
 		#endif //def TXP_ANSCHLUSS
 
-		CgiFormInputFieldULong_P(ISTR(ProtokollLevel), ProtokollLevel_P, 2, ProtokollLevel);
-		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
-		CgiFormInputFieldULong_P(ISTR(DiagnoseLevel), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
+		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 2, ProtokollLevel);
+		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
+		CgiFormInputFieldULong_P(ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
 		
-		CgiFormInputFieldText_P(ISTR(KonfigPasswort), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
+		CgiFormInputFieldText_P(ISTR(KonfigPasswort, Sprache), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
 		
-		CgiFormCheckbox_P(ISTR(TlnVerzeichnisOffen), TlnBuchOffen_P, TlnBuchOffen);
+		CgiFormCheckbox_P(ISTR(TlnVerzeichnisOffen, Sprache), TlnBuchOffen_P, TlnBuchOffen);
 
-		CgiFormFinish_P(ISTR(EinstellungenUebernehmen));
+		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
 		}
 	else // argc > 0
 		{
 		uint8_t Neu;
 
-		printf_P(ISTR(NeueEinstellungen));
+		printf_P(ISTR(NeueEinstellungen, Sprache));
 		printf_P(PSTR("<a href=\"txpcfg-intern.cgi\">"));
-		printf_P(ISTR(Weiter));
+		printf_P(ISTR(Weiter, Sprache));
 		printf_P(PSTR("</a>"));
 
 		#ifdef TXP_ANSCHLUSS
@@ -4481,21 +4483,21 @@ void txp_cgi_config_intern(void *pStruct)
 			Buf[2] = '\0';
 			Neu = WahlZuAdresse(atoi(Buf), strlen(Buf));
 			printf_P(PSTR("<br>"));
-			printf_P(ISTR(EigeneAmtsnummer));
+			printf_P(ISTR(EigeneAmtsnummer, Sprache));
 			if (Neu == BusEigenAdresse)
 				{
-				printf_P(ISTR(Unveraendert));
+				printf_P(ISTR(Unveraendert, Sprache));
 				printf_P(PSTR(": %s"), Buf);
 				}
 			else if (Modus == ModRuhe && BusEigenAdressePruefenUndSetzen(Neu))
 				{
 				AdresseZuWahlStr(Neu, Buf);
 				changeConfig_P(EigeneNummer_P, Buf);
-				printf_P(ISTR(GeaendertIn));
+				printf_P(ISTR(GeaendertIn, Sprache));
 				printf_P(PSTR(": %s"), Buf);
 				}
 			else
-				printf_P(ISTR(KonnteNichtGeaendertWerden));
+				printf_P(ISTR(KonnteNichtGeaendertWerden, Sprache));
 			}
 		
 		// Nummer Hauptstelle
@@ -4506,10 +4508,10 @@ void txp_cgi_config_intern(void *pStruct)
 			Buf[2] = '\0';
 			Neu = WahlZuAdresse(atoi(Buf), strlen(Buf));
 			printf_P(PSTR("<br>"));
-			printf_P(ISTR(FesteHauptstelleNummer));
+			printf_P(ISTR(FesteHauptstelleNummer, Sprache));
 			if (Neu == Hauptstelle)
 				{
-				printf_P(ISTR(Unveraendert));
+				printf_P(ISTR(Unveraendert, Sprache));
 				printf_P(PSTR(": %s"), Buf);
 				}
 			else
@@ -4517,18 +4519,18 @@ void txp_cgi_config_intern(void *pStruct)
 				AdresseZuWahlStr(Neu, Buf);
 				changeConfig_P(Hauptstelle_P, Buf);
 				Hauptstelle = Neu;
-				printf_P(ISTR(GeaendertIn));
+				printf_P(ISTR(GeaendertIn, Sprache));
 				printf_P(PSTR(": %s"), Buf);
 				}
 			}
 		
 		// Feste Hauptstelle
 		// ------------------
-		CgiCheckBool_P(http_request, ISTR(FesteHauptstelle), FesteHst_P, FesteHauptstelle);
+		CgiCheckBool_P(http_request, ISTR(FesteHauptstelle, Sprache), FesteHst_P, FesteHauptstelle, Sprache);
 			
 		// AlternativSucheBeiBesetzt
 		// -------------------------
-		CgiCheckBool_P(http_request, ISTR(AlternativSucheBeiBesetzt), AlternBeiBes_P, AlternativSucheBeiBesetzt);
+		CgiCheckBool_P(http_request, ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P, AlternativSucheBeiBesetzt, Sprache);
 			
 		// DurchwahlTabelle
 		// ----------------
@@ -4554,25 +4556,25 @@ void txp_cgi_config_intern(void *pStruct)
 					}
 				changeConfig_P(DurchwahlTabelle_P, Buf);
 				printf_P(PSTR("<br>"));
-				printf_P(ISTR(DurchwahlenListe));
-				printf_P(ISTR(GeaendertIn));
+				printf_P(ISTR(DurchwahlenListe, Sprache));
+				printf_P(ISTR(GeaendertIn, Sprache));
 				printf_P(PSTR(": %s"), Buf);
 				}
 			else
 				{
 				printf_P(PSTR("<br>"));
-				printf_P(ISTR(DurchwahlenListe));
-				printf_P(ISTR(Unveraendert));
+				printf_P(ISTR(DurchwahlenListe, Sprache));
+				printf_P(ISTR(Unveraendert, Sprache));
 				}
 			}
 		
 		#endif // TXP_ANSCHLUSS
 		
-		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel), ProtokollLevel_P, ProtokollLevel);
+		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, ProtokollLevel, Sprache);
 
-		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, ISTR(ProtokollLevelTlnServer), ProtokollLevelTlnServ_P, ProtokollLevelTlnServ);
+		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, ProtokollLevelTlnServ, Sprache);
 
-		MeldungsdruckLevel = CgiCheckULong_P(http_request, ISTR(DiagnoseLevel), MeldungsdruckLevel_P, MeldungsdruckLevel);
+		MeldungsdruckLevel = CgiCheckULong_P(http_request, ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, MeldungsdruckLevel, Sprache);
 
 		// KonfigPasswort
 		// --------------
@@ -4581,10 +4583,10 @@ void txp_cgi_config_intern(void *pStruct)
 			strncpy(KonfigPasswort, http_request->argvalue[PharseGetValue_P(http_request, KonfigPasswort_P)], KonfigPasswortLen);
 			KonfigPasswort[KonfigPasswortLen] = '\0';
 			changeConfig_P(KonfigPasswort_P, KonfigPasswort);
-			printf_P(ISTR(KennwortGgfGeaendert));
+			printf_P(ISTR(KennwortGgfGeaendert, Sprache));
 			}
 			
-		TlnBuchOffen = CgiCheckBool_P(http_request, ISTR(TlnVerzeichnisOffen), TlnBuchOffen_P, TlnBuchOffen);
+		TlnBuchOffen = CgiCheckBool_P(http_request, ISTR(TlnVerzeichnisOffen, Sprache), TlnBuchOffen_P, TlnBuchOffen, Sprache);
 		
 		} // else argc > 0
 		
@@ -4613,12 +4615,12 @@ void txp_cgi_config_sperren(void *pStruct)
 
 	if (KonfigPasswort[0] == '\0')
 		{
-		printf_P(ISTR(InternesKennwortFehlt));
+		printf_P(ISTR(InternesKennwortFehlt, Sprache));
 		}
 	else
 		{
 		KonfigFreigabeErteilt = false;
-		printf_P(ISTR(GesperrtBestaetigung));
+		printf_P(ISTR(GesperrtBestaetigung, Sprache));
 		}
 
 	cgi_PrintHttpheaderEnd();
@@ -4635,7 +4637,7 @@ const PROGMEM char SelbstAnrufPeriode_P[] = "SELBSTANPER";
 
 #endif // TXP_ANSCHLUSS
 
-
+const PROGMEM char LokaleSprache_P[] = "SPRACHE";
 const PROGMEM char RufnrServerAdr1_P[] = "RUFNRSERV1";
 const PROGMEM char RufnrServerAdr2_P[] = "RUFNRSERV2";
 const PROGMEM char RufnrServerAdr3_P[] = "RUFNRSERV3";
@@ -4643,6 +4645,19 @@ const PROGMEM char TlnServSyncGeheimzahl_P[] = "SYNCPIN";
 
 const char* RufnrServerAdr_P[] = { RufnrServerAdr1_P, RufnrServerAdr2_P, RufnrServerAdr3_P } ; // liegt dann zwar im RAM, ist aber halt so...
 	
+
+//! Speichert die (z.B. in einem CGI-Aufruf) benutzte Sprache in #LokaleSprache	
+//-----------------------------------------------------------------------------
+void SpeichereSpracheAlsLokal(TSprache Sprache)
+	{
+	if (Sprache == LokaleSprache)
+		return; // da gibt es nix zu speichern.
+
+	char Buf[6];
+	itoa(Sprache, Buf, 10); // 10 ist die Basis für Dezimal!
+	changeConfig_P(LokaleSprache_P, Buf);		
+	LokaleSprache = Sprache;
+	} // SpeichereSpracheAlsLokal
 	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface zum Ändern der Einstellungen des TelexPhone-Interface bezüglich der Einbindung
@@ -4662,7 +4677,7 @@ void txp_cgi_config_extern(void *pStruct)
 	
 	PruefeSprache(pStruct, &Sprache);
 
-	if (!KonfigFreigabe(pStruct))
+	if (!KonfigFreigabe(pStruct, Sprache))
 		return;
 	
 	cgi_PrintHttpheaderStart();
@@ -4672,47 +4687,47 @@ void txp_cgi_config_extern(void *pStruct)
 		CgiFormStartTabbed_P(PSTR("txpcfg-extern.cgi"));
 
 		#ifdef TXP_ANSCHLUSS
-		CgiFormInputFieldULong_P(ISTR(ITelexRufnummer), NetzRufnummer_P, 10, NetzRufnummer);
-		CgiFormInputFieldULong_P(ISTR(RufnrServerAnmeldGeheimzahl), Geheimzahl_P, 6, Geheimzahl);
-		CgiFormCheckbox_P(ISTR(DynIPAktiv), DynIPAktiv_P, DynIPAktiv);
-		CgiFormInputFieldULong_P(ISTR(VerbindungstestPeriode), SelbstAnrufPeriode_P, 3, SelbstAnrufPeriode);
-		CgiFormInputFieldULong_P(ISTR(OeffentlichePortNr), NetzPort_P, 6, NetzPort);
+		CgiFormInputFieldULong_P(ISTR(ITelexRufnummer, Sprache), NetzRufnummer_P, 10, NetzRufnummer);
+		CgiFormInputFieldULong_P(ISTR(RufnrServerAnmeldGeheimzahl, Sprache), Geheimzahl_P, 6, Geheimzahl);
+		CgiFormCheckbox_P(ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIPAktiv);
+		CgiFormInputFieldULong_P(ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, 3, SelbstAnrufPeriode);
+		CgiFormInputFieldULong_P(ISTR(OeffentlichePortNr, Sprache), NetzPort_P, 6, NetzPort);
 		#endif // TXP_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
-			CgiFormInputFieldText_P(ISTR(RufnrServerAdr), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
+			CgiFormInputFieldText_P(ISTR(RufnrServerAdr, Sprache), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
 
 		#ifdef TXP_TLNSERVER
-		CgiFormInputFieldULong_P(ISTR(TlnServSyncGeheimzahl), TlnServSyncGeheimzahl_P, 10, TlnServSyncGeheimzahl);
+		CgiFormInputFieldULong_P(ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, 10, TlnServSyncGeheimzahl);
 		#endif //def TXP_TLNSERVER
 		
-		CgiFormFinish_P(ISTR(EinstellungenUebernehmen));
+		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
 		}
 	else // argc > 0
 		{
-		printf_P(ISTR(NeueEinstellungen));
+		printf_P(ISTR(NeueEinstellungen, Sprache));
 		printf_P(PSTR("<a href=\"txpcfg-extern.cgi\">"));
-		printf_P(ISTR(Weiter));
+		printf_P(ISTR(Weiter, Sprache));
 		printf_P(PSTR("</a>"));
 
 		#ifdef TXP_ANSCHLUSS
-		NetzRufnummer = CgiCheckULong_P(http_request, ISTR(ITelexRufnummer), NetzRufnummer_P, NetzRufnummer);
+		NetzRufnummer = CgiCheckULong_P(http_request, ISTR(ITelexRufnummer, Sprache), NetzRufnummer_P, NetzRufnummer, Sprache);
 		if (NetzRufnummer < GlobRufnrMinWert)
-			printf_P(ISTR(ITelexRufnummerZuKurz));
-		Geheimzahl = CgiCheckULong_P(http_request, ISTR(RufnrServerAnmeldGeheimzahl), Geheimzahl_P, Geheimzahl);
-		DynIPAktiv = CgiCheckBool_P(http_request, ISTR(DynIPAktiv), DynIPAktiv_P, DynIPAktiv);
-		SelbstAnrufPeriode = CgiCheckULong_P(http_request, ISTR(VerbindungstestPeriode), SelbstAnrufPeriode_P, SelbstAnrufPeriode);
-		NetzPort = CgiCheckULong_P(http_request, ISTR(OeffentlichePortNr), NetzPort_P, NetzPort);
+			printf_P(ISTR(ITelexRufnummerZuKurz, Sprache));
+		Geheimzahl = CgiCheckULong_P(http_request, ISTR(RufnrServerAnmeldGeheimzahl, Sprache), Geheimzahl_P, Geheimzahl, Sprache);
+		DynIPAktiv = CgiCheckBool_P(http_request, ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIPAktiv, Sprache);
+		SelbstAnrufPeriode = CgiCheckULong_P(http_request, ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, SelbstAnrufPeriode, Sprache);
+		NetzPort = CgiCheckULong_P(http_request, ISTR(OeffentlichePortNr, Sprache), NetzPort_P, NetzPort, Sprache);
 		#endif //def TXP_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 			{
-			CgiCheckText_P(http_request, ISTR(RufnrServerAdr), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
+			CgiCheckText_P(http_request, ISTR(RufnrServerAdr, Sprache), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i], Sprache);
 			TeilnehmerServerIP[i] = 0; // damit diese neu ermittelt wird.
 			}
 
 		#ifdef TXP_TLNSERVER
-		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl);
+		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl, Sprache);
 		#endif //def TXP_TLNSERVER
 
 		if (SelbstAnrufPhase == SelbstAnrufSperre)
@@ -4747,7 +4762,7 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 	
 	cgi_PrintHttpheaderStart();
 
-	printf_P(ISTR(TwiTlnListeAnfang));
+	printf_P(ISTR(TwiTlnListeAnfang, Sprache));
 	for (uint8_t AnzZif = 1 ; AnzZif <= 2 ; AnzZif++)
 		for (uint8_t Wahl = 0 ; Wahl <= ((AnzZif == 1) ? 9 : 99) ; Wahl++)
 			{
@@ -4756,10 +4771,10 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 			int16_t Stat = ((BusNr == BusEigenAdresse) ? Status : GetStatus(BusNr));
 			if (Stat >= 0)
 				{
-				printf_P(ISTR(TwiTlnListeEintrag), Buf, Stat);
+				printf_P(ISTR(TwiTlnListeEintrag, Sprache), Buf, Stat);
 				}
 			}
-	printf_P(ISTR(TwiTlnListeEnde));
+	printf_P(ISTR(TwiTlnListeEnde, Sprache));
 
 	cgi_PrintHttpheaderEnd();
 	
@@ -4777,11 +4792,15 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 //---------------------------------------------------------
 void cgi_SdDirectory(void *pStruct)
 	{
+	static TSprache Sprache;
+
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	char *BaseDir;
 	
-	if (!KonfigFreigabe(pStruct))
+	PruefeSprache(pStruct, &Sprache);
+	
+	if (!KonfigFreigabe(pStruct, Sprache))
 		return;
 	
 	cgi_PrintHttpheaderStart();
@@ -4988,7 +5007,13 @@ void txp_init()
 		MeldungsdruckLevel = atoi(Buf);
 	else
 		MeldungsdruckLevel = 2;
-	
+
+	if (readConfig_P(LokaleSprache_P, Buf) == 1)
+		LokaleSprache = atoi(Buf);
+	else
+		LokaleSprache = Deutsch;
+
+		
 	// dies müsste eigentlich in Protokoll.c enthalten sein.
 	if (readConfig_P(ProtokollLevel_P, Buf) == 1)
 		ProtokollLevel = atoi(Buf);
