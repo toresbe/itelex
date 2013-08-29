@@ -213,7 +213,7 @@ void POP3Einleiten()
 	if (EmailAbfrageTakt == 0)
 		return;
 		
-	if (Modus != ModRuhe || TxpSocketHandle != NO_SOCKET_USED)
+	if (Modus != ModRuhe || ITelexSocketHandle != NO_SOCKET_USED)
 		{
 		StartLangTimer(&POPWartezeitTimer);
 		POPWartezeitEnde = 3 * LangTimerMinuteFaktor;
@@ -242,14 +242,14 @@ void POP3Einleiten()
 		}
 	
 	// und hier wird geöffet...
-	TxpSocketHandle = Connect2IP(ServerIP, 110); 
+	ITelexSocketHandle = Connect2IP(ServerIP, 110); 
 	 
-	if (TxpSocketHandle == -1)
+	if (ITelexSocketHandle == -1)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
 		Protokollieren_P(PSTR("TxP POP: ! Socket zum Server konnte nicht geoeffnet werden\r\n"));
-		TxpSocketHandle = NO_SOCKET_USED;
-		TxpSocketMode = SocketIdle;
+		ITelexSocketHandle = NO_SOCKET_USED;
+		ITelexSocketMode = SocketIdle;
 
 		//! \todo Diagnose 
 		
@@ -261,9 +261,9 @@ void POP3Einleiten()
 		
 	SocketBufInit();
 	
-	TxpSocketMode = SocketOriginate;
-	TxpSocketAbbauGeplant = false;
-	TxpSocketProtokoll = POP3;
+	ITelexSocketMode = SocketOriginate;
+	ITelexSocketAbbauGeplant = false;
+	ITelexSocketProtokoll = POP3;
 	
 	ProtokollPhase = AnmeldungName;
 	POPOkEmpfangen = false;
@@ -343,7 +343,7 @@ void POP3DatenVerarbeiten()
 			}
 
 		InterneVerbindungBeenden(true);
-		TxpSocketAbbauGeplant = true;
+		ITelexSocketAbbauGeplant = true;
 		return;
 		}
 
@@ -357,7 +357,7 @@ void POP3DatenVerarbeiten()
 		case MailFrom:
 		case MailTo:
 			// gibt es nicht...
-			TxpSocketAbbauGeplant = true;
+			ITelexSocketAbbauGeplant = true;
 			return;
 			
 		case AnmeldungName:
@@ -394,7 +394,7 @@ void POP3DatenVerarbeiten()
 				POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
 				StartLangTimer(&POPWartezeitTimer);
 				strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
-				TxpSocketAbbauGeplant = true;
+				ITelexSocketAbbauGeplant = true;
 				ProtokollPhase = WarteEnde;
 				}
 			else
@@ -493,7 +493,7 @@ void POP3DatenVerarbeiten()
 
 		case Abmelden:
 			strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
-			TxpSocketAbbauGeplant = true;
+			ITelexSocketAbbauGeplant = true;
 			ProtokollPhase = WarteEnde;
 			SocketInBufUsed = 0;
 			break;
@@ -518,7 +518,7 @@ void POP3DatenVerarbeiten()
 //! z.B. durch Drücken der Schluss-taste während des Ausdrucks.
 void POP3Abbrechen()
 	{
-	if (TxpSocketMode != SocketOriginate || TxpSocketProtokoll != POP3)
+	if (ITelexSocketMode != SocketOriginate || ITelexSocketProtokoll != POP3)
 		return; // da gibt es nix abzubrechen...
 	if (ProtokollPhase == Abmelden)
 		return; // ist eh gleich vorbei...
@@ -560,14 +560,14 @@ bool SMTPOeffnen(char *EmfaengerName)
 		}
 	
 	// und hier wird geöffet...
-	TxpSocketHandle = Connect2IP(ServerIP, 25); 
+	ITelexSocketHandle = Connect2IP(ServerIP, 25); 
 	 
-	if (TxpSocketHandle == -1)
+	if (ITelexSocketHandle == -1)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
 		Protokollieren_P(PSTR("iTelex SMTP: ! Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
-		TxpSocketHandle = NO_SOCKET_USED;
-		TxpSocketMode = SocketIdle;
+		ITelexSocketHandle = NO_SOCKET_USED;
+		ITelexSocketMode = SocketIdle;
 		if (Diagnoseausgabe_P(ISTR(SMTPFehlerAnfang, LokaleSprache), 1))
 			{
 			strncat(DiagnosePuffer, EmailSMTPServerAdresse, strlen(DiagnosePuffer) - 30);
@@ -578,9 +578,9 @@ bool SMTPOeffnen(char *EmfaengerName)
 
 	SocketBufInit();
 	
-	TxpSocketMode = SocketOriginate;
-	TxpSocketAbbauGeplant = false;
-	TxpSocketProtokoll = SMTP;
+	ITelexSocketMode = SocketOriginate;
+	ITelexSocketAbbauGeplant = false;
+	ITelexSocketProtokoll = SMTP;
 	
 	ProtokollPhase = HalloSagen;
 	
@@ -667,7 +667,7 @@ void SMTPDatenVerarbeiten()
 				strncat(DiagnosePuffer, SocketInBuf, strlen(DiagnosePuffer) - 20);
 			
 			InterneVerbindungBeenden(true);
-			TxpSocketAbbauGeplant = true;
+			ITelexSocketAbbauGeplant = true;
 			SocketInBufUsed = 0; 
 			return;
 			}
@@ -814,12 +814,12 @@ void SMTPDatenVerarbeiten()
 			
 		case Abmelden:
 			strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
-			TxpSocketAbbauGeplant = true;
+			ITelexSocketAbbauGeplant = true;
 			ProtokollPhase = WarteEnde;
 			break;
 			
 		case WarteEnde:
-			TxpSocketAbbauGeplant = true;
+			ITelexSocketAbbauGeplant = true;
 			break;
 
 		}
@@ -844,7 +844,7 @@ void SMTPSchliessen()
 		{
 		strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
 		ProtokollPhase = WarteEnde;
-		TxpSocketAbbauGeplant = true;
+		ITelexSocketAbbauGeplant = true;
 		}
 	SocketOutBufUsed = strlen(SocketOutBuf);
 	}

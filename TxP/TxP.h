@@ -245,7 +245,7 @@ typedef enum {
 	SocketIdle, //!< Unbenutzt
 	SocketOriginate, //!< Ausgehende Verbindung
 	SocketAnswer //!< Kommende Verbindung
-	} TTxpSocketMode; 
+	} TITelexSocketMode; 
 	
 	
  //! Was geht über den Socket 'rüber.	
@@ -256,7 +256,7 @@ typedef enum {
 	POP3,			//!< Mail-Abfrage
 	SMTP,			//!< Mail-Sendung
 #endif //def TXP_EMAIL
-	} TTxpSocketProtokoll;
+	} TITelexSocketProtokoll;
 	
 
 //! Typ eines Teilnehmers
@@ -392,15 +392,15 @@ extern char AsciiDruckPuffer[AsciiDruckPufferMax+4];
 		
 extern uint8_t AsciiDruckZiel;
 
-extern int TxpSocketHandle;
+extern int ITelexSocketHandle;
 
-extern TTxpSocketMode TxpSocketMode;
+extern TITelexSocketMode ITelexSocketMode;
 
-extern bool TxpSocketAbbauGeplant;
+extern bool ITelexSocketAbbauGeplant;
 
-extern TKurzTimer TxpSocketAbbruchTimer;
+extern TKurzTimer ITelexSocketAbbruchTimer;
 	
-extern TTxpSocketProtokoll TxpSocketProtokoll;
+extern TITelexSocketProtokoll ITelexSocketProtokoll;
 
 extern uint16_t SocketInBufUsed; //!< Benutzter Teil des TCP-Empfangspuffers
 
