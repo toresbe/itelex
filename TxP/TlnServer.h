@@ -28,7 +28,7 @@
 	
 	#include "TxP.h"
 	
-	#ifdef TXP_TLNSERVER
+	#ifdef ITELEX_TLNSERVER
 	
 	extern uint32_t TlnServSyncGeheimzahl;
 	
@@ -39,7 +39,7 @@
 	
 	extern void TlnServDebugPrint();
 	
-	#endif //def TXP_TLNSERVER
+	#endif //def ITELEX_TLNSERVER
 	
 #endif /* _TLNSERVER_H_ */
 

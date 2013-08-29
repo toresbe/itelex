@@ -4,7 +4,7 @@
 
 #include "config.h"
 
-#ifdef TELEXPHONE
+#ifdef ITELEX
 
 #include <stdbool.h>
 #include <inttypes.h>
@@ -36,6 +36,6 @@ extern bool TlnListerNaechster(TTlnListerDat *ldp, TTlnDaten *Tln);
 
 extern void TlnBuchInit();
 
-#endif //def TELEXPHONE
+#endif //def ITELEX
 
 #endif //ndef __TLNBUCH_H__

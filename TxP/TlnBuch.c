@@ -20,7 +20,7 @@
 #include "CgiFormTools.h"
 #include "StringTab.h"
 
-#ifdef TELEXPHONE
+#ifdef ITELEX
 
 enum { TlnBuchMemMax = 20000UL } ; //!< Größe des Teilnehmerverzeichnisses in Bytes
 
@@ -754,9 +754,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		return;
 		
 	if (!TlnBuchOffen
-		#ifdef TXP_TLNSERVER
+		#ifdef ITELEX_TLNSERVER
 		&& TlnServSyncGeheimzahl == 0 
-		#endif //def TXP_TLNSERVER
+		#endif //def ITELEX_TLNSERVER
 		&& !KonfigFreigabe(pStruct, Sprache))
 		// wenn nicht offen und kein Server und nicht Kennwort eingegeben -> Ende
 		return;
@@ -919,9 +919,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			TD.Port = TXP_PORT;
 			TD.Durchwahl = 0;
 			TD.Flags = 0;
-			#ifdef TXP_ANSCHLUSS
+			#ifdef ITELEX_ANSCHLUSS
 			TD.Flags |= (TlnFlag_Lokal);
-			#endif //def TXP_ANSCHLUSS
+			#endif //def ITELEX_ANSCHLUSS
 			}
 
 		CgiFormStartTabbed_P(PSTR("txp-tlnverz.cgi"));
@@ -1146,9 +1146,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				if (Res > 0)
 					{
 					printf_P(ISTR(EintragGespeichert, Sprache));
-#ifdef TXP_TLNSERVER
+#ifdef ITELEX_TLNSERVER
 					TlnServTlnbuchEintragGeaendert(&TD, -1); // -1: Änderung kommt von keinem Server
-#endif //def TXP_TLNSERVER
+#endif //def ITELEX_TLNSERVER
 					}
 				else
 					printf_P(ISTR(EintragUnveraendert, Sprache));
@@ -1264,4 +1264,4 @@ void TlnBuchInit()
 	}
 	
 
-#endif //def TELEXPHONE
+#endif //def ITELEX

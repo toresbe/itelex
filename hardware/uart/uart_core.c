@@ -41,7 +41,7 @@
  * \author Dirk Broßwick
  */
 
-#if defined( OpenMCP ) || defined( TXPnet )
+#if defined( OpenMCP ) || defined( iTelex )
 	#include "hardware/uart/mega/uart_1.h"
 
 	UART_NUM uart_num[ ] = {

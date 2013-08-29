@@ -91,7 +91,7 @@ int cmd_dyndns( int argc, char ** argv )
 	char * domain = NULL;
 	int i;
 	char accountdata[ 32 ];
-	char domaindata[ 32 ];
+	char domaindata[ 52 ];
 
 	
 	if ( argc == 2 )
@@ -146,14 +146,14 @@ void cgi_dyndns( void * pStruct )
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	
-#ifdef TELEXPHONE
+#ifdef ITELEX
 	extern uint8_t KonfigFreigabe(void *pStruct); 
 	if (!KonfigFreigabe(pStruct))
 		return;
 #endif	
 	
 	char DYNDNSON[10];
-	char DYNDNSDOMAIN[32];
+	char DYNDNSDOMAIN[52];
 	int i;
 
 	cgi_PrintHttpheaderStart();
@@ -181,7 +181,7 @@ void cgi_dyndns( void * pStruct )
   						"  </tr>\r"
 						"  <tr>\r"
 					   	"   <td align=\"right\">DynDNS Domain</td>"
-						"   <td><input name=\"DOMAIN\" type=\"text\" size=\"31\" value=\"%s\" maxlength=\"31\"></td>"
+						"   <td><input name=\"DOMAIN\" type=\"text\" size=\"31\" value=\"%s\" maxlength=\"51\"></td>"
   						"  </tr>\r"
  						"  <tr>\r"
    						"   <td></td><td><input type=\"submit\" value=\" Einstellung &Uuml;bernehmen \"></td>"

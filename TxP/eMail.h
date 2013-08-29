@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifdef TXP_EMAIL
+#ifdef ITELEX_EMAIL
  
 #include "CgiFormTools.h"
 #include "TxP.h"
@@ -45,4 +45,4 @@ extern void POP3Einleiten();
 extern void POP3Abbrechen();
 
 
-#endif //def TXP_EMAIL
+#endif //def ITELEX_EMAIL

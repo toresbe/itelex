@@ -30,9 +30,9 @@
 
 #include "config.h"
 
-#ifdef TELEXPHONE
+#ifdef ITELEX
 
-#if !defined(TXP_TLNSERVER) && !defined(TXP_ANSCHLUSS)
+#if !defined(ITELEX_TLNSERVER) && !defined(ITELEX_ANSCHLUSS)
 	#warning Kein TxP-Modul aktiv!
 #endif
 
@@ -252,10 +252,10 @@ typedef enum {
  typedef enum {
 	TelexPhone,		//!< Das eigene Protokoll
 	Ascii,			//!< Ascii, also telnet
-#ifdef TXP_EMAIL
+#ifdef ITELEX_EMAIL
 	POP3,			//!< Mail-Abfrage
 	SMTP,			//!< Mail-Sendung
-#endif //def TXP_EMAIL
+#endif //def ITELEX_EMAIL
 	} TTxpSocketProtokoll;
 	
 
@@ -274,6 +274,16 @@ typedef enum
 	} TTlnAdresseArt;
 	
 
+//! Modus für die generierung Datum / Uhrzeit bei ankommenden Anrufen.	
+typedef enum 
+	{
+	DatumDruckKein,
+	DatumDruckLokal,
+	DatumDruckAnrufer,
+	DatumDruckBeide,
+	} TDatumDruckModus;
+	
+	
 //! Datenstruktur für alle Informationen eines Teilnehmers.
 //! Achtung: Bei Änderungen berücksichtigen, dass auch der Datenaustausch 
 //! mit dem Teilnehmer-Server über dieses Format läuft.
@@ -409,7 +419,7 @@ extern char DiagnosePuffer[DiagnosePufferMax];
 extern char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
 
 extern long TeilnehmerServerIP[ANZ_TEILNEHMER_SERVER];
-	
+
 extern TSprache LokaleSprache;
 	
 
@@ -500,7 +510,7 @@ static inline uint16_t KurzTimerVal(TKurzTimer *t)
 	}
 		
 	
-#endif //def TELEXPHONE
+#endif //def ITELEX
 	
 #endif /* _TXP_H_ */
 //@}

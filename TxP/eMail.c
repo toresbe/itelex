@@ -25,7 +25,7 @@
 
 #include "config.h"
 
-#ifdef TXP_EMAIL
+#ifdef ITELEX_EMAIL
 
 #include <avr/pgmspace.h>
 #include <avr/version.h>
@@ -884,7 +884,7 @@ void txp_cgi_email_config(void *pStruct)
 
 	if ( http_request->argc == 0 )
 		{
-		CgiFormStartTabbed_P(PSTR("txpcfg-email.cgi"));
+		CgiFormStartTabbed_P(PSTR("itelexcfg-email.cgi"));
 
 		CgiFormInputFieldText_P(ISTR(EmailKonfigPopServer, Sprache), EmailPOPServerAdresse_P, TlnAdresseMax, EmailPOPServerAdresse);
 		CgiFormInputFieldText_P(ISTR(EmailKonfigSmtpServer, Sprache), EmailSMTPServerAdresse_P, TlnAdresseMax, EmailSMTPServerAdresse);
@@ -898,7 +898,7 @@ void txp_cgi_email_config(void *pStruct)
 	else // argc > 0
 		{
 		printf_P(ISTR(NeueEinstellungen, Sprache));
-		printf_P(PSTR("<a href=\"txpcfg-email.cgi\">"));
+		printf_P(PSTR("<a href=\"itelexcfg-email.cgi\">"));
 		printf_P(ISTR(Weiter, Sprache));
 		printf_P(PSTR("</a>"));
 
@@ -967,8 +967,8 @@ void txp_email_init()
 	
 	// cgi Registrieren
 	
-	cgi_RegisterCGI(txp_cgi_email_config, PSTR("txpcfg-email.cgi"));
+	cgi_RegisterCGI(txp_cgi_email_config, PSTR("itelexcfg-email.cgi"));
 	}
 	
 	
-#endif //def TXP_EMAIL
+#endif //def ITELEX_EMAIL

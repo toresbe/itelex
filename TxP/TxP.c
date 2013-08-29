@@ -39,7 +39,7 @@
 
 #include "config.h"
 
-#ifdef TELEXPHONE
+#ifdef ITELEX
 
 // #include "defports.h"
 // #include "bits.h"
@@ -76,7 +76,7 @@
 const PROGMEM char SvnVersion_P[] = SVNVERSION;
 
 
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 
 
 //! Aktueller Modus. Sollte nur durch ModusWechsel geändert werden.	
@@ -349,6 +349,8 @@ static bool AlternativSucheBeiBesetzt;
 static uint8_t DurchwahlTabelle[9];
 	//!< Liste der Nebenstellen-Nummern bei kommenden Rufen mit Durchwahl
 
+static TDatumDruckModus DatumDruckModus;
+	//!< Wird bei kommenden Verbindungen etwas automatisch gedruckt?
 	
 static uint32_t Wahlnummer; 
 	//!< Momentan gewählte Nummer
@@ -376,7 +378,7 @@ static uint16_t NetzPort;
 static long NetzEigeneIP;
 	//!< Zurückgemeldete IP-Adresse im globalen Netz.
 
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 	
 
 char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
@@ -423,7 +425,7 @@ static uint8_t AktTlnServerTabI;
 	//!< Tabellenindex des aktuell geöffneten Teilnehmer-Servers (#TeilnehmerServerSocket)
 	
 	
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 
 static bool DynIPAktiv;
 	//!< Soll die eigene IP-Adresse auf den Teilnehmer-Server aktualisiert werden?
@@ -469,7 +471,7 @@ static TZeitUeberwachung SelbstAnrufZeitUeberwachung;
 	//!< Überwachung der Dauer des Selbstanrufs.
 	
 	
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 	
 	
 //! Sollfrequenz des Aufrufs von txp_timerEvent()
@@ -630,7 +632,7 @@ bool Diagnoseausgabe_P(const char *msg, uint8_t Level)
 	}
 
 	
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 	
 //! Initialisiert die serielle Umsetzung 
 static void SeriellUmsetzInit(void)
@@ -1881,7 +1883,7 @@ static void ExterneVerbindungBeenden()
 					}
 				break;
 				
-#ifdef TXP_EMAIL
+#ifdef ITELEX_EMAIL
 			case SMTP:
 				SMTPSchliessen();
 				break;
@@ -1889,7 +1891,7 @@ static void ExterneVerbindungBeenden()
 			case POP3:
 				POP3Abbrechen();
 				break;
-#endif //def TXP_EMAIL
+#endif //def ITELEX_EMAIL
 				
 			}
 		}
@@ -2446,7 +2448,7 @@ static void ZeichenInHtmlSendeText(char c)
 	HtmlSendeText[i+1] = '\0';
 	}
 	
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 
 
 //! Prüft, ob ein Socket benutzbar ist und nicht wegen Fehlern gesperrt ist
@@ -2604,7 +2606,7 @@ bool TeilnehmerServerSocketOeffnen(PGM_P Grund)
 	} // TeilnehmerServerSocketOeffnen()
 
 
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 
 //! Versucht den Verbindungsaufbau zu einem vorhandenen Eintrag im eigenen Teilnehmerverzeichnis
 // ---------------------------------------------------------------------------------------------
@@ -2661,7 +2663,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			break;
 			
 		case eMail:
-#ifdef TXP_EMAIL
+#ifdef ITELEX_EMAIL
 			if (SMTPOeffnen(td->Adresse))
 				{
 				if (ProtokollLevel >= 1)
@@ -2680,7 +2682,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			ProtokollierenTxp_P(PSTR("! eMail nicht unterstuetzt\r\n" ));
 			Diagnoseausgabe_P(ISTR(MailNichtInDieserVersion), 3);
 			return 2;
-#endif //ndef TXP_EMAIL		
+#endif //ndef ITELEX_EMAIL		
 			
 		default:
 			if (ProtokollLevel >= 1)
@@ -2972,26 +2974,36 @@ static void DatumUhrzeitDrucken()
 	CLOCK_GetTime(&Time);
 	sprintf_P(Text, PSTR("%02u.%02u.%04u  %02d:%02d\r\n"),
 			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm);
-	
-	for (uint8_t i = 0 ; i < 7 ; i++)
-		PufferSpeich(&EmpfPuffer, TtyCodeBuUm);
-			// EmpfPuffer wird an Gegenstelle gesendet, die muss erst anlaufen, daher als "Überbrückung" ein paar ZL
-	PufferSpeich(&SendePuffer, TtyCodeWR);
-	PufferSpeich(&EmpfPuffer, TtyCodeWR);
-	PufferSpeich(&SendePuffer, TtyCodeZL);
-	PufferSpeich(&EmpfPuffer, TtyCodeZL);
-	PufferSpeich(&SendePuffer, TtyCodeZiUm);
-	PufferSpeich(&EmpfPuffer, TtyCodeZiUm);
-	
-	for (uint8_t i = 0 ; i < strlen(Text) ; i++)
+
+	if (DatumDruckModus == DatumDruckLokal || DatumDruckModus == DatumDruckBeide)
 		{
-		uint8_t Code = ZeichenZuCode(Text[i], ZiMode);
-		if (Code != 255)
+		PufferSpeich(&SendePuffer, TtyCodeWR);
+		PufferSpeich(&SendePuffer, TtyCodeZL);
+		PufferSpeich(&SendePuffer, TtyCodeZiUm);
+		for (uint8_t i = 0 ; i < strlen(Text) ; i++)
 			{
-			PufferSpeich(&SendePuffer, Code);
-			PufferSpeich(&EmpfPuffer, Code);
+			uint8_t Code = ZeichenZuCode(Text[i], ZiMode);
+			if (Code != 255)
+				PufferSpeich(&SendePuffer, Code);
 			}
 		}
+		
+	if (DatumDruckModus == DatumDruckAnrufer || DatumDruckModus == DatumDruckBeide)
+		{
+		for (uint8_t i = 0 ; i < 7 ; i++)
+			PufferSpeich(&EmpfPuffer, TtyCodeBuUm);
+				// EmpfPuffer wird an Gegenstelle gesendet, die muss erst anlaufen, daher als "Überbrückung" ein paar ZL
+		PufferSpeich(&EmpfPuffer, TtyCodeWR);
+		PufferSpeich(&EmpfPuffer, TtyCodeZL);
+		PufferSpeich(&EmpfPuffer, TtyCodeZiUm);
+		for (uint8_t i = 0 ; i < strlen(Text) ; i++)
+			{
+			uint8_t Code = ZeichenZuCode(Text[i], ZiMode);
+			if (Code != 255)
+				PufferSpeich(&EmpfPuffer, Code);
+			}
+		}
+		
 	} // DatumUhrzeitDrucken()
 	
 	
@@ -3244,7 +3256,7 @@ void txp_thread()
 			TxpDatenVerarbeiten();
 			break;
 			
-#ifdef TXP_EMAIL
+#ifdef ITELEX_EMAIL
 		case POP3:
 			POP3DatenVerarbeiten();
 			break;
@@ -3253,7 +3265,7 @@ void txp_thread()
 			SMTPDatenVerarbeiten();
 			break;
 			
-#endif //def TXP_EMAIL
+#endif //def ITELEX_EMAIL
 		
 		default:
 			ProtokollierenTxp_P(PSTR("! ILLEGALES Protokoll\r\n"));
@@ -3503,7 +3515,7 @@ void txp_thread()
 		#endif //def LEDROT_SOCKETERROR
 		}
 		
-#ifdef TXP_EMAIL
+#ifdef ITELEX_EMAIL
 
 	// ==========================================================================
 	// Ab und zu mal prüfen, ob es neue Mails gibt.
@@ -3512,7 +3524,7 @@ void txp_thread()
 	if (SelbstAnrufPhase == SelbstAnrufRuhe || SelbstAnrufPhase == SelbstAnrufSperre)
 		POP3Einleiten();
 	
-#endif //def TXP_EMAIL
+#endif //def ITELEX_EMAIL
 	
 	// ======================================================================
 	// Dynamische IP-Aktualisierung starten
@@ -3787,13 +3799,13 @@ void txp_thread()
 							ProtokollierenInt_P(PSTR("! Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
 							Diagnoseausgabe_P(ISTR(InternesVerzeichnisVoll, LokaleSprache), 2);
 							}
-#ifdef TXP_TLNSERVER							
+#ifdef ITELEX_TLNSERVER							
 						else if (Res > 0) // Erfolg, denn Meldung 2 kann hier nicht kommen.
 							{
 							TlnServTlnbuchEintragGeaendert(&GewaehlterTln, -1); 
 								// -1: Geänderter Eintrag kommt nicht durch einen Sync-Vorgang 
 							}
-#endif //def TXP_TLNSERVER
+#endif //def ITELEX_TLNSERVER
 
 						} // Aktualisieren ist sinnvoll
 						
@@ -3947,7 +3959,7 @@ static uint8_t DurchwahlTabelleDekodieren(char *s)
 	return i;
 	} // DurchwahlTabelleDekodieren()
 	
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 
 
 //! Kann am Anfang jeder cgi-Funktion aufgerufen werden, um Zugang zu der Funktion erst nach Kennwort-Eingabe zu erlauben.
@@ -4098,7 +4110,7 @@ void txp_cgi_debug( void * pStruct )
 	extern char Puffer[]; // aus Protokoll.c
 	printf_P(PSTR("<br>Protokollpuffer: %s"), Puffer);
 
-	#ifdef TXP_ANSCHLUSS
+	#ifdef ITELEX_ANSCHLUSS
 	
 	PRINTVAL(Modus);
 	PRINTVALHEX(Status); // bezüglich TxP-Funktionalität (ist auf TWI-Bus sichtbar)
@@ -4191,13 +4203,13 @@ void txp_cgi_debug( void * pStruct )
 				 TeilnehmerServerAdresse[i], TeilnehmerServerFehlerZaehler[i], LangTimerVal(&TeilnehmerServerSperrTimer[i]));
 		}
 		
-#ifdef TXP_TLNSERVER
+#ifdef ITELEX_TLNSERVER
 	TlnServDebugPrint();
-#endif //def TXP_TLNSERVER
+#endif //def ITELEX_TLNSERVER
 		
 	PRINTVAL(TeilnehmerServerAlleNichtErreichbar);
 	
-	#endif // TXP_ANSCHLUSS
+	#endif // ITELEX_ANSCHLUSS
 	
 	printf_P(PSTR("<br><a href=\"txp-debug.cgi?reset\">Statiktik-Daten zur&uuml;cksetzen</a>"
 				  "<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , 
@@ -4210,7 +4222,7 @@ void txp_cgi_debug( void * pStruct )
 	}
 	
 
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface für das Ausgabefenster der Fernschreiber-Simulation
@@ -4232,7 +4244,7 @@ void txp_cgi_msg_Out( void * pStruct )
 					"<HEAD>"
 					"<meta http-equiv=\"expires\" content=\"1\">"
 					"<meta http-equiv=\"pragma\" content=\"no-cache\">"
-					"<meta http-equiv=\"refresh\" content=\"10; URL=txp-msg-out.cgi\">"
+					"<meta http-equiv=\"refresh\" content=\"10; URL=itelex-msg-out.cgi\">"
 					"</HEAD>"
 					"<BODY>" ));
 					
@@ -4348,12 +4360,12 @@ void txp_cgi_msg_In( void * pStruct )
 		}
 
 	cgi_PrintHttpheaderStart();
-	printf_P(PSTR("<form action=\"txp-msg-in.cgi\">"));
+	printf_P(PSTR("<form action=\"itelex-msg-in.cgi\">"));
 	printf_P(ISTR(HtmlTextEingabe, Sprache));
 	printf_P(PSTR("<input name=\"Eingabe\" type=\"text\" size=\"65\" value=\"\" maxlength=\"65\">"
 				  "<input type=\"submit\" value=\""));
 	printf_P(ISTR(HtmlTextEingabeAbsenden, Sprache));
-	printf_P(PSTR(" \"><a href=\"txp-msg-out.cgi\" target=\"MsgOut\">"));
+	printf_P(PSTR(" \"><a href=\"itelex-msg-out.cgi\" target=\"MsgOut\">"));
 	printf_P(ISTR(HtmlTextEingabeAktualisieren, Sprache));
 	printf_P(PSTR("</a></form>"));
 	cgi_PrintHttpheaderEnd();
@@ -4390,7 +4402,7 @@ void AdresseZuWahlStr(uint8_t Adr, char* Buf)
 		}
 	}
 
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 
 	
 const PROGMEM char KonfigPasswort_P[] = "CFGPASS";
@@ -4399,7 +4411,7 @@ const PROGMEM char ProtokollLevel_P[] = "PROTLEVEL";
 const PROGMEM char ProtokollLevelTlnServ_P[] = "PROTLEVELTLNSRV";
 
 
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 
 const PROGMEM char Hauptstelle_P[] = "HAUPTSTELLE";
 const PROGMEM char EigeneNummer_P[] = "EIGENENUMMER";
@@ -4407,8 +4419,9 @@ const PROGMEM char FesteHst_P[] = "FESTEHPST";
 const PROGMEM char MeldungsdruckLevel_P[] = "MELDRUCK";
 const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
 const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
+const PROGMEM char DatumDruckModus_P[] = "AUTODATUM";
 
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 
 	
 /*------------------------------------------------------------------------------------------------------------*/
@@ -4431,14 +4444,20 @@ void txp_cgi_config_intern(void *pStruct)
 	
 	if (!KonfigFreigabe(pStruct, Sprache))
 		return;
-	
+
+	const char *AutoDatumSelList[4];
+	AutoDatumSelList[0] = ISTR(DatumDruckKein, Sprache);
+	AutoDatumSelList[1] = ISTR(DatumDruckLokal, Sprache);
+	AutoDatumSelList[2] = ISTR(DatumDruckAnrufer, Sprache);
+	AutoDatumSelList[3] = ISTR(DatumDruckBeide, Sprache);
+		
 	cgi_PrintHttpheaderStart();
 
 	if ( http_request->argc == 0 )
 		{
-		CgiFormStartTabbed_P(PSTR("txpcfg-intern.cgi"));
+		CgiFormStartTabbed_P(PSTR("itelexcfg-intern.cgi"));
 
-		#ifdef TXP_ANSCHLUSS
+		#ifdef ITELEX_ANSCHLUSS
 		AdresseZuWahlStr(BusEigenAdresse, Buf);
 		CgiFormInputFieldText_P(ISTR(EigeneAmtsnummer, Sprache), EigeneNummer_P, 2, Buf);
 
@@ -4451,8 +4470,10 @@ void txp_cgi_config_intern(void *pStruct)
 						
 		readConfig_P(DurchwahlTabelle_P, Buf);
 		CgiFormInputFieldText_P(ISTR(DurchwahlenListe, Sprache), DurchwahlTabelle_P, 30, Buf);
+
+		CgiFormDropdown_P(ISTR(DatumDruckModus, Sprache), DatumDruckModus_P, 4, AutoDatumSelList, DatumDruckModus);
 		
-		#endif //def TXP_ANSCHLUSS
+		#endif //def ITELEX_ANSCHLUSS
 
 		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 2, ProtokollLevel);
 		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
@@ -4469,11 +4490,11 @@ void txp_cgi_config_intern(void *pStruct)
 		uint8_t Neu;
 
 		printf_P(ISTR(NeueEinstellungen, Sprache));
-		printf_P(PSTR("<a href=\"txpcfg-intern.cgi\">"));
+		printf_P(PSTR("<a href=\"itelexcfg-intern.cgi\">"));
 		printf_P(ISTR(Weiter, Sprache));
 		printf_P(PSTR("</a>"));
 
-		#ifdef TXP_ANSCHLUSS
+		#ifdef ITELEX_ANSCHLUSS
 		
 		// Eigene Nummer
 		// -------------
@@ -4567,8 +4588,31 @@ void txp_cgi_config_intern(void *pStruct)
 				printf_P(ISTR(Unveraendert, Sprache));
 				}
 			}
-		
-		#endif // TXP_ANSCHLUSS
+
+		// DatumDruckModus
+		// ----------------
+		char DatumDruckModusStr[20];
+		strncpy(DatumDruckModusStr, http_request->argvalue[PharseGetValue_P(http_request, DatumDruckModus_P)], sizeof(DatumDruckModusStr));
+		for (Neu = 0 ; Neu <= 3 ; Neu++)
+			if (strcmp_P(DatumDruckModusStr, AutoDatumSelList[Neu]) == 0)
+				break;
+		if (Neu <= 3) 	
+			{ // übereinstimmung gefunden
+			printf_P(PSTR("<br>"));
+			printf_P(ISTR(DatumDruckModus, Sprache));
+			if (DatumDruckModus != DatumDruckKein + Neu)
+				{ // geändert!
+				DatumDruckModus = DatumDruckKein + Neu;
+				itoa(DatumDruckModus, Buf, 10); // 10 ist die Basis für Dezimal!
+				changeConfig_P(DatumDruckModus_P, Buf);
+				printf_P(ISTR(GeaendertIn, Sprache));
+				printf_P(PSTR(": %s (%d)"), DatumDruckModusStr, DatumDruckModus);
+				}
+			else
+				printf_P(ISTR(Unveraendert, Sprache));
+			}
+			
+		#endif // ITELEX_ANSCHLUSS
 		
 		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, ProtokollLevel, Sprache);
 
@@ -4627,7 +4671,7 @@ void txp_cgi_config_sperren(void *pStruct)
 	}
 	
 	
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 
 const PROGMEM char NetzRufnummer_P[] = "NETZRUFNR";
 const PROGMEM char Geheimzahl_P[] = "PIN";
@@ -4635,7 +4679,7 @@ const PROGMEM char DynIPAktiv_P[] = "DYNIPAKTIV";
 const PROGMEM char NetzPort_P[] = "NETZPORT";
 const PROGMEM char SelbstAnrufPeriode_P[] = "SELBSTANPER";
 
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 
 const PROGMEM char LokaleSprache_P[] = "SPRACHE";
 const PROGMEM char RufnrServerAdr1_P[] = "RUFNRSERV1";
@@ -4684,33 +4728,33 @@ void txp_cgi_config_extern(void *pStruct)
 
 	if ( http_request->argc == 0 )
 		{
-		CgiFormStartTabbed_P(PSTR("txpcfg-extern.cgi"));
+		CgiFormStartTabbed_P(PSTR("itelexcfg-extern.cgi"));
 
-		#ifdef TXP_ANSCHLUSS
+		#ifdef ITELEX_ANSCHLUSS
 		CgiFormInputFieldULong_P(ISTR(ITelexRufnummer, Sprache), NetzRufnummer_P, 10, NetzRufnummer);
 		CgiFormInputFieldULong_P(ISTR(RufnrServerAnmeldGeheimzahl, Sprache), Geheimzahl_P, 6, Geheimzahl);
 		CgiFormCheckbox_P(ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIPAktiv);
 		CgiFormInputFieldULong_P(ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, 3, SelbstAnrufPeriode);
 		CgiFormInputFieldULong_P(ISTR(OeffentlichePortNr, Sprache), NetzPort_P, 6, NetzPort);
-		#endif // TXP_ANSCHLUSS
+		#endif // ITELEX_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 			CgiFormInputFieldText_P(ISTR(RufnrServerAdr, Sprache), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
 
-		#ifdef TXP_TLNSERVER
+		#ifdef ITELEX_TLNSERVER
 		CgiFormInputFieldULong_P(ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, 10, TlnServSyncGeheimzahl);
-		#endif //def TXP_TLNSERVER
+		#endif //def ITELEX_TLNSERVER
 		
 		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
 		}
 	else // argc > 0
 		{
 		printf_P(ISTR(NeueEinstellungen, Sprache));
-		printf_P(PSTR("<a href=\"txpcfg-extern.cgi\">"));
+		printf_P(PSTR("<a href=\"itelexcfg-extern.cgi\">"));
 		printf_P(ISTR(Weiter, Sprache));
 		printf_P(PSTR("</a>"));
 
-		#ifdef TXP_ANSCHLUSS
+		#ifdef ITELEX_ANSCHLUSS
 		NetzRufnummer = CgiCheckULong_P(http_request, ISTR(ITelexRufnummer, Sprache), NetzRufnummer_P, NetzRufnummer, Sprache);
 		if (NetzRufnummer < GlobRufnrMinWert)
 			printf_P(ISTR(ITelexRufnummerZuKurz, Sprache));
@@ -4718,7 +4762,7 @@ void txp_cgi_config_extern(void *pStruct)
 		DynIPAktiv = CgiCheckBool_P(http_request, ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIPAktiv, Sprache);
 		SelbstAnrufPeriode = CgiCheckULong_P(http_request, ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, SelbstAnrufPeriode, Sprache);
 		NetzPort = CgiCheckULong_P(http_request, ISTR(OeffentlichePortNr, Sprache), NetzPort_P, NetzPort, Sprache);
-		#endif //def TXP_ANSCHLUSS
+		#endif //def ITELEX_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 			{
@@ -4726,9 +4770,9 @@ void txp_cgi_config_extern(void *pStruct)
 			TeilnehmerServerIP[i] = 0; // damit diese neu ermittelt wird.
 			}
 
-		#ifdef TXP_TLNSERVER
+		#ifdef ITELEX_TLNSERVER
 		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl, Sprache);
-		#endif //def TXP_TLNSERVER
+		#endif //def ITELEX_TLNSERVER
 
 		if (SelbstAnrufPhase == SelbstAnrufSperre)
 			SelbstAnrufPhase = SelbstAnrufRuhe;
@@ -4741,7 +4785,7 @@ void txp_cgi_config_extern(void *pStruct)
 	} // txp_cgi_config_extern()
 	
 
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface für eine Bus-Status-Liste (TWI-Busteilnehmer)
@@ -4780,7 +4824,7 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 	
 	}
 
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 
 	
 #if defined(MMC)
@@ -4904,7 +4948,7 @@ void txp_init()
 	DiagnosePuffer[0] = '\0';
 	DiagnosePufferLevel = 0;
 
-	#ifdef TXP_ANSCHLUSS
+	#ifdef ITELEX_ANSCHLUSS
 	
 	SeriellUmsetzInit();
 
@@ -4915,13 +4959,13 @@ void txp_init()
 	AsciiDruckPuffer[0] = '\0';
 	HtmlSendeText[0] = '\0';
 	
-	#endif // TXP_ANSCHLUSS
+	#endif // ITELEX_ANSCHLUSS
 	
 	// EEPROM auslesen
 	char Buf[TlnAdresseMax];
 	uint16_t i;
 
-	#ifdef TXP_ANSCHLUSS
+	#ifdef ITELEX_ANSCHLUSS
 	
 	if (readConfig_P(EigeneNummer_P, Buf) == 1)
 		BusEigenAdresse = WahlZuAdresse(atoi(Buf), strlen(Buf));
@@ -4972,15 +5016,20 @@ void txp_init()
 		NetzPort = atol(Buf);
 	else
 		NetzPort = TXP_PORT;
+
+	if (readConfig_P(DatumDruckModus_P, Buf) == 1)
+		DatumDruckModus = atoi(Buf);
+	else
+		DatumDruckModus = DatumDruckBeide;
 		
-	#endif // TXP_ANSCHLUSS
+	#endif // ITELEX_ANSCHLUSS
 	
-	#ifdef TXP_TLNSERVER
+	#ifdef ITELEX_TLNSERVER
 	if (readConfig_P(TlnServSyncGeheimzahl_P, Buf) == 1)
 		TlnServSyncGeheimzahl = atol(Buf);
 	else
 		TlnServSyncGeheimzahl = 0;
-	#endif //def TXP_TLNSERVER
+	#endif //def ITELEX_TLNSERVER
 	
 	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
@@ -5029,7 +5078,7 @@ void txp_init()
 	TeilnehmerServerSocket = NO_SOCKET_USED;
 	AktTlnServerTabI = 0;
 
-	#ifdef TXP_ANSCHLUSS
+	#ifdef ITELEX_ANSCHLUSS
 	
 	BusEigenAdrMehrfach = 1; // muss Potenz von 2 sein (also 1, 2, 4, 8, 16, ... , Standard = 1
 
@@ -5070,22 +5119,22 @@ void txp_init()
 	
 	StartKurzTimer(&TxpThreadCheckTimer);
 		
-	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
-	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("txp-msg-out.cgi"));
+	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("itelex-msg-in.cgi"));
+	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("itelex-msg-out.cgi"));
 	cgi_RegisterCGI( txp_cgi_TwiTlnListe, PSTR("txp-twitlnliste.cgi"));
 	
-	#endif // TXP_ANSCHLUSS
+	#endif // ITELEX_ANSCHLUSS
 	
-	cgi_RegisterCGI( txp_cgi_config_intern, PSTR("txpcfg-intern.cgi"));
-	cgi_RegisterCGI( txp_cgi_config_extern, PSTR("txpcfg-extern.cgi"));
-	cgi_RegisterCGI( txp_cgi_config_sperren, PSTR("txpcfg-sperren.cgi"));
+	cgi_RegisterCGI( txp_cgi_config_intern, PSTR("itelexcfg-intern.cgi"));
+	cgi_RegisterCGI( txp_cgi_config_extern, PSTR("itelexcfg-extern.cgi"));
+	cgi_RegisterCGI( txp_cgi_config_sperren, PSTR("itelexcfg-sperren.cgi"));
 	cgi_RegisterCGI( txp_cgi_debug, PSTR("txp-debug.cgi"));
 	
 #if defined(MMC)
 	cgi_RegisterCGI( cgi_SdDirectory, PSTR("sddir.cgi"));
 #endif //defined(MMC)
 
-	#ifdef TXP_ANSCHLUSS
+	#ifdef ITELEX_ANSCHLUSS
 	
 	RegisterTCPPort(TXP_PORT);
 	
@@ -5095,25 +5144,25 @@ void txp_init()
 
 	THREAD_RegisterThread( txp_thread, PSTR("TxP"));
 
-	#endif // TXP_ANSCHLUSS
+	#endif // ITELEX_ANSCHLUSS
 	
 	TlnBuchInit();
 	
-	#ifdef TXP_TLNSERVER
+	#ifdef ITELEX_TLNSERVER
 	
 	txp_tlnserv_init();
 	
-	#endif // TXP_TLNSERVER
+	#endif // ITELEX_TLNSERVER
 
-	#ifdef TXP_EMAIL
+	#ifdef ITELEX_EMAIL
 	
 	txp_email_init();
 	
-	#endif //def TXP_EMAIL
+	#endif //def ITELEX_EMAIL
 	}
 
 
-#endif //def TELEXPHONE
+#endif //def ITELEX
 
 
 #if defined(MMC)

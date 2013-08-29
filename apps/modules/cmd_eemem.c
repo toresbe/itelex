@@ -137,7 +137,7 @@ void cgi_eemem( void * pStruct )
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 
-#ifdef TELEXPHONE
+#ifdef ITELEX
 	extern uint8_t KonfigFreigabe(void *pStruct); 
 	if (!KonfigFreigabe(pStruct))
 		return;

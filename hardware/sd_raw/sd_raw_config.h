@@ -128,7 +128,7 @@ extern "C"
 
 	#endif
 
-#elif defined(TXPnet)
+#elif defined(iTelex)
 
 	#define spi_bus_num 						1
 	#define configure_pin_ss() 					DDRB |= (1 << DDB2)	

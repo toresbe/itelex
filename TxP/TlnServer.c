@@ -40,7 +40,7 @@
 
 #include "config.h"
 
-#ifdef TELEXPHONE
+#ifdef ITELEX
 
 #include "system/net/ip.h"
 #include "system/net/tcp.h"
@@ -60,7 +60,7 @@
 #include "StringTab.h"
 
 
-#ifdef TXP_TLNSERVER
+#ifdef ITELEX_TLNSERVER
 
 #include "TlnBuch.h"
 #include "TlnServer.h"
@@ -1101,7 +1101,7 @@ void txp_tlnserv_init()
 	*/
 	
 	/*
-	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
+	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("itelex-msg-in.cgi"));
 	*/
 
 	for (i = 0 ; i < AnzTlnServKanaele ; i++)
@@ -1144,7 +1144,7 @@ void txp_tlnserv_init()
 	}
 
 
-#endif //def TXP_TLNSERVER
+#endif //def ITELEX_TLNSERVER
 
-#endif //def TELEXPHONE
+#endif //def ITELEX
 

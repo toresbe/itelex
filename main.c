@@ -73,28 +73,28 @@ void main( void )
 	// System initialisieren
 	init();
 
-#if defined(TXPnet)
+#if defined(iTelex)
 	LED_on(2);
 #endif	
 
 	// Applikationen initialisieren (http, telnet, cron, .... )
 	apps_init();
 
-#if defined(TXPnet)
+#if defined(iTelex)
 	LED_on(3);
 #endif	
 	
 	// Module initialisieren ( cmd, cgi .... )
 	modul_init();
 	
-#if defined(TXPnet)
+#if defined(iTelex)
 	LED_off(2);
 #endif	
 	
 	// User-Module initialisieren
 	txp_init();
 
-#if defined(TXPnet)
+#if defined(iTelex)
 	LED_off(3);
 #endif	
 	
