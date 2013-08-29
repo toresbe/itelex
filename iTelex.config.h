@@ -75,7 +75,7 @@
 		#define NTP
 	#endif
 
-	// aktiviert TelexPhone und die entsprechenden Teilmodule
+	// aktiviert iTelex und die entsprechenden Teilmodule
 	#define ITELEX
 	#define ITELEX_ANSCHLUSS
 	#define ITELEX_TLNSERVER

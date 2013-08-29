@@ -294,10 +294,10 @@ const char iTelexMainMenuDeText[] PROGMEM = {
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"mainmenu.html\">zur&uuml;ck</a>"
 	" / <a href=\"itelex-msg-de.html\" target=\"main\">Nachricht senden</a>"
-	" / <a href=\"txp-tlnverz.cgi?spr=de\" target=\"main\">Teilnehmer-Verzeichnis</a>"
+	" / <a href=\"itelex-tlnverz.cgi?spr=de\" target=\"main\">Teilnehmer-Verzeichnis</a>"
 	" / <a href=\"itelexcfg-menu-de.html\">iTelex-Einstellungen</a>"
-	" / <a href=\"txp-debug.cgi\" target=\"main\">Debug-Infos</a>"
-	" / <a href=\"txp-twitlnliste.cgi?spr=de\" target=\"main\">Bus-Tln-Liste</a>"
+	" / <a href=\"itelex-debug.cgi\" target=\"main\">Debug-Infos</a>"
+	" / <a href=\"itelex-twitlnliste.cgi?spr=de\" target=\"main\">Bus-Tln-Liste</a>"
 #if defined(MMC)
 	" / <a href=\"sddir.cgi\" target=\"main\">SD-Karte</a>"
 #endif //defined(MMC)
@@ -314,10 +314,10 @@ const char iTelexMainMenuEnText[] PROGMEM = {
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"mainmenu.html\">back</a>"
 	" / <a href=\"itelex-msg-en.html\" target=\"main\">Send message</a>"
-	" / <a href=\"txp-tlnverz.cgi?spr=en\" target=\"main\">Subscriber directory</a>"
+	" / <a href=\"itelex-tlnverz.cgi?spr=en\" target=\"main\">Subscriber directory</a>"
 	" / <a href=\"itelexcfg-menu-en.html\">i-Telex settings</a>"
-	" / <a href=\"txp-debug.cgi\" target=\"main\">debug info</a>"
-	" / <a href=\"txp-twitlnliste.cgi?spr=en\" target=\"main\">list of modules</a>"
+	" / <a href=\"itelex-debug.cgi\" target=\"main\">debug info</a>"
+	" / <a href=\"itelex-twitlnliste.cgi?spr=en\" target=\"main\">list of modules</a>"
 #if defined(MMC)
 	" / <a href=\"sddir.cgi\" target=\"main\">SD card</a>"
 #endif //defined(MMC)

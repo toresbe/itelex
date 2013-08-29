@@ -92,7 +92,7 @@ void main( void )
 #endif	
 	
 	// User-Module initialisieren
-	txp_init();
+	itelex_init();
 
 #if defined(iTelex)
 	LED_off(3);

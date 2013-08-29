@@ -1,4 +1,4 @@
-/*! \file eMail.h \brief TelexPhone Definitionen */
+/*! \file eMail.h \brief iTelex Definitionen */
 /***************************************************************************
  *            eMail.h
  *
@@ -30,7 +30,7 @@
 #include "BusKomm.h"
 #include "TxP2-Defs.h"
 
-extern void txp_email_init();
+extern void itelex_email_init();
 
 extern void POP3DatenVerarbeiten();
 			

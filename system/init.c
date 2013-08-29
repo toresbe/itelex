@@ -139,7 +139,7 @@ void init( void )
 	STDOUT_INIT ();
 	STDOUT_set( RS232, 0);
 
-	printf_P( PSTR("TelexPhoneNet...\r\n"));
+	printf_P( PSTR("iTelex...\r\n"));
 
 	// Uart einrichten
 	printf_P( PSTR("UART"));

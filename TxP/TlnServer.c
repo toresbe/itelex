@@ -225,7 +225,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 				ProtokollierenTlnServInt_P(Kanal, PSTR("! Teilnehmer %lu schon vorhanden, aber noch nicht freigegeben\r\n"), TD.Nummer);
 			return false;
 			}
-		else if (TD.AdrArt != TxpDynIP)
+		else if (TD.AdrArt != iTelexDynIP)
 			{
 			if (ProtokollLevelTlnServ >= 1)
 				ProtokollierenTlnServInt_P(Kanal, PSTR("! Teilnehmer %lu schon vorhanden, aber nicht Typ 'dynamisch'\r\n"), TD.Nummer);
@@ -275,7 +275,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 		TD.Name[0] = '?';
 		TD.Name[1] = '\0';
 		TD.Flags = TlnFlag_Gesperrt;
-		TD.AdrArt = TxpDynIP;
+		TD.AdrArt = iTelexDynIP;
 		TD.IPAdr = TlnIP;
 		TD.Port = tsb->SelbstAkt.Port;
 		TD.DynPin = tsb->SelbstAkt.Pin;
@@ -552,8 +552,8 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						// Antwort generieren:
 						TlnServBuf.Code = TLNSERV_AUSKUNFT_VERSION1;
 						TlnServBuf.TlnAuskunft = TD;
-						if (TlnServBuf.TlnAuskunft.AdrArt == TxpDynIP)
-							TlnServBuf.TlnAuskunft.AdrArt = TxpIP;
+						if (TlnServBuf.TlnAuskunft.AdrArt == iTelexDynIP)
+							TlnServBuf.TlnAuskunft.AdrArt = iTelexIP;
 						TlnServBuf.TlnAuskunft.DynPin = 0; // Datenschutz
 						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
 						Senden = true;
@@ -918,7 +918,7 @@ static bool AktivSyncMeldungKanalOeffnen(uint8_t ServerI)
 	}
 	
 	
-//! Der TelexPhone-Rufnummernserver-Client an sich.
+//! Der iTelex-Rufnummernserver-Client an sich.
 //------------------------------------------------------------------------------------------------------------
 //! Diese Funktion wird zyklisch aufgerufen und hat folgende Aufgaben:
 //! \par - Nachschauen, ob eine Verbindung auf den registrierten Port eingegangen ist. Wenn ja 
@@ -928,7 +928,7 @@ static bool AktivSyncMeldungKanalOeffnen(uint8_t ServerI)
 //! \param 	NONE
 //! \return	NONE
 
-void txp_tlnserv_thread()
+void itelex_tlnserv_thread()
 	{
 	uint8_t i;
 	
@@ -945,7 +945,7 @@ void txp_tlnserv_thread()
 	// ==========================================================================
 
 	// auf neue Verbindungsanfrage testen
-	int NewServerSocket = CheckPortRequest(TXP_TLNSERV_PORT);
+	int NewServerSocket = CheckPortRequest(ITELEX_TLNSERV_PORT);
 	bool Ok = false;
 	
 	if (NewServerSocket != NO_SOCKET_USED)
@@ -1029,7 +1029,7 @@ void txp_tlnserv_thread()
 					
 		} // kein Socket offen und Wartezeit abgelaufen.
 	
-	} // txp_tlnserv_thread
+	} // itelex_tlnserv_thread
 	
 	
 // ================================================================================	
@@ -1078,7 +1078,7 @@ void TlnServDebugPrint()
  */
 /*------------------------------------------------------------------------------------------------------------*/
 
-void txp_tlnserv_init()
+void itelex_tlnserv_init()
 	{
 	uint8_t i;
 	
@@ -1095,13 +1095,13 @@ void txp_tlnserv_init()
 	
 	/*
 
-	timer0_init(TxpTimerFreq); 
-	if (!timer0_RegisterCallbackFunction(txp_timerEvent))
+	timer0_init(iTelexTimerFreq); 
+	if (!timer0_RegisterCallbackFunction(itelex_timerEvent))
 		return;
 	*/
 	
 	/*
-	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("itelex-msg-in.cgi"));
+	cgi_RegisterCGI( itelex_cgi_msg_In, PSTR("itelex-msg-in.cgi"));
 	*/
 
 	for (i = 0 ; i < AnzTlnServKanaele ; i++)
@@ -1110,9 +1110,9 @@ void txp_tlnserv_init()
 		TlnServer[i].NutzungZaehler = 0;
 		}
 	
-	RegisterTCPPort(TXP_TLNSERV_PORT);
+	RegisterTCPPort(ITELEX_TLNSERV_PORT);
 	
-	printf_P( PSTR("Txp TlnServer Port %u.\r\n") , TXP_TLNSERV_PORT );
+	printf_P( PSTR("iTelex TlnServer Port %u.\r\n") , ITELEX_TLNSERV_PORT );
 	
 	TlnBuchLetzteAenderung = 0;
 	TTlnDaten TD;
@@ -1140,7 +1140,7 @@ void txp_tlnserv_init()
 	VollAbfrageTimerEnde = 1 * LangTimerMinuteFaktor;
 	VollAbfrageServerIndex = ANZ_TEILNEHMER_SERVER - 1;
 	
-	THREAD_RegisterThread( txp_tlnserv_thread, PSTR("TlnSrv"));
+	THREAD_RegisterThread( itelex_tlnserv_thread, PSTR("TlnSrv"));
 	}
 
 

@@ -34,7 +34,7 @@ enum {
 // Hier werden die Strings definiert:
 // ==================================
 
-// für TxP.c:
+// für iTelex.c:
 _STRTABENTRY(ZweiterAnruf, "Zweiter kommender Anruf auf belegtem i-Telex-Socket", "Second incoming call on busy i-telex socket")
 _STRTABENTRY(MehrfacheSendeFehler, "Mehrfache Fehler beim Senden ins Netz", "Multiple errors while sending on network")
 _STRTABENTRY(ZeitueberschreitungWiederaufnahme, "Zeitueberschreitung bei Wiederaufnahme der Verbindung", "Timeout while waiting for a reconnection")
@@ -121,14 +121,14 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"</tr>", 
 	"")
 _STRTABENTRY(TeilnehmerverzeichnisAktionenOffen,
-	"<a href=\"txp-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a><br>" 
-	"<a href=\"txp-tlnverz.cgi?load\">alle &Auml;nderungen verwerfen</a><br>"
-	"<a href=\"txp-tlnverz.cgi?clear\">komplett l&ouml;schen</a><br>", 
+	"<a href=\"itelex-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a><br>" 
+	"<a href=\"itelex-tlnverz.cgi?load\">alle &Auml;nderungen verwerfen</a><br>"
+	"<a href=\"itelex-tlnverz.cgi?clear\">komplett l&ouml;schen</a><br>", 
 	"")
 _STRTABENTRY(TeilnehmerverzeichnisAktionenLeerOffen, 
 	"Noch keine Eintr&auml;ge vorhanden<p>"
-	"<a href=\"txp-tlnverz.cgi?load\">gespeicherte Daten wiederherstellen</a><br>"
-	"<a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></form>",
+	"<a href=\"itelex-tlnverz.cgi?load\">gespeicherte Daten wiederherstellen</a><br>"
+	"<a href=\"itelex-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></form>",
 	"")
 	
 _STRTABENTRY(Rufnummer, "Rufnummer", "")
@@ -142,14 +142,14 @@ _STRTABENTRY(Typ, "Typ", "")
 _STRTABENTRY(TlnverzAttrDyn, "DynIP", "")
 _STRTABENTRY(TypGeloescht, "geloescht", "")
 _STRTABENTRY(TypAscii, "Ascii", "")
-_STRTABENTRY(TypTxp, "i-Telex", "")
+_STRTABENTRY(TypITelex, "i-Telex", "")
 _STRTABENTRY(TypEMail, "eMail", "")
 _STRTABENTRY(AktionAendern, "&Auml;ndern", "")
 _STRTABENTRY(AktionHinzufuegen, "Hinzuf&uuml;gen", "")
 _STRTABENTRY(Rufnummer0NichtErlaubt, "<b>Rufnummer 0 nicht erlaubt!</b><br>", "")
 _STRTABENTRY(MeldungTlneintragRufnummer, "Teilnehmereintrag:<br>Rufnummer: %ld ", "")
 _STRTABENTRY(EhemalsLong, "ehem. %ld", "")
-_STRTABENTRY(UrlZusatz, ": Url %s ", "")
+_STRTABENTRY(HostnameZusatz, ": Hostname %s ", "")
 _STRTABENTRY(IPZusatz, ": IP %s ", "")
 _STRTABENTRY(TypUnbekannt, "<b>Unbekannter Typ!</b><br>", "")
 _STRTABENTRY(KeineAenderung, "<b>keine &Auml;nderung</b><br>", "")
@@ -163,7 +163,7 @@ _STRTABENTRY(EepromLadenFehler, "<b>Fehler beim Laden (Codes %d / %02X)</b>", ""
 _STRTABENTRY(EepromLadenErfolg, "Erfolgreich geladen (%d Bytes)", "")
 _STRTABENTRY(KomplettGeloescht, "komplett gel&ouml;scht", "")
 _STRTABENTRY(UngueltigerCgiAufruf, "Fehler: ungueltiger CGI-Aufruf: %s", "")
-_STRTABENTRY(ZurueckZumTeilnehmerverzeichnis, "<br>Zur&uuml;ck zum <a href=\"txp-tlnverz.cgi\">Teilnehmer-Verzeichnis</a>", "")
+_STRTABENTRY(ZurueckZumTeilnehmerverzeichnis, "<br>Zur&uuml;ck zum <a href=\"itelex-tlnverz.cgi\">Teilnehmer-Verzeichnis</a>", "")
 _STRTABENTRY(ZusatzEepromFehler, "Fehler im Zusatz-EEPROM", "")
 
 
