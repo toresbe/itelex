@@ -726,10 +726,10 @@ void txp_timerEvent(void)
 		softreset();
 		}
 		
-#if defined(LEDROT_TXPTHREADBLOCK)
+#if defined(LEDROT_ITELEXTHREADBLOCK)
 	if (KurzTimerVal(&TxpThreadCheckTimer) > KurzTimerFreq * 5/10) // nach halber Sekunde geht rot an
 		LED_on(ROT);
-#endif //defined(LEDROT_TXPTHREADBLOCK)
+#endif //defined(LEDROT_ITELEXTHREADBLOCK)
 		
 	TwiWatchdogCount++; 
 		
@@ -1059,7 +1059,7 @@ void ModusWechsel(TModus neu)
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
 			SeriellUmsetzInit();
 			SendenBeschleunigen = false;
-			ITelexSocketProtokoll = TelexPhone;
+			ITelexSocketProtokoll = iTelexProt;
 			AsciiDruckPuffer[0] = '\0';
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
@@ -1416,7 +1416,7 @@ static void SocketBearbeiten()
 
 	// Neue Verbindungswünsche bearbeiten
 	// ----------------------------------
-	int NewServerSocket = CheckPortRequest(TXP_PORT);
+	int NewServerSocket = CheckPortRequest(ITELEX_PORT);
 	if (NewServerSocket != NO_SOCKET_USED)
 		{
 		bool Abweisen = true; // Bei berechtigter kommender Verbindung auf false setzen.
@@ -1504,7 +1504,7 @@ static void SocketBearbeiten()
 			Diagnoseausgabe_P(ISTR(ZweiterAnruf, LokaleSprache), 4);
 			}
 			
-		} // CheckPortRequest(TXP_PORT) != NO_SOCKET_USED
+		} // CheckPortRequest(ITELEX_PORT) != NO_SOCKET_USED
 
 	// Verbindungsabbruch durch Gegenseite?
 	// --------------------------------------------------
@@ -1514,7 +1514,7 @@ static void SocketBearbeiten()
 		{ // ID#242 ID#342 ID#314 ************************************************
 		switch (ITelexSocketProtokoll)
 			{
-			case TelexPhone:
+			case iTelexProt:
 				if (!ITelexSocketAbbauGeplant)
 					{
 					if (ProtokollLevel >= 1)
@@ -1528,7 +1528,7 @@ static void SocketBearbeiten()
 				// sonst weiter mit Ascii, kein break;
 				
 			case Ascii:
-				// oder TelexPhone und AbbauGeplant
+				// oder iTelexProt und AbbauGeplant
 				if (ProtokollLevel >= 1)
 					{
 					ProtokollRegelblockStart();
@@ -1643,7 +1643,7 @@ static void SocketBearbeiten()
 	// ggf Lebenszeichen erzeugen
 	// --------------------------
 	if (ITelexSocketMode != SocketIdle
-		&& ITelexSocketProtokoll == TelexPhone
+		&& ITelexSocketProtokoll == iTelexProt
 		&& KurzTimerVal(&ITelexSocketLebenszeichenTimer) >= 4 * KurzTimerFreq
 	    && SocketOutBufUsed == 0
 		&& SocketSendeFehlerZaehler == 0
@@ -1874,7 +1874,7 @@ static void ExterneVerbindungBeenden()
 				ITelexSocketAbbauGeplant = true;
 				break;
 				
-			case TelexPhone:
+			case iTelexProt:
 				ITelexSocketAbbauGeplant = true;
 				if (SocketOutBufUsed < SocketOutBufMax - 2)
 					{
@@ -2091,7 +2091,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				
 			else if (c == TXPC_DURCHWAHL)
 				{ // ID#312 **************************************************************
-				ITelexSocketProtokoll = TelexPhone;
+				ITelexSocketProtokoll = iTelexProt;
 				if (Modus == ModKommendVerbVorstufe)
 					{
 					Durchwahl = SocketInBuf[i+2];
@@ -2110,7 +2110,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				
 			else if (c == TXPC_BAUDOT_DATA)
 				{ // ID#243 ID#343 ***********************************************************
-				ITelexSocketProtokoll = TelexPhone;
+				ITelexSocketProtokoll = iTelexProt;
 				uint8_t len = SocketInBuf[i+1];
 				
 				if (i + 2 + len <= SocketInBufUsed && PufferAnzahl(&SendePuffer) + len < MaxPuffer)
@@ -2178,7 +2178,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				
 			else if (c == TXPC_QUITT)
 				{ 
-				ITelexSocketProtokoll = TelexPhone;
+				ITelexSocketProtokoll = iTelexProt;
 				uint8_t len = SocketInBuf[i+1];
 				if (Modus == ModKommendVerbVorstufe)
 					{ // ID#312 **************************************************
@@ -2197,7 +2197,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				
 			else if (c == TXPC_VERSION)
 				{ 
-				ITelexSocketProtokoll = TelexPhone;
+				ITelexSocketProtokoll = iTelexProt;
 				uint8_t len = SocketInBuf[i+1];
 				if (len >= 1)
 					{
@@ -2282,7 +2282,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 			else 
 				{ // unbekannter Code --> ignorieren EINSCHLIEßLICH Daten
 				// ID#245 ID#313 ID#346 ********************************************************
-				if (ITelexSocketProtokoll == TelexPhone)
+				if (ITelexSocketProtokoll == iTelexProt)
 					i += 2 + (uint8_t) SocketInBuf[i+1];
 				else
 					i++;
@@ -2510,7 +2510,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 		
 	if (TeilnehmerServerIP[ServerI] != -1)
 		{
-		Res = Connect2IP(TeilnehmerServerIP[ServerI], TXP_TLNSERV_PORT);
+		Res = Connect2IP(TeilnehmerServerIP[ServerI], ITELEX_TLNSERV_PORT);
 		if (Res != -1)
 			{
 			if (ProtokollLevelTlnServ >= 2)
@@ -2618,8 +2618,8 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 	{
 	switch (td->AdrArt)
 		{
-		case TxpIP:
-		case TxpDynIP:
+		case iTelexIP:
+		case iTelexDynIP:
 		case AsciiIP:
 			if (ProtokollLevel >= 1)
 				{
@@ -2632,8 +2632,8 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			// Mode wird nach erfolgreichem Öffnen gesetzt.
 			break;
 			
-		case TxpUrl:
-		case AsciiUrl:
+		case iTelexHostname:
+		case AsciiHostname:
 			td->IPAdr = DNS_ResolveName(td->Adresse); 
 				// IPAdr wird 'missbraucht' aber nicht gespeichert
 			if (td->IPAdr != -1)
@@ -2723,7 +2723,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		// vergeblich versucht wird, dann die aktualisierung vom Teilnehmer-Server
 		// kommt und dann die Verbindung erfolgreich hergestellt wird.
 	
-	if (td->AdrArt == AsciiUrl || td->AdrArt == AsciiIP)
+	if (td->AdrArt == AsciiHostname || td->AdrArt == AsciiIP)
 		{ // ID#226 *********************************************
 		BusSenden(BusQuittEin);
 		if (ProtokollLevel >= 1)
@@ -2733,7 +2733,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		ITelexSocketProtokoll = Ascii;
 		return 0;
 		}
-	else // TxpUrl oder TxpIP
+	else // iTelexHostname oder iTelexIP
 		{ // ID#222 ********************************************
 		if (ProtokollLevel >= 1)
 			{
@@ -2742,7 +2742,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			ProtokollierenInt_P(PSTR(" und Version %u\r\n"), ITelexSocketProtVersionVorschlag);
 			}
 
-		ITelexSocketProtokoll = TelexPhone;
+		ITelexSocketProtokoll = iTelexProt;
 		
 		SocketOutBuf[SocketOutBufUsed++] = TXPC_VERSION;
 		SocketOutBuf[SocketOutBufUsed++] = 1 + strlen_P(SvnVersion_P) + 1;
@@ -3027,9 +3027,9 @@ void txp_thread()
 
 	StartKurzTimer(&TxpThreadCheckTimer);
 	
-#if defined(LEDROT_TXPTHREADBLOCK)
+#if defined(LEDROT_ITELEXTHREADBLOCK)
 	LED_off(ROT); 
-#endif //defined(LEDROT_TXPTHREADBLOCK)
+#endif //defined(LEDROT_ITELEXTHREADBLOCK)
 	
 	// ======================================================================
 	// Auf TWI-Bus empfangene Codes auswerten
@@ -3251,7 +3251,7 @@ void txp_thread()
 			AsciiDatenVerarbeiten();
 			break;
 			
-		case TelexPhone:
+		case iTelexProt:
 			TxpDatenVerarbeiten();
 			break;
 			
@@ -3781,7 +3781,7 @@ void txp_thread()
 						if (GewaehlterTln.Name[0] == '\0') // nur leere Namen überschreiben
 							strncpy(GewaehlterTln.Name, TSB.TlnAuskunft.Name, sizeof(GewaehlterTln.Name));
 						GewaehlterTln.Flags = TSB.TlnAuskunft.Flags;
-						if (GewaehlterTln.AdrArt != TxpDynIP || TSB.TlnAuskunft.AdrArt != TxpIP)
+						if (GewaehlterTln.AdrArt != iTelexDynIP || TSB.TlnAuskunft.AdrArt != iTelexIP)
 							// Nicht DynIP durch IP überschreiben
 							GewaehlterTln.AdrArt = TSB.TlnAuskunft.AdrArt; 
 						strncpy(GewaehlterTln.Adresse, TSB.TlnAuskunft.Adresse, sizeof(GewaehlterTln.Adresse));
@@ -4936,7 +4936,7 @@ void cgi_SdDirectory(void *pStruct)
  */
 /*------------------------------------------------------------------------------------------------------------*/
 
-void txp_init()
+void iTelex_init()
 	{
 	init_Taste();
 	init_RTS();
@@ -5014,7 +5014,7 @@ void txp_init()
 	if (readConfig_P(NetzPort_P, Buf) == 1)
 		NetzPort = atol(Buf);
 	else
-		NetzPort = TXP_PORT;
+		NetzPort = ITELEX_PORT;
 
 	if (readConfig_P(DatumDruckModus_P, Buf) == 1)
 		DatumDruckModus = atoi(Buf);
@@ -5135,11 +5135,11 @@ void txp_init()
 
 	#ifdef TXP_ANSCHLUSS
 	
-	RegisterTCPPort(TXP_PORT);
+	RegisterTCPPort(ITELEX_PORT);
 	
 	Timer0Cnt_Min = 255;
 
-	printf_P( PSTR("TelexPhone Port %u.\r\n") , TXP_PORT );
+	printf_P( PSTR("TelexPhone Port %u.\r\n") , ITELEX_PORT );
 
 	THREAD_RegisterThread( txp_thread, PSTR("TxP"));
 

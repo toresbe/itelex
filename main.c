@@ -92,7 +92,7 @@ void main( void )
 #endif	
 	
 	// User-Module initialisieren
-	txp_init();
+	iTelex_init();
 
 #if defined(TXPnet)
 	LED_off(3);

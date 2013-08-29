@@ -54,7 +54,7 @@
 //---------------------------
 //#define LEDROT_EXTEEPROM
 //#define LEDROT_SDKARTE
-#define LEDROT_TXPTHREADBLOCK
+#define LEDROT_ITELEXTHREADBLOCK
 //#define LEDROT_SOCKETERROR
 //#define LEDROT_UNERWARTET  // noch ungenutzt
 
@@ -75,10 +75,10 @@ DEFPORTIN(CTS, D, 5)
 
 //! Nur Konstanten-Definitionen.
 enum { 
-	TXP_PORT = 134,
+	ITELEX_PORT = 134,
 	//!< Der TCP-Port für die TelexPhone-Kommunikation.
 
-	TXP_TLNSERV_PORT = 11811,
+	ITELEX_TLNSERV_PORT = 11811,
 	//!< Der TCP-Port für die Kommunikation mit den Teilnehmer-Servern.
 	
 	TlnAdresseMax = 40,
@@ -250,7 +250,7 @@ typedef enum {
 	
  //! Was geht über den Socket 'rüber.	
  typedef enum {
-	TelexPhone,		//!< Das eigene Protokoll
+	iTelexProt,		//!< Das eigene Protokoll
 	Ascii,			//!< Ascii, also telnet
 #ifdef TXP_EMAIL
 	POP3,			//!< Mail-Abfrage
@@ -263,13 +263,13 @@ typedef enum {
 typedef enum 
 	{
 	Geloescht = 0,
-	TxpUrl = 1,
-	TxpIP = 2,
-	AsciiUrl = 3, //!< Telnet-ähnlich
+	iTelexHostname = 1,
+	iTelexIP = 2,
+	AsciiHostname = 3, //!< Telnet-ähnlich
 	AsciiIP = 4,
-	TxpDynIP = 5,
+	iTelexDynIP = 5,
 		//!< diesen Typ gibt es nur beim Teilnehmer-Server. Bei Abfragen wird der 
-		//!< Typ TxpIP gemeldet.
+		//!< Typ iTelexIP gemeldet.
 	eMail = 6
 	} TTlnAdresseArt;
 	
@@ -428,7 +428,7 @@ extern TSprache LokaleSprache;
 
 extern void ModusWechsel(TModus neu);
 
-extern void txp_init( void );
+extern void iTelex_init( void );
 
 extern bool WarteTaste();
 

@@ -225,7 +225,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 				ProtokollierenTlnServInt_P(Kanal, PSTR("! Teilnehmer %lu schon vorhanden, aber noch nicht freigegeben\r\n"), TD.Nummer);
 			return false;
 			}
-		else if (TD.AdrArt != TxpDynIP)
+		else if (TD.AdrArt != iTelexDynIP)
 			{
 			if (ProtokollLevelTlnServ >= 1)
 				ProtokollierenTlnServInt_P(Kanal, PSTR("! Teilnehmer %lu schon vorhanden, aber nicht Typ 'dynamisch'\r\n"), TD.Nummer);
@@ -275,7 +275,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 		TD.Name[0] = '?';
 		TD.Name[1] = '\0';
 		TD.Flags = TlnFlag_Gesperrt;
-		TD.AdrArt = TxpDynIP;
+		TD.AdrArt = iTelexDynIP;
 		TD.IPAdr = TlnIP;
 		TD.Port = tsb->SelbstAkt.Port;
 		TD.DynPin = tsb->SelbstAkt.Pin;
@@ -552,8 +552,8 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						// Antwort generieren:
 						TlnServBuf.Code = TLNSERV_AUSKUNFT_VERSION1;
 						TlnServBuf.TlnAuskunft = TD;
-						if (TlnServBuf.TlnAuskunft.AdrArt == TxpDynIP)
-							TlnServBuf.TlnAuskunft.AdrArt = TxpIP;
+						if (TlnServBuf.TlnAuskunft.AdrArt == iTelexDynIP)
+							TlnServBuf.TlnAuskunft.AdrArt = iTelexIP;
 						TlnServBuf.TlnAuskunft.DynPin = 0; // Datenschutz
 						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
 						Senden = true;
@@ -945,7 +945,7 @@ void txp_tlnserv_thread()
 	// ==========================================================================
 
 	// auf neue Verbindungsanfrage testen
-	int NewServerSocket = CheckPortRequest(TXP_TLNSERV_PORT);
+	int NewServerSocket = CheckPortRequest(ITELEX_TLNSERV_PORT);
 	bool Ok = false;
 	
 	if (NewServerSocket != NO_SOCKET_USED)
@@ -1110,9 +1110,9 @@ void txp_tlnserv_init()
 		TlnServer[i].NutzungZaehler = 0;
 		}
 	
-	RegisterTCPPort(TXP_TLNSERV_PORT);
+	RegisterTCPPort(ITELEX_TLNSERV_PORT);
 	
-	printf_P( PSTR("Txp TlnServer Port %u.\r\n") , TXP_TLNSERV_PORT );
+	printf_P( PSTR("Txp TlnServer Port %u.\r\n") , ITELEX_TLNSERV_PORT );
 	
 	TlnBuchLetzteAenderung = 0;
 	TTlnDaten TD;

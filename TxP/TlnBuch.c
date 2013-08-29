@@ -38,7 +38,7 @@ enum { TlnBuchMemMax = 20000UL } ; //!< Größe des Teilnehmerverzeichnisses in 
 //! \par x Byte Adresse als String (mit \0 abgeschlossen) ODER 4 Byte IP-Adresse
 //! \par 2 Byte Port
 //! \par 1 Byte Durchwahl (0 bei keine Durchwahl).
-//! \par 2 Byte DynPin (nur bei Typ = TxpDynIP)
+//! \par 2 Byte DynPin (nur bei Typ = iTelexDynIP)
 
 
 static char TlnBuch[TlnBuchMemMax]; //!< Das Teilnehmer-Verzeichnis.
@@ -63,16 +63,16 @@ static uint8_t TlnEintragGroesse(TTlnDaten *Tln)
 		case Geloescht: 
 			return Basis;
 			
-		case TxpUrl:
+		case iTelexHostname:
 			return Basis + strlen(Tln->Adresse)+1 + 2 + 1;
 			
-		case TxpIP:
+		case iTelexIP:
 			return Basis + 4 + 2 + 1;
 		
-		case TxpDynIP:
+		case iTelexDynIP:
 			return Basis + 4 + 2 + 1 + 2;
 		
-		case AsciiUrl:
+		case AsciiHostname:
 			return Basis + strlen(Tln->Adresse)+1 + 2;
 			
 		case AsciiIP:
@@ -126,24 +126,24 @@ static bool TlnEintragen(TTlnDaten *Tln, char *BuchP, bool DatumAktualisieren)
 		case Geloescht: 
 			break;
 			
-		case TxpUrl:
+		case iTelexHostname:
 			EINTRAGSTR(Tln->Adresse)
 			EINTRAG(uint16_t, Tln->Port, 2)
 			EINTRAG(uint8_t, Tln->Durchwahl, 1)
 			break;
 			
-		case TxpIP:
-		case TxpDynIP:
+		case iTelexIP:
+		case iTelexDynIP:
 			EINTRAG(long, Tln->IPAdr, 4)
 			EINTRAG(uint16_t, Tln->Port, 2)
 			EINTRAG(uint8_t, Tln->Durchwahl, 1)
-			if (Tln->AdrArt == TxpDynIP)
+			if (Tln->AdrArt == iTelexDynIP)
 				{
 				EINTRAG(uint16_t, Tln->DynPin, 2)
 				}
 			break;
 		
-		case AsciiUrl:
+		case AsciiHostname:
 			EINTRAGSTR(Tln->Adresse)
 			EINTRAG(uint16_t, Tln->Port, 2)
 			break;
@@ -197,24 +197,24 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 		case Geloescht: 
 			break;
 			
-		case TxpUrl:
+		case iTelexHostname:
 			strcpy(Tln->Adresse, p);					p += strlen(Tln->Adresse)+1;
 			Tln->Port = *((uint16_t *) p);				p += 2;
 			Tln->Durchwahl = *((uint8_t *) p);			p += 1;
 			break;
 			
-		case TxpIP:
-		case TxpDynIP:
+		case iTelexIP:
+		case iTelexDynIP:
 			Tln->IPAdr = *((long *) p);					p += 4;
 			Tln->Port = *((uint16_t *) p);				p += 2;
 			Tln->Durchwahl = *((uint8_t *) p);			p += 1;
-			if (Tln->AdrArt == TxpDynIP)
+			if (Tln->AdrArt == iTelexDynIP)
 				{
 				Tln->DynPin = *((uint16_t *) p);		p += 2;
 				}
 			break;
 		
-		case AsciiUrl:
+		case AsciiHostname:
 			strcpy(Tln->Adresse, p);					p += strlen(Tln->Adresse)+1;
 			Tln->Port = *((uint16_t *) p);				p += 2;
 			Tln->Durchwahl = 0;
@@ -816,7 +816,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					printf_P(ISTR(TlnverzAttrGesperrt, Sprache));
 					printf_P(PSTR(" "));
 					}
-				if (TD.AdrArt == TxpDynIP)
+				if (TD.AdrArt == iTelexDynIP)
 					{
 					printf_P(ISTR(TlnverzAttrDyn, Sprache));
 					printf_P(PSTR(" "));
@@ -827,11 +827,11 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				
 				switch (TD.AdrArt)
 					{
-					case TxpIP:
-					case TxpDynIP:
+					case iTelexIP:
+					case iTelexDynIP:
 						iptostr(TD.IPAdr, TD.Adresse);
-						// weiter mit TxpUrl!
-					case TxpUrl:
+						// weiter mit iTelexHostname!
+					case iTelexHostname:
 						AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
 						printf_P(ISTR(TypTxp, Sprache));
 						printf_P(PSTR("</td>"
@@ -843,8 +843,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 					case AsciiIP:
 						iptostr(TD.IPAdr, TD.Adresse);
-						// weiter mit AsciiUrl!
-					case AsciiUrl:
+						// weiter mit AsciiHostname!
+					case AsciiHostname:
 						printf_P(ISTR(TypAscii, Sprache));
 						printf_P(PSTR("</td>"
 							"<td align=\"left\">%s</td>" // Adresse
@@ -915,8 +915,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			{ // neuen oder nicht gefundenen Eintrag initialisieren.
 			TD.Name[0] = '\0';
 			TD.Adresse[0] = '\0';
-			TD.AdrArt = TxpUrl;
-			TD.Port = TXP_PORT;
+			TD.AdrArt = iTelexHostname;
+			TD.Port = ITELEX_PORT;
 			TD.Durchwahl = 0;
 			TD.Flags = 0;
 			#ifdef TXP_ANSCHLUSS
@@ -945,17 +945,17 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		uint8_t TypSelNr;
 		switch (TD.AdrArt)
 			{
-			case TxpIP:
-			case TxpDynIP:
-			case TxpUrl: 	TypSelNr = 1; break;
+			case iTelexIP:
+			case iTelexDynIP:
+			case iTelexHostname: 	TypSelNr = 1; break;
 			case AsciiIP:
-			case AsciiUrl: 	TypSelNr = 2; break;
+			case AsciiHostname: 	TypSelNr = 2; break;
 			case eMail:		TypSelNr = 3; break;
 			default: 		TypSelNr = 0; break;
 			}
 		CgiFormDropdown_P(ISTR(Typ, Sprache), Typ_P, 4, TypSelList, TypSelNr);
 		
-		if (TD.AdrArt == TxpIP || TD.AdrArt == TxpDynIP || TD.AdrArt == AsciiIP)
+		if (TD.AdrArt == iTelexIP || TD.AdrArt == iTelexDynIP || TD.AdrArt == AsciiIP)
 			iptostr(TD.IPAdr, TD.Adresse);
 		CgiFormInputFieldText_P(ISTR(Adresse, Sprache), Adresse_P, TlnAdresseMax-1, TD.Adresse);
 		CgiFormInputFieldULong_P(ISTR(Port, Sprache), Port_P, 5, TD.Port);
@@ -1047,18 +1047,18 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				{
 				if (TD.IPAdr == 0)
 					{
-					TD.AdrArt = TxpUrl;
+					TD.AdrArt = iTelexHostname;
 					printf_P(ISTR(TypTxp, Sprache));
 					printf_P(ISTR(UrlZusatz, Sprache), TD.Adresse);
 					}
 				else
 					{
-					if (TD.AdrArt == TxpDynIP && AltNummer == TD.Nummer)
+					if (TD.AdrArt == iTelexDynIP && AltNummer == TD.Nummer)
 						{ // der alte (!) Eintrag war ein Eintrag zu dynamischer IP-Aktualisierung
 						// es ist nix zu ändern, auch die Pin bleibt unverändert.
 						}
 					else
-						TD.AdrArt = TxpIP;
+						TD.AdrArt = iTelexIP;
 					iptostr(TD.IPAdr, TD.Adresse); // und wieder zurück wandeln
 					printf_P(ISTR(TypTxp, Sprache));
 					printf_P(ISTR(IPZusatz, Sprache), TD.Adresse);
@@ -1088,7 +1088,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				{
 				if (TD.IPAdr == 0)
 					{
-					TD.AdrArt = AsciiUrl;
+					TD.AdrArt = AsciiHostname;
 					printf_P(ISTR(TypAscii, Sprache));
 					printf_P(ISTR(UrlZusatz, Sprache), TD.Adresse);
 					}
@@ -1123,7 +1123,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				}
 			}
 
-		if (TD.AdrArt != TxpDynIP)
+		if (TD.AdrArt != iTelexDynIP)
 			TD.DynPin = 0; // Datenschutz.
 			
 		if (DatenOk && TD.AdrArt == Geloescht && AltNummer == 0)
