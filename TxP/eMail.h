@@ -1,4 +1,4 @@
-/*! \file eMail.h \brief iTelex Definitionen */
+/*! \file eMail.h \brief TelexPhone Definitionen */
 /***************************************************************************
  *            eMail.h
  *
@@ -22,7 +22,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifdef ITELEX_EMAIL
+#ifdef TXP_EMAIL
  
 #include "CgiFormTools.h"
 #include "TxP.h"
@@ -30,7 +30,7 @@
 #include "BusKomm.h"
 #include "TxP2-Defs.h"
 
-extern void itelex_email_init();
+extern void txp_email_init();
 
 extern void POP3DatenVerarbeiten();
 			
@@ -45,4 +45,4 @@ extern void POP3Einleiten();
 extern void POP3Abbrechen();
 
 
-#endif //def ITELEX_EMAIL
+#endif //def TXP_EMAIL

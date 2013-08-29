@@ -55,7 +55,7 @@
  */
 
 #if defined(MMC)
-	#if defined(AVRNETIO) || defined(myAVR) || defined(ATXM2) || defined(iTelex)
+	#if defined(AVRNETIO) || defined(myAVR) || defined(ATXM2) || defined(TXPnet)
 		#include "system/filesystem/fat.h"
 		#include "system/filesystem/filesystem.h"
 	#else

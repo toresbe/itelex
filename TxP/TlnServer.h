@@ -1,4 +1,4 @@
-/*! \file TlnServer.h \brief iTelex Definitionen */
+/*! \file TlnServer.h \brief TelexPhone Definitionen */
 /***************************************************************************
  *            TlnServer.h
  *
@@ -28,18 +28,18 @@
 	
 	#include "TxP.h"
 	
-	#ifdef ITELEX_TLNSERVER
+	#ifdef TXP_TLNSERVER
 	
 	extern uint32_t TlnServSyncGeheimzahl;
 	
-	extern void itelex_tlnserv_thread( void );
-	extern void itelex_tlnserv_init( void );
+	extern void txp_tlnserv_thread( void );
+	extern void txp_tlnserv_init( void );
 	
 	extern void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln, int8_t VonServer);
 	
 	extern void TlnServDebugPrint();
 	
-	#endif //def ITELEX_TLNSERVER
+	#endif //def TXP_TLNSERVER
 	
 #endif /* _TLNSERVER_H_ */
 

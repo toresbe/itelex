@@ -69,7 +69,7 @@ void cgi_cron( void * pStruct )
 	char string[32];
 	int HH, MM;
 	
-#ifdef ITELEX
+#ifdef TELEXPHONE
 	extern uint8_t KonfigFreigabe(void *pStruct); 
 	if (!KonfigFreigabe(pStruct))
 		return;

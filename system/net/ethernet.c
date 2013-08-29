@@ -108,7 +108,7 @@ void ethernet(void)
 							ip( packet_lenght , ethernetbuffer );
 							break;
 		}
-#if defined(OpenMCP) || defined( AVRNETIO ) || defined(UPP) || defined(XPLAIN) || defined(ATXM2) || defined( EtherSense ) || defined(iTelex)
+#if defined(OpenMCP) || defined( AVRNETIO ) || defined(UPP) || defined(XPLAIN) || defined(ATXM2) || defined( EtherSense ) || defined(TXPnet)
 		packet_lenght = 0;
 	}	
 #endif
@@ -183,7 +183,7 @@ void LockEthernet( void )
 		eth_state = ETH_LOCK;
 		LockTCP();
 
-#if defined(OpenMCP) || defined(UPP) || defined(iTelex)
+#if defined(OpenMCP) || defined(UPP) || defined(TXPnet)
 		EXTINT_block( ENC28J60_INT );
 #endif
 
@@ -217,7 +217,7 @@ void FreeEthernet( void )
 
 		eth_state = ETH_FREE;
 
-#if defined(OpenMCP) || defined(UPP) || defined(iTelex)
+#if defined(OpenMCP) || defined(UPP) || defined(TXPnet)
 		EXTINT_free ( ENC28J60_INT );
 #endif
 
@@ -257,7 +257,7 @@ void EthernetInit( void )
 		char ethernetbuffer[ MAX_FRAMELEN ];
 		while ( getEthernetframe( MAX_FRAMELEN, ethernetbuffer) != 0 ) { };
 		
-#if defined(OpenMCP) || defined(AVRNETIO) || defined(UPP) || defined( EtherSense ) || defined(iTelex)
+#if defined(OpenMCP) || defined(AVRNETIO) || defined(UPP) || defined( EtherSense ) || defined(TXPnet)
 		EXTINT_set ( ENC28J60_INT , SENSE_LOW , ethernet );
 #endif
 

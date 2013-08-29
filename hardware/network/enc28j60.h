@@ -96,7 +96,7 @@
 	#define ENC28J60_RESET_PORT		PORTQ
 	#define ENC28J60_RESET_PIN		2
 
-#elif defined(iTelex)
+#elif defined(TXPnet)
 
 	#define ENC28J60_INT			4
 	#define SPIBUS					1

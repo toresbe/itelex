@@ -60,7 +60,7 @@
 
 	const char LED_DATA[] PROGMEM = { PORTF_4 , PORTF_5 , PORTF_6 , PORTF_7 };
 
-#elif defined(iTelex)
+#elif defined(TXPnet)
 
 	const char LED_DATA[] PROGMEM = { PORTB_4 , PORTB_5 , PORTB_6, PORTB_7 };
 

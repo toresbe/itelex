@@ -155,9 +155,9 @@ const char data4[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"info.html\"target=\"main\">Info</a>"
-	#if defined(ITELEX)
-	" / <a href=\"itelex-menu-de.html\">i-Telex (Deutsch)</a>"
-	" / <a href=\"itelex-menu-en.html\">i-Telex (English)</a>"
+	#if defined(TELEXPHONE)
+	" / <a href=\"txp-menu-de.html\">i-Telex (Deutsch)</a>"
+	" / <a href=\"txp-menu-en.html\">i-Telex (English)</a>"
 	#endif
 	#if defined(HTTPSERVER_STREAM)
 		" / <a href=\"stream.html\">Stream</a>"
@@ -237,13 +237,13 @@ const char data7[] PROGMEM = {
 	"______________________________________________\r\n"
 	"Build " SVNVERSION " at Date: " __DATE__ " " __TIME__ "\r\n"
 	"Modules:"
-#ifdef ITELEX_ANSCHLUSS
+#ifdef TXP_ANSCHLUSS
 	" i-Telex"
 #endif
-#ifdef ITELEX_TLNSERVER
+#ifdef TXP_TLNSERVER
 	" Nameserver"
 #endif
-#ifdef ITELEX_EMAIL
+#ifdef TXP_EMAIL
 	" Email"
 #endif
 	"\r\n\r\n"
@@ -283,21 +283,21 @@ const char data10[] PROGMEM = {
 	"\r\n\r\n"	};
 #endif
 
-#if defined(ITELEX)
+#if defined(TELEXPHONE)
 
-const char iTelexMainMenuDeName[] PROGMEM = "itelex-menu-de.html";
-const char iTelexMainMenuDeText[] PROGMEM = {
+const char TxpMainMenuDeName[] PROGMEM = "txp-menu-de.html";
+const char TxpMainMenuDeText[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"mainmenu.html\">zur&uuml;ck</a>"
-	" / <a href=\"itelex-msg-de.html\" target=\"main\">Nachricht senden</a>"
-	" / <a href=\"itelex-tlnverz.cgi?spr=de\" target=\"main\">Teilnehmer-Verzeichnis</a>"
-	" / <a href=\"itelexcfg-menu-de.html\">iTelex-Einstellungen</a>"
-	" / <a href=\"itelex-debug.cgi\" target=\"main\">Debug-Infos</a>"
-	" / <a href=\"itelex-twitlnliste.cgi?spr=de\" target=\"main\">Bus-Tln-Liste</a>"
+	" / <a href=\"txp-msg-de.html\" target=\"main\">Nachricht senden</a>"
+	" / <a href=\"txp-tlnverz.cgi?spr=de\" target=\"main\">Teilnehmer-Verzeichnis</a>"
+	" / <a href=\"txpcfg-menu-de.html\">iTelex-Einstellungen</a>"
+	" / <a href=\"txp-debug.cgi\" target=\"main\">Debug-Infos</a>"
+	" / <a href=\"txp-twitlnliste.cgi?spr=de\" target=\"main\">Bus-Tln-Liste</a>"
 #if defined(MMC)
 	" / <a href=\"sddir.cgi\" target=\"main\">SD-Karte</a>"
 #endif //defined(MMC)
@@ -305,19 +305,19 @@ const char iTelexMainMenuDeText[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n" } ;
 
-const char iTelexMainMenuEnName[] PROGMEM = "itelex-menu-en.html";
-const char iTelexMainMenuEnText[] PROGMEM = {
+const char TxpMainMenuEnName[] PROGMEM = "txp-menu-en.html";
+const char TxpMainMenuEnText[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"mainmenu.html\">back</a>"
-	" / <a href=\"itelex-msg-en.html\" target=\"main\">Send message</a>"
-	" / <a href=\"itelex-tlnverz.cgi?spr=en\" target=\"main\">Subscriber directory</a>"
-	" / <a href=\"itelexcfg-menu-en.html\">i-Telex settings</a>"
-	" / <a href=\"itelex-debug.cgi\" target=\"main\">debug info</a>"
-	" / <a href=\"itelex-twitlnliste.cgi?spr=en\" target=\"main\">list of modules</a>"
+	" / <a href=\"txp-msg-en.html\" target=\"main\">Send message</a>"
+	" / <a href=\"txp-tlnverz.cgi?spr=en\" target=\"main\">Subscriber directory</a>"
+	" / <a href=\"txpcfg-menu-en.html\">i-Telex settings</a>"
+	" / <a href=\"txp-debug.cgi\" target=\"main\">debug info</a>"
+	" / <a href=\"txp-twitlnliste.cgi?spr=en\" target=\"main\">list of modules</a>"
 #if defined(MMC)
 	" / <a href=\"sddir.cgi\" target=\"main\">SD card</a>"
 #endif //defined(MMC)
@@ -325,52 +325,52 @@ const char iTelexMainMenuEnText[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n" } ;
 
-const char iTelexCfgMenuDeName[] PROGMEM = "itelexcfg-menu-de.html";
-const char iTelexCfgMenuDeText[] PROGMEM = {
+const char TxpCfgMenuDeName[] PROGMEM = "txpcfg-menu-de.html";
+const char TxpCfgMenuDeText[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
-	"<a href=\"itelex-menu-de.html\">zur&uuml;ck</a>"
-	" / <a href=\"itelexcfg-intern.cgi?spr=de\" target=\"main\">Einstellungen im lokalen TxP-System</a>"
-	" / <a href=\"itelexcfg-extern.cgi?spr=de\" target=\"main\">Einstellungen im i-Telex-Netz</a>"
-#ifdef ITELEX_EMAIL
-	" / <a href=\"itelexcfg-email.cgi?spr=de\" target=\"main\">eMail-Einstellungen</a>"
-#endif //def ITELEX_EMAIL	
-	" / <a href=\"itelexcfg-sperren.cgi?spr=de\" target=\"main\">Sperren</a>"
+	"<a href=\"txp-menu-de.html\">zur&uuml;ck</a>"
+	" / <a href=\"txpcfg-intern.cgi?spr=de\" target=\"main\">Einstellungen im lokalen TxP-System</a>"
+	" / <a href=\"txpcfg-extern.cgi?spr=de\" target=\"main\">Einstellungen im i-Telex-Netz</a>"
+#ifdef TXP_EMAIL
+	" / <a href=\"txpcfg-email.cgi?spr=de\" target=\"main\">eMail-Einstellungen</a>"
+#endif //def TXP_EMAIL	
+	" / <a href=\"txpcfg-sperren.cgi?spr=de\" target=\"main\">Sperren</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n" } ;
 
 	
-const char iTelexCfgMenuEnName[] PROGMEM = "itelexcfg-menu-en.html";
-const char iTelexCfgMenuEnText[] PROGMEM = {
+const char TxpCfgMenuEnName[] PROGMEM = "txpcfg-menu-en.html";
+const char TxpCfgMenuEnText[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
-	"<a href=\"itelex-menu-en.html\">back</a>"
-	" / <a href=\"itelexcfg-intern.cgi?spr=en\" target=\"main\">local settings</a>"
-	" / <a href=\"itelexcfg-extern.cgi?spr=en\" target=\"main\">i-Telex network settings</a>"
-#ifdef ITELEX_EMAIL
-	" / <a href=\"itelexcfg-email.cgi?spr=en\" target=\"main\">eMail settings</a>"
-#endif //def ITELEX_EMAIL	
-	" / <a href=\"itelexcfg-sperren.cgi?spr=en\" target=\"main\">lock</a>"
+	"<a href=\"txp-menu-en.html\">back</a>"
+	" / <a href=\"txpcfg-intern.cgi?spr=en\" target=\"main\">local settings</a>"
+	" / <a href=\"txpcfg-extern.cgi?spr=en\" target=\"main\">i-Telex network settings</a>"
+#ifdef TXP_EMAIL
+	" / <a href=\"txpcfg-email.cgi?spr=en\" target=\"main\">eMail settings</a>"
+#endif //def TXP_EMAIL	
+	" / <a href=\"txpcfg-sperren.cgi?spr=en\" target=\"main\">lock</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n" } ;
 
 	
-const char iTelexChatDeName[] PROGMEM = "itelex-msg-de.html";
-const char iTelexChatDeText[] PROGMEM = {
+const char TxpChatDeName[] PROGMEM = "txp-msg-de.html";
+const char TxpChatDeText[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
 	"</HEAD>"
 	"<frameset rows=\"*,60\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
-	"<frame src=\"itelex-msg-out.cgi?spr=de\" name=\"MsgOut\" scrolling=\"auto\">"
-	"<frame src=\"itelex-msg-in.cgi?spr=de\" name=\"MsgIn\" scrolling=\"no\">"
+	"<frame src=\"txp-msg-out.cgi?spr=de\" name=\"MsgOut\" scrolling=\"auto\">"
+	"<frame src=\"txp-msg-in.cgi?spr=de\" name=\"MsgIn\" scrolling=\"no\">"
 	"<noframes>"
 	"<body>"
 	"<p>Ihr Browser unterstützt keine Frames!</p>"
@@ -381,14 +381,14 @@ const char iTelexChatDeText[] PROGMEM = {
 	"\r\n\r\n" } ;
 
 	
-const char iTelexChatEnName[] PROGMEM = "itelex-msg-en.html";
-const char iTelexChatEnText[] PROGMEM = {
+const char TxpChatEnName[] PROGMEM = "txp-msg-en.html";
+const char TxpChatEnText[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
 	"</HEAD>"
 	"<frameset rows=\"*,60\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
-	"<frame src=\"itelex-msg-out.cgi?spr=en\" name=\"MsgOut\" scrolling=\"auto\">"
-	"<frame src=\"itelex-msg-in.cgi?spr=en\" name=\"MsgIn\" scrolling=\"no\">"
+	"<frame src=\"txp-msg-out.cgi?spr=en\" name=\"MsgOut\" scrolling=\"auto\">"
+	"<frame src=\"txp-msg-in.cgi?spr=en\" name=\"MsgIn\" scrolling=\"no\">"
 	"<noframes>"
 	"<body>"
 	"<p>Ihr Browser unterstützt keine Frames!</p>"
@@ -398,7 +398,7 @@ const char iTelexChatEnText[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n" } ;
 		
-#endif //def ITELEX
+#endif //def TELEXPHONE
 
 FILES files[] = {
 	{ files1, data1, TEXT, sizeof( data1 ) - 1 },
@@ -421,13 +421,13 @@ FILES files[] = {
 #if defined(TEMP_LOGGER)
 	{ files10, data10, TEXT, sizeof( data10 ) - 1 },
 #endif
-#if defined(ITELEX)
-	{ iTelexMainMenuDeName, iTelexMainMenuDeText, TEXT, sizeof( iTelexMainMenuDeText ) - 1 },
-	{ iTelexMainMenuEnName, iTelexMainMenuEnText, TEXT, sizeof( iTelexMainMenuEnText ) - 1 },
-	{ iTelexCfgMenuDeName, iTelexCfgMenuDeText, TEXT, sizeof( iTelexCfgMenuDeText ) - 1 },
-	{ iTelexCfgMenuEnName, iTelexCfgMenuEnText, TEXT, sizeof( iTelexCfgMenuEnText ) - 1 },
-	{ iTelexChatDeName, iTelexChatDeText, TEXT, sizeof( iTelexChatDeText ) - 1 },
-	{ iTelexChatEnName, iTelexChatEnText, TEXT, sizeof( iTelexChatEnText ) - 1 },
+#if defined(TELEXPHONE)
+	{ TxpMainMenuDeName, TxpMainMenuDeText, TEXT, sizeof( TxpMainMenuDeText ) - 1 },
+	{ TxpMainMenuEnName, TxpMainMenuEnText, TEXT, sizeof( TxpMainMenuEnText ) - 1 },
+	{ TxpCfgMenuDeName, TxpCfgMenuDeText, TEXT, sizeof( TxpCfgMenuDeText ) - 1 },
+	{ TxpCfgMenuEnName, TxpCfgMenuEnText, TEXT, sizeof( TxpCfgMenuEnText ) - 1 },
+	{ TxpChatDeName, TxpChatDeText, TEXT, sizeof( TxpChatDeText ) - 1 },
+	{ TxpChatEnName, TxpChatEnText, TEXT, sizeof( TxpChatEnText ) - 1 },
 #endif
 	{ lochstr_hg_filename, lochstreifen_hg, PNG, sizeof( lochstreifen_hg ) },
 	{ 0,0,0,0 }

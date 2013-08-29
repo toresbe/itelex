@@ -185,7 +185,7 @@ volatile char test = 0 ;
 
 void select_card()
 {
-#if defined(myAVR) || defined(iTelex)
+#if defined(myAVR) || defined(TXPnet)
 	if ( test == 0 )
 	{	
 		LockEthernet();
@@ -208,7 +208,7 @@ void unselect_card()
 {
 	ss_PORT |= (1<<ss_PIN);
 
-#if defined(myAVR) || defined(iTelex)
+#if defined(myAVR) || defined(TXPnet)
 	if ( test == 1 )
 	{	
 		test = 0;

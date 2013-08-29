@@ -1,4 +1,4 @@
-/*! \file TxP.h \brief iTelex Definitionen */
+/*! \file TxP.h \brief TelexPhone Definitionen */
 /***************************************************************************
  *            TxP.h
  *
@@ -30,10 +30,10 @@
 
 #include "config.h"
 
-#ifdef ITELEX
+#ifdef TELEXPHONE
 
-#if !defined(ITELEX_TLNSERVER) && !defined(ITELEX_ANSCHLUSS)
-	#warning Kein iTelex-Modul aktiv!
+#if !defined(TXP_TLNSERVER) && !defined(TXP_ANSCHLUSS)
+	#warning Kein TxP-Modul aktiv!
 #endif
 
 #include <avr/pgmspace.h>  
@@ -54,7 +54,7 @@
 //---------------------------
 //#define LEDROT_EXTEEPROM
 //#define LEDROT_SDKARTE
-#define LEDROT_ITELEXTHREADBLOCK
+#define LEDROT_TXPTHREADBLOCK
 //#define LEDROT_SOCKETERROR
 //#define LEDROT_UNERWARTET  // noch ungenutzt
 
@@ -75,10 +75,10 @@ DEFPORTIN(CTS, D, 5)
 
 //! Nur Konstanten-Definitionen.
 enum { 
-	ITELEX_PORT = 134,
-	//!< Der TCP-Port für die iTelex-Kommunikation.
+	TXP_PORT = 134,
+	//!< Der TCP-Port für die TelexPhone-Kommunikation.
 
-	ITELEX_TLNSERV_PORT = 11811,
+	TXP_TLNSERV_PORT = 11811,
 	//!< Der TCP-Port für die Kommunikation mit den Teilnehmer-Servern.
 	
 	TlnAdresseMax = 40,
@@ -172,7 +172,7 @@ enum {
 	
 	KurzTimerFreq = 100,
 	//!< Frequenz (1/Takt) des Kurzzeittimers. 
-	//!< Muss ein Teiler von #iTelexTimerFreq sein.
+	//!< Muss ein Teiler von #TxpTimerFreq sein.
 
 	ANZ_TEILNEHMER_SERVER = 3,
 	//!< Anzahl der Links zu Teilnehmer-Servern.
@@ -190,7 +190,7 @@ enum {
 // Typdefinitionen
 // ================================================================
 
-//! Aktuelle Betriebsart der iTelex-Anwendung.
+//! Aktuelle Betriebsart der TxP-Anwendung.
 typedef enum
 	{
 	ModRuhe = 0, 
@@ -240,36 +240,36 @@ typedef enum {
 	} TTastendruck; 
 
 	
-//! Sollzustand der bestehenden iTelex-Verbindung (Socket)
+//! Sollzustand der bestehenden Txp-Verbindung (Socket)
 typedef enum { 
 	SocketIdle, //!< Unbenutzt
 	SocketOriginate, //!< Ausgehende Verbindung
 	SocketAnswer //!< Kommende Verbindung
-	} TiTelexSocketMode; 
+	} TTxpSocketMode; 
 	
 	
  //! Was geht über den Socket 'rüber.	
  typedef enum {
-	iTelexProt,		//!< Das eigene Protokoll
+	TelexPhone,		//!< Das eigene Protokoll
 	Ascii,			//!< Ascii, also telnet
-#ifdef ITELEX_EMAIL
+#ifdef TXP_EMAIL
 	POP3,			//!< Mail-Abfrage
 	SMTP,			//!< Mail-Sendung
-#endif //def ITELEX_EMAIL
-	} TiTelexSocketProtokoll;
+#endif //def TXP_EMAIL
+	} TTxpSocketProtokoll;
 	
 
 //! Typ eines Teilnehmers
 typedef enum 
 	{
 	Geloescht = 0,
-	iTelexHostname = 1,
-	iTelexIP = 2,
-	AsciiHostname = 3, //!< Telnet-ähnlich
+	TxpUrl = 1,
+	TxpIP = 2,
+	AsciiUrl = 3, //!< Telnet-ähnlich
 	AsciiIP = 4,
-	iTelexDynIP = 5,
+	TxpDynIP = 5,
 		//!< diesen Typ gibt es nur beim Teilnehmer-Server. Bei Abfragen wird der 
-		//!< Typ iTelexIP gemeldet.
+		//!< Typ TxpIP gemeldet.
 	eMail = 6
 	} TTlnAdresseArt;
 	
@@ -392,15 +392,15 @@ extern char AsciiDruckPuffer[AsciiDruckPufferMax+4];
 		
 extern uint8_t AsciiDruckZiel;
 
-extern int iTelexSocketHandle;
+extern int TxpSocketHandle;
 
-extern TiTelexSocketMode iTelexSocketMode;
+extern TTxpSocketMode TxpSocketMode;
 
-extern bool iTelexSocketAbbauGeplant;
+extern bool TxpSocketAbbauGeplant;
 
-extern TKurzTimer iTelexSocketAbbruchTimer;
+extern TKurzTimer TxpSocketAbbruchTimer;
 	
-extern TiTelexSocketProtokoll iTelexSocketProtokoll;
+extern TTxpSocketProtokoll TxpSocketProtokoll;
 
 extern uint16_t SocketInBufUsed; //!< Benutzter Teil des TCP-Empfangspuffers
 
@@ -419,7 +419,7 @@ extern char DiagnosePuffer[DiagnosePufferMax];
 extern char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
 
 extern long TeilnehmerServerIP[ANZ_TEILNEHMER_SERVER];
-
+	
 extern TSprache LokaleSprache;
 	
 
@@ -428,7 +428,7 @@ extern TSprache LokaleSprache;
 
 extern void ModusWechsel(TModus neu);
 
-extern void itelex_init( void );
+extern void txp_init( void );
 
 extern bool WarteTaste();
 
@@ -510,7 +510,7 @@ static inline uint16_t KurzTimerVal(TKurzTimer *t)
 	}
 		
 	
-#endif //def ITELEX
+#endif //def TELEXPHONE
 	
 #endif /* _TXP_H_ */
 //@}

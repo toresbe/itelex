@@ -4,7 +4,7 @@
 //*
 //****************************************************************************/
 ///	\ingroup software
-///	\defgroup iTelex Funktionen für eMail-Empfang und Sendung
+///	\defgroup Txp Funktionen für eMail-Empfang und Sendung
 ///	\code #include "eMail.h" \endcode
 //****************************************************************************/
 /*
@@ -25,7 +25,7 @@
 
 #include "config.h"
 
-#ifdef ITELEX_EMAIL
+#ifdef TXP_EMAIL
 
 #include <avr/pgmspace.h>
 #include <avr/version.h>
@@ -190,7 +190,7 @@ bool MailZeileVerarbeiten(char *Zeile)
 	// Erst wenn kein Überlauf droht Protokoll drucken.
 	if (ProtokollLevel >= 3)
 		{
-		Protokollieren_P(PSTR("iTelex POP: ZeileVerarbeiten: "));
+		Protokollieren_P(PSTR("TxP POP: ZeileVerarbeiten: "));
 		ProtokollierenPuffer(Zeile, strlen(Zeile));
 		if (DieseZeileDrucken)
 			ProtokollierenInt_P(PSTR(" ...druck (Ges. %u)\r\n"), strlen(AsciiDruckPuffer));
@@ -213,7 +213,7 @@ void POP3Einleiten()
 	if (EmailAbfrageTakt == 0)
 		return;
 		
-	if (Modus != ModRuhe || iTelexSocketHandle != NO_SOCKET_USED)
+	if (Modus != ModRuhe || TxpSocketHandle != NO_SOCKET_USED)
 		{
 		StartLangTimer(&POPWartezeitTimer);
 		POPWartezeitEnde = 3 * LangTimerMinuteFaktor;
@@ -242,14 +242,14 @@ void POP3Einleiten()
 		}
 	
 	// und hier wird geöffet...
-	iTelexSocketHandle = Connect2IP(ServerIP, 110); 
+	TxpSocketHandle = Connect2IP(ServerIP, 110); 
 	 
-	if (iTelexSocketHandle == -1)
+	if (TxpSocketHandle == -1)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
-		Protokollieren_P(PSTR("iTelex POP: ! Socket zum Server konnte nicht geoeffnet werden\r\n"));
-		iTelexSocketHandle = NO_SOCKET_USED;
-		iTelexSocketMode = SocketIdle;
+		Protokollieren_P(PSTR("TxP POP: ! Socket zum Server konnte nicht geoeffnet werden\r\n"));
+		TxpSocketHandle = NO_SOCKET_USED;
+		TxpSocketMode = SocketIdle;
 
 		//! \todo Diagnose 
 		
@@ -261,9 +261,9 @@ void POP3Einleiten()
 		
 	SocketBufInit();
 	
-	iTelexSocketMode = SocketOriginate;
-	iTelexSocketAbbauGeplant = false;
-	iTelexSocketProtokoll = POP3;
+	TxpSocketMode = SocketOriginate;
+	TxpSocketAbbauGeplant = false;
+	TxpSocketProtokoll = POP3;
 	
 	ProtokollPhase = AnmeldungName;
 	POPOkEmpfangen = false;
@@ -343,7 +343,7 @@ void POP3DatenVerarbeiten()
 			}
 
 		InterneVerbindungBeenden(true);
-		iTelexSocketAbbauGeplant = true;
+		TxpSocketAbbauGeplant = true;
 		return;
 		}
 
@@ -357,7 +357,7 @@ void POP3DatenVerarbeiten()
 		case MailFrom:
 		case MailTo:
 			// gibt es nicht...
-			iTelexSocketAbbauGeplant = true;
+			TxpSocketAbbauGeplant = true;
 			return;
 			
 		case AnmeldungName:
@@ -394,7 +394,7 @@ void POP3DatenVerarbeiten()
 				POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
 				StartLangTimer(&POPWartezeitTimer);
 				strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
-				iTelexSocketAbbauGeplant = true;
+				TxpSocketAbbauGeplant = true;
 				ProtokollPhase = WarteEnde;
 				}
 			else
@@ -493,7 +493,7 @@ void POP3DatenVerarbeiten()
 
 		case Abmelden:
 			strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
-			iTelexSocketAbbauGeplant = true;
+			TxpSocketAbbauGeplant = true;
 			ProtokollPhase = WarteEnde;
 			SocketInBufUsed = 0;
 			break;
@@ -518,7 +518,7 @@ void POP3DatenVerarbeiten()
 //! z.B. durch Drücken der Schluss-taste während des Ausdrucks.
 void POP3Abbrechen()
 	{
-	if (iTelexSocketMode != SocketOriginate || iTelexSocketProtokoll != POP3)
+	if (TxpSocketMode != SocketOriginate || TxpSocketProtokoll != POP3)
 		return; // da gibt es nix abzubrechen...
 	if (ProtokollPhase == Abmelden)
 		return; // ist eh gleich vorbei...
@@ -560,14 +560,14 @@ bool SMTPOeffnen(char *EmfaengerName)
 		}
 	
 	// und hier wird geöffet...
-	iTelexSocketHandle = Connect2IP(ServerIP, 25); 
+	TxpSocketHandle = Connect2IP(ServerIP, 25); 
 	 
-	if (iTelexSocketHandle == -1)
+	if (TxpSocketHandle == -1)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
 		Protokollieren_P(PSTR("iTelex SMTP: ! Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
-		iTelexSocketHandle = NO_SOCKET_USED;
-		iTelexSocketMode = SocketIdle;
+		TxpSocketHandle = NO_SOCKET_USED;
+		TxpSocketMode = SocketIdle;
 		if (Diagnoseausgabe_P(ISTR(SMTPFehlerAnfang, LokaleSprache), 1))
 			{
 			strncat(DiagnosePuffer, EmailSMTPServerAdresse, strlen(DiagnosePuffer) - 30);
@@ -578,9 +578,9 @@ bool SMTPOeffnen(char *EmfaengerName)
 
 	SocketBufInit();
 	
-	iTelexSocketMode = SocketOriginate;
-	iTelexSocketAbbauGeplant = false;
-	iTelexSocketProtokoll = SMTP;
+	TxpSocketMode = SocketOriginate;
+	TxpSocketAbbauGeplant = false;
+	TxpSocketProtokoll = SMTP;
 	
 	ProtokollPhase = HalloSagen;
 	
@@ -667,7 +667,7 @@ void SMTPDatenVerarbeiten()
 				strncat(DiagnosePuffer, SocketInBuf, strlen(DiagnosePuffer) - 20);
 			
 			InterneVerbindungBeenden(true);
-			iTelexSocketAbbauGeplant = true;
+			TxpSocketAbbauGeplant = true;
 			SocketInBufUsed = 0; 
 			return;
 			}
@@ -814,12 +814,12 @@ void SMTPDatenVerarbeiten()
 			
 		case Abmelden:
 			strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
-			iTelexSocketAbbauGeplant = true;
+			TxpSocketAbbauGeplant = true;
 			ProtokollPhase = WarteEnde;
 			break;
 			
 		case WarteEnde:
-			iTelexSocketAbbauGeplant = true;
+			TxpSocketAbbauGeplant = true;
 			break;
 
 		}
@@ -844,7 +844,7 @@ void SMTPSchliessen()
 		{
 		strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
 		ProtokollPhase = WarteEnde;
-		iTelexSocketAbbauGeplant = true;
+		TxpSocketAbbauGeplant = true;
 		}
 	SocketOutBufUsed = strlen(SocketOutBuf);
 	}
@@ -860,14 +860,14 @@ const PROGMEM char EmailAbfrageTakt_P[] = "EMAILABFRTAKT";
 const PROGMEM char EmailAusgabeFilternKennung_P[] = "EMAILFILTERKENNUNG";
 
 /*------------------------------------------------------------------------------------------------------------*/
-/*!\brief Das CGI-Interface zum Ändern der Einstellungen des iTelex-Interface bezüglich der Anbindung 
+/*!\brief Das CGI-Interface zum Ändern der Einstellungen des TelexPhone-Interface bezüglich der Anbindung 
  * an einen eMail-Server
  * \param 	pStruct	Struktur auf den HTTP_Request
  * \return	NONE
  */
 /*------------------------------------------------------------------------------------------------------------*/
  
-void itelex_cgi_email_config(void *pStruct)
+void txp_cgi_email_config(void *pStruct)
 	{
 	static TSprache Sprache;
 	
@@ -884,7 +884,7 @@ void itelex_cgi_email_config(void *pStruct)
 
 	if ( http_request->argc == 0 )
 		{
-		CgiFormStartTabbed_P(PSTR("itelexcfg-email.cgi"));
+		CgiFormStartTabbed_P(PSTR("txpcfg-email.cgi"));
 
 		CgiFormInputFieldText_P(ISTR(EmailKonfigPopServer, Sprache), EmailPOPServerAdresse_P, TlnAdresseMax, EmailPOPServerAdresse);
 		CgiFormInputFieldText_P(ISTR(EmailKonfigSmtpServer, Sprache), EmailSMTPServerAdresse_P, TlnAdresseMax, EmailSMTPServerAdresse);
@@ -898,7 +898,7 @@ void itelex_cgi_email_config(void *pStruct)
 	else // argc > 0
 		{
 		printf_P(ISTR(NeueEinstellungen, Sprache));
-		printf_P(PSTR("<a href=\"itelexcfg-email.cgi\">"));
+		printf_P(PSTR("<a href=\"txpcfg-email.cgi\">"));
 		printf_P(ISTR(Weiter, Sprache));
 		printf_P(PSTR("</a>"));
 
@@ -931,10 +931,10 @@ void itelex_cgi_email_config(void *pStruct)
 		
 	cgi_PrintHttpheaderEnd();
 
-	} // itelex_cgi_email_config()
+	} // txp_cgi_email_config()
 	
 
-void itelex_email_init()
+void txp_email_init()
 	{
 	// EEPROM auslesen
 	char Buf[TlnAdresseMax];
@@ -967,8 +967,8 @@ void itelex_email_init()
 	
 	// cgi Registrieren
 	
-	cgi_RegisterCGI(itelex_cgi_email_config, PSTR("itelexcfg-email.cgi"));
+	cgi_RegisterCGI(txp_cgi_email_config, PSTR("txpcfg-email.cgi"));
 	}
 	
 	
-#endif //def ITELEX_EMAIL
+#endif //def TXP_EMAIL

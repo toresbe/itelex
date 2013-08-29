@@ -224,7 +224,7 @@ void network_init( void )
 #endif
 
 #if defined(LED)
-	#if defined(OpenMCP) || defined(iTelex)
+	#if defined(OpenMCP) || defined(TXPnet)
 		LED_on(2);
 	#endif
 #endif

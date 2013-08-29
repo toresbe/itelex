@@ -102,7 +102,7 @@
 const char config_ok[] PROGMEM = " Initialisiert\r\n";
 const char config_error[] PROGMEM = " Error\r\n";
 
-#if defined(LED) && !defined(iTelex)
+#if defined(LED) && !defined(TXPnet)
 	// Timerinterrupt mit abstand 1 sekunde, dabei wird die LED 0 getoggelt
 	void blinkinglights( void )
 	{
@@ -139,7 +139,7 @@ void init( void )
 	STDOUT_INIT ();
 	STDOUT_set( RS232, 0);
 
-	printf_P( PSTR("iTelex...\r\n"));
+	printf_P( PSTR("TelexPhoneNet...\r\n"));
 
 	// Uart einrichten
 	printf_P( PSTR("UART"));
@@ -171,9 +171,9 @@ void init( void )
 	printf_P( config_ok );
 	// LED_core starten
 	// Callbackfunktion für die blinkende LED eintragen
-#if !defined(iTelex)
+#if !defined(TXPnet)
  	CLOCK_RegisterCallbackFunction ( blinkinglights, SECOUND );
-#endif // !defined(iTelex)
+#endif // !defined(TXPnet)
 #endif
 
 	// Configmodul initialisieren
