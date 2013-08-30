@@ -57,7 +57,7 @@ MCU = atmega2561
 # HARDWARE = XPLAIN
 # HARDWARE = ATXM2
 # HARDWARE = EtherSense
-HARDWARE = TXPnet
+HARDWARE = iTelex
 
 ADDON = NONE_ADDON
 # ADDON = AVRNETIO_ADDON
@@ -331,7 +331,7 @@ endif
 # ifeq ($(HARDWARE),ATXM2)
 #    EXTMEMOPTS = -Wl,--section-start,.data=0x804000,--defsym=__heap_end=0x80ffff
 # endif
-ifeq ($(HARDWARE),TXPnet)
+ifeq ($(HARDWARE),iTelex)
     EXTMEMOPTS = -Wl,--section-start,.data=0x802200,--defsym=__heap_end=0x80ffff
 endif
 

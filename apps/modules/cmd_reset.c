@@ -31,7 +31,7 @@
 #include "apps/httpd/httpd2_pharse.h"
 #include "system/stdout/stdout.h"
 
-#if defined(TXPnet)
+#if defined(iTelex)
 #include "hardware/led/led_core.h"
 #endif
 
@@ -66,7 +66,7 @@ void cgi_reset( void * pStruct )
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 
-#ifdef TELEXPHONE
+#ifdef ITELEX
 	extern uint8_t KonfigFreigabe(void *pStruct); 
 	if (!KonfigFreigabe(pStruct))
 		return;
@@ -88,7 +88,7 @@ void cgi_reset( void * pStruct )
 			cgi_PrintHttpheaderEnd();
 			STDOUT_Flush();
 			CloseTCPSocket( http_request->HTTP_SOCKET );
-#if defined(TXPnet)
+#if defined(iTelex)
 			LED_on(1);
 			LED_on(2);
 			LED_on(3);

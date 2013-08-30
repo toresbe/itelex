@@ -14,10 +14,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
 
-// This is TXPnet.config.h
+// This is iTelex.config.h
 
-#ifndef TXPNET_CONFIG_H
-	#define TXPNET_CONFIG_H
+#ifndef ITELEX_CONFIG_H
+	#define ITELEX_CONFIG_H
 
 	// set the baudrate for the usart
 	#define UART_BAUD 9600L
@@ -75,11 +75,11 @@
 		#define NTP
 	#endif
 
-	// aktiviert TelexPhone und die entsprechenden Teilmodule
-	#define TELEXPHONE
-	#define TXP_ANSCHLUSS
-	#define TXP_TLNSERVER
-	#define TXP_EMAIL
+	// aktiviert iTelex und die entsprechenden Teilmodule
+	#define ITELEX
+	#define ITELEX_ANSCHLUSS
+	#define ITELEX_TLNSERVER
+	#define ITELEX_EMAIL
 	
 	#define SHELL
 
@@ -176,4 +176,4 @@
 #define TXP_DEBUG 1
 
 
-#endif /* TXPNET_CONFIG_H */
+#endif /* ITELEX_CONFIG_H */

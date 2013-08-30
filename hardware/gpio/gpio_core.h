@@ -36,7 +36,7 @@
 #elif defined(ATXM2)
 	#define MAX_GPIO_PORTS	6
 	#define MAX_GPIO_PIN	48
-#elif defined(TXPnet)
+#elif defined(iTelex)
 	#define MAX_GPIO_PORTS	7
 	#define MAX_GPIO_PIN	54
 #else

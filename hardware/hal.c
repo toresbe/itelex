@@ -161,7 +161,7 @@ HAL hal_table[] = {
 	__MMC
 };
 
-#elif defined(__AVR_ATmega2561__) && defined(TXPnet)
+#elif defined(__AVR_ATmega2561__) && defined(iTelex)
 HAL hal_table[] = {
 // TODO das kann doch gar nicht sein, was hier steht...	
 	// Port A

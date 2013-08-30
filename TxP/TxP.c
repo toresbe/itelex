@@ -39,7 +39,7 @@
 
 #include "config.h"
 
-#ifdef TELEXPHONE
+#ifdef ITELEX
 
 // #include "defports.h"
 // #include "bits.h"
@@ -76,7 +76,7 @@
 const PROGMEM char SvnVersion_P[] = SVNVERSION;
 
 
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 
 
 //! Aktueller Modus. Sollte nur durch ModusWechsel geändert werden.	
@@ -86,26 +86,26 @@ TModus Modus;
 // Die Datem auf dem TXP-Port haben folgende Struktur:
 // - ASCII-Zeichen einschl. WR (CR) und ZL (LF) werden "pur" übertragen.
 // - Ansonsten werden Datenblöcke übertragen, die stets aus folgenden Teilen bestehen:
-//   * ein Byte Kommandocode (siehe die folgenden Konstanten mit TXPC_*)
+//   * ein Byte Kommandocode (siehe die folgenden Konstanten mit ITELEXC_*)
 //   * ein Byte Länge folgender Daten (kann 0 sein).
 //   * zugehörige Daten
 
 //! Nur Konstanten-Definitionen.
 enum { 
-	TXPC_NULL = 0x00, //!< Füllzeichen
-	TXPC_DURCHWAHL = 0x01, //!< Startzeichen, Datenblock enthält ein Byte Durchwahl 
-	TXPC_BAUDOT_DATA = 0x02, //!< Datenblock mit puren Baudot-Codes
-	TXPC_ENDE = 0x03, //!< Beabsichtigter Verbindungsabbau.
-	TXPC_STOP = 0x04, //!< Es können noch Daten angehängt werden. Ursache: Besetzt oder Störung
+	ITELEXC_NULL = 0x00, //!< Füllzeichen
+	ITELEXC_DURCHWAHL = 0x01, //!< Startzeichen, Datenblock enthält ein Byte Durchwahl 
+	ITELEXC_BAUDOT_DATA = 0x02, //!< Datenblock mit puren Baudot-Codes
+	ITELEXC_ENDE = 0x03, //!< Beabsichtigter Verbindungsabbau.
+	ITELEXC_STOP = 0x04, //!< Es können noch Daten angehängt werden. Ursache: Besetzt oder Störung
 	// \005 freigehalten für ^E = WerDa.
-	TXPC_QUITT = 0x06, //!< Meldet Empfangsbereitschaft und Anzahl bereits verarbeiteter Zeichen.
-	TXPC_VERSION = 0x07, 
+	ITELEXC_QUITT = 0x06, //!< Meldet Empfangsbereitschaft und Anzahl bereits verarbeiteter Zeichen.
+	ITELEXC_VERSION = 0x07, 
 		//!< Version der Kommunikation. Originate schlägt vor, Answer bestätigt.
 		//!< Erst wenn andere Seite mit gleicher Nummer antwortet, ist Protokollversion abgestimmt.
-	TXPC_SELBSTANRUF = 0x08, //!< Kennung für einen testweisen Selbst-Anruf.
-	TXPC_FERNKONFIG = 0x09, 
+	ITELEXC_SELBSTANRUF = 0x08, //!< Kennung für einen testweisen Selbst-Anruf.
+	ITELEXC_FERNKONFIG = 0x09, 
 		//!< Telegramm für Änderungen an Teilnehmer-Einstellungen aus der Ferne.
-		//!< Inhalt: 1 Byte Länge inkl. PIN und Kennung, 2 Byte PIN der Gegenstelle, 1 Byte Kennung TXPC_FKK_xxx, x Byte Daten
+		//!< Inhalt: 1 Byte Länge inkl. PIN und Kennung, 2 Byte PIN der Gegenstelle, 1 Byte Kennung ITELEXC_FKK_xxx, x Byte Daten
 	} ;
 	
 	
@@ -182,7 +182,7 @@ volatile uint16_t LangTimerVorteilerCnt;
 volatile static uint16_t TwiLebenszeichenZaehler; 
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf dem TWI-Bus.
 	//!< wird während der Verbindung missbraucht zum Zählen der Takte bis zur Pegelwiederholung.
-	//!< Kein Timer, da nur lokal in txp_timerEvent() verwendet und unterschiedliche 
+	//!< Kein Timer, da nur lokal in itelex_timerEvent() verwendet und unterschiedliche 
 	//!< Ablaufzeiten realisiert werden müssen.
 	
 static TKurzTimer SchreibPauseTimer;
@@ -198,11 +198,11 @@ static TKurzTimer BusQuittTimer;
 	//!< Auf Empfang der Quittung wird nur 3 Sekunden gewartet.
 
 	
-static TKurzTimer ITelexSocketLebenszeichenTimer;
+static TKurzTimer iTelexSocketLebenszeichenTimer;
 	//!< Alle 3,5 bis 4 Sekunden ein Lebenszeichen senden...
 
-static TKurzTimer TxpThreadCheckTimer;
-	//!< Prüft, ob die Funktion void txp_thread() ausreichend häufig aufgerufen wird.
+static TKurzTimer ITelexThreadCheckTimer;
+	//!< Prüft, ob die Funktion void itelex_thread() ausreichend häufig aufgerufen wird.
 
 	
 volatile TPuffer SendePuffer; 
@@ -245,50 +245,50 @@ static TLangTimer BeideRuhigTimer;
 	//!< Abschaltung nach 10 Minuten Ruhe.
 	
 
-int ITelexSocketHandle;
-	//!< Verweis auf Socket für Txp-Kommunikation. Istzustand. Wenn ungültig, aber ITelexSocketMode
+int iTelexSocketHandle;
+	//!< Verweis auf Socket für iTelex-Kommunikation. Istzustand. Wenn ungültig, aber iTelexSocketMode
 	//!< ungleich Idle, ist ein kurzzeitiger Verbindungsverlust eingetreten.
 	
 	
-TITelexSocketMode ITelexSocketMode;
-	//!< Speichert Sollzustand der Txp-Verbindung
+TiTelexSocketMode iTelexSocketMode;
+	//!< Speichert Sollzustand der iTelex-Verbindung
 	
 	
-static long ITelexSocketIP;
-	//!< Aktueller Verbindungspartner. Bei ITelexSocketMode = SocketAnswer wird
+static long iTelexSocketIP;
+	//!< Aktueller Verbindungspartner. Bei iTelexSocketMode = SocketAnswer wird
 	//!< nach Verbindungsverlust geprüft, ob neu aufgenommene Verbindung wieder
 	//!< vom gleichen Anschluss kommt.
 
-static uint16_t ITelexSocketPort;
+static uint16_t iTelexSocketPort;
 	//!< Bei ausgehenden Verbindungen der gewünschte Port des Empfängers.
 
-TKurzTimer ITelexSocketAbbruchTimer;
+TKurzTimer iTelexSocketAbbruchTimer;
 	//!< Nach 30 Sekunden unplanmäßigem Verbindungsverlust wird entgültig abgebaut.
 
-static TKurzTimer ITelexSocketWiederholungVerzoegerung;
+static TKurzTimer iTelexSocketWiederholungVerzoegerung;
 	//!< Bei spontanem Verbindungsabbau oder Sendestörung wird 2 Sekunden auf den nächsten 
 	//!< Versuch gewartet.
 	
 	
-bool ITelexSocketAbbauGeplant;
+bool iTelexSocketAbbauGeplant;
 	//!< Wird auf true gesetzt, wenn ein Verbindungsabbau bevorsteht.
 	//!< Abbau erfolgt immer durch Anrufer. 
-	//!< \p Wenn true und ITelexSocketMode = SocketOriginate wird Abbau nach letzem Datenblock ausgelöst
-	//!< \p Wenn true und ITelexSocketMode = SocketAnswer wird nach gemeldetem Verbindungsabbau
-	//!< ITelexSocketMode auf SocketIdle gesetzt und ITelexSocketIP gelöscht.
+	//!< \p Wenn true und iTelexSocketMode = SocketOriginate wird Abbau nach letzem Datenblock ausgelöst
+	//!< \p Wenn true und iTelexSocketMode = SocketAnswer wird nach gemeldetem Verbindungsabbau
+	//!< iTelexSocketMode auf SocketIdle gesetzt und iTelexSocketIP gelöscht.
 
-static TKurzTimer ITelexSocketAbbauVerzoegerung;
+static TKurzTimer iTelexSocketAbbauVerzoegerung;
 	//!< Geht der Verbindungsabbau vom Anrufer aus, ist eine kurze Verzögerung zwischen 
 	//!< letzter Sendung und Verbindungsabbau sinnvoll.
 	
 	
-static uint8_t ITelexSocketProtVersion;
+static uint8_t iTelexSocketProtVersion;
 	//!< Vereinbarte Protokollversion der Kommunikation
 
-static uint8_t ITelexSocketProtVersionVorschlag;
+static uint8_t iTelexSocketProtVersionVorschlag;
 	//!< Selbst Vorgeschlagene Protokollversion der Kommunikation
 
-TITelexSocketProtokoll ITelexSocketProtokoll;
+TiTelexSocketProtokoll iTelexSocketProtokoll;
 	//!< Was geht über den Socket 'rüber.
 	
 
@@ -378,7 +378,7 @@ static uint16_t NetzPort;
 static long NetzEigeneIP;
 	//!< Zurückgemeldete IP-Adresse im globalen Netz.
 
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 	
 
 char TeilnehmerServerAdresse[ANZ_TEILNEHMER_SERVER][TlnAdresseMax];
@@ -425,7 +425,7 @@ static uint8_t AktTlnServerTabI;
 	//!< Tabellenindex des aktuell geöffneten Teilnehmer-Servers (#TeilnehmerServerSocket)
 	
 	
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 
 static bool DynIPAktiv;
 	//!< Soll die eigene IP-Adresse auf den Teilnehmer-Server aktualisiert werden?
@@ -471,11 +471,11 @@ static TZeitUeberwachung SelbstAnrufZeitUeberwachung;
 	//!< Überwachung der Dauer des Selbstanrufs.
 	
 	
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 	
 	
-//! Sollfrequenz des Aufrufs von txp_timerEvent()
-enum { TxpTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
+//! Sollfrequenz des Aufrufs von itelex_timerEvent()
+enum { iTelexTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
 
 
 char DiagnosePuffer[DiagnosePufferMax];
@@ -579,7 +579,7 @@ char * ZeitUeberwachungAusgabe(TZeitUeberwachung *zue)
 	}
 
 
-static uint16_t TxpThreadCount; 
+static uint16_t ITelexThreadCount; 
 	//!< Für Debugging und Zufallsfaktoren
 	
 	
@@ -594,7 +594,7 @@ uint16_t Zufallswert(uint16_t Maske)
 	x = (TwiLebenszeichenZaehler * 23)
 		^ (TwiWatchdogCount * 31)
 		^ (TwiIsrCount * 47)
-		^ (TxpThreadCount * 83)
+		^ (ITelexThreadCount * 83)
 		^ (ByteCounter * 101);
 	return x & Maske;
 	}
@@ -632,7 +632,7 @@ bool Diagnoseausgabe_P(const char *msg, uint8_t Level)
 	}
 
 	
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 	
 //! Initialisiert die serielle Umsetzung 
 static void SeriellUmsetzInit(void)
@@ -647,22 +647,22 @@ static void SeriellUmsetzInit(void)
 
 //! Protokollzeile einleiten.
 // ---------------------------
-//! Schreibt "Txp (xxx):" in den Puffer mit xxx = Zykluszaehler von txp_thread.
+//! Schreibt "iTelex (xxx):" in den Puffer mit xxx = Zykluszaehler von itelex_thread.
 
-static void ProtokollierenTxp()
+static void ProtokollierenITelex()
 	{
-	ProtokollierenInt_P(PSTR("TxP (%5u): "), TxpThreadCount);
+	ProtokollierenInt_P(PSTR("iTelex (%5u): "), ITelexThreadCount);
 	}
 	
 
 //! Protokollzeile einfach.
 // ---------------------------
-//! Schreibt "Txp (xxx): ttt" in den Puffer mit xxx = Zykluszaehler von txp_thread und
+//! Schreibt "iTelex (xxx): ttt" in den Puffer mit xxx = Zykluszaehler von itelex_thread und
 //! ttt Text aus Programmspeicher.
 
-static void ProtokollierenTxp_P(const char *s)
+static void ProtokollierenITelex_P(const char *s)
 	{
-	ProtokollierenTxp();
+	ProtokollierenITelex();
 	Protokollieren_P(s);
 	}
 	
@@ -690,9 +690,9 @@ volatile static uint32_t Timer0CallbackCount;
 //! Timer-Callback-Funktion. Macht seriell-parallel-Umsetzung und umgekehrt.
 //--------------------------------------------------------------------------
 //! Sendet auf TWI auch die Mark- / Space-Wechsel und die Lebenszeichen.
-//! Wird mit Frequenz TxpTimerFreq aufgerufen.
+//! Wird mit Frequenz iTelexTimerFreq aufgerufen.
 
-void txp_timerEvent(void)
+void itelex_timerEvent(void)
 	{
 	uint8_t t0c = TCNT0;
 	
@@ -705,7 +705,7 @@ void txp_timerEvent(void)
 	Timer0CallbackCount++;
 
 	KurzTimerVorteilerCnt++;
-	if (KurzTimerVorteilerCnt >= TxpTimerFreq / KurzTimerFreq)
+	if (KurzTimerVorteilerCnt >= iTelexTimerFreq / KurzTimerFreq)
 		{
 		KurzTimerCnt++;
 		KurzTimerVorteilerCnt = 0;
@@ -719,15 +719,15 @@ void txp_timerEvent(void)
 		
 	wdt_reset();
 	
-	if (KurzTimerVal(&TxpThreadCheckTimer) > 90 * KurzTimerFreq) // nach 90 Sekunden Reset
+	if (KurzTimerVal(&ITelexThreadCheckTimer) > 90 * KurzTimerFreq) // nach 90 Sekunden Reset
 		{ 
-		ProtokollierenTxp_P(PSTR("! Reset wegen nicht-Aufruf von txp_thread()\r\n"));
+		ProtokollierenITelex_P(PSTR("! Reset wegen nicht-Aufruf von itelex_thread()\r\n"));
 		ProtokollSpeichern(true);
 		softreset();
 		}
 		
 #if defined(LEDROT_ITELEXTHREADBLOCK)
-	if (KurzTimerVal(&TxpThreadCheckTimer) > KurzTimerFreq * 5/10) // nach halber Sekunde geht rot an
+	if (KurzTimerVal(&ITelexThreadCheckTimer) > KurzTimerFreq * 5/10) // nach halber Sekunde geht rot an
 		LED_on(ROT);
 #endif //defined(LEDROT_ITELEXTHREADBLOCK)
 		
@@ -861,7 +861,7 @@ void txp_timerEvent(void)
 				if ((BusAuftrag == Nichts || BusAuftrag == Fertig) && BusFrei)
 					{
 					BusSenden(SendeMark ? BusKdoMarkWdh : BusKdoSpaceWdh);
-					TwiLebenszeichenZaehler = TxpTimerFreq * 5/10; // alle 0,5 Sekunden
+					TwiLebenszeichenZaehler = iTelexTimerFreq * 5/10; // alle 0,5 Sekunden
 					}
 				}
 			} // kein Sendepegel-Wechsel
@@ -894,7 +894,7 @@ void txp_timerEvent(void)
 			if ((BusAuftrag == Nichts || BusAuftrag == Fertig) && BusFrei)
 				{
 				BusSenden(BusLebenszeichen);
-				TwiLebenszeichenZaehler = TxpTimerFreq * 5/10; // alle 0,5 Sekunden
+				TwiLebenszeichenZaehler = iTelexTimerFreq * 5/10; // alle 0,5 Sekunden
 				}
 			}
 		} // if Modus != Ruhe
@@ -967,8 +967,8 @@ void txp_timerEvent(void)
 	
 	t0c = TCNT0 - t0c;
 	if (t0c > Timer0Callback_Max)
-		Timer0Callback_Max = t0c; // Dauer der Funktion txp_timerEvent()
-	} // txp_timerEvent()
+		Timer0Callback_Max = t0c; // Dauer der Funktion itelex_timerEvent()
+	} // itelex_timerEvent()
 
 	
 //! Speichert ungültige Befehle vom TWI-Bus.
@@ -1059,7 +1059,7 @@ void ModusWechsel(TModus neu)
 			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
 			SeriellUmsetzInit();
 			SendenBeschleunigen = false;
-			ITelexSocketProtokoll = iTelexProt;
+			iTelexSocketProtokoll = iTelexProt;
 			AsciiDruckPuffer[0] = '\0';
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
@@ -1237,7 +1237,7 @@ void SocketBufInit()
 	{
 	SocketInBufUsed = 0;
 	SocketOutBufUsed = 0;
-	StartKurzTimer(&ITelexSocketLebenszeichenTimer);
+	StartKurzTimer(&iTelexSocketLebenszeichenTimer);
 	}
 	
 	
@@ -1312,7 +1312,7 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	}
 	
 
-//! Bei kommenden Verbindungen aller Art (TelexPhone, HTML) passenden internen 
+//! Bei kommenden Verbindungen aller Art (iTelex, HTML) passenden internen 
 //! Empfänger ermitteln und anwählen.
 //-----------------------------------------------------------------------------			
 //! Setzt als Ergebnis BusVerbPartner. 
@@ -1424,14 +1424,14 @@ static void SocketBearbeiten()
 		if (ProtokollLevel >= 1)
 			{
 			ProtokollRegelblockStart();
-			ProtokollierenTxp_P(PSTR("Server-Socket geoeffnet von IP "));
+			ProtokollierenITelex_P(PSTR("Server-Socket geoeffnet von IP "));
 			ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
 			Protokollieren_P(PSTR(" / MAC "));
 			ProtokollierenMAC(TCP_sockettable[NewServerSocket].MACadress);
 			ProtokollRegelblockEnde();
 			}
 		
-		if (ITelexSocketMode == SocketIdle)
+		if (iTelexSocketMode == SocketIdle)
 			{ // neue Verbindung
 			if (Modus == ModRuhe)
 				{ // ID#102 *************************************************
@@ -1442,16 +1442,16 @@ static void SocketBearbeiten()
 					Protokollieren_P(PSTR(" ...neu ok\r\n"));
 					ProtokollRegelblockEnde();
 					}
-				ITelexSocketHandle = NewServerSocket;
+				iTelexSocketHandle = NewServerSocket;
 				BusVerbPartner = Hauptstelle; // vorbereitet...
-				ITelexSocketIP = TCP_sockettable[ITelexSocketHandle].SourceIP;
-				ITelexSocketMode = SocketAnswer;
-				ITelexSocketAbbauGeplant = false;
-				ITelexSocketProtVersion = 0;
-				ITelexSocketProtVersionVorschlag = 0; // auf Gegenvorschlag warten
-				ITelexSocketProtokoll = Ascii;
-				StartKurzTimer(&ITelexSocketAbbruchTimer);
-				StartKurzTimer(&ITelexSocketAbbauVerzoegerung);
+				iTelexSocketIP = TCP_sockettable[iTelexSocketHandle].SourceIP;
+				iTelexSocketMode = SocketAnswer;
+				iTelexSocketAbbauGeplant = false;
+				iTelexSocketProtVersion = 0;
+				iTelexSocketProtVersionVorschlag = 0; // auf Gegenvorschlag warten
+				iTelexSocketProtokoll = Ascii;
+				StartKurzTimer(&iTelexSocketAbbruchTimer);
+				StartKurzTimer(&iTelexSocketAbbauVerzoegerung);
 				SocketBufInit();
 				ModusWechsel(ModKommendVerbVorstufe);
 				Abweisen = false;
@@ -1465,16 +1465,16 @@ static void SocketBearbeiten()
 			#ifdef LEDROT_SOCKETERROR
 				LED_off(ROT);
 			#endif //def LEDROT_SOCKETERROR
-			} // ITelexSocketMode == SocketIdle
+			} // iTelexSocketMode == SocketIdle
 			
-		else if (ITelexSocketMode == SocketAnswer && ITelexSocketHandle == NO_SOCKET_USED)
+		else if (iTelexSocketMode == SocketAnswer && iTelexSocketHandle == NO_SOCKET_USED)
 			{
-			if (ITelexSocketIP == TCP_sockettable[NewServerSocket].SourceIP)
+			if (iTelexSocketIP == TCP_sockettable[NewServerSocket].SourceIP)
 				{
 				if (ProtokollLevel >= 1)
 					Protokollieren_P(PSTR(" ...Wiederverbindung ok\r\n"));
-				ITelexSocketHandle = NewServerSocket;
-				StartKurzTimer(&ITelexSocketAbbauVerzoegerung);
+				iTelexSocketHandle = NewServerSocket;
+				StartKurzTimer(&iTelexSocketAbbauVerzoegerung);
 				Abweisen = false;
 				#ifdef LEDROT_SOCKETERROR
 					LED_off(ROT);
@@ -1486,10 +1486,10 @@ static void SocketBearbeiten()
 				if (ProtokollLevel >= 1)
 					Protokollieren_P(PSTR(", andere kommende Verbindung besteht!"));
 				}
-			} // (ITelexSocketMode == SocketAnswer && ITelexSocketIP == NO_SOCKET_USED)
+			} // (iTelexSocketMode == SocketAnswer && iTelexSocketIP == NO_SOCKET_USED)
 			
 		else 
-			{ // ITelexSocketMode == SocketOriginate || ITelexSocketHandle bereits belegt
+			{ // iTelexSocketMode == SocketOriginate || iTelexSocketHandle bereits belegt
 			Abweisen = true; // anderweitig belegt
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR(", Verbindung besteht"));
@@ -1497,7 +1497,7 @@ static void SocketBearbeiten()
 		
 		if (Abweisen)
 			{ // ID#213 ID#225 ***************************************************
-			PutSocketData_RPE(NewServerSocket, 7, PSTR("\004\006occ \r\n"), FLASH); // 004 = TXPC_STOP
+			PutSocketData_RPE(NewServerSocket, 7, PSTR("\004\006occ \r\n"), FLASH); // 004 = ITELEXC_STOP
 			CloseTCPSocket(NewServerSocket);
 			if (ProtokollLevel >= 1)
 				Protokollieren_P(PSTR(" ! ...ABGEWIESEN\r\n" ));
@@ -1508,17 +1508,17 @@ static void SocketBearbeiten()
 
 	// Verbindungsabbruch durch Gegenseite?
 	// --------------------------------------------------
-	if (ITelexSocketHandle != NO_SOCKET_USED 
-		&& CheckSocketState(ITelexSocketHandle) == SOCKET_NOT_USE
+	if (iTelexSocketHandle != NO_SOCKET_USED 
+		&& CheckSocketState(iTelexSocketHandle) == SOCKET_NOT_USE
 		&& SocketInBufUsed == 0) // Verbindungsabbau verzögern bis Puffer verarbeiet.
 		{ // ID#242 ID#342 ID#314 ************************************************
-		switch (ITelexSocketProtokoll)
+		switch (iTelexSocketProtokoll)
 			{
 			case iTelexProt:
-				if (!ITelexSocketAbbauGeplant)
+				if (!iTelexSocketAbbauGeplant)
 					{
 					if (ProtokollLevel >= 1)
-						ProtokollierenTxp_P(PSTR("! Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n" ));
+						ProtokollierenITelex_P(PSTR("! Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n" ));
 			
 					#ifdef LEDROT_SOCKETERROR
 						LED_on(ROT);
@@ -1532,13 +1532,13 @@ static void SocketBearbeiten()
 				if (ProtokollLevel >= 1)
 					{
 					ProtokollRegelblockStart();
-					ProtokollierenTxp_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
+					ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
 					ProtokollRegelblockEnde();
 					}
 					
-				ITelexSocketMode = SocketIdle;
-				ITelexSocketIP = 0;
-				ITelexSocketAbbauGeplant = false;
+				iTelexSocketMode = SocketIdle;
+				iTelexSocketIP = 0;
+				iTelexSocketAbbauGeplant = false;
 				SocketOutBufUsed = 0;
 				SocketInBufUsed = 0;
 				#ifdef LEDROT_SOCKETERROR
@@ -1547,45 +1547,45 @@ static void SocketBearbeiten()
 				break;
 				
 			default:
-				if (!ITelexSocketAbbauGeplant)
-					ProtokollierenTxp_P(PSTR("! Socket wurde von Gegenstelle GETRENNT\r\n" ));
+				if (!iTelexSocketAbbauGeplant)
+					ProtokollierenITelex_P(PSTR("! Socket wurde von Gegenstelle GETRENNT\r\n" ));
 					
 				else if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
+					ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
 					
-				ITelexSocketMode = SocketIdle;
-				ITelexSocketIP = 0;
-				ITelexSocketAbbauGeplant = false;
+				iTelexSocketMode = SocketIdle;
+				iTelexSocketIP = 0;
+				iTelexSocketAbbauGeplant = false;
 				SocketOutBufUsed = 0;
 				SocketInBufUsed = 0;
 				break;
 				
 			}
 			
-		CloseTCPSocket(ITelexSocketHandle);
-		StartKurzTimer(&ITelexSocketAbbruchTimer);
-		StartKurzTimer(&ITelexSocketWiederholungVerzoegerung);
-		ITelexSocketHandle = NO_SOCKET_USED;
+		CloseTCPSocket(iTelexSocketHandle);
+		StartKurzTimer(&iTelexSocketAbbruchTimer);
+		StartKurzTimer(&iTelexSocketWiederholungVerzoegerung);
+		iTelexSocketHandle = NO_SOCKET_USED;
 		return; // GGf wieder aufnahme der Verbindung beim nächsten Aufruf dieser funktion...
 		}
 		
 	// soll offene Verbindung geschlossen werden?
 	// --------------------------------------------------
-	if (ITelexSocketHandle != NO_SOCKET_USED 
-		&& ITelexSocketAbbauGeplant 
-		&& ITelexSocketMode == SocketOriginate 
-		&& KurzTimerVal(&ITelexSocketAbbauVerzoegerung) > KurzTimerFreq * 15/10 // 1,5 Sekunden nach letzter Sendung...
+	if (iTelexSocketHandle != NO_SOCKET_USED 
+		&& iTelexSocketAbbauGeplant 
+		&& iTelexSocketMode == SocketOriginate 
+		&& KurzTimerVal(&iTelexSocketAbbauVerzoegerung) > KurzTimerFreq * 15/10 // 1,5 Sekunden nach letzter Sendung...
 		&& SocketOutBufUsed == 0
 		&& SocketInBufUsed == 0)
 		{ 
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("Socket wird aktiv geschlossen\r\n" ));
+			ProtokollierenITelex_P(PSTR("Socket wird aktiv geschlossen\r\n" ));
 			
-		CloseTCPSocket(ITelexSocketHandle);
-		ITelexSocketHandle = NO_SOCKET_USED;
-		ITelexSocketMode = SocketIdle;
-		ITelexSocketIP = 0;
-		ITelexSocketAbbauGeplant = false;
+		CloseTCPSocket(iTelexSocketHandle);
+		iTelexSocketHandle = NO_SOCKET_USED;
+		iTelexSocketMode = SocketIdle;
+		iTelexSocketIP = 0;
+		iTelexSocketAbbauGeplant = false;
 		SocketOutBufUsed = 0;
 		SocketInBufUsed = 0;
 		#ifdef LEDROT_SOCKETERROR
@@ -1595,18 +1595,18 @@ static void SocketBearbeiten()
 		
 	// Auf neue Daten testen
 	// ---------------------------------
-	if (ITelexSocketHandle != NO_SOCKET_USED && SocketInBufUsed < SocketInBufMax)
+	if (iTelexSocketHandle != NO_SOCKET_USED && SocketInBufUsed < SocketInBufMax)
 		{ // Socket offen und Puffer aufnahmefähig
-		StartKurzTimer(&ITelexSocketAbbruchTimer);
+		StartKurzTimer(&iTelexSocketAbbruchTimer);
 			// so lange Verbindung aufrecht bleibt Timer auf 0
 
-		int InCount = GetBytesInSocketData(ITelexSocketHandle);
+		int InCount = GetBytesInSocketData(iTelexSocketHandle);
 		
 		if (SocketInBufUsed + InCount > SocketInBufMax)
 			{
 			if (ProtokollLevel >= 1) 
 				{
-				ProtokollierenTxp();
+				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("! Socket Empfang drohender Ueberlauf: Empfang von %d " ), InCount);
 				ProtokollierenInt_P(PSTR("limitiert auf %d\r\n" ), SocketInBufMax - SocketInBufUsed);
 				}
@@ -1615,15 +1615,15 @@ static void SocketBearbeiten()
 			
 		if (InCount > 0) 
 			{
-			int Res = GetSocketData(ITelexSocketHandle, InCount, SocketInBuf + SocketInBufUsed);
+			int Res = GetSocketData(iTelexSocketHandle, InCount, SocketInBuf + SocketInBufUsed);
 			
-			if (SocketInBuf[SocketInBufUsed] != TXPC_SELBSTANRUF)
+			if (SocketInBuf[SocketInBufUsed] != ITELEXC_SELBSTANRUF)
 				ProtokollRegelblockAbbruch();
 				
 			if (ProtokollLevel >= 3) // Daten explizit
 				{
 				ProtokollRegelblockStart();
-				ProtokollierenTxp();
+				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Socket Empfang: (%d/" ), InCount);
 				ProtokollierenInt_P(PSTR("%d)"), Res);
 				ProtokollierenPuffer(SocketInBuf + SocketInBufUsed, Res);
@@ -1638,49 +1638,49 @@ static void SocketBearbeiten()
 				
 			}
 
-		} // if ITelexSocketHandle != NO_SOCKET_USED 
+		} // if iTelexSocketHandle != NO_SOCKET_USED 
 		
 	// ggf Lebenszeichen erzeugen
 	// --------------------------
-	if (ITelexSocketMode != SocketIdle
-		&& ITelexSocketProtokoll == iTelexProt
-		&& KurzTimerVal(&ITelexSocketLebenszeichenTimer) >= 4 * KurzTimerFreq
+	if (iTelexSocketMode != SocketIdle
+		&& iTelexSocketProtokoll == iTelexProt
+		&& KurzTimerVal(&iTelexSocketLebenszeichenTimer) >= 4 * KurzTimerFreq
 	    && SocketOutBufUsed == 0
 		&& SocketSendeFehlerZaehler == 0
-		&& !ITelexSocketAbbauGeplant
-		&& ITelexSocketHandle != NO_SOCKET_USED)
+		&& !iTelexSocketAbbauGeplant
+		&& iTelexSocketHandle != NO_SOCKET_USED)
 		{ // alle 4 Sekunden ein Lebenszeichen
-		SocketOutBuf[0] = TXPC_NULL;
+		SocketOutBuf[0] = ITELEXC_NULL;
 		SocketOutBuf[1] = 0;
 		SocketOutBufUsed = 2;
-		StartKurzTimer(&ITelexSocketLebenszeichenTimer);
+		StartKurzTimer(&iTelexSocketLebenszeichenTimer);
 		}
 
 	// Ist ein Neuaufbau der Verbindung erforderlich?
 	// ----------------------------------------------
-	if (ITelexSocketMode == SocketOriginate 
-		&& ITelexSocketHandle == NO_SOCKET_USED 
+	if (iTelexSocketMode == SocketOriginate 
+		&& iTelexSocketHandle == NO_SOCKET_USED 
 		&& SocketOutBufUsed != 0
-		&& !ITelexSocketAbbauGeplant
-		&& KurzTimerVal(&ITelexSocketWiederholungVerzoegerung) > 2 * KurzTimerFreq) // 2 Sekunden verzögerung
+		&& !iTelexSocketAbbauGeplant
+		&& KurzTimerVal(&iTelexSocketWiederholungVerzoegerung) > 2 * KurzTimerFreq) // 2 Sekunden verzögerung
 		{
-		ITelexSocketHandle = Connect2IP(ITelexSocketIP, ITelexSocketPort); 
+		iTelexSocketHandle = Connect2IP(iTelexSocketIP, iTelexSocketPort); 
 	 
-		if (ITelexSocketHandle == -1)
+		if (iTelexSocketHandle == -1)
 			{ 
 			// Verbindung konnte nicht aufgebaut werden
 			if (ProtokollLevel >= 1)
-				ProtokollierenTxp_P(PSTR("! Wieder-Oeffnung des Socket VERSAGT.\r\n"));
+				ProtokollierenITelex_P(PSTR("! Wieder-Oeffnung des Socket VERSAGT.\r\n"));
 
-			ITelexSocketHandle = NO_SOCKET_USED;
-			StartKurzTimer(&ITelexSocketWiederholungVerzoegerung);
+			iTelexSocketHandle = NO_SOCKET_USED;
+			StartKurzTimer(&iTelexSocketWiederholungVerzoegerung);
 			return;
 			}
 
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("Wieder-Oeffnung des Socket erfolgreich.\r\n"));
+			ProtokollierenITelex_P(PSTR("Wieder-Oeffnung des Socket erfolgreich.\r\n"));
 
-		StartKurzTimer(&ITelexSocketAbbauVerzoegerung);
+		StartKurzTimer(&iTelexSocketAbbauVerzoegerung);
 			
 		#ifdef LEDROT_SOCKETERROR
 			LED_off(ROT);
@@ -1690,10 +1690,10 @@ static void SocketBearbeiten()
 		
 	// Daten ggf. ins Netz senden
 	// --------------------------------------------------
-	if (ITelexSocketHandle != NO_SOCKET_USED 
+	if (iTelexSocketHandle != NO_SOCKET_USED 
 		&& SocketOutBufUsed > 0 
 		&& (SocketSendeFehlerZaehler == 0 
-			|| KurzTimerVal(&ITelexSocketWiederholungVerzoegerung) > KurzTimerFreq * 15/10)) 
+			|| KurzTimerVal(&iTelexSocketWiederholungVerzoegerung) > KurzTimerFreq * 15/10)) 
 			// Nach Sendefehlern höchstens alle 1,5 Sekunden senden.
 		{
 		uint16_t SendSize;
@@ -1702,11 +1702,11 @@ static void SocketBearbeiten()
 		if (SendSize > MAX_TCP_Datalenght)
 			SendSize = MAX_TCP_Datalenght;
 			
-		int Res = PutSocketData_RPE(ITelexSocketHandle, SendSize, SocketOutBuf, RAM);
+		int Res = PutSocketData_RPE(iTelexSocketHandle, SendSize, SocketOutBuf, RAM);
 
 		if (ProtokollLevel >= 3)
 			{
-			ProtokollierenTxp();
+			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Socket Sendung: (%u)" ), SendSize);
 			ProtokollierenPuffer(SocketOutBuf, SendSize);
 			ProtokollierenInt_P(PSTR(" --> Res %d" ), Res);
@@ -1722,16 +1722,16 @@ static void SocketBearbeiten()
 			if (SocketSendeFehlerZaehler >= 10)
 				{
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
+					ProtokollierenITelex_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
 				Diagnoseausgabe_P(ISTR(MehrfacheSendeFehler, LokaleSprache), 2);
 	
-				CloseTCPSocket(ITelexSocketHandle);
-				ITelexSocketHandle = NO_SOCKET_USED;
+				CloseTCPSocket(iTelexSocketHandle);
+				iTelexSocketHandle = NO_SOCKET_USED;
 				}
 			#ifdef LEDROT_SOCKETERROR
 				LED_on(ROT);
 			#endif //def LEDROT_SOCKETERROR
-			StartKurzTimer(&ITelexSocketWiederholungVerzoegerung);
+			StartKurzTimer(&iTelexSocketWiederholungVerzoegerung);
 			}
 			
 		else if (Res < SocketOutBufUsed)
@@ -1742,7 +1742,7 @@ static void SocketBearbeiten()
 			#ifdef LEDROT_SOCKETERROR
 				LED_on(ROT);
 			#endif //def LEDROT_SOCKETERROR
-			StartKurzTimer(&ITelexSocketAbbauVerzoegerung);
+			StartKurzTimer(&iTelexSocketAbbauVerzoegerung);
 			}
 			
 		else // Puffer erfolgreich vollständig gesendet.
@@ -1752,27 +1752,27 @@ static void SocketBearbeiten()
 			#ifdef LEDROT_SOCKETERROR
 				LED_off(ROT);
 			#endif //def LEDROT_SOCKETERROR
-			StartKurzTimer(&ITelexSocketAbbauVerzoegerung);
+			StartKurzTimer(&iTelexSocketAbbauVerzoegerung);
 			}
 			
 		} // if es gibt was zu senden
 
 	// Bei Ascii oder Mail den Timeout auf 'deaktivieren'
-	if (ModusTwiVerbunden() && (ITelexSocketProtokoll == Ascii || ITelexSocketProtokoll == POP3 || ITelexSocketProtokoll == SMTP))
-		TCP_sockettable[ITelexSocketHandle].Timeoutcounter = 30; 
+	if (ModusTwiVerbunden() && (iTelexSocketProtokoll == Ascii || iTelexSocketProtokoll == POP3 || iTelexSocketProtokoll == SMTP))
+		TCP_sockettable[iTelexSocketHandle].Timeoutcounter = 30; 
 		
 	// Abbruch wenn zu lange keine Verbindung besteht...
 	// -------------------------------------------------
-	if (ITelexSocketMode != SocketIdle
-		&& ITelexSocketHandle == NO_SOCKET_USED
-		&& KurzTimerVal(&ITelexSocketAbbruchTimer) >= 30 * KurzTimerFreq) // 30 Sekunden.
+	if (iTelexSocketMode != SocketIdle
+		&& iTelexSocketHandle == NO_SOCKET_USED
+		&& KurzTimerVal(&iTelexSocketAbbruchTimer) >= 30 * KurzTimerFreq) // 30 Sekunden.
 		{
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("! ZEITUEBERSCHREITUNG bei Wiederaufnahme der Verbindung\r\n" ));
+			ProtokollierenITelex_P(PSTR("! ZEITUEBERSCHREITUNG bei Wiederaufnahme der Verbindung\r\n" ));
 		Diagnoseausgabe_P(ISTR(ZeitueberschreitungWiederaufnahme, LokaleSprache), 2);
-		ITelexSocketMode = SocketIdle;
-		ITelexSocketAbbauGeplant = false;
-		ITelexSocketIP = 0;
+		iTelexSocketMode = SocketIdle;
+		iTelexSocketAbbauGeplant = false;
+		iTelexSocketIP = 0;
 		SocketOutBufUsed = 0;
 		SocketInBufUsed = 0;
 		#ifdef LEDROT_SOCKETERROR
@@ -1792,12 +1792,12 @@ static void SendeBusKdoSchluss()
 	int16_t Stat = GetStatus(BusVerbPartner);
 	if (Stat < 0)
 		{
-		ProtokollierenTxp();
+		ProtokollierenITelex();
 		ProtokollierenInt_P(PSTR("! interner Verbindungspartner %u NICHT MEHR ERREICHBAR.\r\n"), BusVerbPartner);
 		}
 	else if (BIT_IS_SET(Stat, StatBit_Frei))
 		{
-		ProtokollierenTxp();
+		ProtokollierenITelex();
 		ProtokollierenInt_P(PSTR("! interner Verbindungspartner %u ist SCHON FREI.\r\n"), BusVerbPartner);
 		}
 	else
@@ -1839,7 +1839,7 @@ void InterneVerbindungBeenden(bool Force)
 			if (ProtokollLevel >= 1)
 				{
 				ProtokollRegelblockStart();
-				ProtokollierenTxp();
+				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Wechsel nach Modus Ruhe (von %d)\r\n"), Modus);
 				ProtokollRegelblockEnde();
 				}
@@ -1854,7 +1854,7 @@ void InterneVerbindungBeenden(bool Force)
 		case ModGehendVerbunden:
 			if (ProtokollLevel >= 1)
 				{
-				ProtokollierenTxp();
+				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Wechsel nach Modus PufferDruckUndSchluss (von %d)\r\n"), Modus);
 				}
 			ModusWechsel(ModPufferDruckUndSchluss);
@@ -1866,24 +1866,24 @@ void InterneVerbindungBeenden(bool Force)
 //! Schließt Verbindung nach draußen.
 static void ExterneVerbindungBeenden()
 	{
-	if (ITelexSocketMode != SocketIdle)
+	if (iTelexSocketMode != SocketIdle)
 		{
-		switch (ITelexSocketProtokoll)
+		switch (iTelexSocketProtokoll)
 			{
 			case Ascii:
-				ITelexSocketAbbauGeplant = true;
+				iTelexSocketAbbauGeplant = true;
 				break;
 				
 			case iTelexProt:
-				ITelexSocketAbbauGeplant = true;
+				iTelexSocketAbbauGeplant = true;
 				if (SocketOutBufUsed < SocketOutBufMax - 2)
 					{
-					SocketOutBuf[SocketOutBufUsed++] = TXPC_ENDE;
+					SocketOutBuf[SocketOutBufUsed++] = ITELEXC_ENDE;
 					SocketOutBuf[SocketOutBufUsed++] = 0;
 					}
 				break;
 				
-#ifdef TXP_EMAIL
+#ifdef ITELEX_EMAIL
 			case SMTP:
 				SMTPSchliessen();
 				break;
@@ -1891,7 +1891,7 @@ static void ExterneVerbindungBeenden()
 			case POP3:
 				POP3Abbrechen();
 				break;
-#endif //def TXP_EMAIL
+#endif //def ITELEX_EMAIL
 				
 			}
 		}
@@ -1962,12 +1962,12 @@ static void SendeStopkommando(PGM_P s)
 	uint8_t len = strlen_P(s);
 	if (SocketOutBufUsed + 2 + len < SocketOutBufMax - 10) // - 10 = Reserve für wichtige Daten
 		{
-		SocketOutBuf[SocketOutBufUsed++] = TXPC_STOP;
+		SocketOutBuf[SocketOutBufUsed++] = ITELEXC_STOP;
 		SocketOutBuf[SocketOutBufUsed++] = len;
 		strcpy_P(SocketOutBuf + SocketOutBufUsed, s);
 		SocketOutBufUsed += len;
 		}
-	ITelexSocketAbbauGeplant = true;
+	iTelexSocketAbbauGeplant = true;
 	}
 	
 
@@ -2012,12 +2012,12 @@ static uint8_t FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 		}
 
 	// hier darf man nur bei Erfolg ankommen.
-	SocketOutBuf[SocketOutBufUsed++] = TXPC_QUITT;
+	SocketOutBuf[SocketOutBufUsed++] = ITELEXC_QUITT;
 	SocketOutBuf[SocketOutBufUsed++] = 2;
 	SocketOutBuf[SocketOutBufUsed++] = 0;
 	SocketOutBuf[SocketOutBufUsed++] = FKKennung;
 	
-	ProtokollierenTxp();
+	ProtokollierenITelex();
 	ProtokollierenInt_P(PSTR("Fernkonfig Kenn=%d ok\r\n"), FKKennung);
 	
 	return 0;
@@ -2026,7 +2026,7 @@ static uint8_t FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 
 //! Interpretiert empfangene Daten vom Socket und schiebt diese in den 
 //! EmpfPuffer.
-static void TxpOderAsciiEmpfangVerarbeiten()
+static void ITelexOderAsciiEmpfangVerarbeiten()
 	{
 	// Daten des Socket-Empfangspuffer interpretieren
 	// ----------------------------------------------
@@ -2045,7 +2045,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 			if (c == '\r' || c == '\n' || (c >= ' ' && c <= '~'))
 				{ // ein ASCII-Zeichen
 				// ID#246 ID#344 *****************************************************
-				ITelexSocketProtokoll = Ascii;
+				iTelexSocketProtokoll = Ascii;
 				int alen = strlen(AsciiDruckPuffer);
 				if (alen < AsciiDruckPufferMax-2)
 					{
@@ -2080,18 +2080,18 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 					// sonst auf weitere Zeichen warten.
 					}
 
-				ITelexSocketAbbauGeplant = false;
+				iTelexSocketAbbauGeplant = false;
 
 				} // ASCII-Zeichen oder WR oder ZL
 				
-			else if (c == TXPC_NULL)
+			else if (c == ITELEXC_NULL)
 				{ // ignorieren
 				i++;
 				}
 				
-			else if (c == TXPC_DURCHWAHL)
+			else if (c == ITELEXC_DURCHWAHL)
 				{ // ID#312 **************************************************************
-				ITelexSocketProtokoll = iTelexProt;
+				iTelexSocketProtokoll = iTelexProt;
 				if (Modus == ModKommendVerbVorstufe)
 					{
 					Durchwahl = SocketInBuf[i+2];
@@ -2105,19 +2105,19 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 						}
 					}
 				i += 2 + (uint8_t) SocketInBuf[i+1];
-				ITelexSocketAbbauGeplant = false;
+				iTelexSocketAbbauGeplant = false;
 				}
 				
-			else if (c == TXPC_BAUDOT_DATA)
+			else if (c == ITELEXC_BAUDOT_DATA)
 				{ // ID#243 ID#343 ***********************************************************
-				ITelexSocketProtokoll = iTelexProt;
+				iTelexSocketProtokoll = iTelexProt;
 				uint8_t len = SocketInBuf[i+1];
 				
 				if (i + 2 + len <= SocketInBufUsed && PufferAnzahl(&SendePuffer) + len < MaxPuffer)
 					{ // Baudot-Code-Block ist vollständig UND noch entsprechend Platz im Sendepuffer
 					if (ProtokollLevel == 2) // Datenmengen protokollieren
 						{
-						ProtokollierenTxp();
+						ProtokollierenITelex();
 						ProtokollierenInt_P(PSTR("EmpfB %16d" ), PufferAnzahl(&SendePuffer));
 						ProtokollierenInt_P(PSTR("%4d"), len);
 						ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenEmpfangen) + len);
@@ -2136,7 +2136,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 					if (SendenBeschleunigen && PufferAnzahl(&SendePuffer) < MaxPuffer / 2)
 						{
 						if (ProtokollLevel >= 2)
-							ProtokollierenTxp_P(PSTR("SendenBeschleunigen AUS\r\n"));
+							ProtokollierenITelex_P(PSTR("SendenBeschleunigen AUS\r\n"));
 							
 						SendenBeschleunigen = false;
 						}
@@ -2148,14 +2148,14 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				else // Baudot-Code-Block ist noch nicht vollständig UND noch entsprechend Platz im Sendepuffer
 					{
 					if (!SendenBeschleunigen && (ProtokollLevel >= 2))
-						ProtokollierenTxp_P(PSTR("SendenBeschleunigen EIN\r\n"));
+						ProtokollierenITelex_P(PSTR("SendenBeschleunigen EIN\r\n"));
 						
 					SendenBeschleunigen = true;
 					break; // Daten können momentan nicht verarbeitet werden.
 					}
-				} // else if (c == TXPC_BAUDOT_DATA)
+				} // else if (c == ITELEXC_BAUDOT_DATA)
 
-			else if (c == TXPC_STOP || c == TXPC_ENDE)
+			else if (c == ITELEXC_STOP || c == ITELEXC_ENDE)
 				{
 				uint8_t len = SocketInBuf[i+1];
 				int alen = strlen(AsciiDruckPuffer);
@@ -2168,17 +2168,17 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				i += 2 + len;
 
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("Abbaubefehl von Gegenstelle\r\n"));
+					ProtokollierenITelex_P(PSTR("Abbaubefehl von Gegenstelle\r\n"));
 
 				InterneVerbindungBeenden(true);
 				
-				ITelexSocketAbbauGeplant = true;
+				iTelexSocketAbbauGeplant = true;
 				
-				} // c == TXPC_STOP oder TXPC_ENDE
+				} // c == ITELEXC_STOP oder ITELEXC_ENDE
 				
-			else if (c == TXPC_QUITT)
+			else if (c == ITELEXC_QUITT)
 				{ 
-				ITelexSocketProtokoll = iTelexProt;
+				iTelexSocketProtokoll = iTelexProt;
 				uint8_t len = SocketInBuf[i+1];
 				if (Modus == ModKommendVerbVorstufe)
 					{ // ID#312 **************************************************
@@ -2193,11 +2193,11 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				if (len >= 1)
 					SocketAnzahlZeichenQuittiert = (uint8_t) SocketInBuf[i+2];
 				i += 2 + len;
-				} // c == TXPC_QUITT
+				} // c == ITELEXC_QUITT
 				
-			else if (c == TXPC_VERSION)
+			else if (c == ITELEXC_VERSION)
 				{ 
-				ITelexSocketProtokoll = iTelexProt;
+				iTelexSocketProtokoll = iTelexProt;
 				uint8_t len = SocketInBuf[i+1];
 				if (len >= 1)
 					{
@@ -2205,55 +2205,55 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 
 					if (ProtokollLevel >= 2)
 						{
-						ProtokollierenTxp();
+						ProtokollierenITelex();
 						ProtokollierenInt_P(PSTR("Protokollversion-Vorschlag %u empfangen\r\n"), ProtVorschlag);
 						}
 
-					if (ProtVorschlag == ITelexSocketProtVersionVorschlag)
+					if (ProtVorschlag == iTelexSocketProtVersionVorschlag)
 						{ // Vorschlag ist bestätigt...
-						ITelexSocketProtVersion = ProtVorschlag;
+						iTelexSocketProtVersion = ProtVorschlag;
 						}
 					else if (ProtVorschlag > PROTVERSION_AKTUELL)
 						{
-						ITelexSocketProtVersionVorschlag = PROTVERSION_AKTUELL;
+						iTelexSocketProtVersionVorschlag = PROTVERSION_AKTUELL;
 						}
 					// hier ggf. weitere Inkompatibilitäten bearbeiten...
 					else
 						{
-						ITelexSocketProtVersionVorschlag = ProtVorschlag;
+						iTelexSocketProtVersionVorschlag = ProtVorschlag;
 						}
 						
-					if (ITelexSocketProtVersion == 0 && SocketOutBufUsed < SocketOutBufMax - 10) // noch nichts festgelegt, also Gegenvorschlag senden.
+					if (iTelexSocketProtVersion == 0 && SocketOutBufUsed < SocketOutBufMax - 10) // noch nichts festgelegt, also Gegenvorschlag senden.
 						{
-						SocketOutBuf[SocketOutBufUsed++] = TXPC_VERSION;
+						SocketOutBuf[SocketOutBufUsed++] = ITELEXC_VERSION;
 						SocketOutBuf[SocketOutBufUsed++] = 1 + strlen_P(SvnVersion_P) + 1;
-						SocketOutBuf[SocketOutBufUsed++] = ITelexSocketProtVersionVorschlag;
+						SocketOutBuf[SocketOutBufUsed++] = iTelexSocketProtVersionVorschlag;
 						strcpy_P(SocketOutBuf + SocketOutBufUsed, SvnVersion_P);
 						SocketOutBufUsed += strlen_P(SvnVersion_P) + 1;
 						
 						if (ProtokollLevel >= 2)
 							{
-							ProtokollierenTxp();
-							ProtokollierenInt_P(PSTR("Sende Protokollversion-Vorschlag %u\r\n"), ITelexSocketProtVersionVorschlag);
+							ProtokollierenITelex();
+							ProtokollierenInt_P(PSTR("Sende Protokollversion-Vorschlag %u\r\n"), iTelexSocketProtVersionVorschlag);
 							}
 						}
 					} // len >= 1
 					
 				i += 2 + len;
-				} // c == TXPC_VERSION
+				} // c == ITELEXC_VERSION
 
-			else if (c == TXPC_SELBSTANRUF)
+			else if (c == ITELEXC_SELBSTANRUF)
 				{ 
 				uint8_t len = SocketInBuf[i+1];
 				if (len >= 2 && SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
 					{
 					SelbstAnrufEmpfangPruefwert = (SocketInBuf[i+2] << 8) + SocketInBuf[i+3]; // erst high, dann low
 					// Zur Beschleunigung baut ausnahmsweise der Empfänger die Verbindung ab.
-					CloseTCPSocket(ITelexSocketHandle);
-					ITelexSocketHandle = NO_SOCKET_USED;
-					ITelexSocketMode = SocketIdle;
-					ITelexSocketIP = 0;
-					ITelexSocketAbbauGeplant = false;
+					CloseTCPSocket(iTelexSocketHandle);
+					iTelexSocketHandle = NO_SOCKET_USED;
+					iTelexSocketMode = SocketIdle;
+					iTelexSocketIP = 0;
+					iTelexSocketAbbauGeplant = false;
 					SocketOutBufUsed = 0;
 					SocketInBufUsed = 0;
 					ModusWechsel(ModWarteGrundstellung);
@@ -2261,7 +2261,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				i += 2 + len;
 				}
 				
-			else if (c == TXPC_FERNKONFIG)
+			else if (c == ITELEXC_FERNKONFIG)
 				{ 
 				uint8_t len = SocketInBuf[i+1];
 				uint8_t Res = FernKonfigTelegrammBearbeiten(i, len);
@@ -2270,7 +2270,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 				if (Res != 0)
 					{
 					SendeStopkommando(PSTR("fernkonferr"));
-					ProtokollierenTxp();
+					ProtokollierenITelex();
 					ProtokollierenInt_P(PSTR("Fernkonfig !Fehler Code=%d"), Res);
 					ProtokollierenInt_P(PSTR(" Len=%d"), len);
 					ProtokollierenInt_P(PSTR(" Kenn=%02X\r\n"), (len >= 4) ? SocketInBuf[i+4] : 0);
@@ -2282,7 +2282,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 			else 
 				{ // unbekannter Code --> ignorieren EINSCHLIEßLICH Daten
 				// ID#245 ID#313 ID#346 ********************************************************
-				if (ITelexSocketProtokoll == iTelexProt)
+				if (iTelexSocketProtokoll == iTelexProt)
 					i += 2 + (uint8_t) SocketInBuf[i+1];
 				else
 					i++;
@@ -2301,7 +2301,7 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 			
 		if (ProtokollLevel == 2 && AnzAsciiEmpf > 0) // Datenmengen protokollieren
 			{
-			ProtokollierenTxp();
+			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("EmpfA %16d" ), 
 				PufferAnzahl(&SendePuffer) + strlen(AsciiDruckPuffer) + strlen(AsciiHilfPuffer) );
 			ProtokollierenInt_P(PSTR("%4d"), AnzAsciiEmpf);
@@ -2309,19 +2309,19 @@ static void TxpOderAsciiEmpfangVerarbeiten()
 			// Zahlen: unverarbeitete Daten / neue Daten / Daten insgesamt
 			}
 			
-		if (ITelexSocketProtokoll == Ascii && SocketInBufUsed > 0 && SocketInBuf[SocketInBufUsed-1] == '@')
+		if (iTelexSocketProtokoll == Ascii && SocketInBufUsed > 0 && SocketInBuf[SocketInBufUsed-1] == '@')
 			SocketInBuf[SocketInBufUsed-1] = CodeChrWerDa;
 			// am Ende des Empfangs ein @ durch Werda ersetzen.
 			
 		} // if GetBytesInSocketData > 0
-	} // TxpOderAsciiEmpfangVerarbeiten()
+	} // ITelexOderAsciiEmpfangVerarbeiten()
 
 	
 //! Wandelt Daten aus dem SendePuffer um.
 //! Bearbeitet auch Statusänderungen.
-static void TxpDatenVerarbeiten()
+static void ITelexDatenVerarbeiten()
 	{
-	TxpOderAsciiEmpfangVerarbeiten();
+	ITelexOderAsciiEmpfangVerarbeiten();
 	
 	// vom Endgerät empfangene Daten übersetzen
 	// --------------------------------------------------
@@ -2350,13 +2350,13 @@ static void TxpDatenVerarbeiten()
 				
 			if (ProtokollLevel == 2) // Datenmengen
 				{
-				ProtokollierenTxp();
+				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("SendB %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
 				ProtokollierenInt_P(PSTR("%4d"), len);
 				ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet) + len);
 				}
 				
-			SocketOutBuf[SocketOutBufUsed++] = TXPC_BAUDOT_DATA;
+			SocketOutBuf[SocketOutBufUsed++] = ITELEXC_BAUDOT_DATA;
 			SocketOutBuf[SocketOutBufUsed++] = len;
 			SocketAnzahlZeichenGesendet += len;
 			while (len > 0)
@@ -2372,28 +2372,28 @@ static void TxpDatenVerarbeiten()
 	// --------------------------------------------------
 	if ((Modus == ModKommendVerbunden || Modus == ModGehendVerbunden)
 		&& (SocketSendeQuittung 
-			|| KurzTimerVal(&ITelexSocketLebenszeichenTimer) > KurzTimerFreq * 35/10)
-		&& !ITelexSocketAbbauGeplant
+			|| KurzTimerVal(&iTelexSocketLebenszeichenTimer) > KurzTimerFreq * 35/10)
+		&& !iTelexSocketAbbauGeplant
 		&& SocketSendeFehlerZaehler == 0
 		&& SocketOutBufUsed < SocketOutBufMax - 4 - 10 // - 10 = Reserve für wichtige Daten
-		&& ITelexSocketHandle != NO_SOCKET_USED)
+		&& iTelexSocketHandle != NO_SOCKET_USED)
 		{
-		SocketOutBuf[SocketOutBufUsed++] = TXPC_QUITT;
+		SocketOutBuf[SocketOutBufUsed++] = ITELEXC_QUITT;
 		SocketOutBuf[SocketOutBufUsed++] = 1;
 		SocketOutBuf[SocketOutBufUsed++] = 
 			(uint8_t) (low(SocketAnzahlZeichenEmpfangen) - PufferAnzahl(&SendePuffer));
 		SocketSendeQuittung = false;
-		StartKurzTimer(&ITelexSocketLebenszeichenTimer);
+		StartKurzTimer(&iTelexSocketLebenszeichenTimer);
 		}
 
-	} // TxpDatenVerarbeiten()
+	} // ITelexDatenVerarbeiten()
 	
 
 //! Wandelt Daten aus dem SendePuffer um.
 //! Bearbeitet auch Statusänderungen.
 static void AsciiDatenVerarbeiten()
 	{
-	TxpOderAsciiEmpfangVerarbeiten();
+	ITelexOderAsciiEmpfangVerarbeiten();
 
 	// vom Endgerät empfangene Daten übersetzen
 	// --------------------------------------------------
@@ -2423,13 +2423,13 @@ static void AsciiDatenVerarbeiten()
 
 		if (ProtokollLevel == 2 && ProtAnz > 0) // Datenmengen
 			{
-			ProtokollierenTxp();
+			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("SendA %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
 			ProtokollierenInt_P(PSTR("%4d"), ProtAnz);
 			ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenGesendet)); // wurde schon erhöht
 			}
 			
-		StartKurzTimer(&ITelexSocketLebenszeichenTimer);
+		StartKurzTimer(&iTelexSocketLebenszeichenTimer);
 		}
 
 	} // AsciiDatenVerarbeiten()
@@ -2448,7 +2448,7 @@ static void ZeichenInHtmlSendeText(char c)
 	HtmlSendeText[i+1] = '\0';
 	}
 	
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 
 
 //! Prüft, ob ein Socket benutzbar ist und nicht wegen Fehlern gesperrt ist
@@ -2469,7 +2469,7 @@ bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund)
 			{
 			if (ProtokollLevelTlnServ >= 3)
 				{
-				ProtokollierenTxp_P(PSTR("Teilnehmer-Server "));
+				ProtokollierenITelex_P(PSTR("Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
 				Protokollieren_P(PSTR(" wegen Fehlern noch gesperrt! (Oeffnung fuer "));
 				Protokollieren_P(Grund);
@@ -2515,7 +2515,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 			{
 			if (ProtokollLevelTlnServ >= 2)
 				{
-				ProtokollierenTxp_P(PSTR("Verbindung an Teilnehmer-Server "));
+				ProtokollierenITelex_P(PSTR("Verbindung an Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
 				Protokollieren_P(PSTR(" hergestellt fuer "));
 				Protokollieren_P(Grund);
@@ -2534,7 +2534,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 			
 		if (ProtokollLevelTlnServ >= 1)
 			{
-			ProtokollierenTxp_P(PSTR("! Verbindungsversuch an Teilnehmer-Server "));
+			ProtokollierenITelex_P(PSTR("! Verbindungsversuch an Teilnehmer-Server "));
 			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
 			Protokollieren_P(PSTR(" GESCHEITERT (Oeffnung fuer "));
 			Protokollieren_P(Grund);
@@ -2546,7 +2546,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 		}
 	else
 		{
-		ProtokollierenTxp_P(PSTR("! Teilnehmer-Server "));
+		ProtokollierenITelex_P(PSTR("! Teilnehmer-Server "));
 		Protokollieren(TeilnehmerServerAdresse[ServerI]); 
 		Protokollieren_P(PSTR(" IP nicht bekannt (Oeffnung fuer "));
 		Protokollieren_P(Grund);
@@ -2606,7 +2606,7 @@ bool TeilnehmerServerSocketOeffnen(PGM_P Grund)
 	} // TeilnehmerServerSocketOeffnen()
 
 
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 
 //! Versucht den Verbindungsaufbau zu einem vorhandenen Eintrag im eigenen Teilnehmerverzeichnis
 // ---------------------------------------------------------------------------------------------
@@ -2623,12 +2623,12 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		case AsciiIP:
 			if (ProtokollLevel >= 1)
 				{
-				ProtokollierenTxp_P(PSTR("Verbindungsaufbau zu IP "));
+				ProtokollierenITelex_P(PSTR("Verbindungsaufbau zu IP "));
 				ProtokollierenIPAdr(td->IPAdr);
 				ProtokollierenInt_P(PSTR(" Port %u\r\n"), td->Port);
 				}
-			ITelexSocketIP = td->IPAdr;
-			ITelexSocketPort = td->Port;
+			iTelexSocketIP = td->IPAdr;
+			iTelexSocketPort = td->Port;
 			// Mode wird nach erfolgreichem Öffnen gesetzt.
 			break;
 			
@@ -2640,21 +2640,21 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				{
 				if (ProtokollLevel >= 1)
 					{
-					ProtokollierenTxp_P(PSTR("Verbindungsaufbau zu Url "));
+					ProtokollierenITelex_P(PSTR("Verbindungsaufbau zu Hostname "));
 					Protokollieren(td->Adresse);
 					Protokollieren_P(PSTR(" = "));
 					ProtokollierenIPAdr(td->IPAdr);
 					ProtokollierenInt_P(PSTR(" Port %u\r\n"), td->Port);
 					}									
-				ITelexSocketIP = td->IPAdr;
-				ITelexSocketPort = td->Port;
+				iTelexSocketIP = td->IPAdr;
+				iTelexSocketPort = td->Port;
 				// Mode wird nach erfolgreichem Öffnen gesetzt.
 				}
 			else
 				{
 				if (ProtokollLevel >= 1)
 					{
-					ProtokollierenTxp_P(PSTR("! IP zu Url "));
+					ProtokollierenITelex_P(PSTR("! IP zu Hostname "));
 					Protokollieren(td->Adresse);
 					Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 					}
@@ -2663,11 +2663,11 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			break;
 			
 		case eMail:
-#ifdef TXP_EMAIL
+#ifdef ITELEX_EMAIL
 			if (SMTPOeffnen(td->Adresse))
 				{
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("Client-Socket SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
+					ProtokollierenITelex_P(PSTR("Client-Socket SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
 					
 				BusSenden(BusQuittEin);
 				ModusWechsel(ModGehendVerbunden);
@@ -2679,43 +2679,43 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				return 2; // schlecht
 				}
 #else
-			ProtokollierenTxp_P(PSTR("! eMail nicht unterstuetzt\r\n" ));
+			ProtokollierenITelex_P(PSTR("! eMail nicht unterstuetzt\r\n" ));
 			Diagnoseausgabe_P(ISTR(MailNichtInDieserVersion), 3);
 			return 2;
-#endif //ndef TXP_EMAIL		
+#endif //ndef ITELEX_EMAIL		
 			
 		default:
 			if (ProtokollLevel >= 1)
-				ProtokollierenTxp_P(PSTR("! Teilnehmer ist GELOESCHT\r\n" ));
+				ProtokollierenITelex_P(PSTR("! Teilnehmer ist GELOESCHT\r\n" ));
 				
 			return 2;
 			
 		}
 
 	// und hier wird geöffet...
-	ITelexSocketHandle = Connect2IP(ITelexSocketIP, ITelexSocketPort); 
+	iTelexSocketHandle = Connect2IP(iTelexSocketIP, iTelexSocketPort); 
 	 
-	if (ITelexSocketHandle == -1)
+	if (iTelexSocketHandle == -1)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("! Socket konnte nicht erstmalig geoeffnet werden\r\n"));
+			ProtokollierenITelex_P(PSTR("! Socket konnte nicht erstmalig geoeffnet werden\r\n"));
 			
 		Diagnoseausgabe_P(ISTR(TeilnehmerNichtErreichbar, LokaleSprache), 2);
-		ITelexSocketHandle = NO_SOCKET_USED;
-		ITelexSocketMode = SocketIdle;
+		iTelexSocketHandle = NO_SOCKET_USED;
+		iTelexSocketMode = SocketIdle;
 		return 1;
 		}
 
 	SocketBufInit();
 	
-	ITelexSocketMode = SocketOriginate;
-	ITelexSocketAbbauGeplant = false;
-	ITelexSocketProtVersion = 0;
-	ITelexSocketProtVersionVorschlag = PROTVERSION_AKTUELL;
+	iTelexSocketMode = SocketOriginate;
+	iTelexSocketAbbauGeplant = false;
+	iTelexSocketProtVersion = 0;
+	iTelexSocketProtVersionVorschlag = PROTVERSION_AKTUELL;
 	
-	StartKurzTimer(&ITelexSocketAbbruchTimer);
-	StartKurzTimer(&ITelexSocketAbbauVerzoegerung);
+	StartKurzTimer(&iTelexSocketAbbruchTimer);
+	StartKurzTimer(&iTelexSocketAbbauVerzoegerung);
 		
 	Diagnoseausgabe_P(NULL, 2); 
 		// ggf Meldung "nicht erreichbar" wieder löschen.
@@ -2727,29 +2727,29 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		{ // ID#226 *********************************************
 		BusSenden(BusQuittEin);
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("Client-Socket Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
+			ProtokollierenITelex_P(PSTR("Client-Socket Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
 			
 		ModusWechsel(ModGehendVerbunden);
-		ITelexSocketProtokoll = Ascii;
+		iTelexSocketProtokoll = Ascii;
 		return 0;
 		}
 	else // iTelexHostname oder iTelexIP
 		{ // ID#222 ********************************************
 		if (ProtokollLevel >= 1)
 			{
-			ProtokollierenTxp();
-			ProtokollierenInt_P(PSTR("Client-Socket Txp erfolgreich geoeffnet -> sende Durchwahl %u"), td->Durchwahl);
-			ProtokollierenInt_P(PSTR(" und Version %u\r\n"), ITelexSocketProtVersionVorschlag);
+			ProtokollierenITelex();
+			ProtokollierenInt_P(PSTR("Client-Socket iTelex erfolgreich geoeffnet -> sende Durchwahl %u"), td->Durchwahl);
+			ProtokollierenInt_P(PSTR(" und Version %u\r\n"), iTelexSocketProtVersionVorschlag);
 			}
 
-		ITelexSocketProtokoll = iTelexProt;
+		iTelexSocketProtokoll = iTelexProt;
 		
-		SocketOutBuf[SocketOutBufUsed++] = TXPC_VERSION;
+		SocketOutBuf[SocketOutBufUsed++] = ITELEXC_VERSION;
 		SocketOutBuf[SocketOutBufUsed++] = 1 + strlen_P(SvnVersion_P) + 1;
-		SocketOutBuf[SocketOutBufUsed++] = ITelexSocketProtVersionVorschlag;
+		SocketOutBuf[SocketOutBufUsed++] = iTelexSocketProtVersionVorschlag;
 		strcpy_P(SocketOutBuf + SocketOutBufUsed, SvnVersion_P);
 		SocketOutBufUsed += strlen_P(SvnVersion_P) + 1;
-		SocketOutBuf[SocketOutBufUsed++] = TXPC_DURCHWAHL;
+		SocketOutBuf[SocketOutBufUsed++] = ITELEXC_DURCHWAHL;
 		SocketOutBuf[SocketOutBufUsed++] = 1;
 		SocketOutBuf[SocketOutBufUsed++] = td->Durchwahl;
 		
@@ -2765,7 +2765,7 @@ static void RufnummerBeiTlnServerAbfragen()
 	TlnServerAbfrageWiederholungssperre = true;
 	
 	if (ProtokollLevel >= 2)
-		ProtokollierenTxp_P(PSTR("Abfrage bei Teilnehmer-Servern\r\n" ));
+		ProtokollierenITelex_P(PSTR("Abfrage bei Teilnehmer-Servern\r\n" ));
 
 	if (TeilnehmerServerSocketOeffnen(PSTR("Rufnummer-Abfrage")))
 		{ // Verbindung hergestellt.
@@ -2878,10 +2878,10 @@ void AsciiDruckPufferVerarbeiten()
 
 		if (ProtokollLevel >= 3)
 			{
-			ProtokollierenTxp_P(PSTR("Ascii-Verarbeitung: " ));
+			ProtokollierenITelex_P(PSTR("Ascii-Verarbeitung: " ));
 			ProtokollierenPuffer(AsciiDruckPuffer, dpi);
 			ProtokollierenInt_P(PSTR(" (+%u)\r\n" ), strlen(AsciiDruckPuffer) - dpi);
-			ProtokollierenTxp_P(PSTR("      gewandelt in: " ));
+			ProtokollierenITelex_P(PSTR("      gewandelt in: " ));
 			ProtokollierenPuffer(AsciiHilfPuffer, hpi);
 			Protokollieren_P(PSTR("\r\n" ));
 			}
@@ -3003,10 +3003,11 @@ static void DatumUhrzeitDrucken()
 				PufferSpeich(&EmpfPuffer, Code);
 			}
 		}
+		
 	} // DatumUhrzeitDrucken()
 	
 	
-//! Der TelexPhone-client an sich.
+//! Der iTelex-client an sich.
 //------------------------------------------------------------------------------------------------------------
 //! Diese Funktion wird zyklisch aufgerufen und hat folgende Aufgaben:
 //! \par - Steuerbefehle vom TWI-Bus annehmen und interpretieren.
@@ -3019,13 +3020,13 @@ static void DatumUhrzeitDrucken()
 //! \param 	NONE
 //! \return	NONE
 
-void txp_thread()
+void itelex_thread()
 	{
 	uint8_t Code;
 
-	TxpThreadCount++;
+	ITelexThreadCount++;
 
-	StartKurzTimer(&TxpThreadCheckTimer);
+	StartKurzTimer(&ITelexThreadCheckTimer);
 	
 #if defined(LEDROT_ITELEXTHREADBLOCK)
 	LED_off(ROT); 
@@ -3042,7 +3043,7 @@ void txp_thread()
 			case 1 ... BusKdoVerbAufnahme:
 				if (ProtokollLevel >= 1)
 					{
-					ProtokollierenTxp();
+					ProtokollierenITelex();
 					ProtokollierenInt_P(PSTR("TWI Reservierung intern / gehend von %u\r\n" ), Code);
 					}
 				if (Modus == ModRuhe)
@@ -3058,7 +3059,7 @@ void txp_thread()
 				
 			case BusKdoEin:
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("TWI Einschaltkommando intern / gehend\r\n" ));
+					ProtokollierenITelex_P(PSTR("TWI Einschaltkommando intern / gehend\r\n" ));
 					
 				if (Modus == ModGehendReserv)
 					{ // ID#211 ********************************************
@@ -3073,7 +3074,7 @@ void txp_thread()
 				if (Modus == ModKommendWarteEinQuitt)
 					{ // ID#331 ********************************************
 					if (ProtokollLevel >= 1)
-						ProtokollierenTxp_P(PSTR("TWI Einschaltquittung intern / kommend\r\n" ));
+						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung intern / kommend\r\n" ));
 					ModusWechsel(ModKommendVerbunden);
 					SocketSendeQuittung = true;
 					DatumUhrzeitDrucken();
@@ -3082,14 +3083,14 @@ void txp_thread()
 				else if (Modus == ModHtmlChatWarteEinQuitt)
 					{ 
 					if (ProtokollLevel >= 1)
-						ProtokollierenTxp_P(PSTR("TWI Einschaltquittung nach Beginn HTML-Chat\r\n" ));
+						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung nach Beginn HTML-Chat\r\n" ));
 					ModusWechsel(ModHtmlChatVerbunden);
 					}
 
 				else if (Modus == ModMeldungsdruckWarteEinQuitt)
 					{ 
 					if (ProtokollLevel >= 1)
-						ProtokollierenTxp_P(PSTR("TWI Einschaltquittung nach Meldungsdruck\r\n" ));
+						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung nach Meldungsdruck\r\n" ));
 					ModusWechsel(ModPufferDruckUndSchluss);
 					}
 				
@@ -3101,7 +3102,7 @@ void txp_thread()
 			case BusKdoWahlFreigabe:
 				//! \todo Bei Relaisbetrieb... dies ist eine Leitungsschnittstelle, die kann nicht wählen.
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("TWI Wahlaufforderung intern / kommend\r\n" ));
+					ProtokollierenITelex_P(PSTR("TWI Wahlaufforderung intern / kommend\r\n" ));
 					
 				FalschCodeEmpfangen(BusQuittEin);
 				break;
@@ -3109,10 +3110,10 @@ void txp_thread()
 			case BusKdoWahlziffer0 ... BusKdoWahlziffer9:
 				if (ProtokollLevel >= 2)
 					{
-					ProtokollierenTxp();
+					ProtokollierenITelex();
 					ProtokollierenInt_P(PSTR("TWI Wahlziffer %u intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
 					}
-				if (Modus == ModGehendWaehlen && ITelexSocketMode == SocketIdle)
+				if (Modus == ModGehendWaehlen && iTelexSocketMode == SocketIdle)
 					{
 					// ID#221 ********************************************
 					Wahlnummer = 10 * Wahlnummer + (Code - BusKdoWahlziffer0);
@@ -3126,7 +3127,7 @@ void txp_thread()
 						
 						if (ProtokollLevel >= 1)
 							{
-							ProtokollierenTxp();
+							ProtokollierenITelex();
 							ProtokollierenInt_P(PSTR("Teilnehmer %lu im eigenen Telefonbuch gefunden.\r\n"), GewaehlterTln.Nummer);
 							}
 		
@@ -3164,12 +3165,12 @@ void txp_thread()
 			case BusQuittSchluss:
 
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("TWI Ausschaltung quittiert\r\n" ));
+					ProtokollierenITelex_P(PSTR("TWI Ausschaltung quittiert\r\n" ));
 					
 				if (Modus != ModWarteSchlussQuitt)
 					{
 					if (ProtokollLevel >= 1)
-						ProtokollierenTxp_P(PSTR("! Schlussquittung ohne Aufforderung\r\n"));
+						ProtokollierenITelex_P(PSTR("! Schlussquittung ohne Aufforderung\r\n"));
 						
 					FalschCodeEmpfangen(Code);
 					}
@@ -3186,7 +3187,7 @@ void txp_thread()
 			case BusKdoSchluss:
 
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("TWI Ausschaltung intern\r\n"));
+					ProtokollierenITelex_P(PSTR("TWI Ausschaltung intern\r\n"));
 					
 				// ID#212 ********************************************
 				// ID#224 ********************************************
@@ -3216,17 +3217,17 @@ void txp_thread()
 
 	if (ModusTwiVerbunden())
 		{
-		if (TwiWatchdogCount > 4 * TxpTimerFreq) // nach 4 Sekunden ohne TWI-Kommunikation
+		if (TwiWatchdogCount > 4 * iTelexTimerFreq) // nach 4 Sekunden ohne TWI-Kommunikation
 			{
 			if (ProtokollLevel >= 1)	
-				ProtokollierenTxp_P(PSTR("! TWI-Timeout -> Abschaltung\r\n"));
+				ProtokollierenITelex_P(PSTR("! TWI-Timeout -> Abschaltung\r\n"));
 			Diagnoseausgabe_P(ISTR(TWITimeout, LokaleSprache), 1);
 			
 			InterneVerbindungBeenden(true);
-			ITelexSocketAbbauGeplant = true;
+			iTelexSocketAbbauGeplant = true;
 			if (SocketOutBufUsed < SocketOutBufMax - 2)
 				{
-				SocketOutBuf[SocketOutBufUsed++] = TXPC_ENDE;
+				SocketOutBuf[SocketOutBufUsed++] = ITELEXC_ENDE;
 				SocketOutBuf[SocketOutBufUsed++] = 0;
 				}
 			}
@@ -3240,22 +3241,22 @@ void txp_thread()
 	
 	// Verbindungsabbau bearbeiten
 	// ---------------------------
-	if (ITelexSocketMode == SocketIdle)
+	if (iTelexSocketMode == SocketIdle)
 		{
 		InterneVerbindungBeenden(false);
-		} // if (ITelexSocketMode == SocketIdle)
+		} // if (iTelexSocketMode == SocketIdle)
 	
-	switch (ITelexSocketProtokoll)
+	switch (iTelexSocketProtokoll)
 		{
 		case Ascii:
 			AsciiDatenVerarbeiten();
 			break;
 			
 		case iTelexProt:
-			TxpDatenVerarbeiten();
+			ITelexDatenVerarbeiten();
 			break;
 			
-#ifdef TXP_EMAIL
+#ifdef ITELEX_EMAIL
 		case POP3:
 			POP3DatenVerarbeiten();
 			break;
@@ -3264,11 +3265,11 @@ void txp_thread()
 			SMTPDatenVerarbeiten();
 			break;
 			
-#endif //def TXP_EMAIL
+#endif //def ITELEX_EMAIL
 		
 		default:
-			ProtokollierenTxp_P(PSTR("! ILLEGALES Protokoll\r\n"));
-			ITelexSocketProtokoll = Ascii;
+			ProtokollierenITelex_P(PSTR("! ILLEGALES Protokoll\r\n"));
+			iTelexSocketProtokoll = Ascii;
 			break;
 		}
 			
@@ -3277,7 +3278,7 @@ void txp_thread()
 		{ // es wurden Daten empfangen, also schnellstens Endgerät anschmeißen
 		// ID#227 Teil 2 *******************************************************
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("Angerufener hat geantwortet -> Einschaltung intern\r\n" ));
+			ProtokollierenITelex_P(PSTR("Angerufener hat geantwortet -> Einschaltung intern\r\n" ));
 			
 		BusSenden(BusQuittEin);
 		ModusWechsel(ModGehendVerbunden);
@@ -3291,7 +3292,7 @@ void txp_thread()
 			ModusWechsel(ModKommendWarteEinQuitt);
 			if (ProtokollLevel >= 1)
 				{
-				ProtokollierenTxp();
+				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Anwahl intern %u "), Durchwahl);
 				ProtokollierenInt_P(PSTR("verbunden mit %u\r\n"), BusVerbPartner >> 1);
 				}
@@ -3300,7 +3301,7 @@ void txp_thread()
 			{ // ID#322 ********************************************
 			if (ProtokollLevel >= 1)
 				{
-				ProtokollierenTxp();
+				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("! Anwahl intern an %u VERSAGT\r\n"), Durchwahl);
 				}
 				
@@ -3330,7 +3331,7 @@ void txp_thread()
 		{ // 3 Sekunden keine Schlussquittung empfangen
 		// ID#412 ****************************************************************
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("! Timeout beim Warten auf die Schlussquittung\r\n" ));
+			ProtokollierenITelex_P(PSTR("! Timeout beim Warten auf die Schlussquittung\r\n" ));
 			
 		ModusWechsel(ModWarteGrundstellung);
 		}
@@ -3339,7 +3340,7 @@ void txp_thread()
 		{ // 3 Sekunden keine Einschalt-Quittung empfangen
 		// ID#332 ***************************************************************
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("! Timeout beim Warten auf die Einschaltquittung\r\n" ));
+			ProtokollierenITelex_P(PSTR("! Timeout beim Warten auf die Einschaltquittung\r\n" ));
 			
 		InterneVerbindungBeenden(true);
 		SendeStopkommando(PSTR("err\r\n"));
@@ -3348,7 +3349,7 @@ void txp_thread()
 	if (ModusTwiVerbunden() && LangTimerVal(&BeideRuhigTimer) > 10 * LangTimerMinuteFaktor)
 		{
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("Abbau wegen 10 Minuten Funkstille!\r\n"));
+			ProtokollierenITelex_P(PSTR("Abbau wegen 10 Minuten Funkstille!\r\n"));
 
 		InterneVerbindungBeenden(true);
 		ExterneVerbindungBeenden();
@@ -3393,7 +3394,7 @@ void txp_thread()
 			case ModPufferDruckUndSchluss:
 				// ID#422 *************************************************************
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("Taste gedruckt --> Reste-Druck abgebrochen\r\n" ));
+					ProtokollierenITelex_P(PSTR("Taste gedruckt --> Reste-Druck abgebrochen\r\n" ));
 					
 				SendeBusKdoSchluss();
 				ModusWechsel(ModWarteSchlussQuitt);
@@ -3437,7 +3438,7 @@ void txp_thread()
 	if (Modus == ModRuhe && AsciiDruckPuffer[0] != '\0')
 		{
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("Meldungsdruck -> "));
+			ProtokollierenITelex_P(PSTR("Meldungsdruck -> "));
 			
 		if (SonstigeAnwahl(AsciiDruckZiel))
 			{
@@ -3462,12 +3463,12 @@ void txp_thread()
 			&& SerUmSendBitNr == SerUmSendWarte
 			&& PufferLeer(&SendePuffer)
 			&& PufferLeer(&EmpfPuffer)
-			&& (ITelexSocketHandle == NO_SOCKET_USED || SocketInBufUsed == 0)
+			&& (iTelexSocketHandle == NO_SOCKET_USED || SocketInBufUsed == 0)
 			&& (KurzTimerVal(&HtmlDruckspiegelAnzeigeTimer) >= 30 * KurzTimerFreq // 30 Sekunden keine Anzeige-Abfrage
 				|| LangTimerVal(&BeideRuhigTimer) >= 5 * LangTimerMinuteFaktor)) // 5 Minuten nichts eingegeben
 			{
 			if (ProtokollLevel >= 1)
-				ProtokollierenTxp_P(PSTR("HTML-Chat-Ruhe --> Ausschaltung intern\r\n" ));
+				ProtokollierenITelex_P(PSTR("HTML-Chat-Ruhe --> Ausschaltung intern\r\n" ));
 				
 			InterneVerbindungBeenden(true);
 			} // Abschaltung nach 30 Sekunden / 180 Sekunden.
@@ -3485,7 +3486,7 @@ void txp_thread()
 		&& PufferLeer(&SendePuffer))
 		{ // ID#421 *************************************************************
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("Reste gedruckt --> Ausschaltung intern\r\n" ));
+			ProtokollierenITelex_P(PSTR("Reste gedruckt --> Ausschaltung intern\r\n" ));
 			
 		SendeBusKdoSchluss();
 		ModusWechsel(ModWarteSchlussQuitt);
@@ -3496,13 +3497,13 @@ void txp_thread()
 	// ==========================================================================
 
 	if (Modus == ModWarteGrundstellung 
-		&& ITelexSocketHandle == NO_SOCKET_USED
-		&& ITelexSocketMode == SocketIdle)
+		&& iTelexSocketHandle == NO_SOCKET_USED
+		&& iTelexSocketMode == SocketIdle)
 		{
 		if (ProtokollLevel >= 1)
 			{
 			ProtokollRegelblockStart();
-			ProtokollierenTxp_P(PSTR("Grundstellung erreicht (Socket geschlossen, TWI geschlossen)\r\n" ));
+			ProtokollierenITelex_P(PSTR("Grundstellung erreicht (Socket geschlossen, TWI geschlossen)\r\n" ));
 			ProtokollRegelblockEnde();
 			}
 
@@ -3514,7 +3515,7 @@ void txp_thread()
 		#endif //def LEDROT_SOCKETERROR
 		}
 		
-#ifdef TXP_EMAIL
+#ifdef ITELEX_EMAIL
 
 	// ==========================================================================
 	// Ab und zu mal prüfen, ob es neue Mails gibt.
@@ -3523,7 +3524,7 @@ void txp_thread()
 	if (SelbstAnrufPhase == SelbstAnrufRuhe || SelbstAnrufPhase == SelbstAnrufSperre)
 		POP3Einleiten();
 	
-#endif //def TXP_EMAIL
+#endif //def ITELEX_EMAIL
 	
 	// ======================================================================
 	// Dynamische IP-Aktualisierung starten
@@ -3535,7 +3536,7 @@ void txp_thread()
 		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
 			&& SelbstAnrufPhase == SelbstAnrufRuhe
 			&& SelbstAnrufSocketHandle == NO_SOCKET_USED
-			&& ITelexSocketHandle == NO_SOCKET_USED
+			&& iTelexSocketHandle == NO_SOCKET_USED
 			&& TeilnehmerServerSocket == NO_SOCKET_USED
 			&& SelbstAnrufPeriode > 0
 			&& KurzTimerVal(&SelbstAnrufTimer) > SelbstAnrufEndzeit)
@@ -3544,7 +3545,7 @@ void txp_thread()
 				SelbstAnrufPhase = SelbstAnrufSperre;
 			else
 				{ // NetzEigeneIP gültig
-				SelbstAnrufSendePruefwert = TxpThreadCount ^ Timer0CallbackCount;
+				SelbstAnrufSendePruefwert = ITelexThreadCount ^ Timer0CallbackCount;
 				if (SelbstAnrufSendePruefwert == 0)
 					SelbstAnrufSendePruefwert = 1;
 				SelbstAnrufEmpfangPruefwert = 0; // als Zeichen, dass noch nichts empfangen wurde.
@@ -3556,7 +3557,7 @@ void txp_thread()
 					{ 
 					// Verbindung konnte nicht aufgebaut werden
 					if (ProtokollLevel >= 1)
-						ProtokollierenTxp_P(PSTR("! Selbst-Anruf oeffnen des Socket VERSAGT.\r\n"));
+						ProtokollierenITelex_P(PSTR("! Selbst-Anruf oeffnen des Socket VERSAGT.\r\n"));
 
 					SelbstAnrufSocketHandle = NO_SOCKET_USED;
 					SelbstAnrufFehlerZaehler++;
@@ -3565,7 +3566,7 @@ void txp_thread()
 				else
 					{ // Öffnen erfolgreich.
 					char Buf[10];
-					Buf[0] = TXPC_SELBSTANRUF;
+					Buf[0] = ITELEXC_SELBSTANRUF;
 					Buf[1] = 2; // 16 Bit-Wert
 					Buf[2] = high(SelbstAnrufSendePruefwert);
 					Buf[3] = low(SelbstAnrufSendePruefwert);
@@ -3575,13 +3576,13 @@ void txp_thread()
 						if (ProtokollLevel < 4)
 							ProtokollRegelblockInit();
 						ProtokollRegelblockStart();
-						ProtokollierenTxp_P(PSTR("Selbst-Anruf Daten gesendet.\r\n"));
+						ProtokollierenITelex_P(PSTR("Selbst-Anruf Daten gesendet.\r\n"));
 						ProtokollRegelblockEnde();
 						}
 					else
 						{
 						if (ProtokollLevel >= 1)
-							ProtokollierenTxp_P(PSTR("! Selbst-Anruf Daten-Sendung VERSAGT.\r\n"));
+							ProtokollierenITelex_P(PSTR("! Selbst-Anruf Daten-Sendung VERSAGT.\r\n"));
 						SelbstAnrufFehlerZaehler++;
 						SelbstAnrufPhase = SelbstAnrufSchliessen;
 						ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
@@ -3602,7 +3603,7 @@ void txp_thread()
 					if (ProtokollLevel >= 3)
 						{
 						ProtokollRegelblockStart();
-						ProtokollierenTxp_P(PSTR("! Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
+						ProtokollierenITelex_P(PSTR("! Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
 						ProtokollRegelblockEnde();
 						}
 					if (ProtokollLevel < 4)
@@ -3614,7 +3615,7 @@ void txp_thread()
 				else
 					{ // Falsches Echo angekommen
 					if (ProtokollLevel >= 1)
-						ProtokollierenTxp_P(PSTR("! Selbst-Anruf FALSCHE Daten empfangen.\r\n"));
+						ProtokollierenITelex_P(PSTR("! Selbst-Anruf FALSCHE Daten empfangen.\r\n"));
 					SelbstAnrufFehlerZaehler++;
 					SelbstAnrufEndzeit = 5 * KurzTimerFreq + Zufallswert(0x37);					
 					} // Falsches Echo angekommen
@@ -3625,7 +3626,7 @@ void txp_thread()
 			else if (Modus != ModRuhe && Modus != ModDeaktiviert && Modus != ModKommendVerbVorstufe)
 				{ // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("! Selbst-Anruf ABGEBROCHEN wegen Modus-Wechsel.\r\n"));
+					ProtokollierenITelex_P(PSTR("! Selbst-Anruf ABGEBROCHEN wegen Modus-Wechsel.\r\n"));
 				StartKurzTimer(&SelbstAnrufTimer);
 				SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
 				SelbstAnrufPhase = SelbstAnrufSchliessen;
@@ -3635,7 +3636,7 @@ void txp_thread()
 			else if (KurzTimerVal(&SelbstAnrufTimer) > 5 * KurzTimerFreq) 
 				{ // Timeout nach 5 Sekunden
 				if (ProtokollLevel >= 1)
-					ProtokollierenTxp_P(PSTR("! Selbst-Anruf KEIN Echo empfangen.\r\n"));
+					ProtokollierenITelex_P(PSTR("! Selbst-Anruf KEIN Echo empfangen.\r\n"));
 				SelbstAnrufFehlerZaehler++;
 				StartKurzTimer(&SelbstAnrufTimer);
 				SelbstAnrufEndzeit = 10 * KurzTimerFreq + Zufallswert(0x37);					
@@ -3711,7 +3712,7 @@ void txp_thread()
 		{
 		//! \todo Prüfen, ob dies ungerechtfertigt passiert...
 		if (ProtokollLevel >= 1)
-			ProtokollierenTxp_P(PSTR("Selbst-Anruf-Socket durch Timeout geschlossen!\r\n" ));
+			ProtokollierenITelex_P(PSTR("Selbst-Anruf-Socket durch Timeout geschlossen!\r\n" ));
 		CloseTCPSocket(SelbstAnrufSocketHandle);
 		SelbstAnrufSocketHandle = NO_SOCKET_USED;
 		SelbstAnrufPhase = SelbstAnrufRuhe;
@@ -3735,7 +3736,7 @@ void txp_thread()
 			
 			if (ProtokollLevelTlnServ >= 3) // Daten explizit
 				{
-				ProtokollierenTxp();
+				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Teilnehmer-Server Empfang: (%d/" ), InCount);
 				ProtokollierenInt_P(PSTR("%d)"), Res);
 				ProtokollierenPuffer(TSB.Buf, Res);
@@ -3749,14 +3750,14 @@ void txp_thread()
 				{
 				case TLNSERV_AUSKUNFT_NICHTVERG:
 					if (ProtokollLevel >= 2)
-						ProtokollierenTxp_P(PSTR("Teilnehmer-Server meldet 'nicht gefunden'\r\n" ));
+						ProtokollierenITelex_P(PSTR("Teilnehmer-Server meldet 'nicht gefunden'\r\n" ));
 					Diagnoseausgabe_P(ISTR(NummerNichtBekannt, LokaleSprache), 3);
 					break;
 					
 				case TLNSERV_AUSKUNFT_VERSION1:
 					if (ProtokollLevel >= 2)
 						{
-						ProtokollierenTxp_P(PSTR("Teilnehmer-Server meldet Eintrag gefunden: " ));
+						ProtokollierenITelex_P(PSTR("Teilnehmer-Server meldet Eintrag gefunden: " ));
 						ProtokollierenIPAdr(TSB.TlnAuskunft.IPAdr);
 						Protokollieren_P(PSTR("\r\n"));
 						}
@@ -3765,12 +3766,12 @@ void txp_thread()
 						; // weitermachen
 					else if (GewaehlterTln.Nummer != TSB.TlnAuskunft.Nummer)
 						{ // vorhandener Eintrag weicht von 'aktuellem' ab --> Abbruch
-						ProtokollierenTxp_P(PSTR("! Teilnehmer-Server meldet ANDERE Nummer als angefragt\r\n"));
+						ProtokollierenITelex_P(PSTR("! Teilnehmer-Server meldet ANDERE Nummer als angefragt\r\n"));
 						break;
 						}
 					else if ((GewaehlterTln.Flags & TlnFlag_Lokal) != 0)
 						{ // Privater Eintrag --> nicht ändern
-						ProtokollierenTxp_P(PSTR("! im lokalen Telefonbuch als 'Privat' gekennzeichnet\r\n"));
+						ProtokollierenITelex_P(PSTR("! im lokalen Telefonbuch als 'Privat' gekennzeichnet\r\n"));
 						break;
 						}
 
@@ -3794,21 +3795,21 @@ void txp_thread()
 						Res = TlnHinzufuegen(&GewaehlterTln, TlnHinzKopieren);
 						if (Res < 0)
 							{
-							ProtokollierenTxp();
+							ProtokollierenITelex();
 							ProtokollierenInt_P(PSTR("! Datensatz vom Teilnehmer-Server mit Nr %ld konnte nicht gespeichert werden\r\n"), GewaehlterTln.Nummer);
 							Diagnoseausgabe_P(ISTR(InternesVerzeichnisVoll, LokaleSprache), 2);
 							}
-#ifdef TXP_TLNSERVER							
+#ifdef ITELEX_TLNSERVER							
 						else if (Res > 0) // Erfolg, denn Meldung 2 kann hier nicht kommen.
 							{
 							TlnServTlnbuchEintragGeaendert(&GewaehlterTln, -1); 
 								// -1: Geänderter Eintrag kommt nicht durch einen Sync-Vorgang 
 							}
-#endif //def TXP_TLNSERVER
+#endif //def ITELEX_TLNSERVER
 
 						} // Aktualisieren ist sinnvoll
 						
-					if (Modus == ModGehendWaehlen && ITelexSocketMode == SocketIdle && TSB.TlnAuskunft.Nummer == Wahlnummer)
+					if (Modus == ModGehendWaehlen && iTelexSocketMode == SocketIdle && TSB.TlnAuskunft.Nummer == Wahlnummer)
 						{ // erhaltenen Datensatz auch zum Verbindungsaufbau nutzen.
 						switch (Verbindungsaufbau(&GewaehlterTln))
 							{
@@ -3829,14 +3830,14 @@ void txp_thread()
 					if (TSB.IpRueckm.EmpfIP == NetzEigeneIP)
 						{ // keine Änderung
 						if (ProtokollLevelTlnServ >= 2)
-							ProtokollierenTxp_P(PSTR("Dynamische IP-Aktualisierung: bestehende IP gilt weiter\r\n" ));
+							ProtokollierenITelex_P(PSTR("Dynamische IP-Aktualisierung: bestehende IP gilt weiter\r\n" ));
 						}
 					else
 						{
 						NetzEigeneIP = TSB.IpRueckm.EmpfIP;
 						if (ProtokollLevelTlnServ >= 1)
 							{
-							ProtokollierenTxp_P(PSTR("Dynamische IP-Aktualisierung: neue IP "));
+							ProtokollierenITelex_P(PSTR("Dynamische IP-Aktualisierung: neue IP "));
 							ProtokollierenIPAdr(NetzEigeneIP);
 							Protokollieren_P(PSTR("\r\n"));
 							}
@@ -3849,7 +3850,7 @@ void txp_thread()
 					break;
 
 				case TLNSERV_FEHLER:
-					ProtokollierenTxp_P(PSTR("! Fehlermeldung des Teilnehmer-Servers: "));
+					ProtokollierenITelex_P(PSTR("! Fehlermeldung des Teilnehmer-Servers: "));
 					Protokollieren(TSB.PureData);
 					Protokollieren_P(PSTR("\r\n"));
 					StartLangTimer(&DynIPAktualisierungTimer);
@@ -3860,7 +3861,7 @@ void txp_thread()
 					break;
 				
 				default:
-					ProtokollierenTxp_P(PSTR("! unerwartete Antwort des Teilnehmer-Servers\r\n" ));
+					ProtokollierenITelex_P(PSTR("! unerwartete Antwort des Teilnehmer-Servers\r\n" ));
 					StartLangTimer(&DynIPAktualisierungTimer);
 					DynIPAktualisierungEndzeit = 15 * LangTimerMinuteFaktor - Zufallswert(0xF);
 						// in 15 Minuten minus Zufall wieder.
@@ -3879,7 +3880,7 @@ void txp_thread()
 		if (CheckSocketState(TeilnehmerServerSocket) == SOCKET_NOT_USE)
 			{
 			if (ProtokollLevelTlnServ >= 1)
-				ProtokollierenTxp_P(PSTR("Socket zum Teilnehmer-Server wurde von Gegenstelle geschlossen\r\n" ));
+				ProtokollierenITelex_P(PSTR("Socket zum Teilnehmer-Server wurde von Gegenstelle geschlossen\r\n" ));
 			CloseTCPSocket(TeilnehmerServerSocket);
 			TeilnehmerServerSocket = NO_SOCKET_USED;
 			}
@@ -3905,7 +3906,7 @@ void txp_thread()
 	// HACK Status-Signale Seriell
 	bset_RTS(get_CTS());
 	
-	} // txp_thread
+	} // itelex_thread
 	
 
 // ================================================================================	
@@ -3958,7 +3959,7 @@ static uint8_t DurchwahlTabelleDekodieren(char *s)
 	return i;
 	} // DurchwahlTabelleDekodieren()
 	
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 
 
 //! Kann am Anfang jeder cgi-Funktion aufgerufen werden, um Zugang zu der Funktion erst nach Kennwort-Eingabe zu erlauben.
@@ -4041,7 +4042,7 @@ bool PruefeSprache(void *pStruct, TSprache *Sprache)
 	if (ProtokollLevel >= 3 && http_request != NULL)
 		{
 		char *Ende;
-		ProtokollierenTxp_P(PSTR("cgi-Aufruf: "));
+		ProtokollierenITelex_P(PSTR("cgi-Aufruf: "));
 		if (http_request->argc == 0)
 			Ende = http_request->HTTP_LINEBUFFER;
 		else
@@ -4074,13 +4075,13 @@ bool PruefeSprache(void *pStruct, TSprache *Sprache)
 	
 	
 /*------------------------------------------------------------------------------------------------------------*/
-/*!\brief Das CGI-Interface für Ausgabe von Debug-Infos des TelexPhone
+/*!\brief Das CGI-Interface für Ausgabe von Debug-Infos des iTelex
  * \param 	pStruct	Struktur auf den HTTP_Request
  * \return	NONE
  */
 /*------------------------------------------------------------------------------------------------------------*/
 
-void txp_cgi_debug( void * pStruct )
+void itelex_cgi_debug( void * pStruct )
 	{
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
@@ -4109,19 +4110,19 @@ void txp_cgi_debug( void * pStruct )
 	extern char Puffer[]; // aus Protokoll.c
 	printf_P(PSTR("<br>Protokollpuffer: %s"), Puffer);
 
-	#ifdef TXP_ANSCHLUSS
+	#ifdef ITELEX_ANSCHLUSS
 	
 	PRINTVAL(Modus);
-	PRINTVALHEX(Status); // bezüglich TxP-Funktionalität (ist auf TWI-Bus sichtbar)
+	PRINTVALHEX(Status); // bezüglich interner Telex Funktionalität (ist auf TWI-Bus sichtbar)
 
-	PRINTVAL(ITelexSocketMode);
-	PRINTVAL(ITelexSocketHandle);
-	PRINTVALHEX(ITelexSocketIP);
-	PRINTVAL(ITelexSocketAbbauGeplant);
-	PRINTVAL(KurzTimerVal(&ITelexSocketAbbruchTimer));
+	PRINTVAL(iTelexSocketMode);
+	PRINTVAL(iTelexSocketHandle);
+	PRINTVALHEX(iTelexSocketIP);
+	PRINTVAL(iTelexSocketAbbauGeplant);
+	PRINTVAL(KurzTimerVal(&iTelexSocketAbbruchTimer));
 	PRINTVAL(SocketInBufUsed);
 	PRINTVAL(SocketOutBufUsed);
-	PRINTVAL(ITelexSocketProtokoll);
+	PRINTVAL(iTelexSocketProtokoll);
 	PRINTVAL(ProtokollPhase);
 
 	PRINTVAL(SocketAnzahlZeichenGesendet);
@@ -4171,8 +4172,8 @@ void txp_cgi_debug( void * pStruct )
 	PRINTVAL(TwiLebenszeichenZaehler);
 	PRINTVAL(TwiWatchdogCount);
 	PRINTVAL(BusKollisionZaehler);
-	PRINTVAL(KurzTimerVal(&ITelexSocketLebenszeichenTimer));
-	PRINTVAL(KurzTimerVal(&TxpThreadCheckTimer));
+	PRINTVAL(KurzTimerVal(&iTelexSocketLebenszeichenTimer));
+	PRINTVAL(KurzTimerVal(&ITelexThreadCheckTimer));
 
 	PRINTVAL(LangTimerVal(&DynIPAktualisierungTimer));
 	PRINTVAL(DynIPAktualisierungEndzeit);
@@ -4189,7 +4190,7 @@ void txp_cgi_debug( void * pStruct )
 	
 	PRINTVAL(FalscherCode); 
 	PRINTVAL(TwiIsrCount); 
-	PRINTVAL(TxpThreadCount); 
+	PRINTVAL(ITelexThreadCount); 
 
 	PRINTVAL(Timer0CallbackCount); 
 	PRINTVAL(Timer0Cnt_Min); 
@@ -4202,15 +4203,15 @@ void txp_cgi_debug( void * pStruct )
 				 TeilnehmerServerAdresse[i], TeilnehmerServerFehlerZaehler[i], LangTimerVal(&TeilnehmerServerSperrTimer[i]));
 		}
 		
-#ifdef TXP_TLNSERVER
+#ifdef ITELEX_TLNSERVER
 	TlnServDebugPrint();
-#endif //def TXP_TLNSERVER
+#endif //def ITELEX_TLNSERVER
 		
 	PRINTVAL(TeilnehmerServerAlleNichtErreichbar);
 	
-	#endif // TXP_ANSCHLUSS
+	#endif // ITELEX_ANSCHLUSS
 	
-	printf_P(PSTR("<br><a href=\"txp-debug.cgi?reset\">Statiktik-Daten zur&uuml;cksetzen</a>"
+	printf_P(PSTR("<br><a href=\"itelex-debug.cgi?reset\">Statiktik-Daten zur&uuml;cksetzen</a>"
 				  "<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , 
 				  ByteCounter, PacketCounter, eth_state_error );
 
@@ -4221,7 +4222,7 @@ void txp_cgi_debug( void * pStruct )
 	}
 	
 
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface für das Ausgabefenster der Fernschreiber-Simulation
@@ -4230,7 +4231,7 @@ void txp_cgi_debug( void * pStruct )
  */
 /*------------------------------------------------------------------------------------------------------------*/
 
-void txp_cgi_msg_Out( void * pStruct )
+void itelex_cgi_msg_Out( void * pStruct )
 	{
 	static TSprache Sprache;
 	
@@ -4243,7 +4244,7 @@ void txp_cgi_msg_Out( void * pStruct )
 					"<HEAD>"
 					"<meta http-equiv=\"expires\" content=\"1\">"
 					"<meta http-equiv=\"pragma\" content=\"no-cache\">"
-					"<meta http-equiv=\"refresh\" content=\"10; URL=txp-msg-out.cgi\">"
+					"<meta http-equiv=\"refresh\" content=\"10; URL=itelex-msg-out.cgi\">"
 					"</HEAD>"
 					"<BODY>" ));
 					
@@ -4254,7 +4255,7 @@ void txp_cgi_msg_Out( void * pStruct )
 
 		if (ProtokollLevel >= 3)
 			{
-			ProtokollierenTxp_P(PSTR("Direktdruck Abruf Druckspiegel:"));
+			ProtokollierenITelex_P(PSTR("Direktdruck Abruf Druckspiegel:"));
 			char *p = HtmlSendeText + strlen(HtmlSendeText) - 40;
 			if (p < HtmlSendeText) 
 				p = HtmlSendeText;
@@ -4269,14 +4270,14 @@ void txp_cgi_msg_Out( void * pStruct )
 		printf_P(ISTR(TexteingabeStartetFernschreiber, Sprache));
 		HtmlSendeText[0] = '\0';
 		if (ProtokollLevel >= 3)
-			ProtokollierenTxp_P(PSTR("Direktdruck Abruf Druckspiegel (aus)\r\n"));
+			ProtokollierenITelex_P(PSTR("Direktdruck Abruf Druckspiegel (aus)\r\n"));
 		}
 		
 	else
 		{
 		printf_P(ISTR(AndereVerbindungBesteht, Sprache));
 		if (ProtokollLevel >= 3)
-			ProtokollierenTxp_P(PSTR("Direktdruck Abruf Druckspiegel (belegt)\r\n"));
+			ProtokollierenITelex_P(PSTR("Direktdruck Abruf Druckspiegel (belegt)\r\n"));
 		}
 	
 	cgi_PrintHttpheaderEnd();
@@ -4293,7 +4294,7 @@ void txp_cgi_msg_Out( void * pStruct )
  */
 /*------------------------------------------------------------------------------------------------------------*/
 
-void txp_cgi_msg_In( void * pStruct )
+void itelex_cgi_msg_In( void * pStruct )
 	{
 	static const PROGMEM char Eingabe_P[] = "Eingabe";
 
@@ -4324,7 +4325,7 @@ void txp_cgi_msg_In( void * pStruct )
 		// Ergebnis protokollieren
 		if (ProtokollLevel >= 2)
 			{
-			ProtokollierenTxp_P(PSTR("HTML-Chat Eingabe: "));
+			ProtokollierenITelex_P(PSTR("HTML-Chat Eingabe: "));
 			Protokollieren(EingabeText); 
 			Protokollieren_P(PSTR("\r\n"));
 			}
@@ -4348,7 +4349,7 @@ void txp_cgi_msg_In( void * pStruct )
 				
 			if (ProtokollLevel >= 1)
 				{
-				ProtokollierenTxp();
+				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("HTML-Chat begonnen (Anwahl %u) -> "), Anwahl);
 				}
 				
@@ -4359,12 +4360,12 @@ void txp_cgi_msg_In( void * pStruct )
 		}
 
 	cgi_PrintHttpheaderStart();
-	printf_P(PSTR("<form action=\"txp-msg-in.cgi\">"));
+	printf_P(PSTR("<form action=\"itelex-msg-in.cgi\">"));
 	printf_P(ISTR(HtmlTextEingabe, Sprache));
 	printf_P(PSTR("<input name=\"Eingabe\" type=\"text\" size=\"65\" value=\"\" maxlength=\"65\">"
 				  "<input type=\"submit\" value=\""));
 	printf_P(ISTR(HtmlTextEingabeAbsenden, Sprache));
-	printf_P(PSTR(" \"><a href=\"txp-msg-out.cgi\" target=\"MsgOut\">"));
+	printf_P(PSTR(" \"><a href=\"itelex-msg-out.cgi\" target=\"MsgOut\">"));
 	printf_P(ISTR(HtmlTextEingabeAktualisieren, Sprache));
 	printf_P(PSTR("</a></form>"));
 	cgi_PrintHttpheaderEnd();
@@ -4401,7 +4402,7 @@ void AdresseZuWahlStr(uint8_t Adr, char* Buf)
 		}
 	}
 
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 
 	
 const PROGMEM char KonfigPasswort_P[] = "CFGPASS";
@@ -4410,7 +4411,7 @@ const PROGMEM char ProtokollLevel_P[] = "PROTLEVEL";
 const PROGMEM char ProtokollLevelTlnServ_P[] = "PROTLEVELTLNSRV";
 
 
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 
 const PROGMEM char Hauptstelle_P[] = "HAUPTSTELLE";
 const PROGMEM char EigeneNummer_P[] = "EIGENENUMMER";
@@ -4420,18 +4421,18 @@ const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
 const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
 const PROGMEM char DatumDruckModus_P[] = "AUTODATUM";
 
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 
 	
 /*------------------------------------------------------------------------------------------------------------*/
-/*!\brief Das CGI-Interface zum Ändern der Einstellungen des TelexPhone-Interface bezüglich der Einbindung
+/*!\brief Das CGI-Interface zum Ändern der Einstellungen des iTelex-Interface bezüglich der Einbindung
  * in das lokale TxP-System
  * \param 	pStruct	Struktur auf den HTTP_Request
  * \return	NONE
  */
 /*------------------------------------------------------------------------------------------------------------*/
  
-void txp_cgi_config_intern(void *pStruct)
+void itelex_cgi_config_intern(void *pStruct)
 	{
 	static TSprache Sprache;
 	
@@ -4454,9 +4455,9 @@ void txp_cgi_config_intern(void *pStruct)
 
 	if ( http_request->argc == 0 )
 		{
-		CgiFormStartTabbed_P(PSTR("txpcfg-intern.cgi"));
+		CgiFormStartTabbed_P(PSTR("itelexcfg-intern.cgi"));
 
-		#ifdef TXP_ANSCHLUSS
+		#ifdef ITELEX_ANSCHLUSS
 		AdresseZuWahlStr(BusEigenAdresse, Buf);
 		CgiFormInputFieldText_P(ISTR(EigeneAmtsnummer, Sprache), EigeneNummer_P, 2, Buf);
 
@@ -4472,7 +4473,7 @@ void txp_cgi_config_intern(void *pStruct)
 
 		CgiFormDropdown_P(ISTR(DatumDruckModus, Sprache), DatumDruckModus_P, 4, AutoDatumSelList, DatumDruckModus);
 		
-		#endif //def TXP_ANSCHLUSS
+		#endif //def ITELEX_ANSCHLUSS
 
 		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 2, ProtokollLevel);
 		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
@@ -4489,11 +4490,11 @@ void txp_cgi_config_intern(void *pStruct)
 		uint8_t Neu;
 
 		printf_P(ISTR(NeueEinstellungen, Sprache));
-		printf_P(PSTR("<a href=\"txpcfg-intern.cgi\">"));
+		printf_P(PSTR("<a href=\"itelexcfg-intern.cgi\">"));
 		printf_P(ISTR(Weiter, Sprache));
 		printf_P(PSTR("</a>"));
 
-		#ifdef TXP_ANSCHLUSS
+		#ifdef ITELEX_ANSCHLUSS
 		
 		// Eigene Nummer
 		// -------------
@@ -4635,7 +4636,7 @@ void txp_cgi_config_intern(void *pStruct)
 		
 	cgi_PrintHttpheaderEnd();
 
-	} // txp_cgi_config_intern()
+	} // itelex_cgi_config_intern()
 	
 
 /*------------------------------------------------------------------------------------------------------------*/
@@ -4645,7 +4646,7 @@ void txp_cgi_config_intern(void *pStruct)
  */
 /*------------------------------------------------------------------------------------------------------------*/
  
-void txp_cgi_config_sperren(void *pStruct)
+void itelex_cgi_config_sperren(void *pStruct)
 	{
 	static TSprache Sprache;
 	
@@ -4670,7 +4671,7 @@ void txp_cgi_config_sperren(void *pStruct)
 	}
 	
 	
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 
 const PROGMEM char NetzRufnummer_P[] = "NETZRUFNR";
 const PROGMEM char Geheimzahl_P[] = "PIN";
@@ -4678,7 +4679,7 @@ const PROGMEM char DynIPAktiv_P[] = "DYNIPAKTIV";
 const PROGMEM char NetzPort_P[] = "NETZPORT";
 const PROGMEM char SelbstAnrufPeriode_P[] = "SELBSTANPER";
 
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 
 const PROGMEM char LokaleSprache_P[] = "SPRACHE";
 const PROGMEM char RufnrServerAdr1_P[] = "RUFNRSERV1";
@@ -4703,14 +4704,14 @@ void SpeichereSpracheAlsLokal(TSprache Sprache)
 	} // SpeichereSpracheAlsLokal
 	
 /*------------------------------------------------------------------------------------------------------------*/
-/*!\brief Das CGI-Interface zum Ändern der Einstellungen des TelexPhone-Interface bezüglich der Einbindung
+/*!\brief Das CGI-Interface zum Ändern der Einstellungen des iTelex-Interface bezüglich der Einbindung
  * in das globale ip-netz
  * \param 	pStruct	Struktur auf den HTTP_Request
  * \return	NONE
  */
 /*------------------------------------------------------------------------------------------------------------*/
  
-void txp_cgi_config_extern(void *pStruct)
+void itelex_cgi_config_extern(void *pStruct)
 	{
 	static TSprache Sprache;
 	
@@ -4727,33 +4728,33 @@ void txp_cgi_config_extern(void *pStruct)
 
 	if ( http_request->argc == 0 )
 		{
-		CgiFormStartTabbed_P(PSTR("txpcfg-extern.cgi"));
+		CgiFormStartTabbed_P(PSTR("itelexcfg-extern.cgi"));
 
-		#ifdef TXP_ANSCHLUSS
+		#ifdef ITELEX_ANSCHLUSS
 		CgiFormInputFieldULong_P(ISTR(ITelexRufnummer, Sprache), NetzRufnummer_P, 10, NetzRufnummer);
 		CgiFormInputFieldULong_P(ISTR(RufnrServerAnmeldGeheimzahl, Sprache), Geheimzahl_P, 6, Geheimzahl);
 		CgiFormCheckbox_P(ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIPAktiv);
 		CgiFormInputFieldULong_P(ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, 3, SelbstAnrufPeriode);
 		CgiFormInputFieldULong_P(ISTR(OeffentlichePortNr, Sprache), NetzPort_P, 6, NetzPort);
-		#endif // TXP_ANSCHLUSS
+		#endif // ITELEX_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 			CgiFormInputFieldText_P(ISTR(RufnrServerAdr, Sprache), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
 
-		#ifdef TXP_TLNSERVER
+		#ifdef ITELEX_TLNSERVER
 		CgiFormInputFieldULong_P(ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, 10, TlnServSyncGeheimzahl);
-		#endif //def TXP_TLNSERVER
+		#endif //def ITELEX_TLNSERVER
 		
 		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
 		}
 	else // argc > 0
 		{
 		printf_P(ISTR(NeueEinstellungen, Sprache));
-		printf_P(PSTR("<a href=\"txpcfg-extern.cgi\">"));
+		printf_P(PSTR("<a href=\"itelexcfg-extern.cgi\">"));
 		printf_P(ISTR(Weiter, Sprache));
 		printf_P(PSTR("</a>"));
 
-		#ifdef TXP_ANSCHLUSS
+		#ifdef ITELEX_ANSCHLUSS
 		NetzRufnummer = CgiCheckULong_P(http_request, ISTR(ITelexRufnummer, Sprache), NetzRufnummer_P, NetzRufnummer, Sprache);
 		if (NetzRufnummer < GlobRufnrMinWert)
 			printf_P(ISTR(ITelexRufnummerZuKurz, Sprache));
@@ -4761,7 +4762,7 @@ void txp_cgi_config_extern(void *pStruct)
 		DynIPAktiv = CgiCheckBool_P(http_request, ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIPAktiv, Sprache);
 		SelbstAnrufPeriode = CgiCheckULong_P(http_request, ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, SelbstAnrufPeriode, Sprache);
 		NetzPort = CgiCheckULong_P(http_request, ISTR(OeffentlichePortNr, Sprache), NetzPort_P, NetzPort, Sprache);
-		#endif //def TXP_ANSCHLUSS
+		#endif //def ITELEX_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 			{
@@ -4769,9 +4770,9 @@ void txp_cgi_config_extern(void *pStruct)
 			TeilnehmerServerIP[i] = 0; // damit diese neu ermittelt wird.
 			}
 
-		#ifdef TXP_TLNSERVER
+		#ifdef ITELEX_TLNSERVER
 		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl, Sprache);
-		#endif //def TXP_TLNSERVER
+		#endif //def ITELEX_TLNSERVER
 
 		if (SelbstAnrufPhase == SelbstAnrufSperre)
 			SelbstAnrufPhase = SelbstAnrufRuhe;
@@ -4781,10 +4782,10 @@ void txp_cgi_config_extern(void *pStruct)
 		
 	cgi_PrintHttpheaderEnd();
 
-	} // txp_cgi_config_extern()
+	} // itelex_cgi_config_extern()
 	
 
-#ifdef TXP_ANSCHLUSS
+#ifdef ITELEX_ANSCHLUSS
 
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface für eine Bus-Status-Liste (TWI-Busteilnehmer)
@@ -4793,7 +4794,7 @@ void txp_cgi_config_extern(void *pStruct)
  */
 /*------------------------------------------------------------------------------------------------------------*/
 
-void txp_cgi_TwiTlnListe(void *pStruct)
+void itelex_cgi_TwiTlnListe(void *pStruct)
 	{
 	static TSprache Sprache;
 	
@@ -4823,7 +4824,7 @@ void txp_cgi_TwiTlnListe(void *pStruct)
 	
 	}
 
-#endif // TXP_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 
 	
 #if defined(MMC)
@@ -4930,13 +4931,13 @@ void cgi_SdDirectory(void *pStruct)
 	
 	
 /*------------------------------------------------------------------------------------------------------------*/
-/*!\brief Initialisiert den TelexPhone-clinet und registriert den Port auf welchen dieser lauschen soll.
+/*!\brief Initialisiert den iTelex-clinet und registriert den Port auf welchen dieser lauschen soll.
  * \param 	NONE
  * \return	NONE
  */
 /*------------------------------------------------------------------------------------------------------------*/
 
-void iTelex_init()
+void itelex_init()
 	{
 	init_Taste();
 	init_RTS();
@@ -4947,7 +4948,7 @@ void iTelex_init()
 	DiagnosePuffer[0] = '\0';
 	DiagnosePufferLevel = 0;
 
-	#ifdef TXP_ANSCHLUSS
+	#ifdef ITELEX_ANSCHLUSS
 	
 	SeriellUmsetzInit();
 
@@ -4958,13 +4959,13 @@ void iTelex_init()
 	AsciiDruckPuffer[0] = '\0';
 	HtmlSendeText[0] = '\0';
 	
-	#endif // TXP_ANSCHLUSS
+	#endif // ITELEX_ANSCHLUSS
 	
 	// EEPROM auslesen
 	char Buf[TlnAdresseMax];
 	uint16_t i;
 
-	#ifdef TXP_ANSCHLUSS
+	#ifdef ITELEX_ANSCHLUSS
 	
 	if (readConfig_P(EigeneNummer_P, Buf) == 1)
 		BusEigenAdresse = WahlZuAdresse(atoi(Buf), strlen(Buf));
@@ -5021,14 +5022,14 @@ void iTelex_init()
 	else
 		DatumDruckModus = DatumDruckBeide;
 		
-	#endif // TXP_ANSCHLUSS
+	#endif // ITELEX_ANSCHLUSS
 	
-	#ifdef TXP_TLNSERVER
+	#ifdef ITELEX_TLNSERVER
 	if (readConfig_P(TlnServSyncGeheimzahl_P, Buf) == 1)
 		TlnServSyncGeheimzahl = atol(Buf);
 	else
 		TlnServSyncGeheimzahl = 0;
-	#endif //def TXP_TLNSERVER
+	#endif //def ITELEX_TLNSERVER
 	
 	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
@@ -5077,15 +5078,15 @@ void iTelex_init()
 	TeilnehmerServerSocket = NO_SOCKET_USED;
 	AktTlnServerTabI = 0;
 
-	#ifdef TXP_ANSCHLUSS
+	#ifdef ITELEX_ANSCHLUSS
 	
 	BusEigenAdrMehrfach = 1; // muss Potenz von 2 sein (also 1, 2, 4, 8, 16, ... , Standard = 1
 
-	ITelexSocketHandle = NO_SOCKET_USED;
-	ITelexSocketMode = SocketIdle;
-	ITelexSocketIP = 0;
-	ITelexSocketAbbauGeplant = false;
-	StartKurzTimer(&ITelexSocketAbbruchTimer);
+	iTelexSocketHandle = NO_SOCKET_USED;
+	iTelexSocketMode = SocketIdle;
+	iTelexSocketIP = 0;
+	iTelexSocketAbbauGeplant = false;
+	StartKurzTimer(&iTelexSocketAbbruchTimer);
 	SocketOutBufUsed = 0;
 	SocketInBufUsed = 0;
 	
@@ -5109,59 +5110,59 @@ void iTelex_init()
 		
 	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 
-	timer0_init(TxpTimerFreq); 
-	if (!timer0_RegisterCallbackFunction(txp_timerEvent))
+	timer0_init(iTelexTimerFreq); 
+	if (!timer0_RegisterCallbackFunction(itelex_timerEvent))
 		return;
 
 	wdt_enable(WDTO_250MS);  
-		// in txp_timerEvent wird wdt_reset() ausgefährt.
+		// in itelex_timerEvent wird wdt_reset() ausgefährt.
 	
-	StartKurzTimer(&TxpThreadCheckTimer);
+	StartKurzTimer(&ITelexThreadCheckTimer);
 		
-	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
-	cgi_RegisterCGI( txp_cgi_msg_Out, PSTR("txp-msg-out.cgi"));
-	cgi_RegisterCGI( txp_cgi_TwiTlnListe, PSTR("txp-twitlnliste.cgi"));
+	cgi_RegisterCGI( itelex_cgi_msg_In, PSTR("itelex-msg-in.cgi"));
+	cgi_RegisterCGI( itelex_cgi_msg_Out, PSTR("itelex-msg-out.cgi"));
+	cgi_RegisterCGI( itelex_cgi_TwiTlnListe, PSTR("itelex-twitlnliste.cgi"));
 	
-	#endif // TXP_ANSCHLUSS
+	#endif // ITELEX_ANSCHLUSS
 	
-	cgi_RegisterCGI( txp_cgi_config_intern, PSTR("txpcfg-intern.cgi"));
-	cgi_RegisterCGI( txp_cgi_config_extern, PSTR("txpcfg-extern.cgi"));
-	cgi_RegisterCGI( txp_cgi_config_sperren, PSTR("txpcfg-sperren.cgi"));
-	cgi_RegisterCGI( txp_cgi_debug, PSTR("txp-debug.cgi"));
+	cgi_RegisterCGI( itelex_cgi_config_intern, PSTR("itelexcfg-intern.cgi"));
+	cgi_RegisterCGI( itelex_cgi_config_extern, PSTR("itelexcfg-extern.cgi"));
+	cgi_RegisterCGI( itelex_cgi_config_sperren, PSTR("itelexcfg-sperren.cgi"));
+	cgi_RegisterCGI( itelex_cgi_debug, PSTR("itelex-debug.cgi"));
 	
 #if defined(MMC)
 	cgi_RegisterCGI( cgi_SdDirectory, PSTR("sddir.cgi"));
 #endif //defined(MMC)
 
-	#ifdef TXP_ANSCHLUSS
+	#ifdef ITELEX_ANSCHLUSS
 	
 	RegisterTCPPort(ITELEX_PORT);
 	
 	Timer0Cnt_Min = 255;
 
-	printf_P( PSTR("TelexPhone Port %u.\r\n") , ITELEX_PORT );
+	printf_P( PSTR("iTelex Port %u.\r\n") , ITELEX_PORT );
 
-	THREAD_RegisterThread( txp_thread, PSTR("TxP"));
+	THREAD_RegisterThread( itelex_thread, PSTR("iTelex"));
 
-	#endif // TXP_ANSCHLUSS
+	#endif // ITELEX_ANSCHLUSS
 	
 	TlnBuchInit();
 	
-	#ifdef TXP_TLNSERVER
+	#ifdef ITELEX_TLNSERVER
 	
-	txp_tlnserv_init();
+	itelex_tlnserv_init();
 	
-	#endif // TXP_TLNSERVER
+	#endif // ITELEX_TLNSERVER
 
-	#ifdef TXP_EMAIL
+	#ifdef ITELEX_EMAIL
 	
-	txp_email_init();
+	itelex_email_init();
 	
-	#endif //def TXP_EMAIL
+	#endif //def ITELEX_EMAIL
 	}
 
 
-#endif //def TELEXPHONE
+#endif //def ITELEX
 
 
 #if defined(MMC)

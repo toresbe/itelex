@@ -40,7 +40,7 @@
 
 #include "config.h"
 
-#ifdef TELEXPHONE
+#ifdef ITELEX
 
 #include "system/net/ip.h"
 #include "system/net/tcp.h"
@@ -60,7 +60,7 @@
 #include "StringTab.h"
 
 
-#ifdef TXP_TLNSERVER
+#ifdef ITELEX_TLNSERVER
 
 #include "TlnBuch.h"
 #include "TlnServer.h"
@@ -918,7 +918,7 @@ static bool AktivSyncMeldungKanalOeffnen(uint8_t ServerI)
 	}
 	
 	
-//! Der TelexPhone-Rufnummernserver-Client an sich.
+//! Der iTelex-Rufnummernserver-Client an sich.
 //------------------------------------------------------------------------------------------------------------
 //! Diese Funktion wird zyklisch aufgerufen und hat folgende Aufgaben:
 //! \par - Nachschauen, ob eine Verbindung auf den registrierten Port eingegangen ist. Wenn ja 
@@ -928,7 +928,7 @@ static bool AktivSyncMeldungKanalOeffnen(uint8_t ServerI)
 //! \param 	NONE
 //! \return	NONE
 
-void txp_tlnserv_thread()
+void itelex_tlnserv_thread()
 	{
 	uint8_t i;
 	
@@ -1029,7 +1029,7 @@ void txp_tlnserv_thread()
 					
 		} // kein Socket offen und Wartezeit abgelaufen.
 	
-	} // txp_tlnserv_thread
+	} // itelex_tlnserv_thread
 	
 	
 // ================================================================================	
@@ -1078,7 +1078,7 @@ void TlnServDebugPrint()
  */
 /*------------------------------------------------------------------------------------------------------------*/
 
-void txp_tlnserv_init()
+void itelex_tlnserv_init()
 	{
 	uint8_t i;
 	
@@ -1095,13 +1095,13 @@ void txp_tlnserv_init()
 	
 	/*
 
-	timer0_init(TxpTimerFreq); 
-	if (!timer0_RegisterCallbackFunction(txp_timerEvent))
+	timer0_init(iTelexTimerFreq); 
+	if (!timer0_RegisterCallbackFunction(itelex_timerEvent))
 		return;
 	*/
 	
 	/*
-	cgi_RegisterCGI( txp_cgi_msg_In, PSTR("txp-msg-in.cgi"));
+	cgi_RegisterCGI( itelex_cgi_msg_In, PSTR("itelex-msg-in.cgi"));
 	*/
 
 	for (i = 0 ; i < AnzTlnServKanaele ; i++)
@@ -1112,7 +1112,7 @@ void txp_tlnserv_init()
 	
 	RegisterTCPPort(ITELEX_TLNSERV_PORT);
 	
-	printf_P( PSTR("Txp TlnServer Port %u.\r\n") , ITELEX_TLNSERV_PORT );
+	printf_P( PSTR("iTelex TlnServer Port %u.\r\n") , ITELEX_TLNSERV_PORT );
 	
 	TlnBuchLetzteAenderung = 0;
 	TTlnDaten TD;
@@ -1140,11 +1140,11 @@ void txp_tlnserv_init()
 	VollAbfrageTimerEnde = 1 * LangTimerMinuteFaktor;
 	VollAbfrageServerIndex = ANZ_TEILNEHMER_SERVER - 1;
 	
-	THREAD_RegisterThread( txp_tlnserv_thread, PSTR("TlnSrv"));
+	THREAD_RegisterThread( itelex_tlnserv_thread, PSTR("TlnSrv"));
 	}
 
 
-#endif //def TXP_TLNSERVER
+#endif //def ITELEX_TLNSERVER
 
-#endif //def TELEXPHONE
+#endif //def ITELEX
 
