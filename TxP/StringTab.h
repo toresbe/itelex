@@ -45,10 +45,10 @@ _STRTABENTRY(MailNichtInDieserVersion, "Mail in dieser Version nicht unterstuetz
 _STRTABENTRY(TeilnehmerNichtErreichbar, "Teilnehmer nicht erreichbar", "Subscriber not available")
 _STRTABENTRY(AnschlussInternBesetzt, "Anschluss intern besetzt", "")
 _STRTABENTRY(TWITimeout, "Interne Verbindung unterbrochen", "")
-_STRTABENTRY(DiagInterneIP, "interne IP: ", "")
+_STRTABENTRY(DiagInterneIP, "interne IP: ", "local IP: ")
 _STRTABENTRY(Datum, "Datum", "Date")
 _STRTABENTRY(DiagnoseEinleitung, "\r\n///interne meldung: ", "\r\n///internal message: ")
-_STRTABENTRY(SelbstAnrufMehrfachVersagt, "Selbst-Anruf mehrfach versagt, falsche Router-Konfiguration?", "")
+_STRTABENTRY(SelbstAnrufMehrfachVersagt, "Selbst-Anruf mehrfach versagt, Router-Konfiguration pruefen.", "")
 _STRTABENTRY(NummerNichtBekannt, "gewaehlte Nummer nicht bekannt", "dialled number is unknown")
 _STRTABENTRY(InternesVerzeichnisVoll, "internes Rufnummern-Verzeichnis voll", "")
 _STRTABENTRY(KennwortAbfrage, "Seite gesperrt! Bitte Kennwort eingeben", "")
@@ -88,7 +88,6 @@ _STRTABENTRY(VerbindungstestPeriode, "Verbindungstest-Periode", "")
 _STRTABENTRY(OeffentlichePortNr, "&ouml;ffentliche Port-Nummer", "Public port number")
 _STRTABENTRY(RufnrServerAdr, "Adresse des Teilnehmer-Server", "")
 _STRTABENTRY(TlnServSyncGeheimzahl, "Geheimzahl f&uuml;r Server-Synchronisierung", "")
-// ungeprüft:
 _STRTABENTRY(TwiTlnListeAnfang, "Status der angeschlossenen TWI-Module:<p>", "")
 _STRTABENTRY(TwiTlnListeEintrag, "Nummer %s Status %02X<br>", "Number %s status %02X<br>")
 _STRTABENTRY(TwiTlnListeEnde, "+++fertig", "+++end")
@@ -105,7 +104,7 @@ _STRTABENTRY(UeberschriftTeilnehmerverzeichnis, "<h3>Teilnehmerverzeichnis</h3><
 _STRTABENTRY(UeberschriftOeffentlichesTeilnehmerverzeichnis, 
 				"<h3>&Ouml;ffentliches Teilnehmerverzeichnis</h3><br>", 
 				"<h3>Public directory</h3><br>")
-_STRTABENTRY(VollstaendigesTeilnehmerverzeichnis, "zeige vollst&auml;ndiges Verzeichnis", "")
+_STRTABENTRY(VollstaendigesTeilnehmerverzeichnis, "zeige vollst&auml;ndiges Verzeichnis", "show full directory")
 _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 	"<tr>"
@@ -119,33 +118,49 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<th align=\"center\">letzte<br>Aktualisierung</th>" // Datum / Uhrzeit
 	"<th align=\"left\">Aktion</th>" // in dieser Spalte sind die Buttons
 	"</tr>", 
-	"")
+	"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
+	"<tr>"
+	"<th align=\"right\">Number</th>" // Nummer
+	"<th align=\"left\">Name</th>" // Name
+	"<th align=\"center\">Special</th>" // Flags
+	"<th align=\"left\">Type</th>" // Typ
+	"<th align=\"left\">Address</th>" // Adresse
+	"<th align=\"center\">Port</th>" // Port
+	"<th align=\"center\">Direct dial</th>" // Durchwahl
+	"<th align=\"center\">Updated</th>" // Datum / Uhrzeit
+	"<th align=\"left\">Action</th>" // in dieser Spalte sind die Buttons
+	"</tr>")
+	
 _STRTABENTRY(TeilnehmerverzeichnisAktionenOffen,
 	"<a href=\"txp-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a><br>" 
 	"<a href=\"txp-tlnverz.cgi?load\">alle &Auml;nderungen verwerfen</a><br>"
 	"<a href=\"txp-tlnverz.cgi?clear\">komplett l&ouml;schen</a><br>", 
-	"")
+	"<a href=\"txp-tlnverz.cgi?save\">save non-volatile</a><br>" 
+	"<a href=\"txp-tlnverz.cgi?load\">discard all changes</a><br>"
+	"<a href=\"txp-tlnverz.cgi?clear\">clear all</a><br>")
 _STRTABENTRY(TeilnehmerverzeichnisAktionenLeerOffen, 
 	"Noch keine Eintr&auml;ge vorhanden<p>"
 	"<a href=\"txp-tlnverz.cgi?load\">gespeicherte Daten wiederherstellen</a><br>"
 	"<a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></form>",
-	"")
+	"No eintries yet<p>"
+	"<a href=\"txp-tlnverz.cgi?load\">restore last saved entries</a><br>"
+	"<a href=\"txp-tlnverz.cgi?edit=0\">add entry</a></form>")
 	
 _STRTABENTRY(Rufnummer, "Rufnummer", "")
 _STRTABENTRY(Name, "Name", "")
 _STRTABENTRY(Adresse, "Adresse", "")
 _STRTABENTRY(Port, "Port", "")
-_STRTABENTRY(Durchwahl, "Durchwahl", "")
-_STRTABENTRY(TlnverzAttrLokal, "Lokal", "")
-_STRTABENTRY(TlnverzAttrGesperrt, "gesperrt", "")
-_STRTABENTRY(Typ, "Typ", "")
-_STRTABENTRY(TlnverzAttrDyn, "DynIP", "")
-_STRTABENTRY(TypGeloescht, "geloescht", "")
-_STRTABENTRY(TypAscii, "Ascii", "")
-_STRTABENTRY(TypITelex, "i-Telex", "")
-_STRTABENTRY(TypEMail, "eMail", "")
-_STRTABENTRY(AktionAendern, "&Auml;ndern", "")
-_STRTABENTRY(AktionHinzufuegen, "Hinzuf&uuml;gen", "")
+_STRTABENTRY(Durchwahl, "Durchwahl", "Direct dial")
+_STRTABENTRY(TlnverzAttrLokal, "Lokal", "local")
+_STRTABENTRY(TlnverzAttrGesperrt, "gesperrt", "locked")
+_STRTABENTRY(Typ, "Typ", "Type")
+_STRTABENTRY(TlnverzAttrDyn, "DynIP", "DynIP")
+_STRTABENTRY(TypGeloescht, "geloescht", "deleted")
+_STRTABENTRY(TypAscii, "Ascii", "Ascii")
+_STRTABENTRY(TypTxp, "i-Telex", "i-Telex")
+_STRTABENTRY(TypEMail, "eMail", "eMail")
+_STRTABENTRY(AktionAendern, "&Auml;ndern", "edit")
+_STRTABENTRY(AktionHinzufuegen, "Hinzuf&uuml;gen", "add")
 _STRTABENTRY(Rufnummer0NichtErlaubt, "<b>Rufnummer 0 nicht erlaubt!</b><br>", "")
 _STRTABENTRY(MeldungTlneintragRufnummer, "Teilnehmereintrag:<br>Rufnummer: %ld ", "")
 _STRTABENTRY(EhemalsLong, "ehem. %ld", "")
@@ -169,7 +184,6 @@ _STRTABENTRY(ZusatzEepromFehler, "Fehler im Zusatz-EEPROM", "")
 
 
 // für TlnServer.c:
-// ungeprüft:
 _STRTABENTRY(NeuTeilnehmer, "Neuer Teilnehmer angemeldet", "")
 _STRTABENTRY(TeilnehmerlisteVoll, "Rufnummern-Verzeichnis voll, nicht gespeichert", "")
 _STRTABENTRY(ServerAnmeldungFalscheGeheimzahl, "Teilnehmer-Server Anmeldung mit falscher Geheimzahl", "")
