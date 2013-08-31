@@ -30,7 +30,7 @@
 
 #include "config.h"
 
-#ifdef ITELEX
+#ifdef iTelex
 
 #if !defined(ITELEX_TLNSERVER) && !defined(ITELEX_ANSCHLUSS)
 	#warning Kein iTelex-Modul aktiv!
@@ -442,6 +442,8 @@ extern bool KonfigFreigabe(void *pStruct, TSprache Sprache);
 
 extern bool PruefeSprache(void *pStruct, TSprache *Sprache);
 
+extern void SpeichereSpracheAlsLokal(TSprache Sprache);
+
 extern void ZeitUeberwachungInit(TZeitUeberwachung *zue, uint16_t aGrenzwert);
 
 extern void ZeitUeberwachungStart(TZeitUeberwachung *zue);
@@ -510,7 +512,7 @@ static inline uint16_t KurzTimerVal(TKurzTimer *t)
 	}
 		
 	
-#endif //def ITELEX
+#endif //def iTelex
 	
 #endif /* _TXP_H_ */
 //@}

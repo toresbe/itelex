@@ -39,7 +39,7 @@
 
 #include "config.h"
 
-#ifdef ITELEX
+#ifdef iTelex
 
 // #include "defports.h"
 // #include "bits.h"
@@ -4404,7 +4404,24 @@ void AdresseZuWahlStr(uint8_t Adr, char* Buf)
 
 #endif // ITELEX_ANSCHLUSS
 
+
+const PROGMEM char LokaleSprache_P[] = "SPRACHE";
+
+//! Speichert die (z.B. in einem CGI-Aufruf) benutzte Sprache in #LokaleSprache	
+//-----------------------------------------------------------------------------
+void SpeichereSpracheAlsLokal(TSprache Sprache)
+	{
+	if (Sprache == LokaleSprache)
+		return; // da gibt es nix zu speichern.
+
+	char Buf[6];
+	itoa(Sprache, Buf, 10); // 10 ist die Basis für Dezimal!
+	changeConfig_P(LokaleSprache_P, Buf);		
+	LokaleSprache = Sprache;
+	printf_P(ISTR(LokaleSpracheGespeichert, Sprache));
+	} // SpeichereSpracheAlsLokal
 	
+
 const PROGMEM char KonfigPasswort_P[] = "CFGPASS";
 const PROGMEM char TlnBuchOffen_P[] = "TLNBUCHOFFEN";
 const PROGMEM char ProtokollLevel_P[] = "PROTLEVEL";
@@ -4631,6 +4648,8 @@ void itelex_cgi_config_intern(void *pStruct)
 			}
 			
 		TlnBuchOffen = CgiCheckBool_P(http_request, ISTR(TlnVerzeichnisOffen, Sprache), TlnBuchOffen_P, TlnBuchOffen, Sprache);
+
+		SpeichereSpracheAlsLokal(Sprache);
 		
 		} // else argc > 0
 		
@@ -4681,7 +4700,6 @@ const PROGMEM char SelbstAnrufPeriode_P[] = "SELBSTANPER";
 
 #endif // ITELEX_ANSCHLUSS
 
-const PROGMEM char LokaleSprache_P[] = "SPRACHE";
 const PROGMEM char RufnrServerAdr1_P[] = "RUFNRSERV1";
 const PROGMEM char RufnrServerAdr2_P[] = "RUFNRSERV2";
 const PROGMEM char RufnrServerAdr3_P[] = "RUFNRSERV3";
@@ -4690,19 +4708,6 @@ const PROGMEM char TlnServSyncGeheimzahl_P[] = "SYNCPIN";
 const char* RufnrServerAdr_P[] = { RufnrServerAdr1_P, RufnrServerAdr2_P, RufnrServerAdr3_P } ; // liegt dann zwar im RAM, ist aber halt so...
 	
 
-//! Speichert die (z.B. in einem CGI-Aufruf) benutzte Sprache in #LokaleSprache	
-//-----------------------------------------------------------------------------
-void SpeichereSpracheAlsLokal(TSprache Sprache)
-	{
-	if (Sprache == LokaleSprache)
-		return; // da gibt es nix zu speichern.
-
-	char Buf[6];
-	itoa(Sprache, Buf, 10); // 10 ist die Basis für Dezimal!
-	changeConfig_P(LokaleSprache_P, Buf);		
-	LokaleSprache = Sprache;
-	} // SpeichereSpracheAlsLokal
-	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface zum Ändern der Einstellungen des iTelex-Interface bezüglich der Einbindung
  * in das globale ip-netz
@@ -4773,6 +4778,8 @@ void itelex_cgi_config_extern(void *pStruct)
 		#ifdef ITELEX_TLNSERVER
 		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl, Sprache);
 		#endif //def ITELEX_TLNSERVER
+		
+		SpeichereSpracheAlsLokal(Sprache);
 
 		if (SelbstAnrufPhase == SelbstAnrufSperre)
 			SelbstAnrufPhase = SelbstAnrufRuhe;
@@ -5162,7 +5169,7 @@ void itelex_init()
 	}
 
 
-#endif //def ITELEX
+#endif //def iTelex
 
 
 #if defined(MMC)

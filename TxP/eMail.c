@@ -926,6 +926,8 @@ void itelex_cgi_email_config(void *pStruct)
 		// ----------------------------
 		EmailAusgabeFilternKennung = CgiCheckBool_P(http_request, ISTR(EmailKonfigFilterNurTX, Sprache), 
 													EmailAusgabeFilternKennung_P, EmailAusgabeFilternKennung, Sprache);
+													
+		SpeichereSpracheAlsLokal(Sprache);
 		
 		} // else argc > 0
 		

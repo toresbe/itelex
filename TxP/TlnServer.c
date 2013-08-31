@@ -40,7 +40,7 @@
 
 #include "config.h"
 
-#ifdef ITELEX
+#ifdef iTelex
 
 #include "system/net/ip.h"
 #include "system/net/tcp.h"
@@ -831,6 +831,7 @@ static bool VollAbfrageKanalOeffnen()
 	if (TlnServer[0].Socket != NO_SOCKET_USED)
 		return false;
 
+	bool Res = false;
 	int NewSock = TeilnehmerServerSocketOeffnen1(VollAbfrageServerIndex, PSTR("Vollabfrage")); 
 		// da wird auch Protokoll geschrieben.
 		
@@ -849,13 +850,14 @@ static bool VollAbfrageKanalOeffnen()
 		SocketDatenSenden(&TlnServer[0]);
 		TlnServer[0].Freigabe = true; // wer anruft weiß wen er anruft.
 		TlnServer[0].IstVollAbfrage = true;
+		Res = true;
 		}
 
 	VollAbfrageServerIndex++;
 	if (VollAbfrageServerIndex >= ANZ_TEILNEHMER_SERVER)
 		VollAbfrageServerIndex = 0;
 		
-	return false;
+	return Res;
 	}
 
 
@@ -1138,7 +1140,7 @@ void itelex_tlnserv_init()
 	
 	StartLangTimer(&VollAbfrageTimer);
 	VollAbfrageTimerEnde = 1 * LangTimerMinuteFaktor;
-	VollAbfrageServerIndex = ANZ_TEILNEHMER_SERVER - 1;
+	VollAbfrageServerIndex = 0;
 	
 	THREAD_RegisterThread( itelex_tlnserv_thread, PSTR("TlnSrv"));
 	}
@@ -1146,5 +1148,5 @@ void itelex_tlnserv_init()
 
 #endif //def ITELEX_TLNSERVER
 
-#endif //def ITELEX
+#endif //def iTelex
 

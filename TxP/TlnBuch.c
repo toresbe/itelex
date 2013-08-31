@@ -20,7 +20,7 @@
 #include "CgiFormTools.h"
 #include "StringTab.h"
 
-#ifdef ITELEX
+#ifdef iTelex
 
 enum { TlnBuchMemMax = 20000UL } ; //!< Größe des Teilnehmerverzeichnisses in Bytes
 
@@ -1264,4 +1264,4 @@ void TlnBuchInit()
 	}
 	
 
-#endif //def ITELEX
+#endif //def iTelex

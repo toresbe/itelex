@@ -155,7 +155,7 @@ const char data4[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"info.html\"target=\"main\">Info</a>"
-	#if defined(ITELEX)
+	#if defined(iTelex)
 	" / <a href=\"itelex-menu-de.html\">i-Telex (Deutsch)</a>"
 	" / <a href=\"itelex-menu-en.html\">i-Telex (English)</a>"
 	#endif
@@ -165,12 +165,14 @@ const char data4[] PROGMEM = {
 	#ifdef HTTPSERVER_IO
 		" / <a href=\"io.html\">IO-Ports</a>"
 	#endif
+	/* nach iTelex-Konfiguration verlegt
 	#ifdef HTTPSERVER_NETCONFIG
 		" / <a href=\"network.html\">Netzwerk</a>"
 	#endif
 	#ifdef HTTPSERVER_SYSTEM
 		" / <a href=\"system.html\">System</a>"
 	#endif
+	*/
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
@@ -283,7 +285,7 @@ const char data10[] PROGMEM = {
 	"\r\n\r\n"	};
 #endif
 
-#if defined(ITELEX)
+#if defined(iTelex)
 
 const char iTelexMainMenuDeName[] PROGMEM = "itelex-menu-de.html";
 const char iTelexMainMenuDeText[] PROGMEM = {
@@ -295,7 +297,7 @@ const char iTelexMainMenuDeText[] PROGMEM = {
 	"<a href=\"mainmenu.html\">zur&uuml;ck</a>"
 	" / <a href=\"itelex-msg-de.html\" target=\"main\">Nachricht senden</a>"
 	" / <a href=\"itelex-tlnverz.cgi?spr=de\" target=\"main\">Teilnehmer-Verzeichnis</a>"
-	" / <a href=\"itelexcfg-menu-de.html\">iTelex-Einstellungen</a>"
+	" / <a href=\"itelexcfg-menu-de.html\">i-Telex-Einstellungen</a>"
 	" / <a href=\"itelex-debug.cgi\" target=\"main\">Debug-Infos</a>"
 	" / <a href=\"itelex-twitlnliste.cgi?spr=de\" target=\"main\">Bus-Tln-Liste</a>"
 #if defined(MMC)
@@ -338,6 +340,12 @@ const char iTelexCfgMenuDeText[] PROGMEM = {
 #ifdef ITELEX_EMAIL
 	" / <a href=\"itelexcfg-email.cgi?spr=de\" target=\"main\">eMail-Einstellungen</a>"
 #endif //def ITELEX_EMAIL	
+#ifdef HTTPSERVER_NETCONFIG
+	" / <a href=\"network.html\">Netzwerk</a>"
+#endif
+#ifdef HTTPSERVER_SYSTEM
+	" / <a href=\"system.html\">System</a>"
+#endif
 	" / <a href=\"itelexcfg-sperren.cgi?spr=de\" target=\"main\">Sperren</a>"
 	"</BODY>"
 	"</HTML>"
@@ -357,6 +365,12 @@ const char iTelexCfgMenuEnText[] PROGMEM = {
 #ifdef ITELEX_EMAIL
 	" / <a href=\"itelexcfg-email.cgi?spr=en\" target=\"main\">eMail settings</a>"
 #endif //def ITELEX_EMAIL	
+#ifdef HTTPSERVER_NETCONFIG
+	" / <a href=\"network.html\">Network</a>"
+#endif
+#ifdef HTTPSERVER_SYSTEM
+	" / <a href=\"system.html\">System</a>"
+#endif
 	" / <a href=\"itelexcfg-sperren.cgi?spr=en\" target=\"main\">lock</a>"
 	"</BODY>"
 	"</HTML>"
@@ -398,7 +412,7 @@ const char iTelexChatEnText[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n" } ;
 		
-#endif //def ITELEX
+#endif //def iTelex
 
 FILES files[] = {
 	{ files1, data1, TEXT, sizeof( data1 ) - 1 },
@@ -421,7 +435,7 @@ FILES files[] = {
 #if defined(TEMP_LOGGER)
 	{ files10, data10, TEXT, sizeof( data10 ) - 1 },
 #endif
-#if defined(ITELEX)
+#if defined(iTelex)
 	{ iTelexMainMenuDeName, iTelexMainMenuDeText, TEXT, sizeof( iTelexMainMenuDeText ) - 1 },
 	{ iTelexMainMenuEnName, iTelexMainMenuEnText, TEXT, sizeof( iTelexMainMenuEnText ) - 1 },
 	{ iTelexCfgMenuDeName, iTelexCfgMenuDeText, TEXT, sizeof( iTelexCfgMenuDeText ) - 1 },
