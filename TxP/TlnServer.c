@@ -26,7 +26,59 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
- 
+//*****************************************************************************
+// Typische Abläufe mit dem Teilnehmer-Server:
+// *******************************************
+//
+// 1. Meldung einer Endstelle zur Ermittlung der IP-Adresse der Endstelle.
+// =======================================================================
+// Endstelle (Client)			 -		Server
+// ------------------------------------------------
+// TLNSERV_SELBSTAKT   			-->		
+//								<--		TLNSERV_IPRUECKMELD
+// ??? wer beendet ???
+// 
+// 2. Abfrage einer konkteten Rufnummer
+// ====================================
+// Endstelle (Client)	 		 -		Server
+// ------------------------------------------------
+//	TLNSERV_ABFRAGE_VERSION1	-->
+//								<--		TLNSERV_AUSKUNFT_NICHTVERG (wenn nicht bekannt)
+//											oder
+//								<--		TLNSERV_AUSKUNFT_VERSION1 (wenn gefunden)
+// ??? wer beendet ???
+//
+// 3. Voll-Abfrage Server - Server
+// ================================
+// Server (als Client)	 		 -		Server
+// ------------------------------------------------
+// TLNSERV_SYNC_TOTALABFRAGE	-->
+//								<--		TLNSERV_AUSKUNFT_VERSION1
+// TLNSERV_SYNC_QUITTUNG		-->
+//								<--		TLNSERV_AUSKUNFT_VERSION1
+//								...
+// TLNSERV_SYNC_QUITTUNG		-->
+//								<--		TLNSERV_SYNC_ENDE
+// ??? wer beendet ???
+//							
+// 
+// 4. Meldung von Änderungen von Server an Server
+// ==============================================
+// Server (als Client)	 		 -		Server
+// ------------------------------------------------
+// TLNSERV_SYNC_ANMELDUNG		-->
+//								<--		TLNSERV_SYNC_QUITTUNG
+// TLNSERV_AUSKUNFT_VERSION1	-->
+//								<--		TLNSERV_SYNC_QUITTUNG
+//								...
+// TLNSERV_AUSKUNFT_VERSION1	-->
+//								<--		TLNSERV_SYNC_QUITTUNG
+// TLNSERV_SYNC_ENDE			-->
+// ??? wer beendet ???
+//
+//*****************************************************************************
+
+
 //@{
 #include <avr/pgmspace.h>
 #include <avr/version.h>
