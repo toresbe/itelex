@@ -2451,6 +2451,9 @@ static void ZeichenInHtmlSendeText(char c)
 #endif // ITELEX_ANSCHLUSS
 
 
+// Obergrenze für den Fehlerzähler.
+enum { TeilnehmerServerFehlerZaehlerGrenze = 5 * 2 } ;
+
 //! Prüft, ob ein Socket benutzbar ist und nicht wegen Fehlern gesperrt ist
 //-------------------------------------------------------------------------
 //! \param ServerI Index-Nummer des Teilnehmer-Servers (0 bis ANZ_TEILNEHMER_SERVER-1)
@@ -2461,7 +2464,7 @@ bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund)
 	if (TeilnehmerServerAdresse[ServerI][0] == '\0')
 		return false;
 		
-	if (TeilnehmerServerFehlerZaehler[ServerI] >= 4 * 2)
+	if (TeilnehmerServerFehlerZaehler[ServerI] >= TeilnehmerServerFehlerZaehlerGrenze)
 		// * 2 wegen "doppelter" Zählung in TeilnehmerServerFehlerSpeichern().
 		{
 		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= (TeilnehmerServerAlleNichtErreichbar ? 20 * LangTimerMinuteFaktor : 180 * LangTimerMinuteFaktor))
@@ -2498,9 +2501,6 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 	if (TeilnehmerServerAdresse[ServerI][0] == '\0')
 		return -1;
 		
-	if (TeilnehmerServerFehlerZaehler[ServerI] >= 2)
-		TeilnehmerServerFehlerZaehler[ServerI] -= 2; 
-
 	StartLangTimer(&TeilnehmerServerSperrTimer[ServerI]);
 		
 	TeilnehmerServerIP[ServerI] = strtoip(TeilnehmerServerAdresse[ServerI]);	// Annahme: eine IP-Adresse angegeben
@@ -2521,9 +2521,9 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 				Protokollieren_P(Grund);
 				Protokollieren_P(PSTR(".\r\n"));
 				}
-			if (TeilnehmerServerFehlerZaehler[ServerI] > 0)
-				TeilnehmerServerFehlerZaehler[ServerI]--; // läuft im Erfolgsfall langsam wieder auf Null.
-				
+
+			TeilnehmerServerErfolgSpeichern(ServerI);
+			
 			if (TeilnehmerServerAlleNichtErreichbar)
 				Diagnoseausgabe_P(ISTR(TeilnehmerServerWiederErreichbar, LokaleSprache), 1);	
 				
@@ -2536,12 +2536,13 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 			{
 			ProtokollierenITelex_P(PSTR("! Verbindungsversuch an Teilnehmer-Server "));
 			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
-			Protokollieren_P(PSTR(" GESCHEITERT (Oeffnung fuer "));
+			Protokollieren_P(PSTR(" GESCHEITERT fuer "));
 			Protokollieren_P(Grund);
-			Protokollieren_P(PSTR(")\r\n"));
+			Protokollieren_P(PSTR(".\r\n"));
 			}
-			
+
 		TeilnehmerServerFehlerSpeichern(ServerI);
+			
 		return -1;
 		}
 	else
@@ -2550,7 +2551,8 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 		Protokollieren(TeilnehmerServerAdresse[ServerI]); 
 		Protokollieren_P(PSTR(" IP nicht bekannt (Oeffnung fuer "));
 		Protokollieren_P(Grund);
-		Protokollieren_P(PSTR(")\r\n"));
+		Protokollieren_P(PSTR(").\r\n"));
+		
 		TeilnehmerServerFehlerSpeichern(ServerI);
 		return -1;
 		}
@@ -2568,11 +2570,31 @@ void TeilnehmerServerFehlerSpeichern(int ServerI)
 	if (ServerI >= 0 && ServerI < ANZ_TEILNEHMER_SERVER)
 		{
 		StartLangTimer(&TeilnehmerServerSperrTimer[ServerI]);
-		TeilnehmerServerFehlerZaehler[ServerI] += 2; 
+		if (TeilnehmerServerFehlerZaehler[ServerI] < TeilnehmerServerFehlerZaehlerGrenze)
+			TeilnehmerServerFehlerZaehler[ServerI] += 2; 
 			// Plus 2, da bei jedem erfolgreichen öffnen der Zähler wieder um 1 
 			// dekrementiert wird. Damit Fehler, die wiederholbar erst bei der Datenübertragung
 			// auftreten registriert werden, muss diese dekrementierung "aufgeholt"
 			// werden.
+		ProtokollierenITelex_P(PSTR("Teilnehmer-Server "));
+		Protokollieren(TeilnehmerServerAdresse[ServerI]); 
+		ProtokollierenInt_P(PSTR(" Fehlerzaehler erhoeht auf %d\r\n"), TeilnehmerServerFehlerZaehler[ServerI]);
+		}
+	}
+	
+
+//! Speichern von Erfolgsmeldungen zu Teilnehmer-Servern.
+// -------------------------------------------------------------------
+//! \param ServerI Tabellenindex des Servers.
+
+void TeilnehmerServerErfolgSpeichern(int ServerI)
+	{
+	if (ServerI >= 0 && ServerI < ANZ_TEILNEHMER_SERVER && TeilnehmerServerFehlerZaehler[ServerI] > 0)
+		{
+		TeilnehmerServerFehlerZaehler[ServerI]--; 
+		ProtokollierenITelex_P(PSTR("Teilnehmer-Server "));
+		Protokollieren(TeilnehmerServerAdresse[ServerI]); 
+		ProtokollierenInt_P(PSTR(" Fehlerzaehler verringert auf %d\r\n"), TeilnehmerServerFehlerZaehler[ServerI]);
 		}
 	}
 	

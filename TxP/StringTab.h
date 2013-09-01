@@ -78,7 +78,7 @@ _STRTABENTRY(DatumDruckAnrufer, "nur beim Anrufer", "only at caller")
 _STRTABENTRY(DatumDruckBeide, "lokal und Anrufer", "local and caller")
 _STRTABENTRY(KonnteNichtGeaendertWerden, " konnte nicht ge&auml;ndert werden", "")
 _STRTABENTRY(KennwortGgfGeaendert, "<br>Kennwort ggf. ge&auml;ndert.", "")
-_STRTABENTRY(InternesKennwortFehlt, "zun&auml;chst Passwort in <a href=\"txpcfg-intern.cgi\" target=\"main\">Einstellungen im lokalen TxP-System</a> eingeben!", "")
+_STRTABENTRY(InternesKennwortFehlt, "zun&auml;chst Passwort in <a href=\"itelexcfg-intern.cgi\" target=\"main\">Einstellungen im lokalen TxP-System</a> eingeben!", "")
 _STRTABENTRY(GesperrtBestaetigung, "Konfigurationsseiten sind nun gesperrt. Zur Freigabe wieder das Passwort eingeben oder Taste der Baugruppe 2 x dr&uuml;cken.", "")
 _STRTABENTRY(ITelexRufnummer, "eigene Rufnummer im i-telex-Netz", "")
 _STRTABENTRY(ITelexRufnummerZuKurz, "<big><b>&lt;=== zu wenig Ziffern!</b></big>", "")
@@ -132,19 +132,19 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"</tr>")
 	
 _STRTABENTRY(TeilnehmerverzeichnisAktionenOffen,
-	"<a href=\"txp-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a><br>" 
-	"<a href=\"txp-tlnverz.cgi?load\">alle &Auml;nderungen verwerfen</a><br>"
-	"<a href=\"txp-tlnverz.cgi?clear\">komplett l&ouml;schen</a><br>", 
-	"<a href=\"txp-tlnverz.cgi?save\">save non-volatile</a><br>" 
-	"<a href=\"txp-tlnverz.cgi?load\">discard all changes</a><br>"
-	"<a href=\"txp-tlnverz.cgi?clear\">clear all</a><br>")
+	"<a href=\"itelex-tlnverz.cgi?save\">nichtfl&uuml;chtig speichern</a><br>" 
+	"<a href=\"itelex-tlnverz.cgi?load\">alle &Auml;nderungen verwerfen</a><br>"
+	"<a href=\"itelex-tlnverz.cgi?clear\">komplett l&ouml;schen</a><br>", 
+	"<a href=\"itelex-tlnverz.cgi?save\">save non-volatile</a><br>" 
+	"<a href=\"itelex-tlnverz.cgi?load\">discard all changes</a><br>"
+	"<a href=\"itelex-tlnverz.cgi?clear\">clear all</a><br>")
 _STRTABENTRY(TeilnehmerverzeichnisAktionenLeerOffen, 
 	"Noch keine Eintr&auml;ge vorhanden<p>"
-	"<a href=\"txp-tlnverz.cgi?load\">gespeicherte Daten wiederherstellen</a><br>"
-	"<a href=\"txp-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></form>",
+	"<a href=\"itelex-tlnverz.cgi?load\">gespeicherte Daten wiederherstellen</a><br>"
+	"<a href=\"itelex-tlnverz.cgi?edit=0\">Hinzuf&uuml;gen</a></form>",
 	"No eintries yet<p>"
-	"<a href=\"txp-tlnverz.cgi?load\">restore last saved entries</a><br>"
-	"<a href=\"txp-tlnverz.cgi?edit=0\">add entry</a></form>")
+	"<a href=\"itelex-tlnverz.cgi?load\">restore last saved entries</a><br>"
+	"<a href=\"itelex-tlnverz.cgi?edit=0\">add entry</a></form>")
 	
 _STRTABENTRY(Rufnummer, "Rufnummer", "")
 _STRTABENTRY(Name, "Name", "")
@@ -157,7 +157,7 @@ _STRTABENTRY(Typ, "Typ", "Type")
 _STRTABENTRY(TlnverzAttrDyn, "DynIP", "DynIP")
 _STRTABENTRY(TypGeloescht, "geloescht", "deleted")
 _STRTABENTRY(TypAscii, "Ascii", "Ascii")
-_STRTABENTRY(TypTxp, "i-Telex", "i-Telex")
+_STRTABENTRY(TypITelex, "i-Telex", "i-Telex")
 _STRTABENTRY(TypEMail, "eMail", "eMail")
 _STRTABENTRY(AktionAendern, "&Auml;ndern", "edit")
 _STRTABENTRY(AktionHinzufuegen, "Hinzuf&uuml;gen", "add")
@@ -179,7 +179,7 @@ _STRTABENTRY(EepromLadenFehler, "<b>Fehler beim Laden (Codes %d / %02X)</b>", ""
 _STRTABENTRY(EepromLadenErfolg, "Erfolgreich geladen (%d Bytes)", "")
 _STRTABENTRY(KomplettGeloescht, "komplett gel&ouml;scht", "")
 _STRTABENTRY(UngueltigerCgiAufruf, "Fehler: ungueltiger CGI-Aufruf: %s", "")
-_STRTABENTRY(ZurueckZumTeilnehmerverzeichnis, "<br>Zur&uuml;ck zum <a href=\"txp-tlnverz.cgi\">Teilnehmer-Verzeichnis</a>", "")
+_STRTABENTRY(ZurueckZumTeilnehmerverzeichnis, "<br>Zur&uuml;ck zum <a href=\"itelex-tlnverz.cgi\">Teilnehmer-Verzeichnis</a>", "")
 _STRTABENTRY(ZusatzEepromFehler, "Fehler im Zusatz-EEPROM", "")
 
 

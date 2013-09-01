@@ -464,6 +464,8 @@ extern int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund);
 
 extern void TeilnehmerServerFehlerSpeichern(int ServerI);
 
+extern void TeilnehmerServerErfolgSpeichern(int ServerI);
+
 extern uint16_t Zufallswert(uint16_t Maske);
 
 //! Startet Langzeit-Messung.

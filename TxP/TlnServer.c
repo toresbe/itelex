@@ -748,6 +748,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						{
 						ProtokollierenTlnServ_P(Kanal, PSTR("Vollabfrage erfolgreich beendet"));
 						ProtokollierenInt_P(PSTR(" mit %d geaenderten / aktualisierten Eintraegen\r\n"), Kanal->AnzahlAktualisiert);
+						TeilnehmerServerErfolgSpeichern(Kanal->ListeIdx); 
 						}		
 						
 					StartLangTimer(&VollAbfrageTimer);
@@ -805,15 +806,23 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 			ProtokollierenTlnServ_P(Kanal, PSTR("Socket wurde von Gegenstelle geschlossen\r\n"));
 		CloseTCPSocket(Kanal->Socket);
 		Kanal->Socket = NO_SOCKET_USED;
-		if (!Kanal->Fertig && Kanal->ListeIdx >= 0)
-			{ // unerwartetes Ende...
-			if (Kanal->AusgabeGestartet)
-				TlnServSyncStichzeit[Kanal->ListeIdx] = Kanal->AusgabeStichdatum; 
-					// wegen des Fehlers alles noch mal senden.
-				
-			TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
+		if (Kanal->ListeIdx >= 0 && Kanal->ListeIdx < ANZ_TEILNEHMER_SERVER)
+			{ // noch Statistik führen
+			if (Kanal->Fertig)
+				{ // erwartetes Ende
+				TeilnehmerServerErfolgSpeichern(Kanal->ListeIdx);
+				}
+			else
+				{ // unerwartetes Ende...
+				if (Kanal->AusgabeGestartet)
+					TlnServSyncStichzeit[Kanal->ListeIdx] = Kanal->AusgabeStichdatum; 
+						// wegen des Fehlers alles noch mal senden.
+					
+				// HACK deaktiviert wegen Fehlern mit Richard...: TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
+				//! \todo mal sehen was passiert. Problem: Bei Vollabfrage sendet Gegenstelle wohl kein aktives "Ende der Liste". Oder die Gegenstelle schließt den Kanal dann zu früh...
+				}
 			}
-		
+
 		// da ursache nicht bekannt, kein SyncWarteEnde = X * KurzTimerFreq; // X Sekunden warten.		
 		return;
 		}
