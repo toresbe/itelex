@@ -32,49 +32,51 @@
 //
 // 1. Meldung einer Endstelle zur Ermittlung der IP-Adresse der Endstelle.
 // =======================================================================
-// Endstelle (Client)			 -		Server
+// Endstelle (Client)				 -		Server
 // ------------------------------------------------
-// TLNSERV_SELBSTAKT   			-->		
-//								<--		TLNSERV_IPRUECKMELD
-// ??? wer beendet ???
+// TLNSERV_SELBSTAKT (01)			-->		
+//									<--		TLNSERV_IPRUECKMELD (02)
+// (schließt Verbindung)
 // 
 // 2. Abfrage einer konkteten Rufnummer
 // ====================================
-// Endstelle (Client)	 		 -		Server
+// Endstelle (Client)	 			 -		Server
 // ------------------------------------------------
-//	TLNSERV_ABFRAGE_VERSION1	-->
-//								<--		TLNSERV_AUSKUNFT_NICHTVERG (wenn nicht bekannt)
-//											oder
-//								<--		TLNSERV_AUSKUNFT_VERSION1 (wenn gefunden)
-// ??? wer beendet ???
+//	TLNSERV_ABFRAGE_VERSION1 (03)	-->
+//									<--		TLNSERV_AUSKUNFT_NICHTVERG (04)
+//											(wenn nicht bekannt)
+//												oder
+//									<--		TLNSERV_AUSKUNFT_VERSION1 (05)
+//											(wenn gefunden)
+// (schließt Verbindung)
 //
 // 3. Voll-Abfrage Server - Server
 // ================================
-// Server (als Client)	 		 -		Server
+// Server (als Client)	 			 -		Server
 // ------------------------------------------------
-// TLNSERV_SYNC_TOTALABFRAGE	-->
-//								<--		TLNSERV_AUSKUNFT_VERSION1
-// TLNSERV_SYNC_QUITTUNG		-->
-//								<--		TLNSERV_AUSKUNFT_VERSION1
-//								...
-// TLNSERV_SYNC_QUITTUNG		-->
-//								<--		TLNSERV_SYNC_ENDE
-// ??? wer beendet ???
+// TLNSERV_SYNC_VOLLABFRAGE (06)	-->
+//									<--		TLNSERV_AUSKUNFT_VERSION1 (05)
+// TLNSERV_SYNC_QUITTUNG (08)		-->
+//									<--		TLNSERV_AUSKUNFT_VERSION1 (05)
+//									...
+// TLNSERV_SYNC_QUITTUNG (08)		-->
+//									<--		TLNSERV_SYNC_ENDE (09)
+// (schließt Verbindung)
 //							
 // 
-// 4. Meldung von Änderungen von Server an Server
+// 4. Meldung von Änderungen von Server an Server (Sync-Meldung)
 // ==============================================
-// Server (als Client)	 		 -		Server
+// Server (als Client)	 			 -		Server
 // ------------------------------------------------
-// TLNSERV_SYNC_ANMELDUNG		-->
-//								<--		TLNSERV_SYNC_QUITTUNG
-// TLNSERV_AUSKUNFT_VERSION1	-->
-//								<--		TLNSERV_SYNC_QUITTUNG
-//								...
-// TLNSERV_AUSKUNFT_VERSION1	-->
-//								<--		TLNSERV_SYNC_QUITTUNG
-// TLNSERV_SYNC_ENDE			-->
-// ??? wer beendet ???
+// TLNSERV_SYNC_ANMELDUNG (07)		-->
+//									<--		TLNSERV_SYNC_QUITTUNG (08)
+// TLNSERV_AUSKUNFT_VERSION1 (05)	-->
+//									<--		TLNSERV_SYNC_QUITTUNG (08)
+//									...
+// TLNSERV_AUSKUNFT_VERSION1 (05)	-->
+//									<--		TLNSERV_SYNC_QUITTUNG (08)
+// TLNSERV_SYNC_ENDE (09)			-->
+// 											(schließt Verbindung)
 //
 //*****************************************************************************
 
@@ -135,8 +137,8 @@ typedef struct
 		//!< -1 bei kommenden Verbindungen.
 	uint32_t NutzungZaehler; //!< Zählt, wie oft dieser Kanal geöffnet wurde.
 	bool Freigabe; //!< Korrekte Autentifizierung empfangen.
-	bool IstVollAbfrage; //!< Dieser Kanal wurde geöffnet, um das Teilnehmer-Verzeichnis nach 
-						    //!< Neustart zu initialisieren.
+	bool IstVollAbfrage; //!< Dieser Kanal wurde geöffnet, um das Teilnehmer-Verzeichnis (z.B. nach 
+						    //!< Neustart) vollständig abzufragen.
 	bool AusgabeGestartet; //!< gespeicherte Adressen werden an den Gegenüber gesendet.
 	uint16_t AnzahlAktualisiert; //!< Zählt die durch den Abgleich geänderten Einträge.
 	TTlnListerDat AusgabeLister; //!< Daten für die Ausgabe (welcher Datensatz wurde zuletzt gesendet)
@@ -210,11 +212,19 @@ static void KanalInit(TTlnServKanal* k, int aSocket)
 	k->ListeIdx = -1;
 	k->Freigabe = false;
 	k->AusgabeGestartet = false;
+	k->AusgabeStichdatum = 0;
 	k->IstVollAbfrage = false;
 	k->Fertig = false;
 	k->SendeFehlerZaehler = 0;
 	k->AnzahlAktualisiert = 0;
 	k->NutzungZaehler++;
+	}
+
+
+static void KanalFertig(TTlnServKanal* k)
+	{
+	k->Fertig = true;
+	TCP_sockettable[k->Socket].Timeoutcounter = 5; // Timeout auf 5 Sekunden verkürzen, da eh gleich das Ende kommt.
 	}
 	
 	
@@ -458,7 +468,7 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 	TlnServBuf.Code = TLNSERV_SYNC_ENDE;
 	TlnServBuf.PureData[0] = '\0';
 	TlnServBuf.DataLen = 1;
-	Kanal->Fertig = true;
+	KanalFertig(Kanal);
 	} // TlnDatensatzSyncSenden()
 		
 		
@@ -500,8 +510,6 @@ static void SocketDatenSenden(TTlnServKanal *Kanal)
 			ProtokollierenTlnServ_P(Kanal, PSTR("! Sendung war NICHT VOLLSTAENDIG\r\n" ));
 			}
 
-		TCP_sockettable[Kanal->Socket].Timeoutcounter = 5; // Timeout auf 5 Sekunden verkürzen, da meist nur eine Anfrage.
-			
 		} // if es gibt was zu senden
 	} // SocketDatenSenden()
 		
@@ -568,7 +576,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						TlnServBuf.DataLen = sizeof(TlnServBuf.IpRueckm);
 						TlnServBuf.IpRueckm.EmpfIP = MeldeIP;
 						Senden = true;
-						}
+						} // TlnAktualisierung(...) = true
 					else
 						{
 						FehlerRueckmelden(PSTR("forbidden"), 0);
@@ -579,9 +587,12 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 							ProtokollierenIPAdr(MeldeIP);
 							Protokollieren_P(PSTR("\r\n"));
 							}
-						}
-					}
-				Kanal->Fertig = true; // mehr wird da nicht kommen.
+						} // TlnAktualisierung(..) = false --> nicht erlaubt
+					} // else ausreichend Daten erhalten
+					
+				if (Senden)
+					KanalFertig(Kanal); // mehr wird da nicht kommen.
+					
 				break;
 				
 			case TLNSERV_ABFRAGE_VERSION1:
@@ -619,9 +630,12 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						Senden = true;
 						if (ProtokollLevelTlnServ >= 2) 
 							Protokollieren_P(PSTR("! ...nicht gefunden oder gesperrt\r\n"));
-						}
-					}
-				Kanal->Fertig = true; // mehr wird da nicht kommen.
+						} 
+					} // else ausreichend Daten erhalten
+					
+				if (Senden)
+					KanalFertig(Kanal); // mehr wird da nicht kommen.
+					
 				break;
 
 			case TLNSERV_AUSKUNFT_VERSION1:
@@ -692,7 +706,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					} // SyncFreigabe ok
 				break;
 				
-			case TLNSERV_SYNC_TOTALABFRAGE:
+			case TLNSERV_SYNC_VOLLABFRAGE:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SyncAnmeldung))
 					{
 					FehlerRueckmelden(PSTR("login not enough data: %u"), TlnServBuf.DataLen);
@@ -766,12 +780,13 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				break;
 			
 			case TLNSERV_SYNC_ENDE:
-				CloseTCPSocket(Kanal->Socket);
-				Kanal->Socket = NO_SOCKET_USED;
 				if (ProtokollLevelTlnServ >= 2) 
 					{
 					ProtokollierenTlnServ_P(Kanal, PSTR("Ende Kennung empfangen, Socket wird geschlossen\r\n"));
 					}
+
+				CloseTCPSocket(Kanal->Socket);
+				Kanal->Socket = NO_SOCKET_USED;
 					
 				if (Kanal->IstVollAbfrage)
 					{ 
@@ -822,14 +837,14 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					Protokollieren_P(PSTR("\r\n"));
 					}		
 				SyncWarteEnde = (30 + Zufallswert(0xF)) * KurzTimerFreq; // 30 Sekunden warten.
-				if (Kanal->ListeIdx >= 0)
-					{
+
+				if (Kanal->ListeIdx >= 0 && Kanal->AusgabeStichdatum > 0) // nur wenn es eine aktive Sync-Ausgabe war.
 					TlnServSyncStichzeit[Kanal->ListeIdx] = Kanal->AusgabeStichdatum; 
 						// wegen des Fehlers alles noch mal senden.
-					TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
-						// und Fehler merken, so dass bei Wiederholung der Fehlermeldung 
-						// dieser Server bald nicht mehr berücksichtigt wird.
-					}
+					
+				TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
+					// und Fehler merken, so dass bei Wiederholung der Fehlermeldung 
+					// dieser Server bald nicht mehr berücksichtigt wird.
 					
 				break;
 			
@@ -866,12 +881,13 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				}
 			else
 				{ // unerwartetes Ende...
-				if (Kanal->AusgabeGestartet)
+				if (Kanal->AusgabeGestartet && Kanal->AusgabeStichdatum > 0)
 					TlnServSyncStichzeit[Kanal->ListeIdx] = Kanal->AusgabeStichdatum; 
 						// wegen des Fehlers alles noch mal senden.
 					
-				// HACK deaktiviert wegen Fehlern mit Richard...: TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
-				//! \todo mal sehen was passiert. Problem: Bei Vollabfrage sendet Gegenstelle wohl kein aktives "Ende der Liste". Oder die Gegenstelle schließt den Kanal dann zu früh...
+				TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
+				if (ProtokollLevelTlnServ >= 1)
+					ProtokollierenTlnServ_P(Kanal, PSTR("! Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n"));
 				}
 			}
 
@@ -904,7 +920,7 @@ static bool VollAbfrageKanalOeffnen()
 			{
 			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Socket geoeffnet, Vollabfrage begonnen\r\n"));
 			}
-		TlnServBuf.Code = TLNSERV_SYNC_TOTALABFRAGE;
+		TlnServBuf.Code = TLNSERV_SYNC_VOLLABFRAGE;
 		TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
 		TlnServBuf.SyncAnmeldung.Version = 1; // gibt erst mal nix anderes.
 		TlnServBuf.SyncAnmeldung.Geheimzahl = TlnServSyncGeheimzahl;
@@ -961,6 +977,7 @@ static bool AktivSyncMeldungKanalOeffnen(uint8_t ServerI)
 		TlnServer[0].Freigabe = true; // der Anrufer ist immer ok
 		TlnServer[0].AusgabeStichdatum = TlnServSyncStichzeit[ServerI];
 		TlnServer[0].AusgabeGestartet = true;
+		TlnServer[0].IstVollAbfrage = false;
 		TlnServSyncStichzeit[ServerI] = CurTime.time; 
 			//! Wird wieder auf AusgabeStichdatum zurückgesetzt werden, wenn Fehler passiert.
 		TlnListerStart(&TlnServer[0].AusgabeLister);

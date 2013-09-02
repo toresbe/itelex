@@ -141,7 +141,7 @@ enum {
 	//!< wird auch zur Synchronisation der Teilnehmer-Server untereinander
 	//!< verwendet.
 	
-	TLNSERV_SYNC_TOTALABFRAGE = 0x06,
+	TLNSERV_SYNC_VOLLABFRAGE = 0x06,
 	//!< Leitet eine vollständige Abfrage aller synchronisationsrelevanten 
 	//!< Einträge ein, z.B. weil ein Teilnehmer-Server neu gestartet wurde.
 	
@@ -342,7 +342,7 @@ typedef union
 				{
 				uint8_t Version; //!< Welches Datenformat soll verwendet werden?
 				uint32_t Geheimzahl; //!< PIN, für alle Teilnehmer-Server gültig und gleich.
-				} SyncAnmeldung; //!< Gültig bei #Code == #TLNSERV_SYNC_TOTALABFRAGE
+				} SyncAnmeldung; //!< Gültig bei #Code == #TLNSERV_SYNC_VOLLABFRAGE
 					//!< und bei #Code == #TLNSERV_SYNC_ANMELDUNG 
 				
 			// für Code == TLNSERV_SYNC_QUITTUNG keine Daten.
