@@ -70,8 +70,8 @@ void cgi_cron( void * pStruct )
 	int HH, MM;
 	
 #ifdef iTelex
-	extern uint8_t KonfigFreigabe(void *pStruct); 
-	if (!KonfigFreigabe(pStruct))
+	extern uint8_t PruefeSpracheUndKonfigFreigabe(void *pStruct); 
+	if (!PruefeSpracheUndKonfigFreigabe(pStruct))
 		return;
 #endif	
 	

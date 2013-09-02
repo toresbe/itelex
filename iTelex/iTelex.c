@@ -4096,6 +4096,16 @@ bool PruefeSprache(void *pStruct, TSprache *Sprache)
 	} // PruefeSprache()
 	
 	
+bool PruefeSpracheUndKonfigFreigabe(void *pStruct)
+	{
+	TSprache Sprache;
+	
+	PruefeSprache(pStruct, &Sprache);	
+	
+	return KonfigFreigabe(pStruct, Sprache);
+	}
+	
+	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface für Ausgabe von Debug-Infos des iTelex
  * \param 	pStruct	Struktur auf den HTTP_Request

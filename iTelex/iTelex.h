@@ -442,6 +442,8 @@ extern bool KonfigFreigabe(void *pStruct, TSprache Sprache);
 
 extern bool PruefeSprache(void *pStruct, TSprache *Sprache);
 
+extern bool PruefeSpracheUndKonfigFreigabe(void *pStruct);
+
 extern void SpeichereSpracheAlsLokal(TSprache Sprache);
 
 extern void ZeitUeberwachungInit(TZeitUeberwachung *zue, uint16_t aGrenzwert);
