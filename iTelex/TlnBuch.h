@@ -9,7 +9,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
-#include "TxP.h"
+#include "iTelex.h"
 
 extern void TlnDatenInit(TTlnDaten *Tln);
 

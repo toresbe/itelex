@@ -38,7 +38,7 @@
 #include "apps/httpd/httpd2_pharse.h"
 #include "system/config/eeconfig.h"
 
-#include "TxP/StringTab.h"
+#include "iTelex/StringTab.h"
 
 
 //! Einleitung eines durch Tabelle strukturieten CGI-Eingabeformulares

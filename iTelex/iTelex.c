@@ -1,12 +1,12 @@
-/*! \file TxP.c \brief Anwendung zur Einbettung in das TxP2-System */
+/*! \file iTelex.c \brief Basisfunktionen des iTelex-Systems */
 //***************************************************************************
-//*            TxP.c
+//*            iTelex.c
 //*
 //****************************************************************************/
 ///	\ingroup software
-///	\defgroup TxP Hauptfunktion dieser Applikation: Schnittstelle vom Internet
+///	\defgroup iTelex Hauptfunktion dieser Applikation: Schnittstelle vom Internet
 /// zum Fernschreiber
-///	\code #include "TxP.h" \endcode
+///	\code #include "iTelex.h" \endcode
 //****************************************************************************/
 /*
  *  This program is free software; you can redistribute it and/or modify
@@ -61,7 +61,7 @@
 #include "hardware/timer0/timer0.h"
 
 #include "CgiFormTools.h"
-#include "TxP.h"
+#include "iTelex.h"
 #include "TlnBuch.h"
 #include "BusKomm.h"
 #include "TxP2-Defs.h"
@@ -83,7 +83,7 @@ const PROGMEM char SvnVersion_P[] = SVNVERSION;
 TModus Modus;
 
 	
-// Die Datem auf dem TXP-Port haben folgende Struktur:
+// Die Datem auf dem iTelex-Port haben folgende Struktur:
 // - ASCII-Zeichen einschl. WR (CR) und ZL (LF) werden "pur" übertragen.
 // - Ansonsten werden Datenblöcke übertragen, die stets aus folgenden Teilen bestehen:
 //   * ein Byte Kommandocode (siehe die folgenden Konstanten mit ITELEXC_*)
@@ -4465,7 +4465,7 @@ const PROGMEM char DatumDruckModus_P[] = "AUTODATUM";
 	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface zum Ändern der Einstellungen des iTelex-Interface bezüglich der Einbindung
- * in das lokale TxP-System
+ * in das lokale iTelex-System
  * \param 	pStruct	Struktur auf den HTTP_Request
  * \return	NONE
  */

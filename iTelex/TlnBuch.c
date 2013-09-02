@@ -10,7 +10,7 @@
 #include "apps/httpd/httpd2.h"
 #include "apps/httpd/httpd2_pharse.h"
 
-#include "TxP.h"
+#include "iTelex.h"
 #include "TlnBuch.h"
 #include "TlnServer.h"
 #include "SwTwi.h"

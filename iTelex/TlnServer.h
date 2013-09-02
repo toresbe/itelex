@@ -26,7 +26,7 @@
 #ifndef _TLNSERVER_H_
 	#define _TLNSERVER_H_
 	
-	#include "TxP.h"
+	#include "iTelex.h"
 	
 	#ifdef ITELEX_TLNSERVER
 	

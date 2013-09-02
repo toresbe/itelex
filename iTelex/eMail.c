@@ -1,4 +1,4 @@
-/*! \file eMail.c \brief Anwendung zur Einbettung in das TxP2-System */
+/*! \file eMail.c \brief Anwendung zur Einbettung in das iTelex-System */
 //***************************************************************************
 //*            eMail.c
 //*

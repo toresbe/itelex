@@ -22,7 +22,7 @@
 #include "system/stdout/stdout.h"
 
 #include "Protokoll.h"
-#include "TxP.h"
+#include "iTelex.h"
 
 #include "StringTab.h" //!\todo Umstellung noch nicht erfolgt, da Umstellung nur selten eintretende Diagnosedrucke betrifft.
 

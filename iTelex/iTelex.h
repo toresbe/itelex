@@ -1,11 +1,11 @@
-/*! \file TxP.h \brief iTelex Definitionen */
+/*! \file iTelex.h \brief iTelex Definitionen */
 /***************************************************************************
- *            TxP.h
+ *            iTelex.h
  *
  ****************************************************************************/
 ///	\ingroup software
 ///	\defgroup 
-///	\code #include "txp.h" \endcode
+///	\code #include "iTelex.h" \endcode
 //****************************************************************************/
 /*
  *  This program is free software; you can redistribute it and/or modify
@@ -24,9 +24,9 @@
  */
  
 //@{
-#ifndef _TXP_H_
+#ifndef __ITELEX_H__
 
-#define _TXP_H_
+#define __ITELEX_H__
 
 #include "config.h"
 
@@ -44,7 +44,7 @@
 #include "Defports.h"
 #include "FifoPuffer.h"
 
-#include "TxP/StringTab.h"
+#include "iTelex/StringTab.h"
 
 
 // Einstellungen für Bedingte Kompilierung
@@ -516,5 +516,6 @@ static inline uint16_t KurzTimerVal(TKurzTimer *t)
 	
 #endif //def iTelex
 	
-#endif /* _TXP_H_ */
+#endif // def __ITELEX_H__
+
 //@}

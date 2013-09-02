@@ -10,7 +10,7 @@
 
 #include "hardware/timer1/timer1.h"
 
-#include "TxP.h"
+#include "iTelex.h"
 
 
 //! Zählwert für Timer1: Wenn TCNT1 > 4 * TaktViertel, dann ist ein Bit gesendet

@@ -25,7 +25,7 @@
 #ifdef ITELEX_EMAIL
  
 #include "CgiFormTools.h"
-#include "TxP.h"
+#include "iTelex.h"
 #include "TlnBuch.h"
 #include "BusKomm.h"
 #include "TxP2-Defs.h"

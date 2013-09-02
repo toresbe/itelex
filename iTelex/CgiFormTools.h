@@ -2,7 +2,7 @@
 
 #define __CGIFORMTOOLS_H__
 
-#include "TxP/StringTab.h" // nur für TSprache
+#include "iTelex/StringTab.h" // nur für TSprache
 
 extern void CgiFormStartTabbed_P(const char *FormName);
 

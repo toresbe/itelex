@@ -129,8 +129,8 @@ SRC += apps/mp3-streamingclient/mp3-streaming.c apps/mp3-streamingclient/mp3-cli
 SRC += apps/can/can_eth_rep.c
 
 # Add user C source files here.
-SRC += TxP/TxP.c TxP/TlnBuch.c TxP/CgiFormTools.c TxP/SwTwi.c TxP/Protokoll.c TxP/TlnServer.c TxP/eMail.c TxP/StringTab.c
-SRC += TxP/Gemeinsam/BusKomm.c TxP/Gemeinsam/FifoPuffer.c TxP/Gemeinsam/BaudotCode.c 
+SRC += iTelex/iTelex.c iTelex/TlnBuch.c iTelex/CgiFormTools.c iTelex/SwTwi.c iTelex/Protokoll.c iTelex/TlnServer.c iTelex/eMail.c iTelex/StringTab.c
+SRC += iTelex/Gemeinsam/BusKomm.c iTelex/Gemeinsam/FifoPuffer.c iTelex/Gemeinsam/BaudotCode.c 
 
 
 # List C++ source files here. (C dependencies are automatically generated.)
@@ -164,7 +164,7 @@ DEBUG = dwarf-2
 #     Each directory must be seperated by a space.
 #     Use forward slashes for directory separators.
 #     For a directory that has spaces, enclose it in quotes.
-EXTRAINCDIRS = ../C-Libs TxP/Gemeinsam
+EXTRAINCDIRS = ../C-Libs iTelex/Gemeinsam
 
 
 # Compiler flag to set the C Standard level.

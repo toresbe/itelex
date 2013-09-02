@@ -1,4 +1,4 @@
-/*! \file TlnServer.c \brief Anwendung zur Einbettung in das TxP2-System */
+/*! \file TlnServer.c \brief Anwendung zur Einbettung in das iTelex-System */
 //***************************************************************************
 //*            TlnServer.c
 //*
@@ -109,7 +109,7 @@
 
 // #include "hardware/timer0/timer0.h"
 
-#include "TxP.h"
+#include "iTelex.h"
 
 #include "StringTab.h"
 

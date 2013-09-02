@@ -64,7 +64,7 @@
 
 #include "hardware/led/led_core.h"
 
-#include "TxP/TxP.h"
+#include "iTelex/iTelex.h"
 
 void main(void) __attribute__((noreturn));
 
