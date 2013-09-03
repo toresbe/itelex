@@ -247,7 +247,7 @@ void POP3Einleiten()
 	if (iTelexSocketHandle == -1)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
-		Protokollieren_P(PSTR("iTelex POP: ! Socket zum Server konnte nicht geoeffnet werden\r\n"));
+		Protokollieren_P(PSTR("iTelex POP: ! Client-Socket zum Server konnte nicht geoeffnet werden\r\n"));
 		iTelexSocketHandle = NO_SOCKET_USED;
 		iTelexSocketMode = SocketIdle;
 
@@ -257,7 +257,7 @@ void POP3Einleiten()
 		}
 
 	if (ProtokollLevel >= 2)
-		Protokollieren_P(PSTR("iTelex POP: Socket zum Server erfolgreich geoeffnet\r\n"));
+		Protokollieren_P(PSTR("iTelex POP: Client-Socket zum Server erfolgreich geoeffnet\r\n"));
 		
 	SocketBufInit();
 	
@@ -565,7 +565,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 	if (iTelexSocketHandle == -1)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
-		Protokollieren_P(PSTR("iTelex SMTP: ! Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
+		Protokollieren_P(PSTR("iTelex SMTP: ! Client-Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
 		iTelexSocketHandle = NO_SOCKET_USED;
 		iTelexSocketMode = SocketIdle;
 		if (Diagnoseausgabe_P(ISTR(SMTPFehlerAnfang, LokaleSprache), 1))

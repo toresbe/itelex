@@ -651,7 +651,7 @@ static void SeriellUmsetzInit(void)
 
 static void ProtokollierenITelex()
 	{
-	ProtokollierenInt_P(PSTR("iTelex (%5u): "), ITelexThreadCount);
+	ProtokollierenInt_P(PSTR("iTelex(%5u): "), ITelexThreadCount);
 	}
 	
 
@@ -1805,7 +1805,9 @@ static void SendeBusKdoSchluss()
 	}
 
 
-//! Interner Statuswechsel bei Ende-befehl (Socket geschlossen oder anderes Ende-Kommando)
+//! Interner Statuswechsel bei Ende-befehl
+//----------------------------------------
+//! Aufgerufen bei Socket geschlossen oder anderes Ende-Kommando.
 //! \param Force alle schwebenden Zustände (z.B. Wahlzustand) auch zum Abschluss bringen.
 void InterneVerbindungBeenden(bool Force)
 	{
@@ -1864,6 +1866,7 @@ void InterneVerbindungBeenden(bool Force)
 	
 
 //! Schließt Verbindung nach draußen.
+//-----------------------------------
 static void ExterneVerbindungBeenden()
 	{
 	if (iTelexSocketMode != SocketIdle)
@@ -2318,6 +2321,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 
 	
 //! Wandelt Daten aus dem SendePuffer um.
+//---------------------------------------
 //! Bearbeitet auch Statusänderungen.
 static void ITelexDatenVerarbeiten()
 	{
@@ -2390,6 +2394,7 @@ static void ITelexDatenVerarbeiten()
 	
 
 //! Wandelt Daten aus dem SendePuffer um.
+//---------------------------------------
 //! Bearbeitet auch Statusänderungen.
 static void AsciiDatenVerarbeiten()
 	{
@@ -2436,6 +2441,7 @@ static void AsciiDatenVerarbeiten()
 	
 
 //! Schiebt ein Zeichen in den Anzeigepuffer für HTML-Betrieb.
+//------------------------------------------------------------
 static void ZeichenInHtmlSendeText(char c)
 	{
 	int i = strlen(HtmlSendeText);
@@ -2721,7 +2727,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
 		if (ProtokollLevel >= 1)
-			ProtokollierenITelex_P(PSTR("! Socket konnte nicht erstmalig geoeffnet werden\r\n"));
+			ProtokollierenITelex_P(PSTR("! Client-Socket konnte nicht erstmalig geoeffnet werden\r\n"));
 			
 		Diagnoseausgabe_P(ISTR(TeilnehmerNichtErreichbar, LokaleSprache), 2);
 		iTelexSocketHandle = NO_SOCKET_USED;
@@ -2781,7 +2787,8 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 	} // Verbindungsaufbau()
 
 
-//! Startet die Abfrage einer Rufnummer beim Teilnehmer-Server	
+//! Startet die Abfrage einer Rufnummer beim Teilnehmer-Server.
+//-------------------------------------------------------------
 static void RufnummerBeiTlnServerAbfragen()
 	{
 	TlnServerAbfrageWiederholungssperre = true;
@@ -2958,7 +2965,8 @@ void AsciiDruckPufferVerarbeiten()
 	} // AsciiDruckPufferVerarbeiten()
 
 
-//! Einschaltung für HTML-Chat oder Meldungsdruck
+//! Einschaltung für HTML-Chat oder Meldungsdruck.
+//------------------------------------------------
 bool SonstigeAnwahl(uint8_t aDurchwahl)
 	{
 	if (KommendInternAnwaehlen(aDurchwahl))
@@ -3937,6 +3945,7 @@ void itelex_thread()
 //! Liest den String s aus in die Durchwahl-Tabelle.
 //--------------------------------------------------
 //! \return Anzahl der korrekt gelesenen Einträge
+
 static uint8_t DurchwahlTabelleDekodieren(char *s)
 	{
 	uint8_t i = 0; // Index in der Tabelle
@@ -4056,12 +4065,15 @@ bool PruefeSprache(void *pStruct, TSprache *Sprache)
 	{
 	static const PROGMEM char Sprache_P[] = "spr";
 	
+	if (pStruct == NULL)
+		return false;
+		
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	
 	// Eigentlich hat das folgende gar nix mit dem Sprachprüfen zu tun, hier ist aber eine geeignete Stelle
 	// für eine Protokollierung der CGI-Aufrufe.
-	if (ProtokollLevel >= 3 && http_request != NULL)
+	if (ProtokollLevel >= 3)
 		{
 		char *Ende;
 		ProtokollierenITelex_P(PSTR("cgi-Aufruf: "));
@@ -4096,9 +4108,19 @@ bool PruefeSprache(void *pStruct, TSprache *Sprache)
 	} // PruefeSprache()
 	
 	
+//! Kann am Anfang jeder cgi-Funktion aufgerufen werden, um das Kennwort abzufragen.
+// ---------------------------------------------------------------------------------
+//! Diese Funktion ist nur ein Behelfskonstrukt. Die Ermittelte Sprache wird nicht 
+//! an den Aufrufer übergeben.
+//! \param 	pStruct	Struktur auf den HTTP_Request. Bei NULL wird nur die Variable abgefragt, es gibt keine "Ersatzausgabe" 
+//! des Passwort-Abfragefensters. Die Sprachangabe muss als "spr=de" oder "spr=en" erfolgt
+//! sein. Ist die Sprachangabe das einzige Attribut des CGI-Requests wird die Anzahl der Parameter
+//! des CGI Requests auf Null gesetzt.
+//! \retval true, wenn Zugriff erlaubt ist.
+
 bool PruefeSpracheUndKonfigFreigabe(void *pStruct)
 	{
-	TSprache Sprache;
+	static TSprache Sprache = Deutsch;
 	
 	PruefeSprache(pStruct, &Sprache);	
 	

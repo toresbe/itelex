@@ -918,7 +918,7 @@ static bool VollAbfrageKanalOeffnen()
 		TlnServer[0].ListeIdx = VollAbfrageServerIndex; 
 		if (ProtokollLevelTlnServ >= 2)
 			{
-			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Socket geoeffnet, Vollabfrage begonnen\r\n"));
+			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Client-Socket geoeffnet, Vollabfrage begonnen\r\n"));
 			}
 		TlnServBuf.Code = TLNSERV_SYNC_VOLLABFRAGE;
 		TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
@@ -983,7 +983,7 @@ static bool AktivSyncMeldungKanalOeffnen(uint8_t ServerI)
 		TlnListerStart(&TlnServer[0].AusgabeLister);
 		if (ProtokollLevelTlnServ >= 2)
 			{
-			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Socket geoeffnet zur Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"));
+			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Client-Socket geoeffnet zur Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"));
 			}
 			
 		TlnServBuf.Code = TLNSERV_SYNC_ANMELDUNG;
