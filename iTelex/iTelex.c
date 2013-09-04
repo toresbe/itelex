@@ -174,10 +174,18 @@ volatile uint16_t KurzTimerCnt;
 volatile uint16_t LangTimerCnt;
 //!< Die LangTimer-Basisvariable
 
+#endif //def ITELEX_ANSCHLUSS
+
+
 volatile uint8_t KurzTimerVorteilerCnt;
 
 volatile uint16_t LangTimerVorteilerCnt;
 
+static TKurzTimer ITelexThreadCheckTimer;
+	//!< Prüft, ob die Funktion void itelex_thread() ausreichend häufig aufgerufen wird.
+
+
+#ifdef ITELEX_ANSCHLUSS
 
 volatile static uint16_t TwiLebenszeichenZaehler; 
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf dem TWI-Bus.
@@ -200,9 +208,6 @@ static TKurzTimer BusQuittTimer;
 	
 static TKurzTimer iTelexSocketLebenszeichenTimer;
 	//!< Alle 3,5 bis 4 Sekunden ein Lebenszeichen senden...
-
-static TKurzTimer ITelexThreadCheckTimer;
-	//!< Prüft, ob die Funktion void itelex_thread() ausreichend häufig aufgerufen wird.
 
 	
 volatile TPuffer SendePuffer; 
@@ -680,6 +685,8 @@ static bool ModusTwiVerbunden()
 			|| Modus == ModHtmlChatVerbunden
 			|| Modus == ModMeldungsdruckWarteEinQuitt);
 	}
+
+#endif //def ITELEX_ANSCHLUSS
 	
 	
 volatile static uint8_t Timer0Cnt_Min;
@@ -732,6 +739,8 @@ void itelex_timerEvent(void)
 #endif //defined(LEDROT_ITELEXTHREADBLOCK)
 		
 	TwiWatchdogCount++; 
+		
+#ifdef ITELEX_ANSCHLUSS
 		
 	if (Modus == ModKommendVerbunden 
 		|| Modus == ModGehendVerbunden 
@@ -899,6 +908,8 @@ void itelex_timerEvent(void)
 			}
 		} // if Modus != Ruhe
 
+#endif //def ITELEX_ANSCHLUSS
+		
 	// Taste prüfen und auswerten
 	// -------------------------------
 	static enum { TasteAus, TasteEin, TasteSperr } TasteZustandIntern;
@@ -920,8 +931,10 @@ void itelex_timerEvent(void)
 					StartLangTimer(&KonfigFreigabeTimer);
 					
 					// HACK: Vollabgleich des TlnServers vorziehen
+					#ifdef ITELEX_TLNSERVER
 					extern uint16_t VollAbfrageTimerEnde; 
 					VollAbfrageTimerEnde = 0;
+					#endif //def ITELEX_TLNSERVER
 					}
 				}
 			else
@@ -970,6 +983,9 @@ void itelex_timerEvent(void)
 		Timer0Callback_Max = t0c; // Dauer der Funktion itelex_timerEvent()
 	} // itelex_timerEvent()
 
+
+	
+#ifdef ITELEX_ANSCHLUSS
 	
 //! Speichert ungültige Befehle vom TWI-Bus.
 uint8_t FalscherCode = 0;
@@ -4146,9 +4162,11 @@ void itelex_cgi_debug( void * pStruct )
 		Timer0Cnt_Min = 255;
 		Timer0Cnt_Max = 0;
 		Timer0Callback_Max = 0;
+#ifdef ITELEX_ANSCHLUSS		
 		FalscherCode = 0;
-		TwiIsrCount = 0;
+#endif //def ITELEX_ANSCHLUSS		
 		ZeitUeberwachungInit(&SelbstAnrufZeitUeberwachung, 1 * KurzTimerFreq);
+		TwiIsrCount = 0;
 		}
 	
 	cgi_PrintHttpheaderStart();
@@ -4887,6 +4905,37 @@ void itelex_cgi_TwiTlnListe(void *pStruct)
 
 #endif // ITELEX_ANSCHLUSS
 
+
+//! Rudimentärer Anfang eines ISP-Programmier-Master
+//--------------------------------------------------
+//! Erste realisierte Funktion: Ein Block des Flash-Rom auslesen und Protokollieren.
+void cgi_FlashReadTest(void *pStruct)
+	{
+	uint8_t ProgEnabCheck;
+	
+	LockEthernet(); // keine Interrupts vom ENC28J60
+	
+	clro_IspResetOut();
+	
+	_delay_ms(25);
+	
+	// Programming enable:
+	SPI_ReadWrite(1, 0xAC);
+	SPI_ReadWrite(1, 0x53);
+	ProgEnabCheck = SPI_ReadWrite(1, 0x00);
+	SPI_ReadWrite(1, 0x00);
+	
+	inp_IspResetOut();
+	
+	_delay_ms(25);
+	
+	FreeEthernet();
+	
+	cgi_PrintHttpheaderStart();
+	printf_P(PSTR("Program Enable Echo was 0x%02X"), ProgEnabCheck);
+	cgi_PrintHttpheaderEnd();
+	}
+	
 	
 #if defined(MMC)
 	
@@ -5003,6 +5052,7 @@ void itelex_init()
 	init_Taste();
 	init_RTS();
 	init_CTS();
+	init_IspResetOut();
 	
 	ProtokollInit();
 

@@ -177,46 +177,93 @@ const char data4[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n"	};
 
+
 #ifdef HTTPSERVER_NETCONFIG
-const char files5[] PROGMEM = "network.html";
-const char data5[] PROGMEM = {
+
+const char NetzwerkMenuDeName[] PROGMEM = "network-de.html";
+const char NetzwerkMenuDeText[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
-	"<a href=\"mainmenu.html\">zurueck</a> / <a href=\"network.cgi\" target=\"main\">Infos</a> / <a href=\"network.cgi?config\" target=\"main\">Konfiguration</a>"
+	"<a href=\"itelexcfg-menu-de.html\">zur&uuml;ck</a> / <a href=\"network.cgi?spr=de\" target=\"main\">Infos</a> / <a href=\"network.cgi?spr=de&config\" target=\"main\">Konfiguration</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
-#endif
 
-#ifdef HTTPSERVER_SYSTEM
-const char files6[] PROGMEM = "system.html";
-const char data6[] PROGMEM = {
+const char NetzwerkMenuEnName[] PROGMEM = "network-en.html";
+const char NetzwerkMenuEnText[] PROGMEM = {
 	"<HTML>"
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
-	"<a href=\"mainmenu.html\">zurueck</a> "
+	"<a href=\"itelexcfg-menu-en.html\">back</a> / <a href=\"network.cgi?spr=en\" target=\"main\">Infos</a> / <a href=\"network.cgi?spr=en&config\" target=\"main\">Configuration</a>"
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n"	};
+	
+#endif
+
+#ifdef HTTPSERVER_SYSTEM
+
+const char SystemMenuDeName[] PROGMEM = "system-de.html";
+const char SystemMenuDeText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"itelexcfg-menu-de.html\">zur&uuml;ck</a> "
 #if defined(HTTPSERVER_RESET)
-	"/ <a href=\"reset.cgi\" target=\"main\">Reset</a>"
+	"/ <a href=\"reset.cgi?spr=de\" target=\"main\">Reset</a>"
 #endif
 #if defined(HTTPSERVER_NTP)
-	" / <a href=\"ntp.cgi\" target=\"main\">NTP</a>"
+	" / <a href=\"ntp.cgi?spr=de\" target=\"main\">NTP</a>"
 #endif
 #if defined(HTTPSERVER_DYNDNS)
-	" / <a href=\"dyndns.cgi\" target=\"main\">DynDNS</a>"
+	" / <a href=\"dyndns.cgi?spr=de\" target=\"main\">DynDNS</a>"
 #endif
 #if defined(HTTPSERVER_TWITTER)
 	" / <a href=\"twitter.cgi\" target=\"main\">Twitter</a>"
 #endif
 #if defined(HTTPSERVER_EEMEM)
-	" / <a href=\"eemem.cgi\" target=\"main\">EEmem</a>"
+	" / <a href=\"eemem.cgi?spr=de\" target=\"main\">EEmem</a>"
 #endif
 #if defined(HTTPSERVER_CRON)
-	" / <a href=\"cron.cgi\" target=\"main\">cron</a>"
+	" / <a href=\"cron.cgi?spr=de\" target=\"main\">cron</a>"
+#endif
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n"	};
+#endif
+
+const char SystemMenuEnName[] PROGMEM = "system-en.html";
+const char SystemMenuEnText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"itelexcfg-menu-en.html\">back</a> "
+#if defined(HTTPSERVER_RESET)
+	"/ <a href=\"reset.cgi?spr=en\" target=\"main\">Reset</a>"
+#endif
+#if defined(HTTPSERVER_NTP)
+	" / <a href=\"ntp.cgi?spr=en\" target=\"main\">NTP</a>"
+#endif
+#if defined(HTTPSERVER_DYNDNS)
+	" / <a href=\"dyndns.cgi?spr=en\" target=\"main\">DynDNS</a>"
+#endif
+#if defined(HTTPSERVER_TWITTER)
+	" / <a href=\"twitter.cgi\" target=\"main\">Twitter</a>"
+#endif
+#if defined(HTTPSERVER_EEMEM)
+	" / <a href=\"eemem.cgi?spr=en\" target=\"main\">EEmem</a>"
+#endif
+#if defined(HTTPSERVER_CRON)
+	" / <a href=\"cron.cgi?spr=en\" target=\"main\">cron</a>"
 #endif
 	"</BODY>"
 	"</HTML>"
@@ -341,10 +388,10 @@ const char iTelexCfgMenuDeText[] PROGMEM = {
 	" / <a href=\"itelexcfg-email.cgi?spr=de\" target=\"main\">eMail-Einstellungen</a>"
 #endif //def ITELEX_EMAIL	
 #ifdef HTTPSERVER_NETCONFIG
-	" / <a href=\"network.html\">Netzwerk</a>"
+	" / <a href=\"network-de.html\">Netzwerk</a>"
 #endif
 #ifdef HTTPSERVER_SYSTEM
-	" / <a href=\"system.html\">System</a>"
+	" / <a href=\"system-de.html\">System</a>"
 #endif
 	" / <a href=\"itelexcfg-sperren.cgi?spr=de\" target=\"main\">Sperren</a>"
 	"</BODY>"
@@ -366,10 +413,10 @@ const char iTelexCfgMenuEnText[] PROGMEM = {
 	" / <a href=\"itelexcfg-email.cgi?spr=en\" target=\"main\">eMail settings</a>"
 #endif //def ITELEX_EMAIL	
 #ifdef HTTPSERVER_NETCONFIG
-	" / <a href=\"network.html\">Network</a>"
+	" / <a href=\"network-en.html\">Network</a>"
 #endif
 #ifdef HTTPSERVER_SYSTEM
-	" / <a href=\"system.html\">System</a>"
+	" / <a href=\"system-en.html\">System</a>"
 #endif
 	" / <a href=\"itelexcfg-sperren.cgi?spr=en\" target=\"main\">lock</a>"
 	"</BODY>"
@@ -422,10 +469,12 @@ FILES files[] = {
 #endif
 	{ files4, data4, TEXT, sizeof( data4 ) - 1 },
 #ifdef HTTPSERVER_NETCONFIG
-	{ files5, data5, TEXT, sizeof( data5 ) - 1 },
+	{ NetzwerkMenuDeName, NetzwerkMenuDeText, TEXT, sizeof( NetzwerkMenuDeText ) - 1 },
+	{ NetzwerkMenuEnName, NetzwerkMenuEnText, TEXT, sizeof( NetzwerkMenuEnText ) - 1 },
 #endif
 #ifdef HTTPSERVER_SYSTEM
-	{ files6, data6, TEXT, sizeof( data6 ) - 1 },
+	{ SystemMenuDeName, SystemMenuDeText, TEXT, sizeof( SystemMenuDeText ) - 1 },
+	{ SystemMenuEnName, SystemMenuEnText, TEXT, sizeof( SystemMenuEnText ) - 1 },
 #endif
 	{ files7, data7, TEXT, sizeof( data7 ) - 1 },
 	{ files8, data8, TEXT, sizeof( data8 ) - 1 },
