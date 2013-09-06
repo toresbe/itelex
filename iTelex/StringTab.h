@@ -79,8 +79,8 @@ _STRTABENTRY(DatumDruckBeide, "lokal und Anrufer", "local and caller")
 _STRTABENTRY(KonnteNichtGeaendertWerden, " konnte nicht ge&auml;ndert werden", " could not be changed")
 _STRTABENTRY(KennwortGgfGeaendert, "<br>Kennwort ggf. ge&auml;ndert.", "<br>Passwort if necessary changed")
 _STRTABENTRY(InternesKennwortFehlt, 
-			 "zun&auml;chst Passwort in <a href=\"itelexcfg-intern.cgi&spr=de\" target=\"main\">Einstellungen im lokalen TxP-System</a> eingeben!", 
-			 "First select password in <a href=\"itelexcfg-intern.cgi&spr=en\" target=\"main\">Settings for the local TxP-system</a>!")
+			 "zun&auml;chst Passwort in <a href=\"itelexcfg-intern.cgi?spr=de\" target=\"main\">Einstellungen im lokalen TxP-System</a> eingeben!", 
+			 "First select password in <a href=\"itelexcfg-intern.cgi?spr=en\" target=\"main\">Settings for the local TxP-system</a>!")
 _STRTABENTRY(GesperrtBestaetigung, 
 			 "Konfigurationsseiten sind nun gesperrt. Zur Freigabe wieder das Passwort eingeben oder Taste der Baugruppe 2 x dr&uuml;cken.", 
 			 "Configuration pages are locked again. For unlocking enter password oder push button at i-telex hardware module twice.")
@@ -188,8 +188,8 @@ _STRTABENTRY(EepromLadenErfolg, "Erfolgreich geladen (%d Bytes)", "loaded succes
 _STRTABENTRY(KomplettGeloescht, "komplett gel&ouml;scht", "completely cleared")
 _STRTABENTRY(UngueltigerCgiAufruf, "Fehler: ungueltiger CGI-Aufruf: %s", "Error: invalid cgi-call: %s")
 _STRTABENTRY(ZurueckZumTeilnehmerverzeichnis, 
-			 "<br>Zur&uuml;ck zum <a href=\"itelex-tlnverz.cgi&spr=de\">Teilnehmer-Verzeichnis</a>", 
-			 "<br>back to <a href=\"itelex-tlnverz.cgi&spr=en\">subscriber directory</a>")
+			 "<br>Zur&uuml;ck zum <a href=\"itelex-tlnverz.cgi?spr=de\">Teilnehmer-Verzeichnis</a>", 
+			 "<br>back to <a href=\"itelex-tlnverz.cgi?spr=en\">subscriber directory</a>")
 _STRTABENTRY(ZusatzEepromFehler, "Fehler im Zusatz-EEPROM", "Error in directory EEPROM")
 
 
