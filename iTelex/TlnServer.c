@@ -223,13 +223,14 @@ static void KanalInit(TTlnServKanal* k, int aSocket)
 
 static void KanalFertig(TTlnServKanal* k)
 	{
+	if (!k->Fertig)
+		;// TCP_sockettable[k->Socket].Timeoutcounter = 5; <-- Das ist verboten, weil bei CloseTimeout / 3 das "FIN"-Paket gesendet wird.
 	k->Fertig = true;
-	TCP_sockettable[k->Socket].Timeoutcounter = 5; // Timeout auf 5 Sekunden verkürzen, da eh gleich das Ende kommt.
 	}
 	
 	
 //! Leitet eine Protokollzeile des Teilnehmerservers ein.
-
+//-------------------------------------------------------
 static void ProtokollierenTlnSrv(TTlnServKanal *Kanal)
 	{
 	if (Kanal != NULL)
@@ -1134,7 +1135,18 @@ void TlnServDebugPrint()
 		}
 		
 	for (i = 0 ; i < AnzTlnServKanaele ; i++)
+		{
 		printf_P(PSTR("<br>TlnServerKanal %d wurde %lu mal genutzt."), i, TlnServer[i].NutzungZaehler);
+		if (TlnServer[i].Socket != NO_SOCKET_USED)
+			{
+			printf_P(PSTR(" Momentan ge&ouml;ffnet (SocketID=%d, ListeIdx=%d, Freigabe=%d, "
+						  "AusgabeGestartet=%d, AnzahlAktualisiert=%d, Fertig=%d, Timeoutcounter=%d)"), 
+				TlnServer[i].Socket, TlnServer[i].ListeIdx, TlnServer[i].Freigabe, 
+				TlnServer[i].AusgabeGestartet, TlnServer[i].AnzahlAktualisiert, TlnServer[i].Fertig,
+				TCP_sockettable[TlnServer[i].Socket].Timeoutcounter);
+				);
+			}
+		}
 		
 	Time.time = TlnBuchLetzteAenderung;
 	CLOCK_decode_time(&Time);

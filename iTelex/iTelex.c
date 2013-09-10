@@ -4182,30 +4182,21 @@ void itelex_cgi_debug( void * pStruct )
 	extern char Puffer[]; // aus Protokoll.c
 	printf_P(PSTR("<br>Protokollpuffer: %s"), Puffer);
 
-	#ifdef ITELEX_ANSCHLUSS
+#ifdef ITELEX_TLNSERVER
+	TlnServDebugPrint();
+#endif //def ITELEX_TLNSERVER
+	
+#ifdef ITELEX_ANSCHLUSS
+
+	PRINTVAL(TeilnehmerServerAlleNichtErreichbar);
+	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+		{
+		printf_P(PSTR("<br>TeilnehmerServerFehlerZaehler(%s) = %d, Sperre-Timer %d"), 
+				 TeilnehmerServerAdresse[i], TeilnehmerServerFehlerZaehler[i], LangTimerVal(&TeilnehmerServerSperrTimer[i]));
+		}
 	
 	PRINTVAL(Modus);
 	PRINTVALHEX(Status); // bezüglich interner Telex Funktionalität (ist auf TWI-Bus sichtbar)
-
-	PRINTVAL(iTelexSocketMode);
-	PRINTVAL(iTelexSocketHandle);
-	PRINTVALHEX(iTelexSocketIP);
-	PRINTVAL(iTelexSocketAbbauGeplant);
-	PRINTVAL(KurzTimerVal(&iTelexSocketAbbruchTimer));
-	PRINTVAL(SocketInBufUsed);
-	PRINTVAL(SocketOutBufUsed);
-	PRINTVAL(iTelexSocketProtokoll);
-	PRINTVAL(ProtokollPhase);
-
-	PRINTVAL(SocketAnzahlZeichenGesendet);
-	PRINTVAL(SocketAnzahlZeichenQuittiert);
-	PRINTVAL(SocketAnzahlZeichenEmpfangen);
-
-	printf_P(PSTR("<br>HtmlSendeText: ["));
-	printf(HtmlSendeText);
-	printf_P(PSTR("]<br>AsciiDruckPuffer: ["));
-	printf(AsciiDruckPuffer);
-	printf_P(PSTR("]"));
 
 	/*
 	PRINTVAL(BusEmpfMark);
@@ -4240,13 +4231,6 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(KurzTimerVal(&SchreibPauseTimer));
 	*/
 	
-	PRINTVAL(KurzTimerVal(&BusQuittTimer));
-	PRINTVAL(TwiLebenszeichenZaehler);
-	PRINTVAL(TwiWatchdogCount);
-	PRINTVAL(BusKollisionZaehler);
-	PRINTVAL(KurzTimerVal(&iTelexSocketLebenszeichenTimer));
-	PRINTVAL(KurzTimerVal(&ITelexThreadCheckTimer));
-
 	PRINTVAL(LangTimerVal(&DynIPAktualisierungTimer));
 	PRINTVAL(DynIPAktualisierungEndzeit);
 
@@ -4260,6 +4244,33 @@ void itelex_cgi_debug( void * pStruct )
 	printf_P(PSTR("<br>SelbstAnrufZeitUeberwachung: "));
 	printf(ZeitUeberwachungAusgabe(&SelbstAnrufZeitUeberwachung));
 	
+	PRINTVAL(iTelexSocketMode);
+	PRINTVAL(iTelexSocketHandle);
+	PRINTVALHEX(iTelexSocketIP);
+	PRINTVAL(iTelexSocketAbbauGeplant);
+	PRINTVAL(KurzTimerVal(&iTelexSocketAbbruchTimer));
+	PRINTVAL(SocketInBufUsed);
+	PRINTVAL(SocketOutBufUsed);
+	PRINTVAL(iTelexSocketProtokoll);
+	PRINTVAL(ProtokollPhase);
+
+	PRINTVAL(SocketAnzahlZeichenGesendet);
+	PRINTVAL(SocketAnzahlZeichenQuittiert);
+	PRINTVAL(SocketAnzahlZeichenEmpfangen);
+
+	printf_P(PSTR("<br>HtmlSendeText: ["));
+	printf(HtmlSendeText);
+	printf_P(PSTR("]<br>AsciiDruckPuffer: ["));
+	printf(AsciiDruckPuffer);
+	printf_P(PSTR("]"));
+
+	PRINTVAL(KurzTimerVal(&BusQuittTimer));
+	PRINTVAL(TwiLebenszeichenZaehler);
+	PRINTVAL(TwiWatchdogCount);
+	PRINTVAL(BusKollisionZaehler);
+	PRINTVAL(KurzTimerVal(&iTelexSocketLebenszeichenTimer));
+	PRINTVAL(KurzTimerVal(&ITelexThreadCheckTimer));
+
 	PRINTVAL(FalscherCode); 
 	PRINTVAL(TwiIsrCount); 
 	PRINTVAL(ITelexThreadCount); 
@@ -4269,19 +4280,7 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(Timer0Cnt_Max); 
 	PRINTVAL(Timer0Callback_Max); 
 
-	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
-		{
-		printf_P(PSTR("<br>TeilnehmerServerFehlerZaehler(%s) = %d, Sperre-Timer %d"), 
-				 TeilnehmerServerAdresse[i], TeilnehmerServerFehlerZaehler[i], LangTimerVal(&TeilnehmerServerSperrTimer[i]));
-		}
-		
-#ifdef ITELEX_TLNSERVER
-	TlnServDebugPrint();
-#endif //def ITELEX_TLNSERVER
-		
-	PRINTVAL(TeilnehmerServerAlleNichtErreichbar);
-	
-	#endif // ITELEX_ANSCHLUSS
+#endif // ITELEX_ANSCHLUSS
 	
 	printf_P(PSTR("<br><a href=\"itelex-debug.cgi?reset\">Statiktik-Daten zur&uuml;cksetzen</a>"
 				  "<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , 
@@ -4906,6 +4905,8 @@ void itelex_cgi_TwiTlnListe(void *pStruct)
 #endif // ITELEX_ANSCHLUSS
 
 
+#ifdef ISP_MASTER
+
 //! Rudimentärer Anfang eines ISP-Programmier-Master
 //--------------------------------------------------
 //! Erste realisierte Funktion: Ein Block des Flash-Rom auslesen und Protokollieren.
@@ -4936,6 +4937,7 @@ void cgi_FlashReadTest(void *pStruct)
 	cgi_PrintHttpheaderEnd();
 	}
 	
+#endif //def ISP_MASTER
 	
 #if defined(MMC)
 	
