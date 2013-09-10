@@ -237,7 +237,6 @@ const char SystemMenuDeText[] PROGMEM = {
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
-#endif
 
 const char SystemMenuEnName[] PROGMEM = "system-en.html";
 const char SystemMenuEnText[] PROGMEM = {

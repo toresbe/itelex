@@ -1144,7 +1144,6 @@ void TlnServDebugPrint()
 				TlnServer[i].Socket, TlnServer[i].ListeIdx, TlnServer[i].Freigabe, 
 				TlnServer[i].AusgabeGestartet, TlnServer[i].AnzahlAktualisiert, TlnServer[i].Fertig,
 				TCP_sockettable[TlnServer[i].Socket].Timeoutcounter);
-				);
 			}
 		}
 		

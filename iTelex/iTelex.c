@@ -53,6 +53,7 @@
 #include "system/thread/thread.h"
 #include "system/config/eeconfig.h"
 #include "system/clock/clock.h"
+#include "system/clock/delay_x.h"
 #include "system/softreset/softreset.h"
 
 #include "apps/httpd/cgibin/cgi-bin.h"
@@ -5247,6 +5248,10 @@ void itelex_init()
 	cgi_RegisterCGI( cgi_SdDirectory, PSTR("sddir.cgi"));
 #endif //defined(MMC)
 
+#ifdef ISP_MASTER
+	cgi_RegisterCGI( cgi_FlashReadTest, PSTR("isptest.cgi"));
+#endif //def ISP_MASTER
+	
 	#ifdef ITELEX_ANSCHLUSS
 	
 	RegisterTCPPort(ITELEX_PORT);
