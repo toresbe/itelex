@@ -378,19 +378,21 @@ static void FehlerRueckmelden(PGM_P Text, int val)
 //! Wird aufgerufen, wenn ein Eintrag im eigenen Telefonbuch geändert wird.
 //---------------------------------------------------------------------------
 //! Ziel ist, die Synchronisation dieses geänderten Eintrags anzustoßen.
-
+//! \param Tln: Zeiger auf den geänderten Datensatz. Es wird nur TlnFlag_Lokal und Datum verwendet.
+//! \param VonServer: Von welchem Teilnehmer-Server kommt die Änderung, oder -1 für unbekannte Quelle.
 void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln, int8_t VonServer)
 	{
 	if (Tln->Flags & TlnFlag_Lokal)
 		return;
 		
 	bool SyncStichzeitWarOk = false;
+	
 	if (VonServer >= 0 
 		&& VonServer < ANZ_TEILNEHMER_SERVER
 		&& TlnServSyncStichzeit[VonServer] > TlnBuchLetzteAenderung)
 		SyncStichzeitWarOk = true; 
 		// d.h. die Daten des Servers, von dem eine ggf. Aktualisierung gerade
-		// empfangen worden sind, waren bisher aktuell.
+		// empfangen worden sind, müssten eigentlich vollständig aktuell sein.
 	    
 	if (TlnBuchLetzteAenderung < Tln->Datum)
 		TlnBuchLetzteAenderung = Tln->Datum;
@@ -405,8 +407,8 @@ void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln, int8_t VonServer)
 			
 		else if (i == VonServer 
 				 && SyncStichzeitWarOk
-				 && TlnServSyncStichzeit[i] <= TlnBuchLetzteAenderung)
-			TlnServSyncStichzeit[i] = TlnBuchLetzteAenderung + 1;
+				 && TlnServSyncStichzeit[i] <= Tln->Datum)
+			TlnServSyncStichzeit[i] = Tln->Datum + 1;
 			// dieser Server muss nicht aktualisiert werden, da von diesem Server
 			// gerade die Daten empfangen werden und er vorher aus eigener Sicht 
 			// keine Aktualisierung empfangen brauchte.
@@ -674,22 +676,16 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 							Kanal->AnzahlAktualisiert++;
 							}
 						else if (Res == 2)
-							{ // vorhandener ist aktueller als gesendeter!
+							{ // vorhandener ist aktueller (neuer) als gesendeter!
 							if (ProtokollLevelTlnServ >= 1)
 								ProtokollierenTlnServInt_P(Kanal, 
 									PSTR("! veralteter Datensatz vom Teilnehmer-Server mit Nr %lu empfangen\r\n"), 
 									TlnServBuf.TlnAuskunft.Nummer);
 								
-							uint32_t RufNr = TlnServBuf.TlnAbfr.RufNr;
-						
-							// Telefonbuch abfragen
-							if (TlnSuche(RufNr, false, &TD))
-								{
-								TlnServTlnbuchEintragGeaendert(&TD, -1); 
-									// bewirkt, dass das Stichdatum ALLER TlnServer zurückgesetzt wird,
-									// damit der Server, der den veralteten Datensatz gesendet hat
-									// auch den korrekten Stand erhält.
-								}
+							TlnServTlnbuchEintragGeaendert(&TlnServBuf.TlnAuskunft, -1); 
+								// bewirkt, dass das Stichdatum ALLER TlnServer zurückgesetzt wird,
+								// damit der Server, der den veralteten Datensatz gesendet hat
+								// auch den korrekten Stand erhält.
 							}
 						else // Res == 0
 							{
@@ -697,8 +693,8 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 								ProtokollierenTlnServInt_P(Kanal, 
 									PSTR("Datensatz vom Teilnehmer-Server mit Nr %lu empfangen, keine Aenderung\r\n"), 
 									TlnServBuf.TlnAuskunft.Nummer); 
-									// kann eigentlich nicht sein, da vorher nicht gefunden...
 							}
+							
 						// Antwort generieren:
 						TlnServBuf.Code = TLNSERV_SYNC_QUITTUNG;
 						TlnServBuf.DataLen = 0;
@@ -804,7 +800,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 								{
 								uint32_t EineStundeVorher = CurTime.time - 60L * 60;
 									// die Subtraktion würde aus uint32 leider int32 machen...
-								if (TlnServSyncStichzeit[i] < EineStundeVorher)
+								if (TlnServSyncStichzeit[i] > EineStundeVorher)
 									TlnServSyncStichzeit[i] = EineStundeVorher; 
 								// relativ neue Einträge (nicht älter als eine Stunde) 
 								// doch weiterverteilen, falls nicht schon geschehen.
@@ -839,7 +835,9 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					}		
 				SyncWarteEnde = (30 + Zufallswert(0xF)) * KurzTimerFreq; // 30 Sekunden warten.
 
-				if (Kanal->ListeIdx >= 0 && Kanal->AusgabeStichdatum > 0) // nur wenn es eine aktive Sync-Ausgabe war.
+				if (Kanal->ListeIdx >= 0 
+					&& Kanal->AusgabeStichdatum > 0
+					&& TlnServSyncStichzeit[Kanal->ListeIdx] > Kanal->AusgabeStichdatum) // nur wenn es eine aktive Sync-Ausgabe war.
 					TlnServSyncStichzeit[Kanal->ListeIdx] = Kanal->AusgabeStichdatum; 
 						// wegen des Fehlers alles noch mal senden.
 					
@@ -882,7 +880,9 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				}
 			else
 				{ // unerwartetes Ende...
-				if (Kanal->AusgabeGestartet && Kanal->AusgabeStichdatum > 0)
+				if (Kanal->AusgabeGestartet 
+					&& Kanal->AusgabeStichdatum > 0
+					&& TlnServSyncStichzeit[Kanal->ListeIdx] > Kanal->AusgabeStichdatum)
 					TlnServSyncStichzeit[Kanal->ListeIdx] = Kanal->AusgabeStichdatum; 
 						// wegen des Fehlers alles noch mal senden.
 					
@@ -1200,12 +1200,9 @@ void itelex_tlnserv_init()
 		TlnServer[i].Socket = NO_SOCKET_USED;
 		TlnServer[i].NutzungZaehler = 0;
 		}
-	
-	RegisterTCPPort(ITELEX_TLNSERV_PORT);
-	
-	printf_P( PSTR("iTelex TlnServer Port %u.\r\n") , ITELEX_TLNSERV_PORT );
-	
+
 	TlnBuchLetzteAenderung = 0;
+
 	TTlnDaten TD;
 	TlnDatenInit(&TD);
 
@@ -1230,7 +1227,17 @@ void itelex_tlnserv_init()
 	StartLangTimer(&VollAbfrageTimer);
 	VollAbfrageTimerEnde = 1 * LangTimerMinuteFaktor;
 	VollAbfrageServerIndex = 0;
-	
+
+	struct TIME Time;
+	CLOCK_GetTime(&Time); // holt auch die aktuelle Zeitzone
+	if (Time.YY < 2000) 
+		return; // der Teilnehmerserver ist auf ein korrektes Datum angewiesen
+		//! \todo Fehlermeldung!
+		
+	// Wenn die folgenden Funktionen nicht aufgerufen werden, passiert gar nix als Teilnehmer-Server Funktion.
+	RegisterTCPPort(ITELEX_TLNSERV_PORT);
+	printf_P(PSTR("iTelex TlnServer Port %u.\r\n") , ITELEX_TLNSERV_PORT );
+
 	THREAD_RegisterThread( itelex_tlnserv_thread, PSTR("TlnSrv"));
 	}
 
