@@ -465,7 +465,6 @@ DEBUG_PORT = 4242
 DEBUG_HOST = localhost
 
 
-
 #============================================================================
 
 
@@ -495,6 +494,7 @@ SIZE = $(DIRAVRBIN)avr-size
 AR = $(DIRAVRBIN)avr-ar rcs
 NM = $(DIRAVRBIN)avr-nm
 AVRDUDE = avrdude
+DOXYGEN = doxygen.exe 
 
 
 # Define Messages
@@ -770,7 +770,12 @@ $(shell mkdir $(OBJDIR) 2>/dev/null)
 -include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
 
 
+# Target: doxygen
+doxygen: $(SRC)
+	$(DOXYGEN) Doxyfile
+
+
 # Listing of phony targets.
 .PHONY : all begin finish end sizebefore sizeafter gccversion \
 build elf hex eep lss sym coff extcoff \
-clean clean_list program debug gdb-config
+clean clean_list program debug gdb-config doxygen
