@@ -787,27 +787,6 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					
 				if (Kanal->IstVollAbfrage)
 					{ 
-					if (Kanal->AnzahlAktualisiert > 0)
-						{ // Es wurde was verändert im eigenen Verzeichnis.
-						struct TIME CurTime;
-						CLOCK_GetTime(&CurTime);
-						for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
-							{
-							if (i == Kanal->ListeIdx)
-								TlnServSyncStichzeit[i] = CurTime.time; 
-							
-							else 
-								{
-								uint32_t EineStundeVorher = CurTime.time - 60L * 60;
-									// die Subtraktion würde aus uint32 leider int32 machen...
-								if (TlnServSyncStichzeit[i] > EineStundeVorher)
-									TlnServSyncStichzeit[i] = EineStundeVorher; 
-								// relativ neue Einträge (nicht älter als eine Stunde) 
-								// doch weiterverteilen, falls nicht schon geschehen.
-								} // else anderer Server
-							} // for i
-						} // if (Kanal->AnzahlAktualisiert > 0)
-						
 					if (ProtokollLevelTlnServ >= 1) 
 						{
 						ProtokollierenTlnServ_P(Kanal, PSTR("Vollabfrage erfolgreich beendet"));
