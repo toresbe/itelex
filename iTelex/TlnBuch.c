@@ -314,8 +314,7 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus HinzModus)
 		{
 		if (TlnBuchMemUsed + NeuGr >= TlnBuchMemMax)
 			return -1;
-		TlnEintragen(Tln, TlnBuch + TlnBuchMemUsed, true); 
-			// da es ein neuer Eintrag ist, muss dieser auf jeden Fall ein neues Datum haben
+		TlnEintragen(Tln, TlnBuch + TlnBuchMemUsed, HinzModus == TlnHinzDatumAktualisieren); 
 		TlnBuchMemUsed += NeuGr;
 		return 1;
 		}

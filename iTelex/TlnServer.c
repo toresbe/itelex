@@ -886,7 +886,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 		}
 		
 	// Verzögerten Abbau des Kanals durch Gegenstelle selbst nachholen.
-	if (Kanal->Fertig && KurzTimerVal(&Kanal->SelbstAbbauVerzoegerung) >= 5)
+	if (Kanal->Fertig && KurzTimerVal(&Kanal->SelbstAbbauVerzoegerung) >= 5 * KurzTimerFreq)
 		{
 		if (ProtokollLevelTlnServ >= 1)
 			ProtokollierenTlnServ_P(Kanal, PSTR("! Schliessen des Socket nach Timeout\r\n"));
