@@ -148,6 +148,8 @@ typedef struct
 	TKurzTimer WiederholungVerzoegerung;
 		//!< Bei spontanem Verbindungsabbau oder Sendestörung wird 2 Sekunden auf den nächsten 
 		//!< Versuch gewartet.
+	TKurzTimer SelbstAbbauVerzoegerung;
+		//!< Wenn #AbbauStatus = #WarteEnde ist, wird nach 5 Sekunden selber die Verbindung getrennt.
 	} TTlnServKanal;
 
 
@@ -218,13 +220,15 @@ static void KanalInit(TTlnServKanal* k, int aSocket)
 	k->SendeFehlerZaehler = 0;
 	k->AnzahlAktualisiert = 0;
 	k->NutzungZaehler++;
+	StartKurzTimer(&k->WiederholungVerzoegerung);
+	StartKurzTimer(&k->SelbstAbbauVerzoegerung);
 	}
 
 
 static void KanalFertig(TTlnServKanal* k)
 	{
 	if (!k->Fertig)
-		;// TCP_sockettable[k->Socket].Timeoutcounter = 5; <-- Das ist verboten, weil bei CloseTimeout / 3 das "FIN"-Paket gesendet wird.
+		StartKurzTimer(&k->SelbstAbbauVerzoegerung);
 	k->Fertig = true;
 	}
 	
@@ -543,14 +547,20 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 		
 		int Res = GetSocketData(Kanal->Socket, InCount, TlnServBuf.Buf);
 		
-		if (ProtokollLevelTlnServ >= 3) // Daten explizit
-			{
+		if (ProtokollLevelTlnServ >= (Kanal->Fertig ? 1 : 3)) 
+			{ // Protokollieren der Daten, wenn alles Protokolliert werden soll (3) oder
+			  // im Falle des Fehlers (Fertig = true) Protokollierung nicht ganz abgeschaltet ist (0)
 			ProtokollierenTlnServInt_P(Kanal, PSTR("Socket Empfang: (%ld/" ), InCount);
 			ProtokollierenInt_P(PSTR("%d)"), Res);
 			ProtokollierenPuffer(TlnServBuf.Buf, Res);
-			Protokollieren_P(PSTR("\r\n"));
+			if (Kanal->Fertig)
+				Protokollieren_P(PSTR("! unerwartet wegen Fertig=TRUE\r\n"));
+			else
+				Protokollieren_P(PSTR("\r\n"));
 			}		
 		
+		Kanal->Fertig = false;
+			
 		// Daten des Socket-Empfangspuffer interpretieren
 		// ----------------------------------------------
 		// es wird immer nur ein Telegramm gesendet und empfangen
@@ -596,7 +606,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				if (Senden)
 					KanalFertig(Kanal); // mehr wird da nicht kommen.
 					
-				break;
+				break; // TlnServBuf.Code == TLNSERV_SELBSTAKT
 				
 			case TLNSERV_ABFRAGE_VERSION1:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.TlnAbfr))
@@ -639,7 +649,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				if (Senden)
 					KanalFertig(Kanal); // mehr wird da nicht kommen.
 					
-				break;
+				break; // TlnServBuf.Code == TLNSERV_ABFRAGE_VERSION1
 
 			case TLNSERV_AUSKUNFT_VERSION1:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.TlnAuskunft))
@@ -701,7 +711,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						Senden = true;
 						}
 					} // SyncFreigabe ok
-				break;
+				break; // TlnServBuf.Code == TLNSERV_AUSKUNFT_VERSION1
 				
 			case TLNSERV_SYNC_VOLLABFRAGE:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SyncAnmeldung))
@@ -731,7 +741,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					TlnDatensatzSyncSenden(Kanal);
 					Senden = true;
 					}
-				break; 
+				break; // TlnServBuf.Code == TLNSERV_SYNC_VOLLABFRAGE
 				
 			case TLNSERV_SYNC_ANMELDUNG:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SyncAnmeldung))
@@ -754,7 +764,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					TlnServBuf.DataLen = 0;
 					Senden = true;
 					}
-				break;
+				break; // TlnServBuf.Code == TLNSERV_SYNC_ANMELDUNG
 			
 			case TLNSERV_SYNC_QUITTUNG:
 				if (!Kanal->Freigabe)
@@ -774,7 +784,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					Senden = true;
 					}
 				
-				break;
+				break; // TlnServBuf.Code == TLNSERV_SYNC_QUITTUNG
 			
 			case TLNSERV_SYNC_ENDE:
 				if (ProtokollLevelTlnServ >= 2) 
@@ -801,7 +811,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					} // if (Kanal->IstVollAbfrage)
 					
 				SyncWarteEnde = (120 - Zufallswert(0x3F)) * KurzTimerFreq; // 2 Minuten warten.
-				break;
+				break; // TlnServBuf.Code == TLNSERV_SYNC_ENDE
 				
 			case TLNSERV_FEHLER:
 				CloseTCPSocket(Kanal->Socket);
@@ -824,16 +834,16 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					// und Fehler merken, so dass bei Wiederholung der Fehlermeldung 
 					// dieser Server bald nicht mehr berücksichtigt wird.
 					
-				break;
+				break; // TlnServBuf.Code == TLNSERV_FEHLER
 			
 			case TLNSERV_IPRUECKMELD: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			case TLNSERV_AUSKUNFT_NICHTVERG: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			default:
 				FehlerRueckmelden(PSTR("unknown code %02X"), TlnServBuf.Code);
 				Senden = true;
-				break;
+				break; // TlnServBuf.Code ist was anderes.
 
-			}
+			} // switch (TlnServBuf.Code)
 			
 		if (ProtokollLevelTlnServ >= 1 && Senden && TlnServBuf.Code == TLNSERV_FEHLER)
 			{
@@ -872,6 +882,21 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 			}
 
 		// da ursache nicht bekannt, kein SyncWarteEnde = X * KurzTimerFreq; // X Sekunden warten.		
+		return;
+		}
+		
+	// Verzögerten Abbau des Kanals durch Gegenstelle selbst nachholen.
+	if (Kanal->Fertig && KurzTimerVal(&Kanal->SelbstAbbauVerzoegerung) >= 5)
+		{
+		if (ProtokollLevelTlnServ >= 1)
+			ProtokollierenTlnServ_P(Kanal, PSTR("! Schliessen des Socket nach Timeout\r\n"));
+		CloseTCPSocket(Kanal->Socket);
+		Kanal->Socket = NO_SOCKET_USED;
+		if (Kanal->ListeIdx >= 0 && Kanal->ListeIdx < ANZ_TEILNEHMER_SERVER)
+			{ // noch Statistik führen, erwartetes Ende
+			TeilnehmerServerErfolgSpeichern(Kanal->ListeIdx);
+			}
+			
 		return;
 		}
 		
@@ -1050,7 +1075,8 @@ void itelex_tlnserv_thread()
 	// Timeouts?
 	// ==========================================================================
 
-	//! \todo Prüfen, ob die System-Timeouts immer richtig wirken...
+	// Sind in SocketBearbeiten() behandelt.
+	
 	
 	// ==========================================================================
 	// Neue Aktionen starten?
