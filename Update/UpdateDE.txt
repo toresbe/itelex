@@ -21,12 +21,29 @@ Falls bereits das i-telex schon mal neu programmiert wurde, ist es nur erforderl
 
 8. Das Nullmodem-Kabel an die serielle Schnittstelle bzw. den USB-Adapter anschließen und am anderen Ende an die i-Telex-Karte, die in Betrieb sein muss.
 
-9. Die Datei "upload" or "upload.bat" aus dem Update-Verzeichnis starten (Doppelklick). Ein Fenster mit schwarzem Hintergrund sollte erscheinen mit dem Text "COM 1 at 38400 Baud: " und einem rotierenden strich.
+9. Die Datei "upload" or "upload.bat" aus dem Update-Verzeichnis starten (Doppelklick). Ein Fenster mit schwarzem Hintergrund sollte erscheinen mit dem Text "COM 1 at 38400 Baud: " und einem rotierenden Strich.
 
 10. Die Taste an der i-Telex-Karte kurz drücken. Die blaue LED sollte aufleuchten.
 
-11. Die Taste an der i-Telex-Karte für etwa eine Sekunde drücken. Die blaue LED sollte kurz erlöschen und wieder aufleuchten. Der rotierende Strich verschwindet und ein langsam zählender Zähler sollte erscheinen.
+11. Die Taste an der i-Telex-Karte für etwa eine Sekunde drücken. Die blaue LED sollte kurz erlöschen und wieder aufleuchten. Der rotierende Strich verschwindet und folgender Text sollte zu lesen sein:
+COM 1 at 38400 Baud: Connected
+Bootloader V2.1
+Target: xxxxx fboot.DEF
+Buffer: 7680 Byte
+Size available: xxxxxx Byte
+Program main.hex: 00000 - yyyyy
+Das "yyyyy" wird alle paar Sekunden aktualisiert.
 
-12. Bitte warten bis die blaue LED ausgeht. Das sollte etwa 2 bis 3 Minuten dauern.
 
-Fertig!
+12. Bitte warten bis die blaue LED ausgeht. Das sollte etwa 2 bis 3 Minuten dauern. Daraufhin sollte folgender Text zu lesen sein:
+COM 1 at 38400 Baud: Connected
+Bootloader V2.1
+Target: xxxxx fboot.DEF
+Buffer: 7680 Byte
+Size available: xxxxxx Byte
+Program main.hex: 00000 - yyyyy successful
+Verify main.hex: 00000 - yyyyy successful
+CRC: o.k.
+Elapsed time: 0.00 seconds
+
+13. Fertig!
