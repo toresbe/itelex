@@ -255,6 +255,10 @@ int iTelexSocketHandle;
 	//!< Verweis auf Socket für iTelex-Kommunikation. Istzustand. Wenn ungültig, aber iTelexSocketMode
 	//!< ungleich Idle, ist ein kurzzeitiger Verbindungsverlust eingetreten.
 	
+static int iTelexBlindSocketHandle;
+	//!< Verweis auf zweiten Socket für iTelex-Kommunikation, dieser behandelt 
+	//!< das Besetztzeichen an den zweiten Anrufer.
+	
 	
 TiTelexSocketMode iTelexSocketMode;
 	//!< Speichert Sollzustand der iTelex-Verbindung
@@ -287,6 +291,9 @@ static TKurzTimer iTelexSocketAbbauVerzoegerung;
 	//!< Geht der Verbindungsabbau vom Anrufer aus, ist eine kurze Verzögerung zwischen 
 	//!< letzter Sendung und Verbindungsabbau sinnvoll.
 	
+static TKurzTimer iTelexBlindSocketAbbauVerzoegerung;
+	//!< Nach 30 Sekunden unplanmäßigem Verbindungsverlust wird entgültig abgebaut.
+
 	
 static uint8_t iTelexSocketProtVersion;
 	//!< Vereinbarte Protokollversion der Kommunikation
@@ -1514,10 +1521,17 @@ static void SocketBearbeiten()
 		
 		if (Abweisen)
 			{ // ID#213 ID#225 ***************************************************
-			PutSocketData_RPE(NewServerSocket, 7, PSTR("\004\006occ \r\n"), FLASH); // 004 = ITELEXC_STOP
-			CloseTCPSocket(NewServerSocket);
 			if (ProtokollLevel >= 1)
-				Protokollieren_P(PSTR(" ! ...ABGEWIESEN\r\n" ));
+				Protokollieren_P(PSTR(" * ...ABGEWIESEN, auf Blind-Socket gelegt\r\n" ));
+			if (iTelexBlindSocketHandle != NO_SOCKET_USED)
+				{
+				CloseTCPSocket(iTelexBlindSocketHandle);
+				if (ProtokollLevel >= 1)
+					Protokollieren_P(PSTR(" ! ...Abweisung auf bereits bestehendem Blind-Socket.\r\n" ));
+				}
+			iTelexBlindSocketHandle = NewServerSocket;
+			StartKurzTimer(&iTelexBlindSocketAbbauVerzoegerung);
+			PutSocketData_RPE(iTelexBlindSocketHandle, 7, PSTR("\004\006occ \r\n"), FLASH); // 004 = ITELEXC_STOP
 			Diagnoseausgabe_P(ISTR(ZweiterAnruf, LokaleSprache), 4);
 			}
 			
@@ -1797,6 +1811,28 @@ static void SocketBearbeiten()
 		#endif //def LEDROT_SOCKETERROR
 		}
 
+	// Blind-Socket auch bearbeiten
+	// ----------------------------
+	// 	  Verbindungsabbruch durch Gegenseite?
+	if (iTelexBlindSocketHandle != NO_SOCKET_USED 
+		&& CheckSocketState(iTelexBlindSocketHandle) == SOCKET_NOT_USE)
+		{
+		if (ProtokollLevel >= 1)
+			ProtokollierenITelex_P(PSTR("* iTelex-Blindsocket wurde von Gegenstelle getrennt\r\n" ));
+		CloseTCPSocket(iTelexBlindSocketHandle);
+		iTelexBlindSocketHandle = NO_SOCKET_USED;
+		}
+		
+	// Blind-Socket Abbau Timeout?
+	if (iTelexBlindSocketHandle != NO_SOCKET_USED
+		&& KurzTimerVal(&iTelexBlindSocketAbbauVerzoegerung) >= 3 * KurzTimerFreq)
+		{
+		if (ProtokollLevel >= 1)
+			ProtokollierenITelex_P(PSTR("* i-Telex-Blindsocket selbst getrennt\r\n" ));
+		CloseTCPSocket(iTelexBlindSocketHandle);
+		iTelexBlindSocketHandle = NO_SOCKET_USED;
+		}
+	
 	} // SocketBearbeiten()
 
 
@@ -5203,6 +5239,9 @@ void itelex_init()
 	StartKurzTimer(&iTelexSocketAbbruchTimer);
 	SocketOutBufUsed = 0;
 	SocketInBufUsed = 0;
+
+	iTelexBlindSocketHandle = NO_SOCKET_USED;
+	StartKurzTimer(&iTelexBlindSocketAbbauVerzoegerung);
 	
 	NetzEigeneIP = 0;
 
