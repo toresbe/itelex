@@ -275,7 +275,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 	if (tsb->SelbstAkt.RufNr < GlobRufnrMinWert)
 		{
 		if (ProtokollLevelTlnServ >= 1)
-			ProtokollierenTlnServInt_P(Kanal, PSTR("! Rufnummer %lu zu wenig Ziffern\r\n"), tsb->SelbstAkt.RufNr);
+			ProtokollierenTlnServInt_P(Kanal, PSTR("* Rufnummer %lu zu wenig Ziffern\r\n"), tsb->SelbstAkt.RufNr);
 		return false;
 		}
 	else if (TlnSuche(tsb->SelbstAkt.RufNr, false, &TD))
@@ -289,7 +289,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 		else if (TD.Flags & TlnFlag_Gesperrt)
 			{
 			if (ProtokollLevelTlnServ >= 1)
-				ProtokollierenTlnServInt_P(Kanal, PSTR("! Teilnehmer %lu schon vorhanden, aber noch nicht freigegeben\r\n"), TD.Nummer);
+				ProtokollierenTlnServInt_P(Kanal, PSTR("* Teilnehmer %lu schon vorhanden, aber noch nicht freigegeben\r\n"), TD.Nummer);
 			return false;
 			}
 		else if (TD.AdrArt != iTelexDynIP)
@@ -642,7 +642,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						TlnServBuf.DataLen = 0;
 						Senden = true;
 						if (ProtokollLevelTlnServ >= 2) 
-							Protokollieren_P(PSTR("! ...nicht gefunden oder gesperrt\r\n"));
+							Protokollieren_P(PSTR("* ...nicht gefunden oder gesperrt\r\n"));
 						} 
 					} // else ausreichend Daten erhalten
 					
@@ -680,7 +680,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 							{ // gespeichert...
 							if (ProtokollLevelTlnServ >= 1)
 								ProtokollierenTlnServInt_P(Kanal, 
-									PSTR("! Datensatz vom Teilnehmer-Server mit Nr %lu empfangen und gespeichert \r\n"), 
+									PSTR("* Datensatz vom Teilnehmer-Server mit Nr %lu empfangen und gespeichert \r\n"), 
 									TlnServBuf.TlnAuskunft.Nummer);
 							TlnServTlnbuchEintragGeaendert(&TlnServBuf.TlnAuskunft, Kanal->ListeIdx);
 							Kanal->AnzahlAktualisiert++;
@@ -889,7 +889,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 	if (Kanal->Fertig && KurzTimerVal(&Kanal->SelbstAbbauVerzoegerung) >= 5 * KurzTimerFreq)
 		{
 		if (ProtokollLevelTlnServ >= 1)
-			ProtokollierenTlnServ_P(Kanal, PSTR("! Schliessen des Socket nach Timeout\r\n"));
+			ProtokollierenTlnServ_P(Kanal, PSTR("* Schliessen des Socket nach Timeout\r\n"));
 		CloseTCPSocket(Kanal->Socket);
 		Kanal->Socket = NO_SOCKET_USED;
 		if (Kanal->ListeIdx >= 0 && Kanal->ListeIdx < ANZ_TEILNEHMER_SERVER)

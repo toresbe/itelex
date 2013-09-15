@@ -2531,9 +2531,9 @@ bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund)
 			{
 			if (ProtokollLevelTlnServ >= 3)
 				{
-				ProtokollierenITelex_P(PSTR("Teilnehmer-Server "));
+				ProtokollierenITelex_P(PSTR("* Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
-				Protokollieren_P(PSTR(" wegen Fehlern noch gesperrt! (Oeffnung fuer "));
+				Protokollieren_P(PSTR(" wegen Fehlern noch gesperrt (Oeffnung fuer "));
 				Protokollieren_P(Grund);
 				Protokollieren_P(PSTR(")\r\n"));
 				}
@@ -2767,7 +2767,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			
 		default:
 			if (ProtokollLevel >= 1)
-				ProtokollierenITelex_P(PSTR("! Teilnehmer ist GELOESCHT\r\n" ));
+				ProtokollierenITelex_P(PSTR("* Teilnehmer ist GELOESCHT\r\n" ));
 				
 			return 2;
 			
@@ -3414,7 +3414,7 @@ void itelex_thread()
 		{ // 3 Sekunden keine Schlussquittung empfangen
 		// ID#412 ****************************************************************
 		if (ProtokollLevel >= 1)
-			ProtokollierenITelex_P(PSTR("! Timeout beim Warten auf die Schlussquittung\r\n" ));
+			ProtokollierenITelex_P(PSTR("* Timeout beim Warten auf die Schlussquittung\r\n" ));
 			
 		ModusWechsel(ModWarteGrundstellung);
 		}
@@ -3432,7 +3432,7 @@ void itelex_thread()
 	if (ModusTwiVerbunden() && LangTimerVal(&BeideRuhigTimer) > 10 * LangTimerMinuteFaktor)
 		{
 		if (ProtokollLevel >= 1)
-			ProtokollierenITelex_P(PSTR("Abbau wegen 10 Minuten Funkstille!\r\n"));
+			ProtokollierenITelex_P(PSTR("* Abbau wegen 10 Minuten Funkstille.\r\n"));
 
 		InterneVerbindungBeenden(true);
 		ExterneVerbindungBeenden();
@@ -3686,7 +3686,7 @@ void itelex_thread()
 					if (ProtokollLevel >= 3)
 						{
 						ProtokollRegelblockStart();
-						ProtokollierenITelex_P(PSTR("! Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
+						ProtokollierenITelex_P(PSTR("* Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
 						ProtokollRegelblockEnde();
 						}
 					if (ProtokollLevel < 4)
