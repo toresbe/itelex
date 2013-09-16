@@ -124,7 +124,7 @@
 				#endif
 				// aktiviert ntp per Webinterface
 				#if defined(NTP)
-					#define HTTPSERVER_NTP
+					//#define HTTPSERVER_NTP ersetzt durch ConfigNtp.c
 				#endif
 				// aktiviert eemem per Webinterface
 				#define HTTPSERVER_EEMEM

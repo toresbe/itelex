@@ -130,6 +130,7 @@ SRC += apps/can/can_eth_rep.c
 
 # Add user C source files here.
 SRC += iTelex/iTelex.c iTelex/TlnBuch.c iTelex/CgiFormTools.c iTelex/SwTwi.c iTelex/Protokoll.c iTelex/TlnServer.c iTelex/eMail.c iTelex/StringTab.c
+SRC += iTelex/ConfigNtp.c
 SRC += iTelex/Gemeinsam/BusKomm.c iTelex/Gemeinsam/FifoPuffer.c iTelex/Gemeinsam/BaudotCode.c 
 
 

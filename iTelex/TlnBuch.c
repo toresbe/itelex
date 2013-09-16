@@ -48,12 +48,22 @@ static char TlnBuch[TlnBuchMemMax]; //!< Das Teilnehmer-Verzeichnis.
 enum { TBOffsGroesse = 4 } ; //!< Position der Eintragsgröße im Teilnehmer-Verzeichnis-Eintrag
 enum { TBOffsFlags = 5 } ; //!< Position der Flags im Teilnehmer-Verzeichnis-Eintrag
 enum { TBOffsArt = 7 } ; //!< Position der Art (s. #TTlnAdresseArt) im Teilnehmer-Verzeichnis-Eintrag
+enum { TBOffsName = 8 } ; //!< Position der Art (s. #TTlnAdresseArt) im Teilnehmer-Verzeichnis-Eintrag
 
 
 static uint16_t TlnBuchMemUsed; //!< Ende des genutzten Bereichs in TlnBuch.
 
 
-//! Ermittelt die Größe eines Teilnehmereintrags.
+//! Ermittelt die Größe eines bestehenden Teilnehmereintrags.
+//-----------------------------------------------------------
+static inline uint8_t TlnEintragGroesseB(char *tp)
+	{
+	return *((uint8_t *) (tp + TBOffsGroesse));
+	}
+	
+	
+//! Ermittelt die Größe eines neuen / geänderten Teilnehmereintrags.
+//------------------------------------------------------------------
 static uint8_t TlnEintragGroesse(TTlnDaten *Tln)
 	{
 	uint8_t Basis = 4 + 1 + 2 + 1 + strlen(Tln->Name)+1 + 4;
@@ -264,7 +274,7 @@ char *TlnMemSuche(uint32_t SucheNummer)
 		{
 		if (SucheNummer == *((uint32_t *) p))
 			return p;
-		p += *((uint8_t *) (p + TBOffsGroesse));
+		p += TlnEintragGroesseB(p);
 		}
 	return NULL;
 	}
@@ -333,7 +343,7 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus HinzModus)
 			}
 		}
 		
-	uint8_t AltGr = *((uint8_t *) (p + TBOffsGroesse));
+	uint8_t AltGr = TlnEintragGroesseB(p);
 	if (NeuGr != AltGr)
 		{
 		if (TlnBuchMemUsed + NeuGr - AltGr >= TlnBuchMemMax)
@@ -377,7 +387,7 @@ bool TlnListerNaechster(TTlnListerDat *ldp, TTlnDaten *Tln)
 			ldp->Pos = TlnBuch; // zur Not halt nochmal von vorn...
 			
 		TlnLesen(Tln, ldp->Pos);
-		ldp->Pos += *((uint8_t *) (ldp->Pos + 4));
+		ldp->Pos += TlnEintragGroesseB(ldp->Pos);
 		if (ldp->Pos < TlnBuch + TlnBuchMemUsed)
 			memcpy(ldp->Ref, ldp->Pos, sizeof(ldp->Ref));
 			
@@ -387,6 +397,142 @@ bool TlnListerNaechster(TTlnListerDat *ldp, TTlnDaten *Tln)
 		}
 	}
 
+
+//! Hilfsfuntion zum Sortieren der Teilnehmer-Verzeichnis-Einträge.
+//-----------------------------------------------------------------
+//! Vergleicht nach Wahlnummer. 
+//! \param p1 Zeiger auf ersten Eintrag
+//! \param p2 Zeiger auf zweiten Eintrag
+//! \retval -1, wenn erster Eintrag vor zweitem einzureihen ist.
+//! \retval 0, wenn erster Eintrag vor zweitem einzureihen ist.
+//! \retval 1, wenn erster Eintrag nach zweitem einzureihen ist.
+static int8_t EintragVergleichNummer(char *p1, char *p2)
+	{
+	uint32_t Nr1, Nr2;
+	
+	Nr1 = *((uint32_t *)(p1));
+	Nr2 = *((uint32_t *)(p2));
+	
+	while (Nr1 < 100000000)
+		Nr1 *= 10;
+	while (Nr2 < 100000000)
+		Nr2 *= 10;
+		
+	if (Nr1 < Nr2)
+		return -1;
+	else if (Nr1 == Nr2)
+		return 0;
+	else
+		return 1;
+	}
+
+
+//! Hilfsfuntion zum Sortieren der Teilnehmer-Verzeichnis-Einträge.
+//-----------------------------------------------------------------
+//! Vergleicht nach Name. 
+//! \param p1 Zeiger auf ersten Eintrag
+//! \param p2 Zeiger auf zweiten Eintrag
+//! \retval -1, wenn erster Eintrag vor zweitem einzureihen ist.
+//! \retval 0, wenn erster Eintrag vor zweitem einzureihen ist.
+//! \retval 1, wenn erster Eintrag nach zweitem einzureihen ist.
+static int8_t EintragVergleichName(char *p1, char *p2)
+	{
+	char *Name1, *Name2;
+	
+	Name1 = p1 + TBOffsName;
+	Name2 = p2 + TBOffsName;
+	
+	return strcmp(Name1, Name2);
+	}
+
+
+//! Hilfsfuntion zum Sortieren der Teilnehmer-Verzeichnis-Einträge.
+//-----------------------------------------------------------------
+//! Vergleicht nach letztem Änderungsdatum. 
+//! \param p1 Zeiger auf ersten Eintrag
+//! \param p2 Zeiger auf zweiten Eintrag
+//! \retval -1, wenn erster Eintrag vor zweitem einzureihen ist.
+//! \retval 0, wenn erster Eintrag vor zweitem einzureihen ist.
+//! \retval 1, wenn erster Eintrag nach zweitem einzureihen ist.
+static int8_t EintragVergleichDatum(char *p1, char *p2)
+	{
+	char *Name1, *Name2;
+	
+	Name1 = p1 + TBOffsName;
+	Name2 = p2 + TBOffsName;
+
+	uint32_t Datum1, Datum2;
+	
+	Datum1 = *((uint32_t *)(p1 + TBOffsName + strlen(Name1) + 1)); 
+	Datum2 = *((uint32_t *)(p2 + TBOffsName + strlen(Name2) + 1));
+		// Datum kommt gleich hinter dem Namen plus Null-Zeilen 
+	
+	if (Datum1 < Datum2)
+		return -1;
+	else if (Datum1 == Datum2)
+		return 0;
+	else
+		return 1;
+	}
+
+
+typedef int8_t ( * SortierKritFunktion ) (char *, char *);
+
+
+//! Eigentliche Sortierfunktion für das Teilnehmerverzeichnis.
+//------------------------------------------------------------
+//! Arbeitet nach dem Bubblesort-Prinzip. Zuerst wird der kleinste Eintrag
+//! nach vorne geholt, dann der nächst-kleinste usw.
+//! Als Zwischenpuffer für den Eintragstausch dient der freie Bereich 
+//! hinter dem Ende der Liste.
+//! \param Vergleich Anonyme Vergleichsfunktion für zwei Einträge.
+//! \param Rueckwaerts wenn die Liste Absteigend sortiert sein soll.
+//! \retval true, wenn Verzeichnis neu sortiert ist.
+//! \retval false, wenn der Speicher zum Umsortieren nicht reicht.
+static bool TlnBuchSortieren(SortierKritFunktion Vergleich, bool Rueckwaerts)
+	{
+	char *Kopf; // Aktuell oberstes Element (dort kommt der nächste Kleinste hin).
+	char *p1; // Suchzeiger
+	char *Kleinster; // Zeiger auf den kleinsten gefundenen.
+	
+	Kopf = TlnBuch;
+	while (Kopf < TlnBuch + TlnBuchMemUsed)
+		{ // solange noch Einträge kommen...
+		// Kleinsten suchen:
+		Kleinster = Kopf;
+		p1 = Kleinster + TlnEintragGroesseB(Kleinster);
+		while (p1 < TlnBuch + TlnBuchMemUsed)
+			{
+			if (!Rueckwaerts && (*Vergleich)(p1, Kleinster) < 0)
+				// neuen Kleinsten gefunden.
+				Kleinster = p1;
+			if (Rueckwaerts && (*Vergleich)(p1, Kleinster) > 0)
+				// eigentlich den neuesten größten gefunden, aber durch Rueckwaerts ist es der kleinste ;-)
+				Kleinster = p1;
+			p1 += TlnEintragGroesseB(p1);
+			}
+		
+		if (Kleinster != p1)
+			{ // Kleinsten ganz nach vorne holen, dazu...
+			// Hilfs-Platz prüfen:
+			uint8_t KleinsterGroesse = TlnEintragGroesseB(Kleinster);
+			if (KleinsterGroesse + TlnBuchMemUsed >= TlnBuchMemMax)
+				return false; // Abbruch wegen Speichermangel.
+			// Kleinsten auf Hilfs-Platz schieben:
+			memmove(TlnBuch + TlnBuchMemUsed, Kleinster, KleinsterGroesse);
+			// andere nach hinten schieben:
+			memmove(Kopf + KleinsterGroesse, Kopf, Kleinster - Kopf);
+			// Kleinsten von Hilfs-Platz an den Kopf holen:
+			memmove(Kopf, TlnBuch + TlnBuchMemUsed, KleinsterGroesse);
+			}
+			
+		// Kopf auf nächsten Eintrag:
+		Kopf += TlnEintragGroesseB(Kopf);
+		}
+		
+	return true; // Fertig!!!
+	} // TlnVerzeichnisSortieren()
+	
 	
 //! Errechnet aus dem aktuellen Wert von TlnBuchMemUsed einen Prüfwert,
 //! um die Integrität des externen EEPROM zu testen.
@@ -717,7 +863,159 @@ int TlnBuchSpeichereAufExternEeprom()
 	}
 
 	
+	
+//! Hilfsfunktion für die Darstellung des Teilnehmer-Verzeichnisses als Tabelle.
+//------------------------------------------------------------------------------
+static void TlnBuchTabelleAusgabe(TSprache Sprache)
+	{
+	// Anzeige der Teilnehmerliste...
+	//   wenn TlnBuchOffen 
+	//	 oder wenn KonfigFreigabe erteilt immer vollständige Liste
+	//	 sonst wenn TlnServer aktiv zumindest die öffentlichen Einträge
+	
+	// Startseite = Liste
+	// ==================================================
+	printf_P(PSTR("<form action=\"itelex-tlnverz.cgi\">"));
+	
+	if (TlnBuchOffen || KonfigFreigabe(NULL, 0)) // NULL fragt nicht wieder nach einem Kennwort
+		printf_P(ISTR(UeberschriftTeilnehmerverzeichnis, Sprache));
+	else
+		printf_P(ISTR(UeberschriftOeffentlichesTeilnehmerverzeichnis, Sprache));
+
+	if (!KonfigFreigabe(NULL, 0))
+		{
+		printf_P(PSTR("<a href=\"itelex-tlnverz.cgi?allezeigen\">"));
+		printf_P(ISTR(VollstaendigesTeilnehmerverzeichnis, Sprache));
+		printf_P(PSTR("</a><br>"));
+		}
+	
+	printf_P(ISTR(TeilnehmerverzeichnisHtmlKopf, Sprache));
+		
+	TTlnDaten TD;
+	TlnDatenInit(&TD);
+	
+	struct TIME Time;
+	CLOCK_GetTime(&Time); // holt auch die aktuelle Zeitzone
+	uint32_t AktZeit = Time.time;
+
+	char Hilf[10];
+	
+	TTlnListerDat LD;
+	if (TlnListerStart(&LD))
+		{
+		while (TlnListerNaechster(&LD, &TD))
+			{
+			if (!TlnBuchOffen && (TD.Flags & TlnFlag_Lokal) != 0 && !KonfigFreigabe(NULL, 0))
+				continue; // Private Einträge nicht darstellen.
+				
+			if (TD.AdrArt == Geloescht && TD.Datum < AktZeit - 7L * 24 * 60 * 60) // Mehr als 7 Tage alte Einträge mit "gelöscht" nicht mehr darstellen.
+				continue;
+			
+			printf_P(PSTR("<tr><td align=\"right\">%ld</td>"), TD.Nummer); // Nummer
+			printf_P(PSTR("<td align=\"left\">%s</td><td>&#160;"), TD.Name); // name
+			if ((TD.Flags & TlnFlag_Lokal) != 0)
+				{
+				printf_P(ISTR(TlnverzAttrLokal, Sprache));
+				printf_P(PSTR(" "));
+				}
+			if ((TD.Flags & TlnFlag_Gesperrt) != 0)
+				{
+				printf_P(ISTR(TlnverzAttrGesperrt, Sprache));
+				printf_P(PSTR(" "));
+				}
+			if (TD.AdrArt == iTelexDynIP)
+				{
+				printf_P(ISTR(TlnverzAttrDyn, Sprache));
+				printf_P(PSTR(" "));
+				}
+				
+			printf_P(PSTR("</td>" // Ende Besonderheiten
+						  "<td align=\"left\">")); // Beginn Typ
+			
+			switch (TD.AdrArt)
+				{
+				case iTelexIP:
+				case iTelexDynIP:
+					iptostr(TD.IPAdr, TD.Adresse);
+					// weiter mit iTelexHostname!
+				case iTelexHostname:
+					AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
+					printf_P(ISTR(TypITelex, Sprache));
+					printf_P(PSTR("</td>"
+						"<td align=\"left\"><a href=\"http://%s\" target=\"_blank\">%s</a></td>" // Adresse
+						"<td align=\"center\">%u</td>" // Port
+						"<td align=\"center\">%s</td>" // Durchwahl
+						), TD.Adresse, TD.Adresse, TD.Port, Hilf);
+					break;
+
+				case AsciiIP:
+					iptostr(TD.IPAdr, TD.Adresse);
+					// weiter mit AsciiHostname!
+				case AsciiHostname:
+					printf_P(ISTR(TypAscii, Sprache));
+					printf_P(PSTR("</td>"
+						"<td align=\"left\">%s</td>" // Adresse
+						"<td align=\"center\">%u</td>" // Port
+						"<td>&#160;</td>" // Durchwahl
+						), TD.Adresse, TD.Port);
+					break;
+
+				case eMail:
+					printf_P(ISTR(TypEMail, Sprache));
+					printf_P(PSTR("</td>"
+						"<td align=\"left\">%s</td>" // Adresse
+						"<td align=\"center\">&#160;</td>" // Port
+						"<td>&#160;</td>" // Durchwahl
+						), TD.Adresse);
+					break;
+
+				default:
+					printf_P(ISTR(TypGeloescht, Sprache));
+					printf_P(PSTR("</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"));
+					break;
+				} // switch (TD.AdrArt)
+				
+			// Datum / Uhrzeit...
+			Time.time = TD.Datum;
+			CLOCK_decode_time(&Time);
+			
+			printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u %02d:%02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+			
+			if (KonfigFreigabe(NULL, 0))
+				{
+				printf_P(PSTR("<td><a href=\"itelex-tlnverz.cgi?edit=%ld\">"), TD.Nummer);
+				printf_P(ISTR(AktionAendern, Sprache));
+				printf_P(PSTR("</a></td></tr>"));
+				}
+			else
+				printf_P(PSTR("<td>&#160;</td></tr>"));
+			
+			} // while (TlnListerNaechster(&LD, &TD))
+
+		if (KonfigFreigabe(NULL, 0))
+			{
+			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
+						   "<td><a href=\"itelex-tlnverz.cgi?edit=0\">"));
+			printf_P(ISTR(AktionHinzufuegen, Sprache));
+			printf_P(PSTR("</a></td></tr></table>"));
+			printf_P(ISTR(TeilnehmerverzeichnisAktionenOffen, Sprache));
+			printf_P(PSTR("</form>"));
+			}
+		else
+			printf_P(PSTR( "</table></form>") );
+		
+		} // Teilnehmerverzeichnis nicht leer
+	else
+		{
+		printf_P(PSTR("</table>"));
+		printf_P(ISTR(TeilnehmerverzeichnisAktionenLeerOffen, Sprache));
+		}
+
+	} // TlnBuchTabelleAusgabe()
+	
+	
 //! CGI-Funktion für die Anzeige des Teilnehmerverzeichnisses.
+//------------------------------------------------------------
 void TlnBuch_Anzeige_CGI(void *pStruct)
 	{
 	// folgende Namen sind nur Intern und nicht zu übersetzen.
@@ -732,9 +1030,12 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	static PROGMEM const char Typ_P[] = "type";
 	static PROGMEM const char Lokal_P[] = "local";
 	static PROGMEM const char Gesperrt_P[] = "lock";
+	static PROGMEM const char Datum_P[] = "datum";
 	static PROGMEM const char Save_P[] = "save";
 	static PROGMEM const char Clear_P[] = "clear";
 	static PROGMEM const char Load_P[] = "load";
+	static PROGMEM const char Sortiere_P[] = "sort";
+	static PROGMEM const char SortAb_P[] = "ab";
 
 	static TSprache Sprache;
 
@@ -748,10 +1049,6 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	
 	cgi_PrintHttpheaderStart();
 
-	if (http_request->argc != 0 && !KonfigFreigabe(pStruct, Sprache))
-		// bei Änderungen nach dem Kennwort fragen.
-		return;
-		
 	if (!TlnBuchOffen
 		#ifdef ITELEX_TLNSERVER
 		&& TlnServSyncGeheimzahl == 0 
@@ -762,151 +1059,15 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 	if (http_request->argc == 0 || PharseCheckName_P(http_request, AlleZeigen_P))
 		{ 
-		// Anzeige der Teilnehmerliste...
-		//   wenn TlnBuchOffen 
-		//	 oder wenn KonfigFreigabe erteilt immer vollständige Liste
-		//	 sonst wenn TlnServer aktiv zumindest die öffentlichen Einträge
-		
-		// Startseite = Liste
-		// ==================================================
-		printf_P(PSTR("<form action=\"itelex-tlnverz.cgi\">"));
-		
-		if (TlnBuchOffen || KonfigFreigabe(NULL, 0)) // NULL fragt nicht wieder nach einem Kennwort
-			printf_P(ISTR(UeberschriftTeilnehmerverzeichnis, Sprache));
-		else
-			printf_P(ISTR(UeberschriftOeffentlichesTeilnehmerverzeichnis, Sprache));
-
-		if (!KonfigFreigabe(NULL, 0))
-			{
-			printf_P(PSTR("<a href=\"itelex-tlnverz.cgi?allezeigen\">"));
-			printf_P(ISTR(VollstaendigesTeilnehmerverzeichnis, Sprache));
-			printf_P(PSTR("</a><br>"));
-			}
-		
-		printf_P(ISTR(TeilnehmerverzeichnisHtmlKopf, Sprache));
-			
-		TlnDatenInit(&TD);
-		
-		struct TIME Time;
-		CLOCK_GetTime(&Time); // holt auch die aktuelle Zeitzone
-		uint32_t AktZeit = Time.time;
-		
-		TTlnListerDat LD;
-		
-		if (TlnListerStart(&LD))
-			{
-			while (TlnListerNaechster(&LD, &TD))
-				{
-				if (!TlnBuchOffen && (TD.Flags & TlnFlag_Lokal) != 0 && !KonfigFreigabe(NULL, 0))
-					continue; // Private Einträge nicht darstellen.
-					
-				if (TD.AdrArt == Geloescht && TD.Datum < AktZeit - 7L * 24 * 60 * 60) // Mehr als 7 Tage alte Einträge mit "gelöscht" nicht mehr darstellen.
-					continue;
-				
-				printf_P(PSTR("<tr><td align=\"right\">%ld</td>"), TD.Nummer); // Nummer
-				printf_P(PSTR("<td align=\"left\">%s</td><td>&#160;"), TD.Name); // name
-				if ((TD.Flags & TlnFlag_Lokal) != 0)
-					{
-					printf_P(ISTR(TlnverzAttrLokal, Sprache));
-					printf_P(PSTR(" "));
-					}
-				if ((TD.Flags & TlnFlag_Gesperrt) != 0)
-					{
-					printf_P(ISTR(TlnverzAttrGesperrt, Sprache));
-					printf_P(PSTR(" "));
-					}
-				if (TD.AdrArt == iTelexDynIP)
-					{
-					printf_P(ISTR(TlnverzAttrDyn, Sprache));
-					printf_P(PSTR(" "));
-					}
-					
-				printf_P(PSTR("</td>" // Ende Besonderheiten
-						      "<td align=\"left\">")); // Beginn Typ
-				
-				switch (TD.AdrArt)
-					{
-					case iTelexIP:
-					case iTelexDynIP:
-						iptostr(TD.IPAdr, TD.Adresse);
-						// weiter mit iTelexHostname!
-					case iTelexHostname:
-						AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
-						printf_P(ISTR(TypITelex, Sprache));
-						printf_P(PSTR("</td>"
-							"<td align=\"left\"><a href=\"http://%s\" target=\"_blank\">%s</a></td>" // Adresse
-							"<td align=\"center\">%u</td>" // Port
-					   		"<td align=\"center\">%s</td>" // Durchwahl
-							), TD.Adresse, TD.Adresse, TD.Port, Hilf);
-						break;
-
-					case AsciiIP:
-						iptostr(TD.IPAdr, TD.Adresse);
-						// weiter mit AsciiHostname!
-					case AsciiHostname:
-						printf_P(ISTR(TypAscii, Sprache));
-						printf_P(PSTR("</td>"
-							"<td align=\"left\">%s</td>" // Adresse
-							"<td align=\"center\">%u</td>" // Port
-					   		"<td>&#160;</td>" // Durchwahl
-							), TD.Adresse, TD.Port);
-						break;
-
-					case eMail:
-						printf_P(ISTR(TypEMail, Sprache));
-						printf_P(PSTR("</td>"
-							"<td align=\"left\">%s</td>" // Adresse
-							"<td align=\"center\">&#160;</td>" // Port
-					   		"<td>&#160;</td>" // Durchwahl
-							), TD.Adresse);
-						break;
-
-					default:
-						printf_P(ISTR(TypGeloescht, Sprache));
-						printf_P(PSTR("</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"));
-						break;
-					} // switch (TD.AdrArt)
-					
-				// Datum / Uhrzeit...
-				Time.time = TD.Datum;
-				CLOCK_decode_time(&Time);
-				
-				printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u %02d:%02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
-				
-				if (KonfigFreigabe(NULL, 0))
-					{
-					printf_P(PSTR("<td><a href=\"itelex-tlnverz.cgi?edit=%ld\">"), TD.Nummer);
-					printf_P(ISTR(AktionAendern, Sprache));
-					printf_P(PSTR("</a></td></tr>"));
-					}
-				else
-					printf_P(PSTR("<td>&#160;</td></tr>"));
-				
-				} // while (TlnListerNaechster(&LD, &TD))
-
-			if (KonfigFreigabe(NULL, 0))
-				{
-				printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
-							   "<td><a href=\"itelex-tlnverz.cgi?edit=0\">"));
-				printf_P(ISTR(AktionHinzufuegen, Sprache));
-				printf_P(PSTR("</a></td></tr></table>"));
-				printf_P(ISTR(TeilnehmerverzeichnisAktionenOffen, Sprache));
-				printf_P(PSTR("</form>"));
-				}
-			else
-				printf_P(PSTR( "</table></form>") );
-			
-			} // Teilnehmerverzeichnis nicht leer
-		else
-			{
-			printf_P(PSTR("</table>"));
-			printf_P(ISTR(TeilnehmerverzeichnisAktionenLeerOffen, Sprache));
-			}
-
+		TlnBuchTabelleAusgabe(Sprache);
 		} // argc == 0 --> gesamte Liste ausgeben
 		
 	else if (PharseCheckName_P(http_request, Edit_P))
 		{ 
+		if (!KonfigFreigabe(pStruct, Sprache))
+			// bei Änderungen nach dem Kennwort fragen.
+			return;
+		
 		// Ändern ODER Neu --> Eingabeformular anzeigen und füllen.
 		// =========================================================
 		TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Edit_P)]);
@@ -970,6 +1131,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 	else if (PharseCheckName_P(http_request, Nummer_P))
 		{ 
+		if (!KonfigFreigabe(pStruct, Sprache))
+			// bei Änderungen nach dem Kennwort fragen.
+			return;
+		
 		// neuen Einfügen oder geänderten Aktualisieren
 		// ==================================================
 		bool DatenOk = true; // nur wenn gesetzt, wird auch gespeichert
@@ -1176,6 +1341,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		{ 
 		// auf externem Eeprom speichern
 		// ==================================================
+		if (!KonfigFreigabe(pStruct, Sprache))
+			// bei Änderungen nach dem Kennwort fragen.
+			return;
+		
 		int Res = TlnBuchSpeichereAufExternEeprom();
 		if (Res < 0)
 			printf_P(ISTR(EepromSpeicherFehler, Sprache), Res, SwTwiLetzterFehler);
@@ -1188,6 +1357,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		{ 
 		// von externem Eeprom laden
 		// ==================================================
+		if (!KonfigFreigabe(pStruct, Sprache))
+			// bei Änderungen nach dem Kennwort fragen.
+			return;
+		
 		int Res = TlnBuchLadeVonExternEeprom();
 		if (Res < 0)
 			printf_P(ISTR(EepromLadenFehler, Sprache), Res, SwTwiLetzterFehler);
@@ -1200,9 +1373,46 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		{ 
 		// komplett löschen
 		// ==================================================
+		if (!KonfigFreigabe(pStruct, Sprache))
+			// bei Änderungen nach dem Kennwort fragen.
+			return;
+		
 		printf_P(ISTR(KomplettGeloescht, Sprache));
 		TlnBuchMemUsed = 0;
 		Zurueck = true;
+		}
+		
+	else if (PharseCheckName_P(http_request, Sortiere_P))
+		{ 
+		// sortieren (ohne Kennwort-Abfrage möglich)
+		// ==================================================
+		bool Rueckwaerts = PharseCheckName_P(http_request, SortAb_P);
+		char *Krit = http_request->argvalue[PharseGetValue_P(http_request, Sortiere_P)];
+		bool Res;
+		
+		if (strcmp_P(Krit, Nummer_P) == 0)
+			Res = TlnBuchSortieren(EintragVergleichNummer, Rueckwaerts);
+		else if (strcmp_P(Krit, Name_P) == 0)
+			Res = TlnBuchSortieren(EintragVergleichName, Rueckwaerts);
+		else if (strcmp_P(Krit, Datum_P) == 0)
+			Res = TlnBuchSortieren(EintragVergleichDatum, Rueckwaerts);
+		else
+			{
+			printf_P(ISTR(UngueltigerCgiAufruf, Sprache), http_request->HTTP_LINEBUFFER);
+			Zurueck = true;
+			Res = true;
+			}
+			
+		if (!Res)
+			{
+			printf_P(ISTR(InternesVerzeichnisVoll, Sprache));
+			Zurueck = true;
+			}
+
+		if (!Zurueck)
+			// Bei Fehlern wird 'Zurueck' gesetzt, sonst bleibt es auf False und die Tabelle ist auszugeben.
+			TlnBuchTabelleAusgabe(Sprache);
+			
 		}
 		
 	else
@@ -1218,7 +1428,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	
 	cgi_PrintHttpheaderEnd();
 
-	}
+	} // TlnBuch_Anzeige_CGI()
 	
 
 /*
@@ -1262,5 +1472,10 @@ void TlnBuchInit()
 	
 	}
 	
-
+	
+			
+	
+	
+	
+	
 #endif //def iTelex

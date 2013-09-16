@@ -73,6 +73,8 @@
 #include "eMail.h"
 #include "SvnVersion.h"
 #include "StringTab.h"
+#include "ConfigNtp.h"
+
 
 const PROGMEM char SvnVersion_P[] = SVNVERSION;
 
@@ -197,10 +199,6 @@ volatile static uint16_t TwiLebenszeichenZaehler;
 static TKurzTimer SchreibPauseTimer;
 	//!< Misst die Zeit zwischen zwei vom Endgerät empfangenen Zeichen.
 	//!< Sendung wird nach 0,8 Sekunden Pause ausgelöst
-	
-static TKurzTimer WahlPauseTimer;
-	//!< Misst die Zeit zwischen zwei vom Endgerät empfangenen Wahlziffern.
-	//!< Abfrage des Rufnummern-Servers wird nach 2 Sekunden ausgelöst.
 	
 static TKurzTimer BusQuittTimer;
 	//!< Misst die Zeit zwischen nach Einschalt-Aufforderung oder Schluss-Aufforderung.
@@ -366,7 +364,7 @@ static TDatumDruckModus DatumDruckModus;
 	//!< Wird bei kommenden Verbindungen etwas automatisch gedruckt?
 	
 static uint32_t Wahlnummer; 
-	//!< Momentan gewählte Nummer
+	//!< Momentan gewählte Nummer.
 	
 static uint8_t Wahlziffern; 
 	//!< Anzahl gewählter Ziffern
@@ -377,7 +375,17 @@ static TTlnDaten GewaehlterTln;
 	
 static bool TlnServerAbfrageWiederholungssperre;
 	//!< Bewirkt, dass der Teilnehmer-Server nur ein mal je gewählte Ziffer abgefragt wird.
+
+static TKurzTimer WahlPauseTimer;
+	//!< Misst die Zeit zwischen zwei vom Endgerät empfangenen Wahlziffern.
+	//!< Abfrage des Rufnummern-Servers wird nach 2 Sekunden ausgelöst.
+	//!< 5 Sekunden nach Wahl der letzten Ziffer wird auch bei nicht erfolgreicher
+	//!< Teilnehmer-Server-Abfrage die Versuchsweise Anwahl des alten Teilnehmers 
+	//!< ausgeführt.
 	
+static bool WahlVerbAufbauNach5SekundenVersuchen;
+	//!< Wirkt nur, wenn ohne Rückmeldung eines Teilnehmer-Servers eine nicht
+	//!< als lokal im eigenen Teilnehmer-Verzeichnis gespeicherte Nummer gewählt wird.
 	
 static uint32_t NetzRufnummer;
 	//!< Rufnummer des eigenen Anschlusses im ip-telex-Netz
@@ -3198,15 +3206,34 @@ void itelex_thread()
 					}
 				if (Modus == ModGehendWaehlen && iTelexSocketMode == SocketIdle)
 					{
+					// allgemeines Verhalten beim Wählen:
+					// 1. nach jeder gewählten Ziffer wird das eigene Teilnehmerverzeichnis durchsucht.
+					// 2. Der Teilnehmer-Server wird abgefragt, wenn die gewählte Nummer 
+					//    mindestens 5 Stellen hat UND
+					//    2a) Ein nicht lokaler Eintrag im eigenen Teilnehmerverzeichnis gefunden wurde.
+					//    2b) ODER zwei Sekunden Wahlpause gemacht wurde.
+					// 3. Ein Verbindungsaufbau wird versucht, wenn
+					//    3a) Ein lokaler Eintrag im eigenen Teilnehmerverzeichnis gefunden wurde.
+					//    3b) ODER der Teilnehmer-Server eine positive Rückmeldung bringt
+					//    3c) ODER 5 Sekunden Zeit seit der letzen Wahlziffer vergangen sind.
+					//			(nur für den Schritt 3c) wirkt #WahlVerbAufbauNach5SekundenVersuchen
+					// 4. Die Wahl wird abgebrochen (Abbruch-Meldung an das wählende Gerät, wenn 
+					//    4a) Verbindungsaufbau zu 3a) ODER 3b) fehlschlägt
+					//    4b) 15 Sekunden seit der letzten Wahlziffer vergangen sind.
+					// im folgenden ist auf diese Schritte durch "Wahl-Schritt" verwiesen.
+					
 					// ID#221 ********************************************
 					Wahlnummer = 10 * Wahlnummer + (Code - BusKdoWahlziffer0);
 					Wahlziffern++;
 					StartKurzTimer(&WahlPauseTimer);
 					TlnServerAbfrageWiederholungssperre = false;
+					WahlVerbAufbauNach5SekundenVersuchen = false;
 					
 					if (TlnSuche(Wahlnummer, false, &GewaehlterTln))
-						{ // ID#222 ********************************************
+						{  // es wurde ein Teilnehmer im lokalen Telefonbuch gefunden.
+						// ID#222 ********************************************
 						bool RufnummerServerAbfrage = (Wahlziffern >= GlobRufnrMinZiffern && (GewaehlterTln.Flags & TlnFlag_Lokal) == 0);
+							// siehe Wahl-Schritt 1.
 						
 						if (ProtokollLevel >= 1)
 							{
@@ -3216,34 +3243,31 @@ void itelex_thread()
 		
 						if (RufnummerServerAbfrage)
 							RufnummerBeiTlnServerAbfragen(); 
+								// siehe Wahl-Schritt 2a)
 							
-						switch (Verbindungsaufbau(&GewaehlterTln))
-							{
-							case 0: 
-								break; // erfolgreich
-								
-							case 1:
-								// ID#223 ********************************************
-								if (!RufnummerServerAbfrage)
-									// sonst besteht eine Chance auf eine Meldung des Rufnummern-Servers
-									InterneVerbindungBeenden(true);
-									
-								break;
-							
-							case 2:
+						if ((GewaehlterTln.Flags & TlnFlag_Lokal) != 0)
+							{ // es ist ein lokaler Eintrag
+							if (Verbindungsaufbau(&GewaehlterTln) != 0)
+								{ // Verbindungsaufbau war nicht erfolgreich --> Wahl-Schritt 4a)
 								InterneVerbindungBeenden(true);
 								TlnServerAbfrageWiederholungssperre = true;
-								break;
+								}
 							}
-						
+						else // globaler Einrag -> Wahl-Schritt 3c) vorbereiten
+							WahlVerbAufbauNach5SekundenVersuchen = true;
+							
 						} // gewählte Nummer war vollständig
-					else
+						
+					else // !TlnSuche(Wahlnummer...) 
 						TlnDatenInit(&GewaehlterTln); 
 							// da die aktuell gewählte Nummer ggf. nicht mehr zum zuletzt gefundenen Teilnehmer passt.
+							
 					} // if Modus == ModGehendWaehlen
+					
 				else
 					FalschCodeEmpfangen(BusQuittEin);
-				break;
+					
+				break; // case BusKdoWahlziffer0 ... BusKdoWahlziffer9:
 				
 			case BusQuittSchluss:
 
@@ -3403,11 +3427,34 @@ void itelex_thread()
 
 	if (Modus == ModGehendWaehlen 
 		&& !TlnServerAbfrageWiederholungssperre
-		&& Wahlziffern >= 5
+		&& Wahlziffern >= GlobRufnrMinZiffern
 		&& KurzTimerVal(&WahlPauseTimer) >= 2 * KurzTimerFreq)
-		{ // 2 Sekunden Wahlpause und 5 Ziffern gewählt
+		{ // 2 Sekunden Wahlpause und 5 Ziffern gewählt --> Wahl-Schritt 2b)
 		// ID#231 **************************************************************
 		RufnummerBeiTlnServerAbfragen();
+		}
+
+	if (Modus == ModGehendWaehlen
+		&& KurzTimerVal(&WahlPauseTimer) >= 5 * KurzTimerFreq
+		&& WahlVerbAufbauNach5SekundenVersuchen
+		&& GewaehlterTln.AdrArt != Geloescht)
+		{ // Es ist ein nicht-Lokaler Eintrag im eigenen Teilnehmer-Verzeichbnis gewesen,
+		// ggf. läuft eine Server-Abfrage, die wurde aber noch nicht beantwortet.
+		// -> Wahl-Schritt 3c)
+		WahlVerbAufbauNach5SekundenVersuchen = false; // nur ein Mal...
+		if (Verbindungsaufbau(&GewaehlterTln) == 2)
+			{ // ungültige Daten -> Abbruch
+			InterneVerbindungBeenden(true);
+			}
+		}
+		
+	if (Modus == ModGehendWaehlen 
+		&& KurzTimerVal(&WahlPauseTimer) >= 15 * KurzTimerFreq)
+		{ // 15 Sekunden Wahlpause --> Wahl-Schritt 4b)
+		if (ProtokollLevel >= 1)
+			ProtokollierenITelex_P(PSTR("* 15 Sekunden nicht gewaehlt, Abbruch\r\n" ));
+		InterneVerbindungBeenden(true);
+			//! \todo TEST
 		}
 		
 	if (Modus == ModWarteSchlussQuitt && KurzTimerVal(&BusQuittTimer) > 3 * KurzTimerFreq)
@@ -3847,11 +3894,13 @@ void itelex_thread()
 						
 					if (GewaehlterTln.AdrArt == Geloescht)
 						; // weitermachen
+						
 					else if (GewaehlterTln.Nummer != TSB.TlnAuskunft.Nummer)
 						{ // vorhandener Eintrag weicht von 'aktuellem' ab --> Abbruch
 						ProtokollierenITelex_P(PSTR("! Teilnehmer-Server meldet ANDERE Nummer als angefragt\r\n"));
 						break;
 						}
+						
 					else if ((GewaehlterTln.Flags & TlnFlag_Lokal) != 0)
 						{ // Privater Eintrag --> nicht ändern
 						ProtokollierenITelex_P(PSTR("! im lokalen Telefonbuch als 'Privat' gekennzeichnet\r\n"));
@@ -3893,18 +3942,13 @@ void itelex_thread()
 						} // Aktualisieren ist sinnvoll
 						
 					if (Modus == ModGehendWaehlen && iTelexSocketMode == SocketIdle && TSB.TlnAuskunft.Nummer == Wahlnummer)
-						{ // erhaltenen Datensatz auch zum Verbindungsaufbau nutzen.
-						switch (Verbindungsaufbau(&GewaehlterTln))
-							{
-							case 0: 
-								Diagnoseausgabe_P(NULL, 3);
-								break; // erfolgreich
-								
-							case 1: // Socket öffnen nicht erfolgreich
-							case 2: // Ungültige Daten
-								InterneVerbindungBeenden(true);
-								break;
-							}
+						{ // erhaltenen Datensatz auch zum Verbindungsaufbau nutzen -> Wahl-Schritt 3b)
+						if (Verbindungsaufbau(&GewaehlterTln) == 0)
+							// erfolgreich
+							Diagnoseausgabe_P(NULL, 3);
+						
+						else // nicht erfolgreich
+							InterneVerbindungBeenden(true); // Wahl-Schritt 4a)
 						}
 						
 					break; // case TLNSERV_AUSKUNFT_VERSION1
@@ -5078,7 +5122,7 @@ void cgi_SdDirectory(void *pStruct)
 
 #endif //defined(MMC)
 	
-	
+
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Initialisiert den iTelex-clinet und registriert den Port auf welchen dieser lauschen soll.
  * \param 	NONE
@@ -5228,6 +5272,7 @@ void itelex_init()
 	TeilnehmerServerSocket = NO_SOCKET_USED;
 	AktTlnServerTabI = 0;
 
+	
 	#ifdef ITELEX_ANSCHLUSS
 	
 	BusEigenAdrMehrfach = 1; // muss Potenz von 2 sein (also 1, 2, 4, 8, 16, ... , Standard = 1
@@ -5290,6 +5335,8 @@ void itelex_init()
 #ifdef ISP_MASTER
 	cgi_RegisterCGI( cgi_FlashReadTest, PSTR("isptest.cgi"));
 #endif //def ISP_MASTER
+
+	cgi_RegisterCGI( ConfigNtpCgi, PSTR("ntp.cgi"));
 	
 	#ifdef ITELEX_ANSCHLUSS
 	
