@@ -409,19 +409,29 @@ bool TlnListerNaechster(TTlnListerDat *ldp, TTlnDaten *Tln)
 static int8_t EintragVergleichNummer(char *p1, char *p2)
 	{
 	uint32_t Nr1, Nr2;
+	uint8_t Ziffern1, Ziffern2;
 	
 	Nr1 = *((uint32_t *)(p1));
 	Nr2 = *((uint32_t *)(p2));
 	
+	Ziffern1 = 0;
 	while (Nr1 < 100000000)
-		Nr1 *= 10;
+		Nr1 *= 10, Ziffern1++;
+	Ziffern2 = 0;
 	while (Nr2 < 100000000)
-		Nr2 *= 10;
+		Nr2 *= 10, Ziffern2++;
 		
 	if (Nr1 < Nr2)
 		return -1;
 	else if (Nr1 == Nr2)
-		return 0;
+		{
+		if (Ziffern1 > Ziffern2) // Es wurden bei Nr1 mehr Ziffern 'ergänzt', also ist die ursprüngliche Nummer kürzer
+			return -1;
+		else if (Ziffern1 == Ziffern2)
+			return 0;
+		else
+			return 1;
+		}
 	else
 		return 1;
 	}
@@ -911,7 +921,7 @@ static void TlnBuchTabelleAusgabe(TSprache Sprache)
 			if (TD.AdrArt == Geloescht && TD.Datum < AktZeit - 7L * 24 * 60 * 60) // Mehr als 7 Tage alte Einträge mit "gelöscht" nicht mehr darstellen.
 				continue;
 			
-			printf_P(PSTR("<tr><td align=\"right\">%ld</td>"), TD.Nummer); // Nummer
+			printf_P(PSTR("<tr><td align=\"left\">%ld</td>"), TD.Nummer); // Nummer
 			printf_P(PSTR("<td align=\"left\">%s</td><td>&#160;"), TD.Name); // name
 			if ((TD.Flags & TlnFlag_Lokal) != 0)
 				{

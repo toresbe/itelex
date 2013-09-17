@@ -47,6 +47,7 @@
 #include "StringTab.h"
 
 #include "ConfigNtp.h"
+#include "iTelex.h"
 
 
 const char NtpOn_P[] PROGMEM = "NTP";
@@ -68,7 +69,6 @@ void ConfigNtpCgi( void * pStruct )
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	
-	extern uint8_t PruefeSpracheUndKonfigFreigabe(void *pStruct); 
 	if (!PruefeSpracheUndKonfigFreigabe(pStruct))
 		return;
 	
@@ -111,14 +111,12 @@ void ConfigNtpCgi( void * pStruct )
 		}
 	else // argc > 0
 		{
-		bool NtpAktiv;
-		
 		printf_P(ISTR(NeueEinstellungen, Sprache));
 		printf_P(PSTR("<a href=\"ntp.cgi\">"));
 		printf_P(ISTR(Weiter, Sprache));
 		printf_P(PSTR("</a>"));
 
-		NtpAktiv = CgiCheckBool_P(http_request, ISTR(NtpOn, Sprache), NtpOn_P, NtpAktiv, Sprache);
+		NtpOn = CgiCheckBool_P(http_request, ISTR(NtpOn, Sprache), NtpOn_P, NtpOn, Sprache);
 		CgiCheckText_P(http_request, ISTR(NtpServerHostname, Sprache), NtpServerStr_P, sizeof(NtpServerStr), NtpServerStr, Sprache);
 		CgiCheckText_P(http_request, ISTR(Zeitzone, Sprache), UtcZoneStr_P, sizeof(UtcZoneStr), UtcZoneStr, Sprache);
 		AutoDstOn = CgiCheckBool_P(http_request, ISTR(AutoSommerzeit, Sprache), AutoDst_P, AutoDstOn, Sprache);
@@ -132,7 +130,7 @@ void ConfigNtpCgi( void * pStruct )
 		Time.use_summertime = AutoDstOn;
 		CLOCK_SetTime(&Time);
 		
-		if (NtpAktiv)
+		if (NtpOn)
 			NTP_GetTime(0, NtpServerStr, Time.timezone);
 		
 		}

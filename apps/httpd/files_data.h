@@ -219,7 +219,7 @@ const char SystemMenuDeText[] PROGMEM = {
 #if defined(HTTPSERVER_RESET)
 	"/ <a href=\"reset.cgi?spr=de\" target=\"main\">Reset</a>"
 #endif
-#if defined(HTTPSERVER_NTP)
+#if defined(HTTPSERVER_NTP) || defined(iTelex)
 	" / <a href=\"ntp.cgi?spr=de\" target=\"main\">NTP</a>"
 #endif
 #if defined(HTTPSERVER_DYNDNS)
@@ -249,7 +249,7 @@ const char SystemMenuEnText[] PROGMEM = {
 #if defined(HTTPSERVER_RESET)
 	"/ <a href=\"reset.cgi?spr=en\" target=\"main\">Reset</a>"
 #endif
-#if defined(HTTPSERVER_NTP)
+#if defined(HTTPSERVER_NTP) || defined(iTelex)
 	" / <a href=\"ntp.cgi?spr=en\" target=\"main\">NTP</a>"
 #endif
 #if defined(HTTPSERVER_DYNDNS)

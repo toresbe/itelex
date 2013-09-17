@@ -112,19 +112,19 @@ _STRTABENTRY(VollstaendigesTeilnehmerverzeichnis, "zeige vollst&auml;ndiges Verz
 _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 	"<tr>"
-	"<th align=\"right\">Rufnummer<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=nummer\">auf</a><a href=\"itelex-tlnverz.cgi?sort=nummer&ab\">ab</a></th>" // Nummer
-	"<th align=\"left\">Name<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=name\">auf</a><a href=\"itelex-tlnverz.cgi?sort=name&ab\">ab</a></th>" // Name
+	"<th align=\"left\">Rufnummer<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=nummer\">auf</a> <a href=\"itelex-tlnverz.cgi?sort=nummer&ab\">ab</a></th>" // Nummer
+	"<th align=\"left\">Name<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=name\">auf</a> <a href=\"itelex-tlnverz.cgi?sort=name&ab\">ab</a></th>" // Name
 	"<th align=\"center\">Besond.</th>" // Flags
 	"<th align=\"left\">Typ</th>" // Typ
 	"<th align=\"left\">Adresse</th>" // Adresse
 	"<th align=\"center\">Port</th>" // Port
 	"<th align=\"center\">Durchwahl</th>" // Durchwahl
-	"<th align=\"center\">letzte<br>Aktualisierung<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=datum\">auf</a><a href=\"itelex-tlnverz.cgi?sort=datum&ab\">ab</a></th>" // Datum / Uhrzeit
+	"<th align=\"center\">letzte<br>Aktualisierung<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=datum\">auf</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">ab</a></th>" // Datum / Uhrzeit
 	"<th align=\"left\">Aktion</th>" // in dieser Spalte sind die Buttons
 	"</tr>", 
 	"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 	"<tr>"
-	"<th align=\"right\">Number<br>sort <a href=\"itelex-tlnverz.cgi?sort=nummer\">up</a> <a href=\"itelex-tlnverz.cgi?sort=nummer&ab\">down</a></th>" // Nummer
+	"<th align=\"left\">Number<br>sort <a href=\"itelex-tlnverz.cgi?sort=nummer\">up</a> <a href=\"itelex-tlnverz.cgi?sort=nummer&ab\">down</a></th>" // Nummer
 	"<th align=\"left\">Name<br>sort <a href=\"itelex-tlnverz.cgi?sort=name\">up</a> <a href=\"itelex-tlnverz.cgi?sort=name&ab\">down</a></th>" // Name
 	"<th align=\"center\">Specials</th>" // Flags
 	"<th align=\"left\">Type</th>" // Typ
