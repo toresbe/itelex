@@ -1067,6 +1067,12 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		// wenn nicht offen und kein Server und nicht Kennwort eingegeben -> Ende
 		return;
 
+	if (!TlnBuchOffen
+		&& PharseCheckName_P(http_request, AlleZeigen_P)
+		&& !KonfigFreigabe(pStruct, Sprache))
+		// wenn nicht offen und kein Server und nicht Kennwort eingegeben -> Ende
+		return;
+		
 	if (http_request->argc == 0 || PharseCheckName_P(http_request, AlleZeigen_P))
 		{ 
 		TlnBuchTabelleAusgabe(Sprache);

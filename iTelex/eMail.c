@@ -958,7 +958,7 @@ void itelex_email_init()
 	else
 		EmailAbfrageTakt = 0; // ausgeschaltet.
 		
-	EmailAusgabeFilternKennung = ReadConfigBool(EmailAusgabeFilternKennung_P);
+	EmailAusgabeFilternKennung = ReadConfigBool(EmailAusgabeFilternKennung_P, false);
 		
 	POPWartezeitEnde = LangTimerMinuteFaktor; // 1 Minute
 	

@@ -5166,9 +5166,9 @@ void itelex_init()
 	else
 		BusEigenAdresse = 22 << 1;
 
-	FesteHauptstelle = ReadConfigBool(FesteHst_P);
+	FesteHauptstelle = ReadConfigBool(FesteHst_P, false);
 
-	AlternativSucheBeiBesetzt = ReadConfigBool(AlternBeiBes_P);
+	AlternativSucheBeiBesetzt = ReadConfigBool(AlternBeiBes_P, true);
 	
 	if (readConfig_P(Hauptstelle_P, Buf) == 1)
 		Hauptstelle = WahlZuAdresse(atoi(Buf), strlen(Buf));
@@ -5190,7 +5190,7 @@ void itelex_init()
 	else
 		Geheimzahl = 0;
 
-	DynIPAktiv = ReadConfigBool(DynIPAktiv_P);
+	DynIPAktiv = ReadConfigBool(DynIPAktiv_P, false);
 		
 	if (readConfig_P(SelbstAnrufPeriode_P, Buf) == 1)
 		SelbstAnrufPeriode = atoi(Buf);
@@ -5232,7 +5232,7 @@ void itelex_init()
 		KonfigPasswort[0] = '\0';
 	KonfigFreigabeErteilt = false;
 
-	TlnBuchOffen = ReadConfigBool(TlnBuchOffen_P);
+	TlnBuchOffen = ReadConfigBool(TlnBuchOffen_P, true);
 	
 	if (readConfig_P(MeldungsdruckLevel_P, Buf) == 1)
 		MeldungsdruckLevel = atoi(Buf);

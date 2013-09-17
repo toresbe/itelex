@@ -45,12 +45,12 @@ static char Buf[255];
 
 
 //! Holt aus dem EEPROM einen Boolschen Konfigurationswert
-bool ReadConfigBool(const char *Label)
+bool ReadConfigBool(const char *Label, bool Default)
 	{
 	if (readConfig_P(Label, Buf) == 1) 
 		return strcmp_P(Buf, PSTR("on")) == 0 || atoi(Buf) != 0;
 	else
-		return false;
+		return Default;
 	}
 
 
