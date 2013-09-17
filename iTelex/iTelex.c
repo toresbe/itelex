@@ -2047,6 +2047,7 @@ static uint8_t FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 		FKK_TEILNEHMERSERVER1 = 0x11,
 		FKK_TEILNEHMERSERVER2 = 0x12,
 		FKK_TEILNEHMERSERVER3 = 0x13,
+		FKK_DYNAMISCHEIPAKT = 0x15,
 		} ;
 		
 	if (SocketInBufUsed < i + 2 + len)
@@ -2069,6 +2070,11 @@ static uint8_t FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 			TeilnehmerServerIP[SvrI] = 0;
 			changeConfig_P(RufnrServerAdr_P[SvrI], TeilnehmerServerAdresse[SvrI]);
 			break;
+			}
+			
+		case FKK_DYNAMISCHEIPAKT:
+			{
+			//! \todo Einschalten und speichern.
 			}
 			
 		default:

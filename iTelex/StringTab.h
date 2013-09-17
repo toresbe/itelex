@@ -42,13 +42,15 @@ _STRTABENTRY(KeinTeilnehmerServerErreichbar, "Kein Teilnehmer-Server erreichbar"
 _STRTABENTRY(TeilnehmerServerWiederErreichbar, "Teilnehmer-Server wieder erreicht", "Subscriber directory server available again")
 _STRTABENTRY(KeineVerbindungZumMailServerAusgang, "Keine Verbindung zum Mail-Server fuer Ausgang", "No connection to server for outgoing mails")
 _STRTABENTRY(MailNichtInDieserVersion, "Mail in dieser Version nicht unterstuetzt", "Mail not supported in this version")
-_STRTABENTRY(TeilnehmerNichtErreichbar, "Teilnehmer nicht erreichbar", "Subscriber not available") //???
-_STRTABENTRY(AnschlussInternBesetzt, "Anschluss intern besetzt", "Local connection busy") //???
+_STRTABENTRY(TeilnehmerNichtErreichbar, "Teilnehmer nicht erreichbar", "Subscriber not available")
+_STRTABENTRY(AnschlussInternBesetzt, "Anschluss intern besetzt", "Local connection busy")
 _STRTABENTRY(TWITimeout, "Interne Verbindung unterbrochen", "Lost local connection")
 _STRTABENTRY(DiagInterneIP, "interne IP: ", "local IP: ")
 _STRTABENTRY(Datum, "Datum", "Date")
 _STRTABENTRY(DiagnoseEinleitung, "\r\n///interne meldung: ", "\r\n///internal message: ")
-_STRTABENTRY(SelbstAnrufMehrfachVersagt, "Selbst-Anruf mehrfach versagt, Router-Konfiguration pruefen.", "Loopback call failed constantly. Check router configuration.")
+_STRTABENTRY(SelbstAnrufMehrfachVersagt, 
+			 "Selbst-Anruf mehrfach versagt, Router-Konfiguration pruefen.\r\nNach Fehlerbehebung Dynamische IP-Aktualisierung wieder einschalten.", 
+			 "Loopback call failed constantly. Check router configuration.\r\nAfter check, enable the dynamic update of IP adress again.")
 _STRTABENTRY(NummerNichtBekannt, "gewaehlte Nummer nicht bekannt", "subscriber number not known")
 _STRTABENTRY(InternesVerzeichnisVoll, "internes Rufnummern-Verzeichnis voll", "internal directory out of space")
 _STRTABENTRY(KennwortAbfrage, "Seite gesperrt! Bitte Kennwort eingeben", "Page locked! Enter password")
