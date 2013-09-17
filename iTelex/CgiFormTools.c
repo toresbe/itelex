@@ -41,6 +41,19 @@
 #include "iTelex/StringTab.h"
 
 
+static char Buf[255];
+
+
+//! Holt aus dem EEPROM einen Boolschen Konfigurationswert
+bool ReadConfigBool(const char *Label)
+	{
+	if (readConfig_P(Label, Buf) == 1) 
+		return strcmp_P(Buf, PSTR("on")) == 0 || atoi(Buf) != 0;
+	else
+		return false;
+	}
+
+
 //! Einleitung eines durch Tabelle strukturieten CGI-Eingabeformulares
 //--------------------------------------------------------------------
 //! \param FormName Dateiname der CGI-Auswertung (im PROGMEM)
@@ -144,8 +157,6 @@ void CgiFormFinish_P(const char *ButtonText)
 	}
 	
 
-static char Buf[255];
-
 //! Wertet Eingabefeld für Text aus
 //--------------------------------------------------------------------
 //! \param http_request Zeiger auf die Struktur der CGI-Antwort
@@ -247,6 +258,10 @@ bool CgiCheckBool_P(struct HTTP_REQUEST * http_request, const char *FieldText, c
 		{
 		printf_P(ISTR(GeaendertIn, Sprache));
 		printf_P(PSTR(": %u"), Neu);
+		if (Neu)
+			strcpy_P(Buf, PSTR("on"));
+		else
+			strcpy_P(Buf, PSTR("off"));
 		changeConfig_P(FieldLabel, Buf);
 		}
 	return Neu;

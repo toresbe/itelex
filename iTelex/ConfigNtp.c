@@ -69,7 +69,9 @@ void ConfigNtpCgi( void * pStruct )
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	
-	if (!PruefeSpracheUndKonfigFreigabe(pStruct))
+	PruefeSprache(pStruct, &Sprache);
+	
+	if (!KonfigFreigabe(pStruct, Sprache))
 		return;
 	
 	char NtpServerStr[32];
@@ -77,11 +79,9 @@ void ConfigNtpCgi( void * pStruct )
 	bool NtpOn;
 	bool AutoDstOn;
 	
-	readConfig_P( NtpOn_P, NtpServerStr ); // Missbrauch, aber ok...
-	NtpOn = strcmp_P(NtpServerStr, PSTR("on")) == 0;
+	NtpOn = ReadConfigBool(NtpOn_P);
 	
-	readConfig_P(AutoDst_P, NtpServerStr); // Missbrauch
-	AutoDstOn = strcmp(NtpServerStr, PSTR("on")) == 0;
+	AutoDstOn = ReadConfigBool(AutoDst_P);
 	
 	if( checkConfigName_P( NtpServerStr_P ) != -1 )
 		readConfig_P ( NtpServerStr_P, NtpServerStr );
@@ -147,8 +147,8 @@ void UpdateTimezone()
 	CLOCK_GetTime(&Time);
 	if (readConfig_P(UtcZoneStr_P, Buf) == 1)
 		Time.timezone = atoi(Buf);
-	if (readConfig_P(AutoDst_P, Buf) == 1)
-		Time.use_summertime = atoi(Buf) != 0;
+	if (checkConfigName_P(AutoDst_P))
+		Time.use_summertime = ReadConfigBool(AutoDst_P);
 	CLOCK_SetTime(&Time);
 	}
 	

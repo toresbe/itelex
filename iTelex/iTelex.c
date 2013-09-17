@@ -5166,16 +5166,10 @@ void itelex_init()
 	else
 		BusEigenAdresse = 22 << 1;
 
-	if (readConfig_P(FesteHst_P, Buf) == 1)
-		FesteHauptstelle = atoi(Buf) != 0;
-	else
-		FesteHauptstelle = false;
+	FesteHauptstelle = ReadConfigBool(FesteHst_P);
 
-	if (readConfig_P(AlternBeiBes_P, Buf) == 1)
-		AlternativSucheBeiBesetzt = atoi(Buf) != 0;
-	else
-		AlternativSucheBeiBesetzt = true;
-
+	AlternativSucheBeiBesetzt = ReadConfigBool(AlternBeiBes_P);
+	
 	if (readConfig_P(Hauptstelle_P, Buf) == 1)
 		Hauptstelle = WahlZuAdresse(atoi(Buf), strlen(Buf));
 	else
@@ -5196,10 +5190,7 @@ void itelex_init()
 	else
 		Geheimzahl = 0;
 
-	if (readConfig_P(DynIPAktiv_P, Buf) == 1)
-		DynIPAktiv = atoi(Buf) != 0;
-	else
-		DynIPAktiv = false;
+	DynIPAktiv = ReadConfigBool(DynIPAktiv_P);
 		
 	if (readConfig_P(SelbstAnrufPeriode_P, Buf) == 1)
 		SelbstAnrufPeriode = atoi(Buf);
@@ -5241,10 +5232,7 @@ void itelex_init()
 		KonfigPasswort[0] = '\0';
 	KonfigFreigabeErteilt = false;
 
-	if (readConfig_P(TlnBuchOffen_P, Buf) == 1)
-		TlnBuchOffen = atoi(Buf);
-	else
-		TlnBuchOffen = true;
+	TlnBuchOffen = ReadConfigBool(TlnBuchOffen_P);
 	
 	if (readConfig_P(MeldungsdruckLevel_P, Buf) == 1)
 		MeldungsdruckLevel = atoi(Buf);
@@ -5272,7 +5260,7 @@ void itelex_init()
 	TeilnehmerServerSocket = NO_SOCKET_USED;
 	AktTlnServerTabI = 0;
 
-	
+
 	#ifdef ITELEX_ANSCHLUSS
 	
 	BusEigenAdrMehrfach = 1; // muss Potenz von 2 sein (also 1, 2, 4, 8, 16, ... , Standard = 1

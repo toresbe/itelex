@@ -4,6 +4,8 @@
 
 #include "iTelex/StringTab.h" // nur für TSprache
 
+extern bool ReadConfigBool(const char *Label);
+
 extern void CgiFormStartTabbed_P(const char *FormName);
 
 extern void CgiFormFieldIntro_P(const char *FieldText, const char *FieldLabel);
