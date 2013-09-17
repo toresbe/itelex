@@ -4170,7 +4170,7 @@ bool PruefeSprache(void *pStruct, TSprache *Sprache)
 	
 	// Eigentlich hat das folgende gar nix mit dem Sprachprüfen zu tun, hier ist aber eine geeignete Stelle
 	// für eine Protokollierung der CGI-Aufrufe.
-	if (ProtokollLevel >= 3)
+	if (ProtokollLevel >= 2)
 		{
 		char *Ende;
 		ProtokollierenITelex_P(PSTR("cgi-Aufruf: "));

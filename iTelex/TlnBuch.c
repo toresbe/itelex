@@ -1070,7 +1070,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	if (!TlnBuchOffen
 		&& PharseCheckName_P(http_request, AlleZeigen_P)
 		&& !KonfigFreigabe(pStruct, Sprache))
-		// wenn nicht offen und kein Server und nicht Kennwort eingegeben -> Ende
+		// wenn nicht offen aber Kommando "alle zeigen" dann Kennwort abfragen.
 		return;
 		
 	if (http_request->argc == 0 || PharseCheckName_P(http_request, AlleZeigen_P))
