@@ -2544,6 +2544,7 @@ bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund)
 		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= (TeilnehmerServerAlleNichtErreichbar ? 20 * LangTimerMinuteFaktor : 180 * LangTimerMinuteFaktor))
 			// Wenn alle Server nicht erreichbar, alle 20 Minuten probieren, sonst alle 3 Stunden
 			{
+			/* Müllt total den Speicher zu...
 			if (ProtokollLevelTlnServ >= AblaufInfo)
 				{
 				ProtokollierenITelex_P(PSTR("* Teilnehmer-Server "));
@@ -2552,6 +2553,7 @@ bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund)
 				Protokollieren_P(Grund);
 				Protokollieren_P(PSTR(")\r\n"));
 				}
+			*/
 			return false;
 			}
 		}
