@@ -503,7 +503,7 @@ char DiagnosePuffer[DiagnosePufferMax];
 	//!< String für außergewöhnliche Fälle
 	
 
-static TDiagnoseAusgabeLevel DiagnosePufferLevel;
+static uint8_t DiagnosePufferLevel;
 	//!< Schweregrad der aktuellen Meldung.
 
 uint8_t	MeldungsdruckLevel;
