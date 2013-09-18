@@ -274,7 +274,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 	
 	if (tsb->SelbstAkt.RufNr < GlobRufnrMinWert)
 		{
-		if (ProtokollLevelTlnServ >= 1)
+		if (ProtokollLevelTlnServ >= NurFehler)
 			ProtokollierenTlnServInt_P(Kanal, PSTR("* Rufnummer %lu zu wenig Ziffern\r\n"), tsb->SelbstAkt.RufNr);
 		return false;
 		}
@@ -282,19 +282,19 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 		{ // Eintrag ist schon vorhanden
 		if (TD.Flags & TlnFlag_Lokal)
 			{
-			if (ProtokollLevelTlnServ >= 1)
+			if (ProtokollLevelTlnServ >= NurFehler)
 				ProtokollierenTlnServInt_P(Kanal, PSTR("! Teilnehmer %lu schon vorhanden, aber LOKAL\r\n"), TD.Nummer);
 			return false;
 			}
 		else if (TD.Flags & TlnFlag_Gesperrt)
 			{
-			if (ProtokollLevelTlnServ >= 1)
+			if (ProtokollLevelTlnServ >= NurFehler)
 				ProtokollierenTlnServInt_P(Kanal, PSTR("* Teilnehmer %lu schon vorhanden, aber noch nicht freigegeben\r\n"), TD.Nummer);
 			return false;
 			}
 		else if (TD.AdrArt != iTelexDynIP)
 			{
-			if (ProtokollLevelTlnServ >= 1)
+			if (ProtokollLevelTlnServ >= NurFehler)
 				ProtokollierenTlnServInt_P(Kanal, PSTR("! Teilnehmer %lu schon vorhanden, aber nicht Typ 'dynamisch'\r\n"), TD.Nummer);
 			return false;
 			}
@@ -306,7 +306,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 			}
 		else if (tsb->SelbstAkt.Port == TD.Port && TlnIP == TD.IPAdr)
 			{
-			if (ProtokollLevelTlnServ >= 2)
+			if (ProtokollLevelTlnServ >= AblaufInfo)
 				ProtokollierenTlnServInt_P(Kanal, PSTR("Teilnehmer %lu schon vorhanden, unveraenderte Daten\r\n"), TD.Nummer);
 			return true; // da zulässige Aktualisierung
 			}
@@ -317,7 +317,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 			
 			if (TlnHinzufuegen(&TD, TlnHinzDatumAktualisieren) >= 0)
 				{
-				if (ProtokollLevelTlnServ >= 1)
+				if (ProtokollLevelTlnServ >= NurFehler) // ausnahmsweise
 					{
 					ProtokollierenTlnServInt_P(Kanal, PSTR("Teilnehmer %lu erfolgreich aktualisiert: IP "), TD.Nummer);
 					ProtokollierenIPAdr(TlnIP);
@@ -349,7 +349,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 
 		if (TlnHinzufuegen(&TD, TlnHinzDatumAktualisieren) >= 0)
 			{
-			if (ProtokollLevelTlnServ >= 1)
+			if (ProtokollLevelTlnServ >= NurFehler) // ausnahmsweise
 				{
 				ProtokollierenTlnServInt_P(Kanal, PSTR("Teilnehmer %lu erfolgreich angelegt: IP "), TD.Nummer);
 				ProtokollierenIPAdr(TlnIP);
@@ -431,7 +431,7 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 	if (!Kanal->AusgabeGestartet)
 		{
 		TlnListerStart(&Kanal->AusgabeLister);
-		if (ProtokollLevelTlnServ >= 2)
+		if (ProtokollLevelTlnServ >= AblaufInfo)
 			{
 			ProtokollierenTlnServ_P(Kanal, PSTR("Starte Ausgabe der Teilnehmer-Eintraege\r\n"));
 			}
@@ -456,7 +456,7 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 			if (!Kanal->Freigabe)
 				TlnServBuf.TlnAuskunft.DynPin = 0;
 				
-			if (ProtokollLevelTlnServ >= 2)
+			if (ProtokollLevelTlnServ >= AblaufInfo)
 				{
 				ProtokollierenTlnServInt_P(Kanal, PSTR("Sende Teilnehmer-Eintrag %lu\r\n"), TlnServBuf.TlnAuskunft.Nummer);
 				}
@@ -468,7 +468,7 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 		}
 
 	// Kein zu sendender Datensatz mehr da...
-	if (ProtokollLevelTlnServ >= 2)
+	if (ProtokollLevelTlnServ >= AblaufInfo)
 		{
 		ProtokollierenTlnServ_P(Kanal, PSTR("Sende Ende-Kennung der Teilnehmer-Eintraege\r\n"));
 		}
@@ -491,7 +491,7 @@ static void SocketDatenSenden(TTlnServKanal *Kanal)
 		int Res = PutSocketData_RPE(Kanal->Socket, 2 + TlnServBuf.DataLen, TlnServBuf.Buf, RAM);
 		// SocketLebenszeichenZaehler = 0; 
 
-		if (ProtokollLevelTlnServ >= 3)
+		if (ProtokollLevelTlnServ >= DatenDetailliert)
 			{
 			ProtokollierenTlnServInt_P(Kanal, PSTR("Socket Sendung: (%lu)" ), 2 + TlnServBuf.DataLen);
 			ProtokollierenPuffer(TlnServBuf.Buf, 2 + TlnServBuf.DataLen);
@@ -503,7 +503,7 @@ static void SocketDatenSenden(TTlnServKanal *Kanal)
 			Kanal->SendeFehlerZaehler++;
 			if (Kanal->SendeFehlerZaehler >= 10)
 				{
-				if (ProtokollLevelTlnServ >= 1)
+				if (ProtokollLevelTlnServ >= NurFehler)
 					ProtokollierenTlnServ_P(Kanal, PSTR("! Mehrfache Fehler beim Senden ins Netz, Socket wird geschlossen\r\n" ));
 				CloseTCPSocket(Kanal->Socket);
 				Kanal->Socket = NO_SOCKET_USED;
@@ -547,7 +547,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 		
 		int Res = GetSocketData(Kanal->Socket, InCount, TlnServBuf.Buf);
 		
-		if (ProtokollLevelTlnServ >= (Kanal->Fertig ? 1 : 3)) 
+		if (ProtokollLevelTlnServ >= (Kanal->Fertig ? NurFehler : DatenDetailliert)) 
 			{ // Protokollieren der Daten, wenn alles Protokolliert werden soll (3) oder
 			  // im Falle des Fehlers (Fertig = true) Protokollierung nicht ganz abgeschaltet ist (0)
 			ProtokollierenTlnServInt_P(Kanal, PSTR("Socket Empfang: (%ld/" ), InCount);
@@ -575,7 +575,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				else
 					{
 					long MeldeIP = TCP_sockettable[Kanal->Socket].SourceIP;
-					if (ProtokollLevelTlnServ >= 2)
+					if (ProtokollLevelTlnServ >= DatenKurz)
 						{
 						ProtokollierenTlnServInt_P(Kanal, PSTR("Aktualisierung empfangen. Nummer %lu " ), TlnServBuf.SelbstAkt.RufNr);
 						ProtokollierenInt_P(PSTR("Auth %u " ), TlnServBuf.SelbstAkt.Pin);
@@ -594,7 +594,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						{
 						FehlerRueckmelden(PSTR("forbidden"), 0);
 						Senden = true;
-						if (ProtokollLevelTlnServ >= 1)
+						if (ProtokollLevelTlnServ >= NurFehler)
 							{
 							ProtokollierenTlnServ_P(Kanal, PSTR("! abgewiesene Anfrage war von IP "));
 							ProtokollierenIPAdr(MeldeIP);
@@ -617,7 +617,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				else
 					{
 					uint32_t RufNr = TlnServBuf.TlnAbfr.RufNr;
-					if (ProtokollLevelTlnServ >= 2) 
+					if (ProtokollLevelTlnServ >= AblaufInfo) 
 						ProtokollierenTlnServInt_P(Kanal, PSTR("Abfrage empfangen. Nummer %lu: "), RufNr);
 						
 					// Telefonbuch abfragen
@@ -633,7 +633,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						TlnServBuf.TlnAuskunft.DynPin = 0; // Datenschutz
 						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
 						Senden = true;
-						if (ProtokollLevelTlnServ >= 2)
+						if (ProtokollLevelTlnServ >= AblaufInfo)
 							Protokollieren_P(PSTR(" ...gefunden\r\n"));
 						}
 					else
@@ -641,7 +641,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						TlnServBuf.Code = TLNSERV_AUSKUNFT_NICHTVERG;
 						TlnServBuf.DataLen = 0;
 						Senden = true;
-						if (ProtokollLevelTlnServ >= 2) 
+						if (ProtokollLevelTlnServ >= AblaufInfo) 
 							Protokollieren_P(PSTR("* ...nicht gefunden oder gesperrt\r\n"));
 						} 
 					} // else ausreichend Daten erhalten
@@ -678,7 +678,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						{ // noch alles gut
 						if (Res == 1)
 							{ // gespeichert...
-							if (ProtokollLevelTlnServ >= 1)
+							if (ProtokollLevelTlnServ >= AblaufInfo)
 								ProtokollierenTlnServInt_P(Kanal, 
 									PSTR("* Datensatz vom Teilnehmer-Server mit Nr %lu empfangen und gespeichert \r\n"), 
 									TlnServBuf.TlnAuskunft.Nummer);
@@ -687,7 +687,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 							}
 						else if (Res == 2)
 							{ // vorhandener ist aktueller (neuer) als gesendeter!
-							if (ProtokollLevelTlnServ >= 1)
+							if (ProtokollLevelTlnServ >= NurFehler)
 								ProtokollierenTlnServInt_P(Kanal, 
 									PSTR("! veralteter Datensatz vom Teilnehmer-Server mit Nr %lu empfangen\r\n"), 
 									TlnServBuf.TlnAuskunft.Nummer);
@@ -699,7 +699,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 							}
 						else // Res == 0
 							{
-							if (ProtokollLevelTlnServ >= 2)
+							if (ProtokollLevelTlnServ >= DatenKurz)
 								ProtokollierenTlnServInt_P(Kanal, 
 									PSTR("Datensatz vom Teilnehmer-Server mit Nr %lu empfangen, keine Aenderung\r\n"), 
 									TlnServBuf.TlnAuskunft.Nummer); 
@@ -787,7 +787,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				break; // TlnServBuf.Code == TLNSERV_SYNC_QUITTUNG
 			
 			case TLNSERV_SYNC_ENDE:
-				if (ProtokollLevelTlnServ >= 2) 
+				if (ProtokollLevelTlnServ >= AblaufInfo) 
 					{
 					ProtokollierenTlnServ_P(Kanal, PSTR("Ende Kennung empfangen, Socket wird geschlossen\r\n"));
 					}
@@ -797,7 +797,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					
 				if (Kanal->IstVollAbfrage)
 					{ 
-					if (ProtokollLevelTlnServ >= 1) 
+					if (ProtokollLevelTlnServ >= AblaufInfo) 
 						{
 						ProtokollierenTlnServ_P(Kanal, PSTR("Vollabfrage erfolgreich beendet"));
 						ProtokollierenInt_P(PSTR(" mit %d geaenderten / aktualisierten Eintraegen\r\n"), Kanal->AnzahlAktualisiert);
@@ -816,9 +816,9 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 			case TLNSERV_FEHLER:
 				CloseTCPSocket(Kanal->Socket);
 				Kanal->Socket = NO_SOCKET_USED;
-				if (ProtokollLevelTlnServ >= 1) 
+				if (ProtokollLevelTlnServ >= NurFehler) 
 					{
-					ProtokollierenTlnServ_P(Kanal, PSTR("Fehlermeldung empfangen, Socket wird geschlossen: "));
+					ProtokollierenTlnServ_P(Kanal, PSTR("! Fehlermeldung empfangen, Socket wird geschlossen: "));
 					Protokollieren(TlnServBuf.PureData);
 					Protokollieren_P(PSTR("\r\n"));
 					}		
@@ -845,7 +845,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 
 			} // switch (TlnServBuf.Code)
 			
-		if (ProtokollLevelTlnServ >= 1 && Senden && TlnServBuf.Code == TLNSERV_FEHLER)
+		if (ProtokollLevelTlnServ >= NurFehler && Senden && TlnServBuf.Code == TLNSERV_FEHLER)
 			{
 			ProtokollierenTlnServ_P(Kanal, PSTR("! Error "));
 			Protokollieren(TlnServBuf.PureData);
@@ -857,7 +857,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 	// soll offene Verbindung geschlossen werden?
 	if (CheckSocketState(Kanal->Socket) == SOCKET_NOT_USE)
 		{
-		if (ProtokollLevelTlnServ >= 2)
+		if (ProtokollLevelTlnServ >= AblaufInfo)
 			ProtokollierenTlnServ_P(Kanal, PSTR("Socket wurde von Gegenstelle geschlossen\r\n"));
 		CloseTCPSocket(Kanal->Socket);
 		Kanal->Socket = NO_SOCKET_USED;
@@ -876,7 +876,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						// wegen des Fehlers alles noch mal senden.
 					
 				TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
-				if (ProtokollLevelTlnServ >= 1)
+				if (ProtokollLevelTlnServ >= NurFehler)
 					ProtokollierenTlnServ_P(Kanal, PSTR("! Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n"));
 				}
 			}
@@ -888,7 +888,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 	// Verzögerten Abbau des Kanals durch Gegenstelle selbst nachholen.
 	if (Kanal->Fertig && KurzTimerVal(&Kanal->SelbstAbbauVerzoegerung) >= 5 * KurzTimerFreq)
 		{
-		if (ProtokollLevelTlnServ >= 1)
+		if (ProtokollLevelTlnServ >= AblaufInfo)
 			ProtokollierenTlnServ_P(Kanal, PSTR("* Schliessen des Socket nach Timeout\r\n"));
 		CloseTCPSocket(Kanal->Socket);
 		Kanal->Socket = NO_SOCKET_USED;
@@ -921,7 +921,7 @@ static bool VollAbfrageKanalOeffnen()
 		{
 		KanalInit(&TlnServer[0], NewSock); 
 		TlnServer[0].ListeIdx = VollAbfrageServerIndex; 
-		if (ProtokollLevelTlnServ >= 2)
+		if (ProtokollLevelTlnServ >= AblaufInfo)
 			{
 			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Client-Socket geoeffnet, Vollabfrage begonnen\r\n"));
 			}
@@ -986,7 +986,7 @@ static bool AktivSyncMeldungKanalOeffnen(uint8_t ServerI)
 		TlnServSyncStichzeit[ServerI] = CurTime.time; 
 			//! Wird wieder auf AusgabeStichdatum zurückgesetzt werden, wenn Fehler passiert.
 		TlnListerStart(&TlnServer[0].AusgabeLister);
-		if (ProtokollLevelTlnServ >= 2)
+		if (ProtokollLevelTlnServ >= AblaufInfo)
 			{
 			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Client-Socket geoeffnet zur Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"));
 			}
@@ -1057,7 +1057,7 @@ void itelex_tlnserv_thread()
 			Ok = true;
 			}
 
-		if (ProtokollLevelTlnServ >= (Ok ? 2 : 1))
+		if (ProtokollLevelTlnServ >= (Ok ? AblaufInfo : NurFehler))
 			{
 			ProtokollierenTlnServ_P(&TlnServer[i], PSTR("Server-Socket geoeffnet von IP "));
 			ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);

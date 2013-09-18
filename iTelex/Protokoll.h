@@ -4,9 +4,20 @@
 
 #include <stdbool.h>
 
-extern uint8_t ProtokollLevel;
+//! Meldungs-Level für "generelle" Meldungen
+typedef enum
+	{
+	Keine,
+	NurFehler,
+	AblaufInfo,
+	DatenKurz,
+	DatenDetailliert,
+	} TProtokollLevel;
+	
 
-extern uint8_t ProtokollLevelTlnServ;
+extern TProtokollLevel ProtokollLevel;
+
+extern TProtokollLevel ProtokollLevelTlnServ;
 
 extern bool ProtokollSpeichern(bool flush);
 

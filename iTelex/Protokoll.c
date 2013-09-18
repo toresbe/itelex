@@ -478,8 +478,8 @@ static void SpeichernBeiIdle()
 //! Initialisiert die Protokollierung.
 void ProtokollInit()
 	{
-	ProtokollLevel = 1; // wird später aus der Konfiguration überschrieben
-	ProtokollLevelTlnServ = 1; // wird später aus der Konfiguration überschrieben
+	ProtokollLevel = NurFehler; // wird später aus der Konfiguration überschrieben
+	ProtokollLevelTlnServ = NurFehler; // wird später aus der Konfiguration überschrieben
 	Puffer[0] = '\0';
 	Dateiname[0] = '\0';
 	Idle = true;
