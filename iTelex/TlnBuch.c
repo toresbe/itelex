@@ -1056,34 +1056,67 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 	bool Zurueck = false; // wird auf true gesetzt, wenn ein "zurück"-Text gedruckt werden soll.
 
 	PruefeSprache(pStruct, &Sprache);	
+
+	bool FreigabePruefung = true; // Merker, ob eine Konfigurationsfreigabe gebraucht wird.
+	if (http_request->argc == 0 
+		|| PharseCheckName_P(http_request, Sortiere_P))
+		// erster Aufruf
+		#ifdef ITELEX_TLNSERVER
+			FreigabePruefung = !TlnBuchOffen && TlnServSyncGeheimzahl == 0;
+		#else //ndef ITELEX_TLNSERVER
+			FreigabePruefung = !TlnBuchOffen;
+		#endif //def ITELEX_TLNSERVER
+	else 
+		FreigabePruefung = true; // alle Aktionen (inkl. "AlleZeigen" mit Kennwort-Abfrage
+		
+	if (FreigabePruefung)
+		{
+		if (!KonfigFreigabe(pStruct, Sprache))
+			return; // verboten.
+		}
 	
 	cgi_PrintHttpheaderStart();
 
-	if (!TlnBuchOffen
-		#ifdef ITELEX_TLNSERVER
-		&& TlnServSyncGeheimzahl == 0 
-		#endif //def ITELEX_TLNSERVER
-		&& !KonfigFreigabe(pStruct, Sprache))
-		// wenn nicht offen und kein Server und nicht Kennwort eingegeben -> Ende
-		return;
-
-	if (!TlnBuchOffen
-		&& PharseCheckName_P(http_request, AlleZeigen_P)
-		&& !KonfigFreigabe(pStruct, Sprache))
-		// wenn nicht offen aber Kommando "alle zeigen" dann Kennwort abfragen.
-		return;
-		
 	if (http_request->argc == 0 || PharseCheckName_P(http_request, AlleZeigen_P))
 		{ 
 		TlnBuchTabelleAusgabe(Sprache);
 		} // argc == 0 --> gesamte Liste ausgeben
+
+	else if (PharseCheckName_P(http_request, Sortiere_P))
+		{ 
+		// sortieren (ohne Kennwort-Abfrage möglich)
+		// ==================================================
+		bool Rueckwaerts = PharseCheckName_P(http_request, SortAb_P);
+		char *Krit = http_request->argvalue[PharseGetValue_P(http_request, Sortiere_P)];
+		bool Res;
+		
+		if (strcmp_P(Krit, Nummer_P) == 0)
+			Res = TlnBuchSortieren(EintragVergleichNummer, Rueckwaerts);
+		else if (strcmp_P(Krit, Name_P) == 0)
+			Res = TlnBuchSortieren(EintragVergleichName, Rueckwaerts);
+		else if (strcmp_P(Krit, Datum_P) == 0)
+			Res = TlnBuchSortieren(EintragVergleichDatum, Rueckwaerts);
+		else
+			{
+			printf_P(ISTR(UngueltigerCgiAufruf, Sprache), http_request->HTTP_LINEBUFFER);
+			Zurueck = true;
+			Res = true;
+			}
+			
+		if (!Res)
+			{
+			printf_P(ISTR(InternesVerzeichnisVoll, Sprache));
+			Zurueck = true;
+			}
+
+		if (!Zurueck)
+			// Bei Fehlern wird 'Zurueck' gesetzt, sonst bleibt es auf False und die Tabelle ist auszugeben.
+			TlnBuchTabelleAusgabe(Sprache);
+			
+		} // if (PharseCheckName_P(http_request, Sortiere_P))
 		
 	else if (PharseCheckName_P(http_request, Edit_P))
 		{ 
-		if (!KonfigFreigabe(pStruct, Sprache))
-			// bei Änderungen nach dem Kennwort fragen.
-			return;
-		
 		// Ändern ODER Neu --> Eingabeformular anzeigen und füllen.
 		// =========================================================
 		TD.Nummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Edit_P)]);
@@ -1126,8 +1159,8 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			case iTelexHostname: 	TypSelNr = 1; break;
 			case AsciiIP:
 			case AsciiHostname: 	TypSelNr = 2; break;
-			case eMail:		TypSelNr = 3; break;
-			default: 		TypSelNr = 0; break;
+			case eMail:	            TypSelNr = 3; break;
+			default:                TypSelNr = 0; break;
 			}
 		CgiFormDropdown_P(ISTR(Typ, Sprache), Typ_P, 4, TypSelList, TypSelNr);
 		
@@ -1143,14 +1176,10 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		else
 			CgiFormFinish_P(ISTR(AktionAendern, Sprache));
 		Zurueck = true;
-		} // Ändern oder Neu
+		} // if (PharseCheckName_P(http_request, Edit_P)): Ändern oder Neu
 
 	else if (PharseCheckName_P(http_request, Nummer_P))
-		{ 
-		if (!KonfigFreigabe(pStruct, Sprache))
-			// bei Änderungen nach dem Kennwort fragen.
-			return;
-		
+		{ // Eine Nummer ist angegeben, dass kann nur das Ergebnis eines Änderungs- oder Hinzufüge-Wunsches sein.
 		// neuen Einfügen oder geänderten Aktualisieren
 		// ==================================================
 		bool DatenOk = true; // nur wenn gesetzt, wird auch gespeichert
@@ -1357,85 +1386,42 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		{ 
 		// auf externem Eeprom speichern
 		// ==================================================
-		if (!KonfigFreigabe(pStruct, Sprache))
-			// bei Änderungen nach dem Kennwort fragen.
-			return;
-		
 		int Res = TlnBuchSpeichereAufExternEeprom();
 		if (Res < 0)
 			printf_P(ISTR(EepromSpeicherFehler, Sprache), Res, SwTwiLetzterFehler);
 		else
 			printf_P(ISTR(EepromSpeicherErfolg, Sprache), Res);
 		Zurueck = true;
-		}
+		} // if (PharseCheckName_P(http_request, Save_P))
 		
 	else if (PharseCheckName_P(http_request, Load_P))
 		{ 
 		// von externem Eeprom laden
 		// ==================================================
-		if (!KonfigFreigabe(pStruct, Sprache))
-			// bei Änderungen nach dem Kennwort fragen.
-			return;
-		
 		int Res = TlnBuchLadeVonExternEeprom();
 		if (Res < 0)
 			printf_P(ISTR(EepromLadenFehler, Sprache), Res, SwTwiLetzterFehler);
 		else
 			printf_P(ISTR(EepromLadenErfolg, Sprache), Res);
 		Zurueck = true;
-		}
+		} // if (PharseCheckName_P(http_request, Load_P))
 		
 	else if (PharseCheckName_P(http_request, Clear_P))
 		{ 
 		// komplett löschen
 		// ==================================================
-		if (!KonfigFreigabe(pStruct, Sprache))
-			// bei Änderungen nach dem Kennwort fragen.
-			return;
-		
 		printf_P(ISTR(KomplettGeloescht, Sprache));
 		TlnBuchMemUsed = 0;
 		Zurueck = true;
-		}
-		
-	else if (PharseCheckName_P(http_request, Sortiere_P))
-		{ 
-		// sortieren (ohne Kennwort-Abfrage möglich)
-		// ==================================================
-		bool Rueckwaerts = PharseCheckName_P(http_request, SortAb_P);
-		char *Krit = http_request->argvalue[PharseGetValue_P(http_request, Sortiere_P)];
-		bool Res;
-		
-		if (strcmp_P(Krit, Nummer_P) == 0)
-			Res = TlnBuchSortieren(EintragVergleichNummer, Rueckwaerts);
-		else if (strcmp_P(Krit, Name_P) == 0)
-			Res = TlnBuchSortieren(EintragVergleichName, Rueckwaerts);
-		else if (strcmp_P(Krit, Datum_P) == 0)
-			Res = TlnBuchSortieren(EintragVergleichDatum, Rueckwaerts);
-		else
-			{
-			printf_P(ISTR(UngueltigerCgiAufruf, Sprache), http_request->HTTP_LINEBUFFER);
-			Zurueck = true;
-			Res = true;
-			}
-			
-		if (!Res)
-			{
-			printf_P(ISTR(InternesVerzeichnisVoll, Sprache));
-			Zurueck = true;
-			}
-
-		if (!Zurueck)
-			// Bei Fehlern wird 'Zurueck' gesetzt, sonst bleibt es auf False und die Tabelle ist auszugeben.
-			TlnBuchTabelleAusgabe(Sprache);
-			
-		}
+		} // if (PharseCheckName_P(http_request, Clear_P))
 		
 	else
 		{ 
 		// nicht erkannt
 		// ==================================================
 		printf_P(ISTR(UngueltigerCgiAufruf, Sprache), http_request->HTTP_LINEBUFFER);
+		// HACK TEST:
+			printf_P(PSTR("<br>argc = %d, argv1 = %s"), http_request->argc, http_request->argvalue[0]);
 		Zurueck = true;
 		}
 		
