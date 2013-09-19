@@ -4267,13 +4267,11 @@ void itelex_cgi_debug( void * pStruct )
 	printf_P(PSTR("DiagnosePuffer: %s"), DiagnosePuffer);
 	PRINTVAL(DiagnosePufferLevel);
 
-	extern char Dateiname[]; // aus Protokoll.c
-	printf_P(PSTR("<br>Protokolldatei: %s"), Dateiname);
-	extern char Puffer[]; // aus Protokoll.c
-	printf_P(PSTR("<br>Protokollpuffer: %s"), Puffer);
-
 #ifdef ITELEX_TLNSERVER
-	TlnServDebugPrint();
+	if (TlnServSyncGeheimzahl != 0)
+		TlnServDebugPrint();
+	else
+		printf_P(PSTR("<br>Teilnehmer-Server inaktiv"));
 #endif //def ITELEX_TLNSERVER
 	
 #ifdef ITELEX_ANSCHLUSS
