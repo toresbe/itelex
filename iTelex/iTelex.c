@@ -1318,7 +1318,10 @@ static bool SchreibeZeichenInSendePuffer(char c)
 static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	{
 	if (ProtokollLevel >= DatenKurz)
+		{
+		ProtokollierenITelex();
 		ProtokollierenInt_P(PSTR("Durchwahl-Anfrage %u\r\n"), *aDurchwahl);
+		}
 	
 	if (*aDurchwahl == 0)
 		return true;
@@ -1329,7 +1332,10 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 		{
 		*aDurchwahl = DurchwahlTabelle[*aDurchwahl - 101] >> 1;
 		if (ProtokollLevel >= DatenKurz)
+			{
+			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Durchwahl aus Tabelle umgesetzt %u\r\n"), *aDurchwahl);
+			}
 		return true;
 		}
 		
@@ -1337,7 +1343,10 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 		if (*aDurchwahl == DurchwahlTabelle[i] >> 1)
 			{
 			if (ProtokollLevel >= DatenKurz)
+				{
+				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Durchwahl in Tabelle gefunden %u\r\n"), *aDurchwahl);
+				}
 			return true;
 			}
 	
