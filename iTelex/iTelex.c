@@ -30,6 +30,7 @@
 #include <avr/pgmspace.h>
 #include <avr/version.h>
 #include <avr/interrupt.h>
+#include <avr/eeprom.h>
 #include <avr/io.h>
 #include <avr/wdt.h>
 #include <stdio.h>
@@ -5391,6 +5392,43 @@ void get_datetime(uint16_t* year, uint8_t* month, uint8_t* day, uint8_t* hour, u
 	}
 
 #endif //defined(MMC)
+
+
+// EEPROM-Vorbelegung:
+// -------------------
+
+EEMEM struct Config EE_ConfigHead = { configID, E2END - 40 /* hier gehört eigentlich die wirkliche Länge des genutzten Config-Bereichs hin. */ } ;
+EEMEM char EE_Dummy = '\0';
+EEMEM char EE_ConfigData[] =
+	"MAC=00:22:F9:01:4E:CE\r"
+	"DHCP=on\r"
+	"IP=192.168.1.101\r"
+	"MASK=255.255.255.0\r"
+	"GATE=192.168.178.1\r"
+	"DNS=192.168.178.1\r"
+	"ALTERNBEIBES=1\r"
+	"FESTEHPST=1\r"
+	"EIGENENUMMER=66\r"
+	"HAUPTSTELLE=31\r"
+	"POPSERVER=winmail.qwmail.de\r"
+	"SMTPSERVER=winmail.qwmail.de\r"
+	"EMAILADR=xxx@teleprinter.net\r"
+	"EMAILFILTERKENNUNG=0\r"
+	"EMAILABFRTAKT=0\r"
+	"SELBSTANPER=45\r"
+	"TLNBUCHOFFEN=0\r"
+	"RUFNRSERV1=sonnibs.dyndns.org\r"
+	"RUFNRSERV2=df3oe.no-ip.org\r"
+	"RUFNRSERV3=120.146.186.6\r"
+	"SPRACHE=0\r"
+	"NTP=on\r"
+	"NTPSERVER=time.fu-berlin.de\r"
+	"UTCZONE=1\r"
+	"AUTODST=on\r"
+	"PROTLEVEL=2\r"
+	"PROTLEVELTLNSRV=2\r"
+	"MELDRUCK=4" ;
+EEMEM char EE_ConfigDataEnd[] = "\0";
 
 
 //@}
