@@ -44,6 +44,7 @@
 #include "system/net/ethernet.h"
 #include "system/net/dns.h"
 #include "system/base64/base64.h"
+#include "system/string/string.h"
 
 #include "apps/httpd/cgibin/cgi-bin.h"
 #include "apps/httpd/httpd2_pharse.h"
