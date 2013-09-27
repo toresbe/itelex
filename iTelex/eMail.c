@@ -181,10 +181,35 @@ bool MailZeileVerarbeiten(char *Zeile)
 	// jetzt Zeile drucken, um Umbruch und co kümmern sich andere...
 	if (DieseZeileDrucken)
 		{
-		if (strlen(AsciiDruckPuffer) + strlen(Zeile) < AsciiDruckPufferMax)
-			strcat(AsciiDruckPuffer, Zeile);
-		else
-			return false; // AsciiDruckPuffer würde überlaufen
+		if (strlen(AsciiDruckPuffer) + strlen(Zeile) >= AsciiDruckPufferMax)
+			return false; // AsciiDruckPuffer würde überlaufen, also abbrechen.
+		
+		// quoted-printable umwandeln:
+		p = Zeile;
+		while (*p != '\0')
+			{
+			if (*p == '=')
+				{ // eigentlich folgt jetzt ein Hex-Wert
+				if (p[1] > '0' && p[2] > '0')
+					{ // es ist wahrscheinlich ein Hex-Wert
+					*p = (atoh(p[1]) << 4) + atoh(p[2]);
+					p++;
+					strcpy(p, p + 2);
+					}
+				else if (p[1] < ' ' || p[2] < ' ')
+					{ // es ist wahrscheinlich Zeilenende
+					*p = '\0';
+					break;
+					}
+				else // einfach so lassen
+					p++;
+				}
+			else // es war kein =
+				p++;
+			}
+
+		// und ab in den Puffer
+		strcat(AsciiDruckPuffer, Zeile);
 		}
 
 	// Erst wenn kein Überlauf droht Protokoll drucken.
