@@ -132,6 +132,7 @@ enum {
 	TLNSERV_ABFRAGE_VERSION1 = 0x03,
 	//!< Meldung eines Teilnehmer an den Teilnehmer-Server als Wunsch die
 	//!< IP-Adresse eines anderen Teilnehmers zu erfragen.
+	//!< Version1 bezieht sich auf die gewünschte Version der Rückmeldung.
 	
 	TLNSERV_AUSKUNFT_NICHTVERG = 0x04,
 	//!< Meldung des Teilnehmer-Server an den Teilnehmer als Rückmeldung dass
@@ -139,7 +140,8 @@ enum {
 
 	TLNSERV_AUSKUNFT_VERSION1 = 0x05,
 	//!< Meldung des Teilnehmer-Server an den Teilnehmer als Rückmeldung der
-	//!< kompletten Daten des durch #TLNSERV_ABFRAGE_VERSION1 gewünschten Teilnehmers.
+	//!< kompletten Daten des durch #TLNSERV_ABFRAGE_VERSION1 oder #TLNSERV_SUCHE_VERSION1 
+	//!< gewünschten Teilnehmers.
 	//!< wird auch zur Synchronisation der Teilnehmer-Server untereinander
 	//!< verwendet.
 	
@@ -160,6 +162,11 @@ enum {
 	//!< zu senden sind. \n
 	//!< Oder Meldung des empfangenden Teilnehmer-Servers, wenn dieser keine 
 	//!< weiteren Datensätze verarbeiten kann.
+
+	TLNSERV_SUCHE_VERSION1 = 0x0a,
+	//!< Meldung eines Teilnehmers an den Server zur Auflistung der vorhandenen 
+	//!< Einträge gemäß des übermittelten Suchmusters.
+	//!< Version1 bezieht sich auf die gewünschte Version der Rückmeldung.
 	
 	TLNSERV_FEHLER = 0xFF,
 	//!< Allgemeine Fehlermeldung.
@@ -339,6 +346,10 @@ typedef union
 				{
 				uint32_t RufNr; //!< globale Telefonnummer.
 				} TlnAbfr; //!< Gültig bei #Code == #TLNSERV_ABFRAGE_VERSION1
+			struct 
+				{
+				char SuchMuster[TlnNameMax]; //!< Suchtext. Wird mit den Namen der Einträge abgeglichen.
+				} TlnSuche; //!< Gültig bei #Code == #TLNSERV_SUCHE_VERSION1
 			TTlnDaten TlnAuskunft; //!< Gültig bei #Code == #TLNSERV_AUSKUNFT_VERSION1
 			struct
 				{

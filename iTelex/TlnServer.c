@@ -78,6 +78,20 @@
 // TLNSERV_SYNC_ENDE (09)			-->
 // 											(schließt Verbindung)
 //
+// 5. Suchabfrage von Teilnehmer an Server ("Auskunft")
+// ====================================================
+// Endstelle (Client)	 			 -		Server
+// ------------------------------------------------
+// TLNSERV_SUCHE_VERSION1 (0A)		-->
+//									<--		TLNSERV_AUSKUNFT_VERSION1 (05)
+// TLNSERV_SYNC_QUITTUNG (08)		-->
+//									<--		TLNSERV_AUSKUNFT_VERSION1 (05)
+//									...
+// TLNSERV_SYNC_QUITTUNG (08)		-->
+//									<--		TLNSERV_SYNC_ENDE (09)
+// (schließt Verbindung)
+//
+// 
 //*****************************************************************************
 
 
@@ -143,6 +157,8 @@ typedef struct
 	uint16_t AnzahlAktualisiert; //!< Zählt die durch den Abgleich geänderten Einträge.
 	TTlnListerDat AusgabeLister; //!< Daten für die Ausgabe (welcher Datensatz wurde zuletzt gesendet)
 	long AusgabeStichdatum; //!< Nur Einträge, die neuer oder gleich alt als X sind werden gesendet.
+	char SuchMuster[TlnNameMax]; //!< Nur Einträge, die zum Suchmuster passen, werden gesendet.
+						//!< Wenn leerer String, werden alle gesendet.
 	bool Fertig; //!< true, wenn Auftrag erfüllt. Sonst wäre ein vorzeitiges Ende ein Fehler.
 	uint8_t SendeFehlerZaehler;	//!< Zählt bis 10 bei nicht erfolgreichen Sendeversuchen auf dem Socket.
 	TKurzTimer WiederholungVerzoegerung;
@@ -220,6 +236,7 @@ static void KanalInit(TTlnServKanal* k, int aSocket)
 	k->SendeFehlerZaehler = 0;
 	k->AnzahlAktualisiert = 0;
 	k->NutzungZaehler++;
+	k->SuchMuster[0] = '\0'; // alle ausgeben
 	StartKurzTimer(&k->WiederholungVerzoegerung);
 	StartKurzTimer(&k->SelbstAbbauVerzoegerung);
 	}
@@ -422,9 +439,20 @@ void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln, int8_t VonServer)
 	} // TlnServTlnbuchEintragGeaendert()
 	
 	
-// Den nächsten Eintrag des Teilnehmer-Verzeichnisses senden.
+//! Vergleichsfunktion für die Suchfunktion.
+//------------------------------------------
+
+static bool SuchMusterPasst(char *SuchMuster, TTlnDaten *td)
+	{
+	if (SuchMuster[0] == '\0')
+		return true; // es wird nichts konkretes gesucht.
+	return strstr(td->Name, SuchMuster) != NULL;
+	}
+
+	
+//! Den nächsten Eintrag des Teilnehmer-Verzeichnisses senden.
 // ----------------------------------------------------------
-// ...wenn nicht lokal und Datum jünger als #AusgabeStichdatum.
+//! ...wenn nicht lokal und Datum jünger als #AusgabeStichdatum und wenn Muster zum Namen passt.
 	
 static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 	{
@@ -443,7 +471,8 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 		// wenn nicht lokal UND gültige Nummer UND Datum jünger als Grenzwert, dann senden...
 		if ((TlnServBuf.TlnAuskunft.Flags & TlnFlag_Lokal) == 0
 			&& TlnServBuf.TlnAuskunft.Nummer >= GlobRufnrMinWert
-		    && TlnServBuf.TlnAuskunft.Datum >= Kanal->AusgabeStichdatum)
+		    && TlnServBuf.TlnAuskunft.Datum >= Kanal->AusgabeStichdatum
+			&& SuchMusterPasst(Kanal->SuchMuster, &TlnServBuf.TlnAuskunft))
 			{
 			// aber Nicht senden, wenn gelöscht und Löschdatum älter als 20 Tage
 			if (TlnServBuf.TlnAuskunft.AdrArt == Geloescht 
@@ -454,12 +483,17 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 				}
 		
 			if (!Kanal->Freigabe)
-				TlnServBuf.TlnAuskunft.DynPin = 0;
+				{
+				TlnServBuf.TlnAuskunft.DynPin = 0; // Datenschutz
+				if (TlnServBuf.TlnAuskunft.AdrArt == iTelexDynIP)
+					TlnServBuf.TlnAuskunft.AdrArt = iTelexIP;
+				}
 				
 			if (ProtokollLevelTlnServ >= AblaufInfo)
 				{
 				ProtokollierenTlnServInt_P(Kanal, PSTR("Sende Teilnehmer-Eintrag %lu\r\n"), TlnServBuf.TlnAuskunft.Nummer);
 				}
+				
 			TlnServBuf.Code = TLNSERV_AUSKUNFT_VERSION1;
 			// TlnServBuf-TlnAuskunft ist bereits gefüllt.
 			TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
@@ -524,11 +558,11 @@ static void SocketDatenSenden(TTlnServKanal *Kanal)
 //! Socket für Teilnehmerauskunft-Server bearbeiten.
 //---------------------------------------------------------------------------
 //! Aufgaben:
-//! \par - Empfangene Daten in den Socket-Empfangspuffer schreiben
-//! \par - Daten vom Socket-Empfangspuffer übersetzen in den SendePuffer (zum Endgerät).
-//! \par - Daten des Empfangspuffers (Endgerät) in den Socket-Sendepuffer übersetzen
-//! \par - Daten des Socket-Sendepuffers ggf. senden
-//! \par - Schlusszeichen bearbeiten
+//! - Empfangene Daten in den Socket-Empfangspuffer schreiben
+//! - Daten vom Socket-Empfangspuffer übersetzen in den SendePuffer (zum Endgerät).
+//! - Daten des Empfangspuffers (Endgerät) in den Socket-Sendepuffer übersetzen
+//! - Daten des Socket-Sendepuffers ggf. senden
+//! - Schlusszeichen bearbeiten
 
 static void SocketBearbeiten(TTlnServKanal *Kanal)
 	{
@@ -742,7 +776,25 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					Senden = true;
 					}
 				break; // TlnServBuf.Code == TLNSERV_SYNC_VOLLABFRAGE
-				
+
+			case TLNSERV_SUCHE_VERSION1:
+				if (TlnServBuf.DataLen < sizeof(TlnServBuf.TlnSuche))
+					{
+					FehlerRueckmelden(PSTR("search not enough data: %u"), TlnServBuf.DataLen);
+					Senden = true;
+					}
+				else
+					{
+					Kanal->AusgabeStichdatum = 0; // = alle 
+					Kanal->AusgabeGestartet = false; // wird aber gleich gestartet
+					Kanal->Freigabe = false; // sicherheitshalber
+					strncpy(Kanal->SuchMuster, TlnServBuf.TlnSuche.SuchMuster, TlnNameMax);
+					Kanal->SuchMuster[TlnNameMax-1] = '\0'; // begrenzen
+					TlnDatensatzSyncSenden(Kanal);
+					Senden = true;
+					}
+				break; // TlnServBuf.Code == TLNSERV_SUCHE_VERSION1
+			
 			case TLNSERV_SYNC_ANMELDUNG:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SyncAnmeldung))
 					{

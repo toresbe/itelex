@@ -509,11 +509,11 @@ static uint8_t DiagnosePufferLevel;
 
 uint8_t	MeldungsdruckLevel;
 	//!< Welche Meldungen sollen auf dem angeschlossenen Fernschreiber ausgegeben werden:
-	//!< \par 0 = keine
-	//!< \par 1 = interne Fehler die die Funktion beeinträchtigen
-	//!< \par 2 = wie 1 und externe Fehler
-	//!< \par 3 = wie 2 und Bedienungsfehler
-	//!< \par 4 = wie 3 und Statusmeldungen
+	//!< - 0 = keine
+	//!< - 1 = interne Fehler die die Funktion beeinträchtigen
+	//!< - 2 = wie 1 und externe Fehler
+	//!< - 3 = wie 2 und Bedienungsfehler
+	//!< - 4 = wie 3 und Statusmeldungen
 
 uint8_t DiagnoseAusgabeZiel;
 	//!< Bei Diagnoseausgabe vorzugsweise zu nutzendes Endgerät, das die 
