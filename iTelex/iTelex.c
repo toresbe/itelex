@@ -113,17 +113,6 @@ enum {
 	} ;
 	
 	
-/* Mustertelegramme zur Übernahme in FsTelnet (MFC-Programm)
-
-	Text1 = _T("07 01 02 01 01 00");                       // Protokoll und Durchwahl
-	Text2 = _T("02 0b 1f 02 08 16 0a 10 12 04 18 13 04");  // Text
-	Text3 = _T("02 02 1b 12");                             // Kennungsabfrage
-	Text4 = _T("00 00");                                   // Füllzeichen
-	Text5 = _T("03 00");                                   // Ende
-
-*/
-	
-
 #define PROTVERSION_AKTUELL 1
 	//!< Aktuelle = beste Protokollversion
 
@@ -211,10 +200,10 @@ static TKurzTimer iTelexSocketLebenszeichenTimer;
 
 	
 volatile TPuffer SendePuffer; 
-	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Netz -> Endgerät
+	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Netz -> Endgerät.
 	
 volatile TPuffer EmpfPuffer; 
-	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Endgerät -> Netz
+	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Endgerät -> Netz.
 	
 char AsciiDruckPuffer[AsciiDruckPufferMax+4];
 	//!< Puffer für zu druckenden Text (Netz -> Endgerät), mit Null abgeschlossen
@@ -251,7 +240,7 @@ static TLangTimer BeideRuhigTimer;
 	
 
 int iTelexSocketHandle;
-	//!< Verweis auf Socket für iTelex-Kommunikation. Istzustand. Wenn ungültig, aber iTelexSocketMode
+	//!< Verweis auf Socket für iTelex-Kommunikation. Istzustand. Wenn ungültig, aber #iTelexSocketMode
 	//!< ungleich Idle, ist ein kurzzeitiger Verbindungsverlust eingetreten.
 	
 static int iTelexBlindSocketHandle;
@@ -701,7 +690,9 @@ static bool ModusTwiVerbunden()
 			|| Modus == ModPufferDruckUndSchluss
 			|| Modus == ModHtmlChatWarteEinQuitt
 			|| Modus == ModHtmlChatVerbunden
-			|| Modus == ModMeldungsdruckWarteEinQuitt);
+			|| Modus == ModMeldungsdruckWarteEinQuitt
+			|| Modus == ModNamensucheEingabe
+			|| Modus == ModNamensucheServerAbfrage);
 	}
 
 #endif //def ITELEX_ANSCHLUSS
@@ -1258,6 +1249,24 @@ void ModusWechsel(TModus neu)
 			AsciiHilfZeilenanfang = 0;
 			break;
 			
+		case ModNamensucheEingabe:
+			SET_BIT_Status(StatBit_Verbunden);
+			SET_BIT_Status(StatBit_FsMeldBetrieb);
+			SET_BIT_Status(StatBit_FsMeldEin);
+			SET_BIT_Status(StatBit_FsBefBetrieb);
+			SET_BIT_Status(StatBit_FsBefEin);
+			BusEmpfMark = true;
+			SendeMark = true;
+			LED_on(GELB);
+			LED_off(GRUEN);
+			LED_off(BLAU);
+			StartKurzTimer(&SchreibPauseTimer);
+			break;
+			
+		case ModNamensucheServerAbfrage:
+		    // überhaupt was tun????
+			break;
+			
 		default:
 			return; // nix wird geändert
 		} // switch neu
@@ -1446,12 +1455,12 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 //! Socket bearbeiten.
 //---------------------------------------------------------------------------
 //! Aufgaben:
-//! \par - Empfangene Daten in den Socket-Empfangspuffer schreiben
-//! \par - Daten vom Socket-Empfangspuffer übersetzen in den SendePuffer (zum Endgerät).
-//! \par - Daten des Empfangspuffers (Endgerät) in den Socket-Sendepuffer übersetzen
-//! \par - Daten des Socket-Sendepuffers ggf. senden
-//! \par - Schlusszeichen bearbeiten
-//! \par - Öffnungs- und Schließanforderung bearbeiten
+//!  - Empfangene Daten in den Socket-Empfangspuffer schreiben
+//!  - Daten vom Socket-Empfangspuffer übersetzen in den SendePuffer (zum Endgerät).
+//!  - Daten des Empfangspuffers (Endgerät) in den Socket-Sendepuffer übersetzen
+//!  - Daten des Socket-Sendepuffers ggf. senden
+//!  - Schlusszeichen bearbeiten
+//!  - Öffnungs- und Schließanforderung bearbeiten
 
 static void SocketBearbeiten()
 	{
@@ -1890,6 +1899,8 @@ void InterneVerbindungBeenden(bool Force)
 		case ModHtmlChatWarteEinQuitt:
 		case ModHtmlChatVerbunden:
 		case ModMeldungsdruckWarteEinQuitt:
+		case ModNamensucheEingabe:
+		case ModNamensucheServerAbfrage:
 			if (Force)
 				{
 				SendeBusKdoSchluss();
@@ -3223,6 +3234,7 @@ void itelex_thread()
 					ProtokollierenITelex();
 					ProtokollierenInt_P(PSTR("TWI Wahlziffer %u intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
 					}
+					
 				if (Modus == ModGehendWaehlen && iTelexSocketMode == SocketIdle)
 					{
 					// allgemeines Verhalten beim Wählen:
@@ -3240,47 +3252,57 @@ void itelex_thread()
 					//    4a) Verbindungsaufbau zu 3a) ODER 3b) fehlschlägt
 					//    4b) 15 Sekunden seit der letzten Wahlziffer vergangen sind.
 					// im folgenden ist auf diese Schritte durch "Wahl-Schritt" verwiesen.
-					
-					// ID#221 ********************************************
-					Wahlnummer = 10 * Wahlnummer + (Code - BusKdoWahlziffer0);
-					Wahlziffern++;
-					StartKurzTimer(&WahlPauseTimer);
-					TlnServerAbfrageWiederholungssperre = false;
-					WahlVerbAufbauNach5SekundenVersuchen = false;
-					
-					if (TlnSuche(Wahlnummer, false, &GewaehlterTln))
-						{  // es wurde ein Teilnehmer im lokalen Telefonbuch gefunden.
-						// ID#222 ********************************************
-						bool RufnummerServerAbfrage = (Wahlziffern >= GlobRufnrMinZiffern && (GewaehlterTln.Flags & TlnFlag_Lokal) == 0);
-							// siehe Wahl-Schritt 1.
-						
+
+					if (Wahlziffern == 0 && Code == BusKdoWahlziffer0)
+						{ // Namenssuche starten.
 						if (ProtokollLevel >= AblaufInfo)
-							{
-							ProtokollierenITelex();
-							ProtokollierenInt_P(PSTR("Teilnehmer %lu im eigenen Telefonbuch gefunden.\r\n"), GewaehlterTln.Nummer);
-							}
-		
-						if (RufnummerServerAbfrage)
-							RufnummerBeiTlnServerAbfragen(); 
-								// siehe Wahl-Schritt 2a)
-							
-						if ((GewaehlterTln.Flags & TlnFlag_Lokal) != 0)
-							{ // es ist ein lokaler Eintrag
-							if (Verbindungsaufbau(&GewaehlterTln) != 0)
-								{ // Verbindungsaufbau war nicht erfolgreich --> Wahl-Schritt 4a)
-								InterneVerbindungBeenden(true);
-								TlnServerAbfrageWiederholungssperre = true;
-								}
-							}
-						else // globaler Einrag -> Wahl-Schritt 3c) vorbereiten
-							WahlVerbAufbauNach5SekundenVersuchen = true;
-							
-						} // gewählte Nummer war vollständig
+							ProtokollierenITelex_P(PSTR("Namenssuche gestartet\r\n" ));
+						ModusWechsel(ModNamensucheEingabe);
+						BusSenden(BusKdoEin);
+						}
 						
-					else // !TlnSuche(Wahlnummer...) 
-						TlnDatenInit(&GewaehlterTln); 
-							// da die aktuell gewählte Nummer ggf. nicht mehr zum zuletzt gefundenen Teilnehmer passt.
+					else // es war keine 0 als erster Stelle
+						{
+						// ID#221 ********************************************
+						Wahlnummer = 10 * Wahlnummer + (Code - BusKdoWahlziffer0);
+						Wahlziffern++;
+						StartKurzTimer(&WahlPauseTimer);
+						TlnServerAbfrageWiederholungssperre = false;
+						WahlVerbAufbauNach5SekundenVersuchen = false;
+						
+						if (TlnSuche(Wahlnummer, false, &GewaehlterTln))
+							{  // es wurde ein Teilnehmer im lokalen Telefonbuch gefunden.
+							// ID#222 ********************************************
+							bool RufnummerServerAbfrage = (Wahlziffern >= GlobRufnrMinZiffern && (GewaehlterTln.Flags & TlnFlag_Lokal) == 0);
+								// siehe Wahl-Schritt 1.
 							
+							if (ProtokollLevel >= AblaufInfo)
+								{
+								ProtokollierenITelex();
+								ProtokollierenInt_P(PSTR("Teilnehmer %lu im eigenen Telefonbuch gefunden.\r\n"), GewaehlterTln.Nummer);
+								}
+			
+							if (RufnummerServerAbfrage)
+								RufnummerBeiTlnServerAbfragen(); 
+									// siehe Wahl-Schritt 2a)
+								
+							if ((GewaehlterTln.Flags & TlnFlag_Lokal) != 0)
+								{ // es ist ein lokaler Eintrag
+								if (Verbindungsaufbau(&GewaehlterTln) != 0)
+									{ // Verbindungsaufbau war nicht erfolgreich --> Wahl-Schritt 4a)
+									InterneVerbindungBeenden(true);
+									TlnServerAbfrageWiederholungssperre = true;
+									}
+								}
+							else // globaler Einrag -> Wahl-Schritt 3c) vorbereiten
+								WahlVerbAufbauNach5SekundenVersuchen = true;
+								
+							} // gewählte Nummer war vollständig
+							
+						else // !TlnSuche(Wahlnummer...) 
+							TlnDatenInit(&GewaehlterTln); 
+								// da die aktuell gewählte Nummer ggf. nicht mehr zum zuletzt gefundenen Teilnehmer passt.
+						}
 					} // if Modus == ModGehendWaehlen
 					
 				else
@@ -3371,34 +3393,35 @@ void itelex_thread()
 		{
 		InterneVerbindungBeenden(false);
 		} // if (iTelexSocketMode == SocketIdle)
-	
-	switch (iTelexSocketProtokoll)
+	else
 		{
-		case Ascii:
-			AsciiDatenVerarbeiten();
-			break;
+		switch (iTelexSocketProtokoll)
+			{
+			case Ascii:
+				AsciiDatenVerarbeiten();
+				break;
+				
+			case iTelexProt:
+				ITelexDatenVerarbeiten();
+				break;
+				
+	#ifdef ITELEX_EMAIL
+			case POP3:
+				POP3DatenVerarbeiten();
+				break;
+				
+			case SMTP:
+				SMTPDatenVerarbeiten();
+				break;
+				
+	#endif //def ITELEX_EMAIL
 			
-		case iTelexProt:
-			ITelexDatenVerarbeiten();
-			break;
-			
-#ifdef ITELEX_EMAIL
-		case POP3:
-			POP3DatenVerarbeiten();
-			break;
-			
-		case SMTP:
-			SMTPDatenVerarbeiten();
-			break;
-			
-#endif //def ITELEX_EMAIL
-		
-		default:
-			ProtokollierenITelex_P(PSTR("! ILLEGALES Protokoll\r\n"));
-			iTelexSocketProtokoll = Ascii;
-			break;
-		}
-			
+			default:
+				ProtokollierenITelex_P(PSTR("! ILLEGALES Protokoll\r\n"));
+				iTelexSocketProtokoll = Ascii;
+				break;
+			}
+		} // else iTelexSocketMode != SocketIdle
 		
 	if (Modus == ModGehendWaehlen && !PufferLeer(&SendePuffer))
 		{ // es wurden Daten empfangen, also schnellstens Endgerät anschmeißen

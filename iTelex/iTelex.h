@@ -238,6 +238,13 @@ typedef enum
 		//!< Wartet darauf, dass nach Ausschaltung des lokalen Endgerätes der 
 		//!< Socket wieder geschlossen ist und alles andere auch die Grundstellung hat.
 	
+	ModNamensucheEingabe = 41,
+		//!< Nach Wahl von "0" wird die Abfrage eines Namens-Musters gestartet.
+		
+	ModNamensucheServerAbfrage = 42,
+		//!< Name wurde eingegeben, Abfrage des Servers ist gestartet, warte auf 
+		//!< Rückmeldungen.
+		
 	} TModus;
 	
 
