@@ -446,7 +446,7 @@ static bool SuchMusterPasst(char *SuchMuster, TTlnDaten *td)
 	{
 	if (SuchMuster[0] == '\0')
 		return true; // es wird nichts konkretes gesucht.
-	return strstr(td->Name, SuchMuster) != NULL;
+	return strcasestr(td->Name, SuchMuster) != NULL;
 	}
 
 	
