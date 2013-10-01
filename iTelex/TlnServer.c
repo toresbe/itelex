@@ -819,12 +819,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				break; // TlnServBuf.Code == TLNSERV_SYNC_ANMELDUNG
 			
 			case TLNSERV_SYNC_QUITTUNG:
-				if (!Kanal->Freigabe)
-					{
-					FehlerRueckmelden(PSTR("no authentification"), 0);
-					Senden = true;
-					}
-				else if (!Kanal->AusgabeGestartet)
+				if (!Kanal->AusgabeGestartet)
 					{
 					FehlerRueckmelden(PSTR("unexpected acknowledge"), 0);
 					TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
