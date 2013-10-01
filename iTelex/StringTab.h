@@ -204,9 +204,10 @@ _STRTABENTRY(ServerAnmeldungFalscheGeheimzahl, "Teilnehmer-Server Anmeldung mit 
 
 // für eMail.c:
 // ungeprüft:
-_STRTABENTRY(MailEmpfangStartzeile, "\r\n///email empfangen:\r\n", "\r\n///email received:\r\n")
-_STRTABENTRY(MailEingabeBetreff, "\r\nbetreff:\r\n", "\r\nsubject:\r\n")
-_STRTABENTRY(MailEingabeText, "\r\ntext:\r\n", "\r\nbody text:\r\n")
+_STRTABENTRY(EmailEmpfangStartzeile, "\r\n///email empfangen:\r\n", "\r\n///email received:\r\n")
+_STRTABENTRY(EmailEingabeEmpfaenger, "\r\nemail an:      ", "\r\nemail to:      ")
+_STRTABENTRY(EmailEingabeBetreff, "\r\nbetreff:      ", "\r\nsubject:      ")
+_STRTABENTRY(EmailEingabeText, "\r\ntext:   \r\n", "\r\nbody text:   \r\n")
 _STRTABENTRY(EmailKonfigPopServer, "POP-Server Adresse", "POP server address")
 _STRTABENTRY(EmailKonfigSmtpServer, "SMTP-Server Adresse", "SMTP server address")
 _STRTABENTRY(EmailKonfigEigeneAdresse, "Eigene eMail-Adresse", "Own email address")
