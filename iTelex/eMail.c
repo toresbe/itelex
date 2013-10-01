@@ -425,7 +425,7 @@ void POP3DatenVerarbeiten()
 				}
 			else
 				{ // mindestens eine Meldung im Puffer...
-				strcpy_P(AsciiDruckPuffer, ISTR(MailEmpfangStartzeile, LokaleSprache)); 
+				strcpy_P(AsciiDruckPuffer, ISTR(EmailEmpfangStartzeile, LokaleSprache)); 
 					// startet sofort den Fernschreiber
 				
 				strcpy_P(SocketOutBuf, PSTR("RETR 1\r\n"));
@@ -727,7 +727,7 @@ void SMTPDatenVerarbeiten()
 			strcat_P(SocketOutBuf, PSTR("\r\n"));
 			if (EmailEmpfaenger[0] == '?')
 				{
-				strcpy_P(AsciiDruckPuffer, PSTR("\r\nemail to:\r\n"));
+				strcpy_P(AsciiDruckPuffer, ISTR(EmailEingabeEmpfaenger, LokaleSprache));
 				PufferInit(&EmpfPuffer);
 				ProtokollPhase = EingabeMailTo;
 				EmailEmpfaenger[0] = '\0';
@@ -788,7 +788,7 @@ void SMTPDatenVerarbeiten()
 			strcat_P(SocketOutBuf, PSTR(">\r\nContent-Type: text/plain; charset=us-ascii\r\nSubject: ")); 
 			
 			// Aufforderung für Subject-Eingabe:
-			strcpy_P(AsciiDruckPuffer, ISTR(MailEingabeBetreff, LokaleSprache));
+			strcpy_P(AsciiDruckPuffer, ISTR(EmailEingabeBetreff, LokaleSprache));
 			ProtokollPhase = MailSubject;
 			Zeilenanfang = true;
 			break;
@@ -810,7 +810,7 @@ void SMTPDatenVerarbeiten()
 						ProtokollPhase = MailData;
 						
 						// Aufforderung für Body-Eingabe:
-						strcpy_P(AsciiDruckPuffer, ISTR(MailEingabeText, LokaleSprache));
+						strcpy_P(AsciiDruckPuffer, ISTR(EmailEingabeText, LokaleSprache));
 						PufferInit(&EmpfPuffer);
 						break;
 						}
