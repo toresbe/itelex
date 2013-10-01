@@ -377,6 +377,9 @@ static bool WahlVerbAufbauNach5SekundenVersuchen;
 	//!< Wirkt nur, wenn ohne Rückmeldung eines Teilnehmer-Servers eine nicht
 	//!< als lokal im eigenen Teilnehmer-Verzeichnis gespeicherte Nummer gewählt wird.
 	
+static char NamensucheSuchtext[TlnNameMax];
+	//!< Hier wird der zu suchende Namensteil abgelegt. Nur gültig wenn Modus == ModNamensucheEingabe
+
 static uint32_t NetzRufnummer;
 	//!< Rufnummer des eigenen Anschlusses im ip-telex-Netz
 	
@@ -618,7 +621,7 @@ uint16_t Zufallswert(uint16_t Maske)
 //! \param msg Text aus dem Programmspeicher oder NULL zum Löschen des vorhandenen Textes.
 //! \param Level Schweregrad der neuen Meldung. Meldung wird nur gespeichert wenn neuer 
 //! Grad schwerwiegender als bestehender Text. Niedrige Nummer ist wichtiger.
-//! \retval true, wenn neue Meldung gespeichert wurde.
+//! \retval true wenn die neue Meldung gespeichert wurde.
 bool Diagnoseausgabe_P(const char *msg, uint8_t Level)
 	{
 	if (DiagnosePuffer[0] != '\0' && Level > DiagnosePufferLevel)
@@ -1261,6 +1264,7 @@ void ModusWechsel(TModus neu)
 			LED_off(GRUEN);
 			LED_off(BLAU);
 			StartKurzTimer(&SchreibPauseTimer);
+			NamensucheSuchtext[0] = '\0';
 			break;
 			
 		case ModNamensucheServerAbfrage:
@@ -3131,12 +3135,13 @@ static void DatumUhrzeitDrucken()
 //! Der iTelex-client an sich.
 //------------------------------------------------------------------------------------------------------------
 //! Diese Funktion wird zyklisch aufgerufen und hat folgende Aufgaben:
-//! \par - Steuerbefehle vom TWI-Bus annehmen und interpretieren.
-//! \par - Nachschauen, ob eine Verbindung auf den registrierten Port eingegangen ist. Wenn ja 
+//! - Steuerbefehle vom TWI-Bus annehmen und interpretieren.
+//! - Nachschauen, ob eine Verbindung auf den registrierten Port eingegangen ist. Wenn ja 
 //! holt er sich die Socketnummer der Verbindung und speichert diese.
-//! \par - Wenn eine Verbindung zustande gekommen ist wird diese wiederrum zyklisch nach neuen Daten abgefragt und entsprechend
+//! - Wenn eine Verbindung zustande gekommen ist wird diese wiederrum zyklisch nach neuen Daten abgefragt und entsprechend
 //! reagiert.
-//! \par Eine Übersicht der Gesamtfunktion ist in der Datei AblaeufeVerbindung.xls dargestellt.
+//! .
+//! Eine Übersicht der Gesamtfunktion ist in der Datei AblaeufeVerbindung.xls dargestellt.
 //! Die dort enthaltenen ID sind hier mit ID#xxx referenziert.
 //! \param 	NONE
 //! \return	NONE
@@ -3259,6 +3264,7 @@ void itelex_thread()
 							ProtokollierenITelex_P(PSTR("Namenssuche gestartet\r\n" ));
 						ModusWechsel(ModNamensucheEingabe);
 						BusSenden(BusKdoEin);
+						strcpy_P(AsciiDruckPuffer, ISTR(NamensucheTexteingabe, LokaleSprache));
 						}
 						
 					else // es war keine 0 als erster Stelle
@@ -3463,6 +3469,39 @@ void itelex_thread()
 			}
 		} // if Modus == ModKommendEinschalten
 			
+	if (Modus == ModNamensucheEingabe)
+		{
+		while (!PufferLeer(&EmpfPuffer))
+			{
+			char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+			uint8_t SuchTextLen = strlen(NamensucheSuchtext);
+			
+			if (z == '\r' || z == '\n')
+				{
+				if (SuchTextLen == 0)
+					; // WR / ZL am Zeilenanfang ignorieren
+				else
+					{
+					ProtokollierenITelex_P(PSTR("Starte Namenssuche mit <"));
+					Protokollieren(NamensucheSuchtext);
+					Protokollieren_P(">\r\n");
+
+					//! \todo Länge prüfen Abschicken
+					InterneVerbindungBeenden(true); // HACK
+					break;
+					}
+				} // z == WR oder ZL
+			else if (z != '\0' && z != '#' && SuchTextLen < TlnNameMax - 1)
+				{
+				if (z != ' ' || SuchTextLen > 0)
+					{
+					NamensucheSuchtext[SuchTextLen++] = z;
+					NamensucheSuchtext[SuchTextLen] = '\0';
+					}
+				} // z druckbar
+			} // while !PufferLeer(EmpfPuffer)
+		} // if Modus == ModNamensucheEingabe
+					
 	// ==========================================================================
 	// Timeouts? (auch 2 Sekunden Wahlpause...)
 	// ==========================================================================
@@ -4198,7 +4237,7 @@ bool KonfigFreigabe(void *pStruct, TSprache Sprache)
 //! \param 	pStruct	Struktur auf den HTTP_Request. Die Sprachangabe muss als "spr=de" oder "spr=en" erfolgt
 //! sein. Ist die Sprachangabe das einzige Attribut des CGI-Requests wird die Anzahl der Parameter
 //! des CGI Requests auf Null gesetzt.
-//! \retval true, wenn eine Angabe gefunden wurde.
+//! \retval true wenn eine Angabe gefunden wurde.
 
 bool PruefeSprache(void *pStruct, TSprache *Sprache)
 	{

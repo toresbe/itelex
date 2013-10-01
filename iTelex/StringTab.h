@@ -45,6 +45,8 @@ _STRTABENTRY(MailNichtInDieserVersion, "Mail in dieser Version nicht unterstuetz
 _STRTABENTRY(TeilnehmerNichtErreichbar, "Teilnehmer nicht erreichbar", "Subscriber not available")
 _STRTABENTRY(AnschlussInternBesetzt, "Anschluss intern besetzt", "Local connection busy")
 _STRTABENTRY(TWITimeout, "Interne Verbindung unterbrochen", "Lost local connection")
+_STRTABENTRY(NamensucheTexteingabe, "suche nach:     ", "search for:     ")
+_STRTABENTRY(NamensucheErgebnisse, "nummer / name:\r\n", "number / name:\r\n")
 _STRTABENTRY(DiagInterneIP, "interne IP: ", "local IP: ")
 _STRTABENTRY(Datum, "Datum", "Date")
 _STRTABENTRY(DiagnoseEinleitung, "\r\n///interne meldung: ", "\r\n///internal message: ")
