@@ -2708,7 +2708,8 @@ bool TeilnehmerServerSocketOeffnen(PGM_P Grund)
 		} // for ServerI
 		
 	TeilnehmerServerSocket = NO_SOCKET_USED;
-	Diagnoseausgabe_P(ISTR(KeinTeilnehmerServerErreichbar, LokaleSprache), 1);	
+	if (!TeilnehmerServerAlleNichtErreichbar)
+		Diagnoseausgabe_P(ISTR(KeinTeilnehmerServerErreichbar, LokaleSprache), 1);	
 	TeilnehmerServerAlleNichtErreichbar = true;
 	return false;
 	} // TeilnehmerServerSocketOeffnen()

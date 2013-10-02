@@ -1,0 +1,116 @@
+Second incoming call on busy i-telex socket
+Multiple errors while sending on network
+Timeout while waiting for a reconnection
+No subscriber directory server available
+Subscriber directory server available again
+No connection to server for outgoing mails
+Mail not supported in this version
+Subscriber not available
+Local connection busy
+Lost local connection
+local IP: 
+Date
+internal message: 
+Loopback call failed constantly. Check router configuration. After check, enable the dynamic update of IP adress again.
+subscriber number not known
+internal directory out of space
+Page locked! Enter password
+Unlock
+Wrong password entered!
+unauthorizes access to locked configuratiuon page
+printout mirror
+Enter text to start printer
+Connection busy, please wait.
+Enter text: 
+ Send 
+Refresh
+Outside line number
+Primary teleprinter for incoming calls
+Internal call number of primary teleprinter for incoming calls
+Use alternative secondary teleprinter if primary is busy
+Secondary call numbers list (seperate by comma)
+Logging level at serial port
+Logging level for directory server
+Message filtering level
+Password for configuration pages
+Local subscriber directory visible for everybody
+Print date on incoming calls
+off
+only local
+only at caller
+local and caller
+ could not be changed
+Passwort if necessary changed
+First select password in Settings for the local TxP-system!
+Configuration pages are locked again. For unlocking enter password oder push button at i-telex hardware module twice.
+Subscriber's number
+<=== must have five to nine digits!
+PIN for sign in at subscriber directory server
+Dynamic update of IP adress active
+Loopback test period (0 to swich off)
+Public internet port number
+Subscriber directory server address
+PIN for directory server synchronisation
+Status of all connected hardware modules:
+The new settings are: 
+continue
+ unchanged
+ changed to
+Submit changes
+Subscriber directory
+Public subscriber directory
+show complete directory with private entries
+save non-volatile
+discard all changes
+clear all
+No entries yet
+restore last saved entries
+add entry
+Number
+Name
+Address
+Port
+Direct dial
+local
+locked
+Type
+DynIP
+deleted
+Ascii
+i-Telex
+eMail
+edit
+add
+Number 0 not allowed!
+Language changed to English
+Number already used, change not saved
+Entry saved
+Entry unchanged
+Former number 123 could not be deleted!
+saved successfully (123 byte)
+loaded successfully (123 byte)
+completely cleared
+back to subscriber directory
+Error in directory EEPROM
+new subscriber signed up
+directory out of space, not saved
+Unauthorized access to directory server port
+email received:
+email to:      
+subject:      
+body text:   
+POP server address
+SMTP server address
+Own email address
+Password for email servers
+Polling period for email query
+Print only emails with +tx+ in subject
+Configuration not complete, polling period set to zero, incoming eMail will not be printed.
+Server for outgoing email
+ no IP address was found
+ connection failed
+Message from the Server for outgoing email:
+Use time server
+Time server host name
+Timezone
+Use daylight saving time (european)
