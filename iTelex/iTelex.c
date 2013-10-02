@@ -757,7 +757,9 @@ void itelex_timerEvent(void)
 	if (Modus == ModKommendVerbunden 
 		|| Modus == ModGehendVerbunden 
 		|| Modus == ModHtmlChatVerbunden
-		|| Modus == ModPufferDruckUndSchluss)
+		|| Modus == ModPufferDruckUndSchluss
+		|| Modus == ModNamensucheEingabe
+		|| Modus == ModNamensucheServerAbfrage)
 		{ // ist Verbunden, also Pegel senden und empfangen
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
 
@@ -1264,6 +1266,7 @@ void ModusWechsel(TModus neu)
 			LED_off(GRUEN);
 			LED_off(BLAU);
 			StartKurzTimer(&SchreibPauseTimer);
+			AsciiDruckPuffer[0] = '\0';
 			NamensucheSuchtext[0] = '\0';
 			break;
 			
@@ -2917,7 +2920,9 @@ void AsciiDruckPufferVerarbeiten()
 	if (Modus != ModHtmlChatVerbunden
 		&& Modus != ModKommendVerbunden 
 		&& Modus != ModGehendVerbunden
-		&& Modus != ModPufferDruckUndSchluss)
+		&& Modus != ModPufferDruckUndSchluss
+		&& Modus != ModNamensucheEingabe
+		&& Modus != ModNamensucheServerAbfrage)
 		return; // Drucken nicht möglich.
 		
 	if (!PufferLeer(&SendePuffer))
@@ -3261,9 +3266,10 @@ void itelex_thread()
 					if (Wahlziffern == 0 && Code == BusKdoWahlziffer0)
 						{ // Namenssuche starten.
 						if (ProtokollLevel >= AblaufInfo)
-							ProtokollierenITelex_P(PSTR("Namenssuche gestartet\r\n" ));
+							ProtokollierenITelex_P(PSTR("Namenssuche gestartet -> Einschalt-Quittung an TWI\r\n" ));
 						ModusWechsel(ModNamensucheEingabe);
-						BusSenden(BusKdoEin);
+						BusSenden(BusQuittEin);
+						KurzePause
 						strcpy_P(AsciiDruckPuffer, ISTR(NamensucheTexteingabe, LokaleSprache));
 						}
 						
@@ -3484,9 +3490,9 @@ void itelex_thread()
 					{
 					ProtokollierenITelex_P(PSTR("Starte Namenssuche mit <"));
 					Protokollieren(NamensucheSuchtext);
-					Protokollieren_P(">\r\n");
+					Protokollieren_P(PSTR(">\r\n"));
 
-					//! \todo Länge prüfen Abschicken
+					Länge prüfen Abschicken
 					InterneVerbindungBeenden(true); // HACK
 					break;
 					}
@@ -4358,7 +4364,7 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(Modus);
 	PRINTVALHEX(Status); // bezüglich interner Telex Funktionalität (ist auf TWI-Bus sichtbar)
 
-	/*
+	//*
 	PRINTVAL(BusEmpfMark);
 	PRINTVAL(SerUmTickZaehlerEmpf);
 	PRINTVAL(SerUmEmpfBitNr); 
@@ -4389,7 +4395,7 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(Wahlziffern);
 	PRINTVAL(KurzTimerVal(&WahlPauseTimer));
 	PRINTVAL(KurzTimerVal(&SchreibPauseTimer));
-	*/
+	//*/
 	
 	PRINTVAL(LangTimerVal(&DynIPAktualisierungTimer));
 	PRINTVAL(DynIPAktualisierungEndzeit);
