@@ -2881,9 +2881,10 @@ static void RufnummerBeiTlnServerAbfragen()
 		// Telegramm senden
 		TTlnServBuf TSB;
 		
-		TSB.Code = TLNSERV_ABFRAGE_VERSION1;
+		TSB.Code = TLNSERV_ABFRAGE;
 		TSB.DataLen = sizeof(TSB.TlnAbfr);
 		TSB.TlnAbfr.RufNr = Wahlnummer;
+		TSB.TlnAbfr.Version = 1;
 		PutSocketData_RPE(TeilnehmerServerSocket, 2 + TSB.DataLen, TSB.Buf, RAM);
 		}
 	}
