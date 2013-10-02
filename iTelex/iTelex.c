@@ -3434,7 +3434,6 @@ void itelex_thread()
 				}
 				
 			Diagnoseausgabe_P(ISTR(AnschlussInternBesetzt, LokaleSprache), 1);
-				//!  \todo bei Besetzt andere Meldung.
 
 			SendeStopkommando(PSTR("occ\r\n"));
 			
@@ -3475,7 +3474,6 @@ void itelex_thread()
 		if (ProtokollLevel >= NurFehler)
 			ProtokollierenITelex_P(PSTR("* 15 Sekunden nicht gewaehlt, Abbruch\r\n" ));
 		InterneVerbindungBeenden(true);
-			//! \todo TEST
 		}
 		
 	if (Modus == ModWarteSchlussQuitt && KurzTimerVal(&BusQuittTimer) > 3 * KurzTimerFreq)
@@ -3494,7 +3492,7 @@ void itelex_thread()
 			ProtokollierenITelex_P(PSTR("! Timeout beim Warten auf die Einschaltquittung\r\n" ));
 			
 		InterneVerbindungBeenden(true);
-		SendeStopkommando(PSTR("err\r\n"));
+		SendeStopkommando(PSTR("der\r\n"));
 		}
 		
 	if (ModusTwiVerbunden() && LangTimerVal(&BeideRuhigTimer) > 10 * LangTimerMinuteFaktor)
