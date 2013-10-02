@@ -42,7 +42,7 @@
 // ====================================
 // Endstelle (Client)	 			 -		Server
 // ------------------------------------------------
-//	TLNSERV_ABFRAGE_VERSION1 (03)	-->
+//	TLNSERV_ABFRAGE (03)	        -->
 //									<--		TLNSERV_AUSKUNFT_NICHTVERG (04)
 //											(wenn nicht bekannt)
 //												oder
@@ -82,7 +82,7 @@
 // ====================================================
 // Endstelle (Client)	 			 -		Server
 // ------------------------------------------------
-// TLNSERV_SUCHE_VERSION1 (0A)		-->
+// TLNSERV_SUCHE (0A)				-->
 //									<--		TLNSERV_AUSKUNFT_VERSION1 (05)
 // TLNSERV_SYNC_QUITTUNG (08)		-->
 //									<--		TLNSERV_AUSKUNFT_VERSION1 (05)
@@ -642,8 +642,9 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					
 				break; // TlnServBuf.Code == TLNSERV_SELBSTAKT
 				
-			case TLNSERV_ABFRAGE_VERSION1:
-				if (TlnServBuf.DataLen < sizeof(TlnServBuf.TlnAbfr))
+			case TLNSERV_ABFRAGE:
+				if (TlnServBuf.DataLen < sizeof(TlnServBuf.TlnAbfr) - 1) 
+					// - 1, da ohne das letzte Byte ( = Version) von Version 1 ausgegangen wird.
 					{
 					FehlerRueckmelden(PSTR("request not enough data: %u"), TlnServBuf.DataLen);
 					Senden = true;
@@ -651,6 +652,9 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				else
 					{
 					uint32_t RufNr = TlnServBuf.TlnAbfr.RufNr;
+					if (TlnServBuf.DataLen <= sizeof(TlnServBuf.TlnAbfr) - 1)
+						TlnServBuf.TlnAbfr.Version = 1;
+						
 					if (ProtokollLevelTlnServ >= AblaufInfo) 
 						ProtokollierenTlnServInt_P(Kanal, PSTR("Abfrage empfangen. Nummer %lu: "), RufNr);
 						
@@ -777,7 +781,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					}
 				break; // TlnServBuf.Code == TLNSERV_SYNC_VOLLABFRAGE
 
-			case TLNSERV_SUCHE_VERSION1:
+			case TLNSERV_SUCHE:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.TlnSuche))
 					{
 					FehlerRueckmelden(PSTR("search not enough data: %u"), TlnServBuf.DataLen);
@@ -793,7 +797,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					TlnDatensatzSyncSenden(Kanal);
 					Senden = true;
 					}
-				break; // TlnServBuf.Code == TLNSERV_SUCHE_VERSION1
+				break; // TlnServBuf.Code == TLNSERV_SUCHE
 			
 			case TLNSERV_SYNC_ANMELDUNG:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SyncAnmeldung))
@@ -819,12 +823,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 				break; // TlnServBuf.Code == TLNSERV_SYNC_ANMELDUNG
 			
 			case TLNSERV_SYNC_QUITTUNG:
-				if (!Kanal->Freigabe)
-					{
-					FehlerRueckmelden(PSTR("no authentification"), 0);
-					Senden = true;
-					}
-				else if (!Kanal->AusgabeGestartet)
+				if (!Kanal->AusgabeGestartet)
 					{
 					FehlerRueckmelden(PSTR("unexpected acknowledge"), 0);
 					TeilnehmerServerFehlerSpeichern(Kanal->ListeIdx);
