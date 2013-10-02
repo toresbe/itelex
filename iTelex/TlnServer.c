@@ -474,8 +474,6 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 			if (!Kanal->Freigabe)
 				{
 				TlnServBuf.TlnAuskunft.DynPin = 0; // Datenschutz
-				if (TlnServBuf.TlnAuskunft.AdrArt == iTelexDynIP)
-					TlnServBuf.TlnAuskunft.AdrArt = iTelexIP;
 				}
 				
 			if (ProtokollLevelTlnServ >= AblaufInfo)
@@ -655,8 +653,6 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						// Antwort generieren:
 						TlnServBuf.Code = TLNSERV_AUSKUNFT_VERSION1;
 						TlnServBuf.TlnAuskunft = TD;
-						if (TlnServBuf.TlnAuskunft.AdrArt == iTelexDynIP)
-							TlnServBuf.TlnAuskunft.AdrArt = iTelexIP;
 						TlnServBuf.TlnAuskunft.DynPin = 0; // Datenschutz
 						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
 						Senden = true;

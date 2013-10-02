@@ -516,6 +516,10 @@ uint8_t DiagnoseAusgabeZiel;
 	//!< Ursache des Diagnosetextes durch Endgerät verursacht wurde.
 	
 	
+static struct TIME SystemStartZeit;
+	//! Speichert Uhrzeit des Systemstarts, nur für Diagnose
+	
+	
 TTastendruck Tastendruck;
 
 	
@@ -3560,12 +3564,13 @@ void itelex_thread()
 			TTlnDaten TD;
 			if (!TlnListerNaechster(&NamenssucheLister, &TD))
 				{
+				strcpy_P(AsciiDruckPuffer, ISTR(NamensucheListenende, LokaleSprache));
 				ModusWechsel(ModPufferDruckUndSchluss);
 				break;
 				}
 			if (TlnSuchMusterPasst(NamensucheSuchtext, &TD))
 				{
-				sprintf_P(AsciiDruckPuffer, PSTR("%ld / %s / ...\r\n"), TD.Nummer, TD.Name);
+				sprintf_P(AsciiDruckPuffer, PSTR("%9ld - %s - ...\r\n"), TD.Nummer, TD.Name);
 				//! \todo Verschiedene Typen bearbeiten.
 				}
 			} // while (AsciiDruckPuffer[0] == '\0')
@@ -3604,7 +3609,6 @@ void itelex_thread()
 		if (ProtokollLevel >= NurFehler)
 			ProtokollierenITelex_P(PSTR("* 15 Sekunden nicht gewaehlt, Abbruch\r\n" ));
 		InterneVerbindungBeenden(true);
-			//! \todo TEST
 		}
 		
 	if (Modus == ModWarteSchlussQuitt && KurzTimerVal(&BusQuittTimer) > 3 * KurzTimerFreq)
@@ -4074,9 +4078,7 @@ void itelex_thread()
 							if (GewaehlterTln.Name[0] == '\0') //! \todo Einstellbarkeit, ob nur leere Namen überschreiben werden
 								strncpy(GewaehlterTln.Name, TSB.TlnAuskunft.Name, sizeof(GewaehlterTln.Name));
 							GewaehlterTln.Flags = TSB.TlnAuskunft.Flags;
-							if (GewaehlterTln.AdrArt != iTelexDynIP || TSB.TlnAuskunft.AdrArt != iTelexIP)
-								// Nicht DynIP durch IP überschreiben
-								GewaehlterTln.AdrArt = TSB.TlnAuskunft.AdrArt; 
+							GewaehlterTln.AdrArt = TSB.TlnAuskunft.AdrArt; 
 							strncpy(GewaehlterTln.Adresse, TSB.TlnAuskunft.Adresse, sizeof(GewaehlterTln.Adresse));
 							GewaehlterTln.IPAdr = TSB.TlnAuskunft.IPAdr;
 							GewaehlterTln.Port = TSB.TlnAuskunft.Port;
@@ -4101,7 +4103,7 @@ void itelex_thread()
 					else if (Modus == ModNamensucheServerAbfrage)
 						{ 
 						// erhaltene Datensätze einfach speichern.
-						Res = TlnHinzufuegen(&GewaehlterTln, TlnHinzNurNeuereUebernehmen);
+						Res = TlnHinzufuegen(&TSB.TlnAuskunft, TlnHinzNurNeuereUebernehmen);
 						
 						// und nächsten anfordern
 						TSB.Code = TLNSERV_SYNC_QUITTUNG;
@@ -4557,6 +4559,10 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(Timer0Callback_Max); 
 
 #endif // ITELEX_ANSCHLUSS
+
+	CLOCK_decode_time(&SystemStartZeit);
+	printf_P(PSTR("<br>SystemStartZeit = %02u.%02u.%04u %02d:%02d:%02d"), SystemStartZeit.DD, SystemStartZeit.MM, SystemStartZeit.YY,
+				  SystemStartZeit.hh, SystemStartZeit.mm, SystemStartZeit.ss);
 	
 	printf_P(PSTR("<br><a href=\"itelex-debug.cgi?reset\">Statiktik-Daten zur&uuml;cksetzen</a>"
 				  "<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , 
@@ -5546,6 +5552,9 @@ void itelex_init()
 	itelex_email_init();
 	
 	#endif //def ITELEX_EMAIL
+	
+	CLOCK_GetTime(&SystemStartZeit);	
+	
 	}
 
 

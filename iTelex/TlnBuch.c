@@ -1346,7 +1346,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			}
 
 		if (TD.AdrArt != iTelexDynIP)
-			TD.DynPin = 0; // Datenschutz.
+			TD.DynPin = 0; 
 			
 		if (DatenOk && TD.AdrArt == Geloescht && AltNummer == 0)
 			{ // einen neuen Lösch-Eintrag anzulegen ist doof
