@@ -244,6 +244,9 @@ typedef enum
 	ModNamensucheServerAbfrage = 42,
 		//!< Name wurde eingegeben, Abfrage des Servers ist gestartet, warte auf 
 		//!< Rückmeldungen.
+
+	ModNamensucheAusgabe = 43,
+		//!< Abfrage des Servers ist beendet, gebe Einträge aus dem Verzeichnis aus.
 		
 	} TModus;
 	

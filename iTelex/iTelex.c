@@ -695,7 +695,8 @@ static bool ModusTwiVerbunden()
 			|| Modus == ModHtmlChatVerbunden
 			|| Modus == ModMeldungsdruckWarteEinQuitt
 			|| Modus == ModNamensucheEingabe
-			|| Modus == ModNamensucheServerAbfrage);
+			|| Modus == ModNamensucheServerAbfrage
+			|| Modus == ModNamensucheAusgabe);
 	}
 
 #endif //def ITELEX_ANSCHLUSS
@@ -759,7 +760,8 @@ void itelex_timerEvent(void)
 		|| Modus == ModHtmlChatVerbunden
 		|| Modus == ModPufferDruckUndSchluss
 		|| Modus == ModNamensucheEingabe
-		|| Modus == ModNamensucheServerAbfrage)
+		|| Modus == ModNamensucheServerAbfrage
+		|| Modus == ModNamensucheAusgabe)
 		{ // ist Verbunden, also Pegel senden und empfangen
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
 
@@ -1274,6 +1276,10 @@ void ModusWechsel(TModus neu)
 		    // überhaupt was tun????
 			break;
 			
+		case ModNamensucheAusgabe:
+		    // überhaupt was tun????
+			break;
+		
 		default:
 			return; // nix wird geändert
 		} // switch neu
@@ -1908,6 +1914,7 @@ void InterneVerbindungBeenden(bool Force)
 		case ModMeldungsdruckWarteEinQuitt:
 		case ModNamensucheEingabe:
 		case ModNamensucheServerAbfrage:
+		case ModNamensucheAusgabe:
 			if (Force)
 				{
 				SendeBusKdoSchluss();
@@ -2337,6 +2344,8 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 							}
 						}
 					} // len >= 1
+					
+				// Hinweis: Die Bytes 2 bis x enthalten noch den SVN-Versionsnummer-String.
 					
 				i += 2 + len;
 				} // c == ITELEXC_VERSION
@@ -2922,7 +2931,8 @@ void AsciiDruckPufferVerarbeiten()
 		&& Modus != ModGehendVerbunden
 		&& Modus != ModPufferDruckUndSchluss
 		&& Modus != ModNamensucheEingabe
-		&& Modus != ModNamensucheServerAbfrage)
+		&& Modus != ModNamensucheServerAbfrage
+		&& Modus != ModNamensucheAusgabe)
 		return; // Drucken nicht möglich.
 		
 	if (!PufferLeer(&SendePuffer))
@@ -3269,7 +3279,8 @@ void itelex_thread()
 							ProtokollierenITelex_P(PSTR("Namenssuche gestartet -> Einschalt-Quittung an TWI\r\n" ));
 						ModusWechsel(ModNamensucheEingabe);
 						BusSenden(BusQuittEin);
-						KurzePause
+						for (uint8_t i = 0 ; i < 5 ; i++)
+							PufferSpeich(&SendePuffer, TtyCodeBuUm); // kurze Verzögerung nach dem Einschalten.
 						strcpy_P(AsciiDruckPuffer, ISTR(NamensucheTexteingabe, LokaleSprache));
 						}
 						
@@ -3492,11 +3503,19 @@ void itelex_thread()
 					Protokollieren(NamensucheSuchtext);
 					Protokollieren_P(PSTR(">\r\n"));
 
-					Länge prüfen Abschicken
-					InterneVerbindungBeenden(true); // HACK
+					if (strlen(NamensucheSuchtext) < 3) 
+						{
+						strcpy_P(AsciiDruckPuffer, ISTR(NamensucheZuKurz, LokaleSprache));
+						ModusWechsel(ModPufferDruckUndSchluss);
+						}
+					else
+						{
+						strcpy_P(AsciiDruckPuffer, ISTR(NamensucheErgebnisse, LokaleSprache));
+						}
 					break;
 					}
 				} // z == WR oder ZL
+				
 			else if (z != '\0' && z != '#' && SuchTextLen < TlnNameMax - 1)
 				{
 				if (z != ' ' || SuchTextLen > 0)
@@ -3505,6 +3524,7 @@ void itelex_thread()
 					NamensucheSuchtext[SuchTextLen] = '\0';
 					}
 				} // z druckbar
+				
 			} // while !PufferLeer(EmpfPuffer)
 		} // if Modus == ModNamensucheEingabe
 					
