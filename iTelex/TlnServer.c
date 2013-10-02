@@ -439,17 +439,6 @@ void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln, int8_t VonServer)
 	} // TlnServTlnbuchEintragGeaendert()
 	
 	
-//! Vergleichsfunktion für die Suchfunktion.
-//------------------------------------------
-
-static bool SuchMusterPasst(char *SuchMuster, TTlnDaten *td)
-	{
-	if (SuchMuster[0] == '\0')
-		return true; // es wird nichts konkretes gesucht.
-	return strcasestr(td->Name, SuchMuster) != NULL;
-	}
-
-	
 //! Den nächsten Eintrag des Teilnehmer-Verzeichnisses senden.
 // ----------------------------------------------------------
 //! ...wenn nicht lokal und Datum jünger als #AusgabeStichdatum und wenn Muster zum Namen passt.
@@ -472,7 +461,7 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 		if ((TlnServBuf.TlnAuskunft.Flags & TlnFlag_Lokal) == 0
 			&& TlnServBuf.TlnAuskunft.Nummer >= GlobRufnrMinWert
 		    && TlnServBuf.TlnAuskunft.Datum >= Kanal->AusgabeStichdatum
-			&& SuchMusterPasst(Kanal->SuchMuster, &TlnServBuf.TlnAuskunft))
+			&& TlnSuchMusterPasst(Kanal->SuchMuster, &TlnServBuf.TlnAuskunft))
 			{
 			// aber Nicht senden, wenn gelöscht und Löschdatum älter als 20 Tage
 			if (TlnServBuf.TlnAuskunft.AdrArt == Geloescht 
