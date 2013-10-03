@@ -2186,7 +2186,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 							ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
 						else
 							{ 
-							//! \todo Abweisen
+							//! \todo Abweisen mit "na"
 							Durchwahl = 0;
 							ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
 							}
@@ -2214,7 +2214,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
 					else
 						{ 
-						//! \todo Abweisen
+						//! \todo Abweisen mit "na"
 						Durchwahl = 0;
 						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
 						}
@@ -3515,11 +3515,20 @@ void itelex_thread()
 					Protokollieren(NamensucheSuchtext);
 					Protokollieren_P(PSTR(">\r\n"));
 
+					strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
+
 					if (strlen(NamensucheSuchtext) < 3) 
 						{
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheZuKurz, LokaleSprache));
 						ModusWechsel(ModPufferDruckUndSchluss);
 						}
+#ifdef ITELEX_TLNSERVER
+					else if (TlnServSyncGeheimzahl != 0)
+						{ // Gerät ist selbst Teilnehmer-Server, Abfrage nicht erforderlich
+						ModusWechsel(ModNamensucheAusgabe);
+						}
+
+#endif //def ITELEX_TLNSERVER
 					else
 						{
 						if (TeilnehmerServerSocketOeffnen(PSTR("Namensuche")))
@@ -3533,9 +3542,11 @@ void itelex_thread()
 							TSB.TlnSuche.Version = 1;
 							PutSocketData_RPE(TeilnehmerServerSocket, 2 + TSB.DataLen, TSB.Buf, RAM);
 							ModusWechsel(ModNamensucheServerAbfrage);
+							strcat_P(AsciiDruckPuffer, ISTR(NamensucheBitteWarten, LokaleSprache));
 							}
 						else
 							{
+							strcat_P(AsciiDruckPuffer, ISTR(KeinTeilnehmerServerErreichbar, LokaleSprache));
 							strcat_P(AsciiDruckPuffer, ISTR(NamensucheNurLokal, LokaleSprache));
 							ModusWechsel(ModNamensucheAusgabe);
 							}
@@ -3570,8 +3581,27 @@ void itelex_thread()
 				}
 			if (TlnSuchMusterPasst(NamensucheSuchtext, &TD))
 				{
-				sprintf_P(AsciiDruckPuffer, PSTR("%9ld - %s - ...\r\n"), TD.Nummer, TD.Name);
-				//! \todo Verschiedene Typen bearbeiten.
+				sprintf_P(AsciiDruckPuffer, PSTR("%9ld - %s - "), TD.Nummer, TD.Name);
+				switch (TD.AdrArt)
+					{
+					case Geloescht:
+						break; // kann nicht sein
+					case iTelexHostname:
+					case iTelexIP:
+					case iTelexDynIP:
+						if (TD.Durchwahl != 0)
+							sprintf_P(AsciiDruckPuffer + strlen(AsciiDruckPuffer), PSTR("(%d) "), TD.Durchwahl);
+						strcat_P(AsciiDruckPuffer, ISTR(TypITelex, LokaleSprache));
+						break;
+					case AsciiHostname:
+					case AsciiIP:
+						strcat_P(AsciiDruckPuffer, ISTR(TypAscii, LokaleSprache));
+						break;
+					case eMail:
+						strcat_P(AsciiDruckPuffer, ISTR(TypEMail, LokaleSprache));
+						break;
+					}
+				strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 				}
 			} // while (AsciiDruckPuffer[0] == '\0')
 		} // if (Modus == ModNamensucheAusgabe)
@@ -4039,7 +4069,7 @@ void itelex_thread()
 
 					if (Modus == ModNamensucheServerAbfrage)
 						{
-						//! \todo Fehlermeldung
+						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
 						ModusWechsel(ModNamensucheAusgabe);
 						}
 					
@@ -4170,7 +4200,8 @@ void itelex_thread()
 					
 					if (Modus == ModNamensucheServerAbfrage)
 						{
-						//! \todo Fehlermeldung
+						strcat(AsciiDruckPuffer, TSB.PureData);
+						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
 						ModusWechsel(ModNamensucheAusgabe);
 						}
 					break;
@@ -4185,7 +4216,7 @@ void itelex_thread()
 					
 					if (Modus == ModNamensucheServerAbfrage)
 						{
-						//! \todo Fehlermeldung
+						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
 						ModusWechsel(ModNamensucheAusgabe);
 						}
 					
