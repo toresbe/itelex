@@ -17,7 +17,7 @@ extern bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln);
 
 typedef enum { 
 	TlnHinzDatumAktualisieren, //!< Datensatz wird in jedem Fall übernommen und mit aktuellem Datum versehen.
-	TlnHinzNurNeuereUebernehmen, //!< Datensatz wird nur dann übernommen, wenn Daten neuer sind als alte.
+	TlnHinzNurNeuereUebernehmen, //!< Datensatz wird nur dann übernommen, wenn Daten neuer sind als alte und wenn vorhandener Eintrag nicht lokal ist
 	TlnHinzKopieren, //!< alle Daten werden so übernommen wie sie sind.
 	} TTlnHinzufuegenModus;
 	
@@ -33,6 +33,8 @@ typedef struct
 extern bool TlnListerStart(TTlnListerDat *ldp);
 
 extern bool TlnListerNaechster(TTlnListerDat *ldp, TTlnDaten *Tln);	
+
+extern bool TlnSuchMusterPasst(char *SuchMuster, TTlnDaten *Tln);
 
 extern void TlnBuchInit();
 

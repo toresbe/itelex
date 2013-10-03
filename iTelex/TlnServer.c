@@ -439,17 +439,6 @@ void TlnServTlnbuchEintragGeaendert(TTlnDaten *Tln, int8_t VonServer)
 	} // TlnServTlnbuchEintragGeaendert()
 	
 	
-//! Vergleichsfunktion für die Suchfunktion.
-//------------------------------------------
-
-static bool SuchMusterPasst(char *SuchMuster, TTlnDaten *td)
-	{
-	if (SuchMuster[0] == '\0')
-		return true; // es wird nichts konkretes gesucht.
-	return strcasestr(td->Name, SuchMuster) != NULL;
-	}
-
-	
 //! Den nächsten Eintrag des Teilnehmer-Verzeichnisses senden.
 // ----------------------------------------------------------
 //! ...wenn nicht lokal und Datum jünger als #AusgabeStichdatum und wenn Muster zum Namen passt.
@@ -472,7 +461,7 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 		if ((TlnServBuf.TlnAuskunft.Flags & TlnFlag_Lokal) == 0
 			&& TlnServBuf.TlnAuskunft.Nummer >= GlobRufnrMinWert
 		    && TlnServBuf.TlnAuskunft.Datum >= Kanal->AusgabeStichdatum
-			&& SuchMusterPasst(Kanal->SuchMuster, &TlnServBuf.TlnAuskunft))
+			&& TlnSuchMusterPasst(Kanal->SuchMuster, &TlnServBuf.TlnAuskunft))
 			{
 			// aber Nicht senden, wenn gelöscht und Löschdatum älter als 20 Tage
 			if (TlnServBuf.TlnAuskunft.AdrArt == Geloescht 
@@ -485,8 +474,6 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 			if (!Kanal->Freigabe)
 				{
 				TlnServBuf.TlnAuskunft.DynPin = 0; // Datenschutz
-				if (TlnServBuf.TlnAuskunft.AdrArt == iTelexDynIP)
-					TlnServBuf.TlnAuskunft.AdrArt = iTelexIP;
 				}
 				
 			if (ProtokollLevelTlnServ >= AblaufInfo)
@@ -666,8 +653,6 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						// Antwort generieren:
 						TlnServBuf.Code = TLNSERV_AUSKUNFT_VERSION1;
 						TlnServBuf.TlnAuskunft = TD;
-						if (TlnServBuf.TlnAuskunft.AdrArt == iTelexDynIP)
-							TlnServBuf.TlnAuskunft.AdrArt = iTelexIP;
 						TlnServBuf.TlnAuskunft.DynPin = 0; // Datenschutz
 						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
 						Senden = true;
