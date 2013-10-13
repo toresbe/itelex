@@ -3336,6 +3336,9 @@ void itelex_thread()
 						else // !TlnSuche(Wahlnummer...) 
 							TlnDatenInit(&GewaehlterTln); 
 								// da die aktuell gewählte Nummer ggf. nicht mehr zum zuletzt gefundenen Teilnehmer passt.
+						
+						StartKurzTimer(&WahlPauseTimer); 
+							// nochmal, damit Verzögerungen bei Serverabfrage oder so nicht zu vorzeitigem Abbruch führen.
 						}
 					} // if Modus == ModGehendWaehlen
 					
@@ -4070,6 +4073,7 @@ void itelex_thread()
 					if (Modus == ModNamensucheServerAbfrage)
 						{
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
+						strcat_P(AsciiDruckPuffer, ISTR(NamensucheNurLokal, LokaleSprache));
 						ModusWechsel(ModNamensucheAusgabe);
 						}
 					
@@ -4202,6 +4206,7 @@ void itelex_thread()
 						{
 						strcat(AsciiDruckPuffer, TSB.PureData);
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
+						strcat_P(AsciiDruckPuffer, ISTR(NamensucheNurLokal, LokaleSprache));
 						ModusWechsel(ModNamensucheAusgabe);
 						}
 					break;
@@ -4217,6 +4222,7 @@ void itelex_thread()
 					if (Modus == ModNamensucheServerAbfrage)
 						{
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
+						strcat_P(AsciiDruckPuffer, ISTR(NamensucheNurLokal, LokaleSprache));
 						ModusWechsel(ModNamensucheAusgabe);
 						}
 					
