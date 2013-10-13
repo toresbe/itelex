@@ -4948,11 +4948,11 @@ void itelex_cgi_config_intern(void *pStruct)
 		
 		// Feste Hauptstelle
 		// ------------------
-		CgiCheckBool_P(http_request, ISTR(FesteHauptstelle, Sprache), FesteHst_P, FesteHauptstelle, Sprache);
+		FesteHauptstelle = CgiCheckBool_P(http_request, ISTR(FesteHauptstelle, Sprache), FesteHst_P, FesteHauptstelle, Sprache);
 			
 		// AlternativSucheBeiBesetzt
 		// -------------------------
-		CgiCheckBool_P(http_request, ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P, AlternativSucheBeiBesetzt, Sprache);
+		AlternativSucheBeiBesetzt = CgiCheckBool_P(http_request, ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P, AlternativSucheBeiBesetzt, Sprache);
 			
 		// DurchwahlTabelle
 		// ----------------
