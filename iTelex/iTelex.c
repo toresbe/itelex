@@ -1049,9 +1049,9 @@ static void DatumDruckenUndAusschalten()
 //! Bewirkt Moduswechsel.
 //-----------------------
 //! Erledigt auch folgende Aufgaben:
-//! \par - LED-Anzeigen aktualisieren
-//! \par - Status (für TWI-Abfrage) aktualisieren
-//! \par - Puffer-Initialisierung
+//! - LED-Anzeigen aktualisieren
+//! - Status (für TWI-Abfrage) aktualisieren
+//! - Puffer-Initialisierung
 void ModusWechsel(TModus neu)
 	{
 	if (neu == Modus)
@@ -1914,6 +1914,12 @@ static void SendeBusKdoSchluss()
 //! \param Force alle schwebenden Zustände (z.B. Wahlzustand) auch zum Abschluss bringen.
 void InterneVerbindungBeenden(bool Force)
 	{
+	if (ProtokollLevel >= AblaufInfo)
+		{
+		ProtokollierenITelex();
+		ProtokollierenInt_P(PSTR("InterneVerbindungBeenden ausgehend von Modus %d\r\n"), Modus);
+		}
+	
 	switch (Modus)
 		{
 		case ModGehendReserv:
@@ -2279,7 +2285,9 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					{
 					strncpy(AsciiDruckPuffer + alen, SocketInBuf + i + 2, len);
 					AsciiDruckPuffer[len + alen] = '\0';
+					// HACK if Modus == ?? ModusWechsel(ModPufferDruckUndSchluss);
 					}
+					
 				i += 2 + len;
 
 				if (ProtokollLevel >= NurFehler)
@@ -3242,7 +3250,7 @@ void itelex_thread()
 				else if (Modus == ModMeldungsdruckWarteEinQuitt)
 					{ 
 					if (ProtokollLevel >= AblaufInfo)
-						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung nach Meldungsdruck\r\n" ));
+						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung für Meldungsdruck\r\n" ));
 					ModusWechsel(ModPufferDruckUndSchluss);
 					}
 				
