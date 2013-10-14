@@ -271,9 +271,9 @@ static TKurzTimer iTelexSocketWiederholungVerzoegerung;
 bool iTelexSocketAbbauGeplant;
 	//!< Wird auf true gesetzt, wenn ein Verbindungsabbau bevorsteht.
 	//!< Abbau erfolgt immer durch Anrufer. 
-	//!< \p Wenn true und iTelexSocketMode = SocketOriginate wird Abbau nach letzem Datenblock ausgelöst
-	//!< \p Wenn true und iTelexSocketMode = SocketAnswer wird nach gemeldetem Verbindungsabbau
-	//!< iTelexSocketMode auf SocketIdle gesetzt und iTelexSocketIP gelöscht.
+	//!< - Wenn true und iTelexSocketMode = SocketOriginate wird Abbau nach letzem Datenblock ausgelöst
+	//!< - Wenn true und iTelexSocketMode = SocketAnswer wird nach gemeldetem Verbindungsabbau
+	//!<   iTelexSocketMode auf SocketIdle gesetzt und iTelexSocketIP gelöscht.
 
 static TKurzTimer iTelexSocketAbbauVerzoegerung;
 	//!< Geht der Verbindungsabbau vom Anrufer aus, ist eine kurze Verzögerung zwischen 
@@ -1581,8 +1581,11 @@ static void SocketBearbeiten()
 				}
 			iTelexBlindSocketHandle = NewServerSocket;
 			StartKurzTimer(&iTelexBlindSocketAbbauVerzoegerung);
-			PutSocketData_RPE(iTelexBlindSocketHandle, 7, PSTR("\004\006occ \r\n"), FLASH); // 004 = ITELEXC_STOP
-			Diagnoseausgabe_P(ISTR(ZweiterAnruf, LokaleSprache), 4);
+			PutSocketData_RPE(iTelexBlindSocketHandle, 5, PSTR("\004\003occ"), FLASH); // 004 = ITELEXC_STOP
+				// SendeStopkommando kann nicht benutzt werden, da der Code in den BlindSocket gesendet wird.
+				
+			if (Modus != ModDeaktiviert)
+				Diagnoseausgabe_P(ISTR(ZweiterAnruf, LokaleSprache), 4);
 			}
 			
 		} // CheckPortRequest(ITELEX_PORT) != NO_SOCKET_USED
@@ -2088,6 +2091,27 @@ static void SendeStopkommando(PGM_P s)
 
 const char* RufnrServerAdr_P[]; // Vorwärts-Deklaration
 
+
+//! Wird aufgerufen, wenn in der Wählphase ein Fehler auftritt (besetzt oder ähnlich)
+//-----------------------------------------------------------------------------------
+//! \todo Option kurze Dienstmeldungen
+static void WahlAbbruchMeldung(char *msg)
+	{
+	int alen = strlen(AsciiDruckPuffer);
+	if (strlen(msg) + alen < AsciiDruckPufferMax - 10) // Daten passen noch in den Puffer...
+		{
+		strcat_P(AsciiDruckPuffer, PSTR("\r\r\r\n"));
+		alen = strlen(AsciiDruckPuffer);
+		strcpy(AsciiDruckPuffer + alen, msg);
+		strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
+		if (Modus == ModGehendWaehlen)
+			{ 
+			BusSenden(BusQuittEin);
+			ModusWechsel(ModPufferDruckUndSchluss);
+			}
+		}
+	} // WahlAbbruchMeldung()
+	
 	
 //! Bearbeitet Telegramme mit Daten für Fernkonfiguration
 //-------------------------------------------------------
@@ -2279,20 +2303,31 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 			else if (c == ITELEXC_STOP || c == ITELEXC_ENDE)
 				{
 				uint8_t len = SocketInBuf[i+1];
-				int alen = strlen(AsciiDruckPuffer);
-				if (i + 2 + len <= SocketInBufUsed // Vollständiges Kommando mit Daten empfangen
-					&& len + alen < AsciiDruckPufferMax-1) // und Daten passen noch in den Puffer...
+				if (i + 2 + len > SocketInBufUsed)
+					len = SocketInBufUsed - i - 2;
+					// dies ist implementiert, weil alte i-Telex-Versionen eine zu kurze Länge senden.
+
+				if (len > 0)
 					{
-					strncpy(AsciiDruckPuffer + alen, SocketInBuf + i + 2, len);
-					AsciiDruckPuffer[len + alen] = '\0';
-					// HACK if Modus == ?? ModusWechsel(ModPufferDruckUndSchluss);
+					if (ProtokollLevel >= NurFehler)
+						{
+						ProtokollierenITelex_P(PSTR("Abbaubefehl von Gegenstelle:"));
+						ProtokollierenPuffer(SocketInBuf + i, 2 + len);
+						Protokollieren_P(PSTR("\r\n"));
+						}
 					}
+				else
+					{
+					if (ProtokollLevel >= AblaufInfo)
+						ProtokollierenITelex_P(PSTR("Abbaubefehl von Gegenstelle\r\n"));
+					}
+
+				char Buf[10];
+				strncpy(Buf, SocketInBuf + i + 2, (len < 10) ? len : 10);
+				WahlAbbruchMeldung(Buf);
 					
 				i += 2 + len;
-
-				if (ProtokollLevel >= NurFehler)
-					ProtokollierenITelex_P(PSTR("Abbaubefehl von Gegenstelle\r\n"));
-
+					
 				InterneVerbindungBeenden(true);
 				
 				iTelexSocketAbbauGeplant = true;
@@ -3250,7 +3285,7 @@ void itelex_thread()
 				else if (Modus == ModMeldungsdruckWarteEinQuitt)
 					{ 
 					if (ProtokollLevel >= AblaufInfo)
-						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung für Meldungsdruck\r\n" ));
+						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung fuer Meldungsdruck\r\n" ));
 					ModusWechsel(ModPufferDruckUndSchluss);
 					}
 				
@@ -3332,6 +3367,7 @@ void itelex_thread()
 								{ // es ist ein lokaler Eintrag
 								if (Verbindungsaufbau(&GewaehlterTln) != 0)
 									{ // Verbindungsaufbau war nicht erfolgreich --> Wahl-Schritt 4a)
+									WahlAbbruchMeldung("nc");
 									InterneVerbindungBeenden(true);
 									TlnServerAbfrageWiederholungssperre = true;
 									}
@@ -3436,7 +3472,11 @@ void itelex_thread()
 	// ---------------------------
 	if (iTelexSocketMode == SocketIdle)
 		{
-		InterneVerbindungBeenden(false);
+		if (Modus == ModGehendVerbunden
+			|| Modus == ModKommendVerbunden)
+			{
+			InterneVerbindungBeenden(false);
+			}
 		} // if (iTelexSocketMode == SocketIdle)
 	else
 		{
@@ -3503,7 +3543,7 @@ void itelex_thread()
 				
 			Diagnoseausgabe_P(ISTR(AnschlussInternBesetzt, LokaleSprache), 1);
 
-			SendeStopkommando(PSTR("occ\r\n"));
+			SendeStopkommando(PSTR("occ"));
 			
 			ModusWechsel(ModWarteGrundstellung);
 			}
@@ -3640,6 +3680,7 @@ void itelex_thread()
 		WahlVerbAufbauNach5SekundenVersuchen = false; // nur ein Mal...
 		if (Verbindungsaufbau(&GewaehlterTln) == 2)
 			{ // ungültige Daten -> Abbruch
+			WahlAbbruchMeldung("der");
 			InterneVerbindungBeenden(true);
 			}
 		}
@@ -3649,6 +3690,7 @@ void itelex_thread()
 		{ // 15 Sekunden Wahlpause --> Wahl-Schritt 4b)
 		if (ProtokollLevel >= NurFehler)
 			ProtokollierenITelex_P(PSTR("* 15 Sekunden nicht gewaehlt, Abbruch\r\n" ));
+		WahlAbbruchMeldung("to");
 		InterneVerbindungBeenden(true);
 		}
 		
@@ -3668,7 +3710,7 @@ void itelex_thread()
 			ProtokollierenITelex_P(PSTR("! Timeout beim Warten auf die Einschaltquittung\r\n" ));
 			
 		InterneVerbindungBeenden(true);
-		SendeStopkommando(PSTR("der\r\n"));
+		SendeStopkommando(PSTR("der"));
 		}
 		
 	if (ModusTwiVerbunden() && LangTimerVal(&BeideRuhigTimer) > 10 * LangTimerMinuteFaktor)
@@ -3898,7 +3940,7 @@ void itelex_thread()
 					SelbstAnrufPhase = SelbstAnrufWarteEmpfang;
 					if (PutSocketData_RPE(SelbstAnrufSocketHandle, 4, Buf, RAM) == 4)
 						{
-						if (ProtokollLevel < DatenDetailliert)
+						if (ProtokollLevel < AuchRegelmaessiges)
 							ProtokollRegelblockInit();
 						ProtokollRegelblockStart();
 						ProtokollierenITelex_P(PSTR("Selbst-Anruf Daten gesendet.\r\n"));
@@ -3931,7 +3973,7 @@ void itelex_thread()
 						ProtokollierenITelex_P(PSTR("* Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
 						ProtokollRegelblockEnde();
 						}
-					if (ProtokollLevel < DatenDetailliert)
+					if (ProtokollLevel < AuchRegelmaessiges)
 						ProtokollRegelblockLoeschen();
 					
 					SelbstAnrufFehlerZaehler = 0;
@@ -4138,7 +4180,11 @@ void itelex_thread()
 								Diagnoseausgabe_P(NULL, 3);
 							
 							else // nicht erfolgreich
+								{
+								WahlAbbruchMeldung("nc");
 								InterneVerbindungBeenden(true); // Wahl-Schritt 4a)
+								}
+								
 							}
 						} // if (Modus == ModGehendWaehlen)
 					
