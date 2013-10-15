@@ -50,6 +50,7 @@ _STRTABENTRY(TeilnehmerNichtErlaubt, "Teilnehmer nicht erlaubt", "Subscriber not
 _STRTABENTRY(TeilnehmerGestoert, "Teilnehmer gestoert", "Subscriber derailed")
 _STRTABENTRY(TeilnehmerAbgeschaltet, "Teilnehmer abwesend / abgeschaltet", "Subscriber absent / deactivated")
 _STRTABENTRY(VerbindungGetrennt, "getrennt", "break")
+_STRTABENTRY(SonstigeMeldung, "sonstige meldung: ", "special message: ")
 _STRTABENTRY(AnschlussInternBesetzt, "Anschluss intern besetzt", "Local connection busy")
 _STRTABENTRY(TWITimeout, "Interne Verbindung unterbrochen", "Lost local connection")
 _STRTABENTRY(NamensucheTexteingabe, "\r\nteilnehmersuche nach:      ", "\r\nsearch subscribers for:      ")

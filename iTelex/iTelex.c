@@ -2178,19 +2178,22 @@ static void WahlAbbruchMeldung(char *msg)
 	{
 	if (LangeDienstmeldungen)
 		{
-		if (strcmp_P(msg, PSTR("occ")) == 0)
+		if (strncmp_P(msg, PSTR("occ"), 3) == 0)
 			Diagnoseausgabe_P(ISTR(TeilnehmerBesetzt, LokaleSprache), 3);
-		else if (strcmp_P(msg, PSTR("nc")) == 0)
+		else if (strncmp_P(msg, PSTR("nc"), 2) == 0)
 			Diagnoseausgabe_P(ISTR(TeilnehmerNichtErreichbar, LokaleSprache), 3);
-		else if (strcmp_P(msg, PSTR("na")) == 0)
+		else if (strncmp_P(msg, PSTR("na"), 2) == 0)
 			Diagnoseausgabe_P(ISTR(TeilnehmerNichtErlaubt, LokaleSprache), 3);
-		else if (strcmp_P(msg, PSTR("der")) == 0)
+		else if (strncmp_P(msg, PSTR("der"), 3) == 0)
 			Diagnoseausgabe_P(ISTR(TeilnehmerGestoert, LokaleSprache), 3);
-		else if (strcmp_P(msg, PSTR("abs")) == 0)
+		else if (strncmp_P(msg, PSTR("abs"), 3) == 0)
 			Diagnoseausgabe_P(ISTR(TeilnehmerAbgeschaltet, LokaleSprache), 3);
-		else if (strcmp_P(msg, PSTR("bk")) == 0)
+		else if (strncmp_P(msg, PSTR("bk"), 2) == 0)
 			Diagnoseausgabe_P(ISTR(VerbindungGetrennt, LokaleSprache), 3);
-		else			{
+		else			
+			{
+			if (Diagnoseausgabe_P(ISTR(SonstigeMeldung, LokaleSprache), 3))
+				strcat(DiagnosePuffer, msg);
 			}
 		} // if LangeDienstmeldungen
 	else // !LangeDienstmeldungen
@@ -2317,7 +2320,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 							ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
 						else
 							{ 
-							SendeStopkommando("na"); //! \todo Test
+							SendeStopkommando(PSTR("na")); //! \todo Test
 							iTelexSocketAbbauGeplant = true;
 							ModusWechsel(ModWarteGrundstellung);
 							}
@@ -2336,6 +2339,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 			else if (c == ITELEXC_DURCHWAHL)
 				{ // ID#312 **************************************************************
 				iTelexSocketProtokoll = iTelexProt;
+				iTelexSocketAbbauGeplant = false;
 				if (Modus == ModKommendVerbVorstufe)
 					{
 					Durchwahl = SocketInBuf[i+2];
@@ -2343,13 +2347,12 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
 					else
 						{ 
-						SendeStopkommando("na"); //! \todo Test
+						SendeStopkommando(PSTR("na")); //! \todo Test
 						iTelexSocketAbbauGeplant = true;
 						ModusWechsel(ModWarteGrundstellung);
 						}
 					}
 				i += 2 + (uint8_t) SocketInBuf[i+1];
-				iTelexSocketAbbauGeplant = false;
 				}
 				
 			else if (c == ITELEXC_BAUDOT_DATA)
@@ -2421,9 +2424,14 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						ProtokollierenITelex_P(PSTR("Abbaubefehl von Gegenstelle\r\n"));
 					}
 
-				char Buf[10];
-				strncpy(Buf, SocketInBuf + i + 2, (len < 10) ? len : 10);
-				WahlAbbruchMeldung(Buf);
+				if (len > 0)
+					{
+					char Buf[11];
+					uint8_t msglen = (len < 10) ? len : 10;
+					strncpy(Buf, SocketInBuf + i + 2, msglen);
+					Buf[msglen] = '\0';
+					WahlAbbruchMeldung(Buf);
+					}
 					
 				i += 2 + len;
 					
@@ -2452,7 +2460,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						}
 					else
 						{
-						SendeStopkommando("occ"); //! \todo Test
+						SendeStopkommando(PSTR("occ")); //! \todo Test
 						iTelexSocketAbbauGeplant = true;
 						ModusWechsel(ModWarteGrundstellung);
 						}
