@@ -1,0 +1,19 @@
+Zu Testen:
+
+- Auskunftsfunktion
+
+- Lange und kurze Dienstmeldungen bei Anrufen an:
+  - nicht gültigen IP
+  - deaktivierten i-Telex geräten
+  - belegten i-telex geräten (vorher über html oder telnet zugreifen)
+  - nicht erlaubten durchwahlen
+  
+  
+- Normale Verbindungen
+  - ankommend
+  - abgehend
+  - mit i-Telex oder Telnet
+  - Durch Anrufer oder durch angerufenen getrennt.
+  
+- Durchwahlen-Tabelle
+  
