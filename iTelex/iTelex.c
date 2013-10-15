@@ -1353,7 +1353,7 @@ static bool SchreibeZeichenInSendePuffer(char c)
 //! \retval true Durchwahl war zugelassen.
 static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	{
-	if (ProtokollLevel >= DatenKurz)
+	if (ProtokollLevel >= AblaufInfo)
 		{
 		ProtokollierenITelex();
 		ProtokollierenInt_P(PSTR("Durchwahl-Anfrage %u\r\n"), *aDurchwahl);
@@ -1367,7 +1367,7 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	if (*aDurchwahl >= 101 && *aDurchwahl <= 109 && DurchwahlTabelle[*aDurchwahl - 101] > 0)
 		{
 		*aDurchwahl = DurchwahlTabelle[*aDurchwahl - 101] >> 1;
-		if (ProtokollLevel >= DatenKurz)
+		if (ProtokollLevel >= AblaufInfo)
 			{
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Durchwahl aus Tabelle umgesetzt %u\r\n"), *aDurchwahl);
@@ -1378,7 +1378,7 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	for (uint8_t i = 0 ; i < 9 ; i++)
 		if (*aDurchwahl == DurchwahlTabelle[i] >> 1)
 			{
-			if (ProtokollLevel >= DatenKurz)
+			if (ProtokollLevel >= AblaufInfo)
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Durchwahl in Tabelle gefunden %u\r\n"), *aDurchwahl);
