@@ -2744,7 +2744,8 @@ bool TeilnehmerServerSocketOeffnen(PGM_P Grund)
 		} // for ServerI
 		
 	TeilnehmerServerSocket = NO_SOCKET_USED;
-	Diagnoseausgabe_P(ISTR(KeinTeilnehmerServerErreichbar, LokaleSprache), 1);	
+	if (!TeilnehmerServerAlleNichtErreichbar)
+		Diagnoseausgabe_P(ISTR(KeinTeilnehmerServerErreichbar, LokaleSprache), 1);	
 	TeilnehmerServerAlleNichtErreichbar = true;
 	return false;
 	} // TeilnehmerServerSocketOeffnen()
@@ -3335,6 +3336,9 @@ void itelex_thread()
 						else // !TlnSuche(Wahlnummer...) 
 							TlnDatenInit(&GewaehlterTln); 
 								// da die aktuell gewählte Nummer ggf. nicht mehr zum zuletzt gefundenen Teilnehmer passt.
+						
+						StartKurzTimer(&WahlPauseTimer); 
+							// nochmal, damit Verzögerungen bei Serverabfrage oder so nicht zu vorzeitigem Abbruch führen.
 						}
 					} // if Modus == ModGehendWaehlen
 					
@@ -3490,7 +3494,6 @@ void itelex_thread()
 				}
 				
 			Diagnoseausgabe_P(ISTR(AnschlussInternBesetzt, LokaleSprache), 1);
-				//!  \todo bei Besetzt andere Meldung.
 
 			SendeStopkommando(PSTR("occ\r\n"));
 			
@@ -3657,7 +3660,7 @@ void itelex_thread()
 			ProtokollierenITelex_P(PSTR("! Timeout beim Warten auf die Einschaltquittung\r\n" ));
 			
 		InterneVerbindungBeenden(true);
-		SendeStopkommando(PSTR("err\r\n"));
+		SendeStopkommando(PSTR("der\r\n"));
 		}
 		
 	if (ModusTwiVerbunden() && LangTimerVal(&BeideRuhigTimer) > 10 * LangTimerMinuteFaktor)
@@ -4070,6 +4073,7 @@ void itelex_thread()
 					if (Modus == ModNamensucheServerAbfrage)
 						{
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
+						strcat_P(AsciiDruckPuffer, ISTR(NamensucheNurLokal, LokaleSprache));
 						ModusWechsel(ModNamensucheAusgabe);
 						}
 					
@@ -4202,6 +4206,7 @@ void itelex_thread()
 						{
 						strcat(AsciiDruckPuffer, TSB.PureData);
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
+						strcat_P(AsciiDruckPuffer, ISTR(NamensucheNurLokal, LokaleSprache));
 						ModusWechsel(ModNamensucheAusgabe);
 						}
 					break;
@@ -4217,6 +4222,7 @@ void itelex_thread()
 					if (Modus == ModNamensucheServerAbfrage)
 						{
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
+						strcat_P(AsciiDruckPuffer, ISTR(NamensucheNurLokal, LokaleSprache));
 						ModusWechsel(ModNamensucheAusgabe);
 						}
 					
@@ -4948,11 +4954,11 @@ void itelex_cgi_config_intern(void *pStruct)
 		
 		// Feste Hauptstelle
 		// ------------------
-		CgiCheckBool_P(http_request, ISTR(FesteHauptstelle, Sprache), FesteHst_P, FesteHauptstelle, Sprache);
+		FesteHauptstelle = CgiCheckBool_P(http_request, ISTR(FesteHauptstelle, Sprache), FesteHst_P, FesteHauptstelle, Sprache);
 			
 		// AlternativSucheBeiBesetzt
 		// -------------------------
-		CgiCheckBool_P(http_request, ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P, AlternativSucheBeiBesetzt, Sprache);
+		AlternativSucheBeiBesetzt = CgiCheckBool_P(http_request, ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P, AlternativSucheBeiBesetzt, Sprache);
 			
 		// DurchwahlTabelle
 		// ----------------

@@ -150,7 +150,6 @@ void cgi_ntp( void * pStruct )
 					   	"<td align=\"right\">Zeitzone</td>"
 						"<td><input name=\"UTCZONE\" type=\"text\" size=\"3\" value=\"%s\" maxlength=\"3\"></td>"
   						"</tr>"
-						// TODO hier die Sommerzeit-Umstellung...
  						"<tr>"
    						"<td></td><td><input type=\"submit\" value=\" Einstellung &Uuml;bernehmen \"></td>"
   						"</tr>"

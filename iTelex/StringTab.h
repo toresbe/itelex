@@ -38,8 +38,10 @@ enum {
 _STRTABENTRY(ZweiterAnruf, "Zweiter kommender Anruf auf belegtem i-Telex-Socket", "Second incoming call on busy i-telex socket")
 _STRTABENTRY(MehrfacheSendeFehler, "Mehrfache Fehler beim Senden ins Netz", "Multiple errors while sending on network")
 _STRTABENTRY(ZeitueberschreitungWiederaufnahme, "Zeitueberschreitung bei Wiederaufnahme der Verbindung", "Timeout while waiting for a reconnection")
-_STRTABENTRY(KeinTeilnehmerServerErreichbar, "Kein Teilnehmer-Server erreichbar", "No subscriber directory server available")
-_STRTABENTRY(TeilnehmerServerWiederErreichbar, "Teilnehmer-Server wieder erreicht", "Subscriber directory server available again")
+_STRTABENTRY(KeinTeilnehmerServerErreichbar, 
+	"Kein Teilnehmer-Server erreichbar: Verbindungsversuche koennen fehlschlagen.", 
+	"No subscriber directory server available: Connections may fail.")
+_STRTABENTRY(TeilnehmerServerWiederErreichbar, "Teilnehmer-Server wieder erreicht.", "Subscriber directory server available again.")
 _STRTABENTRY(KeineVerbindungZumMailServerAusgang, "Keine Verbindung zum Mail-Server fuer Ausgang", "No connection to server for outgoing mails")
 _STRTABENTRY(MailNichtInDieserVersion, "Mail in dieser Version nicht unterstuetzt", "Mail not supported in this version")
 _STRTABENTRY(TeilnehmerNichtErreichbar, "Teilnehmer nicht erreichbar", "Subscriber not available")
@@ -57,14 +59,14 @@ _STRTABENTRY(Datum, "Datum", "Date")
 _STRTABENTRY(DiagnoseEinleitung, "\r\n///interne meldung: ", "\r\n///internal message: ")
 _STRTABENTRY(SelbstAnrufMehrfachVersagt, 
 			 "Selbst-Anruf mehrfach versagt, Router-Konfiguration pruefen.\r\nNach Fehlerbehebung Dynamische IP-Aktualisierung wieder einschalten.", 
-			 "Loopback call failed constantly. Check router configuration.\r\nAfter check, enable the dynamic update of IP adress again.")
+			 "Loopback call failed constantly. Check router configuration.\r\nAfter check, enable the dynamic update of IP address again.")
 _STRTABENTRY(NummerNichtBekannt, "gewaehlte Nummer nicht bekannt", "subscriber number not known")
 _STRTABENTRY(InternesVerzeichnisVoll, "internes Rufnummern-Verzeichnis voll", "internal directory out of space")
 _STRTABENTRY(KennwortAbfrage, "Seite gesperrt! Bitte Kennwort eingeben", "Page locked! Enter password")
 _STRTABENTRY(KennwortFreigeben, "Freigeben", "Unlock")
 _STRTABENTRY(KennwortFalsch, "Falsches Kennwort eingegeben!", "Wrong password entered!")
-_STRTABENTRY(FalschesKonfigKennwortEingegeben, "unautorisierter Zugriff auf Konfigurationsseite", "unauthorizes access to locked configuratiuon page")
-_STRTABENTRY(Druckspiegel, "Druckspiegel", "printout mirror")
+_STRTABENTRY(FalschesKonfigKennwortEingegeben, "unautorisierter Zugriff auf Konfigurationsseite", "unauthorised access to locked configuration page")
+_STRTABENTRY(Druckspiegel, "Druckspiegel", "printed text")
 _STRTABENTRY(TexteingabeStartetFernschreiber, "Texteingabe startet Fernschreiber", "Enter text to start printer")
 _STRTABENTRY(AndereVerbindungBesteht, "Es besteht bereits eine andere Verbindung, bitte warten.", "Connection busy, please wait.")
 _STRTABENTRY(HtmlTextEingabe, "Eingabe: ", "Enter text: ")
@@ -74,7 +76,7 @@ _STRTABENTRY(EigeneAmtsnummer, "Netz-Vorwahl f&uuml;r gehende Verbindungen", "Ou
 _STRTABENTRY(FesteHauptstelle, "feste Hauptstelle f&uuml;r kommende Verbindungen", "Primary teleprinter for incoming calls")
 _STRTABENTRY(FesteHauptstelleNummer, "interne Durchwahl der Hauptstelle f&uuml;r kommende Verbindungen", "Internal call number of primary teleprinter for incoming calls")
 _STRTABENTRY(AlternativSucheBeiBesetzt, "Alternativ-Suche bei besetzt", "Use alternative secondary teleprinter if primary is busy")
-_STRTABENTRY(DurchwahlenListe, "Durchwahlen (mit Komma trennen)", "Secondary call numbers list (seperate by comma)")
+_STRTABENTRY(DurchwahlenListe, "Durchwahlen (mit Komma trennen)", "Secondary call numbers list (separate by comma)")
 _STRTABENTRY(ProtokollLevel, "Tiefe der Protokollierung an serieller Schnittstelle", "Logging level at serial port")
 _STRTABENTRY(ProtokollLevelTlnServer, "Tiefe der Protokollierung f&uuml;r Teiln-Server", "Logging level for directory server")
 _STRTABENTRY(DiagnoseLevel, "Level f&uuml;r Druckausgabe von Meldungen", "Message filtering level")
@@ -86,18 +88,18 @@ _STRTABENTRY(DatumDruckLokal, "nur lokal", "only local")
 _STRTABENTRY(DatumDruckAnrufer, "nur beim Anrufer", "only at caller")
 _STRTABENTRY(DatumDruckBeide, "lokal und Anrufer", "local and caller")
 _STRTABENTRY(KonnteNichtGeaendertWerden, " konnte nicht ge&auml;ndert werden", " could not be changed")
-_STRTABENTRY(KennwortGgfGeaendert, "<br>Kennwort ggf. ge&auml;ndert.", "<br>Passwort if necessary changed")
+_STRTABENTRY(KennwortGgfGeaendert, "<br>Kennwort ggf. ge&auml;ndert.", "<br>Password changed if necessary")
 _STRTABENTRY(InternesKennwortFehlt, 
 			 "zun&auml;chst Passwort in <a href=\"itelexcfg-intern.cgi?spr=de\" target=\"main\">Einstellungen im lokalen TxP-System</a> eingeben!", 
 			 "First select password in <a href=\"itelexcfg-intern.cgi?spr=en\" target=\"main\">Settings for the local TxP-system</a>!")
 _STRTABENTRY(GesperrtBestaetigung, 
 			 "Konfigurationsseiten sind nun gesperrt. Zur Freigabe wieder das Passwort eingeben oder Taste der Baugruppe 2 x dr&uuml;cken.", 
-			 "Configuration pages are locked again. For unlocking enter password oder push button at i-telex hardware module twice.")
+			 "Configuration pages are locked again. For unlocking enter password or push button at i-telex hardware module twice.")
 _STRTABENTRY(ITelexRufnummer, "eigene Rufnummer im i-telex-Netz", "Subscriber's number")
 _STRTABENTRY(ITelexRufnummerZuKurz, "<big><b>&lt;=== muss fünf bis neun Ziffern haben!</b></big>", "<big><b>&lt;=== must have five to nine digits!</b></big>")
 _STRTABENTRY(RufnrServerAnmeldGeheimzahl, "Geheimzahl zur Anmeldung beim Rufnummern-Server", "PIN for sign in at subscriber directory server")
-_STRTABENTRY(DynIPAktiv, "Dynamische IP-Aktualisierung aktiv", "Dynamic update of IP adress active")
-_STRTABENTRY(VerbindungstestPeriode, "Verbindungstest-Periode (0 f&uuml;r kein Test)", "Loopback test period (0 to swich off)")
+_STRTABENTRY(DynIPAktiv, "Dynamische IP-Aktualisierung aktiv", "Dynamic update of IP address active")
+_STRTABENTRY(VerbindungstestPeriode, "Verbindungstest-Periode (0 f&uuml;r kein Test)", "Loopback test period (0 to switch off)")
 _STRTABENTRY(OeffentlichePortNr, "&ouml;ffentliche Port-Nummer", "Public internet port number")
 _STRTABENTRY(RufnrServerAdr, "Adresse des Teilnehmer-Server", "Subscriber directory server address")
 _STRTABENTRY(TlnServSyncGeheimzahl, "Geheimzahl f&uuml;r Server-Synchronisierung", "PIN for directory server synchronisation")
@@ -169,7 +171,7 @@ _STRTABENTRY(TlnverzAttrGesperrt, "gesperrt", "locked")
 _STRTABENTRY(Typ, "Typ", "Type")
 _STRTABENTRY(TlnverzAttrDyn, "DynIP", "DynIP")
 _STRTABENTRY(TypGeloescht, "geloescht", "deleted")
-_STRTABENTRY(TypAscii, "Ascii", "Ascii")
+_STRTABENTRY(TypAscii, "Ascii", "ASCII")
 _STRTABENTRY(TypITelex, "i-Telex", "i-Telex")
 _STRTABENTRY(TypEMail, "eMail", "eMail")
 _STRTABENTRY(AktionAendern, "&Auml;ndern", "edit")
@@ -205,7 +207,7 @@ _STRTABENTRY(ZusatzEepromFehler, "Fehler im Zusatz-EEPROM", "Error in directory 
 // für TlnServer.c:
 _STRTABENTRY(NeuTeilnehmer, "Neuer Teilnehmer angemeldet", "new subscriber signed up")
 _STRTABENTRY(TeilnehmerlisteVoll, "Rufnummern-Verzeichnis voll, nicht gespeichert", "directory out of space, not saved")
-_STRTABENTRY(ServerAnmeldungFalscheGeheimzahl, "Teilnehmer-Server Anmeldung mit falscher Geheimzahl", "Unauthorized access to directory server port")
+_STRTABENTRY(ServerAnmeldungFalscheGeheimzahl, "Teilnehmer-Server Anmeldung mit falscher Geheimzahl", "Unauthorised access to directory server port")
 
 // für eMail.c:
 // ungeprüft:
@@ -231,7 +233,7 @@ _STRTABENTRY(SMTPFehlerDirekt, "Meldung vom eMail-Ausgang-Server: ", "Message fr
 _STRTABENTRY(NtpOn, "Uhrzeit vom Server abfragen", "Use time server")
 _STRTABENTRY(NtpServerHostname, "Hostname des Zeitservers", "Time server host name")
 _STRTABENTRY(Zeitzone, "Zeitzone", "Timezone")
-_STRTABENTRY(AutoSommerzeit, "Sommerzeit automatisch umstellen", "Use daylight saving time (european)")
+_STRTABENTRY(AutoSommerzeit, "Sommerzeit automatisch umstellen", "Use daylight saving time (european standard)")
 			 
 // ==================================
 // Ende der Stringtabelle
