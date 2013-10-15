@@ -1,3 +1,7 @@
+Ab Build 443:
+Namenssuche ("Auskunft")
+Zeichensatz-Dekodierung bei Emails verbessert.
+
 Ab Build 384:
 Sortierbare Teilnehmerliste
 Sommerzeit-Umstellung abschaltbar
