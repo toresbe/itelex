@@ -307,8 +307,8 @@ bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln)
 //! Einfügen eines Adressbuch-Eintrags.
 // ------------------------------------
 //! ggf. wird ein alter Eintrag gelöscht
-//! \param[in] Tln Neuer / zu ändernder Teilnehmereintrag.
-//! \param[in] HinzModus siehe #TTlnHinzufuegenModus.
+//! \param [in] Tln Neuer / zu ändernder Teilnehmereintrag.
+//! \param [in] HinzModus siehe #TTlnHinzufuegenModus.
 //! \retval 1 Eintrag hinzugefügt oder aktualisiert.
 //! \retval 2 Vorhandener Eintrag ist neuer als der zu speichernde!
 //! \retval 0 Eintrag unverändert.
@@ -334,6 +334,9 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus HinzModus)
 		TTlnDaten BisherEintrag;
 		TlnLesen(&BisherEintrag, p);
 		if (BisherEintrag.Datum > Tln->Datum)
+			return 2;
+			
+		if ((BisherEintrag.Flags & TlnFlag_Lokal) != 0)
 			return 2;
 			
 		if (BisherEintrag.Datum == Tln->Datum)
@@ -398,6 +401,16 @@ bool TlnListerNaechster(TTlnListerDat *ldp, TTlnDaten *Tln)
 	}
 
 
+//! Vergleichsfunktion für die Suchfunktion.
+//------------------------------------------
+bool TlnSuchMusterPasst(char *SuchMuster, TTlnDaten *Tln)
+	{
+	if (SuchMuster[0] == '\0')
+		return true; // es wird nichts konkretes gesucht.
+	return strcasestr(Tln->Name, SuchMuster) != NULL;
+	}
+	
+	
 //! Hilfsfuntion zum Sortieren der Teilnehmer-Verzeichnis-Einträge.
 //-----------------------------------------------------------------
 //! Vergleicht nach Wahlnummer. 
@@ -1333,7 +1346,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			}
 
 		if (TD.AdrArt != iTelexDynIP)
-			TD.DynPin = 0; // Datenschutz.
+			TD.DynPin = 0; 
 			
 		if (DatenOk && TD.AdrArt == Geloescht && AltNummer == 0)
 			{ // einen neuen Lösch-Eintrag anzulegen ist doof

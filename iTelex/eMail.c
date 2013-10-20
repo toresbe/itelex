@@ -44,6 +44,7 @@
 #include "system/net/ethernet.h"
 #include "system/net/dns.h"
 #include "system/base64/base64.h"
+#include "system/string/string.h"
 
 #include "apps/httpd/cgibin/cgi-bin.h"
 #include "apps/httpd/httpd2_pharse.h"
@@ -181,10 +182,35 @@ bool MailZeileVerarbeiten(char *Zeile)
 	// jetzt Zeile drucken, um Umbruch und co kümmern sich andere...
 	if (DieseZeileDrucken)
 		{
-		if (strlen(AsciiDruckPuffer) + strlen(Zeile) < AsciiDruckPufferMax)
-			strcat(AsciiDruckPuffer, Zeile);
-		else
-			return false; // AsciiDruckPuffer würde überlaufen
+		if (strlen(AsciiDruckPuffer) + strlen(Zeile) >= AsciiDruckPufferMax)
+			return false; // AsciiDruckPuffer würde überlaufen, also abbrechen.
+		
+		// quoted-printable umwandeln:
+		p = Zeile;
+		while (*p != '\0')
+			{
+			if (*p == '=')
+				{ // eigentlich folgt jetzt ein Hex-Wert
+				if (p[1] > '0' && p[2] > '0')
+					{ // es ist wahrscheinlich ein Hex-Wert
+					*p = (atoh(p[1]) << 4) + atoh(p[2]);
+					p++;
+					strcpy(p, p + 2);
+					}
+				else if (p[1] < ' ' || p[2] < ' ')
+					{ // es ist wahrscheinlich Zeilenende
+					*p = '\0';
+					break;
+					}
+				else // einfach so lassen
+					p++;
+				}
+			else // es war kein =
+				p++;
+			}
+
+		// und ab in den Puffer
+		strcat(AsciiDruckPuffer, Zeile);
 		}
 
 	// Erst wenn kein Überlauf droht Protokoll drucken.
@@ -399,7 +425,7 @@ void POP3DatenVerarbeiten()
 				}
 			else
 				{ // mindestens eine Meldung im Puffer...
-				strcpy_P(AsciiDruckPuffer, ISTR(MailEmpfangStartzeile, LokaleSprache)); 
+				strcpy_P(AsciiDruckPuffer, ISTR(EmailEmpfangStartzeile, LokaleSprache)); 
 					// startet sofort den Fernschreiber
 				
 				strcpy_P(SocketOutBuf, PSTR("RETR 1\r\n"));
@@ -701,7 +727,7 @@ void SMTPDatenVerarbeiten()
 			strcat_P(SocketOutBuf, PSTR("\r\n"));
 			if (EmailEmpfaenger[0] == '?')
 				{
-				strcpy_P(AsciiDruckPuffer, PSTR("\r\nemail to:\r\n"));
+				strcpy_P(AsciiDruckPuffer, ISTR(EmailEingabeEmpfaenger, LokaleSprache));
 				PufferInit(&EmpfPuffer);
 				ProtokollPhase = EingabeMailTo;
 				EmailEmpfaenger[0] = '\0';
@@ -762,7 +788,7 @@ void SMTPDatenVerarbeiten()
 			strcat_P(SocketOutBuf, PSTR(">\r\nContent-Type: text/plain; charset=us-ascii\r\nSubject: ")); 
 			
 			// Aufforderung für Subject-Eingabe:
-			strcpy_P(AsciiDruckPuffer, ISTR(MailEingabeBetreff, LokaleSprache));
+			strcpy_P(AsciiDruckPuffer, ISTR(EmailEingabeBetreff, LokaleSprache));
 			ProtokollPhase = MailSubject;
 			Zeilenanfang = true;
 			break;
@@ -784,7 +810,7 @@ void SMTPDatenVerarbeiten()
 						ProtokollPhase = MailData;
 						
 						// Aufforderung für Body-Eingabe:
-						strcpy_P(AsciiDruckPuffer, ISTR(MailEingabeText, LokaleSprache));
+						strcpy_P(AsciiDruckPuffer, ISTR(EmailEingabeText, LokaleSprache));
 						PufferInit(&EmpfPuffer);
 						break;
 						}

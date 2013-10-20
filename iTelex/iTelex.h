@@ -129,17 +129,18 @@ enum {
 	//!< Meldung des Teilnehmer-Server an den Teilnehmer als Rückmeldung der 
 	//!< nun gespeicherten IP-Adresse. Antwort auf #TLNSERV_SELBSTAKT.
 
-	TLNSERV_ABFRAGE_VERSION1 = 0x03,
+	TLNSERV_ABFRAGE = 0x03,
 	//!< Meldung eines Teilnehmer an den Teilnehmer-Server als Wunsch die
 	//!< IP-Adresse eines anderen Teilnehmers zu erfragen.
 	
 	TLNSERV_AUSKUNFT_NICHTVERG = 0x04,
 	//!< Meldung des Teilnehmer-Server an den Teilnehmer als Rückmeldung dass
-	//!< durch #TLNSERV_ABFRAGE_VERSION1 gewünschter Teilnehmer nicht gespeichert ist.
+	//!< durch #TLNSERV_ABFRAGE gewünschter Teilnehmer nicht gespeichert ist.
 
 	TLNSERV_AUSKUNFT_VERSION1 = 0x05,
 	//!< Meldung des Teilnehmer-Server an den Teilnehmer als Rückmeldung der
-	//!< kompletten Daten des durch #TLNSERV_ABFRAGE_VERSION1 gewünschten Teilnehmers.
+	//!< kompletten Daten des durch #TLNSERV_ABFRAGE oder #TLNSERV_SUCHE
+	//!< gewünschten Teilnehmers.
 	//!< wird auch zur Synchronisation der Teilnehmer-Server untereinander
 	//!< verwendet.
 	
@@ -160,6 +161,11 @@ enum {
 	//!< zu senden sind. \n
 	//!< Oder Meldung des empfangenden Teilnehmer-Servers, wenn dieser keine 
 	//!< weiteren Datensätze verarbeiten kann.
+
+	TLNSERV_SUCHE = 0x0a,
+	//!< Meldung eines Teilnehmers an den Server zur Auflistung der vorhandenen 
+	//!< Einträge gemäß des übermittelten Suchmusters.
+	//!< Version1 bezieht sich auf die gewünschte Version der Rückmeldung.
 	
 	TLNSERV_FEHLER = 0xFF,
 	//!< Allgemeine Fehlermeldung.
@@ -231,6 +237,16 @@ typedef enum
 		//!< Wartet darauf, dass nach Ausschaltung des lokalen Endgerätes der 
 		//!< Socket wieder geschlossen ist und alles andere auch die Grundstellung hat.
 	
+	ModNamensucheEingabe = 41,
+		//!< Nach Wahl von "0" wird die Abfrage eines Namens-Musters gestartet.
+		
+	ModNamensucheServerAbfrage = 42,
+		//!< Name wurde eingegeben, Abfrage des Servers ist gestartet, warte auf 
+		//!< Rückmeldungen.
+
+	ModNamensucheAusgabe = 43,
+		//!< Abfrage des Servers ist beendet, gebe Einträge aus dem Verzeichnis aus.
+		
 	} TModus;
 	
 
@@ -338,7 +354,16 @@ typedef union
 			struct 
 				{
 				uint32_t RufNr; //!< globale Telefonnummer.
-				} TlnAbfr; //!< Gültig bei #Code == #TLNSERV_ABFRAGE_VERSION1
+				uint8_t Version; //!< Welches Datenformat soll verwendet werden?
+					// wichtig: diese Reihenfolge RufNr / Version beibehalten, da alte i-Telex Versionen
+					// die Versionsnummer nicht mitsenden. Dies wird beim Empfang eines entsprechenden
+					// Datenpaketes berücksichtigt.
+				} TlnAbfr; //!< Gültig bei #Code == #TLNSERV_ABFRAGE
+			struct 
+				{
+				uint8_t Version; //!< Welches Datenformat soll verwendet werden?
+				char SuchMuster[TlnNameMax]; //!< Suchtext. Wird mit den Namen der Einträge abgeglichen.
+				} TlnSuche; //!< Gültig bei #Code == #TLNSERV_SUCHE
 			TTlnDaten TlnAuskunft; //!< Gültig bei #Code == #TLNSERV_AUSKUNFT_VERSION1
 			struct
 				{
