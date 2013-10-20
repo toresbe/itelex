@@ -492,7 +492,8 @@ void ProtokollInit()
 	LetzteDruckZeit = 0;
 	RegelblockAktiv = false;
 	InRegelblock = false;
-	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), MCUSR);
+	uint8_t Flags = MCUSR;
+	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), Flags);
 	MCUSR = 0;
 	}
 	
