@@ -211,10 +211,10 @@ static TKurzTimer iTelexSocketLebenszeichenTimer;
 
 	
 volatile TPuffer SendePuffer; 
-	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Netz -> Endgerät
+	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Netz -> Endgerät.
 	
 volatile TPuffer EmpfPuffer; 
-	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Endgerät -> Netz
+	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Endgerät -> Netz.
 	
 char AsciiDruckPuffer[AsciiDruckPufferMax+4];
 	//!< Puffer für zu druckenden Text (Netz -> Endgerät), mit Null abgeschlossen
@@ -532,7 +532,10 @@ uint8_t DiagnoseAusgabeZiel;
 	
 	
 static struct TIME SystemStartZeit;
-	//! Speichert Uhrzeit des Systemstarts, nur für Diagnose
+	//!< Speichert Uhrzeit des Systemstarts, nur für Diagnose
+	
+static uint8_t ResetFlags;
+	//!< Speichert Ursache des letzten Reset.
 	
 	
 TTastendruck Tastendruck;
@@ -716,7 +719,10 @@ static bool ModusTwiVerbunden()
 			|| Modus == ModPufferDruckUndSchluss
 			|| Modus == ModHtmlChatWarteEinQuitt
 			|| Modus == ModHtmlChatVerbunden
-			|| Modus == ModMeldungsdruckWarteEinQuitt);
+			|| Modus == ModMeldungsdruckWarteEinQuitt
+			|| Modus == ModNamensucheEingabe
+			|| Modus == ModNamensucheServerAbfrage
+			|| Modus == ModNamensucheAusgabe);
 	}
 
 #endif //def ITELEX_ANSCHLUSS
@@ -778,7 +784,10 @@ void itelex_timerEvent(void)
 	if (Modus == ModKommendVerbunden 
 		|| Modus == ModGehendVerbunden 
 		|| Modus == ModHtmlChatVerbunden
-		|| Modus == ModPufferDruckUndSchluss)
+		|| Modus == ModPufferDruckUndSchluss
+		|| Modus == ModNamensucheEingabe
+		|| Modus == ModNamensucheServerAbfrage
+		|| Modus == ModNamensucheAusgabe)
 		{ // ist Verbunden, also Pegel senden und empfangen
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
 
@@ -1333,8 +1342,11 @@ static bool SchreibeZeichenInSendePuffer(char c)
 //! \retval true Durchwahl war zugelassen.
 static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	{
-	if (ProtokollLevel >= DatenKurz)
+	if (ProtokollLevel >= AblaufInfo)
+		{
+		ProtokollierenITelex();
 		ProtokollierenInt_P(PSTR("Durchwahl-Anfrage %u\r\n"), *aDurchwahl);
+		}
 	
 	if (*aDurchwahl == 0)
 		return true;
@@ -1344,16 +1356,22 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	if (*aDurchwahl >= 101 && *aDurchwahl <= 109 && DurchwahlTabelle[*aDurchwahl - 101] > 0)
 		{
 		*aDurchwahl = DurchwahlTabelle[*aDurchwahl - 101] >> 1;
-		if (ProtokollLevel >= DatenKurz)
+		if (ProtokollLevel >= AblaufInfo)
+			{
+			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Durchwahl aus Tabelle umgesetzt %u\r\n"), *aDurchwahl);
+			}
 		return true;
 		}
 		
 	for (uint8_t i = 0 ; i < 9 ; i++)
 		if (*aDurchwahl == DurchwahlTabelle[i] >> 1)
 			{
-			if (ProtokollLevel >= DatenKurz)
+			if (ProtokollLevel >= AblaufInfo)
+				{
+				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Durchwahl in Tabelle gefunden %u\r\n"), *aDurchwahl);
+				}
 			return true;
 			}
 	
@@ -1556,7 +1574,14 @@ static void SocketBearbeiten()
 				}
 			iTelexBlindSocketHandle = NewServerSocket;
 			StartKurzTimer(&iTelexBlindSocketAbbauVerzoegerung);
-			PutSocketData_RPE(iTelexBlindSocketHandle, 7, PSTR("\004\006occ \r\n"), FLASH); // 004 = ITELEXC_STOP
+			if (Modus == ModDeaktiviert)
+				PutSocketData_RPE(iTelexBlindSocketHandle, 5, PSTR("\004\003abs"), FLASH); // 004 = ITELEXC_STOP
+				// SendeStopkommando kann nicht benutzt werden, da der Code in den BlindSocket gesendet wird.
+			else
+				PutSocketData_RPE(iTelexBlindSocketHandle, 5, PSTR("\004\003occ"), FLASH); // 004 = ITELEXC_STOP
+				// SendeStopkommando kann nicht benutzt werden, da der Code in den BlindSocket gesendet wird.
+				
+			if (Modus != ModDeaktiviert)
 			Diagnoseausgabe_P(ISTR(ZweiterAnruf, LokaleSprache), 4);
 			}
 			
@@ -1889,6 +1914,12 @@ static void SendeBusKdoSchluss()
 //! \param Force alle schwebenden Zustände (z.B. Wahlzustand) auch zum Abschluss bringen.
 void InterneVerbindungBeenden(bool Force)
 	{
+	if (ProtokollLevel >= AblaufInfo)
+		{
+		ProtokollierenITelex();
+		ProtokollierenInt_P(PSTR("InterneVerbindungBeenden ausgehend von Modus %d\r\n"), Modus);
+		}
+	
 	switch (Modus)
 		{
 		case ModGehendReserv:
@@ -1896,6 +1927,9 @@ void InterneVerbindungBeenden(bool Force)
 		case ModHtmlChatWarteEinQuitt:
 		case ModHtmlChatVerbunden:
 		case ModMeldungsdruckWarteEinQuitt:
+		case ModNamensucheEingabe:
+		case ModNamensucheServerAbfrage:
+		case ModNamensucheAusgabe:
 			if (Force)
 				{
 				SendeBusKdoSchluss();
@@ -2148,6 +2182,8 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 				else
 					break; // kann nicht mehr verarbeitet werden, also Schleife beenden.
 					
+				iTelexSocketAbbauGeplant = false;
+
 				if (Modus == ModKommendVerbVorstufe)
 					// ID#311 *******************************************************
 					{
@@ -2167,8 +2203,6 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					// sonst auf weitere Zeichen warten.
 					}
 
-				iTelexSocketAbbauGeplant = false;
-
 				} // ASCII-Zeichen oder WR oder ZL
 				
 			else if (c == ITELEXC_NULL)
@@ -2179,6 +2213,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 			else if (c == ITELEXC_DURCHWAHL)
 				{ // ID#312 **************************************************************
 				iTelexSocketProtokoll = iTelexProt;
+				iTelexSocketAbbauGeplant = false;
 				if (Modus == ModKommendVerbVorstufe)
 					{
 					Durchwahl = SocketInBuf[i+2];
@@ -2192,7 +2227,6 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						}
 					}
 				i += 2 + (uint8_t) SocketInBuf[i+1];
-				iTelexSocketAbbauGeplant = false;
 				}
 				
 			else if (c == ITELEXC_BAUDOT_DATA)
@@ -2245,18 +2279,28 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 			else if (c == ITELEXC_STOP || c == ITELEXC_ENDE)
 				{
 				uint8_t len = SocketInBuf[i+1];
-				int alen = strlen(AsciiDruckPuffer);
-				if (i + 2 + len <= SocketInBufUsed // Vollständiges Kommando mit Daten empfangen
-					&& len + alen < AsciiDruckPufferMax-1) // und Daten passen noch in den Puffer...
+				if (i + 2 + len == SocketInBufUsed - 1)
+					len++;
+					// dies ist implementiert, weil alte i-Telex-Versionen eine zu kurze Länge senden.
+					//! \todo dies noch mal überprüfen!
+
+				if (len > 0)
 					{
-					strncpy(AsciiDruckPuffer + alen, SocketInBuf + i + 2, len);
-					AsciiDruckPuffer[len + alen] = '\0';
+					if (ProtokollLevel >= NurFehler)
+						{
+						ProtokollierenITelex_P(PSTR("* Abbaubefehl von Gegenstelle:"));
+						ProtokollierenPuffer(SocketInBuf + i, 2 + len);
+						Protokollieren_P(PSTR("\r\n"));
+						}
 					}
+				else
+					{
+					if (ProtokollLevel >= AblaufInfo)
+						ProtokollierenITelex_P(PSTR("Abbaubefehl von Gegenstelle\r\n"));
+					}
+
 				i += 2 + len;
-
-				if (ProtokollLevel >= NurFehler)
-					ProtokollierenITelex_P(PSTR("Abbaubefehl von Gegenstelle\r\n"));
-
+					
 				InterneVerbindungBeenden(true);
 				
 				iTelexSocketAbbauGeplant = true;
@@ -2818,7 +2862,6 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		if (ProtokollLevel >= NurFehler)
 			ProtokollierenITelex_P(PSTR("! Client-Socket konnte nicht erstmalig geoeffnet werden\r\n"));
 			
-		Diagnoseausgabe_P(ISTR(TeilnehmerNichtErreichbar, LokaleSprache), 2);
 		iTelexSocketHandle = NO_SOCKET_USED;
 		iTelexSocketMode = SocketIdle;
 		return 1;
@@ -2912,7 +2955,10 @@ void AsciiDruckPufferVerarbeiten()
 	if (Modus != ModHtmlChatVerbunden
 		&& Modus != ModKommendVerbunden 
 		&& Modus != ModGehendVerbunden
-		&& Modus != ModPufferDruckUndSchluss)
+		&& Modus != ModPufferDruckUndSchluss
+		&& Modus != ModNamensucheEingabe
+		&& Modus != ModNamensucheServerAbfrage
+		&& Modus != ModNamensucheAusgabe)
 		return; // Drucken nicht möglich.
 		
 	if (!PufferLeer(&SendePuffer))
@@ -3234,6 +3280,7 @@ void itelex_thread()
 					ProtokollierenITelex();
 					ProtokollierenInt_P(PSTR("TWI Wahlziffer %u intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
 					}
+					
 				if (Modus == ModGehendWaehlen && iTelexSocketMode == SocketIdle)
 					{
 					// allgemeines Verhalten beim Wählen:
@@ -3293,6 +3340,7 @@ void itelex_thread()
 							// da die aktuell gewählte Nummer ggf. nicht mehr zum zuletzt gefundenen Teilnehmer passt.
 							
 						StartKurzTimer(&WahlPauseTimer); 
+							// nochmal, damit Verzögerungen bei Serverabfrage oder so nicht zu vorzeitigem Abbruch führen.
 					} // if Modus == ModGehendWaehlen
 					
 				else
@@ -3428,7 +3476,7 @@ void itelex_thread()
 		BusSenden(BusQuittEin);
 		ModusWechsel(ModGehendVerbunden);
 		}
-
+		
 	if (Modus == ModKommendEinschalten)
 		{
 		if (KommendInternAnwaehlen(Durchwahl)) 
@@ -3451,9 +3499,8 @@ void itelex_thread()
 				}
 				
 			Diagnoseausgabe_P(ISTR(AnschlussInternBesetzt, LokaleSprache), 1);
-				//!  \todo bei Besetzt andere Meldung.
 
-			SendeStopkommando(PSTR("occ\r\n"));
+			SendeStopkommando(PSTR("occ"));
 			
 			ModusWechsel(ModWarteGrundstellung);
 			}
@@ -4014,6 +4061,13 @@ void itelex_thread()
 					SelbstAnrufPhase = SelbstAnrufRuhe;
 					break;
 
+				case TLNSERV_SYNC_ENDE:
+					ProtokollierenITelex_P(PSTR("TlnServer meldet Listenende\r\n"));
+					if (Modus == ModNamensucheServerAbfrage)
+						ModusWechsel(ModNamensucheAusgabe); 
+						// bewirkt auch, dass unten die Verbindung zum Teilnehmer-Server abgebaut wird.
+					break;
+				
 				case TLNSERV_FEHLER:
 					ProtokollierenITelex_P(PSTR("! Fehlermeldung des Teilnehmer-Servers: "));
 					Protokollieren(TSB.PureData);
@@ -4041,7 +4095,7 @@ void itelex_thread()
 			TeilnehmerServerSocket = NO_SOCKET_USED;
 			}
 		
-		// Schließanforderung vom Teilnehmer-Server
+		// Schließanforderung vom Teilnehmer-Server?
 		if (CheckSocketState(TeilnehmerServerSocket) == SOCKET_NOT_USE)
 			{
 			if (ProtokollLevelTlnServ >= AblaufInfo)
@@ -4079,7 +4133,6 @@ void itelex_thread()
 
 //! Liest den String s aus in die Durchwahl-Tabelle.
 //--------------------------------------------------
-//! \return Anzahl der korrekt gelesenen Einträge
 
 static void DurchwahlTabelleDekodieren(char *s)
 	{
@@ -4318,7 +4371,7 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(Modus);
 	PRINTVALHEX(Status); // bezüglich interner Telex Funktionalität (ist auf TWI-Bus sichtbar)
 
-	/*
+	//*
 	PRINTVAL(BusEmpfMark);
 	PRINTVAL(SerUmTickZaehlerEmpf);
 	PRINTVAL(SerUmEmpfBitNr); 
@@ -4349,17 +4402,17 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(Wahlziffern);
 	PRINTVAL(KurzTimerVal(&WahlPauseTimer));
 	PRINTVAL(KurzTimerVal(&SchreibPauseTimer));
-	*/
+	//*/
 	
 	PRINTVAL(LangTimerVal(&DynIPAktualisierungTimer));
 	PRINTVAL(DynIPAktualisierungEndzeit);
 
 	PRINTVAL(SelbstAnrufPhase);
+	PRINTVAL(SelbstAnrufFehlerZaehler);
 	PRINTVAL(KurzTimerVal(&SelbstAnrufTimer));
 	PRINTVAL(SelbstAnrufSocketHandle);
 	PRINTVAL(SelbstAnrufSendePruefwert);
 	PRINTVAL(SelbstAnrufEmpfangPruefwert);
-	PRINTVAL(SelbstAnrufFehlerZaehler);
 	
 	printf_P(PSTR("<br>SelbstAnrufZeitUeberwachung: "));
 	printf(ZeitUeberwachungAusgabe(&SelbstAnrufZeitUeberwachung));
@@ -4403,8 +4456,8 @@ void itelex_cgi_debug( void * pStruct )
 #endif // ITELEX_ANSCHLUSS
 
 	CLOCK_decode_time(&SystemStartZeit);
-	printf_P(PSTR("<br>SystemStartZeit = %02u.%02u.%04u %02d:%02d:%02d"), SystemStartZeit.DD, SystemStartZeit.MM, SystemStartZeit.YY,
-				  SystemStartZeit.hh, SystemStartZeit.mm, SystemStartZeit.ss);
+	printf_P(PSTR("<br>SystemStartZeit = %02u.%02u.%04u %02d:%02d:%02d, ResetFlag = %02X"), SystemStartZeit.DD, SystemStartZeit.MM, SystemStartZeit.YY,
+				  SystemStartZeit.hh, SystemStartZeit.mm, SystemStartZeit.ss, ResetFlags);
 	
 	printf_P(PSTR("<br><a href=\"itelex-debug.cgi?reset\">Statiktik-Daten zur&uuml;cksetzen</a>"
 				  "<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , 
@@ -5184,12 +5237,17 @@ void cgi_SdDirectory(void *pStruct)
 
 void itelex_init()
 	{
+	ResetFlags = MCUSR; // was war die Ursache des letzten Reset?
+	MCUSR = 0;
+	
 	init_Taste();
 	init_RTS();
 	init_CTS();
 	init_IspResetOut();
 	
 	ProtokollInit();
+	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);
+	
 
 	DiagnosePuffer[0] = '\0';
 	DiagnosePufferLevel = 0;

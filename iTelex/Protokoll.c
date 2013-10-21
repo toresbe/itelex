@@ -21,7 +21,6 @@
 	
 #include "system/stdout/stdout.h"
 
-#include "SvnVersion.h"
 #include "Protokoll.h"
 #include "iTelex.h"
 
@@ -492,9 +491,6 @@ void ProtokollInit()
 	LetzteDruckZeit = 0;
 	RegelblockAktiv = false;
 	InRegelblock = false;
-	uint8_t Flags = MCUSR;
-	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), Flags);
-	MCUSR = 0;
 	}
 	
 
