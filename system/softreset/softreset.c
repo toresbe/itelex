@@ -37,8 +37,9 @@ void wdt_init(void)
 #if defined(__AVR_XMEGA__)
 	wdt_reset();
 #else
-	//MCUSR = 0;
+	MCUSR &= ~(1<<WDRF);
     wdt_disable();
 #endif	
     return;
 }
+

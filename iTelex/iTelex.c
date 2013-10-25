@@ -2088,6 +2088,121 @@ static void SendeStopkommando(PGM_P s)
 
 const char* RufnrServerAdr_P[]; // Vorwärts-Deklaration
 
+
+/* Liste der Dienstkürzel
+=========================
+abs	Teilnehmer abwesend, Anlage abgeschaltet
+bk	ich trenne
+cfm	bitte bestätigen Sie oder ich bestätige
+col	bitte vergleichen Sie oder ich vergleich
+crv	wie empfangen Sie?
+der	gestört
+der a	Apparat gestört
+der bk	Störung, ich trenne
+der cct	Übertragungsweg gestört
+der mom	Störung, schalten Sie nicht ab, wir prüfen die Verbindung
+df	Sie sind mit dem verlangten Teilnehmer verbunden
+dif	verschieden (Differenz)
+ya	Sie können übermitteln oder kann ich übermitteln?
+inf	Teilnehmer ist vorübergehend nicht zu erreichen, wenden
+	Sie sich an die Auskunft.
+ltr	Buchstabe(n)
+min	Minute(n)
+mom	bitte warten
+mut	entstellt
+na	Verkehr mit diesem Teilnehmer nicht zulässig
+nadbo	werden nachforschen und berichten
+nc	keine Leitung frei
+nch	Telex-Nummer des Teilnehmers hat sich geändert
+ndr	keine Störung festgestellt
+np	der Verlangte ist nicht oder nicht mehr im Telex-Teilnehmer
+nr	geben Sie Ihre Telex-Rufnummer an oder meine Telex-Ruf-
+	nummer ist ...
+occ	Teilnehmer besetzt
+oftug	Kabelverbindung unterbrochen
+ofvat	Kabelverbindung wieder hergestellt
+ohfop	Verbindung ist wieder hergestellt
+ok	einverstanden
+p	(mehrmals) stellen Sie bitte Ihre Übermittlung ein. bei Telex-Verbindun-
+oder Ziffer	0 gen über Funkwege im Telex-Verzeichnis mit (*) Stern ge-
+(mehrmals) 	kennzeichnet, nicht anwendbar
+ppr	Papier
+r	erhalten
+rap	ich werde Sie wieder anwählen
+rpt	bitte wiederholen Sie oder ich wiederhole
+rpt aa	alles nach ...
+rpt ab	alles vor
+rpt all	die vollständige Nachricht
+rpt wa	Wort nach ...
+rpt wb	wort vor ...
+svp	bitte
+tax	wie hoch sit die Gebühr oder die Gebühr beträgt ...
+test msg	bitte senden Sie einen Prüftext
+thru	Sie sind mit einem Telex-Platz verbunden
+tpr	Fernschreiber
+vejar	werden Erforderliches veranlassen
+wd	Wort (Wörter) oder Gruppe(n)
+wru	wer ist da?
+xxxxx	Irrung
+yabom	Teilnehmer hat Störung, bitte später anrufen
+yabvu	Teilnehmer war mehrmals besetzt
+yagym	Teilnehmer ist besetzt, bitte später anrufen
+yahet	Teilnehmer ist nicht gestört, bitte rufen Sie wieder
+yalim	Telex-Teilnehmer hat neue Rufnummer; neue Rufnummer
+	ist ...
+yapog	können Teilnehmer nicht erreichen, bitte prüfen Sie nach
+	Kennzeichen für das Ende einer Fernschreibnachricht, wenn
+	weitere Fernschreibnachrichten noch folgen, bzw. Kennzei-
+	chen für das Ende eines Telegramms
++?	Ende der Übermittlung, wollen Sie übermitteln?
+++	Kennzeichen für das Ende einer Fernschreib- bzw. Tele-
+	gramm-Übermittlung
+
+*/
+
+
+//! Wird aufgerufen, wenn in der Wählphase ein Fehler auftritt (besetzt oder ähnlich)
+//-----------------------------------------------------------------------------------
+static void WahlAbbruchMeldung(char *msg)
+	{
+	if (LangeDienstmeldungen)
+		{
+		if (strncmp_P(msg, PSTR("occ"), 3) == 0)
+			Diagnoseausgabe_P(ISTR(TeilnehmerBesetzt, LokaleSprache), 3);
+		else if (strncmp_P(msg, PSTR("nc"), 2) == 0)
+			Diagnoseausgabe_P(ISTR(TeilnehmerNichtErreichbar, LokaleSprache), 3);
+		else if (strncmp_P(msg, PSTR("na"), 2) == 0)
+			Diagnoseausgabe_P(ISTR(TeilnehmerNichtErlaubt, LokaleSprache), 3);
+		else if (strncmp_P(msg, PSTR("der"), 3) == 0)
+			Diagnoseausgabe_P(ISTR(TeilnehmerGestoert, LokaleSprache), 3);
+		else if (strncmp_P(msg, PSTR("abs"), 3) == 0)
+			Diagnoseausgabe_P(ISTR(TeilnehmerAbgeschaltet, LokaleSprache), 3);
+		else if (strncmp_P(msg, PSTR("bk"), 2) == 0)
+			Diagnoseausgabe_P(ISTR(VerbindungGetrennt, LokaleSprache), 3);
+		else			
+			{
+			if (Diagnoseausgabe_P(ISTR(SonstigeMeldung, LokaleSprache), 3))
+				strcat(DiagnosePuffer, msg);
+			}
+		} // if LangeDienstmeldungen
+	else // !LangeDienstmeldungen
+		{
+		int alen = strlen(AsciiDruckPuffer);
+		if (strlen(msg) + alen < AsciiDruckPufferMax - 10) // Daten passen noch in den Puffer...
+			{
+			strcat_P(AsciiDruckPuffer, PSTR("\r\r\r\n"));
+			alen = strlen(AsciiDruckPuffer);
+			strcpy(AsciiDruckPuffer + alen, msg);
+			strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
+			if (Modus == ModGehendWaehlen)
+				{ 
+				BusSenden(BusQuittEin);
+				ModusWechsel(ModPufferDruckUndSchluss);
+				}
+			}
+		} // else !LangeDienstmeldungen
+	} // WahlAbbruchMeldung()
+	
 	
 //! Bearbeitet Telegramme mit Daten für Fernkonfiguration
 //-------------------------------------------------------
@@ -2194,9 +2309,9 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 							ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
 						else
 							{ 
-							//! \todo Abweisen
-							Durchwahl = 0;
-							ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
+							SendeStopkommando(PSTR("na")); //! \todo Test
+							iTelexSocketAbbauGeplant = true;
+							ModusWechsel(ModWarteGrundstellung);
 							}
 							
 						}
@@ -2221,9 +2336,9 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
 					else
 						{ 
-						//! \todo Abweisen
-						Durchwahl = 0;
-						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
+						SendeStopkommando(PSTR("na")); //! \todo Test
+						iTelexSocketAbbauGeplant = true;
+						ModusWechsel(ModWarteGrundstellung);
 						}
 					}
 				i += 2 + (uint8_t) SocketInBuf[i+1];
@@ -2279,10 +2394,9 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 			else if (c == ITELEXC_STOP || c == ITELEXC_ENDE)
 				{
 				uint8_t len = SocketInBuf[i+1];
-				if (i + 2 + len == SocketInBufUsed - 1)
-					len++;
-					// dies ist implementiert, weil alte i-Telex-Versionen eine zu kurze Länge senden.
-					//! \todo dies noch mal überprüfen!
+				if (i + 2 + len > SocketInBufUsed)
+					len = SocketInBufUsed - i - 2;
+					// dies ist implementiert, weil alte i-Telex-Versionen einen zu kurzen Datenblock sendeten.
 
 				if (len > 0)
 					{
@@ -2299,6 +2413,15 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						ProtokollierenITelex_P(PSTR("Abbaubefehl von Gegenstelle\r\n"));
 					}
 
+				if (len > 0)
+					{
+					char Buf[11];
+					uint8_t msglen = (len < 10) ? len : 10;
+					strncpy(Buf, SocketInBuf + i + 2, msglen);
+					Buf[msglen] = '\0';
+					WahlAbbruchMeldung(Buf);
+					}
+					
 				i += 2 + len;
 					
 				InterneVerbindungBeenden(true);
@@ -3528,7 +3651,8 @@ void itelex_thread()
 		// -> Wahl-Schritt 3c)
 		WahlVerbAufbauNach5SekundenVersuchen = false; // nur ein Mal...
 		if (Verbindungsaufbau(&GewaehlterTln) == 2)
-			{ // ungültige Daten -> Abbruch
+			{ // ungültige Daten oder e-Mail gestört -> Abbruch
+			WahlAbbruchMeldung("der"); 
 			InterneVerbindungBeenden(true);
 			}
 		}
@@ -3538,6 +3662,7 @@ void itelex_thread()
 		{ // 15 Sekunden Wahlpause --> Wahl-Schritt 4b)
 		if (ProtokollLevel >= NurFehler)
 			ProtokollierenITelex_P(PSTR("* 15 Sekunden nicht gewaehlt, Abbruch\r\n" ));
+		WahlAbbruchMeldung("bk");
 		InterneVerbindungBeenden(true);
 			//! \todo TEST
 		}
@@ -3965,7 +4090,8 @@ void itelex_thread()
 				case TLNSERV_AUSKUNFT_NICHTVERG:
 					if (ProtokollLevel >= AblaufInfo)
 						ProtokollierenITelex_P(PSTR("Teilnehmer-Server meldet 'nicht gefunden'\r\n" ));
-					Diagnoseausgabe_P(ISTR(NummerNichtBekannt, LokaleSprache), 3);
+					Diagnoseausgabe_P(ISTR(NummerNichtBekannt, LokaleSprache), 3); //! \todo Nur bei "langen" Meldungen.
+
 					break;
 					
 				case TLNSERV_AUSKUNFT_VERSION1:
@@ -4017,7 +4143,7 @@ void itelex_thread()
 							Diagnoseausgabe_P(ISTR(InternesVerzeichnisVoll, LokaleSprache), 2);
 							}
 #ifdef ITELEX_TLNSERVER							
-						else if (Res > 0) // Erfolg, denn Meldung 2 kann hier nicht kommen.
+						else if (Res == 1) // Erfolg, denn Meldung 2 kann hier nicht kommen.
 							{
 							TlnServTlnbuchEintragGeaendert(&GewaehlterTln, -1); 
 								// -1: Geänderter Eintrag kommt nicht durch einen Sync-Vorgang 
@@ -4093,7 +4219,7 @@ void itelex_thread()
 			// eine Antwort genügt...
 			CloseTCPSocket(TeilnehmerServerSocket);
 			TeilnehmerServerSocket = NO_SOCKET_USED;
-			}
+			} // if (InCount = GetBytesInSocketData(TeilnehmerServerSocket)) > 0
 		
 		// Schließanforderung vom Teilnehmer-Server?
 		if (CheckSocketState(TeilnehmerServerSocket) == SOCKET_NOT_USE)
@@ -5247,7 +5373,6 @@ void itelex_init()
 	
 	ProtokollInit();
 	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);
-	
 
 	DiagnosePuffer[0] = '\0';
 	DiagnosePufferLevel = 0;

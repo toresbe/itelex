@@ -24,7 +24,9 @@
 #include "Protokoll.h"
 #include "iTelex.h"
 
-#include "StringTab.h" //!\todo Umstellung noch nicht erfolgt, da Umstellung nur selten eintretende Diagnosedrucke betrifft.
+#include "StringTab.h" 
+	//!\todo Umstellung noch nicht erfolgt, da Umstellung nur selten eintretende 
+	//! Diagnosedrucke betrifft, die nur bei Benutzung der SD-Karte erscheinen.
 
 
 enum { MaxProtPuffer = 512 }; //!< Länge des Protokoll-Puffers
