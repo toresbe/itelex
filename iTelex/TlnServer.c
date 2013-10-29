@@ -765,7 +765,25 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					Senden = true;
 					}
 				break; // TlnServBuf.Code == TLNSERV_SYNC_VOLLABFRAGE
-				
+
+			case TLNSERV_SUCHE:
+				if (TlnServBuf.DataLen < sizeof(TlnServBuf.TlnSuche))
+					{
+					FehlerRueckmelden(PSTR("search not enough data: %u"), TlnServBuf.DataLen);
+					Senden = true;
+					}
+				else
+					{
+					Kanal->AusgabeStichdatum = 0; // = alle 
+					Kanal->AusgabeGestartet = false; // wird aber gleich gestartet
+					Kanal->Freigabe = false; // sicherheitshalber
+					strncpy(Kanal->SuchMuster, TlnServBuf.TlnSuche.SuchMuster, TlnNameMax);
+					Kanal->SuchMuster[TlnNameMax-1] = '\0'; // begrenzen
+					TlnDatensatzSyncSenden(Kanal);
+					Senden = true;
+					}
+				break; // TlnServBuf.Code == TLNSERV_SUCHE
+			
 			case TLNSERV_SYNC_ANMELDUNG:
 				if (TlnServBuf.DataLen < sizeof(TlnServBuf.SyncAnmeldung))
 					{
@@ -857,7 +875,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 			case TLNSERV_IPRUECKMELD: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			case TLNSERV_AUSKUNFT_NICHTVERG: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			default:
-				FehlerRueckmelden(PSTR("unknown code %02X "), TlnServBuf.Code);
+				FehlerRueckmelden(PSTR("unknown code %02X"), TlnServBuf.Code);
 				Senden = true;
 				break; // TlnServBuf.Code ist was anderes.
 

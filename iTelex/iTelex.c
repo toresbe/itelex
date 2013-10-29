@@ -4738,6 +4738,11 @@ void itelex_cgi_debug( void * pStruct )
 		uint16_t Mess = ADC;
 		if (Mess == 0)
 			Mess = 1;
+		// zur Messung der 5V:
+		// ADC = Vin * 1024 / Vref
+		// Vin = 1,1 V
+		// Vref = 5 V (zu messen)
+		// Vref (mV) = Vin * 1024 / ADC = 1100 * 1024 / Vref.
 		printf_P(PSTR(" %lu"), 1100UL * 1024UL / Mess);
 		}
 				  
