@@ -2190,6 +2190,14 @@ yapog	können Teilnehmer nicht erreichen, bitte prüfen Sie nach
 //-----------------------------------------------------------------------------------
 static void WahlAbbruchMeldung(char *msg)
 	{
+	if (ProtokollLevel >= AblaufInfo)
+		{
+		ProtokollierenITelex();
+		Protokollieren_P(PSTR("WahlAbbruchMeldung <"));
+		ProtokollierenPuffer(msg, strlen(msg));
+		Protokollieren_P(PSTR(">\r\n"));
+		}
+	
 	if (LangeDienstmeldungen)
 		{
 		if (strncmp_P(msg, PSTR("occ"), 3) == 0)
@@ -4286,7 +4294,10 @@ void itelex_thread()
 							Diagnoseausgabe_P(NULL, 3);
 						
 						else // nicht erfolgreich
+							{
+							WahlAbbruchMeldung("nc");
 							InterneVerbindungBeenden(true); // Wahl-Schritt 4a)
+							}
 						}
 						
 					break; // case TLNSERV_AUSKUNFT_VERSION1

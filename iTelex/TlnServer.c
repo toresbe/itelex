@@ -875,7 +875,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 			case TLNSERV_IPRUECKMELD: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			case TLNSERV_AUSKUNFT_NICHTVERG: // ist ein Fehler, da dieses Telegramm nur eine Antwort des Servers sein kann.
 			default:
-				FehlerRueckmelden(PSTR("unknown code %02X"), TlnServBuf.Code);
+				FehlerRueckmelden(PSTR("unknown code %02X "), TlnServBuf.Code);
 				Senden = true;
 				break; // TlnServBuf.Code ist was anderes.
 
