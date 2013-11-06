@@ -131,8 +131,8 @@ _STRTABENTRY(VollstaendigesTeilnehmerverzeichnis, "zeige vollst&auml;ndiges Verz
 _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 	"<tr>"
-	"<th align=\"left\">Rufnummer<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=nummer\">auf</a> <a href=\"itelex-tlnverz.cgi?sort=nummer&ab\">ab</a></th>" // Nummer
-	"<th align=\"left\">Name<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=name\">auf</a> <a href=\"itelex-tlnverz.cgi?sort=name&ab\">ab</a></th>" // Name
+	"<th align=\"left\">Rufnummer<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=nummer\">1-9</a> <a href=\"itelex-tlnverz.cgi?sort=nummer&ab\">9-1</a></th>" // Nummer
+	"<th align=\"left\">Name<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=name\">A-Z</a> <a href=\"itelex-tlnverz.cgi?sort=name&ab\">Z-A</a></th>" // Name
 	"<th align=\"center\">Besond.</th>" // Flags
 	"<th align=\"left\">Typ</th>" // Typ
 	"<th align=\"left\">Adresse</th>" // Adresse
@@ -143,14 +143,14 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"</tr>", 
 	"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 	"<tr>"
-	"<th align=\"left\">Number<br>sort <a href=\"itelex-tlnverz.cgi?sort=nummer\">up</a> <a href=\"itelex-tlnverz.cgi?sort=nummer&ab\">down</a></th>" // Nummer
-	"<th align=\"left\">Name<br>sort <a href=\"itelex-tlnverz.cgi?sort=name\">up</a> <a href=\"itelex-tlnverz.cgi?sort=name&ab\">down</a></th>" // Name
+	"<th align=\"left\">Number<br>sort <a href=\"itelex-tlnverz.cgi?sort=nummer\">1-9</a> <a href=\"itelex-tlnverz.cgi?sort=nummer&ab\">9-1</a></th>" // Nummer
+	"<th align=\"left\">Name<br>sort <a href=\"itelex-tlnverz.cgi?sort=name\">A-Z</a> <a href=\"itelex-tlnverz.cgi?sort=name&ab\">Z-A</a></th>" // Name
 	"<th align=\"center\">Specials</th>" // Flags
 	"<th align=\"left\">Type</th>" // Typ
 	"<th align=\"left\">Address</th>" // Adresse
 	"<th align=\"center\">Port</th>" // Port
 	"<th align=\"center\">Direct dial</th>" // Durchwahl
-	"<th align=\"center\">Updated<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">up</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">down</a></th>" // Datum / Uhrzeit
+	"<th align=\"center\">Updated<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">asc.</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">desc.</a></th>" // Datum / Uhrzeit
 	"<th align=\"left\">Action</th>" // in dieser Spalte sind die Buttons
 	"</tr>")
 	
