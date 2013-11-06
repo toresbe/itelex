@@ -493,7 +493,6 @@ void ProtokollInit()
 	LetzteDruckZeit = 0;
 	RegelblockAktiv = false;
 	InRegelblock = false;
-	Protokollieren("Neustart\r\n");
 	}
 	
 

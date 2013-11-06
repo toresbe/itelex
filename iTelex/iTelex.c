@@ -113,6 +113,17 @@ enum {
 	} ;
 	
 	
+/* Mustertelegramme zur Übernahme in FsTelnet (MFC-Programm)
+
+	Text1 = _T("07 01 02 01 01 00");                       // Protokoll und Durchwahl
+	Text2 = _T("02 0b 1f 02 08 16 0a 10 12 04 18 13 04");  // Text
+	Text3 = _T("02 02 1b 12");                             // Kennungsabfrage
+	Text4 = _T("00 00");                                   // Füllzeichen
+	Text5 = _T("03 00");                                   // Ende
+
+*/
+	
+
 #define PROTVERSION_AKTUELL 1
 	//!< Aktuelle = beste Protokollversion
 
@@ -521,7 +532,10 @@ uint8_t DiagnoseAusgabeZiel;
 	
 	
 static struct TIME SystemStartZeit;
-	//! Speichert Uhrzeit des Systemstarts, nur für Diagnose
+	//!< Speichert Uhrzeit des Systemstarts, nur für Diagnose
+	
+static uint8_t ResetFlags;
+	//!< Speichert Ursache des letzten Reset.
 	
 	
 TTastendruck Tastendruck;
@@ -2407,7 +2421,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 				uint8_t len = SocketInBuf[i+1];
 				if (i + 2 + len > SocketInBufUsed)
 					len = SocketInBufUsed - i - 2;
-					// dies ist implementiert, weil alte i-Telex-Versionen eine zu kurze Länge senden.
+					// dies ist implementiert, weil alte i-Telex-Versionen einen zu kurzen Datenblock sendeten.
 
 				if (len > 0)
 					{
@@ -3504,7 +3518,7 @@ void itelex_thread()
 						
 						StartKurzTimer(&WahlPauseTimer); 
 							// nochmal, damit Verzögerungen bei Serverabfrage oder so nicht zu vorzeitigem Abbruch führen.
-						}
+						} // else es war keine 0 als erster Stelle
 					} // if Modus == ModGehendWaehlen
 					
 				else
@@ -3594,7 +3608,7 @@ void itelex_thread()
 	if (iTelexSocketMode == SocketIdle)
 		{
 		if (Modus == ModGehendVerbunden
-			|| Modus == ModKommendVerbunden)
+			|| (Modus >= ModKommendVerbVorstufe && Modus <= ModKommendVerbunden))
 			{
 			InterneVerbindungBeenden(false);
 			}
@@ -3813,6 +3827,7 @@ void itelex_thread()
 			ProtokollierenITelex_P(PSTR("* 15 Sekunden nicht gewaehlt, Abbruch\r\n" ));
 		WahlAbbruchMeldung("bk");
 		InterneVerbindungBeenden(true);
+			//! \todo TEST
 		}
 		
 	if (Modus == ModWarteSchlussQuitt && KurzTimerVal(&BusQuittTimer) > 3 * KurzTimerFreq)
@@ -4404,7 +4419,7 @@ void itelex_thread()
 				
 				} // switch (TSB.Code)
 				
-			// in der Wahlphase genügt eine Antwort genügt...
+			// in der Wahlphase genügt eine Antwort...
 			if (Modus != ModNamensucheServerAbfrage)
 				{
 				CloseTCPSocket(TeilnehmerServerSocket);
@@ -4726,11 +4741,11 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(DynIPAktualisierungEndzeit);
 
 	PRINTVAL(SelbstAnrufPhase);
+	PRINTVAL(SelbstAnrufFehlerZaehler);
 	PRINTVAL(KurzTimerVal(&SelbstAnrufTimer));
 	PRINTVAL(SelbstAnrufSocketHandle);
 	PRINTVAL(SelbstAnrufSendePruefwert);
 	PRINTVAL(SelbstAnrufEmpfangPruefwert);
-	PRINTVAL(SelbstAnrufFehlerZaehler);
 	
 	printf_P(PSTR("<br>SelbstAnrufZeitUeberwachung: "));
 	printf(ZeitUeberwachungAusgabe(&SelbstAnrufZeitUeberwachung));
@@ -4773,10 +4788,32 @@ void itelex_cgi_debug( void * pStruct )
 
 #endif // ITELEX_ANSCHLUSS
 
+		
 	CLOCK_decode_time(&SystemStartZeit);
-	printf_P(PSTR("<br>SystemStartZeit = %02u.%02u.%04u %02d:%02d:%02d"), SystemStartZeit.DD, SystemStartZeit.MM, SystemStartZeit.YY,
-				  SystemStartZeit.hh, SystemStartZeit.mm, SystemStartZeit.ss);
-	
+	printf_P(PSTR("<br>SystemStartZeit = %02u.%02u.%04u %02d:%02d:%02d, ResetFlag = %02X"), SystemStartZeit.DD, SystemStartZeit.MM, SystemStartZeit.YY,
+				  SystemStartZeit.hh, SystemStartZeit.mm, SystemStartZeit.ss, ResetFlags);
+
+	// 5 V messen:
+	ADCSRA = (1<<ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
+	ADMUX = (0 << REFS1) | (1 << REFS0) | (0 << ADLAR) | (1 << MUX4) | (1 << MUX3) | (1 << MUX2) | (1 << MUX1) | (0 << MUX0);
+	ADCSRB = 0;
+	printf_P(PSTR("<br> VCC [mV] ="));
+	for (uint8_t i = 0 ; i < 10 ; i++)
+		{
+		ADCSRA |= (1 << ADSC); // Start
+		while (BIT_IS_SET(ADCSRA, ADSC))
+			; // warten bis A/D-Wandlung fertig.
+		uint16_t Mess = ADC;
+		if (Mess == 0)
+			Mess = 1;
+		// zur Messung der 5V:
+		// ADC = Vin * 1024 / Vref
+		// Vin = 1,1 V
+		// Vref = 5 V (zu messen)
+		// Vref (mV) = Vin * 1024 / ADC = 1100 * 1024 / Vref.
+		printf_P(PSTR(" %lu"), 1100UL * 1024UL / Mess);
+		}
+				  
 	printf_P(PSTR("<br><a href=\"itelex-debug.cgi?reset\">Statiktik-Daten zur&uuml;cksetzen</a>"
 				  "<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , 
 				  ByteCounter, PacketCounter, eth_state_error );
@@ -5555,12 +5592,16 @@ void cgi_SdDirectory(void *pStruct)
 
 void itelex_init()
 	{
+	ResetFlags = MCUSR; // was war die Ursache des letzten Reset?
+	MCUSR = 0;
+	
 	init_Taste();
 	init_RTS();
 	init_CTS();
 	init_IspResetOut();
 	
 	ProtokollInit();
+	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);
 
 	DiagnosePuffer[0] = '\0';
 	DiagnosePufferLevel = 0;
