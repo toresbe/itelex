@@ -5568,17 +5568,29 @@ static void RamHexdump(bool LastReset)
 			uint8_t h;
 			p = (uint8_t*) (address + i);
 		
+			uint8_t SregTemp = SREG;
+			
 			if (LastReset)
+				{
+				cli();
 				PORTD |= ( 1<<PD7 );
+				}
 				
 			h = *p;
 			
 			PORTD &= ~( 1<<PD7 );
 			
+			SREG = SregTemp;
+			
 			Buf[i] = h;
+			
 			}
 			
 		IntelHexWriteLine(0, address, Blocklen, Buf);
+		
+		if (address >= 0xffff - Blocklen)
+			break; // da der normale Abbruch der for-Anweisung nie wirkt.
+		
 		}
 	IntelHexWriteLine(1, 0, 0, NULL);
 	}
