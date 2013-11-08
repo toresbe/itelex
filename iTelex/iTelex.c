@@ -5550,9 +5550,9 @@ static void IntelHexWriteLine(uint8_t Type, uint16_t Address, uint8_t Len, uint8
 	
 //! Gibt den Speicherinhalt des XRAM in eine Intel-HEX-Datei aus.
 //---------------------------------------------------------------
-//! \par LastReset bei true wird die "zweite" Seite ausgegeben, die
-//! vor dem RAM-Test (bei Reset) ausgeführt in die zweite Seite 
-//! gerettet wird.
+//! \par LastReset bei true wird die "zweite" Seite ausgegeben: Vor dem 
+//! RAM-Test (nach Reset) wird der vorgefundene Speicherinhalt in die 
+//! "zweite Seite" des externen RAM gerettet wird.
 static void RamHexdump(bool LastReset)
 	{
 	enum { Blocklen = 16 };
@@ -5596,8 +5596,8 @@ static void RamHexdump(bool LastReset)
 	}
 		
 
-//! Erzeugt Inhaltsverzeichnis der SD-Karte als HTML-Seite.
-//---------------------------------------------------------
+//! Wird bei Abruf von "memdump.hex" aufgerufen.
+//----------------------------------------------
 void cgi_MemDump(void *pStruct)
 	{
 	struct HTTP_REQUEST * http_request;
@@ -5607,6 +5607,28 @@ void cgi_MemDump(void *pStruct)
 		RamHexdump(false); // den aktuellen RAM Inhalt speichern
 	else
 		RamHexdump(true); // den RAM Inhalt vor dem letzten Reset speichern.
+	}
+	
+	
+//! Hält für Debugging-Zwecke den Stackpointer fest
+volatile uint16_t DebugSP;
+
+
+//! Rettet beim Watchdog-Reset den Stack, PC und Stackpointer...
+ISR(WDT_vect)
+	{
+	uint16_t Size;
+	
+	cli();
+	wdt_reset();
+	
+	DebugSP = SP;
+	Size = RAMEND - DebugSP;
+	memcpy((void*) (RAMEND - Size), (void*) DebugSP, Size);
+	
+	while (true)
+		; // hier kommt es dann zum nächsten Watchdog-Timerüberlauf, der dann einen Reset macht.
+	
 	}
 	
 
@@ -5794,6 +5816,7 @@ void itelex_init()
 		return;
 
 	wdt_enable(WDTO_250MS);  
+	WDTCSR |= (1 << WDIE); // Interrupt-Mode auch aktivieren, somit Modus Interrupt + Reset aktiv
 		// in itelex_timerEvent wird wdt_reset() ausgefährt.
 	
 	StartKurzTimer(&ITelexThreadCheckTimer);
