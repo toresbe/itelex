@@ -188,6 +188,12 @@ volatile uint16_t LangTimerVorteilerCnt;
 static TKurzTimer ITelexThreadCheckTimer;
 	//!< Prüft, ob die Funktion void itelex_thread() ausreichend häufig aufgerufen wird.
 
+//! Für den Test des Watchdogs.
+static TKurzTimer WatchdogTestTimer;
+
+//! Für einen Test des Watchdogs.
+static uint16_t WatchdogTestTimerEnde;
+
 
 #ifdef ITELEX_ANSCHLUSS
 
@@ -763,7 +769,8 @@ void itelex_timerEvent(void)
 			}
 		}
 		
-	wdt_reset();
+	if (WatchdogTestTimerEnde == 0 || KurzTimerVal(&WatchdogTestTimer) < WatchdogTestTimerEnde)
+		wdt_reset();
 	
 	if (KurzTimerVal(&ITelexThreadCheckTimer) > 90 * KurzTimerFreq) // nach 90 Sekunden Reset
 		{ 
@@ -4620,6 +4627,12 @@ void itelex_cgi_debug( void * pStruct )
 		TwiIsrCount = 0;
 		}
 	
+	if (http_request->argc != 0 && PharseCheckName_P(http_request, PSTR("watchdogtest")) != 0)
+		{ // Watchdog-Reset verursachen nach 20 sekunden.
+		StartKurzTimer(&WatchdogTestTimer);
+		WatchdogTestTimerEnde = 20 * KurzTimerFreq; //! \todo einstellbar...
+		}
+	
 	cgi_PrintHttpheaderStart();
 
 #define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %u"), Var)
@@ -5614,7 +5627,7 @@ void cgi_MemDump(void *pStruct)
 volatile uint16_t DebugSP;
 
 
-//! Rettet beim Watchdog-Reset den Stack, PC und Stackpointer...
+//! Rettet beim Watchdog-Reset den Stack und Stackpointer...
 ISR(WDT_vect)
 	{
 	uint16_t Size;
@@ -5643,6 +5656,8 @@ void itelex_init()
 	{
 	ResetFlags = MCUSR; // was war die Ursache des letzten Reset?
 	MCUSR = 0;
+	
+	WatchdogTestTimerEnde = 0;
 	
 	init_Taste();
 	init_RTS();
