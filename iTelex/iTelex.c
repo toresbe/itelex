@@ -4774,6 +4774,8 @@ void itelex_cgi_debug( void * pStruct )
 				  "<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld") , 
 				  ByteCounter, PacketCounter, eth_state_error );
 
+	PRINTVALHEX(SP);
+				  
 	printf_P(PSTR("<br><a href=\"memdump.hex\">RAM-Inhalt vor dem letzten Reset</a>"));
 	
 	cgi_PrintHttpheaderEnd();
@@ -5635,13 +5637,21 @@ ISR(WDT_vect)
 	cli();
 	wdt_reset();
 	
-	DebugSP = SP;
-	Size = RAMEND - DebugSP;
-	memcpy((void*) (RAMEND - Size), (void*) DebugSP, Size);
+	LED_on(ROT);
+	LED_on(GELB);
+	LED_on(GRUEN);
 	
-	while (true)
+	DebugSP = SP;
+	Size = 0x2200 - DebugSP;
+	memcpy((void*) (0xFFFF - 2 - Size), (void*) DebugSP, Size);
+	
+	while (DebugSP != 0)
 		; // hier kommt es dann zum nächsten Watchdog-Timerüberlauf, der dann einen Reset macht.
 	
+	// der folgende Programmcode hat nur den Zweck, im Simulatior das Stack-Abbild zurück zu kopieren.
+	SP = DebugSP;
+	Size = 0x2200 - DebugSP;
+	memcpy((void*) DebugSP, (void*) (0xFFFF - 2 - Size), Size);
 	}
 	
 
