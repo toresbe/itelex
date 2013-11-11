@@ -5642,16 +5642,18 @@ ISR(WDT_vect)
 	LED_on(GRUEN);
 	
 	DebugSP = SP;
-	Size = 0x2200 - DebugSP;
-	memcpy((void*) (0xFFFF - 2 - Size), (void*) DebugSP, Size);
+	Size = 0x21FF - DebugSP; 
+	memcpy((void*) (0x10000 - Size), (void*) (DebugSP + 1), Size);
+		// Der genutzte Stack-Bereich beginnt erst bei SP+1, da ein PUSH erst die Daten nach
+		// SP kopiert und danach SP dekrementiert wird.
 	
 	while (DebugSP != 0)
 		; // hier kommt es dann zum nächsten Watchdog-Timerüberlauf, der dann einen Reset macht.
 	
-	// der folgende Programmcode hat nur den Zweck, im Simulatior das Stack-Abbild zurück zu kopieren.
+	// der folgende Programmcode hat nur den Zweck, im Simulator das Stack-Abbild zurück zu kopieren.
 	SP = DebugSP;
-	Size = 0x2200 - DebugSP;
-	memcpy((void*) DebugSP, (void*) (0xFFFF - 2 - Size), Size);
+	Size = 0x21FF - DebugSP;
+	memcpy((void*) (DebugSP + 1), (void*) (0x10000 - Size), Size);
 	}
 	
 
