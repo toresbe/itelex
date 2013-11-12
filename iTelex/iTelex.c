@@ -5643,17 +5643,20 @@ ISR(WDT_vect)
 	
 	DebugSP = SP;
 	Size = 0x21FF - DebugSP; 
-	memcpy((void*) (0x10000 - Size), (void*) (DebugSP + 1), Size);
+	memcpy((void*) (0xFFFF - Size + 1), (void*) (DebugSP + 1), Size);
 		// Der genutzte Stack-Bereich beginnt erst bei SP+1, da ein PUSH erst die Daten nach
 		// SP kopiert und danach SP dekrementiert wird.
+		// "0xFFFF - Size + 1" statt "0x10000 - Size" damit nur mit 16 Bit gerechnet wird.
+		// Ergebnis: Wenn Size == 1 wird das einzige zu kopierende Byte von 21FF nach FFFF kopiert.
 	
 	while (DebugSP != 0)
 		; // hier kommt es dann zum nächsten Watchdog-Timerüberlauf, der dann einen Reset macht.
 	
 	// der folgende Programmcode hat nur den Zweck, im Simulator das Stack-Abbild zurück zu kopieren.
-	SP = DebugSP;
+	// ----------------------------------------------------------------------------------------------
+	SP = DebugSP; // Bei dieser Anweisung den Debugger starten, nachdem memdump.hex ins Extended RAM kopiert wurde.
 	Size = 0x21FF - DebugSP;
-	memcpy((void*) (DebugSP + 1), (void*) (0x10000 - Size), Size);
+	memcpy((void*) (DebugSP + 1), (void*) (0xFFFF - Size + 1), Size);
 	}
 	
 
@@ -5858,7 +5861,7 @@ void itelex_init()
 	cgi_RegisterCGI( itelex_cgi_config_extern, PSTR("itelexcfg-extern.cgi"));
 	cgi_RegisterCGI( itelex_cgi_config_sperren, PSTR("itelexcfg-sperren.cgi"));
 	cgi_RegisterCGI( itelex_cgi_debug, PSTR("itelex-debug.cgi"));
-	cgi_RegisterCGI( cgi_MemDump, PSTR("memdump.hex"));
+	cgi_RegisterCGI( cgi_MemDump, PSTR("memdump.hex")); //! \todo Ist-Zustand und Abbild vor Reset.
 	
 #if defined(MMC)
 	cgi_RegisterCGI( cgi_SdDirectory, PSTR("sddir.cgi"));
