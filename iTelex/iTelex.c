@@ -188,6 +188,12 @@ volatile uint16_t LangTimerVorteilerCnt;
 static TKurzTimer ITelexThreadCheckTimer;
 	//!< Prüft, ob die Funktion void itelex_thread() ausreichend häufig aufgerufen wird.
 
+//! Für den Test des Watchdogs.
+static TKurzTimer WatchdogTestTimer;
+
+//! Für einen Test des Watchdogs.
+static uint16_t WatchdogTestTimerEnde;
+
 
 #ifdef ITELEX_ANSCHLUSS
 
@@ -763,7 +769,8 @@ void itelex_timerEvent(void)
 			}
 		}
 		
-	wdt_reset();
+	if (WatchdogTestTimerEnde == 0 || KurzTimerVal(&WatchdogTestTimer) < WatchdogTestTimerEnde)
+		wdt_reset();
 	
 	if (KurzTimerVal(&ITelexThreadCheckTimer) > 90 * KurzTimerFreq) // nach 90 Sekunden Reset
 		{ 
@@ -2190,6 +2197,14 @@ yapog	können Teilnehmer nicht erreichen, bitte prüfen Sie nach
 //-----------------------------------------------------------------------------------
 static void WahlAbbruchMeldung(char *msg)
 	{
+	if (ProtokollLevel >= AblaufInfo)
+		{
+		ProtokollierenITelex();
+		Protokollieren_P(PSTR("WahlAbbruchMeldung <"));
+		ProtokollierenPuffer(msg, strlen(msg));
+		Protokollieren_P(PSTR(">\r\n"));
+		}
+	
 	if (LangeDienstmeldungen)
 		{
 		if (strncmp_P(msg, PSTR("occ"), 3) == 0)
@@ -2466,7 +2481,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						BusSenden(BusKdoEin);
 						ModusWechsel(ModKommendWarteEinQuitt);
 						if (ProtokollLevel >= AblaufInfo)
-							{
+							{ //! \todo Test
 							ProtokollierenITelex();
 							ProtokollierenInt_P(PSTR("! spontane ??? Anwahl intern %u "), Durchwahl);
 							ProtokollierenInt_P(PSTR("verbunden mit %u\r\n"), BusVerbPartner >> 1);
@@ -3716,7 +3731,7 @@ void itelex_thread()
 
 #endif //def ITELEX_TLNSERVER
 					else
-						{
+						{ // Gerät ist nur normaler Teilnehmer, also jetzt Server-Anfrage starten.
 						if (TeilnehmerServerSocketOeffnen(PSTR("Namensuche")))
 							{ // Verbindung hergestellt.
 							// Telegramm senden
@@ -3827,7 +3842,6 @@ void itelex_thread()
 			ProtokollierenITelex_P(PSTR("* 15 Sekunden nicht gewaehlt, Abbruch\r\n" ));
 		WahlAbbruchMeldung("bk");
 		InterneVerbindungBeenden(true);
-			//! \todo TEST
 		}
 		
 	if (Modus == ModWarteSchlussQuitt && KurzTimerVal(&BusQuittTimer) > 3 * KurzTimerFreq)
@@ -4677,6 +4691,12 @@ void itelex_cgi_debug( void * pStruct )
 		TwiIsrCount = 0;
 		}
 	
+	if (http_request->argc != 0 && PharseCheckName_P(http_request, PSTR("watchdogtest")) != 0)
+		{ // Watchdog-Reset verursachen nach 20 sekunden.
+		StartKurzTimer(&WatchdogTestTimer);
+		WatchdogTestTimerEnde = 20 * KurzTimerFreq; //! \todo einstellbar...
+		}
+	
 	cgi_PrintHttpheaderStart();
 
 #define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %u"), Var)
@@ -4815,9 +4835,13 @@ void itelex_cgi_debug( void * pStruct )
 		}
 				  
 	printf_P(PSTR("<br><a href=\"itelex-debug.cgi?reset\">Statiktik-Daten zur&uuml;cksetzen</a>"
-				  "<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld\r\n") , 
+				  "<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld") , 
 				  ByteCounter, PacketCounter, eth_state_error );
 
+	PRINTVALHEX(SP);
+				  
+	printf_P(PSTR("<br><a href=\"memdump.hex\">RAM-Inhalt vor dem letzten Reset</a>"));
+	
 	cgi_PrintHttpheaderEnd();
 
 	ProtokollSpeichern(true);
@@ -5583,6 +5607,123 @@ void cgi_SdDirectory(void *pStruct)
 #endif //defined(MMC)
 	
 
+// folgende Funktionen könnten auch mal in eine Library...
+
+//! Gibt eine Zeile in eine Intel-HEX-Datei aus.
+//----------------------------------------------
+static void IntelHexWriteLine(uint8_t Type, uint16_t Address, uint8_t Len, uint8_t* pData)
+	{
+	uint8_t i;
+	uint8_t CheckSum;
+	
+	printf_P(PSTR(":%02X%04X%02X"), Len, Address, Type);
+	CheckSum = 0 - Type - (Address >> 8) - (Address & 0xFF) - Len; // Überlauf ist beabsichtigt.
+	for (i = 0 ; i < Len ; i++)
+		{
+		printf_P(PSTR("%02X"), pData[i]);
+		CheckSum -= pData[i]; // Überlauf ist beabsichtigt.
+		}
+	printf_P(PSTR("%02X\r\n"), CheckSum);
+	}
+	
+	
+//! Gibt den Speicherinhalt des XRAM in eine Intel-HEX-Datei aus.
+//---------------------------------------------------------------
+//! \par LastReset bei true wird die "zweite" Seite ausgegeben: Vor dem 
+//! RAM-Test (nach Reset) wird der vorgefundene Speicherinhalt in die 
+//! "zweite Seite" des externen RAM gerettet wird.
+static void RamHexdump(bool LastReset)
+	{
+	enum { Blocklen = 16 };
+	volatile uint8_t* p;
+	uint16_t address;
+	uint8_t Buf[Blocklen];
+	uint8_t i;
+
+	for (address = 0x2200 ; address < 0xffff ; address += Blocklen)
+		{
+		for (i = 0 ; i < Blocklen ; i++)
+			{
+			uint8_t h;
+			p = (uint8_t*) (address + i);
+		
+			uint8_t SregTemp = SREG;
+			
+			if (LastReset)
+				{
+				cli();
+				PORTD |= ( 1<<PD7 );
+				}
+				
+			h = *p;
+			
+			PORTD &= ~( 1<<PD7 );
+			
+			SREG = SregTemp;
+			
+			Buf[i] = h;
+			
+			}
+			
+		IntelHexWriteLine(0, address, Blocklen, Buf);
+		
+		if (address >= 0xffff - Blocklen)
+			break; // da der normale Abbruch der for-Anweisung nie wirkt.
+		
+		}
+	IntelHexWriteLine(1, 0, 0, NULL);
+	}
+		
+
+//! Wird bei Abruf von "memdump.hex" aufgerufen.
+//----------------------------------------------
+void cgi_MemDump(void *pStruct)
+	{
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+	
+	if (http_request->argc != 0 && PharseCheckName_P(http_request, PSTR("cur")))
+		RamHexdump(false); // den aktuellen RAM Inhalt speichern
+	else
+		RamHexdump(true); // den RAM Inhalt vor dem letzten Reset speichern.
+	}
+	
+	
+//! Hält für Debugging-Zwecke den Stackpointer fest
+volatile uint16_t DebugSP;
+
+
+//! Rettet beim Watchdog-Reset den Stack und Stackpointer...
+ISR(WDT_vect)
+	{
+	uint16_t Size;
+	
+	cli();
+	wdt_reset();
+	
+	LED_on(ROT);
+	LED_on(GELB);
+	LED_on(GRUEN);
+	
+	DebugSP = SP;
+	Size = 0x21FF - DebugSP; 
+	memcpy((void*) (0xFFFF - Size + 1), (void*) (DebugSP + 1), Size);
+		// Der genutzte Stack-Bereich beginnt erst bei SP+1, da ein PUSH erst die Daten nach
+		// SP kopiert und danach SP dekrementiert wird.
+		// "0xFFFF - Size + 1" statt "0x10000 - Size" damit nur mit 16 Bit gerechnet wird.
+		// Ergebnis: Wenn Size == 1 wird das einzige zu kopierende Byte von 21FF nach FFFF kopiert.
+	
+	while (DebugSP != 0)
+		; // hier kommt es dann zum nächsten Watchdog-Timerüberlauf, der dann einen Reset macht.
+	
+	// der folgende Programmcode hat nur den Zweck, im Simulator das Stack-Abbild zurück zu kopieren.
+	// ----------------------------------------------------------------------------------------------
+	SP = DebugSP; // Bei dieser Anweisung den Debugger starten, nachdem memdump.hex ins Extended RAM kopiert wurde.
+	Size = 0x21FF - DebugSP;
+	memcpy((void*) (DebugSP + 1), (void*) (0xFFFF - Size + 1), Size);
+	}
+	
+
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Initialisiert den iTelex-clinet und registriert den Port auf welchen dieser lauschen soll.
  * \param 	NONE
@@ -5594,6 +5735,8 @@ void itelex_init()
 	{
 	ResetFlags = MCUSR; // was war die Ursache des letzten Reset?
 	MCUSR = 0;
+	
+	WatchdogTestTimerEnde = 0;
 	
 	init_Taste();
 	init_RTS();
@@ -5767,6 +5910,7 @@ void itelex_init()
 		return;
 
 	wdt_enable(WDTO_250MS);  
+	WDTCSR |= (1 << WDIE); // Interrupt-Mode auch aktivieren, somit Modus Interrupt + Reset aktiv
 		// in itelex_timerEvent wird wdt_reset() ausgefährt.
 	
 	StartKurzTimer(&ITelexThreadCheckTimer);
@@ -5781,6 +5925,7 @@ void itelex_init()
 	cgi_RegisterCGI( itelex_cgi_config_extern, PSTR("itelexcfg-extern.cgi"));
 	cgi_RegisterCGI( itelex_cgi_config_sperren, PSTR("itelexcfg-sperren.cgi"));
 	cgi_RegisterCGI( itelex_cgi_debug, PSTR("itelex-debug.cgi"));
+	cgi_RegisterCGI( cgi_MemDump, PSTR("memdump.hex")); //! \todo Ist-Zustand und Abbild vor Reset.
 	
 #if defined(MMC)
 	cgi_RegisterCGI( cgi_SdDirectory, PSTR("sddir.cgi"));
