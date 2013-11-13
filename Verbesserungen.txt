@@ -1,3 +1,7 @@
+Ab Build 443:
+Namenssuche ("Auskunft")
+Zeichensatz-Dekodierung bei Emails verbessert.
+
 Ab Build 384:
 Sortierbare Teilnehmerliste
 Sommerzeit-Umstellung abschaltbar
@@ -6,11 +10,13 @@ Ab Build 378:
 Verbesserte Besetzt-Meldung bei kommenden Anrufen.
 
 Ab Build 363:
-Klingelzeichen durch % bei "Nachricht senden" oder ASCII-Verbindung
+Klingelzeichen durch % bei "Nachricht senden" oder ASCII-
+Verbindung
 Zweisprachig
 
 Ab Build 350:
-Druck von Datum und Uhrzeit (konfigurierbar) bei kommenden Verbindungen.
+Druck von Datum und Uhrzeit (konfigurierbar) bei kommenden
+Verbindungen.
 
 Ab Build 313:
 Teilnehmerliste kann verborgen werden
