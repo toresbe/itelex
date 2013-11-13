@@ -44,12 +44,18 @@ _STRTABENTRY(KeinTeilnehmerServerErreichbar,
 _STRTABENTRY(TeilnehmerServerWiederErreichbar, "Teilnehmer-Server wieder erreicht.", "Subscriber directory server available again.")
 _STRTABENTRY(KeineVerbindungZumMailServerAusgang, "Keine Verbindung zum Mail-Server fuer Ausgang", "No connection to server for outgoing mails")
 _STRTABENTRY(MailNichtInDieserVersion, "Mail in dieser Version nicht unterstuetzt", "Mail not supported in this version")
+_STRTABENTRY(TeilnehmerBesetzt, "Teilnehmer besetzt", "Subscriber busy")
 _STRTABENTRY(TeilnehmerNichtErreichbar, "Teilnehmer nicht erreichbar", "Subscriber not available")
+_STRTABENTRY(TeilnehmerNichtErlaubt, "Teilnehmer nicht erlaubt", "Subscriber not allowed")
+_STRTABENTRY(TeilnehmerGestoert, "Teilnehmer gestoert", "Subscriber derailed")
+_STRTABENTRY(TeilnehmerAbgeschaltet, "Teilnehmer abwesend / abgeschaltet", "Subscriber absent / deactivated")
+_STRTABENTRY(VerbindungGetrennt, "getrennt", "break")
+_STRTABENTRY(SonstigeMeldung, "sonstige meldung: ", "special message: ")
 _STRTABENTRY(AnschlussInternBesetzt, "Anschluss intern besetzt", "Local connection busy")
 _STRTABENTRY(TWITimeout, "Interne Verbindung unterbrochen", "Lost local connection")
-_STRTABENTRY(NamensucheTexteingabe, "\r\nteilnehmersuche nach:     ", "\r\nsearch subscribers for:     ")
+_STRTABENTRY(NamensucheTexteingabe, "\r\nteilnehmersuche nach:      ", "\r\nsearch subscribers for:      ")
 _STRTABENTRY(NamensucheBitteWarten, "\r\nmom\r\n", "\r\nmom\r\n")
-_STRTABENTRY(NamensucheZuKurz, "mindestens 3 zeichen eingeben.    \r\n\n", "enter at least three characters.    \r\n\n")
+_STRTABENTRY(NamensucheZuKurz, "mindestens 3 zeichen eingeben.      \r\n\n", "enter at least three characters.      \r\n\n")
 _STRTABENTRY(NamensucheServerAbbruch, "fehler bei server-abfrage. ", "error in subscriber server answer. ")
 _STRTABENTRY(NamensucheNurLokal, "lokal vorhandene eintraege:\r\n", "locally stored entries:\r\n")
 _STRTABENTRY(NamensucheErgebnisse, "   nummer - name - verbindung:\r\n", "   number - name - connection:\r\n")
@@ -69,6 +75,7 @@ _STRTABENTRY(FalschesKonfigKennwortEingegeben, "unautorisierter Zugriff auf Konf
 _STRTABENTRY(Druckspiegel, "Druckspiegel", "printed text")
 _STRTABENTRY(TexteingabeStartetFernschreiber, "Texteingabe startet Fernschreiber", "Enter text to start printer")
 _STRTABENTRY(AndereVerbindungBesteht, "Es besteht bereits eine andere Verbindung, bitte warten.", "Connection busy, please wait.")
+_STRTABENTRY(ModulDeaktiviert, "i-Telex ist deaktiviert. Bitte sp&auml;ter wieder versuchen.", "i-Telex is de-activated. Try again later.")
 _STRTABENTRY(HtmlTextEingabe, "Eingabe: ", "Enter text: ")
 _STRTABENTRY(HtmlTextEingabeAbsenden, " Absenden ", " Send ")
 _STRTABENTRY(HtmlTextEingabeAktualisieren, "Aktualisieren", "Refresh")
@@ -82,6 +89,7 @@ _STRTABENTRY(ProtokollLevelTlnServer, "Tiefe der Protokollierung f&uuml;r Teiln-
 _STRTABENTRY(DiagnoseLevel, "Level f&uuml;r Druckausgabe von Meldungen", "Message filtering level")
 _STRTABENTRY(KonfigPasswort, "Passwort f&uuml;r Konfigurationsseiten", "Password for configuration pages")
 _STRTABENTRY(TlnVerzeichnisOffen, "Teilnehmer-Verzeichnis f&uuml;r alle sichtbar", "Local subscriber directory visible for everybody")
+_STRTABENTRY(LangeDienstmeldungen, "Dienstmeldungen in Langform", "long service messages")
 _STRTABENTRY(DatumDruckModus, "Datum bei Anrufen automatisch drucken", "Print date on incoming calls")
 _STRTABENTRY(DatumDruckKein, "aus", "off")
 _STRTABENTRY(DatumDruckLokal, "nur lokal", "only local")
@@ -123,8 +131,8 @@ _STRTABENTRY(VollstaendigesTeilnehmerverzeichnis, "zeige vollst&auml;ndiges Verz
 _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 	"<tr>"
-	"<th align=\"left\">Rufnummer<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=nummer\">auf</a> <a href=\"itelex-tlnverz.cgi?sort=nummer&ab\">ab</a></th>" // Nummer
-	"<th align=\"left\">Name<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=name\">auf</a> <a href=\"itelex-tlnverz.cgi?sort=name&ab\">ab</a></th>" // Name
+	"<th align=\"left\">Rufnummer<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=nummer\">1-9</a> <a href=\"itelex-tlnverz.cgi?sort=nummer&ab\">9-1</a></th>" // Nummer
+	"<th align=\"left\">Name<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=name\">A-Z</a> <a href=\"itelex-tlnverz.cgi?sort=name&ab\">Z-A</a></th>" // Name
 	"<th align=\"center\">Besond.</th>" // Flags
 	"<th align=\"left\">Typ</th>" // Typ
 	"<th align=\"left\">Adresse</th>" // Adresse
@@ -135,14 +143,14 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"</tr>", 
 	"<table border=\"1\" cellpadding=\"2\" cellspacing=\"0\">"
 	"<tr>"
-	"<th align=\"left\">Number<br>sort <a href=\"itelex-tlnverz.cgi?sort=nummer\">up</a> <a href=\"itelex-tlnverz.cgi?sort=nummer&ab\">down</a></th>" // Nummer
-	"<th align=\"left\">Name<br>sort <a href=\"itelex-tlnverz.cgi?sort=name\">up</a> <a href=\"itelex-tlnverz.cgi?sort=name&ab\">down</a></th>" // Name
+	"<th align=\"left\">Number<br>sort <a href=\"itelex-tlnverz.cgi?sort=nummer\">1-9</a> <a href=\"itelex-tlnverz.cgi?sort=nummer&ab\">9-1</a></th>" // Nummer
+	"<th align=\"left\">Name<br>sort <a href=\"itelex-tlnverz.cgi?sort=name\">A-Z</a> <a href=\"itelex-tlnverz.cgi?sort=name&ab\">Z-A</a></th>" // Name
 	"<th align=\"center\">Specials</th>" // Flags
 	"<th align=\"left\">Type</th>" // Typ
 	"<th align=\"left\">Address</th>" // Adresse
 	"<th align=\"center\">Port</th>" // Port
 	"<th align=\"center\">Direct dial</th>" // Durchwahl
-	"<th align=\"center\">Updated<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">up</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">down</a></th>" // Datum / Uhrzeit
+	"<th align=\"center\">Updated<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">asc.</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">desc.</a></th>" // Datum / Uhrzeit
 	"<th align=\"left\">Action</th>" // in dieser Spalte sind die Buttons
 	"</tr>")
 	

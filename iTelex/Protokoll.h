@@ -12,6 +12,7 @@ typedef enum
 	AblaufInfo,
 	DatenKurz,
 	DatenDetailliert,
+	AuchRegelmaessiges,
 	} TProtokollLevel;
 	
 
