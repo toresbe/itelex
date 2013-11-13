@@ -130,7 +130,7 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 	LED_on(2);
 #endif
 	
-	uint8_t* p;
+	volatile uint8_t* p;
 	uint16_t address;
 
 	wdt_disable(); // der Timeout ist vielleicht noch 10 ms, daher erstmal deaktivieren.
@@ -138,7 +138,12 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 	// Speicher vollschreiben
 	for (address = 0x2200 ; address < 0xffff ; address++)
 	{
+		uint8_t h;
 		p = (uint8_t*) address;
+		h = *p;
+		PORTD |= ( 1<<PD7 );
+		*p = h; // h muss im Assember Code ein Register sein.
+		PORTD &= ~( 1<<PD7 );
 		*p = MemTestValue(address);
 	}
 
