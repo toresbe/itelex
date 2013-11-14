@@ -135,15 +135,17 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 
 	wdt_disable(); // der Timeout ist vielleicht noch 10 ms, daher erstmal deaktivieren.
 	
-	// Speicher vollschreiben
+	// Speicher vollschreiben, dabei alten Inhalt retten
 	for (address = 0x2200 ; address < 0xffff ; address++)
 	{
 		uint8_t h;
 		p = (uint8_t*) address;
+		
 		h = *p;
 		PORTD |= ( 1<<PD7 );
 		*p = h; // h muss im Assember Code ein Register sein.
 		PORTD &= ~( 1<<PD7 );
+		
 		*p = MemTestValue(address);
 	}
 
