@@ -1,3 +1,6 @@
+Ab Build 479:
+Dienstmeldungen bei nicht erfolgreichem Verbindungsaufbau (occ, na, der, abs)
+
 Ab Build 443:
 Namenssuche ("Auskunft")
 Zeichensatz-Dekodierung bei Emails verbessert.
