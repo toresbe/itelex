@@ -38,6 +38,8 @@ extern bool TlnSuchMusterPasst(char *SuchMuster, TTlnDaten *Tln);
 
 extern void TlnBuchInit();
 
+extern int TlnBuchSpeichereAufExternEeprom();
+
 #endif //def iTelex
 
 #endif //ndef __TLNBUCH_H__
