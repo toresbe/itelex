@@ -466,14 +466,21 @@ static uint8_t AktTlnServerTabI;
 	
 #ifdef ITELEX_ANSCHLUSS
 
-static bool DynIPAktiv;
-	//!< Soll die eigene IP-Adresse auf den Teilnehmer-Server aktualisiert werden?
-	
 static TLangTimer DynIPAktualisierungTimer;
 	//!< Verschiedene Aufgaben bei der Aktualisierung der eigenen IP auf dem Rufnummern-Server.
 
 static uint16_t DynIPAktualisierungEndzeit;
 	//!< Wann soll die nächste Aktualisierung sein?
+	
+static enum {
+	DynIP_Inaktiv, //!< Dynamische meldung der eigenen IP-Adresse an Teilnehmer-Server ist nicht eingeschaltet.
+	DynIP_Erneuern, //!< Es steht eine Erneuerung der IP-Adresse am Teilnehmer-Server an.
+	DynIP_LaeuftGerade, //!< Meldung der IP-Adresse an Teilnehmer-Server läuft gerade.
+	DynIP_Bestaetigt, //!< IP wurde von Teilnehmer-Server zurückgemeldet und durch Selbstanruf bestätigt.
+	DynIP_Unbestaetigt, //!< IP wurde von Teilnehmer-Server zurückgemeldet und noch nicht durch Selbstanruf bestätigt.
+	DynIP_Fehler, //!< Meldung der eigenen IP an Teilnehmer-Server versagt. Erneuerung wird nach Zeitablauf angestoßen.
+	} DynIP_Phase;
+	
 
 static TKurzTimer SelbstAnrufTimer;
 	//!< Verschiedene Aufgaben bei der Aktualisierung der eigenen IP auf dem Rufnummern-Server.
@@ -505,7 +512,7 @@ static enum {
 	SelbstAnrufSperre
 	} SelbstAnrufPhase;
 
-
+	
 static TZeitUeberwachung SelbstAnrufZeitUeberwachung;
 	//!< Überwachung der Dauer des Selbstanrufs.
 	
@@ -4044,13 +4051,51 @@ void itelex_thread()
 #endif //def ITELEX_EMAIL
 	
 	// ======================================================================
-	// Dynamische IP-Aktualisierung starten
+	// Dynamische IP-Aktualisierung / Selbstanruf starten
 	// ======================================================================
 	
-	if (DynIPAktiv && NetzRufnummer >= GlobRufnrMinWert)
+	if (DynIP_Phase != DynIP_Inaktiv && NetzRufnummer >= GlobRufnrMinWert)
 		{
-		// Aktialisierung starten?
-		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
+		if (DynIP_Phase == DynIP_Erneuern
+			&& (Modus == ModRuhe || Modus == ModDeaktiviert)
+			&& TeilnehmerServerSocket == NO_SOCKET_USED)
+			{ // Keine Verbindung laufend, Zeit für Aktualsierung 
+			bool Fehler;
+			
+			if (TeilnehmerServerSocketOeffnen(PSTR("Selbstaktualisierung")))
+				{ // Verbindung hergestellt.
+				// Telegramm senden
+				TTlnServBuf TSB;
+				
+				TSB.Code = TLNSERV_SELBSTAKT;
+				TSB.DataLen = sizeof(TSB.SelbstAkt);
+				TSB.SelbstAkt.RufNr = NetzRufnummer;
+				TSB.SelbstAkt.Pin = Geheimzahl;
+				TSB.SelbstAkt.Port = NetzPort;
+				Fehler = (PutSocketData_RPE(TeilnehmerServerSocket, 2 + TSB.DataLen, TSB.Buf, RAM) != 2 + TSB.DataLen);
+				if (Fehler)
+					{
+					CloseTCPSocket(TeilnehmerServerSocket);
+					TeilnehmerServerSocket = NO_SOCKET_USED;
+					TeilnehmerServerFehlerSpeichern(AktTlnServerTabI);
+					}
+				}
+			else 
+				Fehler = true;
+				
+			if (Fehler)
+				{ // keine Verbindung hergestellt
+				DynIPAktualisierungEndzeit = 15 * LangTimerMinuteFaktor - Zufallswert(0xF);
+					// in 15 Minuten minus Zufall wieder. 
+				DynIP_Phase = DynIP_Fehler;
+				}
+			
+			StartLangTimer(&DynIPAktualisierungTimer);
+			DynIP_Phase = DynIP_LaeuftGerade;
+			} // Zeit für Aktualsierung UND keine Verbindung laufend
+		
+		if ((DynIP_Phase == DynIP_Bestaetigt || DynIP_Phase == DynIP_Unbestaetigt)
+			&& (Modus == ModRuhe || Modus == ModDeaktiviert)
 			&& SelbstAnrufPhase == SelbstAnrufRuhe
 			&& SelbstAnrufSocketHandle == NO_SOCKET_USED
 			&& iTelexSocketHandle == NO_SOCKET_USED
@@ -4128,6 +4173,8 @@ void itelex_thread()
 					
 					SelbstAnrufFehlerZaehler = 0;
 					SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
+					if (DynIP_Phase == DynIP_Unbestaetigt)
+						DynIP_Phase = DynIP_Bestaetigt;
 					} // Richtiges Echo angekommen
 				else
 					{ // Falsches Echo angekommen
@@ -4171,59 +4218,25 @@ void itelex_thread()
 			StartKurzTimer(&SelbstAnrufTimer);
 			}
 			
-		if (SelbstAnrufPhase == SelbstAnrufRuhe && (SelbstAnrufFehlerZaehler & 3) == 3)
-			// nach drei Fehlversuchen Server-Aktulisierung Starten
-			{
-			DynIPAktualisierungEndzeit = LangTimerVal(&DynIPAktualisierungTimer) 
-										 + 1 * LangTimerMinuteFaktor;
-										 // gleich mit 1 Minuten Verzögerung
-			SelbstAnrufPhase = SelbstAnrufSperre;
-			SelbstAnrufFehlerZaehler++; // nicht sofort wieder...
-			if (SelbstAnrufFehlerZaehler >= 16)
+		if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufFehlerZaehler >= 3)
+			{ // nach drei Fehlversuchen Server-Aktulisierung starten
+			if (DynIP_Phase == DynIP_Bestaetigt)
+				DynIP_Phase = DynIP_Erneuern; // sofort erneuern.
+				//! \todo Verzoegerung notwendig?
+				
+			else if (DynIP_Phase == DynIP_Unbestaetigt)
 				{
-				DynIPAktiv = false;
+				SelbstAnrufPeriode = 0;
 				Diagnoseausgabe_P(ISTR(SelbstAnrufMehrfachVersagt, LokaleSprache), 1);
 				}
+				
+			SelbstAnrufPhase = SelbstAnrufSperre;
 			}
 			
-		if ((Modus == ModRuhe || Modus == ModDeaktiviert)
-			&& LangTimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit
-			&& TeilnehmerServerSocket == NO_SOCKET_USED)
-			{ // Keine Verbindung laufend, Zeit für Aktualsierung 
-			bool Fehler;
-			
-			if (TeilnehmerServerSocketOeffnen(PSTR("Selbstaktualisierung")))
-				{ // Verbindung hergestellt.
-				// Telegramm senden
-				TTlnServBuf TSB;
-				
-				TSB.Code = TLNSERV_SELBSTAKT;
-				TSB.DataLen = sizeof(TSB.SelbstAkt);
-				TSB.SelbstAkt.RufNr = NetzRufnummer;
-				TSB.SelbstAkt.Pin = Geheimzahl;
-				TSB.SelbstAkt.Port = NetzPort;
-				Fehler = (PutSocketData_RPE(TeilnehmerServerSocket, 2 + TSB.DataLen, TSB.Buf, RAM) != 2 + TSB.DataLen);
-				if (Fehler)
-					{
-					CloseTCPSocket(TeilnehmerServerSocket);
-					TeilnehmerServerSocket = NO_SOCKET_USED;
-					TeilnehmerServerFehlerSpeichern(AktTlnServerTabI);
-					}
-				}
-			else 
-				Fehler = true;
-				
-			if (Fehler)
-				{ // keine Verbindung hergestellt
-				DynIPAktualisierungEndzeit = 15 * LangTimerMinuteFaktor - Zufallswert(0xF);
-					// in 15 Minuten minus Zufall wieder. 
-					
-				SelbstAnrufPhase = SelbstAnrufSperre;
-				}
-			
-			StartLangTimer(&DynIPAktualisierungTimer);
-			} // Keine Verbindung laufend, Zeit für Aktualsierung ODER Selbstanruf nicht erfolgreich.
-		} // if (DynIPAktiv)
+		if (LangTimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit)
+			DynIP_Phase = DynIP_Erneuern;
+
+		} // if (DynIP_Phase != DynIP_Inaktiv && NetzRufnummer >= GlobRufnrMinWert)
 		
 	if (SelbstAnrufSocketHandle != NO_SOCKET_USED && CheckSocketState(SelbstAnrufSocketHandle) == SOCKET_NOT_USE)
 		{
@@ -4394,6 +4407,7 @@ void itelex_thread()
 							ProtokollierenIPAdr(NetzEigeneIP);
 							Protokollieren_P(PSTR("\r\n"));
 							}
+						DynIP_Phase = DynIP_Unbestaetigt;
 						}
 					StartLangTimer(&DynIPAktualisierungTimer);
 					DynIPAktualisierungEndzeit = 60 * LangTimerMinuteFaktor - Zufallswert(0x3F); 
@@ -4771,6 +4785,7 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(KurzTimerVal(&SchreibPauseTimer));
 	//*/
 	
+	PRINTVAL(DynIP_Phase);
 	PRINTVAL(LangTimerVal(&DynIPAktualisierungTimer));
 	PRINTVAL(DynIPAktualisierungEndzeit);
 
@@ -5399,7 +5414,7 @@ void itelex_cgi_config_extern(void *pStruct)
 		#ifdef ITELEX_ANSCHLUSS
 		CgiFormInputFieldULong_P(ISTR(ITelexRufnummer, Sprache), NetzRufnummer_P, 10, NetzRufnummer);
 		CgiFormInputFieldULong_P(ISTR(RufnrServerAnmeldGeheimzahl, Sprache), Geheimzahl_P, 6, Geheimzahl);
-		CgiFormCheckbox_P(ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIPAktiv);
+		CgiFormCheckbox_P(ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIP_Phase != DynIP_Inaktiv);
 		CgiFormInputFieldULong_P(ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, 3, SelbstAnrufPeriode);
 		CgiFormInputFieldULong_P(ISTR(OeffentlichePortNr, Sprache), NetzPort_P, 6, NetzPort);
 		#endif // ITELEX_ANSCHLUSS
@@ -5425,7 +5440,13 @@ void itelex_cgi_config_extern(void *pStruct)
 		if (NetzRufnummer < GlobRufnrMinWert)
 			printf_P(ISTR(ITelexRufnummerZuKurz, Sprache));
 		Geheimzahl = CgiCheckULong_P(http_request, ISTR(RufnrServerAnmeldGeheimzahl, Sprache), Geheimzahl_P, Geheimzahl, Sprache);
-		DynIPAktiv = CgiCheckBool_P(http_request, ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIPAktiv, Sprache);
+
+		if (CgiCheckBool_P(http_request, ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIP_Phase != DynIP_Inaktiv, Sprache))
+			DynIP_Phase = DynIP_Fehler; 
+				// Damit ist erst mal Selbst-Anruf ausgeschaltet, aber die Aktualisierung wird bald ausgeführt.
+		else
+			DynIP_Phase = DynIP_Inaktiv;
+			
 		SelbstAnrufPeriode = CgiCheckULong_P(http_request, ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, SelbstAnrufPeriode, Sprache);
 		NetzPort = CgiCheckULong_P(http_request, ISTR(OeffentlichePortNr, Sprache), NetzPort_P, NetzPort, Sprache);
 		#endif //def ITELEX_ANSCHLUSS
@@ -5822,7 +5843,11 @@ void itelex_init()
 	else
 		Geheimzahl = 0;
 
-	DynIPAktiv = ReadConfigBool(DynIPAktiv_P, false);
+	if (ReadConfigBool(DynIPAktiv_P, false))
+		DynIP_Phase = DynIP_Fehler; 
+			// Damit ist erst mal Selbst-Anruf ausgeschaltet, aber die Aktualisierung wird bald ausgeführt.
+	else
+		DynIP_Phase = DynIP_Inaktiv;
 		
 	if (readConfig_P(SelbstAnrufPeriode_P, Buf) == 1)
 		SelbstAnrufPeriode = atoi(Buf);
