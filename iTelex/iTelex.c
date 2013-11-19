@@ -985,12 +985,6 @@ void itelex_timerEvent(void)
 					// Zugang zur Konfiguration erlauben.
 					KonfigFreigabeErteilt = true;
 					StartLangTimer(&KonfigFreigabeTimer);
-					
-					// HACK: Vollabgleich des TlnServers vorziehen
-					#ifdef ITELEX_TLNSERVER
-					extern uint16_t VollAbfrageTimerEnde; 
-					VollAbfrageTimerEnde = 0;
-					#endif //def ITELEX_TLNSERVER
 					}
 				}
 			else
@@ -3912,7 +3906,12 @@ void itelex_thread()
 				if (Tastendruck == Kurz)
 					ModusWechsel(ModWarteGrundstellung);
 				else
+					{
+					LED_on(GELB);
+					TlnBuchSpeichereAufExternEeprom();					
+					LED_off(GELB);
 					softreset();
+					}
 				break;
 
 			case ModPufferDruckUndSchluss:
@@ -4792,6 +4791,7 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(SelbstAnrufPhase);
 	PRINTVAL(SelbstAnrufFehlerZaehler);
 	PRINTVAL(KurzTimerVal(&SelbstAnrufTimer));
+	PRINTVAL(SelbstAnrufEndzeit);
 	PRINTVAL(SelbstAnrufSocketHandle);
 	PRINTVAL(SelbstAnrufSendePruefwert);
 	PRINTVAL(SelbstAnrufEmpfangPruefwert);
@@ -4813,6 +4813,8 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(SocketAnzahlZeichenQuittiert);
 	PRINTVAL(SocketAnzahlZeichenEmpfangen);
 
+	PRINTVAL(TeilnehmerServerSocket);
+	
 	printf_P(PSTR("<br>HtmlSendeText: ["));
 	printf(HtmlSendeText);
 	printf_P(PSTR("]<br>AsciiDruckPuffer: ["));
@@ -4840,18 +4842,19 @@ void itelex_cgi_debug( void * pStruct )
 	for (uint8_t i = 0 ; i < MAX_TCP_CONNECTIONS ; i++)
 		{
 		extern struct TCP_SOCKET TCP_sockettable[];
-		printf_P(PSTR("<br>TCP_socket[%d]: ConnectionState=%d, SendState=%d, SourcePort=%d, DestinationPort=%d, SourceIP=%d, Timeoutcounter=%d"),
+		printf_P(PSTR("<br>TCP_socket[%d]: ConnectionState=%u, SendState=%u, SourcePort=%u, DestinationPort=%u, SourceIP=%lx, Timeoutcounter=%d"),
 				 i,     TCP_sockettable[i].ConnectionState, 
 				                            TCP_sockettable[i].SendState, 
 											              TCP_sockettable[i].SourcePort,
 																         TCP_sockettable[i].DestinationPort,
 																							 TCP_sockettable[i].SourceIP, 
-																							              TCP_sockettable[i].Timeoutcounter);
+																							               TCP_sockettable[i].Timeoutcounter);
 		}
 	
 	CLOCK_decode_time(&SystemStartZeit);
-	printf_P(PSTR("<br>SystemStartZeit = %02u.%02u.%04u %02d:%02d:%02d, ResetFlag = %02X"), SystemStartZeit.DD, SystemStartZeit.MM, SystemStartZeit.YY,
-				  SystemStartZeit.hh, SystemStartZeit.mm, SystemStartZeit.ss, ResetFlags);
+	printf_P(PSTR("<br>SystemStartZeit = %02u.%02u.%04u %02d:%02d:%02d, ResetFlag = %02X"), 
+			 SystemStartZeit.DD, SystemStartZeit.MM, SystemStartZeit.YY,
+			 SystemStartZeit.hh, SystemStartZeit.mm, SystemStartZeit.ss, ResetFlags);
 
 	// 5 V messen:
 	ADCSRA = (1<<ADEN) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
@@ -5442,8 +5445,7 @@ void itelex_cgi_config_extern(void *pStruct)
 		Geheimzahl = CgiCheckULong_P(http_request, ISTR(RufnrServerAnmeldGeheimzahl, Sprache), Geheimzahl_P, Geheimzahl, Sprache);
 
 		if (CgiCheckBool_P(http_request, ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIP_Phase != DynIP_Inaktiv, Sprache))
-			DynIP_Phase = DynIP_Fehler; 
-				// Damit ist erst mal Selbst-Anruf ausgeschaltet, aber die Aktualisierung wird bald ausgeführt.
+			DynIP_Phase = DynIP_Bestaetigt; 
 		else
 			DynIP_Phase = DynIP_Inaktiv;
 			

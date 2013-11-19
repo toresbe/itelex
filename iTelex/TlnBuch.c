@@ -1488,9 +1488,4 @@ void TlnBuchInit()
 	}
 	
 	
-			
-	
-	
-	
-	
 #endif //def iTelex
