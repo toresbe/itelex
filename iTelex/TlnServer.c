@@ -561,7 +561,20 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 	int InCount = GetBytesInSocketData(Kanal->Socket);
 	bool Senden = false;
 
-	if (InCount > 0) 
+	if (InCount > sizeof(TlnServBuf))
+		{
+		int Res = GetSocketData(Kanal->Socket, sizeof(TlnServBuf), TlnServBuf.Buf);
+		if (ProtokollLevelTlnServ >= NurFehler)
+			{
+			ProtokollierenTlnServInt_P(Kanal, PSTR("! Socket Empfang UEBERLAUF (%ld)" ), InCount);
+			ProtokollierenPuffer(TlnServBuf.Buf, Res);
+			Protokollieren_P(PSTR(" -> verworfen, Socket geschlossen\r\n"));
+			}
+		CloseTCPSocket(Kanal->Socket);
+		Kanal->Socket = NO_SOCKET_USED;
+		} // InCount zu groß
+		
+	else if (InCount > 0) 
 		{
 		TTlnDaten TD;
 		TlnDatenInit(&TD);
@@ -888,10 +901,10 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 			Protokollieren_P(PSTR("\r\n"));
 			}
 
-		} // if GetBytesInSocketData > 0
+		} // if InCount = GetBytesInSocketData > 0
 		
 	// soll offene Verbindung geschlossen werden?
-	if (CheckSocketState(Kanal->Socket) == SOCKET_NOT_USE)
+	if (Kanal->Socket != NO_SOCKET_USED && CheckSocketState(Kanal->Socket) == SOCKET_NOT_USE)
 		{
 		if (ProtokollLevelTlnServ >= AblaufInfo)
 			ProtokollierenTlnServ_P(Kanal, PSTR("Socket wurde von Gegenstelle geschlossen\r\n"));
@@ -922,7 +935,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 		}
 		
 	// Verzögerten Abbau des Kanals durch Gegenstelle selbst nachholen.
-	if (Kanal->Fertig && KurzTimerVal(&Kanal->SelbstAbbauVerzoegerung) >= 5 * KurzTimerFreq)
+	if (Kanal->Socket != NO_SOCKET_USED && Kanal->Fertig && KurzTimerVal(&Kanal->SelbstAbbauVerzoegerung) >= 5 * KurzTimerFreq)
 		{
 		if (ProtokollLevelTlnServ >= AblaufInfo)
 			ProtokollierenTlnServ_P(Kanal, PSTR("* Schliessen des Socket nach Timeout\r\n"));
@@ -938,7 +951,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 		
 	// Daten ggf. ins Netz senden
 	// --------------------------------------------------
-	if (Senden)
+	if (Senden && Kanal->Socket != NO_SOCKET_USED)
 		SocketDatenSenden(Kanal);
 	
 	} // SocketBearbeiten()

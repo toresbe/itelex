@@ -4202,7 +4202,7 @@ void itelex_thread()
 				TSB.SelbstAkt.RufNr = NetzRufnummer;
 				TSB.SelbstAkt.Pin = Geheimzahl;
 				TSB.SelbstAkt.Port = NetzPort;
-				Fehler = PutSocketData_RPE(TeilnehmerServerSocket, 2 + TSB.DataLen, TSB.Buf, RAM) != 2 + TSB.DataLen;
+				Fehler = (PutSocketData_RPE(TeilnehmerServerSocket, 2 + TSB.DataLen, TSB.Buf, RAM) != 2 + TSB.DataLen);
 				if (Fehler)
 					{
 					CloseTCPSocket(TeilnehmerServerSocket);
@@ -4243,14 +4243,28 @@ void itelex_thread()
 	if (TeilnehmerServerSocket != NO_SOCKET_USED)
 		{
 		// Datenempfang vom Teilnehmer-Server
+		static TTlnServBuf TSB;
 		int InCount = GetBytesInSocketData(TeilnehmerServerSocket);
-		if (InCount > 0) 
+
+		if (InCount > sizeof(TSB))
 			{
-			static TTlnServBuf TSB;
+			int Res = GetSocketData(TeilnehmerServerSocket, sizeof(TSB), TSB.Buf);
+			if (ProtokollLevel >= NurFehler)
+				{
+				ProtokollierenITelex();
+				ProtokollierenInt_P(PSTR("! Teilnehmer-Server Empfang UEBERLAUF zu viele Daten (%d byte)"), InCount);
+				ProtokollierenPuffer(TSB.Buf, Res);
+				Protokollieren_P(PSTR(" -> verworfen, Socket geschlossen\r\n"));
+				}
+			CloseTCPSocket(TeilnehmerServerSocket);
+			TeilnehmerServerSocket = NO_SOCKET_USED;
+			} // InCount zu groß
 			
+		else if (InCount > 0) 
+			{ // Daten verarbeiten
 			int Res = GetSocketData(TeilnehmerServerSocket, InCount, TSB.Buf);
 			
-			if (ProtokollLevelTlnServ >= DatenDetailliert) // Daten explizit
+			if (ProtokollLevel >= DatenDetailliert) // Daten explizit
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Teilnehmer-Server Empfang: (%d/" ), InCount);
@@ -4443,7 +4457,7 @@ void itelex_thread()
 			} // if (InCount = GetBytesInSocketData(TeilnehmerServerSocket)) > 0
 		
 		// Schließanforderung vom Teilnehmer-Server?
-		if (CheckSocketState(TeilnehmerServerSocket) == SOCKET_NOT_USE)
+		if (TeilnehmerServerSocket != NO_SOCKET_USED && CheckSocketState(TeilnehmerServerSocket) == SOCKET_NOT_USE)
 			{
 			if (ProtokollLevelTlnServ >= AblaufInfo)
 				ProtokollierenITelex_P(PSTR("Socket zum Teilnehmer-Server wurde von Gegenstelle geschlossen\r\n" ));
@@ -4453,7 +4467,7 @@ void itelex_thread()
 		
 		// Timeout? kommt von selbst nach 30 Sekunden...
 		
-		}
+		} // if (TeilnehmerServerSocket != NO_SOCKET_USED)
 		
 	// ==========================================================================
 	// Ab und zu mal den Protokollinhalt speichern
@@ -4808,7 +4822,18 @@ void itelex_cgi_debug( void * pStruct )
 
 #endif // ITELEX_ANSCHLUSS
 
-		
+	for (uint8_t i = 0 ; i < MAX_TCP_CONNECTIONS ; i++)
+		{
+		extern struct TCP_SOCKET TCP_sockettable[];
+		printf_P(PSTR("<br>TCP_socket[%d]: ConnectionState=%d, SendState=%d, SourcePort=%d, DestinationPort=%d, SourceIP=%d, Timeoutcounter=%d"),
+				 i,     TCP_sockettable[i].ConnectionState, 
+				                            TCP_sockettable[i].SendState, 
+											              TCP_sockettable[i].SourcePort,
+																         TCP_sockettable[i].DestinationPort,
+																							 TCP_sockettable[i].SourceIP, 
+																							              TCP_sockettable[i].Timeoutcounter);
+		}
+	
 	CLOCK_decode_time(&SystemStartZeit);
 	printf_P(PSTR("<br>SystemStartZeit = %02u.%02u.%04u %02d:%02d:%02d, ResetFlag = %02X"), SystemStartZeit.DD, SystemStartZeit.MM, SystemStartZeit.YY,
 				  SystemStartZeit.hh, SystemStartZeit.mm, SystemStartZeit.ss, ResetFlags);
@@ -4840,7 +4865,7 @@ void itelex_cgi_debug( void * pStruct )
 
 	PRINTVALHEX(SP);
 				  
-	printf_P(PSTR("<br><a href=\"memdump.hex\">RAM-Inhalt vor dem letzten Reset</a>"));
+	printf_P(PSTR("<br><a href=\"memdump.hex\">RAM-Inhalt vor dem letzten Reset</a> <a href=\"memdump.hex?cur\">aktuellen RAM-Inhalt</a>"));
 	
 	cgi_PrintHttpheaderEnd();
 
@@ -5925,7 +5950,7 @@ void itelex_init()
 	cgi_RegisterCGI( itelex_cgi_config_extern, PSTR("itelexcfg-extern.cgi"));
 	cgi_RegisterCGI( itelex_cgi_config_sperren, PSTR("itelexcfg-sperren.cgi"));
 	cgi_RegisterCGI( itelex_cgi_debug, PSTR("itelex-debug.cgi"));
-	cgi_RegisterCGI( cgi_MemDump, PSTR("memdump.hex")); //! \todo Ist-Zustand und Abbild vor Reset.
+	cgi_RegisterCGI( cgi_MemDump, PSTR("memdump.hex")); 
 	
 #if defined(MMC)
 	cgi_RegisterCGI( cgi_SdDirectory, PSTR("sddir.cgi"));
