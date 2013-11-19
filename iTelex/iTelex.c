@@ -4407,6 +4407,7 @@ void itelex_thread()
 							Protokollieren_P(PSTR("\r\n"));
 							}
 						DynIP_Phase = DynIP_Unbestaetigt;
+						SelbstAnrufFehlerZaehler = 0;
 						}
 					StartLangTimer(&DynIPAktualisierungTimer);
 					DynIPAktualisierungEndzeit = 60 * LangTimerMinuteFaktor - Zufallswert(0x3F); 
