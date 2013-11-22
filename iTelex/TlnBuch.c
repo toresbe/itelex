@@ -341,7 +341,7 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus HinzModus)
 			
 		if (BisherEintrag.Datum == Tln->Datum)
 			{
-			//! \todo auch andere Daten vergleichen ???
+			//! \todo Prio 3 auch andere Daten vergleichen ???
 			return 0;
 			}
 		}
@@ -1198,7 +1198,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		bool DatenOk = true; // nur wenn gesetzt, wird auch gespeichert
 		uint32_t AltNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, AltNummer_P)]);
 		uint32_t NeuNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Nummer_P)]);
-			//! \todo Umstellen auf CgiCheckULong...
+			//! \todo Prio 3 Umstellen auf CgiCheckULong...
 		
 		// brauche alte Geheimzahl und alten Typ
 		if (NeuNummer == 0 || !TlnSuche(NeuNummer, true, &TD))

@@ -165,7 +165,7 @@ bool MailZeileVerarbeiten(char *Zeile)
 			}
 		else if (strncasecmp_P(Zeile, PSTR("content-type"), p - Zeile) == 0)
 			{
-			//! \todo Zeichensatz
+			//! \todo Prio 3: Zeichensatz
 			
 			if (strstr_P(p, PSTR("text/plain")) == NULL)
 				// Kein pures Ascii -> weg.
@@ -260,7 +260,7 @@ void POP3Einleiten()
 		Protokollieren(EmailPOPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 
-		//! \todo Diagnose 
+		//! \todo Prio 2 Diagnose, aber mehrfaches Drucken verhindern.
 		
 		POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
 		

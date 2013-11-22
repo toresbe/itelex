@@ -213,7 +213,7 @@ static bool ReadBit(bool* val, bool ExitWhenWaitstate)
 
 	*val = Pegel > 0;
 
-	// TODO if (AnzSamples > 100) Bitfehler
+	//! \todo Prio 2 if (AnzSamples > 100) Bitfehler
 
 	if (AnzSamples < TaktViertel)
 		timer1_wait(TaktViertel - AnzSamples);
@@ -497,7 +497,7 @@ void SwTwiMain()
 			break; // case Startbereit
 
 		case Laeuft:
-			if (TransferTyp == Lesen) // TODO || TransferTyp == LesenNachSchreiben)
+			if (TransferTyp == Lesen) // || TransferTyp == LesenNachSchreiben), wird wahrscheinlich nie gebraucht.
 				{
 				if (AktByte < SwTwiAnzahlDaten)
 					{ // noch SwTwiDaten zu lesen
@@ -550,7 +550,7 @@ void SwTwiMain()
 							}
 						SwTwiModus = Beendet;
 						} // if TransferTyp == Schreiben
-					/* TODO else 
+					/* else , wird wahrscheinlich nie gebraucht.
 						{ // bleibt nur TransferTyp == SchreibenVorLesen
 						// Bei Fehler im schreibvorgang auch nicht lesen
 						if (SwTwiLetzterFehler == SlaveAbbruch)
@@ -597,7 +597,7 @@ void SwTwiMain()
 					SwTwiResultat = AktByte; // Anzahl gelesene Byte
 					break;
 
-				/* TODO
+				/* wird voraussichtlich nie gebraucht...
 				case SchreibenVorLesen:
 					// kann nur bei Abbruch während des Schreibens auftreten...
 					QuittBuf[QuittBufInPos + 2] = AktByte; // Anzahl tatsächlich geschriebene Byte

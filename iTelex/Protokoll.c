@@ -25,7 +25,7 @@
 #include "iTelex.h"
 
 #include "StringTab.h" 
-	//!\todo Umstellung noch nicht erfolgt, da Umstellung nur selten eintretende 
+	//!\todo Prio 4 Umstellung noch nicht erfolgt, da Umstellung nur selten eintretende 
 	//! Diagnosedrucke betrifft, die nur bei Benutzung der SD-Karte erscheinen.
 
 
@@ -109,7 +109,7 @@ bool ProtokollSpeichern(bool flush)
 #if defined(MMC)
 
 	if (!flush)
-		return false; //! \todo bei genügendem Inhalt doch speichern...
+		return false; //! \todo Prio 3 bei genügendem Inhalt doch speichern...
 
 #if defined(LEDROT_SDKARTE)
 	LED_on(ROT); 

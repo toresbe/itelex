@@ -686,6 +686,76 @@ bool Diagnoseausgabe_P(const char *msg, uint8_t Level)
 	}
 
 	
+// folgende Funktionen und Variablen sind nur für Debugging der TCP-Ports
+// ======================================================================
+
+typedef struct
+	{
+	uint8_t SocketHandle;
+	uint32_t ChangeTime;	
+	uint8_t OldState, NewState;
+	long IP;
+	} TSocketLogEntry;
+	
+enum { SocketLogMaxEntries = 20 };
+
+TSocketLogEntry SocketLog[SocketLogMaxEntries];
+
+volatile uint8_t SocketLogUsed;
+
+volatile uint8_t LastSocketConnectionState[MAX_TCP_CONNECTIONS];
+
+
+static void CheckSocketConnectionStateChanges()
+	{
+	extern struct TCP_SOCKET TCP_sockettable[];
+
+	for (uint8_t i = 0 ; i < MAX_TCP_CONNECTIONS ; i++)
+		if (TCP_sockettable[i].ConnectionState != LastSocketConnectionState[i])
+			{
+			struct TIME Time;
+			CLOCK_GetTime(&Time); // Todo testen ob man vollte Funktionalität braucht.
+			uint8_t SregTemp = SREG;
+			cli();
+			TSocketLogEntry *se = &SocketLog[SocketLogUsed];
+			se->SocketHandle = i;
+			se->ChangeTime = Time.time;
+			se->OldState = LastSocketConnectionState[i];
+			se->NewState = TCP_sockettable[i].ConnectionState;
+			se->IP = TCP_sockettable[i].SourceIP;
+			if (SocketLogUsed < SocketLogMaxEntries - 1)
+				SocketLogUsed++;
+			LastSocketConnectionState[i] = se->NewState;
+			SREG = SregTemp;
+			}
+	} // CheckSocketConnectionStateChanges()
+	
+	
+static void PrintSocketConnectionStateChanges()
+	{
+	struct TIME Time;
+	CLOCK_GetTime(&Time); // Todo testen ob man volle Funktionalität braucht.
+
+	for (uint8_t i = 0 ; i < SocketLogUsed ; i++)
+		{
+		TSocketLogEntry *se = &SocketLog[i];
+		ProtokollierenInt_P(PSTR("SocketChange: Handle:%d"), se->SocketHandle);
+		ProtokollierenInt_P(PSTR(" State:%u"), se->OldState);
+		ProtokollierenInt_P(PSTR("->%u IP:"), se->NewState);
+		ProtokollierenIPAdr(se->IP);
+		if (se->ChangeTime < Time.time)
+			ProtokollierenInt_P(PSTR(" (-%u) Sekunden\r\n"), Time.time - se->ChangeTime);
+		else
+			Protokollieren_P(PSTR("\r\n"));
+		uint8_t SregTemp = SREG;
+		cli();
+		if (i >= SocketLogUsed - 1)
+			SocketLogUsed = 0; // wenn letzter gedruckt wurde, wieder Liste leeren.
+		SREG = SregTemp;
+		}
+	}
+	
+
 #ifdef ITELEX_ANSCHLUSS
 	
 //! Initialisiert die serielle Umsetzung 
@@ -825,7 +895,9 @@ void itelex_timerEvent(void)
 				else if (SerUmEmpfBitNr == 7) // im Stop-Bit
 					{
 					SerUmEmpfFehler = SerUmEmpfMarkZaehl < 2; 
-					SerUmEmpfBitNr = SerUmEmpfFertig; //! \todo nur dann Empfang abschließen, wenn auch ein Stop-Bit da war
+					SerUmEmpfBitNr = SerUmEmpfFertig; 
+						//! \todo Prio 4 nur dann Empfang abschließen, wenn auch ein 
+						//! Stop-Bit da war... Entspricht aber nicht den mechanischen Maschinen...
 
 					// und gleich in den Puffer...
 					if (!SerUmEmpfFehler)
@@ -1031,6 +1103,10 @@ void itelex_timerEvent(void)
 	t0c = TCNT0 - t0c;
 	if (t0c > Timer0Callback_Max)
 		Timer0Callback_Max = t0c; // Dauer der Funktion itelex_timerEvent()
+		
+	CheckSocketConnectionStateChanges();
+		// hier werden Änderungen der TCP_sockettable nur aufgezeichnet.
+		
 	} // itelex_timerEvent()
 
 
@@ -1351,16 +1427,6 @@ static bool SchreibeZeichenInSendePuffer(char c)
 		else
 			// Zeichen ist nicht darstellbar, also löschen
 			{
-/*! \todo Fehlermeldung			
-			if (DebugMsg[0] == '\0') // noch leer
-				strcpy_P(DebugMsg, PSTR("?nicht druckbare Zeichen: "));
-			uint8_t l = strlen(DebugMsg);
-			if (DebugMsg[0] == '?' && l + 2 < DebugMsgMax)
-				{
-				DebugMsg[l] = c;
-				DebugMsg[l+1] = '\0';
-				}
-*/				
 			return false;
 			}
 		} // kein Werda
@@ -2281,7 +2347,7 @@ static uint8_t FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 			
 		case FKK_DYNAMISCHEIPAKT:
 			{
-			//! \todo Einschalten und speichern.
+			//! \todo Prio 1 Einschalten und speichern.
 			}
 			
 		default:
@@ -2377,7 +2443,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
 					else
 						{ 
-						SendeStopkommando(PSTR("na")); //! \todo Test
+						SendeStopkommando(PSTR("na")); 
 						iTelexSocketAbbauGeplant = true;
 						ModusWechsel(ModWarteGrundstellung);
 						}
@@ -2490,7 +2556,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						}
 					else
 						{
-						SendeStopkommando(PSTR("occ")); //! \todo Test
+						SendeStopkommando(PSTR("occ")); //! \todo Prio 1 Testen
 						iTelexSocketAbbauGeplant = true;
 						ModusWechsel(ModWarteGrundstellung);
 						}
@@ -3357,9 +3423,9 @@ static void DatumUhrzeitDrucken()
 //! Diese Funktion wird zyklisch aufgerufen und hat folgende Aufgaben:
 //! - Steuerbefehle vom TWI-Bus annehmen und interpretieren.
 //! - Nachschauen, ob eine Verbindung auf den registrierten Port eingegangen ist. Wenn ja 
-//! holt er sich die Socketnummer der Verbindung und speichert diese.
+//!   holt er sich die Socketnummer der Verbindung und speichert diese.
 //! - Wenn eine Verbindung zustande gekommen ist wird diese wiederrum zyklisch nach neuen Daten abgefragt und entsprechend
-//! reagiert.
+//!   reagiert.
 //! .
 //! Eine Übersicht der Gesamtfunktion ist in der Datei AblaeufeVerbindung.xls dargestellt.
 //! Die dort enthaltenen ID sind hier mit ID#xxx referenziert.
@@ -3446,7 +3512,7 @@ void itelex_thread()
 				break;
 
 			case BusKdoWahlFreigabe:
-				//! \todo Bei Relaisbetrieb... dies ist eine Leitungsschnittstelle, die kann nicht wählen.
+				// dies ist eine Leitungsschnittstelle, die kann nicht wählen.
 				if (ProtokollLevel >= AblaufInfo)
 					ProtokollierenITelex_P(PSTR("TWI Wahlaufforderung intern / kommend\r\n" ));
 					
@@ -3582,7 +3648,7 @@ void itelex_thread()
 				break;
 
 			// ID#411 ID#104 *************************************
-			// ???? \todo Ablauftabelle prüfen...
+			// ???? \todo Prio 1 Ablauftabelle prüfen...
 				
 			default:
 				FalschCodeEmpfangen(Code);
@@ -3949,6 +4015,12 @@ void itelex_thread()
 		strncat(AsciiDruckPuffer, DiagnosePuffer, AsciiDruckPufferMax-30);
 		AsciiDruckPuffer[AsciiDruckPufferMax-30] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
+		if (ProtokollLevel >= AblaufInfo && ProtokollLevel < DatenDetailliert)
+			{ // bei DatenDetailliert wird der Eext eh ausgedruckt.
+			ProtokollierenITelex_P(PSTR("Diagnosedruck: "));
+			ProtokollierenPuffer(AsciiDruckPuffer, strlen(AsciiDruckPuffer));
+			Protokollieren_P(PSTR("\r\n" ));
+			}
 		DiagnosePuffer[0] = '\0';
 		DiagnosePufferLevel = 0;
 		DiagnoseAusgabeZiel = 0;
@@ -4221,7 +4293,6 @@ void itelex_thread()
 			{ // nach drei Fehlversuchen Server-Aktulisierung starten
 			if (DynIP_Phase == DynIP_Bestaetigt)
 				DynIP_Phase = DynIP_Erneuern; // sofort erneuern.
-				//! \todo Verzoegerung notwendig?
 				
 			else if (DynIP_Phase == DynIP_Unbestaetigt)
 				{
@@ -4293,7 +4364,9 @@ void itelex_thread()
 				case TLNSERV_AUSKUNFT_NICHTVERG:
 					if (ProtokollLevel >= AblaufInfo)
 						ProtokollierenITelex_P(PSTR("Teilnehmer-Server meldet 'nicht gefunden'\r\n" ));
-					Diagnoseausgabe_P(ISTR(NummerNichtBekannt, LokaleSprache), 3); //! \todo Nur bei "langen" Meldungen.
+						
+					if (LangeDienstmeldungen)
+						Diagnoseausgabe_P(ISTR(NummerNichtBekannt, LokaleSprache), 4); 
 
 					if (Modus == ModNamensucheServerAbfrage)
 						{
@@ -4334,7 +4407,7 @@ void itelex_thread()
 						if (TSB.TlnAuskunft.Datum > GewaehlterTln.Datum || GewaehlterTln.AdrArt == Geloescht)
 							{
 							GewaehlterTln.Nummer = TSB.TlnAuskunft.Nummer;
-							if (GewaehlterTln.Name[0] == '\0') //! \todo Einstellbarkeit, ob nur leere Namen überschreiben werden
+							if (GewaehlterTln.Name[0] == '\0') //! \todo Prio 1 Einstellbarkeit, ob nur leere Namen überschreiben werden
 								strncpy(GewaehlterTln.Name, TSB.TlnAuskunft.Name, sizeof(GewaehlterTln.Name));
 							GewaehlterTln.Flags = TSB.TlnAuskunft.Flags;
 							GewaehlterTln.AdrArt = TSB.TlnAuskunft.AdrArt; 
@@ -4497,7 +4570,16 @@ void itelex_thread()
 		// Konfig-Freigabe nur 5 Minuten gültig.
 		KonfigFreigabeErteilt = false;
 	
+	// ==========================================================================
+	// Ausgabe der Gespeicherten Änderungen der Socket-Tabelle.
+	// ==========================================================================
+	
+	PrintSocketConnectionStateChanges();
+	
+	// ==========================================================================
 	// HACK Status-Signale Seriell
+	// ==========================================================================
+
 	bset_RTS(get_CTS());
 	
 	} // itelex_thread
@@ -4585,13 +4667,13 @@ bool KonfigFreigabe(void *pStruct, TSprache Sprache)
 		// ohne Bezug auf HTML-Abfrage keine Chance
 		return false;
 		
-	//! \todo Sperre nach Fehlversuchen
+	//! \todo Prio 2 Sperre nach Fehlversuchen
 	
 	if (http_request->argc == 0 || PharseCheckName_P(http_request, Kennwort_P) == 0)
 		{ // Ausgabe der Passwort - Eingabeseite
 		KonfigFreigabeErteilt = false;
 		cgi_PrintHttpheaderStart();
-		CgiFormStartTabbed_P(PSTR("")); //! \todo Formularname mit Sprache
+		CgiFormStartTabbed_P(PSTR("")); //! \todo Prio 2 Formularname mit Sprache
 		CgiFormInputFieldText_P(ISTR(KennwortAbfrage, Sprache), Kennwort_P, KonfigPasswortLen, NULL);
 		CgiFormFinish_P(ISTR(KennwortFreigeben, Sprache));
 		cgi_PrintHttpheaderEnd();
@@ -4722,7 +4804,7 @@ void itelex_cgi_debug( void * pStruct )
 	if (http_request->argc != 0 && PharseCheckName_P(http_request, PSTR("watchdogtest")) != 0)
 		{ // Watchdog-Reset verursachen nach 20 sekunden.
 		StartKurzTimer(&WatchdogTestTimer);
-		WatchdogTestTimerEnde = 20 * KurzTimerFreq; //! \todo einstellbar...
+		WatchdogTestTimerEnde = 20 * KurzTimerFreq; //! \todo Prio 2 einstellbar...
 		}
 	
 	cgi_PrintHttpheaderStart();
@@ -4843,13 +4925,17 @@ void itelex_cgi_debug( void * pStruct )
 	for (uint8_t i = 0 ; i < MAX_TCP_CONNECTIONS ; i++)
 		{
 		extern struct TCP_SOCKET TCP_sockettable[];
-		printf_P(PSTR("<br>TCP_socket[%d]: ConnectionState=%u, SendState=%u, SourcePort=%u, DestinationPort=%u, SourceIP=%lx, Timeoutcounter=%d"),
-				 i,     TCP_sockettable[i].ConnectionState, 
-				                            TCP_sockettable[i].SendState, 
-											              TCP_sockettable[i].SourcePort,
-																         TCP_sockettable[i].DestinationPort,
-																							 TCP_sockettable[i].SourceIP, 
-																							               TCP_sockettable[i].Timeoutcounter);
+		if (TCP_sockettable[i].ConnectionState != 0)
+			printf_P(PSTR("<br>TCP_socket[%d]: ConnectionState=%u, SendState=%u, SourcePort=%u, DestinationPort=%u, SourceIP=%lX, Timeoutcounter=%d"),
+					 i,     TCP_sockettable[i].ConnectionState, 
+												TCP_sockettable[i].SendState, 
+															  TCP_sockettable[i].SourcePort,
+																			 TCP_sockettable[i].DestinationPort,
+																								 TCP_sockettable[i].SourceIP, 
+																											   TCP_sockettable[i].Timeoutcounter);
+		else
+			printf_P(PSTR("<br>TCP_socket[%d]: closed"), i);
+																		
 		}
 	
 	CLOCK_decode_time(&SystemStartZeit);
