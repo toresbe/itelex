@@ -744,7 +744,7 @@ static void PrintSocketConnectionStateChanges()
 		ProtokollierenInt_P(PSTR("->%u IP:"), se->NewState);
 		ProtokollierenIPAdr(se->IP);
 		if (se->ChangeTime < Time.time)
-			ProtokollierenInt_P(PSTR(" (-%u) Sekunden\r\n"), Time.time - se->ChangeTime);
+			ProtokollierenInt_P(PSTR(" (-%u Sekunden)\r\n"), Time.time - se->ChangeTime);
 		else
 			Protokollieren_P(PSTR("\r\n"));
 		uint8_t SregTemp = SREG;
