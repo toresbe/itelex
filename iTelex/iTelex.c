@@ -4651,9 +4651,11 @@ static void DurchwahlTabelleDekodieren(char *s)
 // -----------------------------------------------------------------------------------------------------------------------
 //! \param 	pStruct	Struktur auf den HTTP_Request. Bei NULL wird nur die Variable abgefragt, es gibt keine "Ersatzausgabe" 
 //! des Passwort-Abfragefensters.
+//! \param Sprache Index der Sprache für die ggf. erforderliche Passwort-Abfrage
+//! \param Abfragen Abfrag des Passworts erfolgt nur bei true
 //! \retval true, wenn Zugriff erfolgen darf.
 
-bool KonfigFreigabe(void *pStruct, TSprache Sprache)
+bool KonfigFreigabe(void *pStruct, TSprache Sprache, bool Abfragen)
 	{
 	static const PROGMEM char Kennwort_P[] = "kennw";
 	
@@ -4664,7 +4666,7 @@ bool KonfigFreigabe(void *pStruct, TSprache Sprache)
 		return true; // ohne Kennwort keine Sperre
 	
 	if (KonfigFreigabeErteilt && LangTimerVal(&KonfigFreigabeTimer) <= 5 * LangTimerMinuteFaktor)
-		{ // 5 Minuten lang ist der Zugang erlaubt
+		{ // 5 Minuten lang ist der Zugang erlaubt, aber nur wenn es von der gleichen IP kommt.
 		StartLangTimer(&KonfigFreigabeTimer);
 		if (http_request == NULL)
 			return true;
@@ -4677,9 +4679,12 @@ bool KonfigFreigabe(void *pStruct, TSprache Sprache)
 			return true;
 		else
 			{
-			cgi_PrintHttpheaderStart();
-			printf_P(ISTR(SeiteGesperrt, Sprache));
-			cgi_PrintHttpheaderEnd();
+			if (Abfragen)
+				{ // auch nur dann eine Ersatzausgabe 
+				cgi_PrintHttpheaderStart();
+				printf_P(ISTR(SeiteGesperrt, Sprache));
+				cgi_PrintHttpheaderEnd();
+				}
 			return false;
 			}
 		}
@@ -4687,6 +4692,9 @@ bool KonfigFreigabe(void *pStruct, TSprache Sprache)
 	if (http_request == NULL)
 		// ohne Bezug auf HTML-Abfrage keine Chance
 		return false;
+		
+	if (!Abfragen)
+		return false; // wenn nicht gefragt werden soll, kann die Antwort nur Nein sein.
 		
 	//! \todo Prio 2 Sperre nach Fehlversuchen
 	
@@ -4712,16 +4720,16 @@ bool KonfigFreigabe(void *pStruct, TSprache Sprache)
 			return true;
 			}
 		else
-			{
+			{ // falsches Kennwort
 			cgi_PrintHttpheaderStart();
 			printf_P(ISTR(KennwortFalsch, Sprache));
 			cgi_PrintHttpheaderEnd();
 			KonfigFreigabeErteilt = false;
 			Diagnoseausgabe_P(ISTR(FalschesKonfigKennwortEingegeben, Sprache), 3);
 			return false;
-			}
-		}
-	}
+			} // else falsches Kennwort
+		} // else argc > 0 && Kennwort im Request
+	} // KonfigFreigabe()
 	
 	
 //! Kann am Anfang jeder cgi-Funktion aufgerufen werden, um eine Sprachselektion zu ermöglichen. 
@@ -4797,7 +4805,9 @@ bool PruefeSpracheUndKonfigFreigabe(void *pStruct)
 	
 	PruefeSprache(pStruct, &Sprache);	
 	
-	return KonfigFreigabe(pStruct, Sprache);
+	return KonfigFreigabe(pStruct, Sprache, true); 
+		// wenn dass Kennwort nicht abgefragt werden soll, sind die Funktionen PruefeSprache und KonfigFreigabe 
+		// einzeln zu benutzen.
 	}
 	
 	
@@ -5245,7 +5255,7 @@ void itelex_cgi_config_intern(void *pStruct)
 
 	PruefeSprache(pStruct, &Sprache);	
 	
-	if (!KonfigFreigabe(pStruct, Sprache))
+	if (!KonfigFreigabe(pStruct, Sprache, true))
 		return;
 
 	const char *AutoDatumSelList[4];
@@ -5516,7 +5526,7 @@ void itelex_cgi_config_extern(void *pStruct)
 	
 	PruefeSprache(pStruct, &Sprache);
 
-	if (!KonfigFreigabe(pStruct, Sprache))
+	if (!KonfigFreigabe(pStruct, Sprache, true))
 		return;
 	
 	cgi_PrintHttpheaderStart();
@@ -5680,7 +5690,7 @@ void cgi_SdDirectory(void *pStruct)
 	
 	PruefeSprache(pStruct, &Sprache);
 	
-	if (!KonfigFreigabe(pStruct, Sprache))
+	if (!KonfigFreigabe(pStruct, Sprache, true))
 		return;
 	
 	cgi_PrintHttpheaderStart();

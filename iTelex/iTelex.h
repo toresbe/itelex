@@ -465,7 +465,7 @@ extern void InterneVerbindungBeenden(bool Force);
 	
 extern void SocketBufInit();
 
-extern bool KonfigFreigabe(void *pStruct, TSprache Sprache);
+extern bool KonfigFreigabe(void *pStruct, TSprache Sprache, bool Abfragen);
 
 extern bool PruefeSprache(void *pStruct, TSprache *Sprache);
 

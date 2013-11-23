@@ -903,7 +903,7 @@ void itelex_cgi_email_config(void *pStruct)
 
 	PruefeSprache(pStruct, &Sprache);
 	
-	if (!KonfigFreigabe(pStruct, Sprache))
+	if (!KonfigFreigabe(pStruct, Sprache, true))
 		return;
 	
 	cgi_PrintHttpheaderStart();
