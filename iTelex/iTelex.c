@@ -451,6 +451,10 @@ static TLangTimer KonfigFreigabeTimer;
 static bool KonfigFreigabeErteilt;
 	//!< Damit Überlauf des #KonfigFreigabeTimer nicht zur Wieder-Freigabe führt.
 	
+static long KonfigFreigabeFuerIP;
+	//!< Die Konfig-Freigabe gilt nur für die IP-Adresse, mit der das Passwort eingegeben wurde.
+	
+	
 TSprache LokaleSprache;
 	//!< Sprache für nicht CGI-Seiten
 	
@@ -552,6 +556,9 @@ static uint8_t ResetFlags;
 	
 	
 TTastendruck Tastendruck;
+
+// wird so oft gebraucht...
+extern struct TCP_SOCKET TCP_sockettable[];
 
 	
 // LEDs
@@ -708,8 +715,6 @@ volatile uint8_t LastSocketConnectionState[MAX_TCP_CONNECTIONS];
 
 static void CheckSocketConnectionStateChanges()
 	{
-	extern struct TCP_SOCKET TCP_sockettable[];
-
 	for (uint8_t i = 0 ; i < MAX_TCP_CONNECTIONS ; i++)
 		if (TCP_sockettable[i].ConnectionState != LastSocketConnectionState[i])
 			{
@@ -740,8 +745,10 @@ static void PrintSocketConnectionStateChanges()
 		{
 		TSocketLogEntry *se = &SocketLog[i];
 		ProtokollierenInt_P(PSTR("SocketChange: Handle:%d"), se->SocketHandle);
-		ProtokollierenInt_P(PSTR(" State:%u"), se->OldState);
-		ProtokollierenInt_P(PSTR("->%u IP:"), se->NewState);
+		for (uint8_t j = 0 ; j < se->SocketHandle ; j++)
+			Protokollieren_P(PSTR("    "));
+		ProtokollierenInt_P(PSTR(" State:%3u"), se->OldState);
+		ProtokollierenInt_P(PSTR("->%3u   IP:"), se->NewState);
 		ProtokollierenIPAdr(se->IP);
 		if (se->ChangeTime < Time.time)
 			ProtokollierenInt_P(PSTR(" (-%u Sekunden)\r\n"), Time.time - se->ChangeTime);
@@ -1056,6 +1063,7 @@ void itelex_timerEvent(void)
 					
 					// Zugang zur Konfiguration erlauben.
 					KonfigFreigabeErteilt = true;
+					KonfigFreigabeFuerIP = 0; // Zeichen für allgemeine Freigabe.
 					StartLangTimer(&KonfigFreigabeTimer);
 					}
 				}
@@ -1578,8 +1586,6 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 
 static void SocketBearbeiten()
 	{
-	extern struct TCP_SOCKET TCP_sockettable[];
-
 	// Neue Verbindungswünsche bearbeiten
 	// ----------------------------------
 	int NewServerSocket = CheckPortRequest(ITELEX_PORT);
@@ -4660,7 +4666,15 @@ bool KonfigFreigabe(void *pStruct, TSprache Sprache)
 	if (KonfigFreigabeErteilt && LangTimerVal(&KonfigFreigabeTimer) <= 5 * LangTimerMinuteFaktor)
 		{ // 5 Minuten lang ist der Zugang erlaubt
 		StartLangTimer(&KonfigFreigabeTimer);
-		return true;
+		if (http_request == NULL)
+			return true;
+		else if (KonfigFreigabeFuerIP == 0)
+			{ //! \todo Check ob im lokalen Netz.
+			KonfigFreigabeFuerIP = TCP_sockettable[http_request->HTTP_SOCKET].SourceIP;
+			return true;
+			}
+		else
+			return KonfigFreigabeFuerIP == TCP_sockettable[http_request->HTTP_SOCKET].SourceIP;
 		}
 		
 	if (http_request == NULL)
@@ -4685,6 +4699,7 @@ bool KonfigFreigabe(void *pStruct, TSprache Sprache)
 		if (strcmp(EingabeText, KonfigPasswort) == 0)
 			{ // korrekt eingegebenen
 			KonfigFreigabeErteilt = true;
+			KonfigFreigabeFuerIP = TCP_sockettable[http_request->HTTP_SOCKET].SourceIP;
 			StartLangTimer(&KonfigFreigabeTimer);
 			http_request->argc = 0; // damit die eigentliche Seite nicht durch die Kennwort-Eingabe verwirrt ist!			
 			return true;
@@ -4724,7 +4739,10 @@ bool PruefeSprache(void *pStruct, TSprache *Sprache)
 	if (ProtokollLevel >= AblaufInfo)
 		{
 		char *Ende;
-		ProtokollierenITelex_P(PSTR("cgi-Aufruf: "));
+		
+		ProtokollierenITelex_P(PSTR("cgi-Aufruf von "));
+		ProtokollierenIPAdr(TCP_sockettable[http_request->HTTP_SOCKET].SourceIP);
+		Protokollieren_P(PSTR(":"));
 		if (http_request->argc == 0)
 			Ende = http_request->HTTP_LINEBUFFER;
 		else
@@ -4924,7 +4942,6 @@ void itelex_cgi_debug( void * pStruct )
 
 	for (uint8_t i = 0 ; i < MAX_TCP_CONNECTIONS ; i++)
 		{
-		extern struct TCP_SOCKET TCP_sockettable[];
 		if (TCP_sockettable[i].ConnectionState != 0)
 			printf_P(PSTR("<br>TCP_socket[%d]: ConnectionState=%u, SendState=%u, SourcePort=%u, DestinationPort=%u, SourceIP=%lX, Timeoutcounter=%d"),
 					 i,     TCP_sockettable[i].ConnectionState, 
