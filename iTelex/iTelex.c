@@ -4673,8 +4673,15 @@ bool KonfigFreigabe(void *pStruct, TSprache Sprache)
 			KonfigFreigabeFuerIP = TCP_sockettable[http_request->HTTP_SOCKET].SourceIP;
 			return true;
 			}
+		else if (KonfigFreigabeFuerIP == TCP_sockettable[http_request->HTTP_SOCKET].SourceIP)
+			return true;
 		else
-			return KonfigFreigabeFuerIP == TCP_sockettable[http_request->HTTP_SOCKET].SourceIP;
+			{
+			cgi_PrintHttpheaderStart();
+			printf_P(ISTR(SeiteGesperrt, Sprache));
+			cgi_PrintHttpheaderEnd();
+			return false;
+			}
 		}
 		
 	if (http_request == NULL)

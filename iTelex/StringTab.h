@@ -71,6 +71,7 @@ _STRTABENTRY(InternesVerzeichnisVoll, "internes Rufnummern-Verzeichnis voll", "i
 _STRTABENTRY(KennwortAbfrage, "Seite gesperrt! Bitte Kennwort eingeben", "Page locked! Enter password")
 _STRTABENTRY(KennwortFreigeben, "Freigeben", "Unlock")
 _STRTABENTRY(KennwortFalsch, "Falsches Kennwort eingegeben!", "Wrong password entered!")
+_STRTABENTRY(SeiteGesperrt, "Seite gesperrt von anderem Anwender!", "Page locked by other user")
 _STRTABENTRY(FalschesKonfigKennwortEingegeben, "unautorisierter Zugriff auf Konfigurationsseite", "unauthorised access to locked configuration page")
 _STRTABENTRY(Druckspiegel, "Druckspiegel", "printed text")
 _STRTABENTRY(TexteingabeStartetFernschreiber, "Texteingabe startet Fernschreiber", "Enter text to start printer")
