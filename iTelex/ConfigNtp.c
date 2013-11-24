@@ -71,7 +71,7 @@ void ConfigNtpCgi( void * pStruct )
 	
 	PruefeSprache(pStruct, &Sprache);
 	
-	if (!KonfigFreigabe(pStruct, Sprache))
+	if (!KonfigFreigabe(pStruct, Sprache, true))
 		return;
 	
 	char NtpServerStr[32];

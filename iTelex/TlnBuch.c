@@ -341,7 +341,7 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus HinzModus)
 			
 		if (BisherEintrag.Datum == Tln->Datum)
 			{
-			//! \todo auch andere Daten vergleichen ???
+			//! \todo Prio 3 auch andere Daten vergleichen ???
 			return 0;
 			}
 		}
@@ -889,23 +889,25 @@ int TlnBuchSpeichereAufExternEeprom()
 	
 //! Hilfsfunktion für die Darstellung des Teilnehmer-Verzeichnisses als Tabelle.
 //------------------------------------------------------------------------------
-static void TlnBuchTabelleAusgabe(TSprache Sprache)
+//! \param Sprache Sprachindex
+//! \param Freigegeben true für vollständige Ausgabe
+static void TlnBuchTabelleAusgabe(TSprache Sprache, bool Freigegeben)
 	{
 	// Anzeige der Teilnehmerliste...
 	//   wenn TlnBuchOffen 
-	//	 oder wenn KonfigFreigabe erteilt immer vollständige Liste
+	//	 oder wenn Freigegeben immer vollständige Liste
 	//	 sonst wenn TlnServer aktiv zumindest die öffentlichen Einträge
 	
 	// Startseite = Liste
 	// ==================================================
 	printf_P(PSTR("<form action=\"itelex-tlnverz.cgi\">"));
 	
-	if (TlnBuchOffen || KonfigFreigabe(NULL, 0)) // NULL fragt nicht wieder nach einem Kennwort
+	if (TlnBuchOffen || Freigegeben) // NULL fragt nicht wieder nach einem Kennwort
 		printf_P(ISTR(UeberschriftTeilnehmerverzeichnis, Sprache));
 	else
 		printf_P(ISTR(UeberschriftOeffentlichesTeilnehmerverzeichnis, Sprache));
 
-	if (!KonfigFreigabe(NULL, 0))
+	if (!Freigegeben)
 		{
 		printf_P(PSTR("<a href=\"itelex-tlnverz.cgi?allezeigen\">"));
 		printf_P(ISTR(VollstaendigesTeilnehmerverzeichnis, Sprache));
@@ -928,7 +930,7 @@ static void TlnBuchTabelleAusgabe(TSprache Sprache)
 		{
 		while (TlnListerNaechster(&LD, &TD))
 			{
-			if (!TlnBuchOffen && (TD.Flags & TlnFlag_Lokal) != 0 && !KonfigFreigabe(NULL, 0))
+			if (!TlnBuchOffen && (TD.Flags & TlnFlag_Lokal) != 0 && !Freigegeben)
 				continue; // Private Einträge nicht darstellen.
 				
 			if (TD.AdrArt == Geloescht && TD.Datum < AktZeit - 7L * 24 * 60 * 60) // Mehr als 7 Tage alte Einträge mit "gelöscht" nicht mehr darstellen.
@@ -1004,7 +1006,7 @@ static void TlnBuchTabelleAusgabe(TSprache Sprache)
 			
 			printf_P(PSTR("<td align=\"center\">%02u.%02u.%04u %02d:%02d:%02d</td>"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 			
-			if (KonfigFreigabe(NULL, 0))
+			if (Freigegeben)
 				{
 				printf_P(PSTR("<td><a href=\"itelex-tlnverz.cgi?edit=%ld\">"), TD.Nummer);
 				printf_P(ISTR(AktionAendern, Sprache));
@@ -1015,7 +1017,7 @@ static void TlnBuchTabelleAusgabe(TSprache Sprache)
 			
 			} // while (TlnListerNaechster(&LD, &TD))
 
-		if (KonfigFreigabe(NULL, 0))
+		if (Freigegeben)
 			{
 			printf_P(PSTR( "<tr><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td><td>&#160;</td>"
 						   "<td><a href=\"itelex-tlnverz.cgi?edit=0\">"));
@@ -1084,7 +1086,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		
 	if (FreigabePruefung)
 		{
-		if (!KonfigFreigabe(pStruct, Sprache))
+		if (!KonfigFreigabe(pStruct, Sprache, true))
 			return; // verboten.
 		}
 	
@@ -1092,7 +1094,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 	if (http_request->argc == 0 || PharseCheckName_P(http_request, AlleZeigen_P))
 		{ 
-		TlnBuchTabelleAusgabe(Sprache);
+		TlnBuchTabelleAusgabe(Sprache, KonfigFreigabe(pStruct, Sprache, false));
 		} // argc == 0 --> gesamte Liste ausgeben
 
 	else if (PharseCheckName_P(http_request, Sortiere_P))
@@ -1124,7 +1126,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 
 		if (!Zurueck)
 			// Bei Fehlern wird 'Zurueck' gesetzt, sonst bleibt es auf False und die Tabelle ist auszugeben.
-			TlnBuchTabelleAusgabe(Sprache);
+			TlnBuchTabelleAusgabe(Sprache, KonfigFreigabe(pStruct, Sprache, false));
 			
 		} // if (PharseCheckName_P(http_request, Sortiere_P))
 		
@@ -1198,7 +1200,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		bool DatenOk = true; // nur wenn gesetzt, wird auch gespeichert
 		uint32_t AltNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, AltNummer_P)]);
 		uint32_t NeuNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Nummer_P)]);
-			//! \todo Umstellen auf CgiCheckULong...
+			//! \todo Prio 3 Umstellen auf CgiCheckULong...
 		
 		// brauche alte Geheimzahl und alten Typ
 		if (NeuNummer == 0 || !TlnSuche(NeuNummer, true, &TD))
@@ -1486,11 +1488,6 @@ void TlnBuchInit()
 	cgi_RegisterCGI( TlnBuch_Anzeige_CGI, PSTR("itelex-tlnverz.cgi"));
 	
 	}
-	
-	
-			
-	
-	
 	
 	
 #endif //def iTelex

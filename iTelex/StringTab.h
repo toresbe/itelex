@@ -64,13 +64,14 @@ _STRTABENTRY(DiagInterneIP, "interne IP: ", "local IP: ")
 _STRTABENTRY(Datum, "Datum", "Date")
 _STRTABENTRY(DiagnoseEinleitung, "\r\n///interne meldung: ", "\r\n///internal message: ")
 _STRTABENTRY(SelbstAnrufMehrfachVersagt, 
-			 "Selbst-Anruf mehrfach versagt, Router-Konfiguration pruefen.\r\nNach Fehlerbehebung Dynamische IP-Aktualisierung wieder einschalten.", 
-			 "Loopback call failed constantly. Check router configuration.\r\nAfter check, enable the dynamic update of IP address again.")
+			 "Selbst-Anruf mehrfach versagt, Router-Konfiguration pruefen.\r\nSelbst-Anruf wurde abgeschaltet.", 
+			 "Loopback call failed constantly. Check router configuration.\r\nLoopback-Test was switched off.")
 _STRTABENTRY(NummerNichtBekannt, "gewaehlte Nummer nicht bekannt", "subscriber number not known")
 _STRTABENTRY(InternesVerzeichnisVoll, "internes Rufnummern-Verzeichnis voll", "internal directory out of space")
 _STRTABENTRY(KennwortAbfrage, "Seite gesperrt! Bitte Kennwort eingeben", "Page locked! Enter password")
 _STRTABENTRY(KennwortFreigeben, "Freigeben", "Unlock")
 _STRTABENTRY(KennwortFalsch, "Falsches Kennwort eingegeben!", "Wrong password entered!")
+_STRTABENTRY(SeiteGesperrt, "Seite gesperrt von anderem Anwender!", "Page locked by other user")
 _STRTABENTRY(FalschesKonfigKennwortEingegeben, "unautorisierter Zugriff auf Konfigurationsseite", "unauthorised access to locked configuration page")
 _STRTABENTRY(Druckspiegel, "Druckspiegel", "printed text")
 _STRTABENTRY(TexteingabeStartetFernschreiber, "Texteingabe startet Fernschreiber", "Enter text to start printer")

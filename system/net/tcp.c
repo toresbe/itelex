@@ -1053,7 +1053,8 @@ int PutSocketData_RPE( int Socket, int Datalenght, char * Sendbuffer, char Mode 
  * \param	fifo		Fifo in den die Daten kopiert werden sollen.
  * \param	bufferlen	Anzahl der Bytes die kopiert werden soll.
  * \retval	Datalenght	Anzahl der kopierten Bytes oder -1 bei Fehler.
- * \todo    Was passiert, wenn Get_FIFOrestsize ( fifo ) < bufferlen aber > 0 ?
+ * \todo    Fred Sonnenrein: Was passiert, wenn Get_FIFOrestsize ( fifo ) < bufferlen aber > 0 ? Ist mir erst mal
+ *          egal, 
  */
 /*------------------------------------------------------------------------------------------------------------*/	
 int GetSocketDataToFIFO( int Socket , int fifo, int bufferlen )
