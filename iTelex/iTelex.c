@@ -5297,7 +5297,7 @@ void itelex_cgi_config_intern(void *pStruct)
 		
 		#endif //def ITELEX_ANSCHLUSS
 
-		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 2, ProtokollLevel);
+		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 2, ProtokollLevel + (SocketProtokollEin ? 10 : 0));
 		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
 		CgiFormInputFieldULong_P(ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
 		
@@ -5438,7 +5438,11 @@ void itelex_cgi_config_intern(void *pStruct)
 			
 		#endif // ITELEX_ANSCHLUSS
 		
-		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, ProtokollLevel, Sprache);
+		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 
+										 ProtokollLevel + (SocketProtokollEin ? 10 : 0), Sprache);
+		SocketProtokollEin = ProtokollLevel >= 10;
+		if (SocketProtokollEin)
+			ProtokollLevel -= 10;
 
 		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, ProtokollLevelTlnServ, Sprache);
 
@@ -5998,8 +6002,6 @@ void itelex_init()
 		
 	#endif // ITELEX_ANSCHLUSS
 
-	SocketProtokollEin = ReadConfigBool(SocketLog_P, false);
-	
 	#ifdef ITELEX_TLNSERVER
 	if (readConfig_P(TlnServSyncGeheimzahl_P, Buf) == 1)
 		TlnServSyncGeheimzahl = atol(Buf);
@@ -6043,6 +6045,9 @@ void itelex_init()
 		ProtokollLevel = atoi(Buf);
 	else
 		ProtokollLevel = NurFehler;
+	SocketProtokollEin = ProtokollLevel >= 10;
+	if (SocketProtokollEin)
+		ProtokollLevel -= 10;
 		
 	// dies müsste eigentlich in Protokoll.c enthalten sein.
 	if (readConfig_P(ProtokollLevelTlnServ_P, Buf) == 1)
