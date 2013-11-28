@@ -5011,10 +5011,6 @@ void itelex_cgi_debug( void * pStruct )
 				  "<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld") , 
 				  ByteCounter, PacketCounter, eth_state_error );
 
-	PRINTVALHEX(SP);
-				  
-	printf_P(PSTR("<br><a href=\"memdump.hex\">RAM-Inhalt vor dem letzten Reset</a> <a href=\"memdump.hex?cur\">aktuellen RAM-Inhalt</a>"));
-	
 	cgi_PrintHttpheaderEnd();
 
 	ProtokollSpeichern(true);
