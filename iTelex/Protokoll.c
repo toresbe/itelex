@@ -280,16 +280,18 @@ static bool ProtPraeparieren(int len)
 	if (len == 0 || len > MaxProtPuffer / 2)
 		return false;
 	
-	if (strlen(Puffer) + len + 2 >= MaxProtPuffer
+	bool ZeilenEnde = (Puffer[0] != '\0' && Puffer[strlen(Puffer) - 1] == '\n');
+	
+	if (strlen(Puffer) + len + 2 + 15 >= MaxProtPuffer // 15 = Länge des Datums (sicherheitshalber)
 		// Text passt nicht mehr in den Puffer
-		|| (strlen(Puffer) + len + 50 >= MaxProtPuffer && Puffer[strlen(Puffer) - 1] == '\n'))
-		// nächste Zeile passt nicht mehr in den Puffer
+		|| (ZeilenEnde && strlen(Puffer) + len + 2 + 15 + 60 >= MaxProtPuffer))
+		// nächste Zeile passt wahrscheinlich nicht mehr in den Puffer...
 		{
 		if (!ProtokollSpeichern(true))
 			return false; // kein Platz mehr.
 		}
 
-	if (DruckeUhrzeit || Puffer[strlen(Puffer)-1] == '\n')
+	if (DruckeUhrzeit || ZeilenEnde)
 		{
 		CLOCK_GetTime(&Time);
 		sprintf_P(Puffer + strlen(Puffer), PSTR("%02d:%02d:%02d,%02d: "), Time.hh, Time.mm, Time.ss, Time.ms);
@@ -342,7 +344,7 @@ static char Buf[20];
 //! Protokolliert eine IP-Adresse.
 void ProtokollierenIPAdr(long aip)
 	{
-	if (ProtPraeparieren(15))
+	if (ProtPraeparieren(15)) // 15 = 4 * 3 (Ziffern) + 3 (Punkte)
 		strcat(Puffer, iptostr(aip, Buf));
 	}
 	
@@ -350,13 +352,13 @@ void ProtokollierenIPAdr(long aip)
 //! Protokolliert eine MAC-Adresse.
 void ProtokollierenMAC(char mac[6])
 	{
-	if (ProtPraeparieren(17))
+	if (ProtPraeparieren(17)) // 17 = 6 * 2 (Hex-Ziffern) + 5 (Doppelpunkte)
 		strcat(Puffer, mactostr(mac, Buf));
 	}
 
 
 //! Protokolliert eine Pufferinhalt.
-//
+//-----------------------------------
 //! Erkennt automatisch, ob Hex oder Ascii...
 void ProtokollierenPuffer(char buf[], uint16_t Len)
 	{
