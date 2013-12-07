@@ -626,7 +626,7 @@ void TlnBuchPruefsummeBerechnenSchritt()
 		if (PruefsummeSoll != PruefsummeIst)
 			{
 			PruefsummeSoll = PruefsummeIst;
-			ProtokollierenInt_P(PSTR("iTelex: Teilnehmer-Verzeichnis Pruefsumme aktualisiert auf %08X.\r\n"), PruefsummeSoll);
+			ProtokollierenInt_P(PSTR("iTelex: Teilnehmer-Verzeichnis Pruefsumme aktualisiert auf %08lX.\r\n"), PruefsummeSoll);
 			}
 		PruefsummeBerechnungStart();
 		}
