@@ -41,7 +41,9 @@ enum { TlnBuchMemMax = 20000UL } ; //!< Größe des Teilnehmerverzeichnisses in 
 //! \par 2 Byte DynPin (nur bei Typ = iTelexDynIP)
 
 
-static char TlnBuch[TlnBuchMemMax]; //!< Das Teilnehmer-Verzeichnis.
+__attribute__ ((section (".noinit"))) static char TlnBuch[TlnBuchMemMax]; //!< Das Teilnehmer-Verzeichnis.
+
+__attribute__ ((section (".noinit"))) static uint16_t TlnBuchMemUsed; //!< Ende des genutzten Bereichs in TlnBuch.
 
 
 // Häufig benutzte Offsets:
@@ -50,8 +52,6 @@ enum { TBOffsFlags = 5 } ; //!< Position der Flags im Teilnehmer-Verzeichnis-Ein
 enum { TBOffsArt = 7 } ; //!< Position der Art (s. #TTlnAdresseArt) im Teilnehmer-Verzeichnis-Eintrag
 enum { TBOffsName = 8 } ; //!< Position der Art (s. #TTlnAdresseArt) im Teilnehmer-Verzeichnis-Eintrag
 
-
-static uint16_t TlnBuchMemUsed; //!< Ende des genutzten Bereichs in TlnBuch.
 
 
 //! Ermittelt die Größe eines bestehenden Teilnehmereintrags.
@@ -252,7 +252,7 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 	
 //! Initialisieren eines Adressbuch-Datensatzes
 // --------------------------------------------
-//! \param[out] Tln Zeiger auf den Datensatz-
+//! \param[out] Tln Zeiger auf den Datensatz-Puffer
 
 void TlnDatenInit(TTlnDaten *Tln)
 	{
@@ -364,6 +364,7 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus HinzModus)
 //! Startet die sequentielle Abfrage aller Teilnehmereinträge.
 //------------------------------------------------------------
 //! \retval true wenn es mindestens einen Eintrag gibt.
+
 bool TlnListerStart(TTlnListerDat *ldp)
 	{
 	//! ldp->Pos zeigt auf nächsten Eintrag, der durch TlnListerNaechster geliefert wird.
@@ -379,6 +380,7 @@ bool TlnListerStart(TTlnListerDat *ldp)
 //------------------------------------------------------------
 //! \param[out] Tln gefundener Eintrag.
 //! \retval true wenn ein weiterer Eintrag gefunden wurde.
+
 bool TlnListerNaechster(TTlnListerDat *ldp, TTlnDaten *Tln)
 	{
 	while (true)
@@ -419,6 +421,7 @@ bool TlnSuchMusterPasst(char *SuchMuster, TTlnDaten *Tln)
 //! \retval -1, wenn erster Eintrag vor zweitem einzureihen ist.
 //! \retval 0, wenn erster Eintrag vor zweitem einzureihen ist.
 //! \retval 1, wenn erster Eintrag nach zweitem einzureihen ist.
+
 static int8_t EintragVergleichNummer(char *p1, char *p2)
 	{
 	uint32_t Nr1, Nr2;
@@ -458,6 +461,7 @@ static int8_t EintragVergleichNummer(char *p1, char *p2)
 //! \retval -1, wenn erster Eintrag vor zweitem einzureihen ist.
 //! \retval 0, wenn erster Eintrag vor zweitem einzureihen ist.
 //! \retval 1, wenn erster Eintrag nach zweitem einzureihen ist.
+
 static int8_t EintragVergleichName(char *p1, char *p2)
 	{
 	char *Name1, *Name2;
@@ -477,6 +481,7 @@ static int8_t EintragVergleichName(char *p1, char *p2)
 //! \retval -1, wenn erster Eintrag vor zweitem einzureihen ist.
 //! \retval 0, wenn erster Eintrag vor zweitem einzureihen ist.
 //! \retval 1, wenn erster Eintrag nach zweitem einzureihen ist.
+
 static int8_t EintragVergleichDatum(char *p1, char *p2)
 	{
 	char *Name1, *Name2;
@@ -512,6 +517,7 @@ typedef int8_t ( * SortierKritFunktion ) (char *, char *);
 //! \param Rueckwaerts wenn die Liste Absteigend sortiert sein soll.
 //! \retval true, wenn Verzeichnis neu sortiert ist.
 //! \retval false, wenn der Speicher zum Umsortieren nicht reicht.
+
 static bool TlnBuchSortieren(SortierKritFunktion Vergleich, bool Rueckwaerts)
 	{
 	char *Kopf; // Aktuell oberstes Element (dort kommt der nächste Kleinste hin).
@@ -561,11 +567,71 @@ static bool TlnBuchSortieren(SortierKritFunktion Vergleich, bool Rueckwaerts)
 //! um die Integrität des externen EEPROM zu testen.
 //---------------------------------------------------------------------
 //! Im externen EEPROM sind beide Werte ganz am Anfang abgelegt.
+
 uint16_t MemUsedPruefwert(uint16_t groesse)
 	{
 	return (groesse ^ 0x4587) << 1; //### 8765
 	}
+
+
+// Folgende Variablen sind für die Prüfsummenberechnung.
+// Die Prüfsumme wird im laufenden Betrieb ständig berechnet und aktualisiert.
+// Nach Neustart wird die Prüfsumme auch berechnet und mit der gespeicherten verglichen.
+// Ist das Ergebnis identisch, erfolgt KEINE Initialisierung des Teilnehmer-Verzeichnisses.	
 	
+static uint32_t PruefsummeIst; //!< Aktuelles Zwischenergebnis der Prüfsummenberechnung
+
+__attribute__ ((section (".noinit"))) static uint32_t PruefsummeSoll; //!< Aktuelles Endergebnis der Prüfsummenberechnung
+
+static uint16_t PruefsummeBerechnungIndex; //!< Aktuelle Position der Prüfsummenberechnung
+
+
+//! Beginnt die Prüfsummenberechnung.
+//------------------------------------
+
+static void PruefsummeBerechnungStart()
+	{
+	PruefsummeIst = 0xDEADBEEF;
+	PruefsummeBerechnungIndex = 0;
+	}
+
+
+//! Führt einen Schritt der Prüfsummenberechnung durch.
+//-----------------------------------------------------
+//! \retval true, wenn Berechnung beendet.
+
+static bool PruefsummeBerechnungSchritt()
+	{
+	if (PruefsummeBerechnungIndex >= TlnBuchMemUsed)
+		return true;
+	uint8_t SregTemp = SREG;
+	cli();
+	PruefsummeIst ^= 0x04C11DB7;
+	PruefsummeIst = (PruefsummeIst << 1) 
+					+ ((PruefsummeIst & (1UL << 31)) ? 1 : 0);
+	PruefsummeIst ^= TlnBuch[PruefsummeBerechnungIndex] << (PruefsummeIst & 0xf);
+	PruefsummeBerechnungIndex++;
+	SREG = SregTemp;
+	return false;
+	}
+	
+	
+//! Führt im laufenden Betrieb einen Schritt der Prüfsummenberechnung durch.
+//--------------------------------------------------------------------------
+
+void TlnBuchPruefsummeBerechnenSchritt()
+	{
+	if (PruefsummeBerechnungSchritt())
+		{ // fertig -> abspeichern.
+		if (PruefsummeSoll != PruefsummeIst)
+			{
+			PruefsummeSoll = PruefsummeIst;
+			ProtokollierenInt_P(PSTR("iTelex: Teilnehmer-Verzeichnis Pruefsumme aktualisiert auf %08X.\r\n"), PruefsummeSoll);
+			}
+		PruefsummeBerechnungStart();
+		}
+	}
+
 	
 #define XEEPROM_TWI_ADR 0xA0 //!< TWI-Adresse des Externen Eeproms (Typ 24AT256)
 
@@ -891,6 +957,7 @@ int TlnBuchSpeichereAufExternEeprom()
 //------------------------------------------------------------------------------
 //! \param Sprache Sprachindex
 //! \param Freigegeben true für vollständige Ausgabe
+
 static void TlnBuchTabelleAusgabe(TSprache Sprache, bool Freigegeben)
 	{
 	// Anzeige der Teilnehmerliste...
@@ -1468,14 +1535,30 @@ static void TlnBuchTesteintrag(uint32_t nr, TTlnAdresseArt art, char *url, long 
 
 //! Initialisiert die Liste der Teilnehmereinträge.
 //------------------------------------------------------------
+
 void TlnBuchInit()
 	{
 	SwTwiInit();
 	
-	TlnBuchMemUsed = 0;
+	cgi_RegisterCGI( TlnBuch_Anzeige_CGI, PSTR("itelex-tlnverz.cgi"));
 	
 	if (get_Taste()) // high vom Pullup -> Taste nicht gedrückt
 		{
+		// zuerst prüfen, ob vorhandener Inhalt noch korrekt. 
+		if (TlnBuchMemUsed <= TlnBuchMemMax)
+			{
+			PruefsummeBerechnungStart();
+			while (!PruefsummeBerechnungSchritt())
+				; // warten bis fertig.
+			if (PruefsummeIst == PruefsummeSoll) // offensichtlich alles noch ok.
+				{
+				Protokollieren_P(PSTR("iTelex: * Teilnehmer-Verzeichnis wird unveraendert uebernommen.\r\n"));
+				return; // nichts weiter tun.
+				}
+			}
+			
+		// sonst aus dem EEPROM-Speicher laden.
+		TlnBuchMemUsed = 0;
 		int Res = TlnBuchLadeVonExternEeprom();
 		if (Res < 0)
 			{
@@ -1484,8 +1567,8 @@ void TlnBuchInit()
 			Diagnoseausgabe_P(ISTR(ZusatzEepromFehler, LokaleSprache), 1);
 			}
 		} // if get_Taste()
-		
-	cgi_RegisterCGI( TlnBuch_Anzeige_CGI, PSTR("itelex-tlnverz.cgi"));
+	else
+		TlnBuchMemUsed = 0;
 	
 	}
 	

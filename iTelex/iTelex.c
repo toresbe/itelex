@@ -4592,6 +4592,12 @@ void itelex_thread()
 	PrintSocketConnectionStateChanges();
 	
 	// ==========================================================================
+	// laufende Prüfsummenberechnung des Teilnehmer-Verzeichnisses.
+	// ==========================================================================
+	
+	TlnBuchPruefsummeBerechnenSchritt();
+	
+	// ==========================================================================
 	// HACK Status-Signale Seriell
 	// ==========================================================================
 

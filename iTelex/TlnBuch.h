@@ -40,6 +40,8 @@ extern void TlnBuchInit();
 
 extern int TlnBuchSpeichereAufExternEeprom();
 
+extern void TlnBuchPruefsummeBerechnenSchritt();
+
 #endif //def iTelex
 
 #endif //ndef __TLNBUCH_H__
