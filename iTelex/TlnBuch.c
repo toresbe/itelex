@@ -1566,6 +1566,9 @@ void TlnBuchInit()
 			ProtokollierenInt_P(PSTR(" / %02X\r\n"), SwTwiLetzterFehler);
 			Diagnoseausgabe_P(ISTR(ZusatzEepromFehler, LokaleSprache), 1);
 			}
+		else
+			Protokollieren_P(PSTR("iTelex: Teilnehmer-Verzeichnis aus EEPROM geladen.\r\n"));
+		
 		} // if get_Taste()
 	else
 		TlnBuchMemUsed = 0;
