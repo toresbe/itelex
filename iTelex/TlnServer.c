@@ -1284,9 +1284,12 @@ void itelex_tlnserv_init()
 
 	struct TIME Time;
 	CLOCK_GetTime(&Time); // holt auch die aktuelle Zeitzone
-	if (Time.YY < 2000) 
-		//! \todo Prio 1 Fehlermeldung!
+	if (Time.YY < 2000)
+		{
+		if (TlnServSyncGeheimzahl != 0)
+			Diagnoseausgabe_P(ISTR(ServerAusWegenFehlenderUhrzeit, LokaleSprache), 1);
 		return; // der Teilnehmerserver ist auf ein korrektes Datum angewiesen
+		}
 		
 	// Wenn die folgenden Funktionen nicht aufgerufen werden, passiert gar nix als Teilnehmer-Server Funktion.
 	RegisterTCPPort(ITELEX_TLNSERV_PORT);

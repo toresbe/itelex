@@ -44,6 +44,9 @@ _STRTABENTRY(KeinTeilnehmerServerErreichbar,
 _STRTABENTRY(TeilnehmerServerWiederErreichbar, "Teilnehmer-Server wieder erreicht.", "Subscriber directory server available again.")
 _STRTABENTRY(KeineVerbindungZumMailServerAusgang, "Keine Verbindung zum Mail-Server fuer Ausgang", "No connection to server for outgoing mails")
 _STRTABENTRY(MailNichtInDieserVersion, "Mail in dieser Version nicht unterstuetzt", "Mail not supported in this version")
+_STRTABENTRY(ServerAusWegenFehlenderUhrzeit, 
+	"Zeit-Server war nicht verfuegbar, teilnehmer-server nicht gestartet. bitte i-telex neu starten.", 
+	"time server not available. subscriber server not started, please restart i-telex again.")
 _STRTABENTRY(TeilnehmerBesetzt, "Teilnehmer besetzt", "Subscriber busy")
 _STRTABENTRY(TeilnehmerNichtErreichbar, "Teilnehmer nicht erreichbar", "Subscriber not available")
 _STRTABENTRY(TeilnehmerNichtErlaubt, "Teilnehmer nicht erlaubt", "Subscriber not allowed")
