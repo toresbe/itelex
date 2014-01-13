@@ -4048,8 +4048,12 @@ void itelex_thread()
 
 	if (Modus == ModRuhe && AsciiDruckPuffer[0] != '\0')
 		{
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollLevel >= AblaufInfo)
+			{
 			ProtokollierenITelex_P(PSTR("Meldungsdruck -> "));
+			ProtokollierenPuffer(AsciiDruckPuffer, strlen(AsciiDruckPuffer));
+			Protokollieren_P(PSTR("\r\n"));
+			}
 			
 		if (SonstigeAnwahl(AsciiDruckZiel))
 			{
