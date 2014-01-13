@@ -294,8 +294,14 @@ static bool ProtPraeparieren(int len)
 	if (DruckeUhrzeit || ZeilenEnde)
 		{
 		CLOCK_GetTime(&Time);
+
+		uint8_t SregTemp = SREG;
+		cli();
+
 		sprintf_P(Puffer + strlen(Puffer), PSTR("%02d:%02d:%02d,%02d: "), Time.hh, Time.mm, Time.ss, Time.ms);
 		DruckeUhrzeit = false;
+		
+		SREG = SregTemp;
 		}
 
 	return true;
@@ -306,7 +312,14 @@ static bool ProtPraeparieren(int len)
 void Protokollieren(char *s)
 	{
 	if (s != NULL && ProtPraeparieren(strlen(s)))
+		{
+		uint8_t SregTemp = SREG;
+		cli();
+		
 		strcat(Puffer, s);
+		
+		SREG = SregTemp;
+		}
 	}
 	
 
@@ -315,9 +328,14 @@ void ProtokollierenC(char c)
 	{
 	if (ProtPraeparieren(1))
 		{
+		uint8_t SregTemp = SREG;
+		cli();
+
 		uint16_t len = strlen(Puffer);
 		Puffer[len] = c;
 		Puffer[len+1] = '\0';
+		
+		SREG = SregTemp;
 		}
 	}
 	
@@ -326,7 +344,14 @@ void ProtokollierenC(char c)
 void Protokollieren_P(const char *s)
 	{
 	if (s != NULL && ProtPraeparieren(strlen_P(s)))
+		{
+		uint8_t SregTemp = SREG;
+		cli();
+
 		strcat_P(Puffer, s);
+		
+		SREG = SregTemp;
+		}
 	}
 	
 
@@ -334,7 +359,14 @@ void Protokollieren_P(const char *s)
 void ProtokollierenInt_P(const char *s, long i)
 	{
 	if (s != NULL && ProtPraeparieren(strlen_P(s) + 10))
+		{
+		uint8_t SregTemp = SREG;
+		cli();
+
 		sprintf_P(Puffer + strlen(Puffer), s, i);
+		
+		SREG = SregTemp;
+		}
 	}
 
 	
@@ -345,7 +377,14 @@ static char Buf[20];
 void ProtokollierenIPAdr(long aip)
 	{
 	if (ProtPraeparieren(15)) // 15 = 4 * 3 (Ziffern) + 3 (Punkte)
+		{
+		uint8_t SregTemp = SREG;
+		cli();
+
 		strcat(Puffer, iptostr(aip, Buf));
+		
+		SREG = SregTemp;
+		}
 	}
 	
 
@@ -353,7 +392,14 @@ void ProtokollierenIPAdr(long aip)
 void ProtokollierenMAC(char mac[6])
 	{
 	if (ProtPraeparieren(17)) // 17 = 6 * 2 (Hex-Ziffern) + 5 (Doppelpunkte)
+		{
+		uint8_t SregTemp = SREG;
+		cli();
+
 		strcat(Puffer, mactostr(mac, Buf));
+		
+		SREG = SregTemp;
+		}
 	}
 
 
