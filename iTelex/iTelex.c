@@ -1954,7 +1954,9 @@ static void SocketBearbeiten()
 		} // if es gibt was zu senden
 
 	// Bei Ascii oder Mail den Timeout auf 'deaktivieren'
-	if (ModusTwiVerbunden() && (iTelexSocketProtokoll == Ascii || iTelexSocketProtokoll == POP3 || iTelexSocketProtokoll == SMTP))
+	if (ModusTwiVerbunden() 
+		&& (iTelexSocketProtokoll == Ascii || iTelexSocketProtokoll == POP3 || iTelexSocketProtokoll == SMTP)
+		&& TCP_sockettable[iTelexSocketHandle].ConnectionState == SOCKET_READY)
 		TCP_sockettable[iTelexSocketHandle].Timeoutcounter = 30; 
 		
 	// Abbruch wenn zu lange keine Verbindung besteht...

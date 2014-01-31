@@ -183,8 +183,10 @@ void tcp( int packet_lenght, char * ethernetbuffer)
 		
 		// Wenn immer noch keine Verbindung zugeordnet beenden
 		if ( socket == SOCKET_ERROR ) return;
+		
 		// den Timeoutcounter wieder zuruecksetzen für die Verbindung auf den zugeordneten Socket
-		TCP_sockettable[ socket ].Timeoutcounter = TimeOutCounter;
+		if (TCP_sockettable[ socket ].ConnectionState <= SOCKET_READY) // HACK Son Test
+			TCP_sockettable[ socket ].Timeoutcounter = TimeOutCounter;
 
 #if defined(TCP_RTT)
 		TCP_pharseOptions( socket , (unsigned char *) TCP_packet->TCP_Options, TCP_Optionsize );
