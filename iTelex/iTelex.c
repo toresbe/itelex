@@ -5914,6 +5914,81 @@ ISR(WDT_vect)
 	}
 	
 
+//! Behandelt "Werkseinstellungen" durch Tastendruck beim Hochfahren.
+//------------------------------------------------------------------------
+//! Wird aufgerufen, wenn Taste während der Boot-Phase gedrückt wird.
+
+static void iTelexInit_Taste()
+	{
+	TKurzTimer TasteTimer;
+	
+	LED_off(ROT);
+	LED_on(GELB);
+	LED_off(GRUEN);
+	LED_off(BLAU);
+	
+	StartKurzTimer(&TasteTimer);
+	while (KurzTimerVal(&TasteTimer) <= KurzTimerFreq * 2/10) // 0,2 Sekunden Loslassen abwarten
+		{
+		if (!get_Taste())
+			StartKurzTimer(&TasteTimer);
+		}
+
+	LED_on(ROT);
+	LED_off(GELB);
+		
+	// Taste ist jetzt losgelassen.
+	// kein Tastendruck für 3 Sekunden --> Ausstieg ohne Werkseinstellungen
+	// Kurzer Tastendruck --> nur "DHCP = on"
+	// Langer Tastendruck --> alles Reset
+	StartKurzTimer(&TasteTimer);
+	bool Gedrueckt = false;
+	while (KurzTimerVal(&TasteTimer) <= KurzTimerFreq * 30/10 || Gedrueckt)
+		{
+		if (!get_Taste()) // Low = gedrückt!
+			{
+			if (!Gedrueckt)
+				{ // gerade erst gedrückt
+				StartKurzTimer(&TasteTimer);
+				Gedrueckt = true;
+				LED_on(GRUEN);
+				}
+			else if (KurzTimerVal(&TasteTimer) > KurzTimerFreq * 30/10) 
+				{ // 3 Sekunden lang gedrückt --> Total-Reset des EEPROM
+				LED_on(ROT);
+				LED_on(GELB);
+				LED_on(GRUEN);
+				LED_on(BLAU);
+				makeConfig(); // löscht Konfiguration im EEPROM
+				softreset();
+				}
+			else if (KurzTimerVal(&TasteTimer) > KurzTimerFreq * 20/10) 
+				LED_on(BLAU); // nach 2 Sekunden geht zur Warnung blau an.
+			} // if Taste momentan gedrückt
+		else  
+			{ // if Taste momentan losgelassen
+			if (Gedrueckt) 
+				{ // war aber gerade gedrückt
+				if (KurzTimerVal(&TasteTimer) > KurzTimerFreq * 2/10) 
+					{ // Taste kurz gedrückt --> DHCP = on durch löschen von DHCP
+					LED_on(ROT);
+					deleteConfig_P(PSTR("DHCP"));
+					softreset();
+					}
+				StartKurzTimer(&TasteTimer);
+				Gedrueckt = false;
+				LED_off(GRUEN);
+				} // Taste gerade eben losgelassen
+			}
+		} // while Timer < 3 Sekunden oder TasteGedrueckt
+
+	LED_off(ROT);
+	LED_off(GELB);
+	LED_off(GRUEN);
+	LED_on(BLAU);
+	} // iTelexInit_Taste()
+	
+	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Initialisiert den iTelex-clinet und registriert den Port auf welchen dieser lauschen soll.
  * \param 	NONE
@@ -5939,6 +6014,9 @@ void itelex_init()
 	DiagnosePuffer[0] = '\0';
 	DiagnosePufferLevel = 0;
 
+	if (!get_Taste()) // Gedrückt = LOW!
+		iTelexInit_Taste();
+	
 	#ifdef ITELEX_ANSCHLUSS
 	
 	SeriellUmsetzInit();
