@@ -5971,7 +5971,7 @@ static void iTelexInit_Taste()
 				{ // war aber gerade gedrückt
 				if (KurzTimerVal(&TasteTimer) > KurzTimerFreq * 2/10) 
 					{ // Taste kurz gedrückt --> DHCP = on durch löschen von DHCP
-					LED_on(ROT);
+					LED_on(GELB);
 					deleteConfig_P(PSTR("DHCP"));
 					softreset();
 					}
@@ -6011,12 +6011,11 @@ void itelex_init()
 	ProtokollInit();
 	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);
 
+	printf_P(PSTR("itelex_init:\r\n"));
+	
 	DiagnosePuffer[0] = '\0';
 	DiagnosePufferLevel = 0;
 
-	if (!get_Taste()) // Gedrückt = LOW!
-		iTelexInit_Taste();
-	
 	#ifdef ITELEX_ANSCHLUSS
 	
 	SeriellUmsetzInit();
@@ -6027,6 +6026,8 @@ void itelex_init()
 
 	AsciiDruckPuffer[0] = '\0';
 	HtmlSendeText[0] = '\0';
+
+	printf_P(PSTR("...SendePuffer, EmpfPuffer ok\r\n"));
 	
 	#endif // ITELEX_ANSCHLUSS
 	
@@ -6085,7 +6086,9 @@ void itelex_init()
 		DatumDruckModus = atoi(Buf);
 	else
 		DatumDruckModus = DatumDruckBeide;
-		
+
+	printf_P(PSTR("...Config ok\r\n"));
+
 	#endif // ITELEX_ANSCHLUSS
 
 	#ifdef ITELEX_TLNSERVER
@@ -6125,6 +6128,7 @@ void itelex_init()
 	else
 		LokaleSprache = Deutsch;
 
+	printf_P(PSTR("...Config 2 ok\r\n"));
 		
 	// dies müsste eigentlich in Protokoll.c enthalten sein.
 	if (readConfig_P(ProtokollLevel_P, Buf) == 1)
@@ -6144,6 +6148,7 @@ void itelex_init()
 	TeilnehmerServerSocket = NO_SOCKET_USED;
 	AktTlnServerTabI = 0;
 
+	printf_P(PSTR("...Config 3 ok\r\n"));
 
 	#ifdef ITELEX_ANSCHLUSS
 	
@@ -6184,10 +6189,15 @@ void itelex_init()
 	if (!timer0_RegisterCallbackFunction(itelex_timerEvent))
 		return;
 
+	printf_P(PSTR("...Timer-Callback-Funktion ok\r\n"));
+		
 	wdt_enable(WDTO_250MS);  
 	WDTCSR |= (1 << WDIE); // Interrupt-Mode auch aktivieren, somit Modus Interrupt + Reset aktiv
 		// in itelex_timerEvent wird wdt_reset() ausgefährt.
-	
+
+	if (!get_Taste()) // Gedrückt = LOW!
+		iTelexInit_Taste();
+		
 	StartKurzTimer(&ITelexThreadCheckTimer);
 		
 	cgi_RegisterCGI( itelex_cgi_msg_In, PSTR("itelex-msg-in.cgi"));
@@ -6212,6 +6222,8 @@ void itelex_init()
 
 	cgi_RegisterCGI( ConfigNtpCgi, PSTR("ntp.cgi"));
 	
+	printf_P(PSTR("...Cgi ok\r\n"));
+
 	#ifdef ITELEX_ANSCHLUSS
 	
 	RegisterTCPPort(ITELEX_PORT);
@@ -6225,16 +6237,22 @@ void itelex_init()
 	#endif // ITELEX_ANSCHLUSS
 	
 	TlnBuchInit();
+
+	printf_P(PSTR("...TlnBuch ok\r\n"));
 	
 	#ifdef ITELEX_TLNSERVER
 	
 	itelex_tlnserv_init();
+
+	printf_P(PSTR("...Teilnehmer-Server ok\r\n"));
 	
 	#endif // ITELEX_TLNSERVER
 
 	#ifdef ITELEX_EMAIL
 	
 	itelex_email_init();
+
+	printf_P(PSTR("...Email ok\r\n"));
 	
 	#endif //def ITELEX_EMAIL
 	
