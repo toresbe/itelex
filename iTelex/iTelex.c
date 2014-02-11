@@ -6198,6 +6198,8 @@ void itelex_init()
 	if (!get_Taste()) // Gedrückt = LOW!
 		iTelexInit_Taste();
 		
+	Tastendruck = NichtGedr;
+
 	StartKurzTimer(&ITelexThreadCheckTimer);
 		
 	cgi_RegisterCGI( itelex_cgi_msg_In, PSTR("itelex-msg-in.cgi"));
