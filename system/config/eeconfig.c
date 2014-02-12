@@ -140,15 +140,16 @@ int findConfig( void )
 void PrintConfig( void )
 {
 	int i ;
+	int ConfigUsed = getConfigsizeUsed();
 	
-	printf_P( PSTR("Config ist %d bytes gross, %d byte werden benutzt. Offset %d\r\n\r\n"), MCPconfig.Configlen, getConfigsizeUsed(),ConfigOffset );
+	printf_P( PSTR("Config ist %d bytes gross, %d byte werden benutzt. Offset %d\r\n\r\n"), MCPconfig.Configlen, ConfigUsed, ConfigOffset );
 	
-	for ( i = 0 ; i < getConfigsizeUsed() ; i++ )
+	for ( i = 0 ; i < ConfigUsed ; i++ )
 	{
 		// Wenn '&' vorhanden, die zeile überspringen, soll sowas wie ein geheimer Eintrag sein
 		if ( eeprom_read_byte( (const unsigned char * ) ConfigOffset + i ) == '&' )
 		{
-			for( ; i < getConfigsizeUsed() ; i++ )
+			for( ; i < ConfigUsed ; i++ )
 			{
 				if ( eeprom_read_byte( (const unsigned char * ) ConfigOffset + i ) == '\r' )
 					break;
@@ -229,12 +230,13 @@ int readConfig( char * ConfigName, char * ConfigValue )
 	char E2ConfigName[30];
 	
 	ConfigNameLen = strlen( ConfigName );
+	int ConfigUsed = getConfigsizeUsed();
 	
 	i = checkConfigName ( ConfigName );
 	
 	if ( i == -1 ) return( -1 );
 	
-	for( ; i < getConfigsizeUsed () ; Pos++ , i++ )
+	for( ; i < ConfigUsed ; Pos++ , i++ )
 	{
 		E2ConfigName[ Pos ] = eeprom_read_byte( (const unsigned char * ) ConfigOffset + i );
 		if ( E2ConfigName[ Pos ] == '=' || E2ConfigName[ Pos ] == '\0' ) 
@@ -250,7 +252,7 @@ int readConfig( char * ConfigName, char * ConfigValue )
 		{
 			i++;
 			Pos = 0;
-			for ( ; i < getConfigsizeUsed () ; Pos++ , i++ )
+			for ( ; i < ConfigUsed ; Pos++ , i++ )
 			{
 				ConfigValue[ Pos ] = eeprom_read_byte( (const unsigned char * ) ConfigOffset + i );
 				if ( ConfigValue[ Pos ] == '\r' || ConfigValue[ Pos ] == '\0' ) break;
@@ -316,11 +318,13 @@ int checkConfigName( char * ConfigName )
 	
 	ConfigNameLen = strlen( ConfigName );
 	
-	for( ; i < getConfigsizeUsed () ; i++ )
+	int ConfigUsed = getConfigsizeUsed();
+	
+	for( ; i < ConfigUsed ; i++ )
 	{
 		E2NamePos = i;
 		Pos = 0 ;
-		for( ; i < getConfigsizeUsed () ; Pos++ , i++ )
+		for( ; i < ConfigUsed ; Pos++ , i++ )
 		{
 			E2ConfigName[ Pos ] = eeprom_read_byte( (const unsigned char * ) ConfigOffset + i );
 			if ( E2ConfigName[ Pos ] == '=' || E2ConfigName[ Pos ] == '\0' ) 
@@ -331,7 +335,7 @@ int checkConfigName( char * ConfigName )
 			}
 		}
 		
-		for ( ; i < getConfigsizeUsed () ; Pos++ , i++ )
+		for ( ; i < ConfigUsed ; Pos++ , i++ )
 		{
 			if ( eeprom_read_byte( (const unsigned char * ) ConfigOffset + i ) == '\r' || eeprom_read_byte( (const unsigned char * ) ConfigOffset + i ) == '\0' ) break;
 		}
@@ -382,7 +386,7 @@ int deleteConfig( char * ConfigName)
 
 	if ( ConfigProtect == PROTECT ) return( 1 );
 
-	E2Size = getConfigsizeUsed ();
+	E2Size = getConfigsizeUsed();
 	
 	i = checkConfigName ( ConfigName );
 	
@@ -401,7 +405,7 @@ int deleteConfig( char * ConfigName)
 	if ( Buffer == '\r' )
 	{
 		EntryLen++;
-		for( ; i < getConfigsizeUsed () ; i++ )
+		for( ; i < E2Size ; i++ )
 		{
 			eeprom_write_byte( ( unsigned char *) ConfigOffset + i , eeprom_read_byte( ( const unsigned char * ) ConfigOffset + i + EntryLen ) );
 		}

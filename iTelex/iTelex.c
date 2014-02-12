@@ -1954,7 +1954,9 @@ static void SocketBearbeiten()
 		} // if es gibt was zu senden
 
 	// Bei Ascii oder Mail den Timeout auf 'deaktivieren'
-	if (ModusTwiVerbunden() && (iTelexSocketProtokoll == Ascii || iTelexSocketProtokoll == POP3 || iTelexSocketProtokoll == SMTP))
+	if (ModusTwiVerbunden() 
+		&& (iTelexSocketProtokoll == Ascii || iTelexSocketProtokoll == POP3 || iTelexSocketProtokoll == SMTP)
+		&& TCP_sockettable[iTelexSocketHandle].ConnectionState == SOCKET_READY)
 		TCP_sockettable[iTelexSocketHandle].Timeoutcounter = 30; 
 		
 	// Abbruch wenn zu lange keine Verbindung besteht...
@@ -5912,6 +5914,90 @@ ISR(WDT_vect)
 	}
 	
 
+//! Behandelt "Werkseinstellungen" durch Tastendruck beim Hochfahren.
+//------------------------------------------------------------------------
+//! Wird aufgerufen, wenn Taste während der Boot-Phase gedrückt wird.
+
+static void iTelexInit_Taste()
+	{
+	TKurzTimer TasteTimer;
+	
+	LED_off(ROT);
+	LED_on(GELB);
+	LED_off(GRUEN);
+	LED_off(BLAU);
+	
+	StartKurzTimer(&TasteTimer);
+	while (KurzTimerVal(&TasteTimer) <= KurzTimerFreq * 2/10) // 0,2 Sekunden Loslassen abwarten
+		{
+		if (!get_Taste())
+			StartKurzTimer(&TasteTimer);
+		}
+
+	LED_on(ROT);
+	LED_off(GELB);
+		
+	// Taste ist jetzt losgelassen.
+	// kein Tastendruck für 3 Sekunden --> Ausstieg ohne Werkseinstellungen
+	// Kurzer Tastendruck --> nur "DHCP = on"
+	// Langer Tastendruck --> alles Reset
+	StartKurzTimer(&TasteTimer);
+	bool Gedrueckt = false;
+	while (KurzTimerVal(&TasteTimer) <= KurzTimerFreq * 30/10 || Gedrueckt)
+		{
+		if (!get_Taste()) // Low = gedrückt!
+			{
+			if (!Gedrueckt)
+				{ // gerade erst gedrückt
+				StartKurzTimer(&TasteTimer);
+				Gedrueckt = true;
+				LED_on(GRUEN);
+				}
+			else if (KurzTimerVal(&TasteTimer) > KurzTimerFreq * 30/10) 
+				{ // 3 Sekunden lang gedrückt --> Total-Reset des EEPROM
+				LED_off(ROT);
+				LED_on(GELB);
+				LED_on(GRUEN);
+				LED_on(BLAU);
+				makeConfig(); // löscht Konfiguration im EEPROM
+				StartKurzTimer(&TasteTimer);
+				while (KurzTimerVal(&TasteTimer) <= 1 * KurzTimerFreq)
+					; // nix, einfach noch die LED etwas leuchten lassen...
+				softreset();
+				}
+			else if (KurzTimerVal(&TasteTimer) > KurzTimerFreq * 20/10) 
+				LED_on(BLAU); // nach 2 Sekunden geht zur Warnung blau an.
+			} // if Taste momentan gedrückt
+		else  
+			{ // if Taste momentan losgelassen
+			if (Gedrueckt) 
+				{ // war aber gerade gedrückt
+				if (KurzTimerVal(&TasteTimer) > KurzTimerFreq * 2/10) 
+					{ // Taste kurz gedrückt --> DHCP = on durch löschen von DHCP
+					LED_off(ROT);
+					LED_on(GELB);
+					LED_off(GRUEN);
+					LED_on(BLAU);
+					deleteConfig_P(PSTR("DHCP"));
+					StartKurzTimer(&TasteTimer);
+					while (KurzTimerVal(&TasteTimer) <= 1 * KurzTimerFreq)
+						; // nix, einfach noch die LED etwas leuchten lassen...
+					softreset();
+					}
+				StartKurzTimer(&TasteTimer);
+				Gedrueckt = false;
+				LED_off(GRUEN);
+				} // Taste gerade eben losgelassen
+			}
+		} // while Timer < 3 Sekunden oder TasteGedrueckt
+
+	LED_off(ROT);
+	LED_off(GELB);
+	LED_off(GRUEN);
+	LED_on(BLAU);
+	} // iTelexInit_Taste()
+	
+	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Initialisiert den iTelex-clinet und registriert den Port auf welchen dieser lauschen soll.
  * \param 	NONE
@@ -5934,6 +6020,8 @@ void itelex_init()
 	ProtokollInit();
 	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);
 
+	printf_P(PSTR("itelex_init:\r\n"));
+	
 	DiagnosePuffer[0] = '\0';
 	DiagnosePufferLevel = 0;
 
@@ -5947,6 +6035,8 @@ void itelex_init()
 
 	AsciiDruckPuffer[0] = '\0';
 	HtmlSendeText[0] = '\0';
+
+	printf_P(PSTR("...SendePuffer, EmpfPuffer ok\r\n"));
 	
 	#endif // ITELEX_ANSCHLUSS
 	
@@ -6005,7 +6095,7 @@ void itelex_init()
 		DatumDruckModus = atoi(Buf);
 	else
 		DatumDruckModus = DatumDruckBeide;
-		
+
 	#endif // ITELEX_ANSCHLUSS
 
 	#ifdef ITELEX_TLNSERVER
@@ -6064,6 +6154,7 @@ void itelex_init()
 	TeilnehmerServerSocket = NO_SOCKET_USED;
 	AktTlnServerTabI = 0;
 
+	printf_P(PSTR("...Config ok\r\n"));
 
 	#ifdef ITELEX_ANSCHLUSS
 	
@@ -6104,10 +6195,17 @@ void itelex_init()
 	if (!timer0_RegisterCallbackFunction(itelex_timerEvent))
 		return;
 
+	printf_P(PSTR("...Timer-Callback-Funktion ok\r\n"));
+		
 	wdt_enable(WDTO_250MS);  
 	WDTCSR |= (1 << WDIE); // Interrupt-Mode auch aktivieren, somit Modus Interrupt + Reset aktiv
 		// in itelex_timerEvent wird wdt_reset() ausgefährt.
-	
+
+	if (!get_Taste()) // Gedrückt = LOW!
+		iTelexInit_Taste();
+		
+	Tastendruck = NichtGedr;
+
 	StartKurzTimer(&ITelexThreadCheckTimer);
 		
 	cgi_RegisterCGI( itelex_cgi_msg_In, PSTR("itelex-msg-in.cgi"));
@@ -6132,6 +6230,8 @@ void itelex_init()
 
 	cgi_RegisterCGI( ConfigNtpCgi, PSTR("ntp.cgi"));
 	
+	printf_P(PSTR("...Cgi ok\r\n"));
+
 	#ifdef ITELEX_ANSCHLUSS
 	
 	RegisterTCPPort(ITELEX_PORT);
@@ -6145,16 +6245,22 @@ void itelex_init()
 	#endif // ITELEX_ANSCHLUSS
 	
 	TlnBuchInit();
+
+	printf_P(PSTR("...TlnBuch ok\r\n"));
 	
 	#ifdef ITELEX_TLNSERVER
 	
 	itelex_tlnserv_init();
+
+	printf_P(PSTR("...Teilnehmer-Server ok\r\n"));
 	
 	#endif // ITELEX_TLNSERVER
 
 	#ifdef ITELEX_EMAIL
 	
 	itelex_email_init();
+
+	printf_P(PSTR("...Email ok\r\n"));
 	
 	#endif //def ITELEX_EMAIL
 	

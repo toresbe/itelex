@@ -167,12 +167,14 @@ void tcp( int packet_lenght, char * ethernetbuffer)
 #if defined(TCP_RTT)
 					TCP_pharseOptions( socket , (unsigned char *) TCP_packet->TCP_Options, TCP_Optionsize );
 #endif
-					TCP_sockettable[ socket ].ConnectionState = SOCKET_SYNINIT ; // SYNINIT setzen so lange wie das packet noch nicht beantwortet wurde, wird in MakeTCP gebraucht um de MSS zu senden
+					if (TCP_sockettable[ socket ].ConnectionState <= SOCKET_READY) // HACK Son Test
+						TCP_sockettable[ socket ].ConnectionState = SOCKET_SYNINIT ; // SYNINIT setzen so lange wie das packet noch nicht beantwortet wurde, wird in MakeTCP gebraucht um de MSS zu senden
 					TCP_sockettable[ socket ].Windowsize = ntohs( TCP_packet->TCP_Window ); // Windowsize setzen, wird gebraucht um zu wissen wiviel gesendet werden kann ohne ACK
 					TCP_sockettable[ socket ].AcknowledgeNumber++; // SequenceNumber um 1 erhöhen, das gehört zur SYN-sequence dazu
 					MakeTCPheader( socket, TCP_SYN_FLAG | TCP_ACK_FLAG, 0 , MAX_RECIVEBUFFER_LENGHT , ethernetbuffer ); // Baue mal den TCP-Header mit Berechnung des Pseudoheader
 					TCP_sockettable[ socket ].SequenceNumber++; // SequenceNumber um 1 erhöhen, das gehört zur SYN-sequence dazu
-					TCP_sockettable[ socket ].ConnectionState = SOCKET_WAIT2SYNACK ; // State für den Socket auf WAIT2SYNACK und den den SYN abschließen zu können
+					if (TCP_sockettable[ socket ].ConnectionState <= SOCKET_READY) // HACK Son Test
+						TCP_sockettable[ socket ].ConnectionState = SOCKET_WAIT2SYNACK ; // State für den Socket auf WAIT2SYNACK und den den SYN abschließen zu können
 					TCP_sockettable[ socket ].SendState = SOCKET_READY2SEND ; // bereit zum senden
 					TCP_sockettable[ socket ].Timeoutcounter = TimeOutCounter;
 				}
@@ -181,8 +183,10 @@ void tcp( int packet_lenght, char * ethernetbuffer)
 		
 		// Wenn immer noch keine Verbindung zugeordnet beenden
 		if ( socket == SOCKET_ERROR ) return;
+		
 		// den Timeoutcounter wieder zuruecksetzen für die Verbindung auf den zugeordneten Socket
-		TCP_sockettable[ socket ].Timeoutcounter = TimeOutCounter;
+		if (TCP_sockettable[ socket ].ConnectionState <= SOCKET_READY) // HACK Son Test
+			TCP_sockettable[ socket ].Timeoutcounter = TimeOutCounter;
 
 #if defined(TCP_RTT)
 		TCP_pharseOptions( socket , (unsigned char *) TCP_packet->TCP_Options, TCP_Optionsize );
@@ -197,7 +201,8 @@ void tcp( int packet_lenght, char * ethernetbuffer)
 				// Windowsize setzen, wird gebraucht um zu wissen wiviel gesendet werden kann ohne ACK
 				TCP_sockettable[ socket ].Windowsize = ntohs ( TCP_packet->TCP_Window ); 
 				// Baue mal den TCP-Header mit Berechnung des Pseudoheader
-				TCP_sockettable[ socket ].ConnectionState = SOCKET_READY ; // State für den Socket auf WAIT2SYNACK und den den SYN abschließen zu können
+				if (TCP_sockettable[ socket ].ConnectionState < SOCKET_READY) // HACK Son Test
+					TCP_sockettable[ socket ].ConnectionState = SOCKET_READY ; // State für den Socket auf WAIT2SYNACK und den den SYN abschließen zu können
 				TCP_sockettable[ socket ].SendState = SOCKET_READY2SEND ; // bereit zum senden
 				return;
 			}
@@ -410,7 +415,8 @@ void TCPTimeOutHandler( void )
 				if ( TCP_sockettable[ socket ].Timeoutcounter == ( TimeOutCounter / 3 ) )
 				{
 					MakeTCPheader( socket, TCP_FIN_FLAG | TCP_ACK_FLAG , 0 , ( MAX_RECIVEBUFFER_LENGHT - Get_Bytes_in_FIFO ( TCP_sockettable[ socket ].fifo ) ) , ethernetbuffer );
-					TCP_sockettable[ socket ].ConnectionState = SOCKET_WAIT2FINACK;
+					if (TCP_sockettable[ socket ].ConnectionState <= SOCKET_READY) // HACK Son Test
+						TCP_sockettable[ socket ].ConnectionState = SOCKET_WAIT2FINACK;
 				}
 				else if ( TCP_sockettable[ socket ].Timeoutcounter == 0 )
 				{
@@ -809,7 +815,9 @@ void CloseTCPSocket( int Socket)
 	TCP_packet = ( struct TCP_header *) &ethernetbuffer[ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];
 
 	MakeTCPheader( Socket, TCP_FIN_FLAG | TCP_ACK_FLAG , 0, ( MAX_RECIVEBUFFER_LENGHT - Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) ) , ethernetbuffer );
-	TCP_sockettable[ Socket ].ConnectionState = SOCKET_WAIT2FINACK;
+	
+	if (TCP_sockettable[ Socket ].ConnectionState <= SOCKET_READY) // HACK Son Test
+		TCP_sockettable[ Socket ].ConnectionState = SOCKET_WAIT2FINACK;
 
 	FreeEthernet();		
 
