@@ -1,0 +1,15 @@
+-----------------------------------------------------------
+hallo liebe i-telex-anwender.
+schon wieder gibt es eine neue software-version:
+geaendert wurde zwei punkte, die weniger die funktionalitaet,
+sondern mehr die stabilitaet betreffen. einige anwender 
+berichteten von problemen zur erreichbarkeit. eine analyse
+ergab, dass in seltenen faellen blockierungen durch 
+nicht vollstaendigen verbindungsabbau der netzwerk-
+kommunikation eintraten. dies problem ist mit der neuen
+software behoben.
+wie immer koennen alle erforderlichen daten zum update
+unter http://sonnibs.no-ip.org/update.zip heruntergeladen
+werden.
+viel spass.
+fred ++++++

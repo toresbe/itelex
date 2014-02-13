@@ -1,3 +1,10 @@
+Ab Build 520:
+Bessere Behandlung von Fehlern beim Selbst-Anruf
+Fehlerkorrektur von Verbindungsproblemen: 
+    Zeitbeschränkung beim Schließen von TCP-Sockets
+Teilnehmerverzeichnis bleibt nach Reset erhalten
+Möglichkeit des Konfigurations-Reset durch Tastendruck	
+
 Ab Build 479:
 Dienstmeldungen bei nicht erfolgreichem Verbindungsaufbau (occ, na, der, abs)
 
