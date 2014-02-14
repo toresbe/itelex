@@ -243,7 +243,7 @@ static uint8_t AsciiHilfZeilenanfang;
 	//!< Speichert, an welcher Stelle in einer Zeile der Hilfspuffer beginnt, d.h. wieviele
 	//!< Zeichen bereits vorher gedruckt worden sind. Erforderlich für automatischen Zeilenumbruch.
 	
-enum { Druckzeilenlaenge = 64 } ; 
+enum { Druckzeilenlaenge = 68 } ; 
 	//!< Zeichen pro Zeile auf den Fernschreibern.
 	
 
