@@ -1606,7 +1606,8 @@ static void SocketBearbeiten()
 		if (ProtokollLevel >= AblaufInfo)
 			{
 			ProtokollRegelblockStart();
-			ProtokollierenITelex_P(PSTR("Server-Socket geoeffnet von IP "));
+			ProtokollierenITelex();
+			ProtokollierenInt_P(PSTR("Server-Socket #%d geoeffnet von IP "), NewServerSocket);
 			ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
 			Protokollieren_P(PSTR(" / MAC "));
 			ProtokollierenMAC(TCP_sockettable[NewServerSocket].MACadress);
@@ -1874,7 +1875,10 @@ static void SocketBearbeiten()
 			}
 
 		if (ProtokollLevel >= NurFehler)
-			ProtokollierenITelex_P(PSTR("Wieder-Oeffnung des Socket erfolgreich.\r\n"));
+			{
+			ProtokollierenITelex();
+			ProtokollierenInt_P(PSTR("Wieder-Oeffnung des Socket #%d erfolgreich.\r\n"), iTelexSocketHandle);
+			}
 
 		StartKurzTimer(&iTelexSocketAbbauVerzoegerung);
 			
@@ -2918,7 +2922,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 				{
 				ProtokollierenITelex_P(PSTR("Verbindung an Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
-				Protokollieren_P(PSTR(" hergestellt fuer "));
+				ProtokollierenInt_P(PSTR(" Socket #%d hergestellt fuer "), Res);
 				Protokollieren_P(Grund);
 				Protokollieren_P(PSTR(".\r\n"));
 				}
@@ -3091,7 +3095,10 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			if (SMTPOeffnen(td->Adresse))
 				{
 				if (ProtokollLevel >= AblaufInfo)
-					ProtokollierenITelex_P(PSTR("Client-Socket SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
+					{
+					ProtokollierenITelex();
+					ProtokollierenInt_P(PSTR("Client-Socket #%d SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n"), iTelexSocketHandle);
+					}
 					
 				BusSenden(BusQuittEin);
 				ModusWechsel(ModGehendVerbunden);
@@ -3150,7 +3157,10 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		{ // ID#226 *********************************************
 		BusSenden(BusQuittEin);
 		if (ProtokollLevel >= AblaufInfo)
-			ProtokollierenITelex_P(PSTR("Client-Socket Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n" ));
+			{
+			ProtokollierenITelex();
+			ProtokollierenInt_P(PSTR("Client-Socket #%d Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n"), iTelexSocketHandle);
+			}
 			
 		ModusWechsel(ModGehendVerbunden);
 		iTelexSocketProtokoll = Ascii;
@@ -3161,7 +3171,8 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		if (ProtokollLevel >= AblaufInfo)
 			{
 			ProtokollierenITelex();
-			ProtokollierenInt_P(PSTR("Client-Socket iTelex erfolgreich geoeffnet -> sende Durchwahl %u"), td->Durchwahl);
+			ProtokollierenInt_P(PSTR("Client-Socket #%d iTelex erfolgreich geoeffnet "), iTelexSocketHandle);
+			ProtokollierenInt_P(PSTR("-> sende Durchwahl %u"), td->Durchwahl);
 			ProtokollierenInt_P(PSTR(" und Version %u\r\n"), iTelexSocketProtVersionVorschlag);
 			}
 
@@ -4231,7 +4242,8 @@ void itelex_thread()
 						if (ProtokollLevel < AuchRegelmaessiges)
 							ProtokollRegelblockInit();
 						ProtokollRegelblockStart();
-						ProtokollierenITelex_P(PSTR("Selbst-Anruf Daten gesendet.\r\n"));
+						ProtokollierenITelex();
+						ProtokollierenInt_P(PSTR("Selbst-Anruf Daten ueber Socket #%d gesendet.\r\n"), SelbstAnrufSocketHandle);
 						ProtokollRegelblockEnde();
 						}
 					else

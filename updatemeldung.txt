@@ -2,14 +2,37 @@
 hallo liebe i-telex-anwender.
 schon wieder gibt es eine neue software-version:
 geaendert wurde zwei punkte, die weniger die funktionalitaet,
-sondern mehr die stabilitaet betreffen. einige anwender 
+sondern mehr die stabilitaet betreffen. einige anwender
 berichteten von problemen zur erreichbarkeit. eine analyse
-ergab, dass in seltenen faellen blockierungen durch 
+ergab, dass in seltenen faellen blockierungen durch
 nicht vollstaendigen verbindungsabbau der netzwerk-
 kommunikation eintraten. dies problem ist mit der neuen
 software behoben.
+zum zweiten bleibt bei einem absturz nun in den meisten
+faellen das teilnehmerverzeichnis erhalten. das soll aber
+nicht davon abhalten, dass teilnehmerverzeichnis auch 
+nach aenderungen nichtfluechtig zu speichern, da bei
+stromausfaellen die beste software nichts nuetzt.
 wie immer koennen alle erforderlichen daten zum update
 unter http://sonnibs.no-ip.org/update.zip heruntergeladen
 werden.
 viel spass.
+fred ++++++
+
+------------------------------------------------------------
+hello dear i-telex-user.
+again there is a new software-version for the i-telex-board:
+the changes affect more some stability issues than the
+improvement of functionality.
+some users had problems regarding their availability.
+after long term tests the problem was found and solved in
+the new version.
+furthermore the personal subsriber list will keep in most
+cases up-to-date after a system crash. but this feature
+should not replace the functionality to save changes
+permanently because the new functionality does not help
+in power loss situations.
+as before, all necessarry data and information can be
+downloaded at http://sonnibs.no-ip.org/update.zip .
+have fun...
 fred ++++++

@@ -1,3 +1,6 @@
+Ab Build 522:
+Zeilenumbruch bei ASCII-Verbindung erst nach 68 Zeichen
+
 Ab Build 520:
 Bessere Behandlung von Fehlern beim Selbst-Anruf
 Fehlerkorrektur von Verbindungsproblemen: 

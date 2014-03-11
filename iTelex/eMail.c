@@ -283,7 +283,7 @@ void POP3Einleiten()
 		}
 
 	if (ProtokollLevel >= AblaufInfo)
-		Protokollieren_P(PSTR("iTelex POP: Client-Socket zum Server erfolgreich geoeffnet\r\n"));
+		ProtokollierenInt_P(PSTR("iTelex POP: Client-Socket #%d zum Server erfolgreich geoeffnet\r\n"), iTelexSocketHandle);
 		
 	SocketBufInit();
 	
@@ -613,7 +613,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 	StartKurzTimer(&VervollstaendigungTimer);
 	
 	return true;
-	}
+	} // SMTPOeffnen()
 	
 
 /* Typischer Ablauf einer SMTP-Sitzung:

@@ -972,7 +972,8 @@ static bool VollAbfrageKanalOeffnen()
 		TlnServer[0].ListeIdx = VollAbfrageServerIndex; 
 		if (ProtokollLevelTlnServ >= AblaufInfo)
 			{
-			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Client-Socket geoeffnet, Vollabfrage begonnen\r\n"));
+			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Client-Socket "));
+			ProtokollierenInt_P(PSTR("#%d geoeffnet, Vollabfrage begonnen\r\n"), NewSock);
 			}
 		TlnServBuf.Code = TLNSERV_SYNC_VOLLABFRAGE;
 		TlnServBuf.DataLen = sizeof(TlnServBuf.SyncAnmeldung);
@@ -1037,7 +1038,8 @@ static bool AktivSyncMeldungKanalOeffnen(uint8_t ServerI)
 		TlnListerStart(&TlnServer[0].AusgabeLister);
 		if (ProtokollLevelTlnServ >= AblaufInfo)
 			{
-			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Client-Socket geoeffnet zur Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"));
+			ProtokollierenTlnServ_P(&TlnServer[0], PSTR("Client-Socket "));
+			ProtokollierenInt_P(PSTR("#%d geoeffnet zur Ausgabe der geaenderten Teilnehmer-Eintraege\r\n"), NewSock);
 			}
 			
 		TlnServBuf.Code = TLNSERV_SYNC_ANMELDUNG;
@@ -1112,7 +1114,10 @@ void itelex_tlnserv_thread()
 			ProtokollierenIPAdr(TCP_sockettable[NewServerSocket].SourceIP);
 			Protokollieren_P(PSTR(" / MAC "));
 			ProtokollierenMAC(TCP_sockettable[NewServerSocket].MACadress);
-			Protokollieren_P(Ok ? PSTR(" ...ok\r\n") : PSTR("! ...ABGEWIESEN wegen alle besetzt\r\n" ));
+			if (Ok)
+				ProtokollierenInt_P(PSTR(" ...ok #%d\r\n"), NewServerSocket);
+			else
+				Protokollieren_P(PSTR("! ...ABGEWIESEN wegen alle besetzt\r\n"));
 			}
 			
 		if (!Ok)
