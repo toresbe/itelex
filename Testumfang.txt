@@ -16,4 +16,225 @@ Zu Testen:
   - Durch Anrufer oder durch angerufenen getrennt.
   
 - Durchwahlen-Tabelle
+
+
+
+Bei stark ausgelasteter Verbindung fehler im Verbindungsaufbau durch doppelten Anruf:
+
+18:22:33.448> 18:22:39,36: iTelex(36381): TWI Reservierung intern / gehend von 31
+18:22:33.573> 18:22:39,36: iTelex(36382): TWI Einschaltkommando intern / gehend
+18:22:34.198> 18:22:40,07: iTelex(39984): TWI Wahlziffer 5 intern / gehend
+18:22:34.573> 18:22:40,48: iTelex(42058): TWI Wahlziffer 3 intern / gehend
+18:22:34.948> 18:22:40,83: iTelex(43857): TWI Wahlziffer 1 intern / gehend
+18:22:35.573> 18:22:41,47: iTelex(47082): TWI Wahlziffer 0 intern / gehend
+18:22:35.886> 18:22:41,76: iTelex(48580): TWI Wahlziffer 0 intern / gehend
+18:22:36.386> 18:22:42,16: iTelex(50583): TWI Wahlziffer 2 intern / gehend
+18:22:36.448> 18:22:42,16: iTelex(50583): Teilnehmer 531002 im eigenen Telefonbuch gefunden.
+18:22:36.511> 18:22:42,16: iTelex(50583): Abfrage bei Teilnehmer-Servern
+18:22:36.636> 18:22:42,24: iTelex(50583): Verbindung an Teilnehmer-Server sonnibs.no-ip.org hergestellt fuer Rufnummer-Abfrage.
+18:22:44,41: iTelex(60744): Teilnehmer-Server Empfang: (102/102) 05 64 3A 1A 08 00 46 72 65 64 20 42 72 61 75 6E 73 63 68 77 65 69 67 20 5A 77 65 69 74 61 6E 73 63 68 6C 75 73 73 00 00 00 00 00 00 00 00 00 00 05 18:22:38.886> 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 59 B6 7C 0A 85 00 00 00 00 CA A6 0D D7
+18:22:38.948> 18:22:44,45: iTelex(60744): Teilnehmer-Server meldet Eintrag gefunden: 89.182.124.10
+!!!!!!!!!!!!!!!!!!!
+18:22:39.073> 18:22:44,66: iTelex(60744): Verbindungsaufbau zu IP 89.182.124.10 Port 133
+18:22:39.136> 18:22:44,73: iTelex(60744): Client-Socket iTelex erfolgreich geoeffnet -> sende Durchwahl 0 und Version 1
+18:22:41.073> 18:22:46,93: iTelex(60745): Socket Sendung: (10) 07 05 01 35 31 36 00 01 01 00 --> Res 10 SumAnz 0/00
+18:22:41.198> 18:22:46,94: iTelex(60746): Socket Empfang: (7/7) 07 05 01 35 32 34 00 --> BufUsed 7
+18:22:41.261> 18:22:46,95: iTelex(60746): Protokollversion-Vorschlag 1 empfangen
+!!!!!!!!!!!!
+18:22:41.511> 18:22:47,31: iTelex(62318): Verbindungsaufbau zu IP 89.182.124.10 Port 133
+18:22:41.636> 18:22:47,38: iTelex(62318): Client-Socket iTelex erfolgreich geoeffnet -> sende Durchwahl 0 und Version 1
+18:22:43.698> 18:22:49,55: iTelex(62319): Socket Sendung: (10) 07 05 01 35 31 36 00 01 01 00 --> Res 10 SumAnz 0/00
+!!!!!!!!!!!!!
+18:22:44.136> 18:22:49,97: iTelex: Teilnehmer-Verzeichnis Pruefsumme aktualisiert auf DEA762FC.
+18:22:44.636> 18:22:50,48: iTelex(  909): Socket Empfang: (5/5) 04 03 'occ' --> BufUsed 5
+18:22:44.698> 18:22:50,48: iTelex(  909): * Abbaubefehl von Gegenstelle: 04 03 'occ'
+18:22:44.761> 18:22:50,49: iTelex(  909): WahlAbbruchMeldung < 'occ'>
+18:22:44.823> 18:22:50,49: iTelex(  909): InterneVerbindungBeenden ausgehend von Modus 18
+18:22:44.886> 18:22:50,49: iTelex(  909): Ascii-Verarbeitung:  0D 0D 0D 0A (+5)
+18:22:44.948> 18:22:50,49: iTelex(  909):       gewandelt in:  0D 0D 0D 0A
+18:22:45.198> 18:22:51,07: iTelex( 2755): Socket wird aktiv geschlossen
+18:22:45.261> 18:22:51,10: iTelex( 2805): Ascii-Verarbeitung:  'occ' 0D 0A (+0)
+18:22:45.323> 18:22:51,11: iTelex( 2805):       gewandelt in:  'occ' 0D 0A
+18:22:46.136> 18:22:52,01: iTelex( 7350): Reste gedruckt --> Ausschaltung intern
+18:22:47.448> 18:22:53,35: iTelex(14283): TWI Ausschaltung quittiert
+18:22:47.573> 18:22:53,35: iTelex(14283): Grundstellung erreicht (Socket geschlossen, TWI geschlossen)
+--------------
+18:24:12.636> 18:24:18,54: iTelex(64581): TWI Reservierung intern / gehend von 31
+18:24:12.698> 18:24:18,55: iTelex(64582): TWI Einschaltkommando intern / gehend
+18:24:13.198> 18:24:19,09: iTelex( 1826): TWI Wahlziffer 5 intern / gehend
+18:24:13.448> 18:24:19,37: iTelex( 3228): TWI Wahlziffer 3 intern / gehend
+18:24:13.823> 18:24:19,72: iTelex( 5008): TWI Wahlziffer 1 intern / gehend
+18:24:14.448> 18:24:20,31: iTelex( 8022): TWI Wahlziffer 0 intern / gehend
+18:24:14.698> 18:24:20,58: iTelex( 9381): TWI Wahlziffer 0 intern / gehend
+18:24:15.136> 18:24:20,96: iTelex(11264): TWI Wahlziffer 2 intern / gehend
+18:24:15.198> 18:24:20,96: iTelex(11264): Teilnehmer 531002 im eigenen Telefonbuch gefunden.
+18:24:15.261> 18:24:20,96: iTelex(11264): Abfrage bei Teilnehmer-Servern
+18:24:15.386> 18:24:21,03: iTelex(11264): Verbindung an Teilnehmer-Server sonnibs.no-ip.org hergestellt fuer Rufnummer-Abfrage.
+18:24:21,47: iTelex(13052): Teilnehmer-Server Empfang: (102/102) 05 64 3A 1A 08 00 46 72 65 64 20 42 72 61 75 6E 73 63 68 77 65 69 67 20 5A 77 65 69 74 61 6E 73 63 68 6C 75 73 73 00 00 00 00 00 00 00 00 00 00 05 18:24:15.948> 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 59 B6 7C 0A 85 00 00 00 00 CA A6 0D D7
+18:24:16.011> 18:24:21,51: iTelex(13052): Teilnehmer-Server meldet Eintrag gefunden: 89.182.124.10
+18:24:16.073> 18:24:21,72: iTelex(13052): Verbindungsaufbau zu IP 89.182.124.10 Port 133
+18:24:16.198> 18:24:21,72: iTelex(13052): Client-Socket iTelex erfolgreich geoeffnet -> sende Durchwahl 0 und Version 1
+18:24:16.323> 18:24:21,91: iTelex(13053): Socket Sendung: (10) 07 05 01 35 31 36 00 01 01 00 --> Res 10 SumAnz 0/00
+18:24:16.698> 18:24:22,59: iTelex(15625): Socket Empfang: (7/7) 07 05 01 35 32 34 00 --> BufUsed 7
+18:24:16.761> 18:24:22,59: iTelex(15625): Protokollversion-Vorschlag 1 empfangen
+18:24:17.198> 18:24:22,96: iTelex(17207): Socket Empfang: (34/34) 02 1D 1F 1F 1F 1F 1F 1F 1F 02 08 1B 0D 0A 07 0D 01 07 19 0D 1D 0A 04 04 1D 0C 0E 19 0A 02 08 06 01 EA --> BufUsed 34
+18:24:17.261> 18:24:22,99: iTelex(17208): Socket Sendung: (3) 06 01 00 --> Res 3 SumAnz 0/00
+18:24:20.261> 18:24:26,13: iTelex(31363): Socket Empfang: (3/3) 06 01 00 --> BufUsed 3
+18:24:20.636> 18:24:26,50: iTelex(32982): Socket Sendung: (3) 06 01 18 --> Res 3 SumAnz 0/00
+18:24:21.323> 18:24:27,20: iTelex(36095): Socket Sendung: (3) 06 01 1D --> Res 3 SumAnz 0/00
+18:24:21.636> 18:24:27,52: iTelex(37488): Socket Sendung: (6) 02 01 1B 06 01 1D --> Res 6 SumAnz 1/01
+18:24:21.761> 18:24:27,54: iTelex(37489): Socket Empfang: (3/3) 06 01 01 --> BufUsed 3
+18:24:21.823> 18:24:27,68: iTelex(38059): Socket Sendung: (6) 02 01 1B 06 01 1D --> Res 6 SumAnz 2/02
+18:24:21.886> 18:24:27,69: iTelex(38060): Socket Empfang: (3/3) 06 01 02 --> BufUsed 3
+18:24:22.011> 18:24:27,83: iTelex(38629): Socket Sendung: (6) 02 01 12 06 01 1D --> Res 6 SumAnz 3/03
+18:24:22.073> 18:24:27,84: iTelex(38630): Socket Empfang: (3/3) 06 01 03 --> BufUsed 3
+18:24:22.323> 18:24:28,22: iTelex(40300): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:22.448> 18:24:28,23: iTelex(40302): Socket Sendung: (3) 06 01 1E --> Res 3 SumAnz 3/03
+18:24:22.511> 18:24:28,37: iTelex(40871): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:22.573> 18:24:28,38: iTelex(40873): Socket Sendung: (3) 06 01 1F --> Res 3 SumAnz 3/03
+18:24:22.698> 18:24:28,52: iTelex(41435): Socket Empfang: (6/6) 02 01 02 06 01 03 --> BufUsed 6
+18:24:22.761> 18:24:28,54: iTelex(41437): Socket Sendung: (3) 06 01 20 --> Res 3 SumAnz 3/03
+18:24:22.886> 18:24:28,67: iTelex(41987): Socket Empfang: (6/6) 02 01 08 06 01 03 --> BufUsed 6
+18:24:22.948> 18:24:28,68: iTelex(41989): Socket Sendung: (3) 06 01 21 --> Res 3 SumAnz 3/03
+18:24:23.011> 18:24:28,82: iTelex(42557): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:23.136> 18:24:28,83: iTelex(42559): Socket Sendung: (3) 06 01 22 --> Res 3 SumAnz 3/03
+18:24:23.198> 18:24:28,97: iTelex(43129): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:23.261> 18:24:28,98: iTelex(43131): Socket Sendung: (3) 06 01 23 --> Res 3 SumAnz 3/03
+18:24:23.386> 18:24:29,12: iTelex(43700): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:23.448> 18:24:29,14: iTelex(43702): Socket Sendung: (3) 06 01 24 --> Res 3 SumAnz 3/03
+18:24:23.511> 18:24:29,27: iTelex(44262): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:23.636> 18:24:29,28: iTelex(44264): Socket Sendung: (3) 06 01 25 --> Res 3 SumAnz 3/03
+18:24:23.698> 18:24:29,42: iTelex(44746): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:23.761> 18:24:29,44: iTelex(44748): Socket Sendung: (3) 06 01 26 --> Res 3 SumAnz 3/03
+18:24:23.886> 18:24:29,57: iTelex(45138): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:23.948> 18:24:29,59: iTelex(45148): Socket Sendung: (3) 06 01 27 --> Res 3 SumAnz 3/03
+18:24:24.011> 18:24:29,72: iTelex(45445): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:24.136> 18:24:29,74: iTelex(45447): Socket Sendung: (3) 06 01 28 --> Res 3 SumAnz 3/03
+18:24:24.198> 18:24:29,87: iTelex(45660): Socket Empfang: (6/6) 02 01 16 06 01 03 --> BufUsed 6
+18:24:24.323> 18:24:29,91: iTelex(45662): Socket Sendung: (3) 06 01 29 --> Res 3 SumAnz 3/03
+18:24:24.386> 18:24:30,02: iTelex(45781): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:24.448> 18:24:30,08: iTelex(45783): Socket Sendung: (3) 06 01 2A --> Res 3 SumAnz 3/03
+18:24:24.573> 18:24:30,17: iTelex(45819): Socket Empfang: (6/6) 02 01 06 06 01 03 --> BufUsed 6
+18:24:24.636> 18:24:30,25: iTelex(45821): Socket Sendung: (3) 06 01 2B --> Res 3 SumAnz 3/03
+18:24:24.698> 18:24:30,33: iTelex(45822): Socket Empfang: (6/6) 02 01 0A 06 01 03 --> BufUsed 6
+18:24:24.823> 18:24:30,42: iTelex(45824): Socket Sendung: (3) 06 01 2C --> Res 3 SumAnz 3/03
+18:24:24.886> 18:24:30,50: iTelex(45825): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:24.948> 18:24:30,59: iTelex(45827): Socket Sendung: (3) 06 01 2D --> Res 3 SumAnz 3/03
+18:24:25.073> 18:24:30,67: iTelex(45828): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:25.136> 18:24:30,76: iTelex(45830): Socket Sendung: (3) 06 01 2E --> Res 3 SumAnz 3/03
+18:24:25.261> 18:24:30,84: iTelex(45831): Socket Empfang: (6/6) 02 01 04 06 01 03 --> BufUsed 6
+18:24:25.323> 18:24:30,93: iTelex(45833): Socket Sendung: (3) 06 01 2F --> Res 3 SumAnz 3/03
+18:24:25.386> 18:24:31,01: iTelex(45834): Socket Empfang: (6/6) 02 01 12 06 01 03 --> BufUsed 6
+18:24:25.511> 18:24:31,10: iTelex(45836): Socket Sendung: (3) 06 01 30 --> Res 3 SumAnz 3/03
+18:24:25.573> 18:24:31,18: iTelex(45837): Socket Empfang: (6/6) 02 01 1F 06 01 03 --> BufUsed 6
+18:24:25.636> 18:24:31,27: iTelex(45839): Socket Sendung: (3) 06 01 31 --> Res 3 SumAnz 3/03
+18:24:26.823> 18:24:32,68: iTelex(51835): Socket Sendung: (6) 02 01 1B 06 01 31 --> Res 6 SumAnz 4/04
+18:24:26.886> 18:24:32,70: iTelex(51836): Socket Empfang: (3/3) 06 01 04 --> BufUsed 3
+18:24:27.011> 18:24:32,83: iTelex(52406): Socket Sendung: (6) 02 01 02 06 01 31 --> Res 6 SumAnz 5/05
+18:24:27.073> 18:24:32,85: iTelex(52407): Socket Empfang: (3/3) 06 01 05 --> BufUsed 3
+18:24:27.198> 18:24:33,04: iTelex(53211): Socket Sendung: (6) 02 01 08 06 01 31 --> Res 6 SumAnz 6/06
+18:24:27.261> 18:24:33,05: iTelex(53212): Socket Empfang: (3/3) 06 01 06 --> BufUsed 3
+18:24:27.386> 18:24:33,23: iTelex(53946): Socket Sendung: (6) 02 01 08 06 01 31 --> Res 6 SumAnz 7/07
+18:24:27.448> 18:24:33,24: iTelex(53947): Socket Empfang: (3/3) 06 01 07 --> BufUsed 3
+18:24:27.511> 18:24:33,38: iTelex(54525): Socket Sendung: (6) 02 01 08 06 01 31 --> Res 6 SumAnz 8/08
+18:24:27.636> 18:24:33,39: iTelex(54526): Socket Empfang: (3/3) 06 01 08 --> BufUsed 3
+18:24:29.136> 18:24:35,02: iTelex(61832): Socket Sendung: (6) 02 01 1F 06 01 31 --> Res 6 SumAnz 9/09
+18:24:29.198> 18:24:35,03: iTelex(61833): Socket Empfang: (3/3) 06 01 09 --> BufUsed 3
+18:24:29.323> 18:24:35,17: iTelex(62394): Socket Sendung: (6) 02 01 02 06 01 31 --> Res 6 SumAnz 10/0A
+18:24:29.386> 18:24:35,18: iTelex(62395): Socket Empfang: (3/3) 06 01 0A --> BufUsed 3
+18:24:29.511> 18:24:35,32: iTelex(62964): Socket Sendung: (6) 02 01 08 06 01 31 --> Res 6 SumAnz 11/0B
+18:24:29.573> 18:24:35,33: iTelex(62965): Socket Empfang: (3/3) 06 01 0B --> BufUsed 3
+18:24:29.636> 18:24:35,47: iTelex(63509): Socket Sendung: (6) 02 01 1B 06 01 31 --> Res 6 SumAnz 12/0C
+18:24:29.761> 18:24:35,48: iTelex(63510): Socket Empfang: (3/3) 06 01 0C --> BufUsed 3
+18:24:29.823> 18:24:35,61: iTelex(64061): Socket Sendung: (6) 02 01 0C 06 01 31 --> Res 6 SumAnz 13/0D
+18:24:29.886> 18:24:35,63: iTelex(64062): Socket Empfang: (3/3) 06 01 0D --> BufUsed 3
+18:24:30.011> 18:24:35,76: iTelex(64622): Socket Sendung: (6) 02 01 01 06 01 31 --> Res 6 SumAnz 14/0E
+18:24:30.073> 18:24:35,78: iTelex(64625): Socket Empfang: (3/3) 06 01 0E --> BufUsed 3
+18:24:30.198> 18:24:35,92: iTelex(65192): Socket Sendung: (6) 02 01 1C 06 01 31 --> Res 6 SumAnz 15/0F
+18:24:30.261> 18:24:35,93: iTelex(65195): Socket Empfang: (3/3) 06 01 0F --> BufUsed 3
+18:24:30.323> 18:24:36,07: iTelex(  173): Socket Sendung: (6) 02 01 03 06 01 31 --> Res 6 SumAnz 16/10
+18:24:30.448> 18:24:36,08: iTelex(  175): Socket Empfang: (3/3) 06 01 10 --> BufUsed 3
+18:24:30.511> 18:24:36,22: iTelex(  591): Socket Sendung: (6) 02 01 03 06 01 31 --> Res 6 SumAnz 17/11
+18:24:30.573> 18:24:36,23: iTelex(  602): Socket Empfang: (3/3) 06 01 11 --> BufUsed 3
+18:24:30.698> 18:24:36,36: iTelex(  921): Socket Sendung: (6) 02 01 19 06 01 31 --> Res 6 SumAnz 18/12
+18:24:30.761> 18:24:36,38: iTelex(  922): Socket Empfang: (3/3) 06 01 12 --> BufUsed 3
+18:24:30.823> 18:24:36,52: iTelex( 1152): Socket Sendung: (6) 02 01 0A 06 01 31 --> Res 6 SumAnz 19/13
+18:24:30.948> 18:24:36,56: iTelex( 1153): Socket Empfang: (3/3) 06 01 13 --> BufUsed 3
+18:24:31.011> 18:24:36,67: iTelex( 1286): Socket Sendung: (6) 02 01 04 06 01 31 --> Res 6 SumAnz 20/14
+18:24:31.073> 18:24:36,73: iTelex( 1287): Socket Empfang: (3/3) 06 01 14 --> BufUsed 3
+18:24:31.198> 18:24:36,81: iTelex( 1323): Socket Sendung: (6) 02 01 1F 06 01 31 --> Res 6 SumAnz 21/15
+18:24:31.261> 18:24:36,90: iTelex( 1324): Socket Empfang: (3/3) 06 01 15 --> BufUsed 3
+18:24:31.386> 18:24:36,98: iTelex( 1326): Socket Sendung: (6) 02 01 05 06 01 31 --> Res 6 SumAnz 22/16
+18:24:31.448> 18:24:37,07: iTelex( 1327): Socket Empfang: (3/3) 06 01 16 --> BufUsed 3
+18:24:31.511> 18:24:37,15: iTelex( 1329): Socket Sendung: (6) 02 01 18 06 01 31 --> Res 6 SumAnz 23/17
+18:24:31.636> 18:24:37,24: iTelex( 1330): Socket Empfang: (3/3) 06 01 17 --> BufUsed 3
+18:24:31.698> 18:24:37,32: iTelex( 1332): Socket Sendung: (6) 02 01 19 06 01 31 --> Res 6 SumAnz 24/18
+18:24:31.761> 18:24:37,41: iTelex( 1333): Socket Empfang: (3/3) 06 01 18 --> BufUsed 3
+18:24:31.886> 18:24:37,49: iTelex( 1334): Socket Sendung: (6) 02 01 10 06 01 31 --> Res 6 SumAnz 25/19
+18:24:31.948> 18:24:37,58: iTelex( 1335): Socket Empfang: (3/3) 06 01 19 --> BufUsed 3
+18:24:32.073> 18:24:37,66: iTelex( 1336): Socket Sendung: (6) 02 01 04 06 01 31 --> Res 6 SumAnz 26/1A
+18:24:32.136> 18:24:37,75: iTelex( 1337): Socket Empfang: (3/3) 06 01 1A --> BufUsed 3
+18:24:32.198> 18:24:37,83: iTelex( 1338): Socket Sendung: (6) 02 01 12 06 01 31 --> Res 6 SumAnz 27/1B
+18:24:32.323> 18:24:37,92: iTelex( 1339): Socket Empfang: (3/3) 06 01 1B --> BufUsed 3
+18:24:32.386> 18:24:38,00: iTelex( 1340): Socket Sendung: (6) 02 01 1F 06 01 31 --> Res 6 SumAnz 28/1C
+18:24:32.448> 18:24:38,09: iTelex( 1341): Socket Empfang: (3/3) 06 01 1C --> BufUsed 3
+18:24:33.011> 18:24:38,86: iTelex( 4421): Socket Sendung: (6) 02 01 1B 06 01 31 --> Res 6 SumAnz 29/1D
+18:24:33.073> 18:24:38,87: iTelex( 4422): Socket Empfang: (3/3) 06 01 1D --> BufUsed 3
+18:24:33.136> 18:24:39,01: iTelex( 4972): Socket Sendung: (6) 02 01 12 06 01 31 --> Res 6 SumAnz 30/1E
+18:24:33.261> 18:24:39,02: iTelex( 4973): Socket Empfang: (3/3) 06 01 1E --> BufUsed 3
+18:24:33.511> 18:24:39,40: iTelex( 6626): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:33.636> 18:24:39,41: iTelex( 6628): Socket Sendung: (3) 06 01 32 --> Res 3 SumAnz 30/1E
+18:24:33.698> 18:24:39,55: iTelex( 7195): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:33.761> 18:24:39,56: iTelex( 7197): Socket Sendung: (3) 06 01 33 --> Res 3 SumAnz 30/1E
+18:24:33.886> 18:24:39,69: iTelex( 7748): Socket Empfang: (6/6) 02 01 02 06 01 1E --> BufUsed 6
+18:24:33.948> 18:24:39,71: iTelex( 7750): Socket Sendung: (3) 06 01 34 --> Res 3 SumAnz 30/1E
+18:24:34.011> 18:24:39,85: iTelex( 8318): Socket Empfang: (6/6) 02 01 08 06 01 1E --> BufUsed 6
+18:24:34.136> 18:24:39,86: iTelex( 8320): Socket Sendung: (3) 06 01 35 --> Res 3 SumAnz 30/1E
+18:24:34.198> 18:24:40,00: iTelex( 8888): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:34.261> 18:24:40,01: iTelex( 8890): Socket Sendung: (3) 06 01 36 --> Res 3 SumAnz 30/1E
+18:24:34.386> 18:24:40,15: iTelex( 9450): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:34.448> 18:24:40,16: iTelex( 9452): Socket Sendung: (3) 06 01 37 --> Res 3 SumAnz 30/1E
+18:24:34.573> 18:24:40,29: iTelex(10011): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:34.636> 18:24:40,31: iTelex(10022): Socket Sendung: (3) 06 01 38 --> Res 3 SumAnz 30/1E
+18:24:34.698> 18:24:40,45: iTelex(10547): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:34.823> 18:24:40,46: iTelex(10557): Socket Sendung: (3) 06 01 39 --> Res 3 SumAnz 30/1E
+18:24:34.886> 18:24:40,59: iTelex(10983): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:34.948> 18:24:40,61: iTelex(11003): Socket Sendung: (3) 06 01 3A --> Res 3 SumAnz 30/1E
+18:24:35.073> 18:24:40,74: iTelex(11333): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:35.136> 18:24:40,76: iTelex(11352): Socket Sendung: (3) 06 01 3B --> Res 3 SumAnz 30/1E
+18:24:35.261> 18:24:40,90: iTelex(11592): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:35.323> 18:24:40,93: iTelex(11594): Socket Sendung: (3) 06 01 3C --> Res 3 SumAnz 30/1E
+18:24:35.386> 18:24:41,04: iTelex(11738): Socket Empfang: (6/6) 02 01 16 06 01 1E --> BufUsed 6
+18:24:35.511> 18:24:41,10: iTelex(11740): Socket Sendung: (3) 06 01 3D --> Res 3 SumAnz 30/1E
+18:24:35.573> 18:24:41,20: iTelex(11795): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:35.636> 18:24:41,27: iTelex(11797): Socket Sendung: (3) 06 01 3E --> Res 3 SumAnz 30/1E
+18:24:35.761> 18:24:41,35: iTelex(11798): Socket Empfang: (6/6) 02 01 06 06 01 1E --> BufUsed 6
+18:24:35.823> 18:24:41,44: iTelex(11800): Socket Sendung: (3) 06 01 3F --> Res 3 SumAnz 30/1E
+18:24:35.886> 18:24:41,52: iTelex(11801): Socket Empfang: (6/6) 02 01 0A 06 01 1E --> BufUsed 6
+18:24:36.011> 18:24:41,61: iTelex(11803): Socket Sendung: (3) 06 01 40 --> Res 3 SumAnz 30/1E
+18:24:36.073> 18:24:41,70: iTelex(11804): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:36.136> 18:24:41,79: iTelex(11806): Socket Sendung: (3) 06 01 41 --> Res 3 SumAnz 30/1E
+18:24:36.261> 18:24:41,87: iTelex(11807): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:36.323> 18:24:41,96: iTelex(11809): Socket Sendung: (3) 06 01 42 --> Res 3 SumAnz 30/1E
+18:24:36.448> 18:24:42,04: iTelex(11810): Socket Empfang: (6/6) 02 01 04 06 01 1E --> BufUsed 6
+18:24:36.511> 18:24:42,13: iTelex(11812): Socket Sendung: (3) 06 01 43 --> Res 3 SumAnz 30/1E
+18:24:36.573> 18:24:42,21: iTelex(11813): Socket Empfang: (6/6) 02 01 12 06 01 1E --> BufUsed 6
+18:24:36.698> 18:24:42,30: iTelex(11815): Socket Sendung: (3) 06 01 44 --> Res 3 SumAnz 30/1E
+18:24:36.761> 18:24:42,38: iTelex(11816): Socket Empfang: (6/6) 02 01 1F 06 01 1E --> BufUsed 6
+18:24:36.823> 18:24:42,47: iTelex(11818): Socket Sendung: (3) 06 01 45 --> Res 3 SumAnz 30/1E
+18:24:37.448> 18:24:43,34: iTelex(15341): Socket Sendung: (6) 02 01 1B 06 01 45 --> Res 6 SumAnz 31/1F
+18:24:37.573> 18:24:43,35: iTelex(15342): Socket Empfang: (3/3) 06 01 1F --> BufUsed 3
+18:24:37.636> 18:24:43,49: iTelex(15893): Socket Sendung: (6) 02 01 02 06 01 45 --> Res 6 SumAnz 32/20
+18:24:37.698> 18:24:43,50: iTelex(15894): Socket Empfang: (3/3) 06 01 20 --> BufUsed 3
+18:24:37.823> 18:24:43,71: iTelex(16771): Socket Sendung: (6) 02 01 08 06 01 45 --> Res 6 SumAnz 33/21
+18:24:37.948> 18:24:43,72: iTelex(16772): Socket Empfang: (3/3) 06 01 21 --> BufUsed 3
+18:24:38.011> 18:24:43,90: iTelex(17513): Socket Sendung: (6) 02 01 08 06 01 45 --> Res 6 SumAnz 34/22
+18:24:38.136> 18:24:43,91: iTelex(17514): Socket Empfang: (3/3) 06 01 22 --> BufUsed 3
+18:24:38.198> 18:24:44,06: iTelex(18131): Socket Sendung: (6) 02 01 08 06 01 45 --> Res 6 SumAnz 35/23
+18:24:38.261> 18:24:44,07: iTelex(18132): Socket Empfang: (3/3) 06 01 23 --> BufUsed 3
+18:24:40.198> 18:24:46,08: iTelex(27227): TWI Ausschaltung intern
+18:24:40.261> 18:24:46,09: iTelex(27227): Socket Sendung: (2) 03 00 --> Res 2 SumAnz 35/23
+18:24:41.698> 18:24:47,62: iTelex(34113): Socket wird aktiv geschlossen
+18:24:41.823> 18:24:47,62: iTelex(34113): Grundstellung erreicht (Socket geschlossen, TWI geschlossen)
+
   
