@@ -18,6 +18,36 @@ Zu Testen:
 - Durchwahlen-Tabelle
 
 
+Zum Vergleich mit Michas Logs:
+
+21:01:22.750> 21:01:30,04: iTelex(18636): TWI Reservierung intern / gehend von 33
+21:01:22.812> 21:01:30,04: iTelex(18637): TWI Einschaltkommando intern / gehend
+21:01:24.062> 21:01:31,35: iTelex(25393): TWI Wahlziffer 4 intern / gehend
+21:01:25.187> 21:01:32,47: iTelex(31165): TWI Wahlziffer 4 intern / gehend
+21:01:26.062> 21:01:33,35: iTelex(35732): TWI Wahlziffer 2 intern / gehend
+21:01:27.000> 21:01:34,27: iTelex(40429): TWI Wahlziffer 2 intern / gehend
+21:01:28.812> 21:01:36,09: iTelex(49861): TWI Wahlziffer 0 intern / gehend
+21:01:29.750> 21:01:36,83: iTelex(53659): TWI Wahlziffer 1 intern / gehend
+21:01:29.812> 21:01:36,83: iTelex(53659): Teilnehmer 442201 im eigenen Telefonbuch gefunden.
+21:01:29.875> 21:01:36,83: iTelex(53659): Abfrage bei Teilnehmer-Servern
+21:01:30.000> 21:01:36,95: iTelex(53659): Verbindung an Teilnehmer-Server sonnibs.no-ip.org Socket #0 hergestellt fuer Rufnummer-Abfrage.
+21:01:39,95: iTelex( 2267): Teilnehmer-Server Empfang: (102/102) 05 64 59 BF 06 00 48 65 69 6E 7A 20 44 79 6E 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 05 00 21:01:33.000> 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 02 AB 99 E7 86 00 00 00 00 EA 78 11 D7
+21:01:33.125> 21:01:39,98: iTelex( 2267): Teilnehmer-Server meldet Eintrag gefunden: 2.171.153.231
+21:01:37.937> 21:01:40,19: iTelex( 2267): Verbindungsaufbau zu IP 2.171.153.231 Port 134
+21:01:38.000> 21:01:45,19: iTelex( 2267): ! Client-Socket konnte nicht erstmalig geoeffnet werden
+21:01:38.062> 21:01:45,19: iTelex( 2267): WahlAbbruchMeldung < 'nc'>
+21:01:38.125> 21:01:45,19: iTelex( 2267): InterneVerbindungBeenden ausgehend von Modus 18
+21:01:38.187> 21:01:45,25: iTelex( 2268): Ascii-Verarbeitung:  0D 0D 0D 0A (+4)
+21:01:38.250> 21:01:45,25: iTelex( 2268):       gewandelt in:  0D 0D 0D 0A
+21:01:38.562> 21:01:45,85: iTelex( 4803): Ascii-Verarbeitung:  6E 63 0D 0A (+0)
+21:01:38.625> 21:01:45,85: iTelex( 4803):       gewandelt in:  6E 63 0D 0A
+21:01:38.750> 21:01:45,98: iTelex: Teilnehmer-Verzeichnis Pruefsumme aktualisiert auf A2433582.
+21:01:39.312> 21:01:46,61: iTelex( 8568): Reste gedruckt --> Ausschaltung intern
+21:01:40.625> 21:01:47,95: iTelex(15553): TWI Ausschaltung quittiert
+21:01:40.750> 21:01:47,95: iTelex(15553): Grundstellung erreicht (Socket geschlossen, TWI geschlossen)
+
+
+
 Problem bei Server-Abfrage:
 
 20:44:43.609> 20:44:51,23: iTelex(46301): TWI Reservierung intern / gehend von 33
