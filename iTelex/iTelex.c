@@ -3919,6 +3919,7 @@ void itelex_thread()
 	if (Modus == ModGehendWaehlen
 		&& KurzTimerVal(&WahlPauseTimer) >= 5 * KurzTimerFreq
 		&& WahlVerbAufbauNach5SekundenVersuchen
+		&& iTelexSocketMode == SocketIdle
 		&& GewaehlterTln.AdrArt != Geloescht)
 		{ // Es ist ein nicht-Lokaler Eintrag im eigenen Teilnehmer-Verzeichbnis gewesen,
 		// ggf. läuft eine Server-Abfrage, die wurde aber noch nicht beantwortet.
