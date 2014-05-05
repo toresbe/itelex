@@ -18,6 +18,53 @@ Zu Testen:
 - Durchwahlen-Tabelle
 
 
+Problem bei Server-Abfrage:
+
+20:44:43.609> 20:44:51,23: iTelex(46301): TWI Reservierung intern / gehend von 33
+20:44:43.671> 20:44:51,23: iTelex(46302): TWI Einschaltkommando intern / gehend
+20:44:44.984> 20:44:52,59: iTelex(53296): TWI Wahlziffer 5 intern / gehend
+20:44:46.609> 20:44:54,18: iTelex(61501): TWI Wahlziffer 3 intern / gehend
+20:44:47.734> 20:44:55,34: iTelex( 1904): TWI Wahlziffer 1 intern / gehend
+20:44:49.921> 20:44:57,54: iTelex(13280): TWI Wahlziffer 0 intern / gehend
+20:44:51.796> 20:44:59,41: iTelex(22888): TWI Wahlziffer 0 intern / gehend
+20:44:52.984> 20:45:00,30: iTelex(27462): TWI Wahlziffer 2 intern / gehend
+20:44:53.046> 20:45:00,31: iTelex(27462): Teilnehmer 531002 im eigenen Telefonbuch gefunden.
+20:44:53.109> 20:45:00,31: iTelex(27462): Abfrage bei Teilnehmer-Servern
+20:44:53.234> 20:45:00,52: iTelex(27462): Verbindung an Teilnehmer-Server sonnibs.no-ip.org Socket #0 hergestellt fuer Rufnummer-Abfrage.
+20:45:03.046> 20:45:05,59: iTelex(52079): Verbindungsaufbau zu IP 89.182.158.84 Port 133
+20:45:03.109> 20:45:10,59: iTelex(52079): ! Client-Socket konnte nicht erstmalig geoeffnet werden
+20:45:10,59: iTelex(52079): Teilnehmer-Server Empfang: (102/102) 05 64 3A 1A 08 00 46 72 65 64 20 42 72 61 75 6E 73 63 68 77 65 69 67 20 5A 77 65 69 74 61 6E 73 63 68 6C 75 73 73 00 00 00 00 00 00 00 00 00 00 05 20:45:05.296> 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 59 B6 8E C5 85 00 00 00 00 3A 91 11 D7
+20:45:05.421> 20:45:10,86: iTelex(52079): Teilnehmer-Server meldet Eintrag gefunden: 89.182.142.197
+20:45:05.484> 20:45:10,86: iTelex(52079): Verbindungsaufbau zu IP 89.182.142.197 Port 133
+20:45:05.609> 20:45:10,91: iTelex(52079): Client-Socket #0 iTelex erfolgreich geoeffnet -> sende Durchwahl 0 und Version 1
+20:45:05.671> 20:45:12,99: iTelex(52080): ! Socket wurde von Gegenstelle UNERWARTET geschlossen
+20:45:05.859> 20:45:13,42: iTelex: Teilnehmer-Verzeichnis Pruefsumme aktualisiert auf 4831EFE1.
+???????
+20:45:08.796> 20:45:15,05: iTelex(61198): Wieder-Oeffnung des Socket #0 erfolgreich.
+20:45:08.921> 20:45:16,38: iTelex(61198): Socket Sendung: (10) 07 05 01 35 32 34 00 01 01 00 --> Res 10 SumAnz 0/00
+20:45:08.984> 20:45:16,39: iTelex(61198): * 15 Sekunden nicht gewaehlt, Abbruch
+20:45:09.046> 20:45:16,39: iTelex(61198): WahlAbbruchMeldung < 'bk'>
+20:45:09.109> 20:45:16,39: iTelex(61198): InterneVerbindungBeenden ausgehend von Modus 18
+20:45:09.171> 20:45:16,39: iTelex(61198): Ascii-Verarbeitung:  0D 0D 0D 0A (+4)
+20:45:09.234> 20:45:16,59: iTelex(61198):       gewandelt in:  0D 0D 0D 0A
+20:45:09.359> 20:45:16,65: iTelex(61199): Socket Empfang: (5/5) 04 03 'occ' --> BufUsed 5
+20:45:09.421> 20:45:16,67: iTelex(61199): Socket Sendung: (2) 00 00 --> Res 2 SumAnz 0/00
+20:45:09.484> 20:45:16,67: iTelex(61199): * Abbaubefehl von Gegenstelle: 04 03 'occ'
+20:45:09.546> 20:45:16,68: iTelex(61199): WahlAbbruchMeldung < 'occ'>
+20:45:09.609> 20:45:16,68: iTelex(61199): InterneVerbindungBeenden ausgehend von Modus 18
+20:45:09.671> 20:45:17,20: iTelex(61950): Ascii-Verarbeitung:  62 6B 0D 0A (+9)
+20:45:09.734> 20:45:17,20: iTelex(61950):       gewandelt in:  62 6B 0D 0A
+20:45:10.234> 20:45:17,80: iTelex(64595): Ascii-Verarbeitung:  0D 0D 0D 0A (+5)
+20:45:10.234> 20:45:17,80: iTelex(64595):       gewandelt in:  0D 0D 0D 0A
+20:45:10.609> 20:45:18,19: iTelex(  746): Socket wird aktiv geschlossen
+20:45:10.796> 20:45:18,41: iTelex( 1726): Ascii-Verarbeitung:  'occ' 0D 0A (+0)
+20:45:10.859> 20:45:18,41: iTelex( 1726):       gewandelt in:  'occ' 0D 0A
+20:45:11.734> 20:45:19,31: iTelex( 6313): Reste gedruckt --> Ausschaltung intern
+20:45:13.046> 20:45:20,65: iTelex(13298): TWI Ausschaltung quittiert
+20:45:13.109> 20:45:20,65: iTelex(13298): Grundstellung erreicht (Socket geschlossen, TWI geschlossen)
+
+
+
 
 Bei stark ausgelasteter Verbindung fehler im Verbindungsaufbau durch doppelten Anruf:
 
