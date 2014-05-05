@@ -91,7 +91,7 @@ TModus Modus;
 // - ASCII-Zeichen einschl. WR (CR) und ZL (LF) werden "pur" übertragen.
 // - Ansonsten werden Datenblöcke übertragen, die stets aus folgenden Teilen bestehen:
 //   * ein Byte Kommandocode (siehe die folgenden Konstanten mit ITELEXC_*)
-//   * ein Byte Länge folgender Daten (kann 0 sein).
+//   * ein Byte Länge _folgender_ Daten (kann 0 sein).
 //   * zugehörige Daten
 
 //! Nur Konstanten-Definitionen.
@@ -115,7 +115,7 @@ enum {
 	
 /* Mustertelegramme zur Übernahme in FsTelnet (MFC-Programm)
 
-	Text1 = _T("07 01 02 01 01 00");                       // Protokoll und Durchwahl
+	Text1 = _T("07 01 02 01 01 00");                       // Protokoll und Durchwahl (zwei Datensätze)
 	Text2 = _T("02 0b 1f 02 08 16 0a 10 12 04 18 13 04");  // Text
 	Text3 = _T("02 02 1b 12");                             // Kennungsabfrage
 	Text4 = _T("00 00");                                   // Füllzeichen
