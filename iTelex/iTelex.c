@@ -3570,7 +3570,7 @@ void itelex_thread()
 					//			(nur für den Schritt 3c) wirkt #WahlVerbAufbauNach5SekundenVersuchen
 					// 4. Die Wahl wird abgebrochen (Abbruch-Meldung an das wählende Gerät, wenn 
 					//    4a) Verbindungsaufbau zu 3a) ODER 3b) fehlschlägt
-					//    4b) 20 Sekunden seit der letzten Wahlziffer vergangen sind.
+					//    4b) 15 Sekunden seit der letzten Wahlziffer vergangen sind.
 					// im folgenden ist auf diese Schritte durch "Wahl-Schritt" verwiesen.
 
 					if (Wahlziffern == 0 && Code == BusKdoWahlziffer0)
@@ -3933,10 +3933,11 @@ void itelex_thread()
 		}
 		
 	if (Modus == ModGehendWaehlen 
-		&& KurzTimerVal(&WahlPauseTimer) >= 20 * KurzTimerFreq)
-		{ // 20 Sekunden Wahlpause --> Wahl-Schritt 4b)
+		&& KurzTimerVal(&WahlPauseTimer) >= 15 * KurzTimerFreq
+		&& iTelexSocketMode == SocketIdle)
+		{ // 15 Sekunden Wahlpause --> Wahl-Schritt 4b)
 		if (ProtokollLevel >= NurFehler)
-			ProtokollierenITelex_P(PSTR("* 20 Sekunden nicht gewaehlt, Abbruch\r\n" ));
+			ProtokollierenITelex_P(PSTR("* 15 Sekunden nicht gewaehlt, Abbruch\r\n" ));
 		WahlAbbruchMeldung("bk");
 		InterneVerbindungBeenden(true);
 		}
