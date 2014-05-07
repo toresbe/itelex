@@ -109,7 +109,8 @@ enum {
 	ITELEXC_SELBSTANRUF = 0x08, //!< Kennung für einen testweisen Selbst-Anruf.
 	ITELEXC_FERNKONFIG = 0x09, 
 		//!< Telegramm für Änderungen an Teilnehmer-Einstellungen aus der Ferne.
-		//!< Inhalt: 1 Byte Länge inkl. PIN und Kennung, 2 Byte PIN der Gegenstelle, 1 Byte Kennung ITELEXC_FKK_xxx, x Byte Daten
+		//!< Inhalt: 1 Byte Länge (PIN, Kennung, Daten), 2 Byte PIN der Gegenstelle, 1 Byte Kennung ITELEXC_FKK_xxx, x Byte Daten.
+		//!< Wenn Daten ein String ist, wird dieser mit abschließendem \\0 übertragen.
 	} ;
 	
 	
@@ -2299,18 +2300,18 @@ static void WahlAbbruchMeldung(char *msg)
 		if (strncmp_P(msg, PSTR("occ"), 3) == 0)
 			Diagnoseausgabe_P(ISTR(TeilnehmerBesetzt, LokaleSprache), 3);
 		else if (strncmp_P(msg, PSTR("nc"), 2) == 0)
-			Diagnoseausgabe_P(ISTR(TeilnehmerNichtErreichbar, LokaleSprache), 3);
+			Diagnoseausgabe_P(ISTR(TeilnehmerNichtErreichbar, LokaleSprache), 2);
 		else if (strncmp_P(msg, PSTR("na"), 2) == 0)
-			Diagnoseausgabe_P(ISTR(TeilnehmerNichtErlaubt, LokaleSprache), 3);
+			Diagnoseausgabe_P(ISTR(TeilnehmerNichtErlaubt, LokaleSprache), 2);
 		else if (strncmp_P(msg, PSTR("der"), 3) == 0)
-			Diagnoseausgabe_P(ISTR(TeilnehmerGestoert, LokaleSprache), 3);
+			Diagnoseausgabe_P(ISTR(TeilnehmerGestoert, LokaleSprache), 2);
 		else if (strncmp_P(msg, PSTR("abs"), 3) == 0)
-			Diagnoseausgabe_P(ISTR(TeilnehmerAbgeschaltet, LokaleSprache), 3);
+			Diagnoseausgabe_P(ISTR(TeilnehmerAbgeschaltet, LokaleSprache), 2);
 		else if (strncmp_P(msg, PSTR("bk"), 2) == 0)
 			Diagnoseausgabe_P(ISTR(VerbindungGetrennt, LokaleSprache), 3);
 		else			
 			{
-			if (Diagnoseausgabe_P(ISTR(SonstigeMeldung, LokaleSprache), 3))
+			if (Diagnoseausgabe_P(ISTR(SonstigeMeldung, LokaleSprache), 2))
 				strcat(DiagnosePuffer, msg);
 			}
 		} // if LangeDienstmeldungen
