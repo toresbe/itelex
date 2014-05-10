@@ -21,6 +21,9 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 #include <avr/io.h>
+
+#include "util/delay.h"
+
 #include "spi_2.h"
 
 #if !defined(__AVR_XMEGA__)
@@ -46,14 +49,18 @@ char SPI2_ReadWrite( char Data )
 		InData = InData<<1;
 		
 		// Kieck mal ob MSB 1 ist
-		if ( ( Data & 0x80 ) > 0 )
+		if ( ( Data & 0x80 ) != 0 )
 			SPI2_PORT |= ( 1<<MOSI2 );
 		else
 			SPI2_PORT &= ~( 1<<MOSI2 );
 		
+		_delay_us(10);
+		
 		// SCK auf High setzen
 		SPI2_PORT |= ( 1<<SCK2 );
-				
+
+		_delay_us(10);
+		
 		// MISO einlesen
 		if ( bit_is_set( SPI2_PIN, MISO2 ) > 0 )
 			InData |= 1;
@@ -80,16 +87,20 @@ void SPI2_FastMem2Write( char * buffer, int Datalenght )
 		for( i = 0 ; i < 8 ; i++ )
 		{
 			// Kieck mal ob MSB 1 ist
-			if ( ( data & 0x80 ) > 0 )
+			if ( ( data & 0x80 ) != 0 )
 				SPI2_PORT |= ( 1<<MOSI2 );
 			else
 				SPI2_PORT &= ~( 1<<MOSI2 );
 			
+			_delay_us(10);
+			
 			// SCK auf High setzen
 			SPI2_PORT |= ( 1<<SCK2 );
 			
-			data <<= 1;
+			_delay_us(10);
 
+			data <<= 1;
+			
 			// SCK auf Low setzen
 			SPI2_PORT &= ~( 1<<SCK2 );
 
@@ -115,8 +126,12 @@ void SPI2_FastRead2Mem( char * buffer, int Datalenght )
 			// InDaten shiften;
 			InData = InData<<1;
 			
+			_delay_us(10);
+			
 			// SCK auf High setzen
 			SPI2_PORT |= ( 1<<SCK2 );
+			
+			_delay_us(10);
 			
 			// MISO einlesen
 			if ( bit_is_set( SPI2_PIN,MISO2 ) > 0 )

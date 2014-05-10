@@ -46,6 +46,8 @@
 // #include "bits.h"
 
 #include "hardware/led/led_core.h"
+#include "hardware/spi/spi_core.h"
+#include "hardware/spi/spi_2.h"
 
 #include "system/net/ip.h"
 #include "system/net/tcp.h"
@@ -5675,6 +5677,8 @@ void itelex_cgi_TwiTlnListe(void *pStruct)
 #endif // ITELEX_ANSCHLUSS
 
 
+#define ISP_MASTER
+
 #ifdef ISP_MASTER
 
 //! Rudimentärer Anfang eines ISP-Programmier-Master
@@ -5699,21 +5703,34 @@ void cgi_FlashReadTest(void *pStruct)
 	uint8_t ProgEnabCheck;
 	
 	clro_IspResetOut();
+	cgi_PrintHttpheaderStart();
 	
 	_delay_ms(25);
-	
-	// Programming enable:
-	SPI_ReadWrite(2, 0xAC);
-	SPI_ReadWrite(2, 0x53);
-	ProgEnabCheck = SPI_ReadWrite(2, 0x00);
-	SPI_ReadWrite(2, 0x00);
+
+	for (uint8_t i = 0 ; i < 32 ; i++)
+		{
+		// Programming enable:
+		SPI_ReadWrite(2, 0xAC);
+		SPI_ReadWrite(2, 0x53);
+		ProgEnabCheck = SPI_ReadWrite(2, 0x00);
+		SPI_ReadWrite(2, 0x00);
+		printf_P(PSTR("Program Enable Echo %d was 0x%02X (should be 0x53)<p>"), i, ProgEnabCheck);
+		
+		// einen Extra Taktimpuls zum Synchronisieren
+		_delay_us(10);
+		
+		// SCK auf High setzen
+		SPI2_PORT |= ( 1<<SCK2 );
+		_delay_us(10);
+		SPI2_PORT &= ~( 1<<SCK2 );
+		_delay_us(10);
+		
+		}
 	
 	inp_IspResetOut();
 	
 	_delay_ms(25);
 	
-	cgi_PrintHttpheaderStart();
-	printf_P(PSTR("Program Enable Echo was 0x%02X"), ProgEnabCheck);
 	cgi_PrintHttpheaderEnd();
 	}
 	
@@ -6040,7 +6057,11 @@ void itelex_init()
 	init_Taste();
 	init_RTS();
 	init_CTS();
+
+#ifdef ISP_MASTER
 	init_IspResetOut();
+	SPI_init(2);
+#endif //def ISP_MASTER	
 	
 	ProtokollInit();
 	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);
