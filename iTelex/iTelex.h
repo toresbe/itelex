@@ -68,8 +68,6 @@ DEFPORTOUT(RTS, D, 4)
 
 DEFPORTIN(CTS, D, 5)
 
-DEFPORTTRI(IspResetOut, F, 5)
-
 
 // Konstanten
 // ================================================================
