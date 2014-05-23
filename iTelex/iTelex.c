@@ -75,6 +75,7 @@
 #include "SvnVersion.h"
 #include "StringTab.h"
 #include "ConfigNtp.h"
+#include "IspMaster.h"
 
 
 const PROGMEM char SvnVersion_P[] = SVNVERSION;
@@ -5675,40 +5676,6 @@ void itelex_cgi_TwiTlnListe(void *pStruct)
 #endif // ITELEX_ANSCHLUSS
 
 
-#ifdef ISP_MASTER
-
-//! Rudimentärer Anfang eines ISP-Programmier-Master
-//--------------------------------------------------
-//! Erste realisierte Funktion: Ein Block des Flash-Rom auslesen und Protokollieren.
-void cgi_FlashReadTest(void *pStruct)
-	{
-	uint8_t ProgEnabCheck;
-	
-	LockEthernet(); // keine Interrupts vom ENC28J60
-	
-	clro_IspResetOut();
-	
-	_delay_ms(25);
-	
-	// Programming enable:
-	SPI_ReadWrite(1, 0xAC);
-	SPI_ReadWrite(1, 0x53);
-	ProgEnabCheck = SPI_ReadWrite(1, 0x00);
-	SPI_ReadWrite(1, 0x00);
-	
-	inp_IspResetOut();
-	
-	_delay_ms(25);
-	
-	FreeEthernet();
-	
-	cgi_PrintHttpheaderStart();
-	printf_P(PSTR("Program Enable Echo was 0x%02X"), ProgEnabCheck);
-	cgi_PrintHttpheaderEnd();
-	}
-	
-#endif //def ISP_MASTER
-	
 #if defined(MMC)
 	
 #include "system/filesystem/fat.h"
@@ -6030,8 +5997,7 @@ void itelex_init()
 	init_Taste();
 	init_RTS();
 	init_CTS();
-	init_IspResetOut();
-	
+
 	ProtokollInit();
 	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);
 
@@ -6240,7 +6206,7 @@ void itelex_init()
 #endif //defined(MMC)
 
 #ifdef ISP_MASTER
-	cgi_RegisterCGI( cgi_FlashReadTest, PSTR("isptest.cgi"));
+	InitIspMaster();
 #endif //def ISP_MASTER
 
 	cgi_RegisterCGI( ConfigNtpCgi, PSTR("ntp.cgi"));
