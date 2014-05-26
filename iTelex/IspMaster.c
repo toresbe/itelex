@@ -97,38 +97,117 @@
 //   nc  -   8  -  8  - GND
 // --> Das Kabel muss also an einem Ende Adern 2 und 4 drehen, am anderen Ende Adern 3 und 7
 
-void cgi_FlashReadTest(void *pStruct)
+
+#define IspSpiPort 2
+
+
+typedef enum {
+	IspError_NoError = 0,
+	IspError_EnableFailed = 1,
+	} TIspError;
+	
+	
+static TIspError IspErrorID;
+
+
+static bool IspEnable()
 	{
 	uint8_t ProgEnabCheck;
 	
 	clro_IspResetOut();
-	cgi_PrintHttpheaderStart();
 	
 	_delay_ms(25);
 
 	for (uint8_t i = 0 ; i < 32 ; i++)
 		{
 		// Programming enable:
-		SPI_ReadWrite(2, 0xAC);
-		SPI_ReadWrite(2, 0x53);
-		ProgEnabCheck = SPI_ReadWrite(2, 0x00);
-		SPI_ReadWrite(2, 0x00);
-		printf_P(PSTR("Program Enable Echo %d was 0x%02X (should be 0x53)<p>"), i, ProgEnabCheck);
+		SPI_ReadWrite(IspSpiPort, 0xAC);
+		SPI_ReadWrite(IspSpiPort, 0x53);
+		ProgEnabCheck = SPI_ReadWrite(IspSpiPort, 0x00);
+		SPI_ReadWrite(IspSpiPort, 0x00);
+
+		//DEBUG: printf_P(PSTR("Program Enable Echo %d was 0x%02X (should be 0x53)<p>"), i, ProgEnabCheck);
 		
+		if (ProgEnabCheck == 0x53)
+			{
+			IspErrorID = IspError_NoError;
+			return true;
+			}
+			
 		// einen Extra Taktimpuls zum Synchronisieren
-		_delay_us(10);
+		_delay_us(100);
 		
-		// SCK auf High setzen
-		SPI2_PORT |= ( 1<<SCK2 );
-		_delay_us(10);
-		SPI2_PORT &= ~( 1<<SCK2 );
-		_delay_us(10);
+		#if (IspSpiPort == 2)
+			// SCK auf High setzen
+			SPI2_PORT |= ( 1<<SCK2 );
+			_delay_us(100);
+			
+			// SCK wieder auf low
+			SPI2_PORT &= ~( 1<<SCK2 );
+		#else
+			#error Nur fuer SPI-Port 2 definiert
+		#endif
+		
+		_delay_us(100);
 		
 		}
+	
+	// hierher kommt man nur wenn keine Verbindung besteht
+	
+	IspErrorID = IspError_EnableFailed;
 	
 	inp_IspResetOut();
 	
 	_delay_ms(25);
+	
+	return false;
+	}
+	
+	
+static bool FlashRead(uint16_t Addr, uint8_t *Val)
+	{
+	SPI_ReadWrite(IspSpiPort, (Addr & 1) ? 0x28 : 0x20);
+	SPI_ReadWrite(IspSpiPort, (Addr >> 9));
+	SPI_ReadWrite(IspSpiPort, (Addr >> 1) & 0xFF);
+	*Val = SPI_ReadWrite(IspSpiPort, 0x00);
+	return true;
+	}
+	
+	
+static bool SigRead(uint8_t Addr, uint8_t *Val)	
+	{
+	SPI_ReadWrite(IspSpiPort, 0x30);
+	SPI_ReadWrite(IspSpiPort, 0x00);
+	SPI_ReadWrite(IspSpiPort, Addr);
+	*Val = SPI_ReadWrite(IspSpiPort, 0x00);
+	return true;
+	}
+
+	
+static void IspClose()
+	{
+	inp_IspResetOut();
+	}
+	
+	
+void cgi_FlashReadTest(void *pStruct)
+	{
+	cgi_PrintHttpheaderStart();
+	
+	_delay_ms(25);
+
+	if (IspEnable())
+		{
+		for (uint8_t i = 0 ; i < 32 ; i++)
+			{
+			uint8_t x;
+			if (FlashRead(i, &x))
+				printf_P(PSTR("FLASH(0x%02X) = 0x%02X<br>"), i, x);
+			else
+				break;
+			}
+		IspClose();
+		}
 	
 	cgi_PrintHttpheaderEnd();
 
@@ -138,7 +217,7 @@ void cgi_FlashReadTest(void *pStruct)
 void InitIspMaster()
 	{
 	init_IspResetOut();
-	SPI_init(2);
+	SPI_init(IspSpiPort);
 	
 	cgi_RegisterCGI( cgi_FlashReadTest, PSTR("isptest.cgi"));
 	}

@@ -77,6 +77,7 @@
 #include "SvnVersion.h"
 #include "StringTab.h"
 #include "ConfigNtp.h"
+#include "IspMaster.h"
 
 
 const PROGMEM char SvnVersion_P[] = SVNVERSION;
@@ -5676,65 +5677,6 @@ void itelex_cgi_TwiTlnListe(void *pStruct)
 
 #endif // ITELEX_ANSCHLUSS
 
-
-#define ISP_MASTER
-
-#ifdef ISP_MASTER
-
-//! Rudimentärer Anfang eines ISP-Programmier-Master
-//--------------------------------------------------
-//! Erste realisierte Funktion: Ein Block des Flash-Rom auslesen und Protokollieren.
-//! Anschluss über SPI 2, dieser ist auf Port F (eigentlich JTAG) geschaltet.
-// Atmel - JTAG - ISP - Slave
-//  PF5  -   5  -  5  - Reset
-//  PF6  -   3  -  7  - SCK
-//  PF7  -   9  -  9  - MISO
-//  PF4  -   1  -  1  - MOSI
-//  GND  -   2  -  4  - GND
-//  GND  -  10  - 10  - GND
-//  VCC  -   4  -  2  - VCC
-//  VCC  -   7  -  3  - nc (LED)
-//   nc  -   6  -  6  - GND
-//   nc  -   8  -  8  - GND
-// --> Das Kabel muss also an einem Ende Adern 2 und 4 drehen, am anderen Ende Adern 3 und 7
-
-void cgi_FlashReadTest(void *pStruct)
-	{
-	uint8_t ProgEnabCheck;
-	
-	clro_IspResetOut();
-	cgi_PrintHttpheaderStart();
-	
-	_delay_ms(25);
-
-	for (uint8_t i = 0 ; i < 32 ; i++)
-		{
-		// Programming enable:
-		SPI_ReadWrite(2, 0xAC);
-		SPI_ReadWrite(2, 0x53);
-		ProgEnabCheck = SPI_ReadWrite(2, 0x00);
-		SPI_ReadWrite(2, 0x00);
-		printf_P(PSTR("Program Enable Echo %d was 0x%02X (should be 0x53)<p>"), i, ProgEnabCheck);
-		
-		// einen Extra Taktimpuls zum Synchronisieren
-		_delay_us(10);
-		
-		// SCK auf High setzen
-		SPI2_PORT |= ( 1<<SCK2 );
-		_delay_us(10);
-		SPI2_PORT &= ~( 1<<SCK2 );
-		_delay_us(10);
-		
-		}
-	
-	inp_IspResetOut();
-	
-	_delay_ms(25);
-	
-	cgi_PrintHttpheaderEnd();
-	}
-	
-#endif //def ISP_MASTER
 	
 #if defined(MMC)
 	
@@ -6058,11 +6000,6 @@ void itelex_init()
 	init_RTS();
 	init_CTS();
 
-#ifdef ISP_MASTER
-	init_IspResetOut();
-	SPI_init(2);
-#endif //def ISP_MASTER	
-	
 	ProtokollInit();
 	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);
 
@@ -6271,7 +6208,7 @@ void itelex_init()
 #endif //defined(MMC)
 
 #ifdef ISP_MASTER
-	cgi_RegisterCGI( cgi_FlashReadTest, PSTR("isptest.cgi"));
+	InitIspMaster();
 #endif //def ISP_MASTER
 
 	cgi_RegisterCGI( ConfigNtpCgi, PSTR("ntp.cgi"));
