@@ -195,6 +195,61 @@ static bool SigRead(uint8_t Addr, uint8_t *Val)
 	return true;
 	}
 
+
+static bool FuseRead(uint8_t Addr, uint8_t *Val)
+	{
+	SPI_ReadWrite(IspSpiPort, (Addr == 1) ? 0x58 : 0x50);
+	SPI_ReadWrite(IspSpiPort, (Addr == 0) ? 0x00 : 0x08);
+	SPI_ReadWrite(IspSpiPort, 0x00);
+	*Val = SPI_ReadWrite(IspSpiPort, 0x00);
+	return true;
+	}
+	
+	
+static bool FlashWriteBlock(uint16_t Addr, uint8_t *Data)
+// writes 64 Bytes into Flash.
+// Addr must be a multiple of 64
+	{
+	for (uint8_t i = 0 ; i < 64 ; i++)
+		{
+		SPI_ReadWrite(IspSpiPort, (i & 1) ? 0x48 : 0x40);
+		SPI_ReadWrite(IspSpiPort, (Addr >> 9));
+		SPI_ReadWrite(IspSpiPort, ((Addr + i) >> 1) & 0xFF);
+		SPI_ReadWrite(IspSpiPort, Data[i]);
+		}
+		
+	SPI_ReadWrite(IspSpiPort, 0x4C);
+	SPI_ReadWrite(IspSpiPort, (Addr >> 9));
+	SPI_ReadWrite(IspSpiPort, (Addr >> 1) & 0xFF);
+	SPI_ReadWrite(IspSpiPort, 0x00);
+
+	_delay_ms(10);
+	// statt pollen einfach warten
+	
+	return true; // verify???
+	}
+	
+	
+static bool FuseWrite(uint8_t Addr, uint8_t Data)
+	{
+	SPI_ReadWrite(IspSpiPort, 0xAC);
+	if (Addr == 0)
+		SPI_ReadWrite(IspSpiPort, 0xA0);
+	else if (Addr == 1)
+		SPI_ReadWrite(IspSpiPort, 0xA8);
+	else
+		SPI_ReadWrite(IspSpiPort, 0xA4);
+	
+	SPI_ReadWrite(IspSpiPort, 0x00);
+	SPI_ReadWrite(IspSpiPort, Data);
+
+	_delay_ms(10);
+	// statt pollen einfach warten
+	
+	return true; // verify???
+	}
+	
+
 	
 // Auswertungsfunktionen
 // =====================
@@ -300,6 +355,16 @@ void cgi_FlashReadTest(void *pStruct)
 		}
 	*/
 	
+	uint8_t x;	
+
+	for (uint8_t i = 0 ; i < 3 ; i++)
+		if (SigRead(i, &x))
+			printf_P(PSTR("Signature byte %d = 0x%02X<br>"), i, x);
+
+	for (uint8_t i = 0 ; i < 3 ; i++)
+		if (FuseRead(i, &x))
+			printf_P(PSTR("Fuse byte %d = 0x%02X<br>"), i, x);
+			
 	char Ident[MaxIdentLen];
 	if (ReadFlashIdentity(Ident))
 		printf_P(PSTR("Identity found: &lt;%s&gt;<br>"), Ident);
