@@ -2750,6 +2750,8 @@ static void ITelexDatenVerarbeiten()
 			uint16_t len = PufferAnzahl(&EmpfPuffer);
 			if (len > SocketOutBufMax - 10 - 3 - SocketOutBufUsed)
 				len = SocketOutBufMax - 10 - 3 - SocketOutBufUsed;
+			if (len > 255)
+				len = 245;
 				
 			if (ProtokollLevel == DatenKurz) // Datenmengen
 				{
