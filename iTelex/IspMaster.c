@@ -80,8 +80,6 @@
 
 #ifdef ISP_MASTER
 
-//! Rudimentärer Anfang eines ISP-Programmier-Master
-//--------------------------------------------------
 //! Erste realisierte Funktion: Ein Block des Flash-Rom auslesen und Protokollieren.
 //! Anschluss über SPI 2, dieser ist auf Port F (eigentlich JTAG) geschaltet.
 // Atmel - JTAG - ISP - Slave
@@ -101,18 +99,34 @@
 #define IspSpiPort 2
 
 
+// Funktionen für In System Programming (ISP) über den SPI-Bus.
+// ============================================================
+
 typedef enum {
 	IspError_NoError = 0,
 	IspError_EnableFailed = 1,
+	IspError_NotFound = 2,
 	} TIspError;
 	
 	
 static TIspError IspErrorID;
 
 
+static void IspClose()
+	{
+	inp_IspResetOut();
+	//! \todo: SPI auf Input setzen
+	_delay_ms(25);
+	}
+	
+
 static bool IspEnable()
 	{
 	uint8_t ProgEnabCheck;
+
+	_delay_ms(25);
+
+	//! \todo SPI auf Output setzen
 	
 	clro_IspResetOut();
 	
@@ -154,11 +168,9 @@ static bool IspEnable()
 	
 	// hierher kommt man nur wenn keine Verbindung besteht
 	
+	IspClose();
+
 	IspErrorID = IspError_EnableFailed;
-	
-	inp_IspResetOut();
-	
-	_delay_ms(25);
 	
 	return false;
 	}
@@ -184,18 +196,96 @@ static bool SigRead(uint8_t Addr, uint8_t *Val)
 	}
 
 	
-static void IspClose()
+// Auswertungsfunktionen
+// =====================
+
+
+enum { MaxIdentLen = 20 };
+
+
+static bool ReadFlashIdentity(char *Ident)
+// Spezialität von meinen Programmen: Im Flash steht eine Identifikation.
+// Sie besteht aus einem maximal 20 Zeichen langen Text eingebettet zwischen
+// je mindestens drei aufeinanderfolgenden Unterstrichen ( _ )
 	{
-	inp_IspResetOut();
+	enum { MaxIdentPos = 8192 } ; // in den ersten 8 k des Programms
+	uint8_t UnterstrichZaehl;
+	uint8_t IdentI; // Zeiger in Ident-String, wenn 255, dann noch nicht begonnen.
+	uint16_t FlashAddr; // Zeiger in Flash-Speicher des Bausteins
+	
+	if (!IspEnable())
+		return false;
+	
+	UnterstrichZaehl = 0;
+	IdentI = 255; // noch nicht begonnen
+	
+	for (FlashAddr = 0 ; FlashAddr < MaxIdentPos ; FlashAddr++)
+		{
+		uint8_t b;
+		if (!FlashRead(FlashAddr, &b))
+			{
+			IspClose();
+			return false;
+			}
+			
+		// Zeichen abspeichern:
+		if (IdentI < MaxIdentLen - 1) // impliziert auch != 255
+			Ident[IdentI++] = b;
+			
+		if (b == '_')
+			{
+			if (IdentI == 1)
+				IdentI = 0; 
+				// dies entfernt überschüssige _ , falls der Ident-String mit mehr als 
+				// drei _ merkiert ist.
+			else
+				UnterstrichZaehl++; 
+				// nur Zählen, wenn nicht weiterhin die Einleitung des Ident-String
+				
+			if (UnterstrichZaehl >= 3)
+				{
+				if (IdentI == 255)
+					{ // es wurden die einleitenden 3x _ gefunden
+					IdentI = 0;
+					UnterstrichZaehl = 0;
+					}
+				else
+					{ // jetzt wurde der abschließende 3x _ gefunden
+					if (IdentI > UnterstrichZaehl)
+						IdentI -= UnterstrichZaehl;
+					Ident[IdentI] = '\0'; // Abschluss speichern
+					IspClose();
+					return true;
+					}
+				} // if UnterstrichZaehl >= 3
+			} // if b == '_'
+
+		else if (b >= ' ' && b <= '~')
+			{ // b != '_' aber lesbares Zeichen
+			UnterstrichZaehl = 0;
+			if (IdentI != 255 && IdentI >= MaxIdentLen - 1)
+				IdentI = 255; // es war ein Trugschluss 
+			} // else b != '_'
+
+		else
+			{ // nicht druckbares Zeichen
+			IdentI = 255;
+			UnterstrichZaehl = 0;
+			}
+		} // for (FlashAddr)
+	
+	Ident[0] = '\0'; // nichts gefunden
+	IspClose();
+	return false;
 	}
 	
+
 	
 void cgi_FlashReadTest(void *pStruct)
 	{
 	cgi_PrintHttpheaderStart();
 	
-	_delay_ms(25);
-
+	/*
 	if (IspEnable())
 		{
 		for (uint8_t i = 0 ; i < 32 ; i++)
@@ -208,9 +298,15 @@ void cgi_FlashReadTest(void *pStruct)
 			}
 		IspClose();
 		}
+	*/
+	
+	char Ident[MaxIdentLen];
+	if (ReadFlashIdentity(Ident))
+		printf_P(PSTR("Identity found: &lt;%s&gt;<br>"), Ident);
+	else
+		printf_P(PSTR("Identity not found, error %d<br>"), IspErrorID);
 	
 	cgi_PrintHttpheaderEnd();
-
 	}
 
 
