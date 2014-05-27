@@ -355,15 +355,25 @@ void cgi_FlashReadTest(void *pStruct)
 		}
 	*/
 	
-	uint8_t x;	
 
-	for (uint8_t i = 0 ; i < 3 ; i++)
-		if (SigRead(i, &x))
-			printf_P(PSTR("Signature byte %d = 0x%02X<br>"), i, x);
+	/* Test der Lese-Funktionen
+	if (IspEnable())
+		{
+		uint8_t x;	
+		for (uint8_t i = 0 ; i < 20 ; i++)
+			if (FlashRead(i, &x))
+				printf_P(PSTR("Flash byte %d = 0x%02X<br>"), i, x);
+				
+		for (uint8_t i = 0 ; i < 3 ; i++)
+			if (SigRead(i, &x))
+				printf_P(PSTR("Signature byte %d = 0x%02X<br>"), i, x);
 
-	for (uint8_t i = 0 ; i < 3 ; i++)
-		if (FuseRead(i, &x))
-			printf_P(PSTR("Fuse byte %d = 0x%02X<br>"), i, x);
+		for (uint8_t i = 0 ; i < 3 ; i++)
+			if (FuseRead(i, &x))
+				printf_P(PSTR("Fuse byte %d = 0x%02X<br>"), i, x);
+		IspClose();
+		}
+	*/
 			
 	char Ident[MaxIdentLen];
 	if (ReadFlashIdentity(Ident))
