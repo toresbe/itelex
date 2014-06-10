@@ -55,6 +55,7 @@
 #include "system/config/eeconfig.h"
 #include "system/clock/clock.h"
 #include "system/clock/delay_x.h"
+#include "system/stdout/stdout.h"
 //#include "system/softreset/softreset.h"
 
 #include "apps/httpd/cgibin/cgi-bin.h"
@@ -334,29 +335,9 @@ static bool ReadFlashIdentity(char *Ident)
 	return false;
 	}
 	
-
 	
-void cgi_FlashReadTest(void *pStruct)
+static void DebugTestReadFunctions()
 	{
-	cgi_PrintHttpheaderStart();
-	
-	/*
-	if (IspEnable())
-		{
-		for (uint8_t i = 0 ; i < 32 ; i++)
-			{
-			uint8_t x;
-			if (FlashRead(i, &x))
-				printf_P(PSTR("FLASH(0x%02X) = 0x%02X<br>"), i, x);
-			else
-				break;
-			}
-		IspClose();
-		}
-	*/
-	
-
-	/* Test der Lese-Funktionen
 	if (IspEnable())
 		{
 		uint8_t x;	
@@ -373,13 +354,58 @@ void cgi_FlashReadTest(void *pStruct)
 				printf_P(PSTR("Fuse byte %d = 0x%02X<br>"), i, x);
 		IspClose();
 		}
-	*/
-			
+	}
+	
+	
+static void DebugTestReadFlashIdentity()
+	{
 	char Ident[MaxIdentLen];
 	if (ReadFlashIdentity(Ident))
 		printf_P(PSTR("Identity found: &lt;%s&gt;<br>"), Ident);
 	else
 		printf_P(PSTR("Identity not found, error %d<br>"), IspErrorID);
+	}
+	
+
+const PROGMEM char HostUrl[] = "sonnibs.no-ip.org";
+	
+
+static int DebugTestGetFilePerHttp()
+	{
+	struct STDOUT oldstream;
+	char FileName[] = "test.txt";
+	int SocketID;
+	long FileIP;
+	
+	FileIP = DNS_ResolveName_P(HostUrl);
+	if (FileIP == -1)
+		return 1;
+	SocketID = Connect2IP(FileIP, 80); // HTTP_PORT
+	if (SocketID == SOCKET_ERROR)
+		return 2;
+	
+	// STDOUT umbiegen auf die neue Verbingung und alt STDOUT sichern
+	STDOUT_save(&oldstream);
+	STDOUT_set(_TCP, SocketID);
+	
+	printf_P(PSTR("GET /%s HTTP/1.0\r\nUser-Agent: Wget/1.11.4\r\nAccept: */*\r\nHost: "), FileName);
+	printf_P(HostUrl);
+	printf_P(PSTR("\r\n\r\n")); 
+
+	STDOUT_restore(&oldstream);
+	
+	// TODO Input auswerten
+		
+	CloseTCPSocket(SocketID);
+
+	return 0;
+	}
+	
+	
+void cgi_IspTest(void *pStruct)
+	{
+	cgi_PrintHttpheaderStart();
+	
 	
 	cgi_PrintHttpheaderEnd();
 	}
@@ -390,7 +416,7 @@ void InitIspMaster()
 	init_IspResetOut();
 	SPI_init(IspSpiPort);
 	
-	cgi_RegisterCGI( cgi_FlashReadTest, PSTR("isptest.cgi"));
+	cgi_RegisterCGI( cgi_IspTest, PSTR("isptest.cgi"));
 	}
 	
 	
