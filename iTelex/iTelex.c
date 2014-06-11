@@ -1827,7 +1827,8 @@ static void SocketBearbeiten()
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Socket Empfang: (%d/" ), InCount);
 				ProtokollierenInt_P(PSTR("%d)"), Res);
-				ProtokollierenPuffer(SocketInBuf + SocketInBufUsed, Res);
+				if (Res > 0)
+					ProtokollierenPuffer(SocketInBuf + SocketInBufUsed, Res);
 				ProtokollierenInt_P(PSTR(" --> BufUsed %u\r\n"), SocketInBufUsed + Res);
 				ProtokollRegelblockEnde();
 				}		
@@ -4375,7 +4376,8 @@ void itelex_thread()
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("! Teilnehmer-Server Empfang UEBERLAUF zu viele Daten (%d byte)"), InCount);
-				ProtokollierenPuffer(TSB.Buf, Res);
+				if (Res > 0)
+					ProtokollierenPuffer(TSB.Buf, Res);
 				Protokollieren_P(PSTR(" -> verworfen, Socket geschlossen\r\n"));
 				}
 			CloseTCPSocket(TeilnehmerServerSocket);
@@ -4391,7 +4393,8 @@ void itelex_thread()
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Teilnehmer-Server Empfang: (%d/" ), InCount);
 				ProtokollierenInt_P(PSTR("%d)"), Res);
-				ProtokollierenPuffer(TSB.Buf, Res);
+				if (Res > 0)
+					ProtokollierenPuffer(TSB.Buf, Res);
 				Protokollieren_P(PSTR("\r\n"));
 				}		
 			

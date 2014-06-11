@@ -367,13 +367,13 @@ static void DebugTestReadFlashIdentity()
 	}
 	
 
-const PROGMEM char HostUrl[] = "sonnibs.no-ip.org";
+const PROGMEM char HostUrl[] = "df3oe.no-ip.org";
 	
 
 static int DebugTestGetFilePerHttp()
 	{
 	struct STDOUT oldstream;
-	char FileName[] = "test.txt";
+	char FileName[] = "mainmenu.html";
 	int SocketID;
 	long FileIP;
 	char InBuf[100];
@@ -421,11 +421,12 @@ static int DebugTestGetFilePerHttp()
 			
 		if (InCount > 0) 
 			{
-			int Res = GetSocketData(iTelexSocketHandle, InCount, InBuf);
+			int Res = GetSocketData(SocketID, InCount, InBuf);
 			
 			ProtokollierenInt_P(PSTR("FileGet Empfang: (%d/" ), InCount);
 			ProtokollierenInt_P(PSTR("%d)"), Res);
-			ProtokollierenPuffer(InBuf, Res);
+			if (Res > 0)
+				ProtokollierenPuffer(InBuf, Res);
 			Protokollieren_P(PSTR("\r\n"));
 
 			// Todo hier eine künstliche Bremse...
