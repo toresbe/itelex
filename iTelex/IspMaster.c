@@ -64,7 +64,7 @@
 #include "hardware/timer0/timer0.h"
 
 #include "CgiFormTools.h"
-//#include "iTelex.h"
+#include "iTelex.h"
 //#include "TlnBuch.h"
 //#include "BusKomm.h"
 //#include "TxP2-Defs.h"
@@ -376,6 +376,8 @@ static int DebugTestGetFilePerHttp()
 	char FileName[] = "test.txt";
 	int SocketID;
 	long FileIP;
+	char InBuf[100];
+	TKurzTimer AbbruchTimer;
 	
 	FileIP = DNS_ResolveName_P(HostUrl);
 	if (FileIP == -1)
@@ -393,8 +395,45 @@ static int DebugTestGetFilePerHttp()
 	printf_P(PSTR("\r\n\r\n")); 
 
 	STDOUT_restore(&oldstream);
+
+	StartKurzTimer(&AbbruchTimer);
 	
-	// TODO Input auswerten
+	while (true)
+		{
+		if (CheckSocketState(SocketID) == SOCKET_NOT_USE)
+			{
+			Protokollieren_P(PSTR("FileGet: Beendigung durch Gegenstelle.\r\n"));
+			break;
+			}
+			
+		if (KurzTimerVal(&AbbruchTimer) > 5 * KurzTimerFreq)
+			{
+			Protokollieren_P(PSTR("FileGet: Timeout beim Empfang.\r\n"));
+			break;
+			}
+		
+		int InCount = GetBytesInSocketData(SocketID);
+		
+		if (InCount >= sizeof(InBuf))
+			{
+			InCount = sizeof(InBuf) - 1;
+			}
+			
+		if (InCount > 0) 
+			{
+			int Res = GetSocketData(iTelexSocketHandle, InCount, InBuf);
+			
+			ProtokollierenInt_P(PSTR("FileGet Empfang: (%d/" ), InCount);
+			ProtokollierenInt_P(PSTR("%d)"), Res);
+			ProtokollierenPuffer(InBuf, Res);
+			Protokollieren_P(PSTR("\r\n"));
+
+			// Todo hier eine künstliche Bremse...
+			
+			StartKurzTimer(&AbbruchTimer);
+			}		
+				
+		} // while KurzTimerVal(&AbbruchTimer) < 5 * KurzTimerFreq
 		
 	CloseTCPSocket(SocketID);
 
@@ -406,6 +445,8 @@ void cgi_IspTest(void *pStruct)
 	{
 	cgi_PrintHttpheaderStart();
 	
+	// hier nur Tests...
+	DebugTestGetFilePerHttp();
 	
 	cgi_PrintHttpheaderEnd();
 	}
