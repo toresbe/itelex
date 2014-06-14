@@ -75,7 +75,7 @@
 #include "SvnVersion.h"
 #include "StringTab.h"
 #include "ConfigNtp.h"
-#include "IspMaster.h"
+//#include "IspMaster.h"
 
 
 const PROGMEM char SvnVersion_P[] = SVNVERSION;
@@ -2859,7 +2859,8 @@ static void ZeichenInHtmlSendeText(char c)
 
 
 // Obergrenze für den Fehlerzähler.
-enum { TeilnehmerServerFehlerZaehlerGrenze = 5 * 2 } ;
+enum { TeilnehmerServerFehlerZaehlerGrenze = 6 * 2 } ;
+	// * 2 wegen "doppelter" Zählung in TeilnehmerServerFehlerSpeichern().
 
 //! Prüft, ob ein Socket benutzbar ist und nicht wegen Fehlern gesperrt ist
 //-------------------------------------------------------------------------
@@ -2872,10 +2873,29 @@ bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund)
 		return false;
 		
 	if (TeilnehmerServerFehlerZaehler[ServerI] >= TeilnehmerServerFehlerZaehlerGrenze)
-		// * 2 wegen "doppelter" Zählung in TeilnehmerServerFehlerSpeichern().
 		{
 		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= (TeilnehmerServerAlleNichtErreichbar ? 20 * LangTimerMinuteFaktor : 180 * LangTimerMinuteFaktor))
-			// Wenn alle Server nicht erreichbar, alle 20 Minuten probieren, sonst alle 3 Stunden
+			// Wenn Server offensichtlich dauerhaft nicht erreicht, alle 3 Stunden probieren, 
+			// außer wenn alle Server nicht erreichbar, dann alle 20 Minuten probieren
+			{
+			/* Müllt total den Speicher zu...
+			if (ProtokollLevelTlnServ >= AblaufInfo)
+				{
+				ProtokollierenITelex_P(PSTR("* Teilnehmer-Server "));
+				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
+				Protokollieren_P(PSTR(" wegen Fehlern noch gesperrt (Oeffnung fuer "));
+				Protokollieren_P(Grund);
+				Protokollieren_P(PSTR(")\r\n"));
+				}
+			*/
+			return false;
+			}
+		}
+
+	else if (TeilnehmerServerFehlerZaehler[ServerI] >= TeilnehmerServerFehlerZaehlerGrenze / 2)
+		{
+		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= 5 * LangTimerMinuteFaktor)
+			// Wenn dich Fehlerzähler des Servers kritischer Grenze nähert, nur noch seltener probieren
 			{
 			/* Müllt total den Speicher zu...
 			if (ProtokollLevelTlnServ >= AblaufInfo)
