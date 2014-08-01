@@ -419,6 +419,10 @@ static uint16_t NetzPort;
 static long NetzEigeneIP;
 	//!< Zurückgemeldete IP-Adresse im globalen Netz.
 
+static TKurzTimer GrundstellungPruefTimer;
+	//!< Prüft, ob mit Modus == ModRuhe auch iTelexSocketHandle == NO_SOCKET_USED ist.
+	//!< Wenn nicht, wird nach 10 Sekunden eine Meldung generiert.
+	
 #endif // ITELEX_ANSCHLUSS
 	
 
@@ -686,7 +690,12 @@ bool Diagnoseausgabe_P(const char *msg, uint8_t Level)
 		}
 	else
 		{
-		strncpy_P(DiagnosePuffer, msg, DiagnosePufferMax - 1);
+		struct TIME Time;
+		CLOCK_GetTime(&Time);
+		sprintf_P(DiagnosePuffer, 
+				  PSTR("%02u.%02u.%04u %02u:%02u:%02u "), 
+				  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+		strncat_P(DiagnosePuffer, msg, DiagnosePufferMax - strlen(DiagnosePuffer) - 1);
 		DiagnosePuffer[DiagnosePufferMax - 1] = '\0';
 		DiagnosePufferLevel = Level;
 		if (Modus >= ModGehendReserv && Modus < ModKommendVerbVorstufe)
@@ -3995,6 +4004,18 @@ void itelex_thread()
 		ModusWechsel(ModWarteGrundstellung);
 		}
 	
+	if (Modus == ModRuhe && (iTelexSocketHandle != NO_SOCKET_USED || iTelexSocketMode != SocketIdle))
+		{
+		if (KurzTimerVal(&GrundstellungPruefTimer) > 5 * KurzTimerFreq)
+			{
+			Diagnoseausgabe_P(PSTR("Grundstellung gestoert"), 1); // keine Englische Version, da nur ein Hack.
+			iTelexSocketHandle = NO_SOCKET_USED;
+			iTelexSocketMode = SocketIdle;
+			}
+		}
+	else
+		StartKurzTimer(&GrundstellungPruefTimer);
+		
 	// ==========================================================================
 	// Tastendruck?
 	// ==========================================================================
@@ -4071,10 +4092,10 @@ void itelex_thread()
 		AsciiDruckPuffer[AsciiDruckPufferMax-30] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
 		if (ProtokollLevel >= AblaufInfo && ProtokollLevel < DatenDetailliert)
-			{ // bei DatenDetailliert wird der Eext eh ausgedruckt.
+			{ // bei DatenDetailliert wird der Text eh ausgedruckt.
 			ProtokollierenITelex_P(PSTR("Diagnosedruck: "));
 			ProtokollierenPuffer(AsciiDruckPuffer, strlen(AsciiDruckPuffer));
-			Protokollieren_P(PSTR("\r\n" ));
+			Protokollieren_P(PSTR("\r\n"));
 			}
 		DiagnosePuffer[0] = '\0';
 		DiagnosePufferLevel = 0;
@@ -4125,7 +4146,7 @@ void itelex_thread()
 				ProtokollierenITelex_P(PSTR("HTML-Chat-Ruhe --> Ausschaltung intern\r\n" ));
 				
 			InterneVerbindungBeenden(true);
-			} // Abschaltung nach 30 Sekunden / 180 Sekunden.
+			} // Abschaltung nach 30 Sekunden / 5 Minuten.
 
 		} // if Modus == ModHtmlChatVerbunden
 
@@ -6171,6 +6192,8 @@ void itelex_init()
 	SocketOutBufUsed = 0;
 	SocketInBufUsed = 0;
 
+	StartKurzTimer(&GrundstellungPruefTimer);
+	
 	iTelexBlindSocketHandle = NO_SOCKET_USED;
 	StartKurzTimer(&iTelexBlindSocketAbbauVerzoegerung);
 	

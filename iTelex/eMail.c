@@ -277,7 +277,7 @@ void POP3Einleiten()
 		iTelexSocketHandle = NO_SOCKET_USED;
 		iTelexSocketMode = SocketIdle;
 
-		//! \todo Diagnose 
+		//! \todo Diagnose, mehrfaches Drucken verhindern.
 		
 		return;
 		}
@@ -295,6 +295,8 @@ void POP3Einleiten()
 	POPOkEmpfangen = false;
 	
 	StartKurzTimer(&VervollstaendigungTimer);
+	
+	//! \todo Moduswechsel!
 	
 	return;
 	} // POP3Einleiten
