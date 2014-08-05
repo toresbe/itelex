@@ -29,7 +29,7 @@
 	//! Diagnosedrucke betrifft, die nur bei Benutzung der SD-Karte erscheinen.
 
 
-enum { MaxProtPuffer = 512 }; //!< Länge des Protokoll-Puffers
+enum { MaxProtPuffer = 1024 }; //!< Länge des Protokoll-Puffers
 
 char Puffer[MaxProtPuffer]; //!< Puffert Meldungen bis es Zeit ist, diese auf SD-Karte zu speichern.
 

@@ -1189,7 +1189,16 @@ void ModusWechsel(TModus neu)
 		return;
 
 	TwiWatchdogCount = 0; // nicht in allen Modi erforderlich, schadet aber auch nicht.
-		
+	
+	if (ProtokollLevel >= AblaufInfo)
+		{
+		ProtokollRegelblockStart();
+		ProtokollierenITelex();
+		ProtokollierenInt_P(PSTR("ModusWechsel von %d "), Modus);
+		ProtokollierenInt_P(PSTR("nach %d.\r\n"), neu);
+		ProtokollRegelblockEnde();
+		}
+
 	switch (neu)
 		{
 		case ModRuhe: // nichts läuft
@@ -4206,7 +4215,7 @@ void itelex_thread()
 	// ======================================================================
 	
 	if (DynIP_Phase != DynIP_Inaktiv && NetzRufnummer >= GlobRufnrMinWert)
-		{
+		{ // jetzt ist DynIP überhaupt sinnvoll...
 		if (DynIP_Phase == DynIP_Erneuern
 			&& (Modus == ModRuhe || Modus == ModDeaktiviert)
 			&& TeilnehmerServerSocket == NO_SOCKET_USED)
@@ -4240,9 +4249,10 @@ void itelex_thread()
 					// in 15 Minuten minus Zufall wieder. 
 				DynIP_Phase = DynIP_Fehler;
 				}
-			
+			else
+				DynIP_Phase = DynIP_LaeuftGerade;
+				
 			StartLangTimer(&DynIPAktualisierungTimer);
-			DynIP_Phase = DynIP_LaeuftGerade;
 			} // Zeit für Aktualsierung UND keine Verbindung laufend
 		
 		if ((DynIP_Phase == DynIP_Bestaetigt || DynIP_Phase == DynIP_Unbestaetigt)
@@ -4383,7 +4393,7 @@ void itelex_thread()
 			SelbstAnrufPhase = SelbstAnrufSperre;
 			}
 			
-		if (LangTimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit)
+		if (LangTimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit && DynIP_Phase != DynIP_LaeuftGerade)
 			DynIP_Phase = DynIP_Erneuern;
 
 		} // if (DynIP_Phase != DynIP_Inaktiv && NetzRufnummer >= GlobRufnrMinWert)
