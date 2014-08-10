@@ -4387,7 +4387,7 @@ void itelex_thread()
 			}
 			
 		else if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufFehlerZaehler >= 8 && DynIP_Phase == DynIP_Unbestaetigt)
-			{
+			{ // nach acht Fehlversuchen Selbst-Anruf nicht mehr durchführen.
 			SelbstAnrufPeriode = 0;
 			Diagnoseausgabe_P(ISTR(SelbstAnrufMehrfachVersagt, LokaleSprache), 1);
 			SelbstAnrufPhase = SelbstAnrufSperre;
@@ -4569,9 +4569,9 @@ void itelex_thread()
 							ProtokollierenIPAdr(NetzEigeneIP);
 							Protokollieren_P(PSTR("\r\n"));
 							}
-						DynIP_Phase = DynIP_Unbestaetigt;
 						SelbstAnrufFehlerZaehler = 0;
 						}
+					DynIP_Phase = DynIP_Unbestaetigt;
 					StartLangTimer(&DynIPAktualisierungTimer);
 					DynIPAktualisierungEndzeit = 60 * LangTimerMinuteFaktor - Zufallswert(0x3F); 
 						// in einer Stunde wieder
