@@ -4336,7 +4336,10 @@ void itelex_thread()
 					SelbstAnrufFehlerZaehler = 0;
 					SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
 					if (DynIP_Phase == DynIP_Unbestaetigt)
+						{
+						ProtokollierenITelex_P(PSTR("Selbst-Anruf bestaetigt IP Adresse.\r\n"));
 						DynIP_Phase = DynIP_Bestaetigt;
+						}
 					} // Richtiges Echo angekommen
 				else
 					{ // Falsches Echo angekommen
