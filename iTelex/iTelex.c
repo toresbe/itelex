@@ -1769,7 +1769,7 @@ static void SocketBearbeiten()
 					ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
 					ProtokollRegelblockEnde();
 					}
-					
+				
 				iTelexSocketMode = SocketIdle;
 				iTelexSocketIP = 0;
 				iTelexSocketAbbauGeplant = false;
@@ -1786,6 +1786,9 @@ static void SocketBearbeiten()
 					
 				else if (ProtokollLevel >= AblaufInfo)
 					ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
+					
+				if (Modus == ModEmailPOPVerbunden)
+					ModusWechsel(ModRuhe);
 					
 				iTelexSocketMode = SocketIdle;
 				iTelexSocketIP = 0;

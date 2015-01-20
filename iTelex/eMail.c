@@ -258,9 +258,12 @@ void POP3Einleiten()
 		
 	// jetzt geht's los...
 	long ServerIP;
+
+	ServerIP = strtoip(EmailPOPServerAdresse);	// Annahme: eine IP-Adresse angegeben
 	
-	ServerIP = DNS_ResolveName(EmailPOPServerAdresse); 
-	//! \todo Prio 2 direkte IP Adresse erlauben
+	if (ServerIP == 0) // ist es doch eine Hostname?
+		ServerIP = DNS_ResolveName(EmailPOPServerAdresse); 
+
 	if (ServerIP == -1)
 		{
 		Protokollieren_P(PSTR("iTelex POP: ! IP zu Hostname "));
@@ -396,8 +399,9 @@ void POP3DatenVerarbeiten()
 			Protokollieren(SocketInBuf);
 			}
 
-		InterneVerbindungBeenden(true);
+		InterneVerbindungBeenden(true); //! \todo Prüfen, wozu dies???
 		iTelexSocketAbbauGeplant = true;
+		ModusWechsel(ModRuhe);
 		return;
 		}
 
@@ -442,8 +446,7 @@ void POP3DatenVerarbeiten()
 				if (SocketInBuf[i] == ' ')
 					break;
 					
-			if ((i < SocketInBufUsed && atoi(SocketInBuf + i) == 0)
-				|| Modus != ModRuhe)
+			if (i < SocketInBufUsed && atoi(SocketInBuf + i) == 0)
 				{ // nichts im Puffer ODER plötzlich doch belegt...
 				POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
 				StartLangTimer(&POPWartezeitTimer);
@@ -599,10 +602,11 @@ bool SMTPOeffnen(char *EmfaengerName)
 	strncpy(EmailEmpfaenger, EmfaengerName, sizeof(EmailEmpfaenger)-1);
 	EmailEmpfaenger[sizeof(EmailEmpfaenger)-1] = '\0';
 	
-	ServerIP = DNS_ResolveName(EmailSMTPServerAdresse); 
+	ServerIP = strtoip(EmailSMTPServerAdresse);	// Annahme: eine IP-Adresse angegeben
 	
-	//! \todo Prio 2 direkte IP Adresse erlauben
-	
+	if (ServerIP == 0) // ist es doch eine Hostname?
+		ServerIP = DNS_ResolveName(EmailSMTPServerAdresse); 
+
 	if (ServerIP == -1)
 		{
 		Protokollieren_P(PSTR("iTelex SMTP: ! IP zu Hostname "));
