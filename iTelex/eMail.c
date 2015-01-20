@@ -99,6 +99,12 @@ static bool POPOkEmpfangen;
 	//!< Wird auf true gesetzt, wenn eine Zeile mit + am Anfang empfangen wurde.
 	//!< Nach Kommandoausgaben auf false.
 
+static bool POPFehlermeldungWiederholungssperre;
+	//!< Wird gesetzt, wenn die Fehlermeldung der Nicht-Erreichbarkeit des POP-Servers gedruckt wurde.
+	//!< Wird wieder gelöscht, wenn die Adresse geändert wird oder der POP-Server erfolgreich 
+	//!< Verbunden wurde.
+	
+	
 static bool InMailHeader;
 	//!< so lange true, so lange Zeilen des Mail-Headers an MailZeileVerarbeiten()
 	//!< übergeben werden.
@@ -254,13 +260,22 @@ void POP3Einleiten()
 	long ServerIP;
 	
 	ServerIP = DNS_ResolveName(EmailPOPServerAdresse); 
+	//! \todo Prio 2 direkte IP Adresse erlauben
 	if (ServerIP == -1)
 		{
 		Protokollieren_P(PSTR("iTelex POP: ! IP zu Hostname "));
 		Protokollieren(EmailPOPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 
-		//! \todo Prio 2 Diagnose, aber mehrfaches Drucken verhindern.
+		if (!POPFehlermeldungWiederholungssperre)
+			{
+			if (Diagnoseausgabe_P(ISTR(POPFehlerAnfang, LokaleSprache), 1))
+				{
+				strncat(DiagnosePuffer, EmailPOPServerAdresse, strlen(DiagnosePuffer) - 30);
+				strcat_P(DiagnosePuffer, ISTR(MailFehlerIPNichtErmittelbar, LokaleSprache));
+				}
+			POPFehlermeldungWiederholungssperre = true;
+			}
 		
 		POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
 		
@@ -277,7 +292,17 @@ void POP3Einleiten()
 		iTelexSocketHandle = NO_SOCKET_USED;
 		iTelexSocketMode = SocketIdle;
 
-		//! \todo Diagnose, mehrfaches Drucken verhindern.
+		if (!POPFehlermeldungWiederholungssperre)
+			{
+			if (Diagnoseausgabe_P(ISTR(POPFehlerAnfang, LokaleSprache), 1))
+				{
+				strncat(DiagnosePuffer, EmailPOPServerAdresse, strlen(DiagnosePuffer) - 30);
+				strcat_P(DiagnosePuffer, ISTR(MailFehlerNotConnected, LokaleSprache));
+				}
+			POPFehlermeldungWiederholungssperre = true;
+			}
+		
+		POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
 		
 		return;
 		}
@@ -285,6 +310,8 @@ void POP3Einleiten()
 	if (ProtokollLevel >= AblaufInfo)
 		ProtokollierenInt_P(PSTR("iTelex POP: Client-Socket #%d zum Server erfolgreich geoeffnet\r\n"), iTelexSocketHandle);
 		
+	POPFehlermeldungWiederholungssperre = false;
+	
 	SocketBufInit();
 	
 	iTelexSocketMode = SocketOriginate;
@@ -296,9 +323,8 @@ void POP3Einleiten()
 	
 	StartKurzTimer(&VervollstaendigungTimer);
 	
-	//! \todo Moduswechsel!
+	ModusWechsel(ModEmailPOPVerbunden);
 	
-	return;
 	} // POP3Einleiten
 	
 
@@ -574,6 +600,9 @@ bool SMTPOeffnen(char *EmfaengerName)
 	EmailEmpfaenger[sizeof(EmailEmpfaenger)-1] = '\0';
 	
 	ServerIP = DNS_ResolveName(EmailSMTPServerAdresse); 
+	
+	//! \todo Prio 2 direkte IP Adresse erlauben
+	
 	if (ServerIP == -1)
 		{
 		Protokollieren_P(PSTR("iTelex SMTP: ! IP zu Hostname "));
@@ -582,7 +611,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 		if (Diagnoseausgabe_P(ISTR(SMTPFehlerAnfang, LokaleSprache), 1))
 			{
 			strncat(DiagnosePuffer, EmailSMTPServerAdresse, strlen(DiagnosePuffer) - 30);
-			strcat_P(DiagnosePuffer, ISTR(SMTPFehlerIPNichtErmittelbar, LokaleSprache));
+			strcat_P(DiagnosePuffer, ISTR(MailFehlerIPNichtErmittelbar, LokaleSprache));
 			}
 		return false;
 		}
@@ -599,7 +628,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 		if (Diagnoseausgabe_P(ISTR(SMTPFehlerAnfang, LokaleSprache), 1))
 			{
 			strncat(DiagnosePuffer, EmailSMTPServerAdresse, strlen(DiagnosePuffer) - 30);
-			strcat_P(DiagnosePuffer, ISTR(SMTPFehlerNotConnected, LokaleSprache));
+			strcat_P(DiagnosePuffer, ISTR(MailFehlerNotConnected, LokaleSprache));
 			}
 		return false;
 		}
@@ -956,6 +985,8 @@ void itelex_cgi_email_config(void *pStruct)
 													EmailAusgabeFilternKennung_P, EmailAusgabeFilternKennung, Sprache);
 													
 		SpeichereSpracheAlsLokal(Sprache);
+
+		POPFehlermeldungWiederholungssperre = false;
 		
 		} // else argc > 0
 		
@@ -966,6 +997,8 @@ void itelex_cgi_email_config(void *pStruct)
 
 void itelex_email_init()
 	{
+	POPFehlermeldungWiederholungssperre = false;
+	
 	// EEPROM auslesen
 	char Buf[TlnAdresseMax];
 

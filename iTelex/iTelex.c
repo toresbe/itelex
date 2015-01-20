@@ -1428,7 +1428,24 @@ void ModusWechsel(TModus neu)
 			strcat_P(AsciiDruckPuffer, ISTR(NamensucheErgebnisse, LokaleSprache));
 			TlnListerStart(&NamenssucheLister);
 			break;
-		
+
+		case ModEmailPOPVerbunden:
+			CLR_BIT_Status(StatBit_Frei);
+			CLR_BIT_Status(StatBit_LeitungKennung);
+			CLR_BIT_Status(StatBit_Verbunden);
+			CLR_BIT_Status(StatBit_FsMeldBetrieb);
+			CLR_BIT_Status(StatBit_FsMeldEin);
+			CLR_BIT_Status(StatBit_FsBefBetrieb);
+			CLR_BIT_Status(StatBit_FsBefEin);
+			CLR_BIT_Status(StatBit_AngerufenBelegt);
+			LED_on(GELB);
+			LED_on(GRUEN);
+			LED_off(BLAU);
+			AsciiDruckPuffer[0] = '\0';
+			AsciiHilfPuffer[0] = '\0';
+			AsciiHilfZeilenanfang = 0;
+			break;
+			
 		default:
 			return; // nix wird geändert
 		} // switch neu
@@ -2085,6 +2102,7 @@ void InterneVerbindungBeenden(bool Force)
 		case ModWarteSchlussQuitt:
 		case ModDeaktiviert:
 		case ModWarteGrundstellung:
+		case ModEmailPOPVerbunden:
 			// in diesen Zuständen ist nicht zu tun, sondern nur abzuwarten.
 			break; 
 			
@@ -4115,7 +4133,7 @@ void itelex_thread()
 	// Ascii-Text im Puffer z.B. durch Html-Eingabe?
 	// ==========================================================================
 
-	if (Modus == ModRuhe && AsciiDruckPuffer[0] != '\0')
+	if ((Modus == ModRuhe || Modus == ModEmailPOPVerbunden) && AsciiDruckPuffer[0] != '\0')
 		{
 		if (ProtokollLevel >= AblaufInfo)
 			{

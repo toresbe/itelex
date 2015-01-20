@@ -237,8 +237,9 @@ _STRTABENTRY(EmailKonfigFehler,
 			 "<br><b>Konfigurationsdaten unvollst&auml;ndig, Abfragetakt auf Null gesetzt, eMail Abfrage ist ausgeschaltet.</b>", 
 			 "<br><b>Configuration not complete, polling period set to zero, incoming eMail will not be printed.</b>")
 _STRTABENTRY(SMTPFehlerAnfang, "eMail-Ausgang-Server ", "Server for outgoing email")
-_STRTABENTRY(SMTPFehlerIPNichtErmittelbar, " IP nicht ermittelbar", " no IP address was found")
-_STRTABENTRY(SMTPFehlerNotConnected, " konnte nicht verbunden werden", " connection failed")
+_STRTABENTRY(POPFehlerAnfang, "Server fuer eMail-Empfang ", "server for incoming email ")
+_STRTABENTRY(MailFehlerIPNichtErmittelbar, " IP nicht ermittelbar", " no IP address was found")
+_STRTABENTRY(MailFehlerNotConnected, " konnte nicht verbunden werden", " connection failed")
 _STRTABENTRY(SMTPFehlerDirekt, "Meldung vom eMail-Ausgang-Server: ", "Message from the Server for outgoing email: ")
 
 // für ConfigNtp.c:
