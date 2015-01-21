@@ -399,10 +399,9 @@ void POP3DatenVerarbeiten()
 			Protokollieren(SocketInBuf);
 			}
 
-		InterneVerbindungBeenden(true); //! \todo Prüfen, wozu dies???
-		iTelexSocketAbbauGeplant = true;
-		ModusWechsel(ModRuhe);
-		return;
+		// InterneVerbindungBeenden(true); // war mal hier drin, wird aber vermutlich nicht gebraucht.
+		if (ProtokollPhase < Abmelden)
+			ProtokollPhase = Abmelden; // leitet Abbruch der Verbindung ein
 		}
 
 	SocketOutBuf[0] = '\0';
