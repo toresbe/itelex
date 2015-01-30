@@ -634,8 +634,6 @@ void ZeitUeberwachungAbbruch(TZeitUeberwachung *zue)
 	}
 	
 
-	
-
 //! Gibt des aktuellen Stand der Zeitueberwachung aus.
 //----------------------------------------------------	
 //! Ausgabe erfolgt in den #ZeitUeberwachungAusgabePuffer.
@@ -1788,7 +1786,7 @@ static void SocketBearbeiten()
 					ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
 					
 				if (Modus == ModEmailPOPVerbunden)
-					ModusWechsel(ModRuhe);
+					ModusWechsel(ModWarteGrundstellung);
 					
 				iTelexSocketMode = SocketIdle;
 				iTelexSocketIP = 0;
@@ -1961,13 +1959,28 @@ static void SocketBearbeiten()
 			SocketSendeFehlerZaehler++; 
 			if (SocketSendeFehlerZaehler >= 10)
 				{
-				if (ProtokollLevel >= NurFehler)
-					ProtokollierenITelex_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
-				Diagnoseausgabe_P(ISTR(MehrfacheSendeFehler, LokaleSprache), 2);
-	
-				CloseTCPSocket(iTelexSocketHandle);
-				iTelexSocketHandle = NO_SOCKET_USED;
-				}
+				if (iTelexSocketAbbauGeplant)
+					{
+					if (ProtokollLevel >= NurFehler)
+						ProtokollierenITelex_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz aber Verbindungsabbau geplant\r\n"));
+					CloseTCPSocket(iTelexSocketHandle);
+					iTelexSocketHandle = NO_SOCKET_USED;
+					iTelexSocketMode = SocketIdle;
+					iTelexSocketIP = 0;
+					iTelexSocketAbbauGeplant = false;
+					SocketOutBufUsed = 0;
+					SocketInBufUsed = 0;
+					}
+				else
+					{
+					if (ProtokollLevel >= NurFehler)
+						ProtokollierenITelex_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n"));
+					Diagnoseausgabe_P(ISTR(MehrfacheSendeFehler, LokaleSprache), 2);
+		
+					CloseTCPSocket(iTelexSocketHandle);
+					iTelexSocketHandle = NO_SOCKET_USED;
+					}
+				} // if (SocketSendeFehlerZaehler >= 10)
 			#ifdef LEDROT_SOCKETERROR
 				LED_on(ROT);
 			#endif //def LEDROT_SOCKETERROR
@@ -2105,9 +2118,12 @@ void InterneVerbindungBeenden(bool Force)
 		case ModWarteSchlussQuitt:
 		case ModDeaktiviert:
 		case ModWarteGrundstellung:
-		case ModEmailPOPVerbunden:
 			// in diesen Zuständen ist nicht zu tun, sondern nur abzuwarten.
 			break; 
+		
+		case ModEmailPOPVerbunden:
+			ModusWechsel(ModWarteGrundstellung); 
+			break;
 			
 		case ModKommendVerbVorstufe:
 		case ModKommendEinschalten:
@@ -3163,7 +3179,9 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 					ProtokollierenInt_P(PSTR("Client-Socket #%d SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n"), iTelexSocketHandle);
 					}
 					
-				BusSenden(BusQuittEin);
+				BusSenden(BusQuittEin); 
+					//! \todo prüfen, ob der Start des FS nicht auch an das Ende der Authentifizierung am Email Server verschoben werden kann.
+					// Dann aber auch Testen, was bei voerzeitigem Abbruch der Verbindung passiert.
 				ModusWechsel(ModGehendVerbunden);
 				return 0; // gut
 				}
@@ -3782,7 +3800,8 @@ void itelex_thread()
 	if (iTelexSocketMode == SocketIdle)
 		{
 		if (Modus == ModGehendVerbunden
-			|| (Modus >= ModKommendVerbVorstufe && Modus <= ModKommendVerbunden))
+			|| (Modus >= ModKommendVerbVorstufe && Modus <= ModKommendVerbunden)
+			|| (Modus == ModEmailPOPVerbunden))
 			{
 			InterneVerbindungBeenden(false);
 			}
