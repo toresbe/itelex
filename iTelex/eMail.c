@@ -99,9 +99,10 @@ static bool POPOkEmpfangen;
 	//!< Wird auf true gesetzt, wenn eine Zeile mit + am Anfang empfangen wurde.
 	//!< Nach Kommandoausgaben auf false.
 
-static bool POPFehlermeldungWiederholungssperre;
-	//!< Wird gesetzt, wenn die Fehlermeldung der Nicht-Erreichbarkeit des POP-Servers gedruckt wurde.
-	//!< Wird wieder gelöscht, wenn die Adresse geändert wird oder der POP-Server erfolgreich 
+static uint8_t POPOeffnenFehlerZaehler;
+	//!< Wird inkrement, wenn das Öffnen des eMail-Abfrage Servers versagte. 
+	//!< Beim dritten Mal gibt es eine Fehlermeldung, aber beim 4. Mal nicht wieder (also auch eine "Wiederholungssperre")
+	//!< Wird wieder auf 0 gesetzt, wenn die Adresse geändert wird oder der POP-Server erfolgreich 
 	//!< Verbunden wurde.
 	
 	
@@ -270,14 +271,16 @@ void POP3Einleiten()
 		Protokollieren(EmailPOPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 
-		if (!POPFehlermeldungWiederholungssperre)
+		if (POPOeffnenFehlerZaehler < 255)
+			POPOeffnenFehlerZaehler++;
+			
+		if (POPOeffnenFehlerZaehler == 3)
 			{
 			if (Diagnoseausgabe_P(ISTR(POPFehlerAnfang, LokaleSprache), 1))
 				{
 				strncat(DiagnosePuffer, EmailPOPServerAdresse, strlen(DiagnosePuffer) - 30);
 				strcat_P(DiagnosePuffer, ISTR(MailFehlerIPNichtErmittelbar, LokaleSprache));
 				}
-			POPFehlermeldungWiederholungssperre = true;
 			}
 		
 		POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
@@ -295,14 +298,16 @@ void POP3Einleiten()
 		iTelexSocketHandle = NO_SOCKET_USED;
 		iTelexSocketMode = SocketIdle;
 
-		if (!POPFehlermeldungWiederholungssperre)
+		if (POPOeffnenFehlerZaehler < 255)
+			POPOeffnenFehlerZaehler++;
+			
+		if (POPOeffnenFehlerZaehler == 3)
 			{
 			if (Diagnoseausgabe_P(ISTR(POPFehlerAnfang, LokaleSprache), 1))
 				{
 				strncat(DiagnosePuffer, EmailPOPServerAdresse, strlen(DiagnosePuffer) - 30);
 				strcat_P(DiagnosePuffer, ISTR(MailFehlerNotConnected, LokaleSprache));
 				}
-			POPFehlermeldungWiederholungssperre = true;
 			}
 		
 		POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
@@ -313,7 +318,7 @@ void POP3Einleiten()
 	if (ProtokollLevel >= AblaufInfo)
 		ProtokollierenInt_P(PSTR("iTelex POP: Client-Socket #%d zum Server erfolgreich geoeffnet\r\n"), iTelexSocketHandle);
 		
-	POPFehlermeldungWiederholungssperre = false;
+	POPOeffnenFehlerZaehler = 0;
 	
 	SocketBufInit();
 	
@@ -989,7 +994,8 @@ void itelex_cgi_email_config(void *pStruct)
 													
 		SpeichereSpracheAlsLokal(Sprache);
 
-		POPFehlermeldungWiederholungssperre = false;
+		POPOeffnenFehlerZaehler = 0;
+
 		
 		} // else argc > 0
 		
@@ -1000,7 +1006,7 @@ void itelex_cgi_email_config(void *pStruct)
 
 void itelex_email_init()
 	{
-	POPFehlermeldungWiederholungssperre = false;
+	POPOeffnenFehlerZaehler = 0;
 	
 	// EEPROM auslesen
 	char Buf[TlnAdresseMax];

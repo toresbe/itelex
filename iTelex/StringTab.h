@@ -35,7 +35,7 @@ enum {
 // ==================================
 
 // für iTelex.c:
-_STRTABENTRY(ZweiterAnruf, "Zweiter kommender Anruf auf belegtem i-Telex-Socket", "Second incoming call on busy i-telex socket")
+_STRTABENTRY(AnrufAbgewiesenWegenBesetzt, "kommender Anruf abgewiesen wegen besetzt", "incoming call cancelled because busy")
 _STRTABENTRY(MehrfacheSendeFehler, "Mehrfache Fehler beim Senden ins Netz", "Multiple errors while sending on network")
 _STRTABENTRY(ZeitueberschreitungWiederaufnahme, "Zeitueberschreitung bei Wiederaufnahme der Verbindung", "Timeout while waiting for a reconnection")
 _STRTABENTRY(KeinTeilnehmerServerErreichbar, 

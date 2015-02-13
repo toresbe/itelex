@@ -1729,11 +1729,12 @@ static void SocketBearbeiten()
 				PutSocketData_RPE(iTelexBlindSocketHandle, 5, PSTR("\004\003abs"), FLASH); // 004 = ITELEXC_STOP
 				// SendeStopkommando kann nicht benutzt werden, da der Code in den BlindSocket gesendet wird.
 			else
+				{
 				PutSocketData_RPE(iTelexBlindSocketHandle, 5, PSTR("\004\003occ"), FLASH); // 004 = ITELEXC_STOP
 				// SendeStopkommando kann nicht benutzt werden, da der Code in den BlindSocket gesendet wird.
 				
-			if (Modus != ModDeaktiviert)
-				Diagnoseausgabe_P(ISTR(ZweiterAnruf, LokaleSprache), 4);
+				Diagnoseausgabe_P(ISTR(AnrufAbgewiesenWegenBesetzt, LokaleSprache), 4);
+				}
 			}
 			
 		} // CheckPortRequest(ITELEX_PORT) != NO_SOCKET_USED
@@ -4239,17 +4240,6 @@ void itelex_thread()
 		#endif //def LEDROT_SOCKETERROR
 		}
 		
-#ifdef ITELEX_EMAIL
-
-	// ==========================================================================
-	// Ab und zu mal prüfen, ob es neue Mails gibt.
-	// ==========================================================================
-	
-	if (SelbstAnrufPhase == SelbstAnrufRuhe || SelbstAnrufPhase == SelbstAnrufSperre)
-		POP3Einleiten();
-	
-#endif //def ITELEX_EMAIL
-	
 	// ======================================================================
 	// Dynamische IP-Aktualisierung / Selbstanruf starten
 	// ======================================================================
@@ -4301,6 +4291,7 @@ void itelex_thread()
 			&& SelbstAnrufSocketHandle == NO_SOCKET_USED
 			&& iTelexSocketHandle == NO_SOCKET_USED
 			&& TeilnehmerServerSocket == NO_SOCKET_USED
+			&& DiagnosePuffer[0] == '\0' // sonst würde der laufende Selbst-Anruf gleich unterbrochen werden
 			&& SelbstAnrufPeriode > 0
 			&& KurzTimerVal(&SelbstAnrufTimer) > SelbstAnrufEndzeit)
 			{ // Selbst-Anruf starten
@@ -4689,6 +4680,17 @@ void itelex_thread()
 		
 		} // if (TeilnehmerServerSocket != NO_SOCKET_USED)
 		
+#ifdef ITELEX_EMAIL
+
+	// ==========================================================================
+	// Ab und zu mal prüfen, ob es neue Mails gibt.
+	// ==========================================================================
+	
+	if (SelbstAnrufPhase == SelbstAnrufRuhe || SelbstAnrufPhase == SelbstAnrufSperre)
+		POP3Einleiten();
+	
+#endif //def ITELEX_EMAIL
+	
 	// ==========================================================================
 	// Ab und zu mal den Protokollinhalt speichern
 	// ==========================================================================
