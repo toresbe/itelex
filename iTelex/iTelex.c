@@ -4686,7 +4686,8 @@ void itelex_thread()
 	// Ab und zu mal prüfen, ob es neue Mails gibt.
 	// ==========================================================================
 	
-	if (SelbstAnrufPhase == SelbstAnrufRuhe || SelbstAnrufPhase == SelbstAnrufSperre)
+	if ((SelbstAnrufPhase == SelbstAnrufRuhe || SelbstAnrufPhase == SelbstAnrufSperre)
+	    && Modus == ModRuhe)
 		POP3Einleiten();
 	
 #endif //def ITELEX_EMAIL

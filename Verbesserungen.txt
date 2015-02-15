@@ -1,3 +1,11 @@
+Ab Build 573:
+eMail-Server nun auch per IP-Adresse erreichbar
+eMail-Abfrage an LED erkennbar
+eMail-Fehlerbehandlung verbessert (kein Aufhängen mehr)
+DynIP Fehler behoben
+Falsche Fehlermeldungen bei langsamer Verbindung behoben
+Fehlermeldungen bei eMail-Abfrage erst beim dritten Fehlversuch
+
 Ab Build 522:
 Zeilenumbruch bei ASCII-Verbindung erst nach 68 Zeichen
 
