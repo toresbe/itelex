@@ -3,29 +3,27 @@ How to update the Software of an i-telex board.
 
 You need: A windows XP or windows 7 pc with an serial interface (RS232) or an USB-to-serial adapter and a null-modem-cable.
 
-If you already updateted your i-telex once go you'll only need to change the file main.hex in your update directory and start with step 8.
+If you already updateted your i-telex once go you'll only need to change the file main.hex in your update directory and start with step 7.
 
-1. Save the subscriber directory into the non-volatile memory. (See the i-telex manual for details)
+1. Download all the files where you found this manual to the windows pc to any directory. This directory is called the "update directory"
 
-2. Download all the files where you found this manual to the windows pc to any directory. This directory is called the "update directory"
+2. Check the number of the serial interface. If it is COM1: goto step 7. If not, continue.
 
-3. Check the number of the serial interface. If it is COM1: goto step 8. If not, continue.
+3. If the number is greater than 4 you have to change it to COM1: to COM4:
 
-4. If the number is greater than 4 you have to change it to COM1: to COM4:
+4. If the serial interface is not COM1: locate the file "upload.bat" in the update directory. Rightclick the file and select "edit"
 
-5. If the serial interface is not COM1: locate the file "upload.bat" in the update directory. Rightclick the file and select "edit"
+5. In the text editor change the "/C1" to for expample "/C2", if the serial interface is COM2:
 
-6. In the text editor change the "/C1" to for expample "/C2", if the serial interface is COM2:
+6. Choose File - Save from the texteditor menu and close the texteditor.
 
-7. Choose File - Save from the texteditor menu and close the texteditor.
+7. Connect the null-modem-cable to the serial interface or the adapter and to the i-telex-board (which must be powered and active).
 
-8. Connect the null-modem-cable to the serial interface or the adapter and to the i-telex-board (which must be powered and active).
+8. Start "upload" or "upload.bat" from the update directory. A Window with black background should appear with a text "COM 1 at 38400 Baud: " and a "propelling" dash.
 
-9. Start "upload" or "upload.bat" from the update directory. A Window with black background should appear with a text "COM 1 at 38400 Baud: " and a "propelling" dash.
+9. Press the button if the i-telex board for less then half a second. The blue LED should light up.
 
-10. Press the button if the i-telex board for less then half a second. The blue LED should light up.
-
-11. Press the button if the i-telex board for abould one second. The blue LED should go off for a very short period and light up again and stay on. The propelling dash should disappear and a the following text should be visible:
+10. Press the button if the i-telex board for abould one second. The blue LED should go off for a very short period and light up again and stay on. The propelling dash should disappear and a the following text should be visible:
 COM 1 at 38400 Baud: Connected
 Bootloader V2.1
 Target: xxxxx fboot.DEF
@@ -34,7 +32,7 @@ Size available: xxxxxx Byte
 Program main.hex: 00000 - yyyyy
 The "yyyyy" will be updated every few seconds.
 
-12. Be patient until the blue LED goes off. This should take two to three minutes.
+11. Be patient until the blue LED goes off. This should take two to three minutes.
 COM 1 at 38400 Baud: Connected
 Bootloader V2.1
 Target: xxxxx fboot.DEF
@@ -45,4 +43,4 @@ Verify main.hex: 00000 - yyyyy successful
 CRC: o.k.
 Elapsed time: 0.00 seconds
 
-13. Finished!
+12. Finished!
