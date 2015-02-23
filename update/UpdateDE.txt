@@ -45,3 +45,15 @@ CRC: o.k.
 Elapsed time: 0.00 seconds
 
 12. Fertig!
+
+
+Falls der Updatevorgang korrekt beginnt (bei Schritt 10 erscheint "Connected"), dann aber aus irgendeinem 
+Grund nicht erfolgreich beendet wird, MUSS der Updatevorgang wie folgt wiederholt werden, da das 
+nur teilweise hochgeladenen Programm auf dem i-Telex-Board nicht lauffähig ist.
+
+Es ist Schritt 8 zu wiederholen: Die Datei "upload" or "upload.bat" aus dem Update-Verzeichnis starten (Doppelklick). Ein Fenster mit schwarzem Hintergrund sollte erscheinen mit dem Text "COM 1 at 38400 Baud: " und einem rotierenden Strich.
+
+Statt des Tastendrucks auf dem i-Telex-Board (Schritte 9 und 10) muss aber ein "harter" Reset erfolgen. Entweder die Energieversorgung des ganzen i-Telex Systems aus- und wieder einschalten oder die i-Telex Karte "ziehen" und wieder einstecken.
+
+Die Meldungen wie unter 10. und 11. sollten dann wie beschrieben erscheinen.
+
