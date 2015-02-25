@@ -2012,6 +2012,7 @@ static void SocketBearbeiten()
 		} // if es gibt was zu senden
 
 	// Bei Ascii oder Mail den Timeout auf 'deaktivieren'
+	// --------------------------------------------------
 	if (ModusTwiVerbunden() 
 		&& (iTelexSocketProtokoll == Ascii || iTelexSocketProtokoll == POP3 || iTelexSocketProtokoll == SMTP)
 		&& TCP_sockettable[iTelexSocketHandle].ConnectionState == SOCKET_READY)
@@ -4718,6 +4719,50 @@ void itelex_thread()
 	
 	TlnBuchPruefsummeBerechnenSchritt();
 	
+	// ==========================================================================
+	// Uhrzeit verteilen?
+	// ==========================================================================
+	
+	struct TIME Time;
+	CLOCK_GetTime(&Time);
+	static uint8_t MinuteLetzeRundsendung;
+	
+	char *p = AsciiDruckPuffer;
+	while (*p != '\0' && p < AsciiDruckPuffer + AsciiDruckPufferMax - 50) // 50 ist die Länge des Datum-Strings
+		p++;
+
+	sprintf_P(p, PSTR("\r\n\ndatum: %02u.%02u.%04u  uhrzeit: %02d:%02d:%02d\r\n\n"),
+			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+
+	if (Time.mm != MinuteLetzeRundsendung && BusFrei && (BusAuftrag == Nichts || BusAuftrag == Fertig))
+		{
+		MinuteLetzeRundsendung = Time.mm;
+		
+		uint8_t sreg_alt = SREG;
+		cli();
+		
+		BusAuftrag = Rundsenden;
+		
+		RundsendDaten[0] = 'c';
+		RundsendDaten[1] = 'l';
+		RundsendDaten[2] = 'k';
+		RundsendDaten[3] = Time.YY - 2000;
+		RundsendDaten[4] = Time.MM;
+		RundsendDaten[5] = Time.DD;
+		RundsendDaten[6] = Time.hh;
+		RundsendDaten[7] = Time.mm;
+		RundsendAnzDaten = 8;
+		
+		if (BusFrei)
+			{
+			while (BIT_IS_SET(TWCR, TWSTO))
+				;
+			SET_BIT(TWCR, TWSTA);
+			}
+			
+		SREG = sreg_alt; // setzt altes Interrupt-Enable zurück
+		}
+
 	// ==========================================================================
 	// HACK Status-Signale Seriell
 	// ==========================================================================
