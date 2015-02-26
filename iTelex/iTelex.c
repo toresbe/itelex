@@ -4723,17 +4723,10 @@ void itelex_thread()
 	// Uhrzeit verteilen?
 	// ==========================================================================
 	
+	static uint8_t MinuteLetzeRundsendung;
+
 	struct TIME Time;
 	CLOCK_GetTime(&Time);
-	static uint8_t MinuteLetzeRundsendung;
-	
-	char *p = AsciiDruckPuffer;
-	while (*p != '\0' && p < AsciiDruckPuffer + AsciiDruckPufferMax - 50) // 50 ist die Länge des Datum-Strings
-		p++;
-
-	sprintf_P(p, PSTR("\r\n\ndatum: %02u.%02u.%04u  uhrzeit: %02d:%02d:%02d\r\n\n"),
-			  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
-
 	if (Time.mm != MinuteLetzeRundsendung && BusFrei && (BusAuftrag == Nichts || BusAuftrag == Fertig))
 		{
 		MinuteLetzeRundsendung = Time.mm;
