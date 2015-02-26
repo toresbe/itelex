@@ -4738,11 +4738,6 @@ void itelex_thread()
 		{
 		MinuteLetzeRundsendung = Time.mm;
 		
-		uint8_t sreg_alt = SREG;
-		cli();
-		
-		BusAuftrag = Rundsenden;
-		
 		RundsendDaten[0] = 'c';
 		RundsendDaten[1] = 'l';
 		RundsendDaten[2] = 'k';
@@ -4752,15 +4747,8 @@ void itelex_thread()
 		RundsendDaten[6] = Time.hh;
 		RundsendDaten[7] = Time.mm;
 		RundsendAnzDaten = 8;
-		
-		if (BusFrei)
-			{
-			while (BIT_IS_SET(TWCR, TWSTO))
-				;
-			SET_BIT(TWCR, TWSTA);
-			}
-			
-		SREG = sreg_alt; // setzt altes Interrupt-Enable zurück
+
+		BusRundsenden();
 		}
 
 	// ==========================================================================
