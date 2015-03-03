@@ -367,6 +367,10 @@ static void DebugTestReadFlashIdentity()
 	}
 	
 
+	
+#if 0 // Zwischenstand des Versuchs, die Daten von einem Server zu laden
+
+	
 const PROGMEM char HostUrl[] = "df3oe.no-ip.org";
 	
 
@@ -441,13 +445,63 @@ static int DebugTestGetFilePerHttp()
 	return 0;
 	}
 	
+#endif // 0
+
+
+// Hier kommen die Binärdaten...
+// =============================
+
+#define byte uint8_t // nur für die Binärdaten
+#define unsigned PROGMEM // nur für die Binärdaten
+
+#include "ProgBinData\AnalogModem.h"
+#include "ProgBinData\ED1000.h"
+#include "ProgBinData\FernschrTW39.h"
+#include "ProgBinData\Messgeraet.h"
+#include "ProgBinData\SeriellUndSpeicher.h"
+
+#undef unsigned
+#undef byte
+
+
+typedef struct 
+	{
+	const prog_char *Name;
+	const prog_char *Kennung;
+	const uint8_t FuseL, FuseH, FuseX;
+	const prog_uint8_t *ProgBin;
+	} TProgDaten;
+	
+	
+const char AnalogModemBez[] PROGMEM = "AnalogModem";
+const char AnalogModemKenn[] PROGMEM = "TxP2_LeitungAnalog2";
+const char ED1000Bez[] PROGMEM = "ED1000";
+const char ED1000Kenn[] PROGMEM = "TxP2_ED1000";
+const char FernschrTW39Bez[] PROGMEM = "Fs TW39";
+const char FernschrTW39Kenn[] PROGMEM = "TxP2_";
+const char MessgeraetBez[] PROGMEM = "Messgeraet";
+const char MessgeraetKenn[] PROGMEM = "TxP2_";
+const char SeriellUndSpeicherBez[] PROGMEM = "SeriellUndSpeicher";
+const char SeriellUndSpeicherKenn[] PROGMEM = "TxP2_";
+
+
+TProgDaten ProgDatenTab[] =	{
+	{ AnalogModemBez, AnalogModemKenn, 0xE0, 0xD5, 0xF9, AnalogModem } ,
+	{ ED1000Bez, ED1000Kenn, 0xF7, 0xD5, 0xF9, ED1000 } ,
+	{ FernschrTW39Bez, FernschrTW39Kenn, 0xBF, 0xD1, 0xFF, FernschrTW39 } ,
+	{ MessgeraetBez, MessgeraetKenn, 0xF7, 0xD5, 0xF9, Messgeraet } ,
+	{ SeriellUndSpeicherBez, SeriellUndSpeicherKenn, 0xF7, 0xD5, 0xF9, SeriellUndSpeicher } } ;
+
+	
+// Testfunktionen
+// ===========================================
 	
 void cgi_IspTest(void *pStruct)
 	{
 	cgi_PrintHttpheaderStart();
 	
 	// hier nur Tests...
-	DebugTestGetFilePerHttp();
+	//DebugTestGetFilePerHttp();
 	
 	cgi_PrintHttpheaderEnd();
 	}
