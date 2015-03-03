@@ -6373,7 +6373,9 @@ void itelex_init()
 	#endif //def ITELEX_EMAIL
 	
 	CLOCK_GetTime(&SystemStartZeit);	
-	
+
+	void UseEEConfig();
+	UseEEConfig();
 	}
 
 
@@ -6436,6 +6438,20 @@ EEMEM char EE_ConfigData[] =
 	"MELDRUCK=4" ;
 EEMEM char EE_ConfigDataEnd[] = "\0";
 
+
+//! Die folgende Funktion hat nur den Zweck, dass die EEPROM Daten überhaupt irgendwo verwendung finden.
+//! Sonst würden sie vom Linker wegoptimiert werden.
+
+volatile uint8_t EEUsageDummy;
+
+void UseEEConfig()
+	{
+	EEUsageDummy = EE_ConfigHead.TAG[0];
+	EEUsageDummy = EE_Dummy;
+	EEUsageDummy = EE_ConfigData[0];
+	EEUsageDummy = EE_ConfigDataEnd[0];
+	}
+	
 
 //@}
 
