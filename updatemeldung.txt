@@ -1,38 +1,41 @@
------------------------------------------------------------
+@
+rundschreiben
+-------------
 hallo liebe i-telex-anwender.
-schon wieder gibt es eine neue software-version:
-geaendert wurde zwei punkte, die weniger die funktionalitaet,
-sondern mehr die stabilitaet betreffen. einige anwender
-berichteten von problemen zur erreichbarkeit. eine analyse
-ergab, dass in seltenen faellen blockierungen durch
-nicht vollstaendigen verbindungsabbau der netzwerk-
-kommunikation eintraten. dies problem ist mit der neuen
-software behoben.
-zum zweiten bleibt bei einem absturz nun in den meisten
-faellen das teilnehmerverzeichnis erhalten. das soll aber
-nicht davon abhalten, dass teilnehmerverzeichnis auch 
-nach aenderungen nichtfluechtig zu speichern, da bei
-stromausfaellen die beste software nichts nuetzt.
+wieder gibt es eine neue software-version:
+im wesentlichen wurden fehler behoben, speziell in 
+zusammenhang mit der email-abfrage. die email funtionen
+wurden ausserdem ergaenzt in der form, dass ip-adressen
+anstelle von hostnamen bei den email-servern eingestellt
+werden koennen.
 wie immer koennen alle erforderlichen daten zum update
 unter http://sonnibs.no-ip.org/update.zip heruntergeladen
-werden.
-viel spass.
+werden. die neue hex-datei allein ist unter 
+http://sonnibs.no-ip.org/main.hex zu erhalten.
+viel spass weiterhin.
+und immer daran denken: meldet fehler oder verbesserungs-
+vorschlaege an mich. nur so bleibt die freude an i-telex
+erhalten.
 fred ++++++
+@
 
-------------------------------------------------------------
-hello dear i-telex-user.
+
+@
+newsletter
+----------
+hello all i-telex-users...
 again there is a new software-version for the i-telex-board:
-the changes affect more some stability issues than the
-improvement of functionality.
-some users had problems regarding their availability.
-after long term tests the problem was found and solved in
-the new version.
-furthermore the personal subsriber list will keep in most
-cases up-to-date after a system crash. but this feature
-should not replace the functionality to save changes
-permanently because the new functionality does not help
-in power loss situations.
+the changes affect mainly the correction of errors, 
+especially regarding email download. also regarding email
+it is now possible to enter ip-adresses for the email servers
+instead of hostnames.
 as before, all necessarry data and information can be
 downloaded at http://sonnibs.no-ip.org/update.zip .
+the hex file itself is also available at 
+http://sonnibs.no-ip.org/main.hex .
 have fun...
+and remember: if you have problems or whishes, don't 
+hesitate to write me. my number is 531001 or 
+fred.sonnenrein(at)gmx.de .
 fred ++++++
+@

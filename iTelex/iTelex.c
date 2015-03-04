@@ -421,6 +421,10 @@ static uint16_t NetzPort;
 static long NetzEigeneIP;
 	//!< Zurückgemeldete IP-Adresse im globalen Netz.
 
+static TKurzTimer GrundstellungPruefTimer;
+	//!< Prüft, ob mit Modus == ModRuhe auch iTelexSocketHandle == NO_SOCKET_USED ist.
+	//!< Wenn nicht, wird nach 10 Sekunden eine Meldung generiert.
+	
 #endif // ITELEX_ANSCHLUSS
 	
 
@@ -632,8 +636,6 @@ void ZeitUeberwachungAbbruch(TZeitUeberwachung *zue)
 	}
 	
 
-	
-
 //! Gibt des aktuellen Stand der Zeitueberwachung aus.
 //----------------------------------------------------	
 //! Ausgabe erfolgt in den #ZeitUeberwachungAusgabePuffer.
@@ -688,7 +690,12 @@ bool Diagnoseausgabe_P(const char *msg, uint8_t Level)
 		}
 	else
 		{
-		strncpy_P(DiagnosePuffer, msg, DiagnosePufferMax - 1);
+		struct TIME Time;
+		CLOCK_GetTime(&Time);
+		sprintf_P(DiagnosePuffer, 
+				  PSTR("%02u.%02u.%04u %02u:%02u:%02u "), 
+				  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+		strncat_P(DiagnosePuffer, msg, DiagnosePufferMax - strlen(DiagnosePuffer) - 1);
 		DiagnosePuffer[DiagnosePufferMax - 1] = '\0';
 		DiagnosePufferLevel = Level;
 		if (Modus >= ModGehendReserv && Modus < ModKommendVerbVorstufe)
@@ -1182,7 +1189,16 @@ void ModusWechsel(TModus neu)
 		return;
 
 	TwiWatchdogCount = 0; // nicht in allen Modi erforderlich, schadet aber auch nicht.
-		
+	
+	if (ProtokollLevel >= AblaufInfo)
+		{
+		ProtokollRegelblockStart();
+		ProtokollierenITelex();
+		ProtokollierenInt_P(PSTR("ModusWechsel von %d "), Modus);
+		ProtokollierenInt_P(PSTR("nach %d.\r\n"), neu);
+		ProtokollRegelblockEnde();
+		}
+
 	switch (neu)
 		{
 		case ModRuhe: // nichts läuft
@@ -1412,7 +1428,24 @@ void ModusWechsel(TModus neu)
 			strcat_P(AsciiDruckPuffer, ISTR(NamensucheErgebnisse, LokaleSprache));
 			TlnListerStart(&NamenssucheLister);
 			break;
-		
+
+		case ModEmailPOPVerbunden:
+			CLR_BIT_Status(StatBit_Frei);
+			CLR_BIT_Status(StatBit_LeitungKennung);
+			CLR_BIT_Status(StatBit_Verbunden);
+			CLR_BIT_Status(StatBit_FsMeldBetrieb);
+			CLR_BIT_Status(StatBit_FsMeldEin);
+			CLR_BIT_Status(StatBit_FsBefBetrieb);
+			CLR_BIT_Status(StatBit_FsBefEin);
+			CLR_BIT_Status(StatBit_AngerufenBelegt);
+			LED_on(GELB);
+			LED_on(GRUEN);
+			LED_off(BLAU);
+			AsciiDruckPuffer[0] = '\0';
+			AsciiHilfPuffer[0] = '\0';
+			AsciiHilfZeilenanfang = 0;
+			break;
+			
 		default:
 			return; // nix wird geändert
 		} // switch neu
@@ -1698,11 +1731,12 @@ static void SocketBearbeiten()
 				PutSocketData_RPE(iTelexBlindSocketHandle, 5, PSTR("\004\003abs"), FLASH); // 004 = ITELEXC_STOP
 				// SendeStopkommando kann nicht benutzt werden, da der Code in den BlindSocket gesendet wird.
 			else
+				{
 				PutSocketData_RPE(iTelexBlindSocketHandle, 5, PSTR("\004\003occ"), FLASH); // 004 = ITELEXC_STOP
 				// SendeStopkommando kann nicht benutzt werden, da der Code in den BlindSocket gesendet wird.
 				
-			if (Modus != ModDeaktiviert)
-				Diagnoseausgabe_P(ISTR(ZweiterAnruf, LokaleSprache), 4);
+				Diagnoseausgabe_P(ISTR(AnrufAbgewiesenWegenBesetzt, LokaleSprache), 4);
+				}
 			}
 			
 		} // CheckPortRequest(ITELEX_PORT) != NO_SOCKET_USED
@@ -1736,7 +1770,7 @@ static void SocketBearbeiten()
 					ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
 					ProtokollRegelblockEnde();
 					}
-					
+				
 				iTelexSocketMode = SocketIdle;
 				iTelexSocketIP = 0;
 				iTelexSocketAbbauGeplant = false;
@@ -1753,6 +1787,9 @@ static void SocketBearbeiten()
 					
 				else if (ProtokollLevel >= AblaufInfo)
 					ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
+					
+				if (Modus == ModEmailPOPVerbunden)
+					ModusWechsel(ModWarteGrundstellung);
 					
 				iTelexSocketMode = SocketIdle;
 				iTelexSocketIP = 0;
@@ -1926,13 +1963,28 @@ static void SocketBearbeiten()
 			SocketSendeFehlerZaehler++; 
 			if (SocketSendeFehlerZaehler >= 10)
 				{
-				if (ProtokollLevel >= NurFehler)
-					ProtokollierenITelex_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n" ));
-				Diagnoseausgabe_P(ISTR(MehrfacheSendeFehler, LokaleSprache), 2);
-	
-				CloseTCPSocket(iTelexSocketHandle);
-				iTelexSocketHandle = NO_SOCKET_USED;
-				}
+				if (iTelexSocketAbbauGeplant)
+					{
+					if (ProtokollLevel >= NurFehler)
+						ProtokollierenITelex_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz aber Verbindungsabbau geplant\r\n"));
+					CloseTCPSocket(iTelexSocketHandle);
+					iTelexSocketHandle = NO_SOCKET_USED;
+					iTelexSocketMode = SocketIdle;
+					iTelexSocketIP = 0;
+					iTelexSocketAbbauGeplant = false;
+					SocketOutBufUsed = 0;
+					SocketInBufUsed = 0;
+					}
+				else
+					{
+					if (ProtokollLevel >= NurFehler)
+						ProtokollierenITelex_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n"));
+					Diagnoseausgabe_P(ISTR(MehrfacheSendeFehler, LokaleSprache), 2);
+		
+					CloseTCPSocket(iTelexSocketHandle);
+					iTelexSocketHandle = NO_SOCKET_USED;
+					}
+				} // if (SocketSendeFehlerZaehler >= 10)
 			#ifdef LEDROT_SOCKETERROR
 				LED_on(ROT);
 			#endif //def LEDROT_SOCKETERROR
@@ -2072,6 +2124,10 @@ void InterneVerbindungBeenden(bool Force)
 		case ModWarteGrundstellung:
 			// in diesen Zuständen ist nicht zu tun, sondern nur abzuwarten.
 			break; 
+		
+		case ModEmailPOPVerbunden:
+			ModusWechsel(ModWarteGrundstellung); 
+			break;
 			
 		case ModKommendVerbVorstufe:
 		case ModKommendEinschalten:
@@ -2753,6 +2809,8 @@ static void ITelexDatenVerarbeiten()
 			uint16_t len = PufferAnzahl(&EmpfPuffer);
 			if (len > SocketOutBufMax - 10 - 3 - SocketOutBufUsed)
 				len = SocketOutBufMax - 10 - 3 - SocketOutBufUsed;
+			if (len > 255)
+				len = 245;
 				
 			if (ProtokollLevel == DatenKurz) // Datenmengen
 				{
@@ -2860,7 +2918,8 @@ static void ZeichenInHtmlSendeText(char c)
 
 
 // Obergrenze für den Fehlerzähler.
-enum { TeilnehmerServerFehlerZaehlerGrenze = 5 * 2 } ;
+enum { TeilnehmerServerFehlerZaehlerGrenze = 6 * 2 } ;
+	// * 2 wegen "doppelter" Zählung in TeilnehmerServerFehlerSpeichern().
 
 //! Prüft, ob ein Socket benutzbar ist und nicht wegen Fehlern gesperrt ist
 //-------------------------------------------------------------------------
@@ -2873,10 +2932,29 @@ bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund)
 		return false;
 		
 	if (TeilnehmerServerFehlerZaehler[ServerI] >= TeilnehmerServerFehlerZaehlerGrenze)
-		// * 2 wegen "doppelter" Zählung in TeilnehmerServerFehlerSpeichern().
 		{
 		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= (TeilnehmerServerAlleNichtErreichbar ? 20 * LangTimerMinuteFaktor : 180 * LangTimerMinuteFaktor))
-			// Wenn alle Server nicht erreichbar, alle 20 Minuten probieren, sonst alle 3 Stunden
+			// Wenn Server offensichtlich dauerhaft nicht erreicht, alle 3 Stunden probieren, 
+			// außer wenn alle Server nicht erreichbar, dann alle 20 Minuten probieren
+			{
+			/* Müllt total den Speicher zu...
+			if (ProtokollLevelTlnServ >= AblaufInfo)
+				{
+				ProtokollierenITelex_P(PSTR("* Teilnehmer-Server "));
+				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
+				Protokollieren_P(PSTR(" wegen Fehlern noch gesperrt (Oeffnung fuer "));
+				Protokollieren_P(Grund);
+				Protokollieren_P(PSTR(")\r\n"));
+				}
+			*/
+			return false;
+			}
+		}
+
+	else if (TeilnehmerServerFehlerZaehler[ServerI] >= TeilnehmerServerFehlerZaehlerGrenze / 2)
+		{
+		if (LangTimerVal(&TeilnehmerServerSperrTimer[ServerI]) <= 5 * LangTimerMinuteFaktor)
+			// Wenn dich Fehlerzähler des Servers kritischer Grenze nähert, nur noch seltener probieren
 			{
 			/* Müllt total den Speicher zu...
 			if (ProtokollLevelTlnServ >= AblaufInfo)
@@ -3105,7 +3183,9 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 					ProtokollierenInt_P(PSTR("Client-Socket #%d SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n"), iTelexSocketHandle);
 					}
 					
-				BusSenden(BusQuittEin);
+				BusSenden(BusQuittEin); 
+					//! \todo prüfen, ob der Start des FS nicht auch an das Ende der Authentifizierung am Email Server verschoben werden kann.
+					// Dann aber auch Testen, was bei voerzeitigem Abbruch der Verbindung passiert.
 				ModusWechsel(ModGehendVerbunden);
 				return 0; // gut
 				}
@@ -3724,7 +3804,8 @@ void itelex_thread()
 	if (iTelexSocketMode == SocketIdle)
 		{
 		if (Modus == ModGehendVerbunden
-			|| (Modus >= ModKommendVerbVorstufe && Modus <= ModKommendVerbunden))
+			|| (Modus >= ModKommendVerbVorstufe && Modus <= ModKommendVerbunden)
+			|| (Modus == ModEmailPOPVerbunden))
 			{
 			InterneVerbindungBeenden(false);
 			}
@@ -3976,6 +4057,18 @@ void itelex_thread()
 		ModusWechsel(ModWarteGrundstellung);
 		}
 	
+	if (Modus == ModRuhe && (iTelexSocketHandle != NO_SOCKET_USED || iTelexSocketMode != SocketIdle))
+		{
+		if (KurzTimerVal(&GrundstellungPruefTimer) > 5 * KurzTimerFreq)
+			{
+			Diagnoseausgabe_P(PSTR("Grundstellung gestoert"), 1); // keine Englische Version, da nur ein Hack.
+			iTelexSocketHandle = NO_SOCKET_USED;
+			iTelexSocketMode = SocketIdle;
+			}
+		}
+	else
+		StartKurzTimer(&GrundstellungPruefTimer);
+		
 	// ==========================================================================
 	// Tastendruck?
 	// ==========================================================================
@@ -4052,10 +4145,10 @@ void itelex_thread()
 		AsciiDruckPuffer[AsciiDruckPufferMax-30] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
 		if (ProtokollLevel >= AblaufInfo && ProtokollLevel < DatenDetailliert)
-			{ // bei DatenDetailliert wird der Eext eh ausgedruckt.
+			{ // bei DatenDetailliert wird der Text eh ausgedruckt.
 			ProtokollierenITelex_P(PSTR("Diagnosedruck: "));
 			ProtokollierenPuffer(AsciiDruckPuffer, strlen(AsciiDruckPuffer));
-			Protokollieren_P(PSTR("\r\n" ));
+			Protokollieren_P(PSTR("\r\n"));
 			}
 		DiagnosePuffer[0] = '\0';
 		DiagnosePufferLevel = 0;
@@ -4066,7 +4159,7 @@ void itelex_thread()
 	// Ascii-Text im Puffer z.B. durch Html-Eingabe?
 	// ==========================================================================
 
-	if (Modus == ModRuhe && AsciiDruckPuffer[0] != '\0')
+	if ((Modus == ModRuhe || Modus == ModEmailPOPVerbunden) && AsciiDruckPuffer[0] != '\0')
 		{
 		if (ProtokollLevel >= AblaufInfo)
 			{
@@ -4106,7 +4199,7 @@ void itelex_thread()
 				ProtokollierenITelex_P(PSTR("HTML-Chat-Ruhe --> Ausschaltung intern\r\n" ));
 				
 			InterneVerbindungBeenden(true);
-			} // Abschaltung nach 30 Sekunden / 180 Sekunden.
+			} // Abschaltung nach 30 Sekunden / 5 Minuten.
 
 		} // if Modus == ModHtmlChatVerbunden
 
@@ -4150,23 +4243,12 @@ void itelex_thread()
 		#endif //def LEDROT_SOCKETERROR
 		}
 		
-#ifdef ITELEX_EMAIL
-
-	// ==========================================================================
-	// Ab und zu mal prüfen, ob es neue Mails gibt.
-	// ==========================================================================
-	
-	if (SelbstAnrufPhase == SelbstAnrufRuhe || SelbstAnrufPhase == SelbstAnrufSperre)
-		POP3Einleiten();
-	
-#endif //def ITELEX_EMAIL
-	
 	// ======================================================================
 	// Dynamische IP-Aktualisierung / Selbstanruf starten
 	// ======================================================================
 	
 	if (DynIP_Phase != DynIP_Inaktiv && NetzRufnummer >= GlobRufnrMinWert)
-		{
+		{ // jetzt ist DynIP überhaupt sinnvoll...
 		if (DynIP_Phase == DynIP_Erneuern
 			&& (Modus == ModRuhe || Modus == ModDeaktiviert)
 			&& TeilnehmerServerSocket == NO_SOCKET_USED)
@@ -4200,9 +4282,10 @@ void itelex_thread()
 					// in 15 Minuten minus Zufall wieder. 
 				DynIP_Phase = DynIP_Fehler;
 				}
-			
+			else
+				DynIP_Phase = DynIP_LaeuftGerade;
+				
 			StartLangTimer(&DynIPAktualisierungTimer);
-			DynIP_Phase = DynIP_LaeuftGerade;
 			} // Zeit für Aktualsierung UND keine Verbindung laufend
 		
 		if ((DynIP_Phase == DynIP_Bestaetigt || DynIP_Phase == DynIP_Unbestaetigt)
@@ -4211,6 +4294,7 @@ void itelex_thread()
 			&& SelbstAnrufSocketHandle == NO_SOCKET_USED
 			&& iTelexSocketHandle == NO_SOCKET_USED
 			&& TeilnehmerServerSocket == NO_SOCKET_USED
+			&& DiagnosePuffer[0] == '\0' // sonst würde der laufende Selbst-Anruf gleich unterbrochen werden
 			&& SelbstAnrufPeriode > 0
 			&& KurzTimerVal(&SelbstAnrufTimer) > SelbstAnrufEndzeit)
 			{ // Selbst-Anruf starten
@@ -4286,7 +4370,10 @@ void itelex_thread()
 					SelbstAnrufFehlerZaehler = 0;
 					SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
 					if (DynIP_Phase == DynIP_Unbestaetigt)
+						{
+						ProtokollierenITelex_P(PSTR("Selbst-Anruf bestaetigt IP Adresse.\r\n"));
 						DynIP_Phase = DynIP_Bestaetigt;
+						}
 					} // Richtiges Echo angekommen
 				else
 					{ // Falsches Echo angekommen
@@ -4337,13 +4424,13 @@ void itelex_thread()
 			}
 			
 		else if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufFehlerZaehler >= 8 && DynIP_Phase == DynIP_Unbestaetigt)
-			{
+			{ // nach acht Fehlversuchen Selbst-Anruf nicht mehr durchführen.
 			SelbstAnrufPeriode = 0;
 			Diagnoseausgabe_P(ISTR(SelbstAnrufMehrfachVersagt, LokaleSprache), 1);
 			SelbstAnrufPhase = SelbstAnrufSperre;
 			}
 			
-		if (LangTimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit)
+		if (LangTimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit && DynIP_Phase != DynIP_LaeuftGerade)
 			DynIP_Phase = DynIP_Erneuern;
 
 		} // if (DynIP_Phase != DynIP_Inaktiv && NetzRufnummer >= GlobRufnrMinWert)
@@ -4521,9 +4608,9 @@ void itelex_thread()
 							ProtokollierenIPAdr(NetzEigeneIP);
 							Protokollieren_P(PSTR("\r\n"));
 							}
-						DynIP_Phase = DynIP_Unbestaetigt;
 						SelbstAnrufFehlerZaehler = 0;
 						}
+					DynIP_Phase = DynIP_Unbestaetigt;
 					StartLangTimer(&DynIPAktualisierungTimer);
 					DynIPAktualisierungEndzeit = 60 * LangTimerMinuteFaktor - Zufallswert(0x3F); 
 						// in einer Stunde wieder
@@ -4598,6 +4685,18 @@ void itelex_thread()
 		
 		} // if (TeilnehmerServerSocket != NO_SOCKET_USED)
 		
+#ifdef ITELEX_EMAIL
+
+	// ==========================================================================
+	// Ab und zu mal prüfen, ob es neue Mails gibt.
+	// ==========================================================================
+	
+	if ((SelbstAnrufPhase == SelbstAnrufRuhe || SelbstAnrufPhase == SelbstAnrufSperre)
+	    && Modus == ModRuhe)
+		POP3Einleiten();
+	
+#endif //def ITELEX_EMAIL
+	
 	// ==========================================================================
 	// Ab und zu mal den Protokollinhalt speichern
 	// ==========================================================================
@@ -6154,6 +6253,8 @@ void itelex_init()
 	SocketOutBufUsed = 0;
 	SocketInBufUsed = 0;
 
+	StartKurzTimer(&GrundstellungPruefTimer);
+	
 	iTelexBlindSocketHandle = NO_SOCKET_USED;
 	StartKurzTimer(&iTelexBlindSocketAbbauVerzoegerung);
 	

@@ -469,7 +469,7 @@ static int8_t EintragVergleichName(char *p1, char *p2)
 	Name1 = p1 + TBOffsName;
 	Name2 = p2 + TBOffsName;
 	
-	return strcmp(Name1, Name2);
+	return strcasecmp(Name1, Name2);
 	}
 
 

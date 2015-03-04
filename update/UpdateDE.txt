@@ -3,29 +3,27 @@ Aktialisieren der i-telex-Software.
 
 Benötigt wird ein Windows XP oder Windows 7 PC / Laptop mit serieller Schnittstelle oder USB-zu-Seriell-Adapter sowie ein Nullmodem-Kabel.
 
-Falls bereits das i-telex schon mal neu programmiert wurde, ist es nur erforderlich die datei "main.hex" im Update-Verzeichnis zu aktualisieren, dann kann mit Schritt 8 dieser Anleitung begonnen werden.
+Falls bereits das i-telex schon mal neu programmiert wurde, ist es nur erforderlich die datei "main.hex" im Update-Verzeichnis zu aktualisieren, dann kann mit Schritt 7 dieser Anleitung begonnen werden.
 
-1. Das Teilnehmerverzeichnis des i-Telex nicht flüchtig speichern. (Siehe Anleitung des i-Telex für Details)
+1. Alle Dateien des Verzeichnisses, wo diese Anleitung enthalten ist, herunterladen und auf einem Verzeichnis des Windows-PC speichern. Dieses Verzeichnis wird "Update-Verzeichnis" genannt.
 
-2. Alle Dateien des Verzeichnisses, wo diese Anleitung enthalten ist, herunterladen und auf einem Verzeichnis des Windows-PC speichern. Dieses Verzeichnis wird "Update-Verzeichnis" genannt.
+2. Überprüfen, ob die serielle Schnitstelle "COM1:" ist. Wenn ja, mit Schritt 7 weitermachen.
 
-3. Überprüfen, ob die serielle Schnitstelle "COM1:" ist. Wenn ja, mit Schritt 8 weitermachen.
+3. Wenn es nicht "COM1" bis "COM4" ist, muss dies ind er Systemsteuerung des Windows-PC korrigiert werden.
 
-4. Wenn es nicht "COM1" bis "COM4" ist, muss dies ind er Systemsteuerung des Windows-PC korrigiert werden.
+4. Wenn die Serielle Schnittstelle nicht "COM1" ist, ist im Update-Verzeichnis die Datei "upload.bat" zu suchen. Die Datei mit der rechten Maustaste anklicken und "bearbeiten" auswählen.
 
-5. Wenn die Serielle Schnittstelle nicht "COM1" ist, ist im Update-Verzeichnis die Datei "upload.bat" zu suchen. Die Datei mit der rechten Maustaste anklicken und "bearbeiten" auswählen.
+5. Im Texteditor das "/C1" ändern in beispielsweise "/C2" für die serielle Schnittstelle COM2:
 
-6. Im Texteditor das "/C1" ändern in beispielsweise "/C2" für die serielle Schnittstelle COM2:
+6. Im Texteditor Datei - Speichern wählen und den Texteditor schließen.
 
-7. Im Texteditor Datei - Speichern wählen und den Texteditor schließen.
+7. Das Nullmodem-Kabel an die serielle Schnittstelle bzw. den USB-Adapter anschließen und am anderen Ende an die i-Telex-Karte, die in Betrieb sein muss.
 
-8. Das Nullmodem-Kabel an die serielle Schnittstelle bzw. den USB-Adapter anschließen und am anderen Ende an die i-Telex-Karte, die in Betrieb sein muss.
+8. Die Datei "upload" or "upload.bat" aus dem Update-Verzeichnis starten (Doppelklick). Ein Fenster mit schwarzem Hintergrund sollte erscheinen mit dem Text "COM 1 at 38400 Baud: " und einem rotierenden Strich.
 
-9. Die Datei "upload" or "upload.bat" aus dem Update-Verzeichnis starten (Doppelklick). Ein Fenster mit schwarzem Hintergrund sollte erscheinen mit dem Text "COM 1 at 38400 Baud: " und einem rotierenden Strich.
+9. Die Taste an der i-Telex-Karte kurz drücken. Die blaue LED sollte aufleuchten.
 
-10. Die Taste an der i-Telex-Karte kurz drücken. Die blaue LED sollte aufleuchten.
-
-11. Die Taste an der i-Telex-Karte für etwa eine Sekunde drücken. Die blaue LED sollte kurz erlöschen und wieder aufleuchten. Der rotierende Strich verschwindet und folgender Text sollte zu lesen sein:
+10. Die Taste an der i-Telex-Karte für etwa eine Sekunde drücken. Die blaue LED sollte kurz erlöschen und wieder aufleuchten. Der rotierende Strich verschwindet und folgender Text sollte zu lesen sein:
 COM 1 at 38400 Baud: Connected
 Bootloader V2.1
 Target: xxxxx fboot.DEF
@@ -35,7 +33,7 @@ Program main.hex: 00000 - yyyyy
 Das "yyyyy" wird alle paar Sekunden aktualisiert.
 
 
-12. Bitte warten bis die blaue LED ausgeht. Das sollte etwa 2 bis 3 Minuten dauern. Daraufhin sollte folgender Text zu lesen sein:
+11. Bitte warten bis die blaue LED ausgeht. Das sollte etwa 2 bis 3 Minuten dauern. Daraufhin sollte folgender Text zu lesen sein:
 COM 1 at 38400 Baud: Connected
 Bootloader V2.1
 Target: xxxxx fboot.DEF
@@ -46,4 +44,16 @@ Verify main.hex: 00000 - yyyyy successful
 CRC: o.k.
 Elapsed time: 0.00 seconds
 
-13. Fertig!
+12. Fertig!
+
+
+Falls der Updatevorgang korrekt beginnt (bei Schritt 10 erscheint "Connected"), dann aber aus irgendeinem 
+Grund nicht erfolgreich beendet wird, MUSS der Updatevorgang wie folgt wiederholt werden, da das 
+nur teilweise hochgeladenen Programm auf dem i-Telex-Board nicht lauffähig ist.
+
+Es ist Schritt 8 zu wiederholen: Die Datei "upload" or "upload.bat" aus dem Update-Verzeichnis starten (Doppelklick). Ein Fenster mit schwarzem Hintergrund sollte erscheinen mit dem Text "COM 1 at 38400 Baud: " und einem rotierenden Strich.
+
+Statt des Tastendrucks auf dem i-Telex-Board (Schritte 9 und 10) muss aber ein "harter" Reset erfolgen. Entweder die Energieversorgung des ganzen i-Telex Systems aus- und wieder einschalten oder die i-Telex Karte "ziehen" und wieder einstecken.
+
+Die Meldungen wie unter 10. und 11. sollten dann wie beschrieben erscheinen.
+

@@ -99,6 +99,13 @@ static bool POPOkEmpfangen;
 	//!< Wird auf true gesetzt, wenn eine Zeile mit + am Anfang empfangen wurde.
 	//!< Nach Kommandoausgaben auf false.
 
+static uint8_t POPOeffnenFehlerZaehler;
+	//!< Wird inkrement, wenn das Öffnen des eMail-Abfrage Servers versagte. 
+	//!< Beim dritten Mal gibt es eine Fehlermeldung, aber beim 4. Mal nicht wieder (also auch eine "Wiederholungssperre")
+	//!< Wird wieder auf 0 gesetzt, wenn die Adresse geändert wird oder der POP-Server erfolgreich 
+	//!< Verbunden wurde.
+	
+	
 static bool InMailHeader;
 	//!< so lange true, so lange Zeilen des Mail-Headers an MailZeileVerarbeiten()
 	//!< übergeben werden.
@@ -252,15 +259,29 @@ void POP3Einleiten()
 		
 	// jetzt geht's los...
 	long ServerIP;
+
+	ServerIP = strtoip(EmailPOPServerAdresse);	// Annahme: eine IP-Adresse angegeben
 	
-	ServerIP = DNS_ResolveName(EmailPOPServerAdresse); 
+	if (ServerIP == 0) // ist es doch eine Hostname?
+		ServerIP = DNS_ResolveName(EmailPOPServerAdresse); 
+
 	if (ServerIP == -1)
 		{
 		Protokollieren_P(PSTR("iTelex POP: ! IP zu Hostname "));
 		Protokollieren(EmailPOPServerAdresse);
 		Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 
-		//! \todo Prio 2 Diagnose, aber mehrfaches Drucken verhindern.
+		if (POPOeffnenFehlerZaehler < 255)
+			POPOeffnenFehlerZaehler++;
+			
+		if (POPOeffnenFehlerZaehler == 3)
+			{
+			if (Diagnoseausgabe_P(ISTR(POPFehlerAnfang, LokaleSprache), 1))
+				{
+				strncat(DiagnosePuffer, EmailPOPServerAdresse, strlen(DiagnosePuffer) - 30);
+				strcat_P(DiagnosePuffer, ISTR(MailFehlerIPNichtErmittelbar, LokaleSprache));
+				}
+			}
 		
 		POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
 		
@@ -277,7 +298,19 @@ void POP3Einleiten()
 		iTelexSocketHandle = NO_SOCKET_USED;
 		iTelexSocketMode = SocketIdle;
 
-		//! \todo Diagnose 
+		if (POPOeffnenFehlerZaehler < 255)
+			POPOeffnenFehlerZaehler++;
+			
+		if (POPOeffnenFehlerZaehler == 3)
+			{
+			if (Diagnoseausgabe_P(ISTR(POPFehlerAnfang, LokaleSprache), 1))
+				{
+				strncat(DiagnosePuffer, EmailPOPServerAdresse, strlen(DiagnosePuffer) - 30);
+				strcat_P(DiagnosePuffer, ISTR(MailFehlerNotConnected, LokaleSprache));
+				}
+			}
+		
+		POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
 		
 		return;
 		}
@@ -285,6 +318,8 @@ void POP3Einleiten()
 	if (ProtokollLevel >= AblaufInfo)
 		ProtokollierenInt_P(PSTR("iTelex POP: Client-Socket #%d zum Server erfolgreich geoeffnet\r\n"), iTelexSocketHandle);
 		
+	POPOeffnenFehlerZaehler = 0;
+	
 	SocketBufInit();
 	
 	iTelexSocketMode = SocketOriginate;
@@ -296,7 +331,8 @@ void POP3Einleiten()
 	
 	StartKurzTimer(&VervollstaendigungTimer);
 	
-	return;
+	ModusWechsel(ModEmailPOPVerbunden);
+	
 	} // POP3Einleiten
 	
 
@@ -368,9 +404,9 @@ void POP3DatenVerarbeiten()
 			Protokollieren(SocketInBuf);
 			}
 
-		InterneVerbindungBeenden(true);
-		iTelexSocketAbbauGeplant = true;
-		return;
+		// InterneVerbindungBeenden(true); // war mal hier drin, wird aber vermutlich nicht gebraucht.
+		if (ProtokollPhase < Abmelden)
+			ProtokollPhase = Abmelden; // leitet Abbruch der Verbindung ein
 		}
 
 	SocketOutBuf[0] = '\0';
@@ -414,8 +450,7 @@ void POP3DatenVerarbeiten()
 				if (SocketInBuf[i] == ' ')
 					break;
 					
-			if ((i < SocketInBufUsed && atoi(SocketInBuf + i) == 0)
-				|| Modus != ModRuhe)
+			if (i < SocketInBufUsed && atoi(SocketInBuf + i) == 0)
 				{ // nichts im Puffer ODER plötzlich doch belegt...
 				POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
 				StartLangTimer(&POPWartezeitTimer);
@@ -571,7 +606,11 @@ bool SMTPOeffnen(char *EmfaengerName)
 	strncpy(EmailEmpfaenger, EmfaengerName, sizeof(EmailEmpfaenger)-1);
 	EmailEmpfaenger[sizeof(EmailEmpfaenger)-1] = '\0';
 	
-	ServerIP = DNS_ResolveName(EmailSMTPServerAdresse); 
+	ServerIP = strtoip(EmailSMTPServerAdresse);	// Annahme: eine IP-Adresse angegeben
+	
+	if (ServerIP == 0) // ist es doch eine Hostname?
+		ServerIP = DNS_ResolveName(EmailSMTPServerAdresse); 
+
 	if (ServerIP == -1)
 		{
 		Protokollieren_P(PSTR("iTelex SMTP: ! IP zu Hostname "));
@@ -580,7 +619,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 		if (Diagnoseausgabe_P(ISTR(SMTPFehlerAnfang, LokaleSprache), 1))
 			{
 			strncat(DiagnosePuffer, EmailSMTPServerAdresse, strlen(DiagnosePuffer) - 30);
-			strcat_P(DiagnosePuffer, ISTR(SMTPFehlerIPNichtErmittelbar, LokaleSprache));
+			strcat_P(DiagnosePuffer, ISTR(MailFehlerIPNichtErmittelbar, LokaleSprache));
 			}
 		return false;
 		}
@@ -597,7 +636,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 		if (Diagnoseausgabe_P(ISTR(SMTPFehlerAnfang, LokaleSprache), 1))
 			{
 			strncat(DiagnosePuffer, EmailSMTPServerAdresse, strlen(DiagnosePuffer) - 30);
-			strcat_P(DiagnosePuffer, ISTR(SMTPFehlerNotConnected, LokaleSprache));
+			strcat_P(DiagnosePuffer, ISTR(MailFehlerNotConnected, LokaleSprache));
 			}
 		return false;
 		}
@@ -954,6 +993,9 @@ void itelex_cgi_email_config(void *pStruct)
 													EmailAusgabeFilternKennung_P, EmailAusgabeFilternKennung, Sprache);
 													
 		SpeichereSpracheAlsLokal(Sprache);
+
+		POPOeffnenFehlerZaehler = 0;
+
 		
 		} // else argc > 0
 		
@@ -964,6 +1006,8 @@ void itelex_cgi_email_config(void *pStruct)
 
 void itelex_email_init()
 	{
+	POPOeffnenFehlerZaehler = 0;
+	
 	// EEPROM auslesen
 	char Buf[TlnAdresseMax];
 

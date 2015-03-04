@@ -35,7 +35,7 @@ enum {
 // ==================================
 
 // für iTelex.c:
-_STRTABENTRY(ZweiterAnruf, "Zweiter kommender Anruf auf belegtem i-Telex-Socket", "Second incoming call on busy i-telex socket")
+_STRTABENTRY(AnrufAbgewiesenWegenBesetzt, "kommender Anruf abgewiesen wegen besetzt", "incoming call cancelled because busy")
 _STRTABENTRY(MehrfacheSendeFehler, "Mehrfache Fehler beim Senden ins Netz", "Multiple errors while sending on network")
 _STRTABENTRY(ZeitueberschreitungWiederaufnahme, "Zeitueberschreitung bei Wiederaufnahme der Verbindung", "Timeout while waiting for a reconnection")
 _STRTABENTRY(KeinTeilnehmerServerErreichbar, 
@@ -237,8 +237,9 @@ _STRTABENTRY(EmailKonfigFehler,
 			 "<br><b>Konfigurationsdaten unvollst&auml;ndig, Abfragetakt auf Null gesetzt, eMail Abfrage ist ausgeschaltet.</b>", 
 			 "<br><b>Configuration not complete, polling period set to zero, incoming eMail will not be printed.</b>")
 _STRTABENTRY(SMTPFehlerAnfang, "eMail-Ausgang-Server ", "Server for outgoing email")
-_STRTABENTRY(SMTPFehlerIPNichtErmittelbar, " IP nicht ermittelbar", " no IP address was found")
-_STRTABENTRY(SMTPFehlerNotConnected, " konnte nicht verbunden werden", " connection failed")
+_STRTABENTRY(POPFehlerAnfang, "Server fuer eMail-Empfang ", "server for incoming email ")
+_STRTABENTRY(MailFehlerIPNichtErmittelbar, " IP nicht ermittelbar", " no IP address was found")
+_STRTABENTRY(MailFehlerNotConnected, " konnte nicht verbunden werden", " connection failed")
 _STRTABENTRY(SMTPFehlerDirekt, "Meldung vom eMail-Ausgang-Server: ", "Message from the Server for outgoing email: ")
 
 // für ConfigNtp.c:

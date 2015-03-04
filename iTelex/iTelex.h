@@ -245,6 +245,10 @@ typedef enum
 	ModNamensucheAusgabe = 43,
 		//!< Abfrage des Servers ist beendet, gebe Einträge aus dem Verzeichnis aus.
 		
+	ModEmailPOPVerbunden = 51,
+		//!< Verbindung zum POP Dienst des Email-Servers ist hergestellt.
+		//!< Keine Aussage über den Status der Abfrage selbst.
+		
 	} TModus;
 	
 
