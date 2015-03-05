@@ -560,6 +560,9 @@ void cgi_Isp(void *pStruct)
 		StartKurzTimer(&ProgSim);
 		while (KurzTimerVal(&ProgSim) < 5 * KurzTimerFreq)
 			; // nix anderes tun
+			
+		// Test der Kennungs-Auslesung:
+		zu Testzwecken ein und ausschalten DebugTestReadFlashIdentity();
 
 		printf_P(PSTR("Schritt 2<p>"));
 		STDOUT_Flush();
