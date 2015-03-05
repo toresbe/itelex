@@ -336,6 +336,10 @@ static bool ReadFlashIdentity(char *Ident)
 	}
 	
 	
+//! Testfunktion in der Debugging-Phase
+//-------------------------------------
+//! Wird im finalen Code nicht mehr gebraucht.
+	
 static void DebugTestReadFunctions()
 	{
 	if (IspEnable())
@@ -356,6 +360,10 @@ static void DebugTestReadFunctions()
 		}
 	}
 	
+	
+//! Testfunktion in der Debugging-Phase
+//-------------------------------------
+//! Wird im finalen Code nicht mehr gebraucht.
 	
 static void DebugTestReadFlashIdentity()
 	{
@@ -492,18 +500,103 @@ TProgDaten ProgDatenTab[] =	{
 	{ MessgeraetBez, MessgeraetKenn, 0xF7, 0xD5, 0xF9, Messgeraet } ,
 	{ SeriellUndSpeicherBez, SeriellUndSpeicherKenn, 0xF7, 0xD5, 0xF9, SeriellUndSpeicher } } ;
 
+
+#define ProgDatenTabAnzahl (sizeof(ProgDatenTab) / sizeof(TProgDaten))
+
+
+// Hier folgenden die Hauptfunktionen
+// ===========================================
+
+char IspDiagnoseText[200];
+
+
+
 	
-// Testfunktionen
+// Benutzerschnittstelle für das Brennen
 // ===========================================
 	
-void cgi_IspTest(void *pStruct)
+void cgi_Isp(void *pStruct)
 	{
-	cgi_PrintHttpheaderStart();
-	
-	// hier nur Tests...
-	//DebugTestGetFilePerHttp();
-	
-	cgi_PrintHttpheaderEnd();
+	static TSprache Sprache;
+	uint8_t i;
+
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+
+	if (!PruefeSpracheUndKonfigFreigabe(pStruct))
+		return;
+
+	if (http_request->argc == 0)
+		{ // Standard-Aufruf
+		cgi_PrintHttpheaderStart();
+		if (IspDiagnoseText[0] != '\0')
+			{
+			printf_P(PSTR("Result of last operation: %s <p>"), IspDiagnoseText);
+			}
+		
+		printf_P(PSTR("<h1>Before start of any programming action connect target board by spacial cable</h1><p>"));
+		printf_P(PSTR("<a href=\"isp.cgi?autoprog\">Automatic</a> identification and update<p>"));
+		for (i = 0 ; i < ProgDatenTabAnzahl ; i++)
+			{
+			printf_P(PSTR("Initial programming of board <a href=\"isp.cgi?progid=%d\">"), i);
+			printf_P(ProgDatenTab[i].Name);
+			printf_P(PSTR("</a><br>"));
+			}
+		cgi_PrintHttpheaderEnd();
+		} // if (http_request->argc == 0)
+		
+	else if (PharseCheckName_P(http_request, PSTR("autoprog")))
+		{ // identifizieren des angeschlossenen Boards und automatische Auswahl des hochzuladenden Programms
+		cgi_PrintHttpheaderStart();
+
+		//! \todo identifizieren und auswählen
+		
+		// Test:
+		printf_P(PSTR("Schritt 1<p>"));
+		STDOUT_Flush();
+
+		// Hack Simulation des Progammiervorgangs:
+		static TKurzTimer ProgSim;
+		StartKurzTimer(&ProgSim);
+		while (KurzTimerVal(&ProgSim) < 5 * KurzTimerFreq)
+			; // nix anderes tun
+
+		printf_P(PSTR("Schritt 2<p>"));
+		STDOUT_Flush();
+		cgi_PrintHttpheaderEnd();
+		
+		} // if (PharseCheckName_P(http_request, PSTR("autoprog")))
+		
+	else if (PharseCheckName_P(http_request, PSTR("progid")))
+		{ // konkreten Typ ausgewählt
+		i = atoi(http_request->argvalue[PharseGetValue_P(http_request, PSTR("progid"))]);
+		cgi_PrintHttpheaderStart();
+		if (i >= ProgDatenTabAnzahl)
+			{
+			printf_P(PSTR("Error: invalid progid. Click <a href=\"isp.cgi\">here</a> to continue."));
+			cgi_PrintHttpheaderEnd();
+			}
+		else
+			{
+			printf_P(PSTR("programming board "));
+			printf_P(ProgDatenTab[i].Name);
+			printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after red LED went off again."));
+			cgi_PrintHttpheaderEnd();
+			STDOUT_Flush();
+			// CloseTCPSocket( http_request->HTTP_SOCKET ); //! \todo Prüfen, ob dies erforderlich oder sinnvoll ist und nicht stört
+			
+			LED_on(0); // rot
+			
+			// Hack Simulation des Progammiervorgangs:
+			static TKurzTimer ProgSim;
+			StartKurzTimer(&ProgSim);
+			while (KurzTimerVal(&ProgSim) < 15 * KurzTimerFreq)
+				; // nix anderes tun
+			
+			LED_off(0); // rot
+			}
+		} // if (PharseCheckName_P(http_request, PSTR("progid")))
+			
 	}
 
 
@@ -512,7 +605,8 @@ void InitIspMaster()
 	init_IspResetOut();
 	SPI_init(IspSpiPort);
 	
-	cgi_RegisterCGI( cgi_IspTest, PSTR("isptest.cgi"));
+	IspDiagnoseText[0] = '\0';
+	cgi_RegisterCGI( cgi_Isp, PSTR("isp.cgi"));
 	}
 	
 	
