@@ -562,7 +562,7 @@ void cgi_Isp(void *pStruct)
 			; // nix anderes tun
 			
 		// Test der Kennungs-Auslesung:
-		zu Testzwecken ein und ausschalten DebugTestReadFlashIdentity();
+		//zu Testzwecken ein und ausschalten DebugTestReadFlashIdentity();
 
 		printf_P(PSTR("Schritt 2<p>"));
 		STDOUT_Flush();
@@ -609,7 +609,7 @@ void InitIspMaster()
 	SPI_init(IspSpiPort);
 	
 	IspDiagnoseText[0] = '\0';
-	cgi_RegisterCGI( cgi_Isp, PSTR("isp.cgi"));
+	cgi_RegisterCGI( cgi_Isp, PSTR("isptest.cgi"));
 	}
 	
 	

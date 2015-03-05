@@ -6,4 +6,4 @@ C:\WinAVR-20100110\avr\bin\objcopy.exe -I ihex -O binary ..\..\..\TxP2\SeriellUn
 @echo ===============================================
 @echo und nun alle .bin auf das Programm HEXY werfen.
 @echo ===============================================
-D:\Sonnenrein\Programme\hexy.exe
+C:\Programme\BinToC\hexy.exe
