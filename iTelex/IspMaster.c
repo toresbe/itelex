@@ -463,13 +463,15 @@ static int DebugTestGetFilePerHttp()
 #define unsigned PROGMEM // nur für die Binärdaten
 
 #include "ProgBinData\AnalogModem.h"
-#include "ProgBinData\ED1000.h"
+//#include "ProgBinData\ED1000.h"
 #include "ProgBinData\FernschrTW39.h"
-#include "ProgBinData\Messgeraet.h"
-#include "ProgBinData\SeriellUndSpeicher.h"
+//#include "ProgBinData\Messgeraet.h"
+//#include "ProgBinData\SeriellUndSpeicher.h"
 
 #undef unsigned
 #undef byte
+
+//HACK:
 
 
 typedef struct 
@@ -495,10 +497,11 @@ const char SeriellUndSpeicherKenn[] PROGMEM = "TxP2_";
 
 TProgDaten ProgDatenTab[] =	{
 	{ AnalogModemBez, AnalogModemKenn, 0xE0, 0xD5, 0xF9, AnalogModem } ,
-	{ ED1000Bez, ED1000Kenn, 0xF7, 0xD5, 0xF9, ED1000 } ,
+//	{ ED1000Bez, ED1000Kenn, 0xF7, 0xD5, 0xF9, ED1000 } ,
 	{ FernschrTW39Bez, FernschrTW39Kenn, 0xBF, 0xD1, 0xFF, FernschrTW39 } ,
-	{ MessgeraetBez, MessgeraetKenn, 0xF7, 0xD5, 0xF9, Messgeraet } ,
-	{ SeriellUndSpeicherBez, SeriellUndSpeicherKenn, 0xF7, 0xD5, 0xF9, SeriellUndSpeicher } } ;
+//	{ MessgeraetBez, MessgeraetKenn, 0xF7, 0xD5, 0xF9, Messgeraet } ,
+//	{ SeriellUndSpeicherBez, SeriellUndSpeicherKenn, 0xF7, 0xD5, 0xF9, SeriellUndSpeicher } ,
+	} ;
 
 
 #define ProgDatenTabAnzahl (sizeof(ProgDatenTab) / sizeof(TProgDaten))
@@ -534,7 +537,7 @@ void cgi_Isp(void *pStruct)
 			printf_P(PSTR("Result of last operation: %s <p>"), IspDiagnoseText);
 			}
 		
-		printf_P(PSTR("<h1>Before start of any programming action connect target board by spacial cable</h1><p>"));
+		printf_P(PSTR("<h1>Before start of any programming action connect target board by special cable</h1><p>"));
 		printf_P(PSTR("<a href=\"isp.cgi?autoprog\">Automatic</a> identification and update<p>"));
 		for (i = 0 ; i < ProgDatenTabAnzahl ; i++)
 			{
@@ -549,23 +552,11 @@ void cgi_Isp(void *pStruct)
 		{ // identifizieren des angeschlossenen Boards und automatische Auswahl des hochzuladenden Programms
 		cgi_PrintHttpheaderStart();
 
-		//! \todo identifizieren und auswählen
-		
-		// Test:
-		printf_P(PSTR("Schritt 1<p>"));
-		STDOUT_Flush();
-
-		// Hack Simulation des Progammiervorgangs:
-		static TKurzTimer ProgSim;
-		StartKurzTimer(&ProgSim);
-		while (KurzTimerVal(&ProgSim) < 5 * KurzTimerFreq)
-			; // nix anderes tun
-			
 		// Test der Kennungs-Auslesung:
-		//zu Testzwecken ein und ausschalten DebugTestReadFlashIdentity();
+		DebugTestReadFlashIdentity();
+		
+		//! \todo identifizieren und auswählen
 
-		printf_P(PSTR("Schritt 2<p>"));
-		STDOUT_Flush();
 		cgi_PrintHttpheaderEnd();
 		
 		} // if (PharseCheckName_P(http_request, PSTR("autoprog")))
@@ -583,12 +574,12 @@ void cgi_Isp(void *pStruct)
 			{
 			printf_P(PSTR("programming board "));
 			printf_P(ProgDatenTab[i].Name);
-			printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after red LED went off again."));
+			printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after red and yellow LED went off again."));
 			cgi_PrintHttpheaderEnd();
 			STDOUT_Flush();
-			// CloseTCPSocket( http_request->HTTP_SOCKET ); //! \todo Prüfen, ob dies erforderlich oder sinnvoll ist und nicht stört
+			CloseTCPSocket(http_request->HTTP_SOCKET); // ist erfoderlich, damit erstmal die Meldung erscheint.
 			
-			LED_on(0); // rot
+			LED_on(1); // gelb
 			
 			// Hack Simulation des Progammiervorgangs:
 			static TKurzTimer ProgSim;
@@ -596,7 +587,7 @@ void cgi_Isp(void *pStruct)
 			while (KurzTimerVal(&ProgSim) < 15 * KurzTimerFreq)
 				; // nix anderes tun
 			
-			LED_off(0); // rot
+			LED_off(1); // gelb
 			}
 		} // if (PharseCheckName_P(http_request, PSTR("progid")))
 			
@@ -609,7 +600,7 @@ void InitIspMaster()
 	SPI_init(IspSpiPort);
 	
 	IspDiagnoseText[0] = '\0';
-	cgi_RegisterCGI( cgi_Isp, PSTR("isptest.cgi"));
+	cgi_RegisterCGI( cgi_Isp, PSTR("isp.cgi"));
 	}
 	
 	

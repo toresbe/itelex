@@ -2016,7 +2016,11 @@ static void SocketBearbeiten()
 
 	// Bei Ascii oder Mail den Timeout auf 'deaktivieren'
 	if (ModusTwiVerbunden() 
+#ifdef ITELEX_EMAIL
 		&& (iTelexSocketProtokoll == Ascii || iTelexSocketProtokoll == POP3 || iTelexSocketProtokoll == SMTP)
+#else
+		&& (iTelexSocketProtokoll == Ascii)
+#endif	
 		&& TCP_sockettable[iTelexSocketHandle].ConnectionState == SOCKET_READY)
 		TCP_sockettable[iTelexSocketHandle].Timeoutcounter = 30; 
 		
@@ -3196,7 +3200,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				}
 #else
 			ProtokollierenITelex_P(PSTR("! eMail nicht unterstuetzt\r\n" ));
-			Diagnoseausgabe_P(ISTR(MailNichtInDieserVersion), 3);
+			Diagnoseausgabe_P(ISTR(MailNichtInDieserVersion, LokaleSprache), 3);
 			return 2;
 #endif //ndef ITELEX_EMAIL		
 			
