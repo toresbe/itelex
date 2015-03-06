@@ -199,13 +199,13 @@ static TKurzTimer WatchdogTestTimer;
 static uint16_t WatchdogTestTimerEnde;
 
 
-#ifdef ITELEX_ANSCHLUSS
-
 volatile static uint16_t TwiLebenszeichenZaehler; 
 	//!< Zählt rückwärts die Takte bis zum nächsten Lebenszeichen auf dem TWI-Bus.
 	//!< wird während der Verbindung missbraucht zum Zählen der Takte bis zur Pegelwiederholung.
 	//!< Kein Timer, da nur lokal in itelex_timerEvent() verwendet und unterschiedliche 
 	//!< Ablaufzeiten realisiert werden müssen.
+
+#ifdef ITELEX_ANSCHLUSS
 	
 static TKurzTimer SchreibPauseTimer;
 	//!< Misst die Zeit zwischen zwei vom Endgerät empfangenen Zeichen.
@@ -4976,8 +4976,8 @@ void itelex_cgi_debug( void * pStruct )
 		Timer0Callback_Max = 0;
 #ifdef ITELEX_ANSCHLUSS		
 		FalscherCode = 0;
-#endif //def ITELEX_ANSCHLUSS		
 		ZeitUeberwachungInit(&SelbstAnrufZeitUeberwachung, 1 * KurzTimerFreq);
+#endif //def ITELEX_ANSCHLUSS		
 		TwiIsrCount = 0;
 		}
 	
@@ -5431,13 +5431,18 @@ void itelex_cgi_config_intern(void *pStruct)
 
 		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 2, ProtokollLevel + (SocketProtokollEin ? 10 : 0));
 		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
+
+		#ifdef ITELEX_ANSCHLUSS
 		CgiFormInputFieldULong_P(ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
+		#endif //def ITELEX_ANSCHLUSS
 		
 		CgiFormInputFieldText_P(ISTR(KonfigPasswort, Sprache), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
 		
 		CgiFormCheckbox_P(ISTR(TlnVerzeichnisOffen, Sprache), TlnBuchOffen_P, TlnBuchOffen);
 
+		#ifdef ITELEX_ANSCHLUSS
 		CgiFormCheckbox_P(ISTR(LangeDienstmeldungen, Sprache), LangeDienstmeldungen_P, LangeDienstmeldungen);
+		#endif //def ITELEX_ANSCHLUSS
 
 		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
 		}
@@ -5578,7 +5583,9 @@ void itelex_cgi_config_intern(void *pStruct)
 
 		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, ProtokollLevelTlnServ, Sprache);
 
+		#ifdef ITELEX_ANSCHLUSS
 		MeldungsdruckLevel = CgiCheckULong_P(http_request, ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, MeldungsdruckLevel, Sprache);
+		#endif //def ITELEX_ANSCHLUSS
 
 		// KonfigPasswort
 		// --------------
@@ -5592,7 +5599,9 @@ void itelex_cgi_config_intern(void *pStruct)
 			
 		TlnBuchOffen = CgiCheckBool_P(http_request, ISTR(TlnVerzeichnisOffen, Sprache), TlnBuchOffen_P, TlnBuchOffen, Sprache);
 		
+		#ifdef ITELEX_ANSCHLUSS
 		LangeDienstmeldungen = CgiCheckBool_P(http_request, ISTR(LangeDienstmeldungen, Sprache), LangeDienstmeldungen_P, LangeDienstmeldungen, Sprache);
+		#endif //def ITELEX_ANSCHLUSS
 
 		SpeichereSpracheAlsLokal(Sprache);
 		
@@ -5717,13 +5726,16 @@ void itelex_cgi_config_extern(void *pStruct)
 			
 		SelbstAnrufPeriode = CgiCheckULong_P(http_request, ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, SelbstAnrufPeriode, Sprache);
 		NetzPort = CgiCheckULong_P(http_request, ISTR(OeffentlichePortNr, Sprache), NetzPort_P, NetzPort, Sprache);
+		
 		#endif //def ITELEX_ANSCHLUSS
 		
+		#if defined(ITELEX_ANSCHLUSS) || defined(ITELEX_TLNSERVER)
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 			{
 			CgiCheckText_P(http_request, ISTR(RufnrServerAdr, Sprache), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i], Sprache);
 			TeilnehmerServerIP[i] = 0; // damit diese neu ermittelt wird.
 			}
+		#endif //defined(ITELEX_ANSCHLUSS) || defined(ITELEX_TLNSERVER)
 
 		#ifdef ITELEX_TLNSERVER
 		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl, Sprache);
@@ -5731,9 +5743,11 @@ void itelex_cgi_config_extern(void *pStruct)
 		
 		SpeichereSpracheAlsLokal(Sprache);
 
+		#ifdef ITELEX_ANSCHLUSS
 		if (SelbstAnrufPhase == SelbstAnrufSperre)
 			SelbstAnrufPhase = SelbstAnrufRuhe;
 		SelbstAnrufFehlerZaehler = 0;
+		#endif //def ITELEX_ANSCHLUSS
 			
 		} // else argc > 0
 		
