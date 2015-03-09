@@ -213,6 +213,7 @@ static bool ChipErase()
 	SPI_ReadWrite(IspSpiPort, 0x80);
 	SPI_ReadWrite(IspSpiPort, 0x00);
 	SPI_ReadWrite(IspSpiPort, 0x00);
+	_delay_ms(20);
 	return true;
 	}
 	
@@ -392,7 +393,7 @@ static void DebugTestReadFlashIdentity()
 
 //! Liest den HTTP Header komplett ein
 //------------------------------------
-//! \retval Code der Statusmeldung, meist 200 = OK, oder -1 bei Kommunikationsfehler
+//! \retval Code der Statusmeldung, meist 200 = OK, oder -1 bei Timeout oder -2 bei Kommunikationsfehler
 //!
 
 int16_t HttpReadHeader(int SocketID)
@@ -402,28 +403,37 @@ int16_t HttpReadHeader(int SocketID)
 	bool Flag;
 	uint8_t Pos;
 	uint16_t Res;
+	TKurzTimer AbbruchTimer;
 	
 	Res = 0;
+	
 	while (true)
 		{
 		// erstmal eine Zeile in den Puffer lesen
 		i = 0;
-		while (GetBytesInSocketData(SocketID) > 0)
+		StartKurzTimer(&AbbruchTimer);
+		while (true)
 			{
-			if (GetSocketData(SocketID, 1, InBuf + i) != 1)
+			if (GetBytesInSocketData(SocketID) > 0)
+				{
+				StartKurzTimer(&AbbruchTimer);
+				if (GetSocketData(SocketID, 1, LineBuf + i) != 1)
+					return -2;
+				else if (LineBuf[i] == '\n') 
+					break;
+				else if (LineBuf[i] != '\r' && i < sizeof(LineBuf) - 1)
+					i++;
+				}
+			else if (KurzTimerVal(&AbbruchTimer) > 10 * KurzTimerFreq)
 				return -1;
-			if (InBuf[i] == '\n') 
-				break;
-			else if (InBuf[i] != '\r' && i < sizeof(InBuf) - 1)
-				i++;
 			}
-		InBuf[i] = '\0';
+		LineBuf[i] = '\0';
 		
 		// Zeile gelesen und jetzt auswerten. Zuerst das zweite Wort finden.
 		Flag = false;
-		for (Pos = 0 ; InBuf[Pos] != '\0' ; Pos++)
+		for (Pos = 0 ; LineBuf[Pos] != '\0' ; Pos++)
 			{
-			if (InBuf[Pos] == ' ')
+			if (LineBuf[Pos] == ' ')
 				Flag = true;
 			else if (Flag) 
 				break;
@@ -434,8 +444,8 @@ int16_t HttpReadHeader(int SocketID)
 			break; // das war eine Leerzeile, die beendet den Header
 		
 		// abhängig vom Zeilenanfang eine Auswertung durchführen
-		if (strncmp_P(InBuf, PSTR("HTTP/"), 5) == 0)
-			Res = atoi(InBuf + Pos); // der Ergebniscode
+		if (strncmp_P(LineBuf, PSTR("HTTP/"), 5) == 0)
+			Res = atoi(LineBuf + Pos); // der Ergebniscode
 			
 		// else... jetzt könnte man noch andere Rückmeldungen auswerten
 		} // while (true) ... Schleife über alle Zeilen des Header
@@ -448,15 +458,17 @@ int16_t HttpReadHeader(int SocketID)
 static int DebugTestGetFilePerHttp()
 	{
 	struct STDOUT oldstream;
-	char FileName[] = "lochstreifen-hg.png";
+	//char FileName[] = "itelex-tlnverz.cgi";
+	char FileName[] = "prot_2015-02-26_16-04.txt";
 	int SocketID;
 	long FileIP;
 	char InBuf[100];
 	TKurzTimer AbbruchTimer;
+	int16_t HttpHeadCode;
 	
 	// FileIP = DNS_ResolveName_P(PSTR("sonnibs.no-ip.org"));
 	
-	FileIP = IPDOT(192l,168l,178l,38l); // die andere Karte
+	FileIP = IPDOT(192l,168l,178l,39l); // die andere Karte
 	
 	if (FileIP == -1)
 		{
@@ -482,52 +494,50 @@ static int DebugTestGetFilePerHttp()
 	STDOUT_restore(&oldstream);
 
 	StartKurzTimer(&AbbruchTimer);
+
+	HttpHeadCode = HttpReadHeader(SocketID);
+	
+	ProtokollierenInt_P(PSTR("Header Code: %d\r\n"), HttpHeadCode);
 	
 	while (true)
 		{
-		if (CheckSocketState(SocketID) == SOCKET_NOT_USE)
-			{
-			Protokollieren_P(PSTR("FileGet: Beendigung durch Gegenstelle.\r\n"));
-			break;
-			}
-			
+		int InCount = GetBytesInSocketData(SocketID);
+
 		if (KurzTimerVal(&AbbruchTimer) > 5 * KurzTimerFreq)
 			{
 			Protokollieren_P(PSTR("FileGet: Timeout beim Empfang.\r\n"));
 			break;
 			}
 		
-		int InCount = GetBytesInSocketData(SocketID);
-		
-		if (InCount >= sizeof(InBuf))
+		else if (InCount > 0)
 			{
-			InCount = sizeof(InBuf) - 1;
-			}
-			
-		if (InCount > 0) 
-			{
-			int Res = GetSocketData(SocketID, InCount, InBuf);
+			int Res = GetSocketData(SocketID, (InCount > sizeof(InBuf)) ? sizeof(InBuf) : InCount, InBuf);
 			
 			ProtokollierenInt_P(PSTR("FileGet Empfang: (%d/" ), InCount);
 			ProtokollierenInt_P(PSTR("%d)"), Res);
 			if (Res > 0)
 				ProtokollierenPuffer(InBuf, Res);
 			Protokollieren_P(PSTR("\r\n"));
+			ProtokollierenInt_P(PSTR("CheckSocketState() = %d\r\n" ), CheckSocketState(SocketID));
 
 			// Todo hier eine künstliche Bremse...
-			
+				
 			StartKurzTimer(&AbbruchTimer);
 			}		
 				
-		} // while KurzTimerVal(&AbbruchTimer) < 5 * KurzTimerFreq
+		else if (CheckSocketState(SocketID) == SOCKET_NOT_USE && KurzTimerVal(&AbbruchTimer) > 2 * KurzTimerFreq)
+			{
+			Protokollieren_P(PSTR("FileGet: Beendigung durch Gegenstelle.\r\n"));
+			break;
+			}
+			
+		} // while (true)
 		
 	CloseTCPSocket(SocketID);
 
 	return 0;
 	}
 	
-#endif // 0
-
 
 // Hier kommen die Binärdaten...
 // =============================
@@ -535,7 +545,7 @@ static int DebugTestGetFilePerHttp()
 #define byte uint8_t // nur für die Binärdaten
 #define unsigned PROGMEM // nur für die Binärdaten
 
-#include "ProgBinData\AnalogModem.h"
+//#include "ProgBinData\AnalogModem.h"
 //#include "ProgBinData\ED1000.h"
 #include "ProgBinData\FernschrTW39.h"
 //#include "ProgBinData\Messgeraet.h"
@@ -570,7 +580,7 @@ const char SeriellUndSpeicherKenn[] PROGMEM = "TxP2_";
 
 
 TProgDaten ProgDatenTab[] =	{
-	{ AnalogModemBez, AnalogModemKenn, 0xE0, 0xD5, 0xF9, AnalogModem, sizeof(AnalogModem) } ,
+//	{ AnalogModemBez, AnalogModemKenn, 0xE0, 0xD5, 0xF9, AnalogModem, sizeof(AnalogModem) } ,
 //	{ ED1000Bez, ED1000Kenn, 0xF7, 0xD5, 0xF9, ED1000, sizeof(ED1000) } ,
 	{ FernschrTW39Bez, FernschrTW39Kenn, 0xBF, 0xD1, 0xFF, FernschrTW39, sizeof(FernschrTW39) } ,
 //	{ MessgeraetBez, MessgeraetKenn, 0xF7, 0xD5, 0xF9, Messgeraet , sizeof(Messgeraet) } ,
@@ -629,7 +639,7 @@ void ProgrammiereFlashAusProgSpeicher(const prog_uint8_t *Data, uint16_t Size)
 			if (readback != Buf[pos])
 				{
 				IspClose();
-				sprintf_P(IspDiagnoseText, PSTR("Verify failed: %ld is %d should be %d"), start + pos, readback, Buf[pos]);
+				sprintf_P(IspDiagnoseText, PSTR("Verify failed: %04x is %02x should be %02x"), start + pos, readback, Buf[pos]);
 				return;
 				}
 			}
@@ -657,19 +667,21 @@ void cgi_Isp(void *pStruct)
 	if (http_request->argc == 0)
 		{ // Standard-Aufruf
 		cgi_PrintHttpheaderStart();
-		if (IspDiagnoseText[0] != '\0')
-			{
-			printf_P(PSTR("Result of last operation: %s <p>"), IspDiagnoseText);
-			}
 		
 		printf_P(PSTR("<h1>Before start of any programming action connect target board by special cable</h1><p>"));
+
+		if (IspDiagnoseText[0] != '\0')
+			printf_P(PSTR("Result of last operation: <big>%s</big><p>"), IspDiagnoseText);
+
 		printf_P(PSTR("<big><a href=\"isp.cgi?autoprog\">Automatic</a> identification and update<p></big>"));
+
 		for (i = 0 ; i < ProgDatenTabAnzahl ; i++)
 			{
 			printf_P(PSTR("Initial programming of board <a href=\"isp.cgi?progid=%d\">"), i);
 			printf_P(ProgDatenTab[i].Name);
 			printf_P(PSTR("</a><br>"));
 			}
+			
 		cgi_PrintHttpheaderEnd();
 		} // if (http_request->argc == 0)
 		
