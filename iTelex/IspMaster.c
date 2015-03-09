@@ -385,9 +385,64 @@ static void DebugTestReadFlashIdentity()
 	}
 	
 
-	
-#if 1 // Zwischenstand des Versuchs, die Daten von einem Server zu laden
 
+// Funktionen zum Empfang von Daten per HTTP
+// =========================================
+// bei Gelegenheit mal in andere Bibliothek auslagern
+
+//! Liest den HTTP Header komplett ein
+//------------------------------------
+//! \retval Code der Statusmeldung, meist 200 = OK, oder -1 bei Kommunikationsfehler
+//!
+
+int16_t HttpReadHeader(int SocketID)
+	{
+	char LineBuf[64];
+	uint8_t i;
+	bool Flag;
+	uint8_t Pos;
+	uint16_t Res;
+	
+	Res = 0;
+	while (true)
+		{
+		// erstmal eine Zeile in den Puffer lesen
+		i = 0;
+		while (GetBytesInSocketData(SocketID) > 0)
+			{
+			if (GetSocketData(SocketID, 1, InBuf + i) != 1)
+				return -1;
+			if (InBuf[i] == '\n') 
+				break;
+			else if (InBuf[i] != '\r' && i < sizeof(InBuf) - 1)
+				i++;
+			}
+		InBuf[i] = '\0';
+		
+		// Zeile gelesen und jetzt auswerten. Zuerst das zweite Wort finden.
+		Flag = false;
+		for (Pos = 0 ; InBuf[Pos] != '\0' ; Pos++)
+			{
+			if (InBuf[Pos] == ' ')
+				Flag = true;
+			else if (Flag) 
+				break;
+			}
+		// jetzt zeigt Pos auf das zweite Wort
+		
+		if (Pos == 0)
+			break; // das war eine Leerzeile, die beendet den Header
+		
+		// abhängig vom Zeilenanfang eine Auswertung durchführen
+		if (strncmp_P(InBuf, PSTR("HTTP/"), 5) == 0)
+			Res = atoi(InBuf + Pos); // der Ergebniscode
+			
+		// else... jetzt könnte man noch andere Rückmeldungen auswerten
+		} // while (true) ... Schleife über alle Zeilen des Header
+		
+	return Res;
+	} // HttpReadHeader()
+	
 	
 
 static int DebugTestGetFilePerHttp()
