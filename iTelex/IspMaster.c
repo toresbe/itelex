@@ -405,11 +405,7 @@ int HttpGet(char *Pfad)
 	{
 	long ServerIP;
 	int SocketID;
-	char InBuf[100];
 	char *FileStart;
-	
-	TKurzTimer AbbruchTimer;
-	int16_t HttpHeadCode;
 	
 	FileStart = strchr(Pfad, '/');
 	if (FileStart == NULL)
@@ -543,24 +539,24 @@ int16_t HttpReadHeader(int SocketID)
 	
 	
 
-static int DebugTestGetFilePerHttp()
+static int DebugTestGetFilePerHttp(char *Filename)
 	{
-	//char FileName[] = "itelex-tlnverz.cgi";
-	char FileName[] = "prot_2015-02-26_16-04.txt";
 	int SocketID;
-	long FileIP;
 	char InBuf[100];
 	TKurzTimer AbbruchTimer;
 	int16_t HttpHeadCode;
+	uint16_t GesamtBytes;
 	
-	SocketID = HttpGet("sonnibs.no-ip.org/prot_2015-02-26_16-04.txt");
+	SocketID = HttpGet(Filename);
 	if (SocketID < 0)
-		return;
+		return -1;
 		
 	HttpHeadCode = HttpReadHeader(SocketID);
 	ProtokollierenInt_P(PSTR("Header Code: %d\r\n"), HttpHeadCode);
 	
 	StartKurzTimer(&AbbruchTimer);
+	
+	GesamtBytes = 0;
 	
 	while (true)
 		{
@@ -578,11 +574,13 @@ static int DebugTestGetFilePerHttp()
 			
 			ProtokollierenInt_P(PSTR("FileGet Empfang: (%d/" ), InCount);
 			ProtokollierenInt_P(PSTR("%d)"), Res);
-			if (Res > 0)
-				ProtokollierenPuffer(InBuf, Res);
+//			if (Res > 0)
+//				ProtokollierenPuffer(InBuf, Res);
 			Protokollieren_P(PSTR("\r\n"));
 			ProtokollierenInt_P(PSTR("CheckSocketState() = %d\r\n" ), CheckSocketState(SocketID));
 
+			GesamtBytes += Res;
+			
 			// Todo hier eine künstliche Bremse...
 				
 			StartKurzTimer(&AbbruchTimer);
@@ -595,35 +593,14 @@ static int DebugTestGetFilePerHttp()
 			}
 			
 		} // while (true)
+
+	ProtokollierenInt_P(PSTR("GesamtBytes = %d\r\n" ), GesamtBytes);
 		
 	CloseTCPSocket(SocketID);
 
 	return 0;
 	} // DebugTestGetFilePerHttp()
 	
-
-// Hier kommen die Binärdaten...
-// =============================
-
-#if 0 // erst mal ausgeblendet
-
-#define byte uint8_t // nur für die Binärdaten
-#define unsigned PROGMEM // nur für die Binärdaten
-
-//#include "ProgBinData\AnalogModem.h"
-//#include "ProgBinData\ED1000.h"
-#include "ProgBinData\FernschrTW39.h"
-//#include "ProgBinData\Messgeraet.h"
-//#include "ProgBinData\SeriellUndSpeicher.h"
-
-#undef unsigned
-#undef byte
-
-#endif // 0
-
-
-//HACK:
-
 
 typedef struct 
 	{
@@ -710,6 +687,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		}
 		
 	strcpy(FullPath, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
+	strcat_P(FullPath, PSTR("/"));
 	strcat_P(FullPath, ProgDatenTab[index].BinFilename);
 	
 	printf_P(PSTR("programming board "));
@@ -778,17 +756,28 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		{
 		int InCount = GetBytesInSocketData(SocketID);
 
+		if ( /* (InCount == 0 && CheckSocketState(SocketID) > SOCKET_READY)
+			|| */ (CheckSocketState(SocketID) == SOCKET_NOT_USE && KurzTimerVal(&AbbruchTimer) > 2 * KurzTimerFreq))
+			{
+			sprintf_P(IspDiagnoseText, PSTR("CheckSocketState() = %d. "), CheckSocketState(SocketID));
+//			ProtokollierenInt_P(PSTR("CheckSocketState: %d "), CheckSocketState(SocketID));
+			beenden = true;
+			}
+		
 		if (KurzTimerVal(&AbbruchTimer) > 5 * KurzTimerFreq)
 			{
 			strcpy_P(IspDiagnoseText, PSTR("Socket timeout. "));
 			beenden = true;
 			}
-			
+
 		if (InCount > 0)
 			{
 			if (InCount > 64 - pos)
 				InCount = 64 - pos;
 			Res = GetSocketData(SocketID, InCount, Buf);
+
+//			ProtokollierenInt_P(PSTR("GetSocketData: %d\r\n"), Res);
+			
 			if (Res != InCount)
 				{
 				strcpy_P(IspDiagnoseText, PSTR("GetSocketData Error. "));
@@ -796,6 +785,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 				}
 			if (Res > 0)
 				pos = pos + Res;
+			StartKurzTimer(&AbbruchTimer);
 			}
 
 		if (beenden || pos == 64)
@@ -805,7 +795,8 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 				strcpy_P(IspDiagnoseText, PSTR("FlashWriteBlock64 failed. "));
 				beenden = true;
 				}
-				
+
+/*				
 			for (i = 0 ; i < pos ; i++)
 				{
 				if (!FlashRead(start + i, &readback))
@@ -821,13 +812,11 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 					break;
 					}
 				}
+*/				
 				
 			start += pos; // pos ist meistens 64, außer beim Beenden.
+			pos = 0;
 			} // if (beenden || pos == 64)
-			
-		//! \todo folgendes testen:
-		if (GetBytesInSocketData(SocketID) == 0 && CheckSocketState(SocketID) > SOCKET_READY)
-			beenden = true;
 			
 		} // while (!beenden)
 		
@@ -849,7 +838,7 @@ void cgi_Isp(void *pStruct)
 	{
 	static TSprache Sprache;
 	uint8_t i;
-	char BinServerPath[50]; // what 
+	char BinServerPath[50]; 
 	char Ident[50];
 
 	struct HTTP_REQUEST * http_request;
@@ -860,6 +849,8 @@ void cgi_Isp(void *pStruct)
 
 	if (http_request->argc == 0)
 		{ // Standard-Aufruf
+		strcpy_P(BinServerPath, PSTR("sonnibs.no-ip.org/ProgBinData")); // vorläufig, künftig Variable im EEPROM
+		
 		cgi_PrintHttpheaderStart();
 
 		printf_P(PSTR("<h1>Before start of any programming action connect target board by special cable</h1><p>"));
@@ -883,6 +874,9 @@ void cgi_Isp(void *pStruct)
 
 		if (strcmp_P(http_request->argvalue[PharseGetValue_P(http_request, PSTR("progid"))], AutomatikBez) == 0)
 			{
+			DebugTestGetFilePerHttp(http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
+
+/*			
 			if (!ReadFlashIdentity(Ident))
 				{ // Identifikation konnte nicht geladen werden.
 				cgi_PrintHttpheaderStart();
@@ -916,6 +910,8 @@ void cgi_Isp(void *pStruct)
 					cgi_PrintHttpheaderEnd();
 					}
 				} // else Identifikation gefunden
+*/
+				
 			} // Automatische Auswahl des Programms
 			
 		else
