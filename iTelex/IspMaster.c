@@ -487,16 +487,32 @@ int16_t HttpReadHeader(int SocketID)
 				{
 				StartKurzTimer(&AbbruchTimer);
 				if (GetSocketData(SocketID, 1, LineBuf + i) != 1)
+					{
+					if (ProtokollLevel >= NurFehler) // Daten explizit
+						Protokollieren_P(PSTR("HttpReadHeader: GetSocketData() Fehler\r\n"));
 					return -2;
+					}
 				else if (LineBuf[i] == '\n') 
 					break;
 				else if (LineBuf[i] != '\r' && i < sizeof(LineBuf) - 1)
 					i++;
 				}
 			else if (KurzTimerVal(&AbbruchTimer) > 10 * KurzTimerFreq)
+				{
+				if (ProtokollLevel >= NurFehler) // Daten explizit
+					Protokollieren_P(PSTR("HttpReadHeader: Timeout\r\n"));
 				return -1;
+				}
 			}
 		LineBuf[i] = '\0';
+
+		// Für Debugging:
+		if (ProtokollLevel >= DatenDetailliert) // Daten explizit
+			{
+			Protokollieren_P(PSTR("HttpReadHeader: Zeile >>"));
+			ProtokollierenPuffer(LineBuf, i); // i enthält immer noch Zeilenlänge
+			Protokollieren_P(PSTR("<< verarbeitet.\r\n"));
+			}
 		
 		// Zeile gelesen und jetzt auswerten. Zuerst das zweite Wort finden.
 		Flag = false;
@@ -518,7 +534,10 @@ int16_t HttpReadHeader(int SocketID)
 			
 		// else... jetzt könnte man noch andere Rückmeldungen auswerten
 		} // while (true) ... Schleife über alle Zeilen des Header
-		
+
+	if (ProtokollLevel >= AblaufInfo) // Daten explizit
+		ProtokollierenInt_P(PSTR("HttpReadHeader: Res = %d\r\n"), Res);
+
 	return Res;
 	} // HttpReadHeader()
 	
