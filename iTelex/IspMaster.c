@@ -542,7 +542,7 @@ int16_t HttpReadHeader(int SocketID)
 static int DebugTestGetFilePerHttp(char *Filename)
 	{
 	int SocketID;
-	char InBuf[100];
+	char InBuf[64]; // ex 100
 	TKurzTimer AbbruchTimer;
 	int16_t HttpHeadCode;
 	uint16_t GesamtBytes;
@@ -614,7 +614,7 @@ typedef struct
 const PROGMEM char AutomatikBez[] = "Auto detection";
 const char AnalogModemBez[] PROGMEM = "AnalogModem";
 const char AnalogModemKenn[] PROGMEM = "TxP2_LeitungAnalog2";
-const char AnalogModemFile[] PROGMEM = "AnalogModem2.bin";
+const char AnalogModemFile[] PROGMEM = "AnalogModem.bin";
 const char ED1000Bez[] PROGMEM = "ED1000";
 const char ED1000Kenn[] PROGMEM = "TxP2_ED1000";
 const char ED1000File[] PROGMEM = "ED1000.bin";
@@ -665,11 +665,16 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 	char FullPath[200];
 	int SocketID;
 	int Res;
+	uint8_t InBuf[64];
+	TKurzTimer AbbruchTimer;
+	int16_t HttpHeadCode;
+	uint16_t GesamtBytes;
 
 	cgi_PrintHttpheaderStart();
 	
 	IspDiagnoseText[0] = '\0';
 	
+/*
 	if (index >= ProgDatenTabAnzahl)
 		{
 		printf_P(PSTR("Error: invalid progid. "));
@@ -685,6 +690,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		cgi_PrintHttpheaderEnd();
 		return;
 		}
+*/		
 		
 	strcpy(FullPath, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
 	strcat_P(FullPath, PSTR("/"));
@@ -703,6 +709,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		return;
 		}
 
+/*	
 	Res = HttpReadHeader(SocketID);
 	if (Res != 200)
 		{
@@ -731,7 +738,9 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		cgi_PrintHttpheaderEnd();
 		return;
 		}
-	
+
+*/
+		
 	// da der Rest Zeitkritisch ist wird der Bildschirmaufbau erstmal zuende gebracht.
 	printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after red and yellow LED went off again."));
 	cgi_PrintHttpheaderEnd();
@@ -739,7 +748,55 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 	CloseTCPSocket(http_request->HTTP_SOCKET); // ist erfoderlich, damit erstmal die Meldung erscheint.
 	
 	LED_on(1); // gelb
+		
+	HttpHeadCode = HttpReadHeader(SocketID);
+	ProtokollierenInt_P(PSTR("Header Code: %d\r\n"), HttpHeadCode);
 	
+	StartKurzTimer(&AbbruchTimer);
+	
+	GesamtBytes = 0;
+	
+	while (true)
+		{
+		int InCount = GetBytesInSocketData(SocketID);
+
+		if (KurzTimerVal(&AbbruchTimer) > 5 * KurzTimerFreq)
+			{
+			Protokollieren_P(PSTR("FileGet: Timeout beim Empfang.\r\n"));
+			break;
+			}
+		
+		else if (InCount > 0)
+			{
+			int Res = GetSocketData(SocketID, (InCount > sizeof(InBuf)) ? sizeof(InBuf) : InCount, InBuf);
+			
+			ProtokollierenInt_P(PSTR("FileGet Empfang: (%d/" ), InCount);
+			ProtokollierenInt_P(PSTR("%d)"), Res);
+//			if (Res > 0)
+//				ProtokollierenPuffer(InBuf, Res);
+			Protokollieren_P(PSTR("\r\n"));
+			ProtokollierenInt_P(PSTR("CheckSocketState() = %d\r\n" ), CheckSocketState(SocketID));
+
+			GesamtBytes += Res;
+			
+			// Todo hier eine k¸nstliche Bremse...
+				
+			StartKurzTimer(&AbbruchTimer);
+			}		
+				
+		else if (CheckSocketState(SocketID) == SOCKET_NOT_USE && KurzTimerVal(&AbbruchTimer) > 2 * KurzTimerFreq)
+			{
+			Protokollieren_P(PSTR("FileGet: Beendigung durch Gegenstelle.\r\n"));
+			break;
+			}
+			
+		} // while (true)
+
+	ProtokollierenInt_P(PSTR("GesamtBytes = %d\r\n" ), GesamtBytes);
+		
+	CloseTCPSocket(SocketID);
+
+/*	
 	uint16_t start, pos;
 	uint8_t Buf[64];
 	uint8_t i;
@@ -757,7 +814,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		int InCount = GetBytesInSocketData(SocketID);
 
 		if ( /* (InCount == 0 && CheckSocketState(SocketID) > SOCKET_READY)
-			|| */ (CheckSocketState(SocketID) == SOCKET_NOT_USE && KurzTimerVal(&AbbruchTimer) > 2 * KurzTimerFreq))
+			|| * / (CheckSocketState(SocketID) == SOCKET_NOT_USE && KurzTimerVal(&AbbruchTimer) > 2 * KurzTimerFreq))
 			{
 			sprintf_P(IspDiagnoseText, PSTR("CheckSocketState() = %d. "), CheckSocketState(SocketID));
 //			ProtokollierenInt_P(PSTR("CheckSocketState: %d "), CheckSocketState(SocketID));
@@ -812,7 +869,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 					break;
 					}
 				}
-*/				
+* /				
 				
 			start += pos; // pos ist meistens 64, auﬂer beim Beenden.
 			pos = 0;
@@ -826,6 +883,8 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 
 	sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("%d bytes written to flash."), start);
 	
+*/
+
 	LED_off(1); // gelb
 	
 	} // ProgrammiereVordefiniert()
