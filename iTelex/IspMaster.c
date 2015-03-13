@@ -636,7 +636,7 @@ const char *ProgWahlTab[] = { AutomatikBez, AnalogModemBez, ED1000Bez, FernschrT
 TProgDaten ProgDatenTab[] =	{
 	{ AnalogModemBez, AnalogModemKenn, 0xE0, 0xD5, 0xF9, AnalogModemFile } ,
 	{ ED1000Bez, ED1000Kenn, 0xF7, 0xD5, 0xF9, ED1000File } ,
-	{ FernschrTW39Bez, FernschrTW39Kenn, 0xBF, 0xD1, 0xFF, FernschrTW39File } ,
+	{ FernschrTW39Bez, FernschrTW39Kenn, 0xBF, 0xD1, 0x00, FernschrTW39File } ,
 	{ MessgeraetBez, MessgeraetKenn, 0xF7, 0xD5, 0xF9, MessgeraetFile } ,
 	{ SeriellUndSpeicherBez, SeriellUndSpeicherKenn, 0xF7, 0xD5, 0xF9, SeriellUndSpeicherFile } ,
 	} ;
@@ -658,23 +658,26 @@ const PROGMEM char ClickToContinue_P[] = "Click <a href=\"isp.cgi\">here</a> to 
 
 //! Startet den Programmiervorgang entsprechend der Daten aus #ProgDatenTab.
 //--------------------------------------------------------------------------
-//! \todo fuses brennen
 	
 void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 	{
 	char FullPath[200];
 	int SocketID;
 	int Res;
-	uint8_t InBuf[64];
+	uint8_t Buf[64];
 	TKurzTimer AbbruchTimer;
 	int16_t HttpHeadCode;
-	uint16_t GesamtBytes;
+	uint16_t FehlerBytes;
+	uint16_t BlockStart;
+	uint16_t BlockFill;
+	uint8_t i;
+	uint8_t readback;
+	bool beenden;
 
 	cgi_PrintHttpheaderStart();
 	
 	IspDiagnoseText[0] = '\0';
 	
-/*
 	if (index >= ProgDatenTabAnzahl)
 		{
 		printf_P(PSTR("Error: invalid progid. "));
@@ -690,7 +693,34 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		cgi_PrintHttpheaderEnd();
 		return;
 		}
-*/		
+
+	if (!IspEnable())
+		{
+		printf_P(PSTR("<p><big>ISP program enable failed. Check connection to target board.</big><p>"));
+		printf_P(ClickToContinue_P);
+		cgi_PrintHttpheaderEnd();
+		return;
+		}
+
+	if (!ChipErase())
+		{
+		IspClose();
+		printf_P(PSTR("<p><big>ISP chip erase failed.</big><p>"));
+		printf_P(ClickToContinue_P);
+		cgi_PrintHttpheaderEnd();
+		return;
+		}
+		
+	if (!FuseWrite(0, ProgDatenTab[index].FuseL)
+	    || !FuseWrite(1, ProgDatenTab[index].FuseH)
+		|| (ProgDatenTab[index].FuseX > 0 && !FuseWrite(1, ProgDatenTab[index].FuseX)))
+		{
+		IspClose();
+		printf_P(PSTR("<p><big>ISP fuse program failed.</big><p>"));
+		printf_P(ClickToContinue_P);
+		cgi_PrintHttpheaderEnd();
+		return;
+		}
 		
 	strcpy(FullPath, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
 	strcat_P(FullPath, PSTR("/"));
@@ -709,154 +739,81 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		return;
 		}
 
-/*	
-	Res = HttpReadHeader(SocketID);
-	if (Res != 200)
-		{
-		CloseTCPSocket(SocketID);
-		printf_P(PSTR("<big> &lt;-- http get failed statuscode %d.</big><p>"), Res);
-		printf_P(ClickToContinue_P);
-		cgi_PrintHttpheaderEnd();
-		return;
-		}
-
-	if (!IspEnable())
-		{
-		CloseTCPSocket(SocketID);
-		printf_P(PSTR("<p><big>ISP program enable failed. Check connection to target board.</big><p>"), SocketID);
-		printf_P(ClickToContinue_P);
-		cgi_PrintHttpheaderEnd();
-		return;
-		}
-		
-	if (!ChipErase())
-		{
-		IspClose();
-		CloseTCPSocket(SocketID);
-		printf_P(PSTR("<p><big>ISP chip erase failed.</big><p>"), SocketID);
-		printf_P(ClickToContinue_P);
-		cgi_PrintHttpheaderEnd();
-		return;
-		}
-
-*/
+	LED_on(1); // gelb
 		
 	// da der Rest Zeitkritisch ist wird der Bildschirmaufbau erstmal zuende gebracht.
 	printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after red and yellow LED went off again."));
 	cgi_PrintHttpheaderEnd();
 	STDOUT_Flush();
 	CloseTCPSocket(http_request->HTTP_SOCKET); // ist erfoderlich, damit erstmal die Meldung erscheint.
-	
-	LED_on(1); // gelb
-		
+
 	HttpHeadCode = HttpReadHeader(SocketID);
 	ProtokollierenInt_P(PSTR("Header Code: %d\r\n"), HttpHeadCode);
+	if (HttpHeadCode != 200)
+		{
+		IspClose();
+		CloseTCPSocket(SocketID);
+		sprintf_P(IspDiagnoseText, PSTR("Fileserver error code %d."), HttpHeadCode);
+		LED_off(1); // gelb
+		return;
+		}
 	
 	StartKurzTimer(&AbbruchTimer);
 	
-	GesamtBytes = 0;
+	beenden = false;
+	FehlerBytes = 0;
+	BlockStart = 0;
+	BlockFill = 0;
 	
-	while (true)
+	while (!beenden)
 		{
 		int InCount = GetBytesInSocketData(SocketID);
 
 		if (KurzTimerVal(&AbbruchTimer) > 5 * KurzTimerFreq)
 			{
+			strcpy_P(IspDiagnoseText, PSTR("Server timeout? "));
 			Protokollieren_P(PSTR("FileGet: Timeout beim Empfang.\r\n"));
-			break;
+			beenden = true;
 			}
 		
 		else if (InCount > 0)
 			{
-			int Res = GetSocketData(SocketID, (InCount > sizeof(InBuf)) ? sizeof(InBuf) : InCount, InBuf);
-			
-			ProtokollierenInt_P(PSTR("FileGet Empfang: (%d/" ), InCount);
-			ProtokollierenInt_P(PSTR("%d)"), Res);
-//			if (Res > 0)
-//				ProtokollierenPuffer(InBuf, Res);
-			Protokollieren_P(PSTR("\r\n"));
-			ProtokollierenInt_P(PSTR("CheckSocketState() = %d\r\n" ), CheckSocketState(SocketID));
+			//ProtokollierenInt_P(PSTR("FileGet Empfang: (%d/" ), InCount);
 
-			GesamtBytes += Res;
+			if (InCount > 64 - BlockFill)
+				InCount = 64 - BlockFill;
+			Res = GetSocketData(SocketID, InCount, Buf + BlockFill);
 			
-			// Todo hier eine künstliche Bremse...
+			//ProtokollierenInt_P(PSTR("%d)"), Res);
+			//if (Res > 0)
+			//	ProtokollierenPuffer(Buf, Res);
+			//Protokollieren_P(PSTR("\r\n"));
+			//if (CheckSocketState(SocketID) != SOCKET_READY)
+			//	ProtokollierenInt_P(PSTR("CheckSocketState() = %d\r\n" ), CheckSocketState(SocketID));
+
+			if (Res > 0)	
+				BlockFill += Res;
 				
 			StartKurzTimer(&AbbruchTimer);
 			}		
 				
 		else if (CheckSocketState(SocketID) == SOCKET_NOT_USE && KurzTimerVal(&AbbruchTimer) > 2 * KurzTimerFreq)
-			{
+			{ // dies ist das normale Ende.
 			Protokollieren_P(PSTR("FileGet: Beendigung durch Gegenstelle.\r\n"));
-			break;
-			}
-			
-		} // while (true)
-
-	ProtokollierenInt_P(PSTR("GesamtBytes = %d\r\n" ), GesamtBytes);
-		
-	CloseTCPSocket(SocketID);
-
-/*	
-	uint16_t start, pos;
-	uint8_t Buf[64];
-	uint8_t i;
-	uint8_t readback;
-	bool beenden;
-	TKurzTimer AbbruchTimer;
-	
-	start = 0;
-	pos = 0;
-	beenden = false;
-	
-	StartKurzTimer(&AbbruchTimer);
-	while (!beenden)
-		{
-		int InCount = GetBytesInSocketData(SocketID);
-
-		if ( /* (InCount == 0 && CheckSocketState(SocketID) > SOCKET_READY)
-			|| * / (CheckSocketState(SocketID) == SOCKET_NOT_USE && KurzTimerVal(&AbbruchTimer) > 2 * KurzTimerFreq))
-			{
-			sprintf_P(IspDiagnoseText, PSTR("CheckSocketState() = %d. "), CheckSocketState(SocketID));
-//			ProtokollierenInt_P(PSTR("CheckSocketState: %d "), CheckSocketState(SocketID));
 			beenden = true;
 			}
-		
-		if (KurzTimerVal(&AbbruchTimer) > 5 * KurzTimerFreq)
-			{
-			strcpy_P(IspDiagnoseText, PSTR("Socket timeout. "));
-			beenden = true;
-			}
-
-		if (InCount > 0)
-			{
-			if (InCount > 64 - pos)
-				InCount = 64 - pos;
-			Res = GetSocketData(SocketID, InCount, Buf);
-
-//			ProtokollierenInt_P(PSTR("GetSocketData: %d\r\n"), Res);
 			
-			if (Res != InCount)
-				{
-				strcpy_P(IspDiagnoseText, PSTR("GetSocketData Error. "));
-				beenden = true;
-				}
-			if (Res > 0)
-				pos = pos + Res;
-			StartKurzTimer(&AbbruchTimer);
-			}
-
-		if (beenden || pos == 64)
+		if (BlockFill == 64 || (beenden && BlockFill > 0))
 			{
-			if (!FlashWriteBlock64(start, Buf))
+			if (!FlashWriteBlock64(BlockStart, Buf))
 				{
 				strcpy_P(IspDiagnoseText, PSTR("FlashWriteBlock64 failed. "));
 				beenden = true;
 				}
 
-/*				
-			for (i = 0 ; i < pos ; i++)
+			for (i = 0 ; i < BlockFill ; i++)
 				{
-				if (!FlashRead(start + i, &readback))
+				if (!FlashRead(BlockStart + i, &readback))
 					{
 					strcpy_P(IspDiagnoseText, PSTR("FlashRead failed."));
 					beenden = true;
@@ -864,27 +821,26 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 					}
 				if (readback != Buf[i])
 					{
-					sprintf_P(IspDiagnoseText, PSTR("Verify failed: %04x is %02x should be %02x. "), start + i, readback, Buf[i]);
-					beenden = true;
-					break;
+					if (FehlerBytes == 0)
+						sprintf_P(IspDiagnoseText, PSTR("Verify failed: %04x is %02x should be %02x. "), BlockStart + i, readback, Buf[i]);
+					FehlerBytes++;
 					}
 				}
-* /				
 				
-			start += pos; // pos ist meistens 64, außer beim Beenden.
-			pos = 0;
-			} // if (beenden || pos == 64)
+			BlockStart += BlockFill; // pos ist meistens 64, außer beim Beenden.
+			BlockFill = 0;
+			} // if (BlockFill == 64 || (beenden && BlockFill > 0))
 			
 		} // while (!beenden)
-		
+
 	IspClose();
-
 	CloseTCPSocket(SocketID);
-
-	sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("%d bytes written to flash."), start);
 	
-*/
+	ProtokollierenInt_P(PSTR("GesamtBytes = %d\r\n" ), BlockStart);
+	ProtokollierenInt_P(PSTR("FehlerBytes = %d\r\n" ), FehlerBytes);
 
+	sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("%d bytes written to flash, %d failed."), BlockStart, FehlerBytes);
+		
 	LED_off(1); // gelb
 	
 	} // ProgrammiereVordefiniert()
@@ -930,12 +886,8 @@ void cgi_Isp(void *pStruct)
 		
 	else if (PharseCheckName_P(http_request, ProgID_P))
 		{ // kann nur durch Drücken der Taste "Start" erreicht werden
-
 		if (strcmp_P(http_request->argvalue[PharseGetValue_P(http_request, PSTR("progid"))], AutomatikBez) == 0)
-			{
-			DebugTestGetFilePerHttp(http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
-
-/*			
+			{ // Automatische Erkennung wurde gewählt
 			if (!ReadFlashIdentity(Ident))
 				{ // Identifikation konnte nicht geladen werden.
 				cgi_PrintHttpheaderStart();
@@ -955,7 +907,7 @@ void cgi_Isp(void *pStruct)
 				for (i = 0 ; i < ProgDatenTabAnzahl ; i++)
 					{
 					if (strcmp_P(Ident, ProgDatenTab[i].Kennung) == 0)
-						{
+						{ // geladene Kennung stimmt mit Kennung aus Tabelle überein
 						ProgrammiereVordefiniert(i, http_request);
 						break;
 						}
@@ -969,12 +921,11 @@ void cgi_Isp(void *pStruct)
 					cgi_PrintHttpheaderEnd();
 					}
 				} // else Identifikation gefunden
-*/
 				
 			} // Automatische Auswahl des Programms
 			
 		else
-			{
+			{ // keine Automatische Erkennung, sondern explizite Wahl des Moduls
 			for (i = 0 ; i < ProgDatenTabAnzahl ; i++)
 				{
 				if (strcmp_P(http_request->argvalue[PharseGetValue_P(http_request, PSTR("progid"))], ProgDatenTab[i].Name) == 0)
@@ -994,7 +945,7 @@ void cgi_Isp(void *pStruct)
 		printf_P(PSTR("internal Error: invalid parameter. Click <a href=\"isp.cgi\">here</a> to continue."));
 		cgi_PrintHttpheaderEnd();
 		}
-	}
+	} // cgi_Isp()
 
 
 void InitIspMaster()
@@ -1004,7 +955,7 @@ void InitIspMaster()
 	
 	IspDiagnoseText[0] = '\0';
 	cgi_RegisterCGI( cgi_Isp, PSTR("isp.cgi"));
-	}
+	} // InitIspMaster()
 	
 	
 #endif //def ISP_MASTER
