@@ -2012,6 +2012,7 @@ static void SocketBearbeiten()
 		} // if es gibt was zu senden
 
 	// Bei Ascii oder Mail den Timeout auf 'deaktivieren'
+	// --------------------------------------------------
 	if (ModusTwiVerbunden() 
 		&& (iTelexSocketProtokoll == Ascii || iTelexSocketProtokoll == POP3 || iTelexSocketProtokoll == SMTP)
 		&& TCP_sockettable[iTelexSocketHandle].ConnectionState == SOCKET_READY)
@@ -4719,6 +4720,31 @@ void itelex_thread()
 	TlnBuchPruefsummeBerechnenSchritt();
 	
 	// ==========================================================================
+	// Uhrzeit verteilen?
+	// ==========================================================================
+	
+	static uint8_t MinuteLetzeRundsendung;
+
+	struct TIME Time;
+	CLOCK_GetTime(&Time);
+	if (Time.mm != MinuteLetzeRundsendung && BusFrei && (BusAuftrag == Nichts || BusAuftrag == Fertig))
+		{
+		MinuteLetzeRundsendung = Time.mm;
+		
+		RundsendDaten[0] = 'c';
+		RundsendDaten[1] = 'l';
+		RundsendDaten[2] = 'k';
+		RundsendDaten[3] = Time.YY - 2000;
+		RundsendDaten[4] = Time.MM;
+		RundsendDaten[5] = Time.DD;
+		RundsendDaten[6] = Time.hh;
+		RundsendDaten[7] = Time.mm;
+		RundsendAnzDaten = 8;
+
+		BusRundsenden();
+		}
+
+	// ==========================================================================
 	// HACK Status-Signale Seriell
 	// ==========================================================================
 
@@ -6347,7 +6373,9 @@ void itelex_init()
 	#endif //def ITELEX_EMAIL
 	
 	CLOCK_GetTime(&SystemStartZeit);	
-	
+
+	void UseEEConfig();
+	UseEEConfig();
 	}
 
 
@@ -6410,6 +6438,20 @@ EEMEM char EE_ConfigData[] =
 	"MELDRUCK=4" ;
 EEMEM char EE_ConfigDataEnd[] = "\0";
 
+
+//! Die folgende Funktion hat nur den Zweck, dass die EEPROM Daten überhaupt irgendwo verwendung finden.
+//! Sonst würden sie vom Linker wegoptimiert werden.
+
+volatile uint8_t EEUsageDummy;
+
+void UseEEConfig()
+	{
+	EEUsageDummy = EE_ConfigHead.TAG[0];
+	EEUsageDummy = EE_Dummy;
+	EEUsageDummy = EE_ConfigData[0];
+	EEUsageDummy = EE_ConfigDataEnd[0];
+	}
+	
 
 //@}
 
