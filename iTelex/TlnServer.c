@@ -567,7 +567,8 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 		if (ProtokollLevelTlnServ >= NurFehler)
 			{
 			ProtokollierenTlnServInt_P(Kanal, PSTR("! Socket Empfang UEBERLAUF (%ld)" ), InCount);
-			ProtokollierenPuffer(TlnServBuf.Buf, Res);
+			if (Res > 0)
+				ProtokollierenPuffer(TlnServBuf.Buf, Res);
 			Protokollieren_P(PSTR(" -> verworfen, Socket geschlossen\r\n"));
 			}
 		CloseTCPSocket(Kanal->Socket);
@@ -586,7 +587,8 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 			  // im Falle des Fehlers (Fertig = true) Protokollierung nicht ganz abgeschaltet ist (0)
 			ProtokollierenTlnServInt_P(Kanal, PSTR("Socket Empfang: (%ld/" ), InCount);
 			ProtokollierenInt_P(PSTR("%d)"), Res);
-			ProtokollierenPuffer(TlnServBuf.Buf, Res);
+			if (Res > 0)
+				ProtokollierenPuffer(TlnServBuf.Buf, Res);
 			if (Kanal->Fertig)
 				Protokollieren_P(PSTR("! unerwartet wegen Fertig=TRUE\r\n"));
 			else

@@ -43,12 +43,12 @@
 
 #elif defined(__AVR_ATmega2561__)
 
-	#define SPI2_PORT		PORTB
-	#define SPI2_DDR		DDRB
-	#define SPI2_PIN		PINB
-	#define MISO2			PB2
-	#define MOSI2			PB3
-	#define SCK2			PB1
+	#define SPI2_PORT		PORTF
+	#define SPI2_DDR		DDRF
+	#define SPI2_PIN		PINF
+	#define MISO2			PF7
+	#define MOSI2			PF4
+	#define SCK2			PF6
 
 #elif defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__) 
 
