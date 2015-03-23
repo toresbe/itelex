@@ -267,12 +267,12 @@ static bool FuseWrite(uint8_t Addr, uint8_t Data)
 // =====================
 
 
-enum { MaxIdentLen = 20 };
+enum { MaxIdentLen = 40 };
 
 
 //! Liest eine im Flash des Target abgelegte Identifikation aus.
 //--------------------------------------------------------------
-//! Die Identifikation besteht aus einem maximal 20 Zeichen langen 
+//! Die Identifikation besteht aus einem maximal 40 Zeichen langen 
 //! Text eingebettet zwischen je mindestens drei aufeinanderfolgenden 
 //! Unterstrichen ( _ ) .
 //! \return Lesevorgang erfolgreich. Auch bei nicht gefundener 
