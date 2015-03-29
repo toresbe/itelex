@@ -352,6 +352,8 @@ static bool ReadFlashIdentity(char *Ident)
 	return true;
 	}
 	
+
+#if 1 // kein Testen mehr erforderlich
 	
 //! Testfunktion in der Debugging-Phase
 //-------------------------------------
@@ -391,7 +393,8 @@ static void DebugTestReadFlashIdentity()
 		printf_P(PSTR("Identity not found, error %d<br>"), IspErrorID);
 	}
 	
-
+#endif // 0
+	
 
 // Funktionen zum Empfang von Daten per HTTP
 // =========================================
@@ -538,6 +541,7 @@ int16_t HttpReadHeader(int SocketID)
 	} // HttpReadHeader()
 	
 	
+#if 0 // nur in der Testphase gebraucht
 
 static int DebugTestGetFilePerHttp(char *Filename)
 	{
@@ -601,6 +605,9 @@ static int DebugTestGetFilePerHttp(char *Filename)
 	return 0;
 	} // DebugTestGetFilePerHttp()
 	
+#endif // 0
+
+	
 
 typedef struct 
 	{
@@ -609,6 +616,7 @@ typedef struct
 	const uint8_t FuseL, FuseH, FuseX;
 	const prog_char *BinFilename;
 	} TProgDaten;
+//! \todo Soll-Signatur ablegen und prüfen.	
 	
 	
 const PROGMEM char AutomatikBez[] = "Auto detection";
@@ -673,6 +681,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 	uint8_t i;
 	uint8_t readback;
 	bool beenden;
+	bool DownloadPfadGeaendert;
 
 	cgi_PrintHttpheaderStart();
 	
@@ -702,15 +711,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		return;
 		}
 
-	if (!ChipErase())
-		{
-		IspClose();
-		printf_P(PSTR("<p><big>ISP chip erase failed.</big><p>"));
-		printf_P(ClickToContinue_P);
-		cgi_PrintHttpheaderEnd();
-		return;
-		}
-		
+/*		
 	if (!FuseWrite(0, ProgDatenTab[index].FuseL)
 	    || !FuseWrite(1, ProgDatenTab[index].FuseH)
 		|| (ProgDatenTab[index].FuseX > 0 && !FuseWrite(1, ProgDatenTab[index].FuseX)))
@@ -721,7 +722,22 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		cgi_PrintHttpheaderEnd();
 		return;
 		}
+*/
+
+	if (!ChipErase())
+		{
+		IspClose();
+		printf_P(PSTR("<p><big>ISP chip erase failed.</big><p>"));
+		printf_P(ClickToContinue_P);
+		cgi_PrintHttpheaderEnd();
+		return;
+		}
 		
+	if (readConfig_P(BinServerPath_P, FullPath) != 1)
+		DownloadPfadGeaendert = true;
+	else
+		DownloadPfadGeaendert = (strcmp(FullPath, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]) != 0);
+	
 	strcpy(FullPath, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
 	strcat_P(FullPath, PSTR("/"));
 	strcat_P(FullPath, ProgDatenTab[index].BinFilename);
@@ -756,6 +772,12 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		sprintf_P(IspDiagnoseText, PSTR("Fileserver error code %d."), HttpHeadCode);
 		LED_off(1); // gelb
 		return;
+		}
+	
+	// Download-Pfad erfolgreich geöffnet, also ggf. abspeichern
+	if (DownloadPfadGeaendert) 
+		{
+		changeConfig_P(BinServerPath_P, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
 		}
 	
 	StartKurzTimer(&AbbruchTimer);
@@ -853,7 +875,7 @@ void cgi_Isp(void *pStruct)
 	{
 	static TSprache Sprache;
 	uint8_t i;
-	char BinServerPath[50]; 
+	char BinServerPath[80]; 
 	char Ident[50];
 
 	struct HTTP_REQUEST * http_request;
@@ -864,7 +886,8 @@ void cgi_Isp(void *pStruct)
 
 	if (http_request->argc == 0)
 		{ // Standard-Aufruf
-		strcpy_P(BinServerPath, PSTR("sonnibs.no-ip.org/ProgBinData")); // vorläufig, künftig Variable im EEPROM
+		if (readConfig_P(BinServerPath_P, BinServerPath) != 1)
+			BinServerPath[0] = '\0';
 		
 		cgi_PrintHttpheaderStart();
 
