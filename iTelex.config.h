@@ -79,6 +79,7 @@
 	#define ITELEX_ANSCHLUSS
 	#define ITELEX_TLNSERVER
 	#define ITELEX_EMAIL
+	#define ISP_MASTER	
 	
 	#define SHELL
 
