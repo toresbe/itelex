@@ -56,6 +56,7 @@
 #include "system/clock/clock.h"
 #include "system/clock/delay_x.h"
 #include "system/stdout/stdout.h"
+#include "system/string/string.h"
 //#include "system/softreset/softreset.h"
 
 #include "apps/httpd/cgibin/cgi-bin.h"
@@ -372,9 +373,12 @@ static void DebugTestReadFunctions()
 			if (SigRead(i, &x))
 				printf_P(PSTR("Signature byte %d = 0x%02X<br>"), i, x);
 
+/*
 		for (uint8_t i = 0 ; i < 3 ; i++)
 			if (FuseRead(i, &x))
 				printf_P(PSTR("Fuse byte %d = 0x%02X<br>"), i, x);
+*/
+
 		IspClose();
 		}
 	}
@@ -661,6 +665,7 @@ char IspDiagnoseText[200];
 
 const PROGMEM char BinServerPath_P[] = "servpath";
 const PROGMEM char ProgID_P[] = "progid";
+const PROGMEM char Fuses_P[] = "fuses";
 const PROGMEM char ClickToContinue_P[] = "Click <a href=\"isp.cgi\">here</a> to continue.";
 
 
@@ -763,7 +768,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 	STDOUT_Flush();
 	CloseTCPSocket(http_request->HTTP_SOCKET); // ist erfoderlich, damit erstmal die Meldung erscheint.
 
-	HttpHeadCode = HttpReadHeader(SocketID);
+	HttpHeadCode = HttpReadHeader(SocketID); //! \todo Dateigröße speichern und am Ende des Programmiervorgangs vergleichen
 	ProtokollierenInt_P(PSTR("Header Code: %d\r\n"), HttpHeadCode);
 	if (HttpHeadCode != 200)
 		{
@@ -909,7 +914,7 @@ void cgi_Isp(void *pStruct)
 		
 	else if (PharseCheckName_P(http_request, ProgID_P))
 		{ // kann nur durch Drücken der Taste "Start" erreicht werden
-		if (strcmp_P(http_request->argvalue[PharseGetValue_P(http_request, PSTR("progid"))], AutomatikBez) == 0)
+		if (strcmp_P(http_request->argvalue[PharseGetValue_P(http_request, ProgID_P)], AutomatikBez) == 0)
 			{ // Automatische Erkennung wurde gewählt
 			if (!ReadFlashIdentity(Ident))
 				{ // Identifikation konnte nicht geladen werden.
@@ -948,7 +953,7 @@ void cgi_Isp(void *pStruct)
 			} // Automatische Auswahl des Programms
 			
 		else
-			{ // keine Automatische Erkennung, sondern explizite Wahl des Moduls
+			{ // keine Automatische Erkennung, sondern explizite Wahl des Moduls im CGI-Parameter progid
 			for (i = 0 ; i < ProgDatenTabAnzahl ; i++)
 				{
 				if (strcmp_P(http_request->argvalue[PharseGetValue_P(http_request, PSTR("progid"))], ProgDatenTab[i].Name) == 0)
@@ -958,10 +963,48 @@ void cgi_Isp(void *pStruct)
 					}
 				// hier sollte es keinesfalls vorkommen, dass das Programm nicht gefunden wird.
 				}
+				
 			} // else keine Automatik
 				
 		} // if (PharseCheckName_P(http_request, PSTR("autoprog")))
 
+	// ab hier Test-Programmteile
+	// --------------------------
+	else if (PharseCheckName_P(http_request, Fuses_P))
+		{ // muss von Hand eigegeben werden isp.cgi?fuses
+		strcpy(Ident, http_request->argvalue[PharseGetValue_P(http_request, Fuses_P)]); // Ident wird misbraucht
+
+		cgi_PrintHttpheaderStart();
+		
+		if (strlen(Ident) < 2)
+			{
+			CgiFormStartTabbed_P(PSTR("isp.cgi"));
+			CgiFormInputFieldText_P(PSTR("Fuses (hex values)"), Fuses_P, sizeof(Ident)-1, Ident);
+			CgiFormFinish_P(PSTR("Start fuse check"));
+			}
+		else if (atoh(Ident[0]) >= 0 && atoh(Ident[1]) >= 0)
+			{
+			// erst mal nur das High-Byte, weil dort die EESAVE Fuse drin ist.
+			uint8_t Wert = (atoh(Ident[0]) << 4) + atoh(Ident[1]);
+			
+			if (!IspEnable())
+				printf_P(PSTR("<p><big>ISP program enable failed. Check connection to target board.</big><p>"));
+			else
+				{
+				if (!FuseWrite(1, Wert))
+					printf_P(PSTR("<p><big>ISP fuse program failed.</big><p>"));
+				IspClose();
+				}
+			}
+		
+		DebugTestReadFunctions();
+
+		cgi_PrintHttpheaderEnd();
+		}
+	
+	// --------------------------
+	// bis hier Test-Programmteile
+	
 	else // ungültiger cgi-Aufruf
 		{
 		cgi_PrintHttpheaderStart();
