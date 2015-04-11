@@ -1,7 +1,3 @@
-Ab Build 600:
-Mit Spezialkabel Update der übrigen Platinen des TelexPhone2 möglich
-Uhrzeit-Verteilung an andere Platinen
-
 Ab Build 573:
 eMail-Server nun auch per IP-Adresse erreichbar
 eMail-Abfrage an LED erkennbar

@@ -365,19 +365,19 @@ static void DebugTestReadFunctions()
 	if (IspEnable())
 		{
 		uint8_t x;	
+/*
 		for (uint8_t i = 0 ; i < 20 ; i++)
 			if (FlashRead(i, &x))
 				printf_P(PSTR("Flash byte %d = 0x%02X<br>"), i, x);
+*/
 				
 		for (uint8_t i = 0 ; i < 3 ; i++)
 			if (SigRead(i, &x))
 				printf_P(PSTR("Signature byte %d = 0x%02X<br>"), i, x);
 
-/*
 		for (uint8_t i = 0 ; i < 3 ; i++)
 			if (FuseRead(i, &x))
 				printf_P(PSTR("Fuse byte %d = 0x%02X<br>"), i, x);
-*/
 
 		IspClose();
 		}
@@ -669,6 +669,35 @@ const PROGMEM char Fuses_P[] = "fuses";
 const PROGMEM char ClickToContinue_P[] = "Click <a href=\"isp.cgi\">here</a> to continue.";
 
 
+//! Programmiert und prüft eine Fuse
+//----------------------------------
+
+static bool FuseProgAndVerify(uint8_t id, uint8_t val)
+	{
+	uint8_t readback;
+	
+	if (!FuseWrite(id, val))
+		{
+		printf_P(PSTR("<p><big>ISP fuse #%d program failed.</big><p>"), id);
+		return false;
+		}
+		
+	if (!FuseRead(id, &readback))
+		{
+		printf_P(PSTR("<p><big>ISP fuse #%d read failed.</big><p>"), id);
+		return false;
+		}
+		
+	if (readback != val)
+		{
+		printf_P(PSTR("<p><big>ISP fuse #%d verify failed.</big><p>"), id);
+		return false;
+		}
+		
+	return true;
+	}
+	
+	
 //! Startet den Programmiervorgang entsprechend der Daten aus #ProgDatenTab.
 //--------------------------------------------------------------------------
 	
@@ -716,18 +745,15 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		return;
 		}
 
-/*		
-	if (!FuseWrite(0, ProgDatenTab[index].FuseL)
-	    || !FuseWrite(1, ProgDatenTab[index].FuseH)
-		|| (ProgDatenTab[index].FuseX > 0 && !FuseWrite(1, ProgDatenTab[index].FuseX)))
+	if (!FuseProgAndVerify(0, ProgDatenTab[index].FuseL)
+	    || !FuseProgAndVerify(1, ProgDatenTab[index].FuseH)
+		|| (ProgDatenTab[index].FuseX > 0 && !FuseProgAndVerify(2, ProgDatenTab[index].FuseX)))
 		{
 		IspClose();
-		printf_P(PSTR("<p><big>ISP fuse program failed.</big><p>"));
 		printf_P(ClickToContinue_P);
 		cgi_PrintHttpheaderEnd();
 		return;
 		}
-*/
 
 	if (!ChipErase())
 		{
@@ -879,7 +905,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 void cgi_Isp(void *pStruct)
 	{
 	static TSprache Sprache;
-	uint8_t i;
+	uint8_t i, x;
 	char BinServerPath[80]; 
 	char Ident[50];
 
@@ -969,31 +995,56 @@ void cgi_Isp(void *pStruct)
 		} // if (PharseCheckName_P(http_request, PSTR("autoprog")))
 
 	// ab hier Test-Programmteile
-	// --------------------------
+	// ========================== HACK
 	else if (PharseCheckName_P(http_request, Fuses_P))
 		{ // muss von Hand eigegeben werden isp.cgi?fuses
 		strcpy(Ident, http_request->argvalue[PharseGetValue_P(http_request, Fuses_P)]); // Ident wird misbraucht
 
 		cgi_PrintHttpheaderStart();
 		
-		if (strlen(Ident) < 2)
-			{
-			CgiFormStartTabbed_P(PSTR("isp.cgi"));
-			CgiFormInputFieldText_P(PSTR("Fuses (hex values)"), Fuses_P, sizeof(Ident)-1, Ident);
-			CgiFormFinish_P(PSTR("Start fuse check"));
-			}
-		else if (atoh(Ident[0]) >= 0 && atoh(Ident[1]) >= 0)
-			{
-			// erst mal nur das High-Byte, weil dort die EESAVE Fuse drin ist.
-			uint8_t Wert = (atoh(Ident[0]) << 4) + atoh(Ident[1]);
+		CgiFormStartTabbed_P(PSTR("isp.cgi"));
+		CgiFormInputFieldText_P(PSTR("Fuses (hex values)"), Fuses_P, sizeof(Ident)-1, Ident);
+		CgiFormFinish_P(PSTR("Start fuse check"));
+
+		if (strlen(Ident) >= 2)
+			{ // check ob alles Hex-Werte sind
+			for (i = 0 ; i < strlen(Ident) ; i++)
+				if (atoh(Ident[i]) < 0)
+					break;
 			
-			if (!IspEnable())
-				printf_P(PSTR("<p><big>ISP program enable failed. Check connection to target board.</big><p>"));
-			else
+			if (i == strlen(Ident)) // nur Hex werte und gerade anzahl
 				{
-				if (!FuseWrite(1, Wert))
-					printf_P(PSTR("<p><big>ISP fuse program failed.</big><p>"));
-				IspClose();
+				if (!IspEnable())
+					printf_P(PSTR("<p><big>ISP program enable failed. Check connection to target board.</big><p>"));
+				else
+					{
+					if (i >= 2) // mindestens die Low-Fuse angegeben
+						{
+						uint8_t Wert = (atoh(Ident[i-2]) << 4) + atoh(Ident[i-1]);
+						if (!FuseWrite(0, Wert))
+							printf_P(PSTR("<p><big>ISP fuse low program failed.</big><p>"));
+						}
+
+					if (i >= 4) // mindestens die Low-Fuse angegeben
+						{
+						uint8_t Wert = (atoh(Ident[i-4]) << 4) + atoh(Ident[i-3]);
+						if (!FuseWrite(1, Wert))
+							printf_P(PSTR("<p><big>ISP fuse high program failed.</big><p>"));
+						}
+
+					if (i >= 6) // mindestens die Low-Fuse angegeben
+						{
+						uint8_t Wert = (atoh(Ident[i-6]) << 4) + atoh(Ident[i-5]);
+						if (!FuseWrite(2, Wert))
+							printf_P(PSTR("<p><big>ISP fuse extended program failed.</big><p>"));
+						}
+
+					for (uint8_t i = 0 ; i < 3 ; i++)
+						if (FuseRead(i, &x))
+							printf_P(PSTR("Fuse byte %d = 0x%02X<br>"), i, x);
+						
+					IspClose();
+					}
 				}
 			}
 		

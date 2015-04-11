@@ -3507,6 +3507,9 @@ static void DatumUhrzeitDrucken()
 
 	if (DatumDruckModus == DatumDruckLokal || DatumDruckModus == DatumDruckBeide)
 		{
+		for (uint8_t i = 0 ; i < 3 ; i++)
+			PufferSpeich(&SendePuffer, TtyCodeBuUm);
+				// Zur 'Snychronisierung'
 		PufferSpeich(&SendePuffer, TtyCodeWR);
 		PufferSpeich(&SendePuffer, TtyCodeZL);
 		PufferSpeich(&SendePuffer, TtyCodeZiUm);
