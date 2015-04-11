@@ -678,19 +678,19 @@ static bool FuseProgAndVerify(uint8_t id, uint8_t val)
 	
 	if (!FuseWrite(id, val))
 		{
-		printf_P(PSTR("<p><big>ISP fuse #%d program failed.</big><p>"), id);
+		sprintf_P(IspDiagnoseText, PSTR("ISP fuse #%d program failed."), id);
 		return false;
 		}
 		
 	if (!FuseRead(id, &readback))
 		{
-		printf_P(PSTR("<p><big>ISP fuse #%d read failed.</big><p>"), id);
+		sprintf_P(IspDiagnoseText, PSTR("ISP fuse #%d read failed."), id);
 		return false;
 		}
 		
 	if (readback != val)
 		{
-		printf_P(PSTR("<p><big>ISP fuse #%d verify failed.</big><p>"), id);
+		sprintf_P(IspDiagnoseText, PSTR("ISP fuse #%d verify failed."), id);
 		return false;
 		}
 		
@@ -737,33 +737,6 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		return;
 		}
 
-	if (!IspEnable())
-		{
-		printf_P(PSTR("<p><big>ISP program enable failed. Check connection to target board.</big><p>"));
-		printf_P(ClickToContinue_P);
-		cgi_PrintHttpheaderEnd();
-		return;
-		}
-
-	if (!FuseProgAndVerify(0, ProgDatenTab[index].FuseL)
-	    || !FuseProgAndVerify(1, ProgDatenTab[index].FuseH)
-		|| (ProgDatenTab[index].FuseX > 0 && !FuseProgAndVerify(2, ProgDatenTab[index].FuseX)))
-		{
-		IspClose();
-		printf_P(ClickToContinue_P);
-		cgi_PrintHttpheaderEnd();
-		return;
-		}
-
-	if (!ChipErase())
-		{
-		IspClose();
-		printf_P(PSTR("<p><big>ISP chip erase failed.</big><p>"));
-		printf_P(ClickToContinue_P);
-		cgi_PrintHttpheaderEnd();
-		return;
-		}
-		
 	if (readConfig_P(BinServerPath_P, FullPath) != 1)
 		DownloadPfadGeaendert = true;
 	else
@@ -777,28 +750,25 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 	printf_P(ProgDatenTab[index].Name);
 	printf_P(PSTR("<p>Loading binary data from %s."), FullPath);
 
-	SocketID = HttpGet(FullPath);
-	if (SocketID < 0)
-		{
-		printf_P(PSTR("<big> &lt;-- open failed code %d.</big><p>"), SocketID);
-		printf_P(ClickToContinue_P);
-		cgi_PrintHttpheaderEnd();
-		return;
-		}
-
-	LED_on(1); // gelb
-		
 	// da der Rest Zeitkritisch ist wird der Bildschirmaufbau erstmal zuende gebracht.
-	printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after red and yellow LED went off again."));
+	LED_on(1); // gelb
+	printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after yellow LED went off again."));
 	cgi_PrintHttpheaderEnd();
 	STDOUT_Flush();
 	CloseTCPSocket(http_request->HTTP_SOCKET); // ist erfoderlich, damit erstmal die Meldung erscheint.
 
+	SocketID = HttpGet(FullPath);
+	if (SocketID < 0)
+		{
+		sprintf_P(IspDiagnoseText, PSTR("Socket open failed code %d."), SocketID);
+		LED_off(1); // gelb
+		return;
+		}
+		
 	HttpHeadCode = HttpReadHeader(SocketID); //! \todo Dateigröße speichern und am Ende des Programmiervorgangs vergleichen
 	ProtokollierenInt_P(PSTR("Header Code: %d\r\n"), HttpHeadCode);
 	if (HttpHeadCode != 200)
 		{
-		IspClose();
 		CloseTCPSocket(SocketID);
 		sprintf_P(IspDiagnoseText, PSTR("Fileserver error code %d."), HttpHeadCode);
 		LED_off(1); // gelb
@@ -811,6 +781,33 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		changeConfig_P(BinServerPath_P, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
 		}
 	
+	if (!IspEnable())
+		{
+		strcpy_P(IspDiagnoseText, PSTR("ISP program enable failed. Check connection to target board."));
+		CloseTCPSocket(SocketID);
+		LED_off(1); // gelb
+		return;
+		}
+
+	if (!FuseProgAndVerify(0, ProgDatenTab[index].FuseL)
+	    || !FuseProgAndVerify(1, ProgDatenTab[index].FuseH)
+		|| (ProgDatenTab[index].FuseX > 0 && !FuseProgAndVerify(2, ProgDatenTab[index].FuseX)))
+		{
+		IspClose();
+		CloseTCPSocket(SocketID);
+		LED_off(1); // gelb
+		return;
+		}
+
+	if (!ChipErase())
+		{
+		strcpy_P(IspDiagnoseText, PSTR("ISP chip erase failed."));
+		IspClose();
+		CloseTCPSocket(SocketID);
+		LED_off(1); // gelb
+		return;
+		}
+		
 	StartKurzTimer(&AbbruchTimer);
 	
 	beenden = false;
@@ -1039,7 +1036,7 @@ void cgi_Isp(void *pStruct)
 							printf_P(PSTR("<p><big>ISP fuse extended program failed.</big><p>"));
 						}
 
-					for (uint8_t i = 0 ; i < 3 ; i++)
+					for (i = 0 ; i < 3 ; i++)
 						if (FuseRead(i, &x))
 							printf_P(PSTR("Fuse byte %d = 0x%02X<br>"), i, x);
 						
