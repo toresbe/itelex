@@ -743,8 +743,18 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		DownloadPfadGeaendert = (strcmp(FullPath, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]) != 0);
 	
 	strcpy(FullPath, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
-	strcat_P(FullPath, PSTR("/"));
-	strcat_P(FullPath, ProgDatenTab[index].BinFilename);
+	if (strchr(FullPath, '$') == NULL)
+		{
+		strcat_P(FullPath, PSTR("/"));
+		strcat_P(FullPath, ProgDatenTab[index].BinFilename);
+		}
+	else
+		{
+		strchr(FullPath, '$')[0] = '\0'; // ab dem Doller wegschneiden
+		strcat_P(FullPath, ProgDatenTab[index].BinFilename);
+		strcat(FullPath, strchr(http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)], '$') + 1); 
+			// ein Zeichen hinter dem $ wieder Kopieren
+		}
 	
 	printf_P(PSTR("programming board "));
 	printf_P(ProgDatenTab[index].Name);
