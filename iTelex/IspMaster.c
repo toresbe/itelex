@@ -855,7 +855,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 				BlockFill += Res;
 				
 			StartKurzTimer(&AbbruchTimer);
-			}		
+			}	
 				
 		else if (CheckSocketState(SocketID) == SOCKET_NOT_USE && KurzTimerVal(&AbbruchTimer) > 2 * KurzTimerFreq)
 			{ // dies ist das normale Ende.
@@ -913,7 +913,7 @@ void cgi_Isp(void *pStruct)
 	{
 	static TSprache Sprache;
 	uint8_t i, x;
-	char BinServerPath[80]; 
+	char BinServerPath[120]; 
 	char Ident[50];
 
 	struct HTTP_REQUEST * http_request;
@@ -937,7 +937,8 @@ void cgi_Isp(void *pStruct)
 		CgiFormStartTabbed_P(PSTR("isp.cgi"));
 
 		CgiFormInputFieldText_P(PSTR("Path to server for binaries"), BinServerPath_P, sizeof(BinServerPath)-1, BinServerPath);
-
+		// z.B. sourceforge.net/p/telexphone2/code/HEAD/tree/trunk/AlleBins/$?format=raw
+		
 		CgiFormDropdown_P(PSTR("What to program"), ProgID_P, ProgWahlTabAnzahl, ProgWahlTab, 0);
 
 		CgiFormFinish_P(PSTR("Start programming"));
@@ -1001,7 +1002,7 @@ void cgi_Isp(void *pStruct)
 				
 		} // if (PharseCheckName_P(http_request, PSTR("autoprog")))
 
-	// ab hier Test-Programmteile
+	/*/ ab hier Test-Programmteile
 	// ========================== HACK
 	else if (PharseCheckName_P(http_request, Fuses_P))
 		{ // muss von Hand eigegeben werden isp.cgi?fuses
@@ -1061,7 +1062,8 @@ void cgi_Isp(void *pStruct)
 		}
 	
 	// --------------------------
-	// bis hier Test-Programmteile
+	// bis hier Test-Programmteile */
+	
 	
 	else // ungültiger cgi-Aufruf
 		{

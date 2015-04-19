@@ -1,3 +1,9 @@
+Ab Build 621:
+In-System-Programmierung für andere Module möglich
+
+Ab Build 603:
+Uhrzeit wird an andere Module verteilt
+
 Ab Build 573:
 eMail-Server nun auch per IP-Adresse erreichbar
 eMail-Abfrage an LED erkennbar
