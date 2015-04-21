@@ -639,9 +639,10 @@ const char MessgeraetFile[] PROGMEM = "Messgeraet.bin";
 const char SeriellUndSpeicherBez[] PROGMEM = "SeriellUndSpeicher";
 const char SeriellUndSpeicherKenn[] PROGMEM = "TxP2_SeriellUndSpeicher";
 const char SeriellUndSpeicherFile[] PROGMEM = "SeriellUndSpeicher.bin";
+const PROGMEM char ITelexBootloaderBez[] = "i-Telex bootloader";
 
 
-const char *ProgWahlTab[] = { AutomatikBez, AnalogModemBez, ED1000Bez, FernschrTW39Bez, MessgeraetBez, SeriellUndSpeicherBez } ;
+const char *ProgWahlTab[] = { AutomatikBez, AnalogModemBez, ED1000Bez, FernschrTW39Bez, MessgeraetBez, SeriellUndSpeicherBez, ITelexBootloaderBez } ;
 
 #define ProgWahlTabAnzahl (sizeof(ProgWahlTab) / sizeof(ProgWahlTab[0]))
 
@@ -791,11 +792,14 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		changeConfig_P(BinServerPath_P, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
 		}
 	
+	LED_on(3); // blau
+	
 	if (!IspEnable())
 		{
 		strcpy_P(IspDiagnoseText, PSTR("ISP program enable failed. Check connection to target board."));
 		CloseTCPSocket(SocketID);
 		LED_off(1); // gelb
+		LED_off(3); // blau
 		return;
 		}
 
@@ -806,6 +810,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		IspClose();
 		CloseTCPSocket(SocketID);
 		LED_off(1); // gelb
+		LED_off(3); // blau
 		return;
 		}
 
@@ -815,8 +820,11 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		IspClose();
 		CloseTCPSocket(SocketID);
 		LED_off(1); // gelb
+		LED_off(3); // blau
 		return;
 		}
+		
+	LED_off(3); // blau
 		
 	StartKurzTimer(&AbbruchTimer);
 	
@@ -865,6 +873,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 			
 		if (BlockFill == 64 || (beenden && BlockFill > 0))
 			{
+			LED_on(3); // blau
 			if (!FlashWriteBlock64(BlockStart, Buf))
 				{
 				strcpy_P(IspDiagnoseText, PSTR("FlashWriteBlock64 failed. "));
@@ -886,6 +895,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 					FehlerBytes++;
 					}
 				}
+			LED_off(3); // blau
 				
 			BlockStart += BlockFill; // pos ist meistens 64, außer beim Beenden.
 			BlockFill = 0;
@@ -906,7 +916,20 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 	} // ProgrammiereVordefiniert()
 	
 
-// Benutzerschnittstelle für das Brennen
+	
+void ProgrammiereDupliziertenBootloader()
+	{
+	// Kennung des angeschlossenen Atmel prüfen
+	
+	// Fuses brennen
+	
+	// Porgramm aus eigenem Flash duplizieren
+	
+	// dazu pgm_read_byte_far(uint32_t) benutzen
+	}
+	
+	
+//! Benutzerschnittstelle für das Brennen
 // ===========================================
 
 void cgi_Isp(void *pStruct)
@@ -948,7 +971,11 @@ void cgi_Isp(void *pStruct)
 		
 	else if (PharseCheckName_P(http_request, ProgID_P))
 		{ // kann nur durch Drücken der Taste "Start" erreicht werden
-		if (strcmp_P(http_request->argvalue[PharseGetValue_P(http_request, ProgID_P)], AutomatikBez) == 0)
+		if (strcmp_P(http_request->argvalue[PharseGetValue_P(http_request, ProgID_P)], ITelexBootloaderBez) == 0)		
+			{
+			ProgrammiereDupliziertenBootloader();
+			}
+		else if (strcmp_P(http_request->argvalue[PharseGetValue_P(http_request, ProgID_P)], AutomatikBez) == 0)
 			{ // Automatische Erkennung wurde gewählt
 			if (!ReadFlashIdentity(Ident))
 				{ // Identifikation konnte nicht geladen werden.
@@ -1074,6 +1101,8 @@ void cgi_Isp(void *pStruct)
 	} // cgi_Isp()
 
 
+//! Initialisiert und registriert die CGI-Funktion für das Brennen
+//----------------------------------------------------------------
 void InitIspMaster()
 	{
 	init_IspResetOut();

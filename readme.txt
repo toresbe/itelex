@@ -1,0 +1,2 @@
+Since this is a firmware for the specific hardware (based on AVRs) of the i-telex-system this updates files work only when connected with the i-telex-board.
+Instructions how to update the board are included in the update.zip file.

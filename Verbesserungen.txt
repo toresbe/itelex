@@ -1,6 +1,9 @@
 Ab Build 621:
 In-System-Programmierung für andere Module möglich
 
+Ab Build 619:
+Datums-Druck lokal bei kommenden Verbindungen verbessert
+
 Ab Build 603:
 Uhrzeit wird an andere Module verteilt
 
