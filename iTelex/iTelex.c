@@ -78,7 +78,7 @@
 #include "StringTab.h"
 #include "ConfigNtp.h"
 #include "IspMaster.h"
-
+#include "RamCorrTest.h"
 
 const PROGMEM char SvnVersion_P[] = SVNVERSION;
 
@@ -4814,6 +4814,13 @@ void itelex_thread()
 		BusRundsenden();
 		}
 
+		
+	// ==========================================================================
+	// Test des RAM auf Korruption (wenigstens in einem Block)
+	// ==========================================================================
+	
+	RamCorrTestStep();
+	
 	// ==========================================================================
 	// HACK Status-Signale Seriell
 	// ==========================================================================
@@ -5082,6 +5089,8 @@ void itelex_cgi_debug( void * pStruct )
 	printf_P(PSTR("DiagnosePuffer: %s"), DiagnosePuffer);
 	PRINTVAL(DiagnosePufferLevel);
 
+	RamCorrTestDebugPrint();
+	
 #ifdef ITELEX_TLNSERVER
 	if (TlnServSyncGeheimzahl != 0)
 		TlnServDebugPrint();
@@ -5092,6 +5101,7 @@ void itelex_cgi_debug( void * pStruct )
 #ifdef ITELEX_ANSCHLUSS
 
 	PRINTVAL(TeilnehmerServerAlleNichtErreichbar);
+	PRINTVAL(AktTlnServerTabI);
 	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
 		printf_P(PSTR("<br>TeilnehmerServerFehlerZaehler(%s) = %d, Sperre-Timer %d"), 
@@ -5152,11 +5162,13 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(iTelexSocketMode);
 	PRINTVAL(iTelexSocketHandle);
 	PRINTVALHEX(iTelexSocketIP);
+	PRINTVAL(iTelexSocketPort);
+	PRINTVAL(iTelexSocketProtokoll);
+	PRINTVAL(iTelexSocketProtVersion);
 	PRINTVAL(iTelexSocketAbbauGeplant);
 	PRINTVAL(KurzTimerVal(&iTelexSocketAbbruchTimer));
 	PRINTVAL(SocketInBufUsed);
 	PRINTVAL(SocketOutBufUsed);
-	PRINTVAL(iTelexSocketProtokoll);
 	PRINTVAL(ProtokollPhase);
 
 	PRINTVAL(SocketAnzahlZeichenGesendet);
@@ -5171,6 +5183,7 @@ void itelex_cgi_debug( void * pStruct )
 	printf(AsciiDruckPuffer);
 	printf_P(PSTR("]"));
 
+	PRINTVAL(LangTimerVal(&BeideRuhigTimer));
 	PRINTVAL(KurzTimerVal(&BusQuittTimer));
 	PRINTVAL(TwiLebenszeichenZaehler);
 	PRINTVAL(TwiWatchdogCount);
@@ -5203,6 +5216,9 @@ void itelex_cgi_debug( void * pStruct )
 			printf_P(PSTR("<br>TCP_socket[%d]: closed"), i);
 																		
 		}
+		
+	PRINTVAL(NetzPort);
+	PRINTVALHEX(NetzEigeneIP);
 	
 	CLOCK_decode_time(&SystemStartZeit);
 	printf_P(PSTR("<br>SystemStartZeit = %02u.%02u.%04u %02d:%02d:%02d, ResetFlag = %02X"), 
@@ -6210,6 +6226,8 @@ void itelex_init()
 	ProtokollInit();
 	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);
 
+	RamCorrTestInit();
+	
 	printf_P(PSTR("itelex_init:\r\n"));
 	
 	DiagnosePuffer[0] = '\0';
