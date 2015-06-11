@@ -1,0 +1,52 @@
+Ab Build 621:
+In-System-Programmierung für andere Module möglich
+
+Ab Build 619:
+Datums-Druck lokal bei kommenden Verbindungen verbessert
+
+Ab Build 603:
+Uhrzeit wird an andere Module verteilt
+
+Ab Build 573:
+eMail-Server nun auch per IP-Adresse erreichbar
+eMail-Abfrage an LED erkennbar
+eMail-Fehlerbehandlung verbessert (kein Aufhängen mehr)
+DynIP Fehler behoben
+Falsche Fehlermeldungen bei langsamer Verbindung behoben
+Fehlermeldungen bei eMail-Abfrage erst beim dritten Fehlversuch
+
+Ab Build 522:
+Zeilenumbruch bei ASCII-Verbindung erst nach 68 Zeichen
+
+Ab Build 520:
+Bessere Behandlung von Fehlern beim Selbst-Anruf
+Fehlerkorrektur von Verbindungsproblemen: 
+    Zeitbeschränkung beim Schließen von TCP-Sockets
+Teilnehmerverzeichnis bleibt nach Reset erhalten
+Möglichkeit des Konfigurations-Reset durch Tastendruck	
+
+Ab Build 479:
+Dienstmeldungen bei nicht erfolgreichem Verbindungsaufbau (occ, na, der, abs)
+
+Ab Build 443:
+Namenssuche ("Auskunft")
+Zeichensatz-Dekodierung bei Emails verbessert.
+
+Ab Build 384:
+Sortierbare Teilnehmerliste
+Sommerzeit-Umstellung abschaltbar
+
+Ab Build 378:
+Verbesserte Besetzt-Meldung bei kommenden Anrufen.
+
+Ab Build 363:
+Klingelzeichen durch % bei "Nachricht senden" oder ASCII-
+Verbindung
+Zweisprachig
+
+Ab Build 350:
+Druck von Datum und Uhrzeit (konfigurierbar) bei kommenden
+Verbindungen.
+
+Ab Build 313:
+Teilnehmerliste kann verborgen werden

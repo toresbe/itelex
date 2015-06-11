@@ -12,9 +12,7 @@
 
 #include "config.h"
 
-volatile uint8_t RamTestBlock[6049];
-
-#define RamTestBlockSize (sizeof(RamTestBlock) / sizeof(uint8_t))
+#include "RamCorrTest.h"
 
 static uint16_t RamTestPos;
 
