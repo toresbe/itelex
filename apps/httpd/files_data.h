@@ -301,7 +301,7 @@ const char data7[] PROGMEM = {
 	"(c)2006-2015   Software: Fred Sonnenrein\r\n"
 	"based on OpenMCP by Dirk Brosswick\r\n"
 	"</pre></p><br>"
-	"This project on <a href=\"http://sourceforge.net/projects/itelex/\">SourceForge<\a>"
+	"This project on <a href=\"http://sourceforge.net/projects/itelex/\" target=\"_blank\">SourceForge</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n"	};
