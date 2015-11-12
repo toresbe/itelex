@@ -3563,7 +3563,8 @@ static void DatumUhrzeitDrucken()
 		
 	} // DatumUhrzeitDrucken()
 	
-	
+
+
 //! Der iTelex-client an sich.
 //------------------------------------------------------------------------------------------------------------
 //! Diese Funktion wird zyklisch aufgerufen und hat folgende Aufgaben:
@@ -4773,49 +4774,11 @@ void itelex_thread()
 		{ 
 		StartLangTimer(&ZeitServerAbfrageTimer);
 		ZeitServerAbfrageTimerEnde = 15 * LangTimerMinuteFaktor; // dies wird bei Erfolg auf 24 Stunden erhöht
-/*
-	unsigned long ip;
-	char ipstr[ 20 ];
 
-	struct TIME time;
-	
-	if ( argc == 2 )
-	{
-		ip = strtoip( argv[1] );
-
-		if ( ip == 0 )
-		{
-			ip = DNS_ResolveName( argv[ 1 ] );
-			if ( ip == DNS_NO_ANSWER )
-			{
-				printf_P( PSTR("Fehler\r\n"));
-				return( 0 );
-			}
+		if (UpdateTimeFromNTP())
+			ZeitServerAbfrageTimerEnde = 24 * 60 * LangTimerMinuteFaktor; 
 		}
-		
-		printf_P( PSTR("Hole Zeit von %s\r\n"), argv[ 1 ] );
-		
-		if( checkConfigName_P( UTCZONE_P ) != -1 )
-			readConfig_P ( UTCZONE_P, ipstr );
-		else
-			ipstr[0] = '\0';
 
-		if ( NTP_GetTime( ip , 0 , atol( ipstr ) ) != NTP_ERROR )
-		{
-			CLOCK_GetTime( &time );
-			printf_P( PSTR("Neue Zeit: %02d:%02d:%02d\r\n") , time.hh , time.mm , time.ss );
-		}
-		else
-			printf_P( PSTR("Fehler\r\n"));			
-	}
-	else
-		printf_P( PSTR("ntp <ntpserver>\r\n"));
-
-	return( 0 );
-}
-*/
-		}
-	
 	// ==========================================================================
 	// Uhrzeit verteilen?
 	// ==========================================================================

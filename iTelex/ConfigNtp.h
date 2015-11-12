@@ -20,6 +20,7 @@
 	#ifdef NTP
 	extern void ConfigNtpCgi( void * pStruct );
 	extern void UpdateTimezone(void);
+	extern bool UpdateTimeFromNTP(void);
 	#endif //def NTP
 	
 #endif /* _CMD_NTP_H */

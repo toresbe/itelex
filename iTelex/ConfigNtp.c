@@ -15,7 +15,7 @@
  */
  
 // Modifiziert für iTelex-Projekt von cmd-ntp.c.
-// Ersetzt NUR cgi_ntp()
+// Ersetzt NUR cgi_ntp() und stellt Funktion für Uhrzeit-Aktualisierung zur Verfügung
 
 
 #include <avr/pgmspace.h>
@@ -46,6 +46,7 @@
 #include "CgiFormTools.h"
 #include "StringTab.h"
 
+#include "Protokoll.h"
 #include "ConfigNtp.h"
 #include "iTelex.h"
 
@@ -135,12 +136,12 @@ void ConfigNtpCgi( void * pStruct )
 	cgi_PrintHttpheaderEnd();
 
 	if (NtpOn && http_request->argc != 0)
-		NTP_GetTime(0, NtpServerStr, Time.timezone);
+		UpdateTimeFromNTP();
 	
 	}
 
 	
-void UpdateTimezone()
+void UpdateTimezone(void)
 	{
 	char Buf[40];
 	struct TIME Time;
@@ -152,7 +153,53 @@ void UpdateTimezone()
 		Time.use_summertime = ReadConfigBool(AutoDst_P, true);
 	CLOCK_SetTime(&Time);
 	}
+
+
+//! Führt eine Abfrage des Uhrzeit-Servers durch. 
+//------------------------------------------------
+//! Sonst läuft die lokale Uhr auf die Dauer "weg".
+//! \return true, wenn erfolgreich
+
+bool UpdateTimeFromNTP()
+	{
+	char Buf[40];
+	struct TIME Time;
+	unsigned long OldTime;
+
+	if (!ReadConfigBool(NtpOn_P, false))
+		return false;
+
+	if (readConfig_P(NtpServerStr_P, Buf) != 1)
+		return false;
+
+	CLOCK_GetTime(&Time);
+	OldTime = Time.time;
+
+	if (NTP_GetTime(strtoip(Buf), Buf, Time.timezone) != NTP_ERROR )
+		{
+		CLOCK_GetTime(&Time);
+		if (ProtokollLevel >= AblaufInfo)
+			{
+			Protokollieren_P(PSTR("NTP-Server "));
+			Protokollieren(Buf); 
+			ProtokollierenInt_P(PSTR(" Verbindung erfolgreich, Zeitkorrektur: %d sekunden.\r\n"), Time.time - OldTime);
+			}
+		//! \todo Erfolgsmeldung speichern
+		return true;
+		}
+	else
+		{
+		if (ProtokollLevel >= NurFehler)
+			{
+			Protokollieren_P(PSTR("! NTP-Server "));
+			Protokollieren(Buf); 
+			Protokollieren_P(PSTR(" konnte nicht verbunden werden.\r\n"));
+			}
+		//! \todo Misserfolgsmeldung speichern
+		return false;
+		}
+	}
 	
-	
+
 #endif //defined(NTP)
 
