@@ -531,10 +531,18 @@ static TZeitUeberwachung SelbstAnrufZeitUeberwachung;
 	
 #endif // ITELEX_ANSCHLUSS
 	
+
+#ifdef USTTY
+	
+//! Sollfrequenz des Aufrufs von itelex_timerEvent()
+enum { iTelexTimerFreq = 455 } ; // 45,5 Baud mit 10 Takten je Bit	
+
+#else
 	
 //! Sollfrequenz des Aufrufs von itelex_timerEvent()
 enum { iTelexTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
 
+#endif
 
 char DiagnosePuffer[DiagnosePufferMax];
 	//!< String für außergewöhnliche Fälle
@@ -565,8 +573,9 @@ static TLangTimer ZeitServerAbfrageTimer;
 static uint16_t ZeitServerAbfrageTimerEnde;
 	//!< Nach Ablauf dieser Zeit wird der Zeitserver wieder abgefragt.
 	
-static uint8_t ResetFlags;
+__attribute__ ((section (".noinit"))) uint8_t ResetFlags;
 	//!< Speichert Ursache des letzten Reset.
+
 	
 TTastendruck Tastendruck;
 	//!< Speichert, ob und wie lange letztens die Taste an der Platine gedrückt wurde.
@@ -576,6 +585,10 @@ bool SocketProtokollEin;
 	//!< \todo Konfigurierbar nicht nur über EEPROM-Variable.
 
 
+uint16_t Debug_LowestSP;
+	//!< for testing of the maximum use of stack-pointer.
+	
+	
 // wird so oft gebraucht...
 extern struct TCP_SOCKET TCP_sockettable[];
 
@@ -1142,6 +1155,9 @@ void itelex_timerEvent(void)
 		
 	CheckSocketConnectionStateChanges();
 		// hier werden Änderungen der TCP_sockettable nur aufgezeichnet.
+	
+	if (SP < Debug_LowestSP)
+		Debug_LowestSP = SP;
 		
 	} // itelex_timerEvent()
 
@@ -2950,7 +2966,7 @@ bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund)
 			// außer wenn alle Server nicht erreichbar, dann alle 20 Minuten probieren
 			{
 			/* Müllt total den Speicher zu...
-			if (ProtokollLevelTlnServ >= AblaufInfo)
+			if (ProtokollLevel >= AblaufInfo)
 				{
 				ProtokollierenITelex_P(PSTR("* Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
@@ -2969,7 +2985,7 @@ bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund)
 			// Wenn dich Fehlerzähler des Servers kritischer Grenze nähert, nur noch seltener probieren
 			{
 			/* Müllt total den Speicher zu...
-			if (ProtokollLevelTlnServ >= AblaufInfo)
+			if (ProtokollLevel >= AblaufInfo)
 				{
 				ProtokollierenITelex_P(PSTR("* Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
@@ -3013,7 +3029,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 		Res = Connect2IP(TeilnehmerServerIP[ServerI], ITELEX_TLNSERV_PORT);
 		if (Res != -1)
 			{
-			if (ProtokollLevelTlnServ >= AblaufInfo)
+			if (ProtokollLevel >= AblaufInfo)
 				{
 				ProtokollierenITelex_P(PSTR("Verbindung an Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
@@ -3032,7 +3048,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 			return Res;
 			}
 			
-		if (ProtokollLevelTlnServ >= NurFehler)
+		if (ProtokollLevel >= NurFehler)
 			{
 			ProtokollierenITelex_P(PSTR("! Verbindungsversuch an Teilnehmer-Server "));
 			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
@@ -3111,6 +3127,7 @@ bool TeilnehmerServerSocketOeffnen(PGM_P Grund)
 		
 	int ServerI;
 	
+	// TODO: den mit der geringsten Fehlerzahl nehmen.
 	for (ServerI = 0 ; ServerI < ANZ_TEILNEHMER_SERVER ; ServerI++)
 		{
 		TeilnehmerServerSocket = TeilnehmerServerSocketOeffnen1(ServerI, Grund);
@@ -4303,69 +4320,75 @@ void itelex_thread()
 			StartLangTimer(&DynIPAktualisierungTimer);
 			} // Zeit für Aktualsierung UND keine Verbindung laufend
 		
-		if ((DynIP_Phase == DynIP_Bestaetigt || DynIP_Phase == DynIP_Unbestaetigt)
-			&& (Modus == ModRuhe || Modus == ModDeaktiviert)
-			&& SelbstAnrufPhase == SelbstAnrufRuhe
-			&& SelbstAnrufSocketHandle == NO_SOCKET_USED
-			&& iTelexSocketHandle == NO_SOCKET_USED
-			&& TeilnehmerServerSocket == NO_SOCKET_USED
-			&& DiagnosePuffer[0] == '\0' // sonst würde der laufende Selbst-Anruf gleich unterbrochen werden
-			&& SelbstAnrufPeriode > 0
-			&& KurzTimerVal(&SelbstAnrufTimer) > SelbstAnrufEndzeit)
-			{ // Selbst-Anruf starten
-			if (NetzEigeneIP == 0)
-				SelbstAnrufPhase = SelbstAnrufSperre;
-			else
-				{ // NetzEigeneIP gültig
-				SelbstAnrufSendePruefwert = ITelexThreadCount ^ Timer0CallbackCount;
-				if (SelbstAnrufSendePruefwert == 0)
-					SelbstAnrufSendePruefwert = 1;
-				SelbstAnrufEmpfangPruefwert = 0; // als Zeichen, dass noch nichts empfangen wurde.
-				
-				ZeitUeberwachungStart(&SelbstAnrufZeitUeberwachung);
-				
-				SelbstAnrufSocketHandle = Connect2IP(NetzEigeneIP, NetzPort); 
-				if (SelbstAnrufSocketHandle == -1)
-					{ 
-					// Verbindung konnte nicht aufgebaut werden
-					if (ProtokollLevel >= NurFehler)
-						ProtokollierenITelex_P(PSTR("! Selbst-Anruf oeffnen des Socket VERSAGT.\r\n"));
+		if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufSocketHandle == NO_SOCKET_USED && SelbstAnrufPeriode > 0)
+			{
+			if (DynIP_Phase != DynIP_Bestaetigt && DynIP_Phase != DynIP_Unbestaetigt)
+				StartKurzTimer(&SelbstAnrufTimer);
 
-					SelbstAnrufSocketHandle = NO_SOCKET_USED;
-					SelbstAnrufFehlerZaehler++;
-					ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
-					}
+			if (Modus != ModRuhe && Modus != ModDeaktiviert)
+				StartKurzTimer(&SelbstAnrufTimer);
+
+			if (iTelexSocketHandle != NO_SOCKET_USED 
+				|| TeilnehmerServerSocket != NO_SOCKET_USED
+				|| DiagnosePuffer[0] != '\0')
+				StartKurzTimer(&SelbstAnrufTimer);
+				
+			if (KurzTimerVal(&SelbstAnrufTimer) > SelbstAnrufEndzeit)
+				{ // Selbst-Anruf starten
+				if (NetzEigeneIP == 0)
+					SelbstAnrufPhase = SelbstAnrufSperre;
 				else
-					{ // Öffnen erfolgreich.
-					char Buf[10];
-					Buf[0] = ITELEXC_SELBSTANRUF;
-					Buf[1] = 2; // 16 Bit-Wert
-					Buf[2] = high(SelbstAnrufSendePruefwert);
-					Buf[3] = low(SelbstAnrufSendePruefwert);
-					SelbstAnrufPhase = SelbstAnrufWarteEmpfang;
-					if (PutSocketData_RPE(SelbstAnrufSocketHandle, 4, Buf, RAM) == 4)
-						{
-						if (ProtokollLevel < AuchRegelmaessiges)
-							ProtokollRegelblockInit();
-						ProtokollRegelblockStart();
-						ProtokollierenITelex();
-						ProtokollierenInt_P(PSTR("Selbst-Anruf Daten ueber Socket #%d gesendet.\r\n"), SelbstAnrufSocketHandle);
-						ProtokollRegelblockEnde();
-						}
-					else
-						{
+					{ // NetzEigeneIP gültig
+					SelbstAnrufSendePruefwert = ITelexThreadCount ^ Timer0CallbackCount;
+					if (SelbstAnrufSendePruefwert == 0)
+						SelbstAnrufSendePruefwert = 1;
+					SelbstAnrufEmpfangPruefwert = 0; // als Zeichen, dass noch nichts empfangen wurde.
+					
+					ZeitUeberwachungStart(&SelbstAnrufZeitUeberwachung);
+					
+					SelbstAnrufSocketHandle = Connect2IP(NetzEigeneIP, NetzPort); 
+					if (SelbstAnrufSocketHandle == -1)
+						{ 
+						// Verbindung konnte nicht aufgebaut werden
 						if (ProtokollLevel >= NurFehler)
-							ProtokollierenITelex_P(PSTR("! Selbst-Anruf Daten-Sendung VERSAGT.\r\n"));
+							ProtokollierenITelex_P(PSTR("! Selbst-Anruf oeffnen des Socket VERSAGT.\r\n"));
+
+						SelbstAnrufSocketHandle = NO_SOCKET_USED;
 						SelbstAnrufFehlerZaehler++;
-						SelbstAnrufPhase = SelbstAnrufSchliessen;
 						ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
 						}
-					} // Öffnen von NetzEigeneIP erfolgreich.
-					
-				StartKurzTimer(&SelbstAnrufTimer);
-				SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x7);
-				} // NetzEigeneIP gültig
-			} // Selbst-Anruf starten
+					else
+						{ // Öffnen erfolgreich.
+						char Buf[10];
+						Buf[0] = ITELEXC_SELBSTANRUF;
+						Buf[1] = 2; // 16 Bit-Wert
+						Buf[2] = high(SelbstAnrufSendePruefwert);
+						Buf[3] = low(SelbstAnrufSendePruefwert);
+						SelbstAnrufPhase = SelbstAnrufWarteEmpfang;
+						if (PutSocketData_RPE(SelbstAnrufSocketHandle, 4, Buf, RAM) == 4)
+							{
+							if (ProtokollLevel < AuchRegelmaessiges)
+								ProtokollRegelblockInit();
+							ProtokollRegelblockStart();
+							ProtokollierenITelex();
+							ProtokollierenInt_P(PSTR("Selbst-Anruf Daten ueber Socket #%d gesendet.\r\n"), SelbstAnrufSocketHandle);
+							ProtokollRegelblockEnde();
+							}
+						else
+							{
+							if (ProtokollLevel >= NurFehler)
+								ProtokollierenITelex_P(PSTR("! Selbst-Anruf Daten-Sendung VERSAGT.\r\n"));
+							SelbstAnrufFehlerZaehler++;
+							SelbstAnrufPhase = SelbstAnrufSchliessen;
+							ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
+							}
+						} // Öffnen von NetzEigeneIP erfolgreich.
+						
+					StartKurzTimer(&SelbstAnrufTimer);
+					SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x7);
+					} // NetzEigeneIP gültig
+				} // Selbst-Anruf starten
+			} // Selbst-Anruf-Funktion ist aktiv, aber ggf. schlafend
 				
 		if (SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
 			{
@@ -4611,13 +4634,13 @@ void itelex_thread()
 				case TLNSERV_IPRUECKMELD:
 					if (TSB.IpRueckm.EmpfIP == NetzEigeneIP)
 						{ // keine Änderung
-						if (ProtokollLevelTlnServ >= AblaufInfo)
+						if (ProtokollLevel >= AblaufInfo)
 							ProtokollierenITelex_P(PSTR("Dynamische IP-Aktualisierung: bestehende IP gilt weiter\r\n" ));
 						}
 					else
 						{
 						NetzEigeneIP = TSB.IpRueckm.EmpfIP;
-						if (ProtokollLevelTlnServ >= NurFehler) // ausnahmsweise
+						if (ProtokollLevel >= NurFehler) // ausnahmsweise
 							{
 							ProtokollierenITelex_P(PSTR("Dynamische IP-Aktualisierung: neue IP "));
 							ProtokollierenIPAdr(NetzEigeneIP);
@@ -4630,7 +4653,8 @@ void itelex_thread()
 					DynIPAktualisierungEndzeit = 60 * LangTimerMinuteFaktor - Zufallswert(0x3F); 
 						// in einer Stunde wieder
 					StartKurzTimer(&SelbstAnrufTimer);
-					SelbstAnrufPhase = SelbstAnrufRuhe;
+					if (SelbstAnrufPhase == SelbstAnrufSperre)
+						SelbstAnrufPhase = SelbstAnrufRuhe;
 					break;
 
 				case TLNSERV_SYNC_ENDE:
@@ -4648,8 +4672,6 @@ void itelex_thread()
 					DynIPAktualisierungEndzeit = 15 * LangTimerMinuteFaktor - Zufallswert(0xF);
 						// in 15 Minuten minus Zufall wieder.
 
-					SelbstAnrufPhase = SelbstAnrufSperre;
-					
 					if (Modus == ModNamensucheServerAbfrage)
 						{
 						strcat(AsciiDruckPuffer, TSB.PureData);
@@ -4657,6 +4679,10 @@ void itelex_thread()
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheNurLokal, LokaleSprache));
 						ModusWechsel(ModNamensucheAusgabe);
 						}
+						
+					else if (SelbstAnrufPhase == SelbstAnrufRuhe)
+						SelbstAnrufPhase = SelbstAnrufSperre;
+
 					break;
 				
 				default:
@@ -4665,8 +4691,6 @@ void itelex_thread()
 					DynIPAktualisierungEndzeit = 15 * LangTimerMinuteFaktor - Zufallswert(0xF);
 						// in 15 Minuten minus Zufall wieder.
 
-					SelbstAnrufPhase = SelbstAnrufSperre;
-					
 					if (Modus == ModNamensucheServerAbfrage)
 						{
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
@@ -4674,6 +4698,9 @@ void itelex_thread()
 						ModusWechsel(ModNamensucheAusgabe);
 						}
 					
+					else if (SelbstAnrufPhase == SelbstAnrufRuhe)
+						SelbstAnrufPhase = SelbstAnrufSperre;
+
 					break;
 				
 				} // switch (TSB.Code)
@@ -4690,7 +4717,7 @@ void itelex_thread()
 		// Schließanforderung vom Teilnehmer-Server?
 		if (TeilnehmerServerSocket != NO_SOCKET_USED && CheckSocketState(TeilnehmerServerSocket) == SOCKET_NOT_USE)
 			{
-			if (ProtokollLevelTlnServ >= AblaufInfo)
+			if (ProtokollLevel >= AblaufInfo)
 				ProtokollierenITelex_P(PSTR("Socket zum Teilnehmer-Server wurde von Gegenstelle geschlossen\r\n" ));
 			CloseTCPSocket(TeilnehmerServerSocket);
 			TeilnehmerServerSocket = NO_SOCKET_USED;
@@ -4819,7 +4846,7 @@ void itelex_thread()
 	// Test des RAM auf Korruption (wenigstens in einem Block)
 	// ==========================================================================
 	
-	RamCorrTestStep();
+	// RamCorrTestStep(); // TODO: Konfigurierbar machen.
 	
 	// ==========================================================================
 	// HACK Status-Signale Seriell
@@ -5089,7 +5116,7 @@ void itelex_cgi_debug( void * pStruct )
 	printf_P(PSTR("DiagnosePuffer: %s"), DiagnosePuffer);
 	PRINTVAL(DiagnosePufferLevel);
 
-	RamCorrTestDebugPrint();
+	// RamCorrTestDebugPrint(); // TODO konfigurierbar.
 	
 #ifdef ITELEX_TLNSERVER
 	if (TlnServSyncGeheimzahl != 0)
@@ -5219,6 +5246,10 @@ void itelex_cgi_debug( void * pStruct )
 		
 	PRINTVAL(NetzPort);
 	PRINTVALHEX(NetzEigeneIP);
+	
+	PRINTVALHEX(Debug_LowestSP);
+
+	PRINTVALHEX(XMCRA);
 	
 	CLOCK_decode_time(&SystemStartZeit);
 	printf_P(PSTR("<br>SystemStartZeit = %02u.%02u.%04u %02d:%02d:%02d, ResetFlag = %02X"), 
@@ -6028,7 +6059,7 @@ static void IntelHexWriteLine(uint8_t Type, uint16_t Address, uint8_t Len, uint8
 //---------------------------------------------------------------
 //! \par LastReset bei true wird die "zweite" Seite ausgegeben: Vor dem 
 //! RAM-Test (nach Reset) wird der vorgefundene Speicherinhalt in die 
-//! "zweite Seite" des externen RAM gerettet wird.
+//! "zweite Seite" des externen RAM gerettet.
 static void RamHexdump(bool LastReset)
 	{
 	enum { Blocklen = 16 };
@@ -6037,7 +6068,7 @@ static void RamHexdump(bool LastReset)
 	uint8_t Buf[Blocklen];
 	uint8_t i;
 
-	for (address = 0x2200 ; address < 0xffff ; address += Blocklen)
+	for (address = 0x1500 ; address < 0xffff ; address += Blocklen)
 		{
 		for (i = 0 ; i < Blocklen ; i++)
 			{
@@ -6052,7 +6083,7 @@ static void RamHexdump(bool LastReset)
 				PORTD |= ( 1<<PD7 );
 				}
 				
-			h = *p;
+			h = *p; // nach dem Compilieren prüfen, dass h ein Register ist.
 			
 			PORTD &= ~( 1<<PD7 );
 			
@@ -6086,8 +6117,11 @@ void cgi_MemDump(void *pStruct)
 	}
 	
 	
-//! Hält für Debugging-Zwecke den Stackpointer fest
-volatile uint16_t DebugSP;
+//! Hält für Debugging-Zwecke bei einem Watchdog-Reset den Stackpointer fest.
+__attribute__ ((section (".noinit"))) volatile uint16_t DebugSP1;
+
+//! Hält für Testzwecke den Stackpointer nach einem Reset fest.
+__attribute__ ((section (".noinit"))) volatile uint16_t DebugSP2;
 
 
 //! Rettet beim Watchdog-Reset den Stack und Stackpointer...
@@ -6102,22 +6136,23 @@ ISR(WDT_vect)
 	LED_on(GELB);
 	LED_on(GRUEN);
 	
-	DebugSP = SP;
-	Size = 0x21FF - DebugSP; 
-	memcpy((void*) (0xFFFF - Size + 1), (void*) (DebugSP + 1), Size);
+	DebugSP1 = SP;
+	DebugSP2 = 0xBBBB;
+	Size = 0x21FF - DebugSP1; 
+	memcpy((void*) (0xFFFF - Size + 1), (void*) (DebugSP1 + 1), Size);
 		// Der genutzte Stack-Bereich beginnt erst bei SP+1, da ein PUSH erst die Daten nach
 		// SP kopiert und danach SP dekrementiert wird.
 		// "0xFFFF - Size + 1" statt "0x10000 - Size" damit nur mit 16 Bit gerechnet wird.
 		// Ergebnis: Wenn Size == 1 wird das einzige zu kopierende Byte von 21FF nach FFFF kopiert.
 	
-	while (DebugSP != 0)
+	while (DebugSP1 != 0)
 		; // hier kommt es dann zum nächsten Watchdog-Timerüberlauf, der dann einen Reset macht.
 	
 	// der folgende Programmcode hat nur den Zweck, im Simulator das Stack-Abbild zurück zu kopieren.
 	// ----------------------------------------------------------------------------------------------
-	SP = DebugSP; // Bei dieser Anweisung den Debugger starten, nachdem memdump.hex ins Extended RAM kopiert wurde.
-	Size = 0x21FF - DebugSP;
-	memcpy((void*) (DebugSP + 1), (void*) (0xFFFF - Size + 1), Size);
+	SP = DebugSP1; // Bei dieser Anweisung den Debugger starten, nachdem memdump.hex ins Extended RAM kopiert wurde.
+	Size = 0x21FF - DebugSP1;
+	memcpy((void*) (DebugSP1 + 1), (void*) (0xFFFF - Size + 1), Size);
 	}
 	
 
@@ -6214,9 +6249,9 @@ static void iTelexInit_Taste()
 
 void itelex_init()
 	{
-	ResetFlags = MCUSR; // was war die Ursache des letzten Reset?
-	MCUSR = 0;
-	
+	uint16_t i; // für mehrere Zwecke
+	char Buf[TlnNameMax]; // unversell verwendet, TlnNameMax ist auch der längste erlaubte Wert in der Konfig.
+		
 	WatchdogTestTimerEnde = 0;
 	
 	init_Taste();
@@ -6226,8 +6261,19 @@ void itelex_init()
 	ProtokollInit();
 	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);
 
-	RamCorrTestInit();
-	
+	// Test: Speicherzugriffs-Geschwindigkeit setzen:
+	i = 1; // Default-Waitstates
+	if (readConfig_P(PSTR("XRAMWAIT"), Buf) == 1)
+		{
+		i = atoi(Buf);
+		if (i > 3)
+			i = 3;
+		}
+	XMCRA = XMCRA = (1 << SRE) | (0 << SRL0) | (i << SRW10) | (i << SRW00); 
+		// sicherheitshalber beide Wait-State-Konfigurationen auf den gleichen Wert setzen.
+
+	// RamCorrTestInit(); // TODO konfigurierbar.
+
 	printf_P(PSTR("itelex_init:\r\n"));
 	
 	DiagnosePuffer[0] = '\0';
@@ -6249,8 +6295,6 @@ void itelex_init()
 	#endif // ITELEX_ANSCHLUSS
 	
 	// EEPROM auslesen
-	char Buf[TlnAdresseMax];
-	uint16_t i;
 
 	#ifdef ITELEX_ANSCHLUSS
 	
@@ -6406,11 +6450,21 @@ void itelex_init()
 		return;
 
 	printf_P(PSTR("...Timer-Callback-Funktion ok\r\n"));
-		
-	wdt_enable(WDTO_250MS);  
-	WDTCSR |= (1 << WDIE); // Interrupt-Mode auch aktivieren, somit Modus Interrupt + Reset aktiv
-		// in itelex_timerEvent wird wdt_reset() ausgefährt.
 
+	DebugSP1 = 0xCCCC; // Zeichen für bisher nicht gefüllt
+	DebugSP2 = 0xDDDD; // Zeichen für bisher nicht gefüllt
+	
+
+	//wdt_disable(); 
+	wdt_enable(WDTO_4S);	// (WDTO_250MS);  
+	
+	uint8_t SregTemp = SREG;
+	cli();
+	WDTCSR |= (1 << WDCE) | (1 << WDE);
+	WDTCSR |= (1 << WDIE) | (1 << WDE); // Interrupt-Mode auch aktivieren, somit Modus Interrupt + Reset aktiv
+		// in itelex_timerEvent wird wdt_reset() ausgefährt.
+	SREG = SregTemp;
+		
 	if (!get_Taste()) // Gedrückt = LOW!
 		iTelexInit_Taste();
 		
@@ -6452,6 +6506,14 @@ void itelex_init()
 
 	THREAD_RegisterThread( itelex_thread, PSTR("iTelex"));
 
+	#ifdef ITELEX_EMAIL
+	
+	itelex_email_init();
+
+	printf_P(PSTR("...Email ok\r\n"));
+	
+	#endif //def ITELEX_EMAIL
+	
 	#endif // ITELEX_ANSCHLUSS
 	
 	TlnBuchInit();
@@ -6466,16 +6528,10 @@ void itelex_init()
 	
 	#endif // ITELEX_TLNSERVER
 
-	#ifdef ITELEX_EMAIL
-	
-	itelex_email_init();
-
-	printf_P(PSTR("...Email ok\r\n"));
-	
-	#endif //def ITELEX_EMAIL
-	
 	CLOCK_GetTime(&SystemStartZeit);	
 
+	Debug_LowestSP = 0xFFFF;
+	
 	StartLangTimer(&ZeitServerAbfrageTimer);
 	
 	if (SystemStartZeit.YY >= 2000) // okay

@@ -130,9 +130,10 @@ SRC += apps/can/can_eth_rep.c
 
 # Add user C source files here.
 SRC += iTelex/iTelex.c iTelex/TlnBuch.c iTelex/CgiFormTools.c iTelex/SwTwi.c iTelex/Protokoll.c iTelex/TlnServer.c iTelex/eMail.c iTelex/StringTab.c
-SRC += iTelex/RamCorrTest.c
-SRC += iTelex/RamCorrTestBlock.c
-SRC += iTelex/ConfigNtp.c iTelex/IspMaster.c
+# SRC += iTelex/RamCorrTest.c
+# SRC += iTelex/RamCorrTestBlock.c
+SRC += iTelex/ConfigNtp.c
+SRC += iTelex/IspMaster.c
 SRC += iTelex/Gemeinsam/BusKomm.c iTelex/Gemeinsam/FifoPuffer.c iTelex/Gemeinsam/BaudotCode.c 
 
 
@@ -180,6 +181,11 @@ CSTANDARD = -std=gnu99
 
 # Place -D or -U options here for C sources
 CDEFS = -DF_CPU=$(F_CPU)UL
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# für US-Version:
+# CDEFS += -DUSTTY
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 # Place -D or -U options here for ASM sources
@@ -599,7 +605,7 @@ program: all
 #	sleep 3
 #	avarice -2 -D -j com2 -x
 #	mode com1: BAUD=9600 PARITY=N DATA=8 STOP=1 to=off xon=off odsr=off octs=off dtr=on rts=on idsr=off
-	fboot.exe /C1 /B38400 /P$(TARGET).hex /V$(TARGET).hex
+	update/fboot.exe /C1 /B38400 /P$(TARGET).hex /V$(TARGET).hex
 
 	
 # Program the device via COM2
