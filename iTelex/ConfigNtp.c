@@ -57,6 +57,10 @@ const char UtcZoneStr_P[] PROGMEM = "UTCZONE";
 const char AutoDst_P[] PROGMEM = "AUTODST";
 
 
+//! Speichert die Zeitdifferenz zwischen per NTP aktualisierter Uhrzeit und der internen Uhrzeit
+int NTPUpdateDiffSeconds; 
+
+
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface für zum Einstellen und Anzeigen für den NTP-Service.
  * \param 	pStruct	Struktur auf den HTTP_Request
@@ -184,7 +188,7 @@ bool UpdateTimeFromNTP()
 			Protokollieren(Buf); 
 			ProtokollierenInt_P(PSTR(" Verbindung erfolgreich, Zeitkorrektur: %d sekunden.\r\n"), Time.time - OldTime);
 			}
-		//! \todo Erfolgsmeldung speichern
+		NTPUpdateDiffSeconds = Time.time - OldTime;
 		return true;
 		}
 	else
@@ -195,7 +199,7 @@ bool UpdateTimeFromNTP()
 			Protokollieren(Buf); 
 			Protokollieren_P(PSTR(" konnte nicht verbunden werden.\r\n"));
 			}
-		//! \todo Misserfolgsmeldung speichern
+		NTPUpdateDiffSeconds = 9999; // als Fehlermeldung
 		return false;
 		}
 	}

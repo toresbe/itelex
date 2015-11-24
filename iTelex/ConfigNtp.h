@@ -18,6 +18,7 @@
 	#define _CONFIG_NTP_H
 
 	#ifdef NTP
+	extern int NTPUpdateDiffSeconds; 
 	extern void ConfigNtpCgi( void * pStruct );
 	extern void UpdateTimezone(void);
 	extern bool UpdateTimeFromNTP(void);

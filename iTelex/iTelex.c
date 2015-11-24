@@ -567,11 +567,16 @@ static struct TIME SystemStartZeit;
 	//!< Speichert Uhrzeit des Systemstarts, nur für Diagnose
 
 
+#ifdef NTP
+	
 static TLangTimer ZeitServerAbfrageTimer;
 	//!< Damit Uhrzeit regelmäßig gestellt wird.
 
 static uint16_t ZeitServerAbfrageTimerEnde;
 	//!< Nach Ablauf dieser Zeit wird der Zeitserver wieder abgefragt.
+	
+#endif //def NTP
+	
 	
 __attribute__ ((section (".noinit"))) uint8_t ResetFlags;
 	//!< Speichert Ursache des letzten Reset.
@@ -5074,6 +5079,7 @@ void itelex_cgi_debug( void * pStruct )
 	cgi_PrintHttpheaderStart();
 
 #define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %u"), Var)
+#define PRINTVALS(Var) printf_P(PSTR("<br>" #Var " = %d"), Var)
 #define PRINTVALHEX(Var) printf_P(PSTR("<br>" #Var " = %02X"), Var)
 
 	printf_P(PSTR("DiagnosePuffer: %s"), DiagnosePuffer);
@@ -5142,7 +5148,7 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(SelbstAnrufFehlerZaehler);
 	PRINTVAL(KurzTimerVal(&SelbstAnrufTimer));
 	PRINTVAL(SelbstAnrufEndzeit);
-	PRINTVAL(SelbstAnrufSocketHandle);
+	PRINTVALS(SelbstAnrufSocketHandle);
 	PRINTVAL(SelbstAnrufSendePruefwert);
 	PRINTVAL(SelbstAnrufEmpfangPruefwert);
 	
@@ -5150,7 +5156,7 @@ void itelex_cgi_debug( void * pStruct )
 	printf(ZeitUeberwachungAusgabe(&SelbstAnrufZeitUeberwachung));
 	
 	PRINTVAL(iTelexSocketMode);
-	PRINTVAL(iTelexSocketHandle);
+	PRINTVALS(iTelexSocketHandle);
 	PRINTVALHEX(iTelexSocketIP);
 	PRINTVAL(iTelexSocketPort);
 	PRINTVAL(iTelexSocketProtokoll);
@@ -5165,7 +5171,7 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(SocketAnzahlZeichenQuittiert);
 	PRINTVAL(SocketAnzahlZeichenEmpfangen);
 
-	PRINTVAL(TeilnehmerServerSocket);
+	PRINTVALS(TeilnehmerServerSocket);
 	
 	printf_P(PSTR("<br>HtmlSendeText: ["));
 	printf(HtmlSendeText);
@@ -5209,6 +5215,12 @@ void itelex_cgi_debug( void * pStruct )
 		
 	PRINTVAL(NetzPort);
 	PRINTVALHEX(NetzEigeneIP);
+	
+	#ifdef NTP
+	PRINTVAL(LangTimerVal(&ZeitServerAbfrageTimer));
+	PRINTVAL(ZeitServerAbfrageTimerEnde);
+	PRINTVALS(NTPUpdateDiffSeconds);
+	#endif //def NTP
 	
 	PRINTVALHEX(Debug_LowestSP);
 
@@ -6491,10 +6503,12 @@ void itelex_init()
 	
 	#endif // ITELEX_TLNSERVER
 
-	CLOCK_GetTime(&SystemStartZeit);	
-
 	Debug_LowestSP = 0xFFFF;
 	
+	CLOCK_GetTime(&SystemStartZeit);	
+	
+	#ifdef NTP
+
 	StartLangTimer(&ZeitServerAbfrageTimer);
 	
 	if (SystemStartZeit.YY >= 2000) // okay
@@ -6502,6 +6516,10 @@ void itelex_init()
 	else
 		ZeitServerAbfrageTimerEnde = 15 * LangTimerMinuteFaktor;
 
+	NTPUpdateDiffSeconds = 0;
+	
+	#endif //def NTP
+	
 	void UseEEConfig();
 	UseEEConfig();
 	}
