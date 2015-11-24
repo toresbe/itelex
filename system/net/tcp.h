@@ -153,6 +153,7 @@
 			char MACadress[6];				// 6 Byte
 			volatile unsigned int fifo;
 			char Recivebuffer[ MAX_RECIVEBUFFER_LENGHT ];
+			char OverflowTest[8];			// HACK: Testbuffer to check if Recivebuffer is used wrongly
 	};
 	
 	// definitionen für die ConnectionState
@@ -195,6 +196,7 @@
 			unsigned int socket;
 			unsigned long Sequencenumber;
 			char Recivebuffer[ MAX_TCP_Datalenght ];
+			char OverflowTest[8];			// HACK: Testbuffer to check if Recivebuffer is used wrongly
 	};
 
 // der TCP-header :-)

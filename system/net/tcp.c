@@ -106,6 +106,8 @@ void tcp_init( void )
 	
 	#ifdef TCP_with_unsortseq
 		TCP_Unsort.lenght = 0 ;
+		for (int j = 0 ; j < sizeof(TCP_Unsort.OverflowTest) ; j++)
+			TCP_Unsort.OverflowTest[j] = 0x55;
 	#endif
 
 	FreeTCP();
@@ -118,6 +120,9 @@ void tcp_init( void )
 		TCP_sockettable[ i ].Timeoutcounter = 0 ;
 		TCP_sockettable[ i ].ConnectionState = SOCKET_NOT_USE;
 		CloseTCPSocket( i );
+		
+		for (int j = 0 ; j < sizeof(TCP_sockettable[i].OverflowTest) ; j++)
+			TCP_sockettable[i].OverflowTest[j] = 0x55;
 	}
 }
 	
