@@ -4075,8 +4075,8 @@ void itelex_thread()
 		ModusWechsel(ModWarteGrundstellung);
 		}
 		
-	if (Modus == ModKommendWarteEinQuitt && KurzTimerVal(&BusQuittTimer) > 3 * KurzTimerFreq)
-		{ // 3 Sekunden keine Einschalt-Quittung empfangen
+	if (Modus == ModKommendWarteEinQuitt && KurzTimerVal(&BusQuittTimer) > 8 * KurzTimerFreq)
+		{ // 8 Sekunden keine Einschalt-Quittung empfangen
 		// ID#332 ***************************************************************
 		if (ProtokollLevel >= NurFehler)
 			ProtokollierenITelex_P(PSTR("! Timeout beim Warten auf die Einschaltquittung\r\n" ));
