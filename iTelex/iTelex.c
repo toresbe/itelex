@@ -2420,6 +2420,7 @@ static void WahlAbbruchMeldung(char *msg)
 			if (Modus == ModGehendWaehlen)
 				{ 
 				BusSenden(BusQuittEin);
+//!\todo prio1 hier noch ein paar "Bu" in den Druckpuffer schreiben.				
 				ModusWechsel(ModPufferDruckUndSchluss);
 				}
 			}
@@ -4131,6 +4132,12 @@ void itelex_thread()
 					sprintf_P(AsciiDruckPuffer + strlen(AsciiDruckPuffer), 
 							  PSTR(": %02u.%02u.%04u %02u:%02u:%02u\r\n"), 
 							  Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+							  
+					// und noch ein paar ryryry zum Testen.
+					while (strlen(AsciiDruckPuffer) < AsciiDruckPufferMax - 55) // diese 50 muss zur Länge des folgenden Texts passen
+						strcat_P(AsciiDruckPuffer, PSTR("ryryryryryryryryryryryryryryryryryryryryryryryryry\r\n"));
+					// das Drucken kann ja per Tastendruck gestoppt werden.
+							  
 					}
 				break;
 				
@@ -4732,7 +4739,17 @@ void itelex_thread()
 		// Timeout? kommt von selbst nach 30 Sekunden...
 		
 		} // if (TeilnehmerServerSocket != NO_SOCKET_USED)
-		
+
+	if (TeilnehmerServerSocket == NO_SOCKET_USED && DynIP_Phase == DynIP_LaeuftGerade)
+		{
+		if (ProtokollLevel >= NurFehler)
+			ProtokollierenITelex_P(PSTR("!Socket zum Teilnehmer-Server geschlossen, DynIP_Phase war noch 'aktiv'.\r\n" ));
+			
+		DynIP_Phase = DynIP_Unbestaetigt;
+		StartLangTimer(&DynIPAktualisierungTimer);
+		DynIPAktualisierungEndzeit = 5 * LangTimerMinuteFaktor - Zufallswert(0x0F); // in 5 Minuten wieder.
+		}
+	
 #ifdef ITELEX_EMAIL
 
 	// ==========================================================================
