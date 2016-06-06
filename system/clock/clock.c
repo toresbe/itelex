@@ -502,7 +502,8 @@ void CLOCK_decode_time( struct TIME * Timestruct )
 			{
 				Timestruct->WW = 0;
 			}
-			if ( Timestruct->DD == CLOCK_monthlen( LEAPYEAR( Timestruct->YY ) , Timestruct->MM ) )
+			if ( Timestruct->DD == CLOCK_monthlen( LEAPYEAR( Timestruct->YY ) , Timestruct->MM - 1) )
+					// Timestruct->MM - 1 because CLOCK_monthlen counts the months starting with 0 for January
 			{                // next month
 				Timestruct->DD = 0;
 				Timestruct->MM++;
