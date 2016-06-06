@@ -424,6 +424,11 @@ static long NetzEigeneIP;
 static TKurzTimer GrundstellungPruefTimer;
 	//!< Prüft, ob mit Modus == ModRuhe auch iTelexSocketHandle == NO_SOCKET_USED ist.
 	//!< Wenn nicht, wird nach 10 Sekunden eine Meldung generiert.
+
+static struct TIME LetzterAnrufZeit;
+	//!< Speichert die Uhrzeit des letzten Ereignisses, welches die Einschaltung eines
+	//!< angeschlossenen Fernschreibers bewirkte.
+	
 	
 #endif // ITELEX_ANSCHLUSS
 	
@@ -2530,7 +2535,9 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						{
 						Durchwahl = AnwahlNummerInAsciiPuffer(true);
 						if (ExternDurchwahlPruefen(&Durchwahl))
+							{
 							ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
+							}
 						else
 							{ 
 							SendeStopkommando(PSTR("na")); //! \todo Test
@@ -2557,7 +2564,9 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					{
 					Durchwahl = SocketInBuf[i+2];
 					if (ExternDurchwahlPruefen(&Durchwahl))
+						{
 						ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
+						}
 					else
 						{ 
 						SendeStopkommando(PSTR("na")); 
@@ -2603,7 +2612,10 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						
 					if (Modus == ModKommendVerbVorstufe)
 						// war noch gar nicht eingeschaltet, dann wird es aber Zeit...
+						{
 						ModusWechsel(ModKommendEinschalten);
+						ProtokollierenITelex_P(PSTR("* verspaetete Einschaltung\r\n"));
+						}
 					}
 				else // Baudot-Code-Block ist noch nicht vollständig UND noch entsprechend Platz im Sendepuffer
 					{
@@ -3903,6 +3915,7 @@ void itelex_thread()
 				ProtokollierenInt_P(PSTR("Anwahl intern %u "), Durchwahl);
 				ProtokollierenInt_P(PSTR("verbunden mit %u\r\n"), BusVerbPartner >> 1);
 				}
+			CLOCK_GetTime(&LetzterAnrufZeit);
 			}
 		else
 			{ // ID#322 ********************************************
@@ -5099,6 +5112,14 @@ void itelex_cgi_debug( void * pStruct )
 #define PRINTVALS(Var) printf_P(PSTR("<br>" #Var " = %d"), Var)
 #define PRINTVALHEX(Var) printf_P(PSTR("<br>" #Var " = %02X"), Var)
 
+	if (LetzterAnrufZeit.time != 0)
+		{
+		CLOCK_decode_time(&LetzterAnrufZeit);
+		printf_P(PSTR("<br>Letzter Anruf um %02u.%02u.%04u %02d:%02d:%02d"), 
+				 LetzterAnrufZeit.DD, LetzterAnrufZeit.MM, LetzterAnrufZeit.YY,
+				 LetzterAnrufZeit.hh, LetzterAnrufZeit.mm, LetzterAnrufZeit.ss);
+		}
+	
 	printf_P(PSTR("DiagnosePuffer: %s"), DiagnosePuffer);
 	PRINTVAL(DiagnosePufferLevel);
 
@@ -6446,7 +6467,8 @@ void itelex_init()
 	DebugSP1 = 0xCCCC; // Zeichen für bisher nicht gefüllt
 	DebugSP2 = 0xDDDD; // Zeichen für bisher nicht gefüllt
 	
-
+	LetzterAnrufZeit.time = 0;
+	
 	//wdt_disable(); 
 	wdt_enable(WDTO_4S);	// (WDTO_250MS);  
 	
