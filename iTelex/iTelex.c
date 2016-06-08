@@ -5115,7 +5115,7 @@ void itelex_cgi_debug( void * pStruct )
 	if (LetzterAnrufZeit.time != 0)
 		{
 		CLOCK_decode_time(&LetzterAnrufZeit);
-		printf_P(PSTR("<br>Letzter Anruf um %02u.%02u.%04u %02d:%02d:%02d"), 
+		printf_P(PSTR("Letzter Anruf: %02u.%02u.%04u %02d:%02d:%02d<br>"), 
 				 LetzterAnrufZeit.DD, LetzterAnrufZeit.MM, LetzterAnrufZeit.YY,
 				 LetzterAnrufZeit.hh, LetzterAnrufZeit.mm, LetzterAnrufZeit.ss);
 		}
