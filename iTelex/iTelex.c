@@ -3661,6 +3661,7 @@ void itelex_thread()
 					{ 
 					if (ProtokollLevel >= AblaufInfo)
 						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung nach Beginn HTML-Chat\r\n" ));
+					CLOCK_GetTime(&LetzterAnrufZeit);
 					ModusWechsel(ModHtmlChatVerbunden);
 					}
 
