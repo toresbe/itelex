@@ -1721,9 +1721,9 @@ static void SocketBearbeiten()
 			} // iTelexSocketMode == SocketIdle
 			
 		else if (iTelexSocketMode == SocketAnswer && iTelexSocketHandle == NO_SOCKET_USED)
-			{
+			{ // Anrufer versicht offensichtlich einen wiederaufbau der Verbindung.
 			if (iTelexSocketIP == TCP_sockettable[NewServerSocket].SourceIP)
-				{
+				{ // kommender Wiederaufbau ist nur von gleicher IP erlaubt
 				if (ProtokollLevel >= NurFehler)
 					Protokollieren_P(PSTR(" ...Wiederverbindung ok\r\n"));
 				iTelexSocketHandle = NewServerSocket;
@@ -1837,7 +1837,7 @@ static void SocketBearbeiten()
 		StartKurzTimer(&iTelexSocketAbbruchTimer);
 		StartKurzTimer(&iTelexSocketWiederholungVerzoegerung);
 		iTelexSocketHandle = NO_SOCKET_USED;
-		return; // GGf wieder aufnahme der Verbindung beim nächsten Aufruf dieser funktion...
+		return; // GGf wieder Aufnahme der Verbindung beim nächsten Aufruf dieser funktion...
 		}
 		
 	// soll offene Verbindung geschlossen werden?

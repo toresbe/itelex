@@ -408,6 +408,7 @@ static void DebugTestReadFlashIdentity()
 //! Startet eine HTTP-Get-Anfrage
 //-------------------------------
 //! \return Nummer des Socket oder -1 für IP nicht gefunden oder -2 für Verbindungsfehler oder -3 für fehlenden / im Pfad.
+
 int HttpGet(char *Pfad)
 	{
 	long ServerIP;
@@ -613,51 +614,6 @@ static int DebugTestGetFilePerHttp(char *Filename)
 
 	
 
-typedef struct 
-	{
-	const prog_char *Name;
-	const prog_char *Kennung;
-	const uint8_t FuseL, FuseH, FuseX;
-	const prog_char *BinFilename;
-	} TProgDaten;
-//! \todo Soll-Signatur ablegen und prüfen.	
-	
-	
-const PROGMEM char AutomatikBez[] = "Auto detection";
-const char AnalogModemBez[] PROGMEM = "AnalogModem";
-const char AnalogModemKenn[] PROGMEM = "TxP2_LeitungAnalog2";
-const char AnalogModemFile[] PROGMEM = "AnalogModem.bin";
-const char ED1000Bez[] PROGMEM = "ED1000";
-const char ED1000Kenn[] PROGMEM = "TxP2_ED1000";
-const char ED1000File[] PROGMEM = "ED1000.bin";
-const char FernschrTW39Bez[] PROGMEM = "Fs TW39";
-const char FernschrTW39Kenn[] PROGMEM = "TxP2_TW39";
-const char FernschrTW39File[] PROGMEM = "FernschrTW39.bin";
-const char MessgeraetBez[] PROGMEM = "Messgeraet";
-const char MessgeraetKenn[] PROGMEM = "TxP2_Messgeraet";
-const char MessgeraetFile[] PROGMEM = "Messgeraet.bin";
-const char SeriellUndSpeicherBez[] PROGMEM = "SeriellUndSpeicher";
-const char SeriellUndSpeicherKenn[] PROGMEM = "TxP2_SeriellUndSpeicher";
-const char SeriellUndSpeicherFile[] PROGMEM = "SeriellUndSpeicher.bin";
-const PROGMEM char ITelexBootloaderBez[] = "i-Telex bootloader";
-
-
-const char *ProgWahlTab[] = { AutomatikBez, AnalogModemBez, ED1000Bez, FernschrTW39Bez, MessgeraetBez, SeriellUndSpeicherBez, ITelexBootloaderBez } ;
-
-#define ProgWahlTabAnzahl (sizeof(ProgWahlTab) / sizeof(ProgWahlTab[0]))
-
-TProgDaten ProgDatenTab[] =	{
-	{ AnalogModemBez, AnalogModemKenn, 0xE0, 0xD5, 0xF9, AnalogModemFile } ,
-	{ ED1000Bez, ED1000Kenn, 0xF7, 0xD5, 0xF9, ED1000File } ,
-	{ FernschrTW39Bez, FernschrTW39Kenn, 0xBF, 0xD1, 0x00, FernschrTW39File } ,
-	{ MessgeraetBez, MessgeraetKenn, 0xF7, 0xD5, 0xF9, MessgeraetFile } ,
-	{ SeriellUndSpeicherBez, SeriellUndSpeicherKenn, 0xF7, 0xD5, 0xF9, SeriellUndSpeicherFile } ,
-	} ;
-
-
-#define ProgDatenTabAnzahl (sizeof(ProgDatenTab) / sizeof(TProgDaten))
-
-
 // Hier folgenden die Hauptfunktionen
 // ===========================================
 
@@ -699,15 +655,39 @@ static bool FuseProgAndVerify(uint8_t id, uint8_t val)
 	}
 	
 	
+//! Assembles URL from Path template, actual filename (Ident) and Extension (like .bin)
+
+static void BuildFullPath(char *Path, char *Ident, PGM_P Extension, char *FullPath)
+	{
+	strcpy(FullPath, Path);
+	if (strchr(Path, '$') == NULL)
+		{
+		strcat_P(FullPath, PSTR("/"));
+		strcat(FullPath, Ident);
+		strcat_P(FullPath, Extension);
+		}
+	else
+		{
+		strchr(FullPath, '$')[0] = '\0'; // ab dem Doller wegschneiden
+		strcat(FullPath, Ident);
+		strcat_P(FullPath, Extension);
+		strcat(FullPath, strchr(Path, '$') + 1); 
+			// ein Zeichen hinter dem $ wieder Kopieren
+		}
+	}
+	
+	
 //! Startet den Programmiervorgang entsprechend der Daten aus #ProgDatenTab.
 //--------------------------------------------------------------------------
 	
-void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
+static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	{
 	char FullPath[200];
 	int SocketID;
 	int Res;
-	uint8_t Buf[64];
+	char Buf[64];
+	uint8_t Signature[3];
+	uint8_t Fuses[3];
 	TKurzTimer AbbruchTimer;
 	int16_t HttpHeadCode;
 	uint16_t FehlerBytes;
@@ -722,14 +702,6 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 	
 	IspDiagnoseText[0] = '\0';
 	
-	if (index >= ProgDatenTabAnzahl)
-		{
-		printf_P(PSTR("Error: invalid progid. "));
-		printf_P(ClickToContinue_P);
-		cgi_PrintHttpheaderEnd();
-		return;
-		}
-	
 	if (!PharseCheckName_P(http_request, BinServerPath_P))
 		{
 		printf_P(PSTR("Error: no server path specified. "));
@@ -742,25 +714,85 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		DownloadPfadGeaendert = true;
 	else
 		DownloadPfadGeaendert = (strcmp(FullPath, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]) != 0);
-	
-	strcpy(FullPath, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
-	if (strchr(FullPath, '$') == NULL)
-		{
-		strcat_P(FullPath, PSTR("/"));
-		strcat_P(FullPath, ProgDatenTab[index].BinFilename);
-		}
-	else
-		{
-		strchr(FullPath, '$')[0] = '\0'; // ab dem Doller wegschneiden
-		strcat_P(FullPath, ProgDatenTab[index].BinFilename);
-		strcat(FullPath, strchr(http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)], '$') + 1); 
-			// ein Zeichen hinter dem $ wieder Kopieren
-		}
-	
-	printf_P(PSTR("programming board "));
-	printf_P(ProgDatenTab[index].Name);
-	printf_P(PSTR("<p>Loading binary data from %s."), FullPath);
 
+	printf_P(PSTR("Programm identity %s"), Ident);
+	
+	BuildFullPath(http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)], Ident, PSTR(".txt"), FullPath);
+
+	//TEST: Fuses laden
+	SocketID = HttpGet(FullPath);
+	if (SocketID < 0)
+		{
+		printf_P(PSTR("<p>Download %s socket open failed code %d."), FullPath, SocketID);
+		printf_P(ClickToContinue_P);
+		cgi_PrintHttpheaderEnd();
+		return;
+		}
+		
+	HttpHeadCode = HttpReadHeader(SocketID); 
+	if (HttpHeadCode != 200)
+		{
+		CloseTCPSocket(SocketID);
+		printf_P(PSTR("<p>Download %s fileserver error code %d."), FullPath, HttpHeadCode);
+		printf_P(ClickToContinue_P);
+		cgi_PrintHttpheaderEnd();
+		return;
+		}
+	
+	// Download-Pfad erfolgreich geöffnet, also ggf. abspeichern
+	if (DownloadPfadGeaendert) 
+		{
+		changeConfig_P(BinServerPath_P, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
+		}
+	
+	Res = GetSocketData(SocketID, sizeof(Buf)-1, Buf);
+
+	if (Res <= 0)
+		{
+		CloseTCPSocket(SocketID);
+		printf_P(PSTR("<p>Error reading %s (code %d)."), FullPath, HttpHeadCode);
+		printf_P(ClickToContinue_P);
+		cgi_PrintHttpheaderEnd();
+		return;
+		}
+
+	Buf[Res] = '\0';
+
+/*	
+TODO Aufteilen in Worte (anhand Spaces)	
+strtobin liefert -1 wenn es nicht exakt passt
+
+	Res = strtobin(Buf, (char *) Signature, 3);
+	if (Res == 0)
+		{
+		i = 1;
+		while (Buf[i] != '\0' && Buf[i-1] != '\n')
+			i++; // bis hinter das Zeilenende
+		
+		printf_P(PSTR("<p>%d[%s]"), i, Buf + i);
+		
+		Res = strtobin(Buf + i, (char *) Fuses, 3);
+		}
+*/
+	CloseTCPSocket(SocketID);
+
+	if (Res != 0)
+		{
+		printf_P(PSTR("<p>Invalid data in %s: %s"), FullPath, Buf);
+		printf_P(ClickToContinue_P);
+		cgi_PrintHttpheaderEnd();
+		return;
+		}
+	
+	printf_P(PSTR("<p>Read from %s: Signature %02X %02X %02X, Fuses %02X %02X %02X"), 
+		FullPath, Signature[0], Signature[1], Signature[2], Fuses[0], Fuses[1], Fuses[2]);
+	
+	// jetzt die eigentlichen Programmdaten
+	
+	BuildFullPath(http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)], Ident, PSTR(".bin"), FullPath);
+	
+	printf_P(PSTR("<p>Loading binary data from %s."), FullPath);
+	
 	// da der Rest Zeitkritisch ist wird der Bildschirmaufbau erstmal zuende gebracht.
 	LED_on(1); // gelb
 	printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after yellow LED went off again."));
@@ -786,12 +818,6 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		return;
 		}
 	
-	// Download-Pfad erfolgreich geöffnet, also ggf. abspeichern
-	if (DownloadPfadGeaendert) 
-		{
-		changeConfig_P(BinServerPath_P, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
-		}
-	
 	LED_on(3); // blau
 	
 	if (!IspEnable())
@@ -803,9 +829,16 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		return;
 		}
 
-	if (!FuseProgAndVerify(0, ProgDatenTab[index].FuseL)
-	    || !FuseProgAndVerify(1, ProgDatenTab[index].FuseH)
-		|| (ProgDatenTab[index].FuseX > 0 && !FuseProgAndVerify(2, ProgDatenTab[index].FuseX)))
+	// read and verify signature
+
+	for (uint8_t i = 0 ; i < 3 ; i++)
+		if (SigRead(i, &readback))
+			ProtokollierenInt_P(PSTR("SigByte = %d\r\n" ), readback);
+	
+/*	
+	if (!FuseProgAndVerify(0, Fuses[0])
+	    || !FuseProgAndVerify(1, Fuses[1])
+		|| (Fuses[2] > 0 && !FuseProgAndVerify(2, Fuses[2])))
 		{
 		IspClose();
 		CloseTCPSocket(SocketID);
@@ -813,6 +846,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		LED_off(3); // blau
 		return;
 		}
+*/
 
 	if (!ChipErase())
 		{
@@ -874,7 +908,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		if (BlockFill == 64 || (beenden && BlockFill > 0))
 			{
 			LED_on(3); // blau
-			if (!FlashWriteBlock64(BlockStart, Buf))
+			if (!FlashWriteBlock64(BlockStart, (uint8_t *) Buf))
 				{
 				strcpy_P(IspDiagnoseText, PSTR("FlashWriteBlock64 failed. "));
 				beenden = true;
@@ -888,7 +922,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 					beenden = true;
 					break;
 					}
-				if (readback != Buf[i])
+				if (readback != ((uint8_t *) Buf)[i])
 					{
 					if (FehlerBytes == 0)
 						sprintf_P(IspDiagnoseText, PSTR("Verify failed: %04x is %02x should be %02x. "), BlockStart + i, readback, Buf[i]);
@@ -913,7 +947,7 @@ void ProgrammiereVordefiniert(uint8_t index, struct HTTP_REQUEST * http_request)
 		
 	LED_off(1); // gelb
 	
-	} // ProgrammiereVordefiniert()
+	} // ProgrammiereVomNetz()
 	
 
 	
@@ -935,7 +969,6 @@ void ProgrammiereDupliziertenBootloader()
 void cgi_Isp(void *pStruct)
 	{
 	static TSprache Sprache;
-	uint8_t i, x;
 	char BinServerPath[120]; 
 	char Ident[50];
 
@@ -945,6 +978,8 @@ void cgi_Isp(void *pStruct)
 	if (!PruefeSpracheUndKonfigFreigabe(pStruct))
 		return;
 
+	Ident[0] = '\0';
+	
 	if (http_request->argc == 0)
 		{ // Standard-Aufruf
 		if (readConfig_P(BinServerPath_P, BinServerPath) != 1)
@@ -962,7 +997,7 @@ void cgi_Isp(void *pStruct)
 		CgiFormInputFieldText_P(PSTR("Path to server for binaries"), BinServerPath_P, sizeof(BinServerPath)-1, BinServerPath);
 		// z.B. sourceforge.net/p/telexphone2/code/HEAD/tree/trunk/AlleBins/$?format=raw
 		
-		CgiFormDropdown_P(PSTR("What to program"), ProgID_P, ProgWahlTabAnzahl, ProgWahlTab, 0);
+		CgiFormInputFieldText_P(PSTR("What to program (leave empty for auto-detection)"), ProgID_P, sizeof(Ident)-1, Ident);
 
 		CgiFormFinish_P(PSTR("Start programming"));
 
@@ -971,11 +1006,9 @@ void cgi_Isp(void *pStruct)
 		
 	else if (PharseCheckName_P(http_request, ProgID_P))
 		{ // kann nur durch Drücken der Taste "Start" erreicht werden
-		if (strcmp_P(http_request->argvalue[PharseGetValue_P(http_request, ProgID_P)], ITelexBootloaderBez) == 0)		
-			{
-			ProgrammiereDupliziertenBootloader();
-			}
-		else if (strcmp_P(http_request->argvalue[PharseGetValue_P(http_request, ProgID_P)], AutomatikBez) == 0)
+		strncpy(Ident, http_request->argvalue[PharseGetValue_P(http_request, ProgID_P)], sizeof(Ident)-1);
+		Ident[sizeof(Ident)-1] = '\0';
+		if (Ident[0] == '\0')
 			{ // Automatische Erkennung wurde gewählt
 			if (!ReadFlashIdentity(Ident))
 				{ // Identifikation konnte nicht geladen werden.
@@ -983,6 +1016,7 @@ void cgi_Isp(void *pStruct)
 				printf_P(PSTR("<big>ISP program enable failed. Check connection to target board.</big>"));
 				printf_P(ClickToContinue_P);
 				cgi_PrintHttpheaderEnd();
+				Ident[0] = '\0';
 				}
 			else if (Ident[0] == '\0')
 				{ // Identifikation ist leer
@@ -991,48 +1025,21 @@ void cgi_Isp(void *pStruct)
 				printf_P(ClickToContinue_P);
 				cgi_PrintHttpheaderEnd();
 				} 
-			else
-				{ // Identifikation nicht leer
-				for (i = 0 ; i < ProgDatenTabAnzahl ; i++)
-					{
-					if (strcmp_P(Ident, ProgDatenTab[i].Kennung) == 0)
-						{ // geladene Kennung stimmt mit Kennung aus Tabelle überein
-						ProgrammiereVordefiniert(i, http_request);
-						break;
-						}
-					}
-					
-				if (i == ProgDatenTabAnzahl)
-					{ // Identifikation nicht in der Liste der bekannten Programme
-					cgi_PrintHttpheaderStart();
-					printf_P(PSTR("Identification of target ""%s"" unknown. Select program manually. "), Ident);
-					printf_P(ClickToContinue_P);
-					cgi_PrintHttpheaderEnd();
-					}
-				} // else Identifikation gefunden
+			}
 				
-			} // Automatische Auswahl des Programms
-			
-		else
-			{ // keine Automatische Erkennung, sondern explizite Wahl des Moduls im CGI-Parameter progid
-			for (i = 0 ; i < ProgDatenTabAnzahl ; i++)
-				{
-				if (strcmp_P(http_request->argvalue[PharseGetValue_P(http_request, PSTR("progid"))], ProgDatenTab[i].Name) == 0)
-					{
-					ProgrammiereVordefiniert(i, http_request);
-					break;
-					}
-				// hier sollte es keinesfalls vorkommen, dass das Programm nicht gefunden wird.
-				}
+		if (Ident[0] != '\0')
+			{ // Identifikation scheint gültig (entweder automatisch ermittelt oder von Hand eingegeben)
+			ProgrammiereVomNetz(Ident, http_request); 
+			}
 				
-			} // else keine Automatik
-				
-		} // if (PharseCheckName_P(http_request, PSTR("autoprog")))
+		} // if (PharseCheckName_P(http_request, ProgID_P))
 
 	/*/ ab hier Test-Programmteile
 	// ========================== HACK
 	else if (PharseCheckName_P(http_request, Fuses_P))
 		{ // muss von Hand eigegeben werden isp.cgi?fuses
+		uint8_t i;
+	
 		strcpy(Ident, http_request->argvalue[PharseGetValue_P(http_request, Fuses_P)]); // Ident wird misbraucht
 
 		cgi_PrintHttpheaderStart();
