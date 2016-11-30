@@ -354,7 +354,7 @@ static bool ReadFlashIdentity(char *Ident)
 	}
 	
 
-#if 1 // kein Testen mehr erforderlich
+#if 0 // kein Testen mehr erforderlich
 	
 //! Testfunktion in der Debugging-Phase
 //-------------------------------------
@@ -537,6 +537,8 @@ int16_t HttpReadHeader(int SocketID)
 			Res = atoi(LineBuf + Pos); // der Ergebniscode
 			
 		// else... jetzt könnte man noch andere Rückmeldungen auswerten
+// TODO:  >> 'Content-Length: 7926'<< 
+		
 		} // while (true) ... Schleife über alle Zeilen des Header
 
 	if (ProtokollLevel >= AblaufInfo) // Daten explizit
@@ -622,7 +624,6 @@ char IspDiagnoseText[200];
 
 const PROGMEM char BinServerPath_P[] = "servpath";
 const PROGMEM char ProgID_P[] = "progid";
-const PROGMEM char Fuses_P[] = "fuses";
 const PROGMEM char ClickToContinue_P[] = "Click <a href=\"isp.cgi\">here</a> to continue.";
 
 
@@ -686,6 +687,7 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	int SocketID;
 	int Res;
 	char Buf[64];
+	char Rett;
 	uint8_t Signature[3];
 	uint8_t Fuses[3];
 	TKurzTimer AbbruchTimer;
@@ -693,7 +695,7 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	uint16_t FehlerBytes;
 	uint16_t BlockStart;
 	uint16_t BlockFill;
-	uint8_t i;
+	uint8_t i, Start;
 	uint8_t readback;
 	bool beenden;
 	bool DownloadPfadGeaendert;
@@ -758,22 +760,33 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 
 	Buf[Res] = '\0';
 
-/*	
-TODO Aufteilen in Worte (anhand Spaces)	
-strtobin liefert -1 wenn es nicht exakt passt
-
+	// erstes Wort ist Signature
+	i = 0;
+	while (Buf[i] > ' ')
+		i++; // erstes druckbares Zeichen finden
+	
+	Rett = Buf[i];
+	Buf[i] = '\0';
 	Res = strtobin(Buf, (char *) Signature, 3);
+	Buf[i] = Rett;
+	
 	if (Res == 0)
-		{
-		i = 1;
-		while (Buf[i] != '\0' && Buf[i-1] != '\n')
-			i++; // bis hinter das Zeilenende
+		{ // Umwandlung der Signatur erfolgreich. Jetzt zweites Wort suchen
+		i = i + 1;
+		while (Buf[i] != '\0' && Buf[i] <= ' ')
+			i++; //Steuerzeichen und Spaces überspringen
+		Start = i;
+		while (Buf[i] > ' ')
+			i++; // erstes druckbares Zeichen finden
+
+		Rett = Buf[i];
+		Buf[i] = '\0';
+		Res = strtobin(Buf + Start, (char *) Fuses, 3);
+		Buf[i] = Rett;
 		
-		printf_P(PSTR("<p>%d[%s]"), i, Buf + i);
-		
-		Res = strtobin(Buf + i, (char *) Fuses, 3);
+		// Res sollte jetzt immer noch 0 sein. 0 = strtobin war erfolgreich
 		}
-*/
+
 	CloseTCPSocket(SocketID);
 
 	if (Res != 0)
@@ -830,34 +843,54 @@ strtobin liefert -1 wenn es nicht exakt passt
 		}
 
 	// read and verify signature
-
-	for (uint8_t i = 0 ; i < 3 ; i++)
+	Res = 1; // means ok
+	for (i = 0 ; i < 3 ; i++)
+		{
 		if (SigRead(i, &readback))
-			ProtokollierenInt_P(PSTR("SigByte = %d\r\n" ), readback);
-	
-/*	
-	if (!FuseProgAndVerify(0, Fuses[0])
-	    || !FuseProgAndVerify(1, Fuses[1])
-		|| (Fuses[2] > 0 && !FuseProgAndVerify(2, Fuses[2])))
-		{
-		IspClose();
-		CloseTCPSocket(SocketID);
-		LED_off(1); // gelb
-		LED_off(3); // blau
-		return;
-		}
-*/
-
-	if (!ChipErase())
-		{
-		strcpy_P(IspDiagnoseText, PSTR("ISP chip erase failed."));
-		IspClose();
-		CloseTCPSocket(SocketID);
-		LED_off(1); // gelb
-		LED_off(3); // blau
-		return;
+			if (readback == Signature[i])
+				; // super
+			else
+				{
+				sprintf_P(IspDiagnoseText, PSTR("Signature mismatch: byte %d is %02X should be %02X."), i, readback, Signature[i]);
+				Res = 0; // failed
+				}
+		else
+			{
+			sprintf_P(IspDiagnoseText, PSTR("Signature read error byte %d."), i);
+			Res = 0; // failed
+			}
 		}
 		
+	if (Res)
+		{ // no errors so far -> erase old content
+		if (!ChipErase())
+			{
+			strcpy_P(IspDiagnoseText, PSTR("ISP chip erase failed."));
+			Res = 0;
+			}
+		}
+		
+	if (Res)
+		{ // no errors so far -> program fuses
+		for (i = 0 ; i < 3 ; i++)
+			{
+			if (Fuses[i] != 0)
+				{
+				if (!FuseProgAndVerify(0, Fuses[0]))
+					Res = 0; // failed, Message already stored
+				}
+			}
+		}
+
+	if (Res == 0) // any error so far?
+		{
+		IspClose();
+		CloseTCPSocket(SocketID);
+		LED_off(1); // gelb
+		LED_off(3); // blau
+		return;
+		}
+
 	LED_off(3); // blau
 		
 	StartKurzTimer(&AbbruchTimer);
