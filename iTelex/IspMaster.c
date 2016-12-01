@@ -468,8 +468,8 @@ int HttpGet(char *Pfad)
 //! Liest den HTTP Header komplett ein
 //------------------------------------
 //! \retval Code der Statusmeldung, meist 200 = OK, oder -1 bei Timeout oder -2 bei Kommunikationsfehler
-
-int16_t HttpReadHeader(int SocketID)
+//! \param[Out] Size Dateigröße laut Header.
+int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 	{
 	char LineBuf[64];
 	uint8_t i;
@@ -479,6 +479,8 @@ int16_t HttpReadHeader(int SocketID)
 	TKurzTimer AbbruchTimer;
 	
 	Res = 0;
+	if (Size != NULL)
+		*Size = 0;
 	
 	while (true)
 		{
@@ -527,7 +529,7 @@ int16_t HttpReadHeader(int SocketID)
 			else if (Flag) 
 				break;
 			}
-		// jetzt zeigt Pos auf das zweite Wort
+		// jetzt zeigt Pos auf das zweite Wort oder das Zeilenende
 		
 		if (Pos == 0)
 			break; // das war eine Leerzeile, die beendet den Header
@@ -536,8 +538,13 @@ int16_t HttpReadHeader(int SocketID)
 		if (strncmp_P(LineBuf, PSTR("HTTP/"), 5) == 0)
 			Res = atoi(LineBuf + Pos); // der Ergebniscode
 			
+		else if (strncmp_P(LineBuf, PSTR("Content-Length:"), 15) == 0)
+			{
+			if (Size != NULL)
+				*Size = atoi(LineBuf + Pos);
+			}
+		
 		// else... jetzt könnte man noch andere Rückmeldungen auswerten
-// TODO:  >> 'Content-Length: 7926'<< 
 		
 		} // while (true) ... Schleife über alle Zeilen des Header
 
@@ -562,7 +569,7 @@ static int DebugTestGetFilePerHttp(char *Filename)
 	if (SocketID < 0)
 		return -1;
 		
-	HttpHeadCode = HttpReadHeader(SocketID);
+	HttpHeadCode = HttpReadHeader(SocketID, NULL);
 	ProtokollierenInt_P(PSTR("Header Code: %d\r\n"), HttpHeadCode);
 	
 	StartKurzTimer(&AbbruchTimer);
@@ -692,6 +699,7 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	uint8_t Fuses[3];
 	TKurzTimer AbbruchTimer;
 	int16_t HttpHeadCode;
+	uint16_t FileSize;
 	uint16_t FehlerBytes;
 	uint16_t BlockStart;
 	uint16_t BlockFill;
@@ -731,7 +739,7 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 		return;
 		}
 		
-	HttpHeadCode = HttpReadHeader(SocketID); 
+	HttpHeadCode = HttpReadHeader(SocketID, NULL); 
 	if (HttpHeadCode != 200)
 		{
 		CloseTCPSocket(SocketID);
@@ -808,7 +816,7 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	
 	// da der Rest Zeitkritisch ist wird der Bildschirmaufbau erstmal zuende gebracht.
 	LED_on(1); // gelb
-	printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after yellow LED went off again."));
+	printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after blue and yellow LED went off again."));
 	cgi_PrintHttpheaderEnd();
 	STDOUT_Flush();
 	CloseTCPSocket(http_request->HTTP_SOCKET); // ist erfoderlich, damit erstmal die Meldung erscheint.
@@ -821,8 +829,9 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 		return;
 		}
 		
-	HttpHeadCode = HttpReadHeader(SocketID); //! \todo Dateigröße speichern und am Ende des Programmiervorgangs vergleichen
+	HttpHeadCode = HttpReadHeader(SocketID, &FileSize); 
 	ProtokollierenInt_P(PSTR("Header Code: %d\r\n"), HttpHeadCode);
+	ProtokollierenInt_P(PSTR("File size: %d\r\n"), FileSize);
 	if (HttpHeadCode != 200)
 		{
 		CloseTCPSocket(SocketID);
@@ -843,7 +852,7 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 		}
 
 	// read and verify signature
-	Res = 1; // means ok
+	FehlerBytes = 0;
 	for (i = 0 ; i < 3 ; i++)
 		{
 		if (SigRead(i, &readback))
@@ -851,38 +860,39 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 				; // super
 			else
 				{
-				sprintf_P(IspDiagnoseText, PSTR("Signature mismatch: byte %d is %02X should be %02X."), i, readback, Signature[i]);
-				Res = 0; // failed
+				sprintf_P(IspDiagnoseText, PSTR("Signature mismatch: byte %d is %02X should be %02X.<br>"), i, readback, Signature[i]);
+				if (i != 2) // das dritte Signatur-Byte kann auch mal abweichen (Mega168 / Mega168P)
+					FehlerBytes++; // failed
 				}
 		else
 			{
 			sprintf_P(IspDiagnoseText, PSTR("Signature read error byte %d."), i);
-			Res = 0; // failed
+			FehlerBytes++; // failed
 			}
 		}
 		
-	if (Res)
+	if (FehlerBytes == 0)
 		{ // no errors so far -> erase old content
 		if (!ChipErase())
 			{
 			strcpy_P(IspDiagnoseText, PSTR("ISP chip erase failed."));
-			Res = 0;
+			FehlerBytes++; // failed
 			}
 		}
 		
-	if (Res)
+	if (FehlerBytes == 0)
 		{ // no errors so far -> program fuses
 		for (i = 0 ; i < 3 ; i++)
 			{
 			if (Fuses[i] != 0)
 				{
 				if (!FuseProgAndVerify(0, Fuses[0]))
-					Res = 0; // failed, Message already stored
+					FehlerBytes++; // failed, Message already stored
 				}
 			}
 		}
 
-	if (Res == 0) // any error so far?
+	if (FehlerBytes > 0) // any error so far?
 		{
 		IspClose();
 		CloseTCPSocket(SocketID);
@@ -932,13 +942,17 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 			StartKurzTimer(&AbbruchTimer);
 			}	
 				
-		else if (CheckSocketState(SocketID) == SOCKET_NOT_USE && KurzTimerVal(&AbbruchTimer) > 2 * KurzTimerFreq)
+		else if (CheckSocketState(SocketID) == SOCKET_NOT_USE && KurzTimerVal(&AbbruchTimer) > 3 * KurzTimerFreq)
 			{ // dies ist das normale Ende.
 			Protokollieren_P(PSTR("FileGet: Beendigung durch Gegenstelle.\r\n"));
 			beenden = true;
 			}
 			
-		if (BlockFill == 64 || (beenden && BlockFill > 0))
+		if (BlockFill == 64   // ein Block zum Programmieren ist bereit
+			|| (beenden && BlockFill > 0) 
+						// oder Programmierdaten sind teilweise vorhanden aber Dateiende (Timeout) ist erreicht
+			|| ((BlockStart + BlockFill) >= FileSize && FileSize > 0))
+						// oder Programmierdaten wurden vollständig empfangen (nominelle Dateigröße erreicht) 
 			{
 			LED_on(3); // blau
 			if (!FlashWriteBlock64(BlockStart, (uint8_t *) Buf))
@@ -964,8 +978,12 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 				}
 			LED_off(3); // blau
 				
-			BlockStart += BlockFill; // pos ist meistens 64, außer beim Beenden.
+			BlockStart += BlockFill; // BlockFill ist meistens 64, außer beim Beenden.
 			BlockFill = 0;
+
+			if (BlockStart == FileSize)
+				beenden = true;
+			
 			} // if (BlockFill == 64 || (beenden && BlockFill > 0))
 			
 		} // while (!beenden)
@@ -976,7 +994,10 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	ProtokollierenInt_P(PSTR("GesamtBytes = %d\r\n" ), BlockStart);
 	ProtokollierenInt_P(PSTR("FehlerBytes = %d\r\n" ), FehlerBytes);
 
-	sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("%d bytes written to flash, %d failed."), BlockStart, FehlerBytes);
+	if (FehlerBytes == 0 && (FileSize == 0 || BlockStart == FileSize))
+		sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("successful: %d bytes written to flash, no failures."), BlockStart);
+	else
+		sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("Failure: %d nominal size, %d bytes written to flash, %d failed."), FileSize, BlockStart, FehlerBytes);
 		
 	LED_off(1); // gelb
 	
