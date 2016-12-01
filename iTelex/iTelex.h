@@ -69,6 +69,14 @@ DEFPORTOUT(RTS, D, 4)
 DEFPORTIN(CTS, D, 5)
 
 
+// LEDs
+// ====
+#define ROT 0
+#define GELB 1
+#define GRUEN 2
+#define BLAU 3
+
+
 // Konstanten
 // ================================================================
 
@@ -426,6 +434,8 @@ extern int iTelexSocketHandle;
 extern TiTelexSocketMode iTelexSocketMode;
 
 extern bool iTelexSocketAbbauGeplant;
+
+extern TKurzTimer iTelexThreadCheckTimer;
 
 extern TKurzTimer iTelexSocketAbbruchTimer;
 	

@@ -189,7 +189,7 @@ volatile uint8_t KurzTimerVorteilerCnt;
 
 volatile uint16_t LangTimerVorteilerCnt;
 
-static TKurzTimer ITelexThreadCheckTimer;
+TKurzTimer iTelexThreadCheckTimer;
 	//!< Prüft, ob die Funktion void itelex_thread() ausreichend häufig aufgerufen wird.
 
 //! Für den Test des Watchdogs.
@@ -603,14 +603,6 @@ uint16_t Debug_LowestSP;
 extern struct TCP_SOCKET TCP_sockettable[];
 
 	
-// LEDs
-// ----	
-#define ROT 0
-#define GELB 1
-#define GRUEN 2
-#define BLAU 3
-
-
 static inline uint8_t low(uint16_t x)
 	{
 	return x & 0xFF;
@@ -907,7 +899,7 @@ void itelex_timerEvent(void)
 	if (WatchdogTestTimerEnde == 0 || KurzTimerVal(&WatchdogTestTimer) < WatchdogTestTimerEnde)
 		wdt_reset();
 	
-	if (KurzTimerVal(&ITelexThreadCheckTimer) > 90 * KurzTimerFreq) // nach 90 Sekunden Reset
+	if (KurzTimerVal(&iTelexThreadCheckTimer) > 90 * KurzTimerFreq) // nach 90 Sekunden Reset
 		{ 
 		ProtokollierenITelex_P(PSTR("! Reset wegen nicht-Aufruf von itelex_thread()\r\n"));
 		ProtokollSpeichern(true);
@@ -915,7 +907,7 @@ void itelex_timerEvent(void)
 		}
 		
 #if defined(LEDROT_ITELEXTHREADBLOCK)
-	if (KurzTimerVal(&ITelexThreadCheckTimer) > KurzTimerFreq * 5/10) // nach halber Sekunde geht rot an
+	if (KurzTimerVal(&iTelexThreadCheckTimer) > KurzTimerFreq * 5/10) // nach halber Sekunde geht rot an
 		LED_on(ROT);
 #endif //defined(LEDROT_ITELEXTHREADBLOCK)
 		
@@ -3603,7 +3595,7 @@ void itelex_thread()
 
 	ITelexThreadCount++;
 
-	StartKurzTimer(&ITelexThreadCheckTimer);
+	StartKurzTimer(&iTelexThreadCheckTimer);
 	
 #if defined(LEDROT_ITELEXTHREADBLOCK)
 	LED_off(ROT); 
@@ -5224,7 +5216,7 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(TwiWatchdogCount);
 	PRINTVAL(BusKollisionZaehler);
 	PRINTVAL(KurzTimerVal(&iTelexSocketLebenszeichenTimer));
-	PRINTVAL(KurzTimerVal(&ITelexThreadCheckTimer));
+	PRINTVAL(KurzTimerVal(&iTelexThreadCheckTimer));
 
 	PRINTVAL(FalscherCode); 
 	PRINTVAL(TwiIsrCount); 
@@ -6485,7 +6477,7 @@ void itelex_init()
 		
 	Tastendruck = NichtGedr;
 
-	StartKurzTimer(&ITelexThreadCheckTimer);
+	StartKurzTimer(&iTelexThreadCheckTimer);
 		
 	cgi_RegisterCGI( itelex_cgi_msg_In, PSTR("itelex-msg-in.cgi"));
 	cgi_RegisterCGI( itelex_cgi_msg_Out, PSTR("itelex-msg-out.cgi"));

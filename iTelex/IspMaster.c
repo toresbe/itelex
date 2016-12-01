@@ -626,12 +626,12 @@ static int DebugTestGetFilePerHttp(char *Filename)
 // Hier folgenden die Hauptfunktionen
 // ===========================================
 
-char IspDiagnoseText[200];
+char IspDiagnoseText[300];
 
 
 const PROGMEM char BinServerPath_P[] = "servpath";
 const PROGMEM char ProgID_P[] = "progid";
-const PROGMEM char ClickToContinue_P[] = "Click <a href=\"isp.cgi\">here</a> to continue.";
+const PROGMEM char ClickToContinue_P[] = "<p>Click <a href=\"isp.cgi\">here</a> to continue.";
 
 
 //! Programmiert und prüft eine Fuse
@@ -643,19 +643,19 @@ static bool FuseProgAndVerify(uint8_t id, uint8_t val)
 	
 	if (!FuseWrite(id, val))
 		{
-		sprintf_P(IspDiagnoseText, PSTR("ISP fuse #%d program failed."), id);
+		sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("ISP fuse #%d program failed.<br>"), id);
 		return false;
 		}
 		
 	if (!FuseRead(id, &readback))
 		{
-		sprintf_P(IspDiagnoseText, PSTR("ISP fuse #%d read failed."), id);
+		sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("ISP fuse #%d read failed.<br>"), id);
 		return false;
 		}
 		
 	if (readback != val)
 		{
-		sprintf_P(IspDiagnoseText, PSTR("ISP fuse #%d verify failed."), id);
+		sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("ISP fuse #%d verify failed.<br>"), id);
 		return false;
 		}
 		
@@ -708,6 +708,9 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	bool beenden;
 	bool DownloadPfadGeaendert;
 
+	StartKurzTimer(&iTelexThreadCheckTimer);
+	LED_off(ROT);
+	
 	cgi_PrintHttpheaderStart();
 	
 	IspDiagnoseText[0] = '\0';
@@ -815,8 +818,8 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	printf_P(PSTR("<p>Loading binary data from %s."), FullPath);
 	
 	// da der Rest Zeitkritisch ist wird der Bildschirmaufbau erstmal zuende gebracht.
-	LED_on(1); // gelb
-	printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after blue and yellow LED went off again."));
+	LED_on(BLAU); 
+	printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after all LED on i-Telex board went off again."));
 	cgi_PrintHttpheaderEnd();
 	STDOUT_Flush();
 	CloseTCPSocket(http_request->HTTP_SOCKET); // ist erfoderlich, damit erstmal die Meldung erscheint.
@@ -825,7 +828,7 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	if (SocketID < 0)
 		{
 		sprintf_P(IspDiagnoseText, PSTR("Socket open failed code %d."), SocketID);
-		LED_off(1); // gelb
+		LED_off(BLAU); 
 		return;
 		}
 		
@@ -836,18 +839,21 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 		{
 		CloseTCPSocket(SocketID);
 		sprintf_P(IspDiagnoseText, PSTR("Fileserver error code %d."), HttpHeadCode);
-		LED_off(1); // gelb
+		LED_off(BLAU); 
 		return;
 		}
-	
-	LED_on(3); // blau
+
+	StartKurzTimer(&iTelexThreadCheckTimer);
+	LED_off(ROT); 
+		
+	LED_on(GELB); 
 	
 	if (!IspEnable())
 		{
 		strcpy_P(IspDiagnoseText, PSTR("ISP program enable failed. Check connection to target board."));
 		CloseTCPSocket(SocketID);
-		LED_off(1); // gelb
-		LED_off(3); // blau
+		LED_off(GELB); 
+		LED_off(BLAU); 
 		return;
 		}
 
@@ -860,22 +866,16 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 				; // super
 			else
 				{
-				sprintf_P(IspDiagnoseText, PSTR("Signature mismatch: byte %d is %02X should be %02X.<br>"), i, readback, Signature[i]);
 				if (i != 2) // das dritte Signatur-Byte kann auch mal abweichen (Mega168 / Mega168P)
 					FehlerBytes++; // failed
+				else
+					strcat_P(IspDiagnoseText, PSTR("Warning: "));
+				sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), 
+						  PSTR("Signature mismatch: byte %d is %02X should be %02X.<br>"), i, readback, Signature[i]);
 				}
 		else
 			{
-			sprintf_P(IspDiagnoseText, PSTR("Signature read error byte %d."), i);
-			FehlerBytes++; // failed
-			}
-		}
-		
-	if (FehlerBytes == 0)
-		{ // no errors so far -> erase old content
-		if (!ChipErase())
-			{
-			strcpy_P(IspDiagnoseText, PSTR("ISP chip erase failed."));
+			sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("Signature read error byte %d.<br>"), i);
 			FehlerBytes++; // failed
 			}
 		}
@@ -892,16 +892,26 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 			}
 		}
 
+	if (FehlerBytes == 0)
+		{ // no errors so far -> erase old content
+		if (!ChipErase())
+			{
+			strcat_P(IspDiagnoseText, PSTR("ISP chip erase failed.<br>"));
+			FehlerBytes++; // failed
+			}
+		}
+		
 	if (FehlerBytes > 0) // any error so far?
 		{
+		strcat_P(IspDiagnoseText, PSTR("Failed: nothing programmed."));
 		IspClose();
 		CloseTCPSocket(SocketID);
-		LED_off(1); // gelb
-		LED_off(3); // blau
+		LED_off(GELB);
+		LED_off(BLAU);
 		return;
 		}
 
-	LED_off(3); // blau
+	LED_off(GELB);
 		
 	StartKurzTimer(&AbbruchTimer);
 	
@@ -912,8 +922,16 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	
 	while (!beenden)
 		{
+		StartKurzTimer(&iTelexThreadCheckTimer);
+		LED_off(ROT);
+		
 		int InCount = GetBytesInSocketData(SocketID);
 
+		if ((BlockStart & 64) == 0)
+			LED_on(GRUEN);
+		else
+			LED_off(GRUEN); // gruen blinkt mit jedem Block
+			
 		if (KurzTimerVal(&AbbruchTimer) > 5 * KurzTimerFreq)
 			{
 			strcpy_P(IspDiagnoseText, PSTR("Server timeout? "));
@@ -954,7 +972,7 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 			|| ((BlockStart + BlockFill) >= FileSize && FileSize > 0))
 						// oder Programmierdaten wurden vollständig empfangen (nominelle Dateigröße erreicht) 
 			{
-			LED_on(3); // blau
+			LED_on(GELB);
 			if (!FlashWriteBlock64(BlockStart, (uint8_t *) Buf))
 				{
 				strcpy_P(IspDiagnoseText, PSTR("FlashWriteBlock64 failed. "));
@@ -976,7 +994,7 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 					FehlerBytes++;
 					}
 				}
-			LED_off(3); // blau
+			LED_off(GELB);
 				
 			BlockStart += BlockFill; // BlockFill ist meistens 64, außer beim Beenden.
 			BlockFill = 0;
@@ -995,11 +1013,12 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	ProtokollierenInt_P(PSTR("FehlerBytes = %d\r\n" ), FehlerBytes);
 
 	if (FehlerBytes == 0 && (FileSize == 0 || BlockStart == FileSize))
-		sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("successful: %d bytes written to flash, no failures."), BlockStart);
+		sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("Success: %d bytes written to flash, no failures."), BlockStart);
 	else
-		sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("Failure: %d nominal size, %d bytes written to flash, %d failed."), FileSize, BlockStart, FehlerBytes);
+		sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("Failed: %d nominal size, %d bytes written to flash, %d failed."), FileSize, BlockStart, FehlerBytes);
 		
-	LED_off(1); // gelb
+	LED_off(GRUEN);
+	LED_off(BLAU);
 	
 	} // ProgrammiereVomNetz()
 	
@@ -1022,7 +1041,7 @@ void ProgrammiereDupliziertenBootloader()
 
 void cgi_Isp(void *pStruct)
 	{
-	static TSprache Sprache;
+	//static TSprache Sprache;
 	char BinServerPath[120]; 
 	char Ident[50];
 
@@ -1041,11 +1060,6 @@ void cgi_Isp(void *pStruct)
 		
 		cgi_PrintHttpheaderStart();
 
-		printf_P(PSTR("<h1>Before start of any programming action connect target board by special cable</h1><p>"));
-
-		if (IspDiagnoseText[0] != '\0')
-			printf_P(PSTR("Result of last operation: <big>%s</big><p>"), IspDiagnoseText);
-
 		CgiFormStartTabbed_P(PSTR("isp.cgi"));
 
 		CgiFormInputFieldText_P(PSTR("Path to server for binaries"), BinServerPath_P, sizeof(BinServerPath)-1, BinServerPath);
@@ -1053,13 +1067,21 @@ void cgi_Isp(void *pStruct)
 		
 		CgiFormInputFieldText_P(PSTR("What to program (leave empty for auto-detection)"), ProgID_P, sizeof(Ident)-1, Ident);
 
-		CgiFormFinish_P(PSTR("Start programming"));
 
+		CgiFormFinish_P(PSTR("Start programming"));
+		
+		if (IspDiagnoseText[0] != '\0')
+			printf_P(PSTR("<p>Result of last operation:<p><big>%s</big>"), IspDiagnoseText);
+		else
+			printf_P(PSTR("<h3>Before start programming action connect target board by special cable</h3><p>"));
+		
 		cgi_PrintHttpheaderEnd();
 		} // if (http_request->argc == 0)
 		
 	else if (PharseCheckName_P(http_request, ProgID_P))
 		{ // kann nur durch Drücken der Taste "Start" erreicht werden
+		IspDiagnoseText[0] = '\0';
+		LED_on(BLAU);
 		strncpy(Ident, http_request->argvalue[PharseGetValue_P(http_request, ProgID_P)], sizeof(Ident)-1);
 		Ident[sizeof(Ident)-1] = '\0';
 		if (Ident[0] == '\0')
@@ -1080,6 +1102,7 @@ void cgi_Isp(void *pStruct)
 				cgi_PrintHttpheaderEnd();
 				} 
 			}
+		LED_off(BLAU);
 				
 		if (Ident[0] != '\0')
 			{ // Identifikation scheint gültig (entweder automatisch ermittelt oder von Hand eingegeben)
