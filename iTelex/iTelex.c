@@ -247,10 +247,10 @@ static uint8_t AsciiHilfZeilenanfang;
 	//!< Speichert, an welcher Stelle in einer Zeile der Hilfspuffer beginnt, d.h. wieviele
 	//!< Zeichen bereits vorher gedruckt worden sind. Erforderlich für automatischen Zeilenumbruch.
 	
-enum { Druckzeilenlaenge = 68 } ; 
-	//!< Zeichen pro Zeile auf den Fernschreibern.
+static uint8_t Druckzeilenlaenge; 
+	//!< Maximale Anzahl Zeichen pro Zeile auf den Fernschreibern.
+	//!< wird nur bei Ascii-Verarbeitung berücksichtigt
 	
-
 static TKurzTimer HtmlDruckspiegelAnzeigeTimer;
 	//!< Zeit seit der letzten Anzeige des Druckspiegels. Druckspiegel wird alle 10 Sekunden 
 	//!< abgerufen.
@@ -5514,6 +5514,7 @@ const PROGMEM char MeldungsdruckLevel_P[] = "MELDRUCK";
 const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
 const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
 const PROGMEM char DatumDruckModus_P[] = "AUTODATUM";
+const PROGMEM char Druckzeilenlaenge_P[] = "ZEILENLAENGE";
 
 #endif // ITELEX_ANSCHLUSS
 
@@ -5566,6 +5567,9 @@ void itelex_cgi_config_intern(void *pStruct)
 		CgiFormInputFieldText_P(ISTR(DurchwahlenListe, Sprache), DurchwahlTabelle_P, 30, Buf);
 
 		CgiFormDropdown_P(ISTR(DatumDruckModus, Sprache), DatumDruckModus_P, 4, AutoDatumSelList, DatumDruckModus);
+		
+		readConfig_P(Druckzeilenlaenge_P, Buf);
+		CgiFormInputFieldText_P(ISTR(Druckzeilenlaenge, Sprache), Druckzeilenlaenge_P, 3, Buf);
 		
 		#endif //def ITELEX_ANSCHLUSS
 
@@ -5713,6 +5717,36 @@ void itelex_cgi_config_intern(void *pStruct)
 				printf_P(ISTR(Unveraendert, Sprache));
 			}
 			
+		// Druckzeilenlaenge
+		// -----------------
+		if (PharseCheckName_P(http_request, Druckzeilenlaenge_P))
+			{
+			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, Druckzeilenlaenge_P)], 3);
+			Buf[3] = '\0';
+			Neu = atoi(Buf);
+			printf_P(PSTR("<br>"));
+			printf_P(ISTR(Druckzeilenlaenge, Sprache));
+			if (Neu == Druckzeilenlaenge)
+				{
+				printf_P(ISTR(Unveraendert, Sprache));
+				printf_P(PSTR(": %s"), Buf);
+				}
+			else 
+				{
+				if (Neu < 10) 
+					{
+					Neu = 10;
+					strcpy_P(Buf, PSTR("10"));
+					}
+				changeConfig_P(Druckzeilenlaenge_P, Buf);
+				Druckzeilenlaenge = Neu;
+				printf_P(ISTR(GeaendertIn, Sprache));
+				printf_P(PSTR(": %s"), Buf);
+				}
+			}
+		
+		
+		
 		#endif // ITELEX_ANSCHLUSS
 		
 		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 
@@ -6353,7 +6387,14 @@ void itelex_init()
 		DatumDruckModus = atoi(Buf);
 	else
 		DatumDruckModus = DatumDruckBeide;
-
+	
+	if (readConfig_P(Druckzeilenlaenge_P, Buf) == 1)
+		Druckzeilenlaenge = atoi(Buf);
+	else
+		Druckzeilenlaenge = 68;
+	if (Druckzeilenlaenge < 10)
+		Druckzeilenlaenge = 10;
+	
 	#endif // ITELEX_ANSCHLUSS
 
 	#ifdef ITELEX_TLNSERVER

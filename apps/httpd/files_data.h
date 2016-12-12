@@ -286,7 +286,7 @@ const char data7[] PROGMEM = {
 	"Build " SVNVERSION " at Date: " __DATE__ " " __TIME__ "\r\n"
 	"Modules:"
 #ifdef ITELEX_ANSCHLUSS
-	" i-Telex"
+	" Anschluss"
 #endif
 #ifdef ITELEX_TLNSERVER
 	" Nameserver"
@@ -298,7 +298,7 @@ const char data7[] PROGMEM = {
 	"build on AVR-libc version: " __AVR_LIBC_VERSION_STRING__ "/" __AVR_LIBC_DATE_STRING__ 
 	" with avr-gcc " __VERSION__ "\r\n"
 	"\r\n"
-	"(c)2006-2015   Software: Fred Sonnenrein\r\n"
+	"(c)2006-2016   Software: Fred Sonnenrein\r\n"
 	"based on OpenMCP by Dirk Brosswick\r\n"
 	"</pre></p><br>"
 	"This project on <a href=\"http://sourceforge.net/projects/itelex/\" target=\"_blank\">SourceForge</a>"
