@@ -467,7 +467,9 @@ extern TSprache LokaleSprache;
 
 extern void ModusWechsel(TModus neu);
 
-extern void itelex_init( void );
+extern void itelex_init1( void );
+
+extern void itelex_init2( void );
 
 extern bool WarteTaste();
 

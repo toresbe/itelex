@@ -59,6 +59,7 @@
 #include "apps/apps_init.h"
 #include "apps/modul_init.h"
 #include "system/thread/thread.h"
+#include "system/net/network.h"
 
 #include "hardware/led-tafel/led_tafel-par.h"
 
@@ -77,6 +78,12 @@ void main( void )
 	LED_on(2);
 #endif	
 
+	// User-Module initialisieren
+	itelex_init1();
+
+	// Netzwerk starten
+	network_init(); 
+
 	// Applikationen initialisieren (http, telnet, cron, .... )
 	apps_init();
 
@@ -92,7 +99,7 @@ void main( void )
 #endif	
 	
 	// User-Module initialisieren
-	itelex_init();
+	itelex_init2();
 
 #if defined(iTelex)
 	LED_off(3);

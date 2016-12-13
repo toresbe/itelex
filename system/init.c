@@ -311,7 +311,7 @@ void init( void )
 	printf_P( config_ok );
 
 	// Netzwerk starten
-	network_init();
+	// network_init(); --> verschoben nach main.c
 	
 #if defined(LEDTAFEL) || defined(LEDTAFEL_PAR)
 	LEDTAFEL_fadeout_display( 16 , NULL );

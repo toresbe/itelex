@@ -6200,7 +6200,7 @@ ISR(WDT_vect)
 //------------------------------------------------------------------------
 //! Wird aufgerufen, wenn Taste während der Boot-Phase gedrückt wird.
 
-static void iTelexInit_Taste()
+static void iTelexInit_BeiTasteGedrueckt()
 	{
 	TKurzTimer TasteTimer;
 	
@@ -6277,17 +6277,17 @@ static void iTelexInit_Taste()
 	LED_off(GELB);
 	LED_off(GRUEN);
 	LED_on(BLAU);
-	} // iTelexInit_Taste()
+	} // iTelexInit_BeiTasteGedrueckt()
 	
-	
+
 /*------------------------------------------------------------------------------------------------------------*/
-/*!\brief Initialisiert den iTelex-clinet und registriert den Port auf welchen dieser lauschen soll.
+/*!\brief Initialisierung der i-Telex-Software vor dem Initialisieren der Netzwerkschnittstelle.
  * \param 	NONE
  * \return	NONE
  */
 /*------------------------------------------------------------------------------------------------------------*/
 
-void itelex_init()
+extern void itelex_init1(void)
 	{
 	uint16_t i; // für mehrere Zwecke
 	char Buf[TlnNameMax]; // unversell verwendet, TlnNameMax ist auch der längste erlaubte Wert in der Konfig.
@@ -6314,7 +6314,7 @@ void itelex_init()
 
 	// RamCorrTestInit(); // TODO konfigurierbar.
 
-	printf_P(PSTR("itelex_init:\r\n"));
+	printf_P(PSTR("itelex_init1:\r\n"));
 	
 	DiagnosePuffer[0] = '\0';
 	DiagnosePufferLevel = 0;
@@ -6492,6 +6492,25 @@ void itelex_init()
 		
 	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 
+	if (!get_Taste()) // Gedrückt = LOW!
+		iTelexInit_BeiTasteGedrueckt();
+		
+	Tastendruck = NichtGedr;
+	
+	} // itelex_init1()
+	
+	
+/*------------------------------------------------------------------------------------------------------------*/
+/*!\brief Initialisiert den iTelex-clinet und registriert den Port auf welchen dieser lauschen soll.
+ * \param 	NONE
+ * \return	NONE
+ */
+/*------------------------------------------------------------------------------------------------------------*/
+
+void itelex_init2()
+	{
+	printf_P(PSTR("itelex_init1:\r\n"));
+		
 	timer0_init(iTelexTimerFreq); 
 	if (!timer0_RegisterCallbackFunction(itelex_timerEvent))
 		return;
@@ -6513,11 +6532,6 @@ void itelex_init()
 		// in itelex_timerEvent wird wdt_reset() ausgefährt.
 	SREG = SregTemp;
 		
-	if (!get_Taste()) // Gedrückt = LOW!
-		iTelexInit_Taste();
-		
-	Tastendruck = NichtGedr;
-
 	StartKurzTimer(&iTelexThreadCheckTimer);
 		
 	cgi_RegisterCGI( itelex_cgi_msg_In, PSTR("itelex-msg-in.cgi"));
