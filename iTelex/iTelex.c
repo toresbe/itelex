@@ -5572,8 +5572,8 @@ void itelex_cgi_config_intern(void *pStruct)
 		CgiFormInputFieldText_P(ISTR(DurchwahlenListe, Sprache), DurchwahlTabelle_P, 30, Buf);
 
 		CgiFormDropdown_P(ISTR(DatumDruckModus, Sprache), DatumDruckModus_P, 4, AutoDatumSelList, DatumDruckModus);
-		
-		readConfig_P(Druckzeilenlaenge_P, Buf);
+
+		itoa(Druckzeilenlaenge, Buf, 10); // 10 ist die Basis für Dezimal!
 		CgiFormInputFieldText_P(ISTR(Druckzeilenlaenge, Sprache), Druckzeilenlaenge_P, 3, Buf);
 		
 		#endif //def ITELEX_ANSCHLUSS
