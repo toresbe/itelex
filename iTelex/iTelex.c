@@ -580,6 +580,9 @@ static TLangTimer ZeitServerAbfrageTimer;
 static uint16_t ZeitServerAbfrageTimerEnde;
 	//!< Nach Ablauf dieser Zeit wird der Zeitserver wieder abgefragt.
 	
+static bool UhrzeitVerteilen;
+	//!< Schalter, ob die aktuelle Uhrzeit per Broadcast auf dem TWI-Bus verteilt werden soll.
+	
 #endif //def NTP
 	
 	
@@ -4815,7 +4818,8 @@ void itelex_thread()
 
 	struct TIME Time;
 	CLOCK_GetTime(&Time);
-	if (Time.mm != MinuteLetzeRundsendung && BusFrei && (BusAuftrag == Nichts || BusAuftrag == Fertig))
+	if (UhrzeitVerteilen && Time.mm != MinuteLetzeRundsendung 
+		&& BusFrei && (BusAuftrag == Nichts || BusAuftrag == Fertig))
 		{
 		MinuteLetzeRundsendung = Time.mm;
 		
@@ -5515,6 +5519,7 @@ const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
 const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
 const PROGMEM char DatumDruckModus_P[] = "AUTODATUM";
 const PROGMEM char Druckzeilenlaenge_P[] = "ZEILENLAENGE";
+const PROGMEM char UhrzeitVerteilen_P[] = "ZEITRUNDSEND";
 
 #endif // ITELEX_ANSCHLUSS
 
@@ -5572,6 +5577,8 @@ void itelex_cgi_config_intern(void *pStruct)
 		CgiFormInputFieldText_P(ISTR(Druckzeilenlaenge, Sprache), Druckzeilenlaenge_P, 3, Buf);
 		
 		#endif //def ITELEX_ANSCHLUSS
+		
+		CgiFormCheckbox_P(ISTR(UhrzeitVerteilen, Sprache), UhrzeitVerteilen_P, UhrzeitVerteilen);
 
 		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 2, ProtokollLevel + (SocketProtokollEin ? 10 : 0));
 		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
@@ -5745,9 +5752,11 @@ void itelex_cgi_config_intern(void *pStruct)
 				}
 			}
 		
-		
-		
 		#endif // ITELEX_ANSCHLUSS
+
+		// Uhrzeit verteilen
+		// ------------------
+		UhrzeitVerteilen = CgiCheckBool_P(http_request, ISTR(UhrzeitVerteilen, Sprache), UhrzeitVerteilen_P, UhrzeitVerteilen, Sprache);
 		
 		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 
 										 ProtokollLevel + (SocketProtokollEin ? 10 : 0), Sprache);
@@ -6423,6 +6432,8 @@ extern void itelex_init1(void)
 	TlnBuchOffen = ReadConfigBool(TlnBuchOffen_P, true);
 	
 	LangeDienstmeldungen = ReadConfigBool(LangeDienstmeldungen_P, false);
+	
+	UhrzeitVerteilen = ReadConfigBool(UhrzeitVerteilen_P, true);
 	
 	if (readConfig_P(MeldungsdruckLevel_P, Buf) == 1)
 		MeldungsdruckLevel = atoi(Buf);

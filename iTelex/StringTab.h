@@ -89,6 +89,7 @@ _STRTABENTRY(FesteHauptstelleNummer, "interne Durchwahl der Hauptstelle f&uuml;r
 _STRTABENTRY(AlternativSucheBeiBesetzt, "Alternativ-Suche bei besetzt", "Use alternative secondary teleprinter if primary is busy")
 _STRTABENTRY(DurchwahlenListe, "Durchwahlen (mit Komma trennen)", "Secondary call numbers list (separate by comma)")
 _STRTABENTRY(Druckzeilenlaenge, "Automatischer Zeilenumbruch an Position", "Automatic line break at position")
+_STRTABENTRY(UhrzeitVerteilen, "Uhrzeit an andere Module verteilen", "Broadcast time to other modules")
 _STRTABENTRY(ProtokollLevel, "Tiefe der Protokollierung an serieller Schnittstelle", "Logging level at serial port")
 _STRTABENTRY(ProtokollLevelTlnServer, "Tiefe der Protokollierung f&uuml;r Teiln-Server", "Logging level for directory server")
 _STRTABENTRY(DiagnoseLevel, "Level f&uuml;r Druckausgabe von Meldungen", "Message filtering level")
