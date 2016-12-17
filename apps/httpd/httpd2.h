@@ -33,7 +33,7 @@
 	#endif
 
 	// Son 04.12.2012: von 8 auf 12 erhöht.
-	#define MAX_HTTP_PARAMS			12
+	#define MAX_HTTP_PARAMS			15
 	
 
 	/*! \struct HTTP_REQUEST
