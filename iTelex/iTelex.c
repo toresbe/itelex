@@ -6524,7 +6524,7 @@ extern void itelex_init1(void)
 
 void itelex_init2()
 	{
-	printf_P(PSTR("itelex_init1:\r\n"));
+	printf_P(PSTR("itelex_init2:\r\n"));
 		
 	timer0_init(iTelexTimerFreq); 
 	if (!timer0_RegisterCallbackFunction(itelex_timerEvent))
