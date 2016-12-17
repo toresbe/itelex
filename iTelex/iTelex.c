@@ -5287,8 +5287,8 @@ void itelex_cgi_debug( void * pStruct )
 		printf_P(PSTR(" %lu"), 1100UL * 1024UL / Mess);
 		}
 				  
-	printf_P(PSTR("<br><a href=\"itelex-debug.cgi?reset\">Statiktik-Daten zur&uuml;cksetzen</a>"
-				  "<br>Ethernet: %ld Bytes in %ld Packeten LockErrors %ld") , 
+	printf_P(PSTR("<br><a href=\"itelex-debug.cgi?reset\">Statistik-Daten zur&uuml;cksetzen</a>"
+				  "<br>Ethernet: %ld Bytes in %ld Paketen LockErrors %ld") , 
 				  ByteCounter, PacketCounter, eth_state_error );
 
 	cgi_PrintHttpheaderEnd();
