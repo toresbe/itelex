@@ -4819,7 +4819,11 @@ void itelex_thread()
 	struct TIME Time;
 	CLOCK_GetTime(&Time);
 	if (UhrzeitVerteilen && Time.mm != MinuteLetzeRundsendung 
-		&& BusFrei && (BusAuftrag == Nichts || BusAuftrag == Fertig))
+		&& (Modus == ModDeaktiviert || Modus == ModRuhe)
+		&& SelbstAnrufPhase == SelbstAnrufRuhe
+		&& iTelexSocketHandle == NO_SOCKET_USED
+		&& BusFrei 
+		&& (BusAuftrag == Nichts || BusAuftrag == Fertig))
 		{
 		MinuteLetzeRundsendung = Time.mm;
 		
