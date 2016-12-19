@@ -1,3 +1,9 @@
+Ab Build 684:
+Zeilenlänge einstellbar
+Uhrzeit-Verteilung abschaltbar
+In-System-Programmierung für andere Module umstrukturiert
+Konfigurations-Reset jetzt vor der Netzwerk-Initialisierung
+
 Ab Build 621:
 In-System-Programmierung für andere Module möglich
 
