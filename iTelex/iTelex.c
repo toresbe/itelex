@@ -537,17 +537,17 @@ static TZeitUeberwachung SelbstAnrufZeitUeberwachung;
 #endif // ITELEX_ANSCHLUSS
 	
 
-#ifdef USTTY
-	
-//! Sollfrequenz des Aufrufs von itelex_timerEvent()
-enum { iTelexTimerFreq = 455 } ; // 45,5 Baud mit 10 Takten je Bit	
+#ifndef BIT_LENGTH
 
-#else
-	
-//! Sollfrequenz des Aufrufs von itelex_timerEvent()
-enum { iTelexTimerFreq = 50 * 10 } ; // 50 Baud mit 10 Takten je Bit	
+//! Bit-Länge in Millisekunden
+#define BIT_LENGTH 20
 
 #endif
+
+	
+//! Sollfrequenz des Aufrufs von itelex_timerEvent()
+enum { iTelexTimerFreq = 10000 / BIT_LENGTH } ; // 10 Takten je Bit, im Millisekunden
+
 
 char DiagnosePuffer[DiagnosePufferMax];
 	//!< String für außergewöhnliche Fälle
@@ -5124,6 +5124,40 @@ void itelex_cgi_debug( void * pStruct )
 	printf_P(PSTR("DiagnosePuffer: %s"), DiagnosePuffer);
 	PRINTVAL(DiagnosePufferLevel);
 
+	PRINTVAL(Modus);
+	PRINTVALHEX(Status); // bezüglich interner Telex Funktionalität (ist auf TWI-Bus sichtbar)
+
+	PRINTVAL(iTelexSocketMode);
+	PRINTVALS(iTelexSocketHandle);
+	PRINTVALHEX(iTelexSocketIP);
+	PRINTVAL(iTelexSocketPort);
+	PRINTVAL(iTelexSocketProtokoll);
+	PRINTVAL(iTelexSocketProtVersion);
+	PRINTVAL(iTelexSocketAbbauGeplant);
+	PRINTVAL(KurzTimerVal(&iTelexSocketAbbruchTimer));
+	PRINTVAL(SocketInBufUsed);
+	PRINTVAL(SocketOutBufUsed);
+	PRINTVAL(ProtokollPhase);
+
+	PRINTVAL(SocketAnzahlZeichenGesendet);
+	PRINTVAL(SocketAnzahlZeichenQuittiert);
+	PRINTVAL(SocketAnzahlZeichenEmpfangen);
+	
+	PRINTVAL(DynIP_Phase);
+	PRINTVAL(LangTimerVal(&DynIPAktualisierungTimer));
+	PRINTVAL(DynIPAktualisierungEndzeit);
+
+	PRINTVAL(SelbstAnrufPhase);
+	PRINTVAL(SelbstAnrufFehlerZaehler);
+	PRINTVAL(KurzTimerVal(&SelbstAnrufTimer));
+	PRINTVAL(SelbstAnrufEndzeit);
+	PRINTVALS(SelbstAnrufSocketHandle);
+	PRINTVAL(SelbstAnrufSendePruefwert);
+	PRINTVAL(SelbstAnrufEmpfangPruefwert);
+	
+	printf_P(PSTR("<br>SelbstAnrufZeitUeberwachung: "));
+	printf(ZeitUeberwachungAusgabe(&SelbstAnrufZeitUeberwachung));
+	
 	// RamCorrTestDebugPrint(); // TODO konfigurierbar.
 	
 #ifdef ITELEX_TLNSERVER
@@ -5135,6 +5169,8 @@ void itelex_cgi_debug( void * pStruct )
 	
 #ifdef ITELEX_ANSCHLUSS
 
+	PRINTVALS(TeilnehmerServerSocket);
+
 	PRINTVAL(TeilnehmerServerAlleNichtErreichbar);
 	PRINTVAL(AktTlnServerTabI);
 	for (uint8_t i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
@@ -5142,11 +5178,8 @@ void itelex_cgi_debug( void * pStruct )
 		printf_P(PSTR("<br>TeilnehmerServerFehlerZaehler(%s) = %d, Sperre-Timer %d"), 
 				 TeilnehmerServerAdresse[i], TeilnehmerServerFehlerZaehler[i], LangTimerVal(&TeilnehmerServerSperrTimer[i]));
 		}
-	
-	PRINTVAL(Modus);
-	PRINTVALHEX(Status); // bezüglich interner Telex Funktionalität (ist auf TWI-Bus sichtbar)
 
-	//*
+	/*
 	PRINTVAL(BusEmpfMark);
 	PRINTVAL(SerUmTickZaehlerEmpf);
 	PRINTVAL(SerUmEmpfBitNr); 
@@ -5179,45 +5212,14 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(KurzTimerVal(&SchreibPauseTimer));
 	//*/
 	
-	PRINTVAL(DynIP_Phase);
-	PRINTVAL(LangTimerVal(&DynIPAktualisierungTimer));
-	PRINTVAL(DynIPAktualisierungEndzeit);
-
-	PRINTVAL(SelbstAnrufPhase);
-	PRINTVAL(SelbstAnrufFehlerZaehler);
-	PRINTVAL(KurzTimerVal(&SelbstAnrufTimer));
-	PRINTVAL(SelbstAnrufEndzeit);
-	PRINTVALS(SelbstAnrufSocketHandle);
-	PRINTVAL(SelbstAnrufSendePruefwert);
-	PRINTVAL(SelbstAnrufEmpfangPruefwert);
-	
-	printf_P(PSTR("<br>SelbstAnrufZeitUeberwachung: "));
-	printf(ZeitUeberwachungAusgabe(&SelbstAnrufZeitUeberwachung));
-	
-	PRINTVAL(iTelexSocketMode);
-	PRINTVALS(iTelexSocketHandle);
-	PRINTVALHEX(iTelexSocketIP);
-	PRINTVAL(iTelexSocketPort);
-	PRINTVAL(iTelexSocketProtokoll);
-	PRINTVAL(iTelexSocketProtVersion);
-	PRINTVAL(iTelexSocketAbbauGeplant);
-	PRINTVAL(KurzTimerVal(&iTelexSocketAbbruchTimer));
-	PRINTVAL(SocketInBufUsed);
-	PRINTVAL(SocketOutBufUsed);
-	PRINTVAL(ProtokollPhase);
-
-	PRINTVAL(SocketAnzahlZeichenGesendet);
-	PRINTVAL(SocketAnzahlZeichenQuittiert);
-	PRINTVAL(SocketAnzahlZeichenEmpfangen);
-
-	PRINTVALS(TeilnehmerServerSocket);
-	
+	/*
 	printf_P(PSTR("<br>HtmlSendeText: ["));
 	printf(HtmlSendeText);
 	printf_P(PSTR("]<br>AsciiDruckPuffer: ["));
 	printf(AsciiDruckPuffer);
 	printf_P(PSTR("]"));
-
+	//*/
+	
 	PRINTVAL(LangTimerVal(&BeideRuhigTimer));
 	PRINTVAL(KurzTimerVal(&BusQuittTimer));
 	PRINTVAL(TwiLebenszeichenZaehler);

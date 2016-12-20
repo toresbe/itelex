@@ -283,7 +283,11 @@ const char data7[] PROGMEM = {
 	"   O         O    O      O      O       O O   \r\n"
 	"  OOO        O    OOOOO  OOOOO  OOOOO  O   O  \r\n"
 	"______________________________________________\r\n"
-	"Build " SVNVERSION " at Date: " __DATE__ " " __TIME__ "\r\n"
+	"Build " SVNVERSION 
+#ifdef PROG_ID_ZUSATZ
+	" " PROG_ID_ZUSATZ
+#endif
+	" at Date: " __DATE__ " " __TIME__ "\r\n"
 	"Modules:"
 #ifdef ITELEX_ANSCHLUSS
 	" Anschluss"
