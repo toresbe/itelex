@@ -76,7 +76,9 @@ static uint8_t EmailAbfrageTakt;
 
 static bool EmailAusgabeFilternKennung;
 	//!< Nur die emails ausgeben, die eine +TX+ Kennung in der Subject-Zeile haben.
-	
+
+static uint8_t EmailDruckZiel;
+	//!< Nebenstelle für die Druckausgabe von Mails, 0 falls Hauptstelle.
 	
 static char EmailEmpfaenger[TlnAdresseMax];
 	//!< Zwischenspeicher für Empfänger.
@@ -127,9 +129,10 @@ enum {
 	StartData = 8,
 	WarteStart = 9,
 	MailSubject = 10,
-	MailData = 11,
-	Abmelden = 12,
-	WarteEnde = 13
+	MailWarteEinschaltungDruck = 11,
+	MailData = 12,
+	Abmelden = 13,
+	WarteEnde = 14
 	} ; // Konstanten für ProtokollPhase
 
 	
@@ -450,8 +453,8 @@ void POP3DatenVerarbeiten()
 				if (SocketInBuf[i] == ' ')
 					break;
 					
-			if (i < SocketInBufUsed && atoi(SocketInBuf + i) == 0)
-				{ // nichts im Puffer ODER plötzlich doch belegt...
+			if (i >= SocketInBufUsed || atoi(SocketInBuf + i) == 0)
+				{ // ungültige Antwort oder keine Mails im Puffer
 				POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
 				StartLangTimer(&POPWartezeitTimer);
 				strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
@@ -460,22 +463,44 @@ void POP3DatenVerarbeiten()
 				}
 			else
 				{ // mindestens eine Meldung im Puffer...
-				strcpy_P(AsciiDruckPuffer, ISTR(EmailEmpfangStartzeile, LokaleSprache)); 
-					// startet sofort den Fernschreiber
-				
-				strcpy_P(SocketOutBuf, PSTR("RETR 1\r\n"));
-				ProtokollPhase = MailData;
-				InMailHeader = true; // für MailZeileVerarbeiten()
-				MailUnterdruecken = false;
+				if (SonstigeAnwahl(EmailDruckZiel))
+					{
+					ModusWechsel(ModEmailPOPWarteEinQuitt);
+					ProtokollPhase = MailWarteEinschaltungDruck;
+					}
+				else
+					{ // Drucken momentan nicht möglich
+					POPWartezeitEnde = EmailAbfrageTakt * LangTimerMinuteFaktor;
+					strcpy_P(SocketOutBuf, PSTR("QUIT\r\n"));
+					iTelexSocketAbbauGeplant = true;
+					ProtokollPhase = WarteEnde;
+					}
+				StartLangTimer(&POPWartezeitTimer);
 				}
 				
 			SocketInBufUsed = 0;
 			break;
 			
+		case MailWarteEinschaltungDruck:
+			if (Modus == ModEmailPOPWarteEinQuitt)
+				{
+				//if (LangTimerVal(&POPWartezeitTimer) > KurzTimer wird gebraucht TODO Timeout
+				break; // weiter warten
+				}
+			else if (Modus == ModEmailPOPVerbunden) 
+				{
+				strcpy_P(AsciiDruckPuffer, ISTR(EmailEmpfangStartzeile, LokaleSprache)); 
+				InMailHeader = true; // für MailZeileVerarbeiten()
+				MailUnterdruecken = false;
+				strcpy_P(SocketOutBuf, PSTR("RETR 1\r\n"));
+				ProtokollPhase = MailData;
+				}
+			break;
+		
 		case MailData:
 			//HACK if (AsciiDruckPuffer[0] != '\0')
 			//HACK	return; // es wird noch gedruckt, also nichts neues Drucken...
-				
+			
 			// Empfang in einzelne Zeilen zerlegen und verarbeiten...
 			ZeileAnfang = 0;
 			while (ZeileAnfang < SocketInBufUsed)
@@ -923,6 +948,7 @@ const PROGMEM char EmailEigeneAdresse_P[] = "EMAILADR";
 const PROGMEM char EmailEigenesPasswort_P[] = "EMAILPASS";
 const PROGMEM char EmailAbfrageTakt_P[] = "EMAILABFRTAKT";
 const PROGMEM char EmailAusgabeFilternKennung_P[] = "EMAILFILTERKENNUNG";
+const PROGMEM char EmailDruckZiel_P[] = "EMAILNST";
 
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface zum Ändern der Einstellungen des iTelex-Interface bezüglich der Anbindung 
@@ -958,6 +984,9 @@ void itelex_cgi_email_config(void *pStruct)
 		CgiFormInputFieldULong_P(ISTR(EmailKonfigAbfragetakt, Sprache), EmailAbfrageTakt_P, 2, EmailAbfrageTakt);
 		CgiFormCheckbox_P(ISTR(EmailKonfigFilterNurTX, Sprache), EmailAusgabeFilternKennung_P, EmailAusgabeFilternKennung);
 
+		AdresseZuWahlStr(EmailDruckZiel, Buf);
+		CgiFormInputFieldText_P(ISTR(EmailKonfigDruckZiel, Sprache), EmailDruckZiel_P, 2, Buf);
+
 		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
 		}
 	else // argc > 0
@@ -991,12 +1020,39 @@ void itelex_cgi_email_config(void *pStruct)
 		// ----------------------------
 		EmailAusgabeFilternKennung = CgiCheckBool_P(http_request, ISTR(EmailKonfigFilterNurTX, Sprache), 
 													EmailAusgabeFilternKennung_P, EmailAusgabeFilternKennung, Sprache);
-													
+
+		// Nummer Druckziel
+		// ------------------
+		if (PharseCheckName_P(http_request, EmailDruckZiel_P))
+			{
+			uint8_t Neu;
+				
+			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EmailDruckZiel_P)], 2);
+			Buf[2] = '\0';
+			Neu = WahlZuAdresse(atoi(Buf), strlen(Buf));
+			printf_P(PSTR("<br>"));
+			printf_P(ISTR(EmailKonfigDruckZiel, Sprache));
+			if (Neu == EmailDruckZiel)
+				{
+				printf_P(ISTR(Unveraendert, Sprache));
+				printf_P(PSTR(": %s"), Buf);
+				}
+			else
+				{
+				AdresseZuWahlStr(Neu, Buf);
+				changeConfig_P(EmailDruckZiel_P, Buf);
+				EmailDruckZiel = Neu;
+				printf_P(ISTR(GeaendertIn, Sprache));
+				printf_P(PSTR(": %s"), Buf);
+				}
+			}
+
+		// Abschluss
+		// ---------
 		SpeichereSpracheAlsLokal(Sprache);
 
 		POPOeffnenFehlerZaehler = 0;
 
-		
 		} // else argc > 0
 		
 	cgi_PrintHttpheaderEnd();
@@ -1030,7 +1086,12 @@ void itelex_email_init()
 		
 	EmailAusgabeFilternKennung = ReadConfigBool(EmailAusgabeFilternKennung_P, false);
 		
-	POPWartezeitEnde = LangTimerMinuteFaktor; // 1 Minute
+	if (readConfig_P(EmailDruckZiel_P, Buf) == 1)
+		EmailDruckZiel = WahlZuAdresse(atoi(Buf), strlen(Buf));
+	else
+		EmailDruckZiel = 0; // also die Hauptstelle
+	
+	POPWartezeitEnde = 2 * LangTimerMinuteFaktor; // 2 Minuten
 	
 	StartLangTimer(&POPWartezeitTimer);
 	

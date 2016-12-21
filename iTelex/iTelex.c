@@ -858,7 +858,8 @@ static bool ModusTwiVerbunden()
 			|| Modus == ModMeldungsdruckWarteEinQuitt
 			|| Modus == ModNamensucheEingabe
 			|| Modus == ModNamensucheServerAbfrage
-			|| Modus == ModNamensucheAusgabe);
+			|| Modus == ModNamensucheAusgabe
+			|| Modus == ModEmailPOPWarteEinQuitt);
 	}
 
 #endif //def ITELEX_ANSCHLUSS
@@ -1367,6 +1368,7 @@ void ModusWechsel(TModus neu)
 
 		case ModHtmlChatWarteEinQuitt: 
 		case ModMeldungsdruckWarteEinQuitt:
+		case ModEmailPOPWarteEinQuitt: // Warte auf Einschalt-Quittung des Endgeräts
 			CLR_BIT_Status(StatBit_Frei);
 			CLR_BIT_Status(StatBit_LeitungKennung);
 			CLR_BIT_Status(StatBit_Verbunden);
@@ -2141,6 +2143,7 @@ void InterneVerbindungBeenden(bool Force)
 		case ModNamensucheEingabe:
 		case ModNamensucheServerAbfrage:
 		case ModNamensucheAusgabe:
+		case ModEmailPOPWarteEinQuitt:
 			if (Force)
 				{
 				SendeBusKdoSchluss();
@@ -3666,6 +3669,13 @@ void itelex_thread()
 						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung fuer Meldungsdruck\r\n" ));
 					ModusWechsel(ModPufferDruckUndSchluss);
 					}
+
+				else if (Modus == ModEmailPOPWarteEinQuitt)
+					{ 
+					if (ProtokollLevel >= AblaufInfo)
+						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung fuer e-Mail-Druck\r\n" ));
+					ModusWechsel(ModEmailPOPVerbunden); //! \todo Prüfen, ob eigener Modus sinnvoll.
+					}
 				
 				else
 					FalschCodeEmpfangen(BusQuittEin);
@@ -4094,6 +4104,8 @@ void itelex_thread()
 		InterneVerbindungBeenden(true);
 		SendeStopkommando(PSTR("der"));
 		}
+
+//! \todo Timeouts bei ModEmailPOPWarteEinQuitt und ModHtmlChatWarteEinQuitt und ModMeldungsdruckWarteEinQuitt
 		
 	if (ModusTwiVerbunden() && LangTimerVal(&BeideRuhigTimer) > 10 * LangTimerMinuteFaktor)
 		{

@@ -257,6 +257,10 @@ typedef enum
 		//!< Verbindung zum POP Dienst des Email-Servers ist hergestellt.
 		//!< Keine Aussage über den Status der Abfrage selbst.
 		
+	ModEmailPOPWarteEinQuitt = 52,
+		//!< Verbindung zum POP Dienst des Email-Servers ist hergestellt,
+		//!< Es ist eine Email (oder nur der Header zu drucken).
+		
 	} TModus;
 	
 
@@ -498,6 +502,8 @@ extern void ZeitUeberwachungAbbruch(TZeitUeberwachung *zue);
 extern char *ZeitUeberwachungAusgabe(TZeitUeberwachung *zue);
 
 extern bool Diagnoseausgabe_P(const char *msg, uint8_t Level);
+
+extern bool SonstigeAnwahl(uint8_t aDurchwahl);
 
 extern void AsciiDruckPufferVerarbeiten();
 

@@ -235,6 +235,7 @@ _STRTABENTRY(EmailKonfigEigeneAdresse, "Eigene eMail-Adresse", "Own email addres
 _STRTABENTRY(EmailKonfigKennwort, "Kennwort f&uuml;r eMail-Server", "Password for email servers")
 _STRTABENTRY(EmailKonfigAbfragetakt, "Takt des eMail-Abrufs (in Minuten; 0 = ausgeschaltet)", "Polling period for email query")
 _STRTABENTRY(EmailKonfigFilterNurTX, "Nur eMails mit +TX+ im Subject drucken", "Print only emails with +tx+ in subject")
+_STRTABENTRY(EmailKonfigDruckZiel, "Spezieller Drucker f&uuml;r eMail", "special printer for emails")
 _STRTABENTRY(EmailKonfigFehler, 
 			 "<br><b>Konfigurationsdaten unvollst&auml;ndig, Abfragetakt auf Null gesetzt, eMail Abfrage ist ausgeschaltet.</b>", 
 			 "<br><b>Configuration not complete, polling period set to zero, incoming eMail will not be printed.</b>")
