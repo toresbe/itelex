@@ -509,7 +509,7 @@ extern char *ZeitUeberwachungAusgabe(TZeitUeberwachung *zue);
 
 extern bool Diagnoseausgabe_P(const char *msg, uint8_t Level);
 
-extern bool SonstigeAnwahl(uint8_t aDurchwahl);
+extern bool SonstigeAnwahl(uint8_t aDurchwahl, bool OhneMeldung);
 
 extern void AsciiDruckPufferVerarbeiten();
 

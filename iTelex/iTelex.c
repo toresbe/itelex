@@ -926,7 +926,8 @@ void itelex_timerEvent(void)
 		|| Modus == ModPufferDruckUndSchluss
 		|| Modus == ModNamensucheEingabe
 		|| Modus == ModNamensucheServerAbfrage
-		|| Modus == ModNamensucheAusgabe)
+		|| Modus == ModNamensucheAusgabe
+		|| Modus == ModEmailPOPDruckend)
 		{ // ist Verbunden, also Pegel senden und empfangen
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
 
@@ -1486,6 +1487,7 @@ void ModusWechsel(TModus neu)
 			SendeMark = true;
 			SeriellUmsetzInit();
 			SendenBeschleunigen = false;
+			StartLangTimer(&BeideRuhigTimer);
 			break;
 		
 		case ModEmailPOPDruckend:
@@ -3528,27 +3530,27 @@ void AsciiDruckPufferVerarbeiten()
 
 //! Einschaltung für HTML-Chat oder Meldungsdruck.
 //------------------------------------------------
-bool SonstigeAnwahl(uint8_t aDurchwahl)
+bool SonstigeAnwahl(uint8_t aDurchwahl, bool OhneMeldung)
 	{
 	if (KommendInternAnwaehlen(aDurchwahl))
 		{ 
 		if (ProtokollLevel >= AblaufInfo)
-			Protokollieren_P(PSTR("Einschaltung intern\r\n" ));
+			ProtokollierenInt_P(PSTR("Einschaltung %u intern\r\n"), aDurchwahl);
 		BusSenden(BusKdoEin);
 		return true;
 		}
 	else
 		{ 
 		if (ProtokollLevel >= NurFehler)
-			Protokollieren_P(PSTR("! Einschaltung intern VERSAGT\r\n" ));
+			ProtokollierenInt_P(PSTR("! Einschaltung %u intern VERSAGT\r\n"), aDurchwahl);
 			
-		Diagnoseausgabe_P(ISTR(AnschlussInternBesetzt, LokaleSprache), 1);
+		if (!OhneMeldung)
+			Diagnoseausgabe_P(ISTR(AnschlussInternBesetzt, LokaleSprache), 4);
 			
 		AsciiDruckPuffer[0] = '\0'; // damit es keine neue Einschaltung gibt.
 		AsciiHilfPuffer[0] = '\0';
 		AsciiDruckZiel = 0;
 		AsciiHilfZeilenanfang = 0;
-		ModusWechsel(ModWarteGrundstellung);
 		return false;
 		}
 	} // SonstigeAnwahl()
@@ -4255,11 +4257,13 @@ void itelex_thread()
 			Protokollieren_P(PSTR("\r\n"));
 			}
 			
-		if (SonstigeAnwahl(AsciiDruckZiel))
+		if (SonstigeAnwahl(AsciiDruckZiel, true))
 			{
 			ModusWechsel(ModMeldungsdruckWarteEinQuitt);
 			AsciiDruckZiel = 0;
 			}
+		else
+			ModusWechsel(ModWarteGrundstellung);
 			
 		} // if ModRuhe && Text im DruckPuffer
 		
@@ -5473,9 +5477,10 @@ void itelex_cgi_msg_In( void * pStruct )
 				ProtokollierenInt_P(PSTR("HTML-Chat begonnen (Anwahl %u) -> "), Anwahl);
 				}
 				
-			if (SonstigeAnwahl(Anwahl)) 
+			if (SonstigeAnwahl(Anwahl, false)) 
 				ModusWechsel(ModHtmlChatWarteEinQuitt);
-				
+			else
+				ModusWechsel(ModWarteGrundstellung);
 			}
 		}
 

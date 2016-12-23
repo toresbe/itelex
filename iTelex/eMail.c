@@ -485,7 +485,7 @@ void POP3DatenVerarbeiten()
 				}
 			else
 				{ // mindestens eine Meldung im Puffer...
-				if (SonstigeAnwahl(EmailDruckZiel >> 1))
+				if (SonstigeAnwahl(EmailDruckZiel >> 1, true))
 					{
 					ModusWechsel(ModEmailPOPWarteEinQuitt);
 					ProtokollPhase = MailWarteEinschaltungDruck;
@@ -1036,7 +1036,12 @@ void itelex_cgi_email_config(void *pStruct)
 				
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EmailDruckZiel_P)], 2);
 			Buf[2] = '\0';
-			Neu = WahlZuAdresse(atoi(Buf), strlen(Buf));
+			if (atoi(Buf) != 0 || Buf[0] == '0')
+				Neu = WahlZuAdresse(atoi(Buf), strlen(Buf));
+			else // in Buf war keine gültige Zahl
+				Neu = 0; // Hauptstelle
+			AdresseZuWahlStr(Neu, Buf);
+				
 			printf_P(PSTR("<br>"));
 			printf_P(ISTR(EmailKonfigDruckZiel, Sprache));
 			if (Neu == EmailDruckZiel)
@@ -1046,7 +1051,6 @@ void itelex_cgi_email_config(void *pStruct)
 				}
 			else
 				{
-				AdresseZuWahlStr(Neu, Buf);
 				changeConfig_P(EmailDruckZiel_P, Buf);
 				EmailDruckZiel = Neu;
 				printf_P(ISTR(GeaendertIn, Sprache));
@@ -1094,7 +1098,10 @@ void itelex_email_init()
 	EmailAusgabeFilternKennung = ReadConfigBool(EmailAusgabeFilternKennung_P, false);
 		
 	if (readConfig_P(EmailDruckZiel_P, Buf) == 1)
-		EmailDruckZiel = WahlZuAdresse(atoi(Buf), strlen(Buf));
+		if (Buf[0] == '-')
+			EmailDruckZiel = 0;
+		else
+			EmailDruckZiel = WahlZuAdresse(atoi(Buf), strlen(Buf));
 	else
 		EmailDruckZiel = 0; // also die Hauptstelle
 	
