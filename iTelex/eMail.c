@@ -388,8 +388,30 @@ void POP3DatenVerarbeiten()
 	if (SocketOutBufUsed != 0)
 		return;
 		
+	// da alle folgenden Zeilen vom Vorhandensein von Eingagsdaten ausgehen,
+	// müssen andere Prüfungen vorgezogen werden
+
+	if (ProtokollPhase == MailWarteEinschaltungDruck && Modus == ModEmailPOPWarteEinQuitt)
+		{
+		//if (LangTimerVal(&POPWartezeitTimer) > KurzTimer wird gebraucht TODO Timeout
+		return; // weiter warten
+		}
+
+	if (ProtokollPhase == MailWarteEinschaltungDruck && Modus == ModEmailPOPVerbunden) 
+		{
+		strcpy_P(AsciiDruckPuffer, ISTR(EmailEmpfangStartzeile, LokaleSprache)); 
+		InMailHeader = true; // für MailZeileVerarbeiten()
+		MailUnterdruecken = false;
+		strcpy_P(SocketOutBuf, PSTR("RETR 1\r\n"));
+		SocketOutBufUsed = strlen(SocketOutBuf);
+		ProtokollPhase = MailData;
+		return;
+		}
+
 	if (SocketInBufUsed == 0)
 		return;
+	
+	// ab hier nur noch Verarbeitung von EIngangsdaten
 		
 	SocketInBuf[SocketInBufUsed] = '\0';
 	
@@ -463,7 +485,7 @@ void POP3DatenVerarbeiten()
 				}
 			else
 				{ // mindestens eine Meldung im Puffer...
-				if (SonstigeAnwahl(EmailDruckZiel))
+				if (SonstigeAnwahl(EmailDruckZiel >> 1))
 					{
 					ModusWechsel(ModEmailPOPWarteEinQuitt);
 					ProtokollPhase = MailWarteEinschaltungDruck;
@@ -481,22 +503,6 @@ void POP3DatenVerarbeiten()
 			SocketInBufUsed = 0;
 			break;
 			
-		case MailWarteEinschaltungDruck:
-			if (Modus == ModEmailPOPWarteEinQuitt)
-				{
-				//if (LangTimerVal(&POPWartezeitTimer) > KurzTimer wird gebraucht TODO Timeout
-				break; // weiter warten
-				}
-			else if (Modus == ModEmailPOPVerbunden) 
-				{
-				strcpy_P(AsciiDruckPuffer, ISTR(EmailEmpfangStartzeile, LokaleSprache)); 
-				InMailHeader = true; // für MailZeileVerarbeiten()
-				MailUnterdruecken = false;
-				strcpy_P(SocketOutBuf, PSTR("RETR 1\r\n"));
-				ProtokollPhase = MailData;
-				}
-			break;
-		
 		case MailData:
 			//HACK if (AsciiDruckPuffer[0] != '\0')
 			//HACK	return; // es wird noch gedruckt, also nichts neues Drucken...
@@ -586,6 +592,7 @@ void POP3DatenVerarbeiten()
 			
 		case WarteEnde:
 			SocketInBufUsed = 0;
+			// TODO if Popokempfangen selbst abbauen
 			break;
 
 		}

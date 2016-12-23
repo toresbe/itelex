@@ -3359,6 +3359,7 @@ void AsciiDruckPufferVerarbeiten()
 	if (Modus != ModHtmlChatVerbunden
 		&& Modus != ModKommendVerbunden 
 		&& Modus != ModGehendVerbunden
+		&& Modus != ModEmailPOPVerbunden 
 		&& Modus != ModPufferDruckUndSchluss
 		&& Modus != ModNamensucheEingabe
 		&& Modus != ModNamensucheServerAbfrage
@@ -4225,7 +4226,7 @@ void itelex_thread()
 	// Ascii-Text im Puffer z.B. durch Html-Eingabe?
 	// ==========================================================================
 
-	if ((Modus == ModRuhe || Modus == ModEmailPOPVerbunden) && AsciiDruckPuffer[0] != '\0')
+	if ((Modus == ModRuhe) && AsciiDruckPuffer[0] != '\0')
 		{
 		if (ProtokollLevel >= AblaufInfo)
 			{
