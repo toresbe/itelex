@@ -397,7 +397,7 @@ void POP3DatenVerarbeiten()
 		return; // weiter warten
 		}
 
-	if (ProtokollPhase == MailWarteEinschaltungDruck && Modus == ModEmailPOPVerbunden) 
+	if (ProtokollPhase == MailWarteEinschaltungDruck && Modus == ModEmailPOPDruckend) 
 		{
 		strcpy_P(AsciiDruckPuffer, ISTR(EmailEmpfangStartzeile, LokaleSprache)); 
 		InMailHeader = true; // für MailZeileVerarbeiten()

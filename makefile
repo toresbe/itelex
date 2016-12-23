@@ -101,7 +101,7 @@ OBJDIR = .
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c
+SRC = main.c
 SRC += hardware/ext_int/ext_int.c system/clock/clock.c hardware/timer1/timer1.c hardware/spi/spi_core.c 
 SRC += hardware/keyboard/keyboard.c hardware/uart/uart_core.c 
 SRC += hardware/uart/mega/uart_0.c hardware/uart/mega/uart_1.c
@@ -182,6 +182,9 @@ CSTANDARD = -std=gnu99
 # Place -D or -U options here for C sources
 CDEFS = -DF_CPU=$(F_CPU)UL
 
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# für EU Version
+CDEFS += "-DPROG_ID_ZUSATZ=\"             \""
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # für US-Version:
 # CDEFS += -DUSTTY

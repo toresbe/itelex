@@ -859,7 +859,8 @@ static bool ModusTwiVerbunden()
 			|| Modus == ModNamensucheEingabe
 			|| Modus == ModNamensucheServerAbfrage
 			|| Modus == ModNamensucheAusgabe
-			|| Modus == ModEmailPOPWarteEinQuitt);
+			|| Modus == ModEmailPOPWarteEinQuitt
+			|| Modus == ModEmailPOPDruckend);
 	}
 
 #endif //def ITELEX_ANSCHLUSS
@@ -1368,7 +1369,6 @@ void ModusWechsel(TModus neu)
 
 		case ModHtmlChatWarteEinQuitt: 
 		case ModMeldungsdruckWarteEinQuitt:
-		case ModEmailPOPWarteEinQuitt: // Warte auf Einschalt-Quittung des Endgeräts
 			CLR_BIT_Status(StatBit_Frei);
 			CLR_BIT_Status(StatBit_LeitungKennung);
 			CLR_BIT_Status(StatBit_Verbunden);
@@ -1474,6 +1474,23 @@ void ModusWechsel(TModus neu)
 			AsciiDruckPuffer[0] = '\0';
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
+			break;
+
+		case ModEmailPOPWarteEinQuitt:
+			SET_BIT_Status(StatBit_AngerufenBelegt);
+			SET_BIT_Status(StatBit_FsBefBetrieb);
+			LED_on(BLAU);
+			PufferInit(&SendePuffer);
+			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			BusEmpfMark = true;
+			SendeMark = true;
+			SeriellUmsetzInit();
+			SendenBeschleunigen = false;
+			break;
+		
+		case ModEmailPOPDruckend:
+			SET_BIT_Status(StatBit_FsMeldBetrieb);
+			SET_BIT_Status(StatBit_Verbunden);
 			break;
 			
 		default:
@@ -2143,7 +2160,6 @@ void InterneVerbindungBeenden(bool Force)
 		case ModNamensucheEingabe:
 		case ModNamensucheServerAbfrage:
 		case ModNamensucheAusgabe:
-		case ModEmailPOPWarteEinQuitt:
 			if (Force)
 				{
 				SendeBusKdoSchluss();
@@ -2162,6 +2178,9 @@ void InterneVerbindungBeenden(bool Force)
 			break; 
 		
 		case ModEmailPOPVerbunden:
+		case ModEmailPOPWarteEinQuitt:
+			if (Modus == ModEmailPOPWarteEinQuitt)
+				SendeBusKdoSchluss();
 			ModusWechsel(ModWarteGrundstellung); 
 			break;
 			
@@ -2184,6 +2203,7 @@ void InterneVerbindungBeenden(bool Force)
 		
 		case ModKommendVerbunden:
 		case ModGehendVerbunden:
+		case ModEmailPOPDruckend:
 			if (ProtokollLevel >= AblaufInfo)
 				{
 				ProtokollierenITelex();
@@ -3359,7 +3379,7 @@ void AsciiDruckPufferVerarbeiten()
 	if (Modus != ModHtmlChatVerbunden
 		&& Modus != ModKommendVerbunden 
 		&& Modus != ModGehendVerbunden
-		&& Modus != ModEmailPOPVerbunden 
+		&& Modus != ModEmailPOPDruckend
 		&& Modus != ModPufferDruckUndSchluss
 		&& Modus != ModNamensucheEingabe
 		&& Modus != ModNamensucheServerAbfrage
@@ -3675,7 +3695,7 @@ void itelex_thread()
 					{ 
 					if (ProtokollLevel >= AblaufInfo)
 						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung fuer e-Mail-Druck\r\n" ));
-					ModusWechsel(ModEmailPOPVerbunden); //! \todo Prüfen, ob eigener Modus sinnvoll.
+					ModusWechsel(ModEmailPOPDruckend); 
 					}
 				
 				else
@@ -3863,7 +3883,7 @@ void itelex_thread()
 		{
 		if (Modus == ModGehendVerbunden
 			|| (Modus >= ModKommendVerbVorstufe && Modus <= ModKommendVerbunden)
-			|| (Modus == ModEmailPOPVerbunden))
+			|| (Modus >= ModEmailPOPVerbunden && Modus <= ModEmailPOPDruckend))
 			{
 			InterneVerbindungBeenden(false);
 			}
@@ -4848,7 +4868,8 @@ void itelex_thread()
 		RundsendDaten[5] = Time.DD;
 		RundsendDaten[6] = Time.hh;
 		RundsendDaten[7] = Time.mm;
-		RundsendAnzDaten = 8;
+		RundsendDaten[8] = Time.WW;
+		RundsendAnzDaten = 9;
 
 		BusRundsenden();
 		}

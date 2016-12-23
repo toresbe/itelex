@@ -256,10 +256,16 @@ typedef enum
 	ModEmailPOPVerbunden = 51,
 		//!< Verbindung zum POP Dienst des Email-Servers ist hergestellt.
 		//!< Keine Aussage über den Status der Abfrage selbst.
+		//!< Dazu dient im Modul eMail.c die Variable #ProtokollPhase
 		
 	ModEmailPOPWarteEinQuitt = 52,
+		//!< Verbindung zum POP Dienst des Email-Servers ist hergestellt.
+		//!< Es ist eine Email (oder nur der Header zu drucken). Drucker
+		//!< wurde eingeschaltet hat aber noch nicht quittiert
+	
+	ModEmailPOPDruckend = 53,
 		//!< Verbindung zum POP Dienst des Email-Servers ist hergestellt,
-		//!< Es ist eine Email (oder nur der Header zu drucken).
+		//!< Drucker ist eingeschaltet und Druckbereit
 		
 	} TModus;
 	
