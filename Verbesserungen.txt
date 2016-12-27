@@ -1,3 +1,8 @@
+Ab Build 693:
+E-Mail kann auf eine spezielle Nebenstelle gelenkt werden
+E-Mails gehen nicht mehr verloren, wenn der Drucker nicht
+funktioniert.
+
 Ab Build 684:
 Zeilenlänge einstellbar
 Uhrzeit-Verteilung abschaltbar
