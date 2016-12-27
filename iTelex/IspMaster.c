@@ -1103,7 +1103,10 @@ void cgi_Isp(void *pStruct)
 				} 
 			}
 		LED_off(BLAU);
-				
+
+		if (strncmp_P(Ident, PSTR("TxP2"), 4) == 0)
+			memcpy_P(Ident, PSTR("itlx"), 4);
+		
 		if (Ident[0] != '\0')
 			{ // Identifikation scheint gültig (entweder automatisch ermittelt oder von Hand eingegeben)
 			ProgrammiereVomNetz(Ident, http_request); 

@@ -4872,7 +4872,7 @@ void itelex_thread()
 		RundsendDaten[5] = Time.DD;
 		RundsendDaten[6] = Time.hh;
 		RundsendDaten[7] = Time.mm;
-		RundsendDaten[8] = Time.WW;
+		RundsendDaten[8] = (Time.WW == 0) ? 7 : Time.WW;
 		RundsendAnzDaten = 9;
 
 		BusRundsenden();

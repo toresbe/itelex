@@ -80,7 +80,7 @@ void network_init( void )
 	struct TIME Time;
 	
 	char ip[32];
-	char timedif = 0;
+	int timedif = 0;
 	
 	// Ethernet starten
 	if (  checkConfigName_P( PSTR("MAC") ) != -1 ) 
@@ -207,7 +207,7 @@ void network_init( void )
 			printf_P( PSTR(" |-> NTP-Server Zeit aktualisieren:"));
 			if( readConfig_P ( PSTR("UTCZONE"), ip ) != -1 )
 			{
-				timedif = (char)atoi( ip );
+				timedif = atoi( ip );
 				readConfig_P ( PSTR("NTPSERVER"), ip );
 				if( NTP_GetTime( 0 , ip, timedif ) == NTP_OK )
 				{

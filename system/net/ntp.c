@@ -54,7 +54,7 @@
  * \return	int
  */
 /*------------------------------------------------------------------------------------------------------------*/
-unsigned int NTP_GetTime( unsigned long IP, char * dnsbuffer, char timedif )
+unsigned int NTP_GetTime( unsigned long IP, char * dnsbuffer, int timedif )
 	{
 		char buffer[ NTP_SIZE ];
 		int i=0, socket, timer, retval = NTP_ERROR;

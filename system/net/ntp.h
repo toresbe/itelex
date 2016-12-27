@@ -32,7 +32,7 @@
 #ifndef _NTP_H
 	#define _NTP_H
 
-	unsigned int NTP_GetTime( unsigned long IP, char * dnsbuffer, char timedif );
+	unsigned int NTP_GetTime( unsigned long IP, char * dnsbuffer, int timedif );
 	
 	#define NTP_OK			0
 	#define NTP_ERROR		-1
