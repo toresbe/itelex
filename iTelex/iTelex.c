@@ -598,12 +598,37 @@ bool SocketProtokollEin;
 	//!< \todo Konfigurierbar nicht nur über EEPROM-Variable.
 
 
+//! Struktur für die Speicherung von Ankommenden TCP-Verbindungen	
+typedef struct
+	{
+	long SourceIP;
+	uint16_t DestinationPort;
+	uint32_t FirstTime;	
+	uint16_t UseCount; //!< Anzahl Zugriffe seit letzter Ausgabe. Bei 0 ist dieser Tabelleneintrag ungenutzt.
+	} TServSocketLogEntry;
+	
+	
+enum { ServSocketLogMaxEntries = 20 };
+	//!< Anzahl zulässiger Einträge in der Protokollierung der ankommenden TCP-Verbindungen.
+
+
+TServSocketLogEntry ServSocketLogTab[ServSocketLogMaxEntries];
+	//!< Die Tabelle mit allen Einträgen über Zeitpunkt von kommenden TXP Verbindungen
+
+
+TKurzTimer ServSocketLogChange;
+	//!< Speichert, wann die letzte Neueintragung in der Liste ServSocketLogTab erfolgte.
+	//!< Ziel ist das Log erst zu drucken, wenn eine gewisse Stabilität herrscht.
+
+	
 uint16_t Debug_LowestSP;
 	//!< for testing of the maximum use of stack-pointer.
 	
 	
 // wird so oft gebraucht...
 extern struct TCP_SOCKET TCP_sockettable[];
+
+
 
 	
 static inline uint8_t low(uint16_t x)
@@ -748,7 +773,7 @@ enum { SocketLogMaxEntries = 20 };
 
 TSocketLogEntry SocketLog[SocketLogMaxEntries];
 
-volatile uint8_t SocketLogUsed;
+volatile uint8_t SocketLogUsed = 0;
 
 volatile uint8_t LastSocketConnectionState[MAX_TCP_CONNECTIONS];
 
@@ -757,12 +782,12 @@ static void CheckSocketConnectionStateChanges()
 	{
 	if (!SocketProtokollEin)
 		return;
-		
+	
 	for (uint8_t i = 0 ; i < MAX_TCP_CONNECTIONS ; i++)
 		if (TCP_sockettable[i].ConnectionState != LastSocketConnectionState[i])
 			{
 			struct TIME Time;
-			CLOCK_GetTime(&Time); // Todo testen ob man vollte Funktionalität braucht.
+			CLOCK_GetTime(&Time); // Todo testen ob man volle Funktionalität braucht.
 			uint8_t SregTemp = SREG;
 			cli();
 			TSocketLogEntry *se = &SocketLog[SocketLogUsed];
@@ -773,15 +798,15 @@ static void CheckSocketConnectionStateChanges()
 			se->IP = TCP_sockettable[i].SourceIP;
 			if (SocketLogUsed < SocketLogMaxEntries - 1)
 				SocketLogUsed++;
-			LastSocketConnectionState[i] = se->NewState;
 			SREG = SregTemp;
+			LastSocketConnectionState[i] = se->NewState;
 			}
 	} // CheckSocketConnectionStateChanges()
 	
 	
 static void PrintSocketConnectionStateChanges()
 	{
-	if (!SocketProtokollEin)
+	if (SocketLogUsed == 0)
 		return;
 		
 	struct TIME Time;
@@ -808,6 +833,8 @@ static void PrintSocketConnectionStateChanges()
 		}
 	}
 	
+
+// =========================================================================
 
 #ifdef ITELEX_ANSCHLUSS
 	
@@ -3603,6 +3630,92 @@ static void DatumUhrzeitDrucken()
 	} // DatumUhrzeitDrucken()
 	
 
+// ========================================================
+
+	
+//! Prüffunktionen für alle Eingehenden TCP-Verbindungen
+//------------------------------------------------------
+// \returns false, wenn Verbindung abzuweisen ist.
+
+bool CheckTCPServerConnect(long IP, unsigned int Port)
+	{
+	uint8_t i;
+	uint8_t NeuI; // speichert einen geeigneten Platz für einen Neuen Eintrag
+	
+	// TODO Blacklist durchgehen
+	
+	NeuI = ServSocketLogMaxEntries;
+	
+	// prüfen, ob bereits ein Eintrag zu dieser IP / Port - Kombination besteht
+	for (i = 0 ; i < ServSocketLogMaxEntries ; i++)
+		{
+		if (ServSocketLogTab[i].UseCount == 0)
+			{
+			if (i < NeuI)
+				NeuI = i; // wird erstmal nur "gespeichert" für einen ggf. Neueintrag.
+			}
+			
+		else if (ServSocketLogTab[i].SourceIP == IP && ServSocketLogTab[i].DestinationPort == Port)
+			{
+			ServSocketLogTab[i].UseCount++;
+			return true;
+			}
+		}
+		
+	if (NeuI < ServSocketLogMaxEntries)
+		{
+		struct TIME Time;
+
+		// Zeit holen
+		CLOCK_GetTime(&Time);
+			
+		ServSocketLogTab[NeuI].SourceIP = IP;
+		ServSocketLogTab[NeuI].DestinationPort = Port;
+		ServSocketLogTab[NeuI].FirstTime = Time.time;
+		ServSocketLogTab[NeuI].UseCount = 1;
+
+		StartKurzTimer(&ServSocketLogChange);
+		}
+	
+	return true;
+	}
+
+
+//! Ausgabe der Einträge in der Zugriffs-Tabelle für kommende TCP-Verbindungen
+//----------------------------------------------------------------------------
+//! Macht den Puffer #DiagnosePuffer so voll es geht.
+static void PrintServSocketLogTabEntry()
+	{
+	uint8_t i; // Index in der ServSocketLogTab
+	char Buf[60]; // Berechnung der maximalen Textlänge siehe unten
+	struct TIME Time;
+
+	CLOCK_GetTime(&Time);
+	
+	for (i = 0 ; i < ServSocketLogMaxEntries ; i++)
+		{
+		if (ServSocketLogTab[i].UseCount > 0)
+			{															// Anzahl Zeichen in Buf:
+			sprintf_P(Buf, PSTR("\r\nport %u ip "), ServSocketLogTab[i].DestinationPort); // 7 + 5 + 4
+			iptostr(ServSocketLogTab[i].SourceIP, Buf + strlen(Buf));					  // 4*3 + 3
+			sprintf_P(Buf + strlen(Buf), PSTR("  %u x  - %u s"), 
+				ServSocketLogTab[i].UseCount, Time.time - ServSocketLogTab[i].FirstTime); // 2 + 5 + 6 + 5 + 2
+																					// Summe: 51
+
+			if (DiagnosePuffer[0] == '\0') // noch leer
+				Diagnoseausgabe_P(PSTR("Zugriffe per TCP:"), 3);
+																					
+			if (strlen(DiagnosePuffer) + strlen(Buf) < DiagnosePufferMax - 2)
+				{
+				strcat(DiagnosePuffer, Buf);
+				ServSocketLogTab[i].UseCount = 0;
+				}
+			else
+				break; // andere Meldungen bei nächster Runde
+			} // if UseCount > 0
+		} // for i 
+	}
+					
 
 //! Der iTelex-client an sich.
 //------------------------------------------------------------------------------------------------------------
@@ -4826,8 +4939,15 @@ void itelex_thread()
 	// Ausgabe der Gespeicherten Änderungen der Socket-Tabelle.
 	// ==========================================================================
 	
-	PrintSocketConnectionStateChanges();
+	PrintSocketConnectionStateChanges(); // Print heißt hier Ausgabe auf der Seriellen Schnittstelle
 	
+	// ==========================================================================
+	// Socket-Zugriffe Drucken
+	// ==========================================================================
+	
+	if (Modus == ModRuhe && DiagnosePuffer[0] == '\0' && KurzTimerVal(&ServSocketLogChange) >= 5 * KurzTimerFreq)
+		PrintServSocketLogTabEntry();
+
 	// ==========================================================================
 	// laufende Prüfsummenberechnung des Teilnehmer-Verzeichnisses.
 	// ==========================================================================
@@ -6203,6 +6323,11 @@ void cgi_MemDump(void *pStruct)
 	{
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
+	static TSprache Sprache;
+	
+	PruefeSprache(pStruct, &Sprache);
+	if (!KonfigFreigabe(pStruct, Sprache, true))
+		return;
 	
 	if (http_request->argc != 0 && PharseCheckName_P(http_request, PSTR("cur")))
 		RamHexdump(false); // den aktuellen RAM Inhalt speichern
@@ -6387,6 +6512,8 @@ extern void itelex_init1(void)
 	printf_P(PSTR("...SendePuffer, EmpfPuffer ok\r\n"));
 	
 	#endif // ITELEX_ANSCHLUSS
+	
+	SocketLogUsed = 0;
 	
 	// EEPROM auslesen
 

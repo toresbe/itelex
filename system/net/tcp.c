@@ -55,6 +55,7 @@
 #include <avr/pgmspace.h>
 #include <stdio.h>
 #include <string.h>
+#include <bool.h>
 
 #include "system/math/math.h"
 #include "system/math/checksum.h"
@@ -129,6 +130,13 @@ void tcp_init( void )
 			TCP_sockettable[i].OverflowTest[j] = 0x55;
 	}
 }
+
+
+// Funktion zur Prüfung / Filterung eingehender Verbindungen
+// definiert in iTelex.c
+
+extern bool CheckTCPServerConnect(long IP, unsigned int Port);
+
 	
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Die TCP-Funktion die aufgerufen wird wenn ein Packet eintrifft.
@@ -173,6 +181,13 @@ void tcp( int packet_lenght, char * ethernetbuffer)
 				socket = RegisterSocket( ethernetbuffer ) ;
 				if ( socket != SOCKET_ERROR ) // Verbinung einem neuem Socket zuordnen
 				{
+					if (!CheckTCPServerConnect(TCP_sockettable[socket].SourceIP, TCP_sockettable[socket].DestinationPort))
+					{ // Verbindung abweisen, Datensatz in TCP_sockettable wieder freigeben
+						TCP_sockettable[socket].Timeoutcounter = 0 ;
+						TCP_sockettable[socket].ConnectionState = SOCKET_NOT_USE ;
+						return;
+					}
+					
 #if defined(TCP_RTT)
 					TCP_pharseOptions( socket , (unsigned char *) TCP_packet->TCP_Options, TCP_Optionsize );
 #endif
@@ -543,7 +558,7 @@ int GetSocket( char * ethernetbuffer )
 		TCP_sockettable[ socket ].SendetBytes = 0;
 		memcpy( TCP_sockettable[ socket ].MACadress, ETH_packet->ETH_sourceMac, 6 );
 		Flush_FIFO( TCP_sockettable[ socket ].fifo );
-		TCP_sockettable[ socket ].TCP_CallbackFunc = NULL;
+		TCP_sockettable[ socket ].TCP_CallbackFunc = NULL; // Ob das hier wirklich richtig ist?
 	}
 
 	return( socket );
