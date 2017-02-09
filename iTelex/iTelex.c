@@ -3644,6 +3644,11 @@ bool CheckTCPServerConnect(long IP, unsigned int Port)
 	
 	// TODO Blacklist durchgehen
 	
+	
+	// Behelf: Port 11811 erstmal ausschließen TODO entfernen und durch "rückgängigmachen" im Erfolgsfall ersetzen.
+	if (Port == 11811)
+		return true;
+	
 	NeuI = ServSocketLogMaxEntries;
 	
 	// prüfen, ob bereits ein Eintrag zu dieser IP / Port - Kombination besteht
@@ -3698,7 +3703,7 @@ static void PrintServSocketLogTabEntry()
 			{															// Anzahl Zeichen in Buf:
 			sprintf_P(Buf, PSTR("\r\nport %u ip "), ServSocketLogTab[i].DestinationPort); // 7 + 5 + 4
 			iptostr(ServSocketLogTab[i].SourceIP, Buf + strlen(Buf));					  // 4*3 + 3
-			sprintf_P(Buf + strlen(Buf), PSTR("  %u x  - %u s"), 
+			sprintf_P(Buf + strlen(Buf), PSTR("  %ux  -%us"),  //  5x -4s = 5 mal  3 sek vorher
 				ServSocketLogTab[i].UseCount, Time.time - ServSocketLogTab[i].FirstTime); // 2 + 5 + 6 + 5 + 2
 																					// Summe: 51
 
