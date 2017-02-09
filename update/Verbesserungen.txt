@@ -1,3 +1,20 @@
+Ab Build 711:
+Protokollierung der Verbindungs-Eingänge aller TCP-Sockets
+
+Ab Build 706:
+In-System-Programmierung für andere Module fertiggestellt
+
+Ab Build 693:
+E-Mail kann auf eine spezielle Nebenstelle gelenkt werden
+E-Mails gehen nicht mehr verloren, wenn der Drucker nicht
+funktioniert.
+
+Ab Build 684:
+Zeilenlänge einstellbar
+Uhrzeit-Verteilung abschaltbar
+In-System-Programmierung für andere Module umstrukturiert
+Konfigurations-Reset jetzt vor der Netzwerk-Initialisierung
+
 Ab Build 621:
 In-System-Programmierung für andere Module möglich
 

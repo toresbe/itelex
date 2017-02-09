@@ -3708,7 +3708,7 @@ static void PrintServSocketLogTabEntry()
 																					// Summe: 51
 
 			if (DiagnosePuffer[0] == '\0') // noch leer
-				Diagnoseausgabe_P(PSTR("Zugriffe per TCP:"), 3);
+				Diagnoseausgabe_P(PSTR("Zugriffe per TCP:"), 5);
 																					
 			if (strlen(DiagnosePuffer) + strlen(Buf) < DiagnosePufferMax - 2)
 				{
