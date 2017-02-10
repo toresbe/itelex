@@ -65,7 +65,7 @@ _STRTABENTRY(NamensucheErgebnisse, "   nummer - name - verbindung:\r\n", "   num
 _STRTABENTRY(NamensucheListenende, "ende ++++\r\n\n", "end ++++\r\n\n")
 _STRTABENTRY(DiagInterneIP, "interne IP: ", "local IP: ")
 _STRTABENTRY(Datum, "Datum", "Date")
-_STRTABENTRY(DiagnoseEinleitung, "\r\n///interne meldung: ", "\r\n///internal message: ")
+_STRTABENTRY(DiagnoseEinleitung, "\r\n///interne meldung ", "\r\n///internal message ")
 _STRTABENTRY(SelbstAnrufMehrfachVersagt, 
 			 "Selbst-Anruf mehrfach versagt, Router-Konfiguration pruefen.\r\nSelbst-Anruf wurde abgeschaltet.", 
 			 "Loopback call failed constantly. Check router configuration.\r\nLoopback-Test was switched off.")

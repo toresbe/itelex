@@ -612,7 +612,7 @@ enum { ServSocketLogMaxEntries = 20 };
 	//!< Anzahl zulässiger Einträge in der Protokollierung der ankommenden TCP-Verbindungen.
 
 
-TServSocketLogEntry ServSocketLogTab[ServSocketLogMaxEntries];
+__attribute__ ((section (".noinit"))) TServSocketLogEntry ServSocketLogTab[ServSocketLogMaxEntries];
 	//!< Die Tabelle mit allen Einträgen über Zeitpunkt von kommenden TXP Verbindungen
 
 
@@ -3632,7 +3632,22 @@ static void DatumUhrzeitDrucken()
 
 // ========================================================
 
+//! Initialisierung der TCP-Protokollierung
+//------------------------------------------
+//! Puffer ist im nicht initialisierten Bereich, daher bei Reset löschen
+
+static void InitServSocketLog()
+	{
+	if (ResetFlags == 0x08)
+		return; // das war nur ein Watchdog-Reset, der Speicher müsste noch korrekt sein
 	
+	for (uint8_t i = 0 ; i < ServSocketLogMaxEntries ; i++)
+		ServSocketLogTab[i].UseCount = 0;
+	
+	StartKurzTimer(&ServSocketLogChange);
+	}
+
+
 //! Prüffunktionen für alle Eingehenden TCP-Verbindungen
 //------------------------------------------------------
 // \returns false, wenn Verbindung abzuweisen ist.
@@ -4348,8 +4363,10 @@ void itelex_thread()
 		{ 
 		AsciiDruckZiel = DiagnoseAusgabeZiel;
 		strcpy_P(AsciiDruckPuffer, ISTR(DiagnoseEinleitung, LokaleSprache));
-		strncat(AsciiDruckPuffer, DiagnosePuffer, AsciiDruckPufferMax-30);
-		AsciiDruckPuffer[AsciiDruckPufferMax-30] = '\0';
+		AdresseZuWahlStr(BusEigenAdresse, AsciiDruckPuffer + strlen(AsciiDruckPuffer));
+		strcat_P(AsciiDruckPuffer, PSTR(": "));
+		strncat(AsciiDruckPuffer, DiagnosePuffer, AsciiDruckPufferMax-3-strlen(AsciiDruckPuffer));
+		AsciiDruckPuffer[AsciiDruckPufferMax-6] = '\0';
 		strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
 		if (ProtokollLevel >= AblaufInfo && ProtokollLevel < DatenDetailliert)
 			{ // bei DatenDetailliert wird der Text eh ausgedruckt.
@@ -6667,6 +6684,8 @@ extern void itelex_init1(void)
 	SelbstAnrufSocketHandle = NO_SOCKET_USED;
 
 	ZeitUeberwachungInit(&SelbstAnrufZeitUeberwachung, 1 * KurzTimerFreq);
+	
+	InitServSocketLog();
 	
 	TwiInit();
 
