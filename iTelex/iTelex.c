@@ -4999,7 +4999,7 @@ void itelex_thread()
 	CLOCK_GetTime(&Time);
 	if (UhrzeitVerteilen && Time.mm != MinuteLetzeRundsendung 
 		&& (Modus == ModDeaktiviert || Modus == ModRuhe)
-		&& SelbstAnrufPhase == SelbstAnrufRuhe
+		&& (SelbstAnrufPhase == SelbstAnrufRuhe || SelbstAnrufPhase == SelbstAnrufSperre)
 		&& iTelexSocketHandle == NO_SOCKET_USED
 		&& BusFrei 
 		&& (BusAuftrag == Nichts || BusAuftrag == Fertig))
