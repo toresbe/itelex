@@ -9,6 +9,7 @@
 #include "apps/httpd/cgibin/cgi-bin.h"
 #include "apps/httpd/httpd2.h"
 #include "apps/httpd/httpd2_pharse.h"
+#include "system/config/eeconfig.h"
 
 #include "iTelex.h"
 #include "TlnBuch.h"
@@ -52,6 +53,8 @@ enum { TBOffsFlags = 5 } ; //!< Position der Flags im Teilnehmer-Verzeichnis-Ein
 enum { TBOffsArt = 7 } ; //!< Position der Art (s. #TTlnAdresseArt) im Teilnehmer-Verzeichnis-Eintrag
 enum { TBOffsName = 8 } ; //!< Position der Art (s. #TTlnAdresseArt) im Teilnehmer-Verzeichnis-Eintrag
 
+
+const PROGMEM char ExternEepromInit_P[] = "EEPROMOK";
 
 
 //! Ermittelt die Größe eines bestehenden Teilnehmereintrags.
@@ -1473,7 +1476,13 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		if (Res < 0)
 			printf_P(ISTR(EepromSpeicherFehler, Sprache), Res, SwTwiLetzterFehler);
 		else
+			{
 			printf_P(ISTR(EepromSpeicherErfolg, Sprache), Res);
+			
+			// Flag, dass das externe EEPROM eigentlich "korrekt" sein sollte, prüfen und ggf. setzen
+			if (!ReadConfigBool(ExternEepromInit_P, false)) 
+				changeConfig_P(ExternEepromInit_P, "1");
+			}
 		Zurueck = true;
 		} // if (PharseCheckName_P(http_request, Save_P))
 		
@@ -1562,10 +1571,11 @@ void TlnBuchInit()
 		TlnBuchMemUsed = 0;
 		int Res = TlnBuchLadeVonExternEeprom();
 		if (Res < 0)
-			{
+			{ 
 			ProtokollierenInt_P(PSTR("iTelex: ! Eeprom Ladefehler %d"), Res);
 			ProtokollierenInt_P(PSTR(" / %02X\r\n"), SwTwiLetzterFehler);
-			Diagnoseausgabe_P(ISTR(ZusatzEepromFehler, LokaleSprache), 1);
+			if (ReadConfigBool(ExternEepromInit_P, false)) // Flag, dass das externe EEPROM eigentlich "korrekt" sein sollte
+				Diagnoseausgabe_P(ISTR(ZusatzEepromFehler, LokaleSprache), 1);
 			}
 		else
 			Protokollieren_P(PSTR("iTelex: Teilnehmer-Verzeichnis aus EEPROM geladen.\r\n"));

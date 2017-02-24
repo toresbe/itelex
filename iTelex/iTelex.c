@@ -6510,7 +6510,7 @@ extern void itelex_init1(void)
 		if (i > 3)
 			i = 3;
 		}
-	XMCRA = XMCRA = (1 << SRE) | (0 << SRL0) | (i << SRW10) | (i << SRW00); 
+	XMCRA = (1 << SRE) | (0 << SRL0) | (i << SRW10) | (i << SRW00); 
 		// sicherheitshalber beide Wait-State-Konfigurationen auf den gleichen Wert setzen.
 
 	// RamCorrTestInit(); // TODO konfigurierbar.
