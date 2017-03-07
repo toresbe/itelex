@@ -223,6 +223,10 @@ uint16_t VollAbfrageTimerEnde; // für HACK bei Taste wurde static entfernt.
 static uint8_t VollAbfrageServerIndex;
 	//!< Partner für die nächste Vollabfrage.
 		
+
+static uint32_t TlnServAbfrageZaehler;
+	//!< Zählt wie oft der Teilnehmerserver von Nutzern abgefragt wird.
+	
 	
 static void KanalInit(TTlnServKanal* k, int aSocket)
 	{
@@ -671,6 +675,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						TlnServBuf.TlnAuskunft.DynPin = 0; // Datenschutz
 						TlnServBuf.DataLen = sizeof(TlnServBuf.TlnAuskunft);
 						Senden = true;
+						TlnServAbfrageZaehler++; // für die Statistik
 						if (ProtokollLevelTlnServ >= AblaufInfo)
 							Protokollieren_P(PSTR(" ...gefunden\r\n"));
 						}
@@ -1180,13 +1185,15 @@ void itelex_tlnserv_thread()
 void TlnServDebugPrint()
 	{
 	
-#define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %u"), Var)
+#define PRINTVAL(Var) printf_P(PSTR("<br>" #Var " = %lu"), (unsigned long) Var)
 	
 	struct TIME Time;
 	uint8_t i;
 	
 	CLOCK_GetTime(&Time); // holt auch die aktuelle Zeitzone
 
+	PRINTVAL(TlnServAbfrageZaehler);
+	
 	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
 		Time.time = TlnServSyncStichzeit[i];
@@ -1289,6 +1296,8 @@ void itelex_tlnserv_init()
 	VollAbfrageTimerEnde = 1 * LangTimerMinuteFaktor;
 	VollAbfrageServerIndex = 0;
 
+	TlnServAbfrageZaehler = 0;
+	
 	struct TIME Time;
 	CLOCK_GetTime(&Time); // holt auch die aktuelle Zeitzone
 	if (Time.YY < 2000)
