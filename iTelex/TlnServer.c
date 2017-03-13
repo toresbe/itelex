@@ -408,9 +408,9 @@ static void FehlerRueckmelden(PGM_P Text, int val)
 
 static void AsciiTlnAuskunft(TTlnDaten *td)
 	{
+	sprintf_P(TlnServBuf.Buf, PSTR("ok\r\n%lu\r\n%s\r\n%d\r\n"), td->Nummer, td->Name, td->AdrArt); // wird ggf. wieder überschrieben.
 	switch (td->AdrArt)
 		{
-		sprintf_P(TlnServBuf.Buf, PSTR("ok\r\n%lu\r\n%s\r\n%d\r\n"), td->Nummer, td->Name, td->AdrArt); // wird ggf. wieder überschrieben.
 		case iTelexHostname:
 		case AsciiHostname:
 			sprintf_P(TlnServBuf.Buf + strlen(TlnServBuf.Buf), PSTR("%s\r\n%d\r\n%d\r\n+++\r\n"), td->Adresse, td->Port, td->Durchwahl);
