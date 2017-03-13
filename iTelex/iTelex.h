@@ -176,6 +176,8 @@ enum {
 	TLNSERV_FEHLER = 0xFF,
 	//!< Allgemeine Fehlermeldung.
 
+	TLNSERV_ASCII_ABFRAGE = 'q',
+	//!< Teilnehmer-Daten-Abfrage im Ascii-Format
 	
 	LangTimerTakt = 10,
 	//!< Takt in Sekunden des Langzeittimers. 

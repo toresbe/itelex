@@ -391,6 +391,9 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 	return true;
 	}
 	
+
+//! Erstellt eine Fehlermeldung im "codierten" Modus des #TlnServBuf
+//------------------------------------------------------------------
 	
 static void FehlerRueckmelden(PGM_P Text, int val)
 	{
@@ -398,6 +401,37 @@ static void FehlerRueckmelden(PGM_P Text, int val)
 	sprintf_P(TlnServBuf.PureData, Text, val);
 	TlnServBuf.DataLen = strlen(TlnServBuf.PureData) + 1;
 	}
+
+
+//! Erstellt die Rückmeldung zu einer Teilnehmer-Auskunft im Ascii-Modus
+//----------------------------------------------------------------------
+
+static void AsciiTlnAuskunft(TTlnDaten *td)
+	{
+	switch (td->AdrArt)
+		{
+		sprintf_P(TlnServBuf.Buf, PSTR("ok\r\n%lu\r\n%s\r\n%d\r\n"), td->Nummer, td->Name, td->AdrArt); // wird ggf. wieder überschrieben.
+		case iTelexHostname:
+		case AsciiHostname:
+			sprintf_P(TlnServBuf.Buf + strlen(TlnServBuf.Buf), PSTR("%s\r\n%d\r\n%d\r\n+++\r\n"), td->Adresse, td->Port, td->Durchwahl);
+			break;
+		case iTelexDynIP:
+		case iTelexIP:
+		case AsciiIP:
+			iptostr(td->IPAdr, TlnServBuf.Buf + strlen(TlnServBuf.Buf));
+			sprintf_P(TlnServBuf.Buf + strlen(TlnServBuf.Buf), PSTR("\r\n%d\r\n%d\r\n+++\r\n"), td->Port, td->Durchwahl);
+			break;
+		case eMail:
+			sprintf_P(TlnServBuf.Buf + strlen(TlnServBuf.Buf), PSTR("%s\r\n+++\r\n"), td->Adresse);
+			break;
+		default:
+			sprintf_P(TlnServBuf.Buf, PSTR("fail\r\n%lu\r\nwrong type\r\n+++\r\n"), td->Nummer); 
+			break;
+		}
+	} // AsciiTlnAuskunft()
+
+
+
 	
 	
 //! Wird aufgerufen, wenn ein Eintrag im eigenen Telefonbuch geändert wird.
@@ -513,13 +547,19 @@ static void SocketDatenSenden(TTlnServKanal *Kanal)
 		|| KurzTimerVal(&Kanal->WiederholungVerzoegerung) > KurzTimerFreq * 15/10)
 
 		{
-		int Res = PutSocketData_RPE(Kanal->Socket, 2 + TlnServBuf.DataLen, TlnServBuf.Buf, RAM);
+		uint16_t LenToSend;
+		if (TlnServBuf.Buf[0] >= 'a' && TlnServBuf.Buf[0] <= 'z') // Ascii-Daten senden
+			LenToSend = strlen(TlnServBuf.Buf);
+		else
+			LenToSend = 2 + TlnServBuf.DataLen;
+		
+		int Res = PutSocketData_RPE(Kanal->Socket, LenToSend, TlnServBuf.Buf, RAM);
 		// SocketLebenszeichenZaehler = 0; 
 
 		if (ProtokollLevelTlnServ >= DatenDetailliert)
 			{
-			ProtokollierenTlnServInt_P(Kanal, PSTR("Socket Sendung: (%lu)" ), 2 + TlnServBuf.DataLen);
-			ProtokollierenPuffer(TlnServBuf.Buf, 2 + TlnServBuf.DataLen);
+			ProtokollierenTlnServInt_P(Kanal, PSTR("Socket Sendung: (%lu)" ), LenToSend);
+			ProtokollierenPuffer(TlnServBuf.Buf, LenToSend);
 			ProtokollierenInt_P(PSTR(" --> Res %d\r\n" ), Res);
 			}
 
@@ -537,7 +577,7 @@ static void SocketDatenSenden(TTlnServKanal *Kanal)
 				}
 			StartKurzTimer(&Kanal->WiederholungVerzoegerung);				
 			}
-		else if (Res < 2 + TlnServBuf.DataLen)
+		else if (Res < LenToSend)
 			{
 			ProtokollierenTlnServ_P(Kanal, PSTR("! Sendung war NICHT VOLLSTAENDIG\r\n" ));
 			}
@@ -868,6 +908,45 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					
 				SyncWarteEnde = (120 - Zufallswert(0x3F)) * KurzTimerFreq; // 2 Minuten warten.
 				break; // TlnServBuf.Code == TLNSERV_SYNC_ENDE
+
+			case TLNSERV_ASCII_ABFRAGE:
+				// ASCII-Abfrage in der Form "q12345" oder ähnlich. 
+				if (InCount < 1 + GlobRufnrMinZiffern) // mindestens "q" eine hinreichend lange Rufnummer und <LF>
+					{
+					FehlerRueckmelden(PSTR("ascii-query too short: %u"), InCount);
+					Senden = true;
+					}
+				else
+					{
+					uint32_t RufNr = atol(TlnServBuf.Buf + 1); // Nach dem 'q' beginnen
+					if (ProtokollLevelTlnServ >= AblaufInfo) 
+						ProtokollierenTlnServInt_P(Kanal, PSTR("Ascii-Abfrage empfangen. Nummer %lu: "), RufNr);
+						
+					// Telefonbuch abfragen
+					if (TlnSuche(RufNr, false, &TD)
+						&& !(TD.Flags & TlnFlag_Lokal)
+						&& !(TD.Flags & TlnFlag_Gesperrt))
+						{ // gefunden
+						// Antwort generieren:
+						AsciiTlnAuskunft(&TD); // erstellt die Teilnehmer-Auskunft als ASCII-Daten
+						Senden = true;
+						TlnServAbfrageZaehler++; // für die Statistik
+						if (ProtokollLevelTlnServ >= AblaufInfo)
+							Protokollieren_P(PSTR(" ...gefunden\r\n"));
+						}
+					else
+						{ // Nummer nicht gefunden
+						sprintf_P(TlnServBuf.Buf, PSTR("fail\r\n%lu\r\nunknown\r\n+++\r\n"), RufNr);
+						Senden = true;
+						if (ProtokollLevelTlnServ >= AblaufInfo) 
+							Protokollieren_P(PSTR("* ...nicht gefunden oder gesperrt\r\n"));
+						} 
+					} // else ausreichend Daten erhalten
+					
+				if (Senden)
+					KanalFertig(Kanal); // mehr wird da nicht kommen.
+					
+				break; // TlnServBuf.Code == TLNSERV_ASCII_ABFRAGE
 				
 			case TLNSERV_FEHLER:
 				CloseTCPSocket(Kanal->Socket);
