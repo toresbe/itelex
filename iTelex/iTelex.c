@@ -568,8 +568,8 @@ uint8_t DiagnoseAusgabeZiel;
 	//!< Ursache des Diagnosetextes durch Endgerät verursacht wurde.
 	
 	
-static struct TIME SystemStartZeit;
-	//!< Speichert Uhrzeit des Systemstarts, nur für Diagnose
+struct TIME SystemStartZeit;
+	//!< Speichert Uhrzeit des Systemstarts, nur für Diagnose und Statistik
 
 
 #ifdef NTP

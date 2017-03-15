@@ -473,6 +473,8 @@ extern long TeilnehmerServerIP[ANZ_TEILNEHMER_SERVER];
 
 extern TSprache LokaleSprache;
 	
+extern struct TIME SystemStartZeit;
+
 
 // globale Funktionen
 // ================================================================

@@ -501,9 +501,9 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 		    && TlnServBuf.TlnAuskunft.Datum >= Kanal->AusgabeStichdatum
 			&& TlnSuchMusterPasst(Kanal->SuchMuster, &TlnServBuf.TlnAuskunft))
 			{
-			// aber Nicht senden, wenn gelöscht und Löschdatum älter als 20 Tage
+			// aber Nicht senden, wenn gelöscht und Löschdatum älter als 40 Tage
 			if (TlnServBuf.TlnAuskunft.AdrArt == Geloescht 
-				&& TlnServBuf.TlnAuskunft.Datum + 20L * 24 * 60 * 60 < TlnBuchLetzteAenderung)
+				&& TlnServBuf.TlnAuskunft.Datum + 40L * 24 * 60 * 60 < TlnBuchLetzteAenderung)
 				{
 				ProtokollierenTlnServInt_P(Kanal, PSTR("Als geloescht markierter Teilnehmer-Eintrag %lu uebersprungen\r\n"), TlnServBuf.TlnAuskunft.Nummer);
 				continue;
@@ -1272,6 +1272,12 @@ void TlnServDebugPrint()
 	CLOCK_GetTime(&Time); // holt auch die aktuelle Zeitzone
 
 	PRINTVAL(TlnServAbfrageZaehler);
+
+	uint32_t Divisor = (Time.time - SystemStartZeit.time) / (24 * 7);
+	if (Divisor == 0) 
+		Divisor = 1;
+	printf_P(PSTR("<br>Anzahl Abfragen pro Woche: %u (gerundet)"), TlnServAbfrageZaehler * 60L * 60L / Divisor);
+		// Berechnung: Anz / ( Laufzeit[sek] / (60 * 60 * 24 * 7) ) == Anz * 60 * 60 / (Laufzeit * 24 * 7)
 	
 	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
