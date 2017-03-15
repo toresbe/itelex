@@ -4358,25 +4358,33 @@ void itelex_thread()
 
 	if (Modus == ModRuhe 
 		&& AsciiDruckPuffer[0] == '\0' 
-		&& DiagnosePuffer[0] != '\0'
-		&& DiagnosePufferLevel <= MeldungsdruckLevel)
-		{ 
-		AsciiDruckZiel = DiagnoseAusgabeZiel;
-		strcpy_P(AsciiDruckPuffer, ISTR(DiagnoseEinleitung, LokaleSprache));
-		AdresseZuWahlStr(BusEigenAdresse, AsciiDruckPuffer + strlen(AsciiDruckPuffer));
-		strcat_P(AsciiDruckPuffer, PSTR(": "));
-		strncat(AsciiDruckPuffer, DiagnosePuffer, AsciiDruckPufferMax-3-strlen(AsciiDruckPuffer));
-		AsciiDruckPuffer[AsciiDruckPufferMax-6] = '\0';
-		strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
-		if (ProtokollLevel >= AblaufInfo && ProtokollLevel < DatenDetailliert)
-			{ // bei DatenDetailliert wird der Text eh ausgedruckt.
-			ProtokollierenITelex_P(PSTR("Diagnosedruck: "));
-			ProtokollierenPuffer(AsciiDruckPuffer, strlen(AsciiDruckPuffer));
-			Protokollieren_P(PSTR("\r\n"));
+		&& DiagnosePuffer[0] != '\0')
+		{
+		if (DiagnosePufferLevel <= MeldungsdruckLevel)
+			{ 
+			AsciiDruckZiel = DiagnoseAusgabeZiel;
+			strcpy_P(AsciiDruckPuffer, ISTR(DiagnoseEinleitung, LokaleSprache));
+			AdresseZuWahlStr(BusEigenAdresse, AsciiDruckPuffer + strlen(AsciiDruckPuffer));
+			strcat_P(AsciiDruckPuffer, PSTR(": "));
+			strncat(AsciiDruckPuffer, DiagnosePuffer, AsciiDruckPufferMax-3-strlen(AsciiDruckPuffer));
+			AsciiDruckPuffer[AsciiDruckPufferMax-6] = '\0';
+			strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
+			if (ProtokollLevel >= AblaufInfo && ProtokollLevel < DatenDetailliert)
+				{ // bei DatenDetailliert wird der Text eh ausgedruckt.
+				ProtokollierenITelex_P(PSTR("Diagnosedruck: "));
+				ProtokollierenPuffer(AsciiDruckPuffer, strlen(AsciiDruckPuffer));
+				Protokollieren_P(PSTR("\r\n"));
+				}
+			DiagnosePuffer[0] = '\0';
+			DiagnosePufferLevel = 0;
+			DiagnoseAusgabeZiel = 0;
 			}
-		DiagnosePuffer[0] = '\0';
-		DiagnosePufferLevel = 0;
-		DiagnoseAusgabeZiel = 0;
+		else // DiagnosePuffer ignorieren
+			{
+			DiagnosePuffer[0] = '\0';
+			DiagnosePufferLevel = 0;
+			DiagnoseAusgabeZiel = 0;
+			}
 		}
 
 	// ==========================================================================
