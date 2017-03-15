@@ -4451,7 +4451,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_abbrev  0x00006fed      0x16f iTelex/Gemeinsam/FifoPuffer.o
  .debug_abbrev  0x0000715c      0x126 iTelex/Gemeinsam/BaudotCode.o
 
-.debug_line     0x00000000    0x18c35
+.debug_line     0x00000000    0x18c3d
  *(.debug_line)
  .debug_line    0x00000000       0xfe main.o
  .debug_line    0x000000fe      0x261 hardware/ext_int/ext_int.o
@@ -4568,19 +4568,19 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_line    0x0000c0be       0x3e apps/mp3-streamingclient/mp3-streaming.o
  .debug_line    0x0000c0fc       0x3e apps/mp3-streamingclient/mp3-clientserver.o
  .debug_line    0x0000c13a       0x3e apps/can/can_eth_rep.o
- .debug_line    0x0000c178     0x6729 iTelex/iTelex.o
- .debug_line    0x000128a1     0x1287 iTelex/TlnBuch.o
- .debug_line    0x00013b28      0x43b iTelex/CgiFormTools.o
- .debug_line    0x00013f63      0x6b7 iTelex/SwTwi.o
- .debug_line    0x0001461a      0x75f iTelex/Protokoll.o
- .debug_line    0x00014d79     0x1221 iTelex/TlnServer.o
- .debug_line    0x00015f9a      0xe52 iTelex/eMail.o
- .debug_line    0x00016dec      0x101 iTelex/StringTab.o
- .debug_line    0x00016eed      0x306 iTelex/ConfigNtp.o
- .debug_line    0x000171f3      0xdea iTelex/IspMaster.o
- .debug_line    0x00017fdd      0x754 iTelex/Gemeinsam/BusKomm.o
- .debug_line    0x00018731      0x2cb iTelex/Gemeinsam/FifoPuffer.o
- .debug_line    0x000189fc      0x239 iTelex/Gemeinsam/BaudotCode.o
+ .debug_line    0x0000c178     0x6731 iTelex/iTelex.o
+ .debug_line    0x000128a9     0x1287 iTelex/TlnBuch.o
+ .debug_line    0x00013b30      0x43b iTelex/CgiFormTools.o
+ .debug_line    0x00013f6b      0x6b7 iTelex/SwTwi.o
+ .debug_line    0x00014622      0x75f iTelex/Protokoll.o
+ .debug_line    0x00014d81     0x1221 iTelex/TlnServer.o
+ .debug_line    0x00015fa2      0xe52 iTelex/eMail.o
+ .debug_line    0x00016df4      0x101 iTelex/StringTab.o
+ .debug_line    0x00016ef5      0x306 iTelex/ConfigNtp.o
+ .debug_line    0x000171fb      0xdea iTelex/IspMaster.o
+ .debug_line    0x00017fe5      0x754 iTelex/Gemeinsam/BusKomm.o
+ .debug_line    0x00018739      0x2cb iTelex/Gemeinsam/FifoPuffer.o
+ .debug_line    0x00018a04      0x239 iTelex/Gemeinsam/BaudotCode.o
 
 .debug_frame    0x00000000     0x2740
  *(.debug_frame)
