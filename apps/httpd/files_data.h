@@ -82,7 +82,7 @@ const char data2[] PROGMEM = {
 	"<HTML>"
 	"<BODY text=\"#0000C0\" style=\"background-image:url(lochstreifen-hg.png)\">"
 	"<span style=\"font: bold 40px 'Courier New','Lucida Console',monospace; \"><b>"
-	"i-Telex - ToIP - telex over internet"
+	"i-Telex - ToIP - ethernet interface"
 	"</b></span>"
 	"</BODY>"
 	"</HTML>"
@@ -387,7 +387,7 @@ const char iTelexCfgMenuDeText[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"itelex-menu-de.html\">zur&uuml;ck</a>"
-	" / <a href=\"itelexcfg-intern.cgi?spr=de\" target=\"main\">Einstellungen im lokalen TxP-System</a>"
+	" / <a href=\"itelexcfg-intern.cgi?spr=de\" target=\"main\">Einstellungen im lokalen System</a>"
 	" / <a href=\"itelexcfg-extern.cgi?spr=de\" target=\"main\">Einstellungen im i-Telex-Netz</a>"
 #ifdef ITELEX_EMAIL
 	" / <a href=\"itelexcfg-email.cgi?spr=de\" target=\"main\">eMail-Einstellungen</a>"

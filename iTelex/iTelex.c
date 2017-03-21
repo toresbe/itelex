@@ -375,6 +375,9 @@ static bool LangeDienstmeldungen;
 static uint8_t DurchwahlTabelle[9];
 	//!< Liste der Nebenstellen-Nummern bei kommenden Rufen mit Durchwahl
 
+static bool DurchwahlTabIstAusschluss;
+	//!< Bei true enthält die #DurchwahlTabelle keine erlaubten, sondern verbotene Nummern
+	
 static TDatumDruckModus DatumDruckModus;
 	//!< Wird bei kommenden Verbindungen etwas automatisch gedruckt?
 	
@@ -1582,9 +1585,11 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 		return true;
 		
 	// Prüfen, ob Durchwahl freigegeben ist. Freigegeben ist diese, wenn 
-	// zwischen 1 und 9 oder wenn direkte Durchwahl in DurchwahlTabelle enthalten.
-	if (*aDurchwahl >= 101 && *aDurchwahl <= 109 && DurchwahlTabelle[*aDurchwahl - 101] > 0)
-		{
+	// zwischen 1 und 9 oder wenn direkte Durchwahl in DurchwahlTabelle enthalten ist, aber nicht, 
+	// wenn DurchwahlTabIstAusschluss gesetzt ist
+	
+	if (!DurchwahlTabIstAusschluss && *aDurchwahl >= 101 && *aDurchwahl <= 109 && DurchwahlTabelle[*aDurchwahl - 101] > 0)
+		{ // Prüfung auf einstellige Durchwahl
 		*aDurchwahl = DurchwahlTabelle[*aDurchwahl - 101] >> 1;
 		if (ProtokollLevel >= AblaufInfo)
 			{
@@ -1594,6 +1599,7 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 		return true;
 		}
 		
+	// Prüfung auf 'direkte' Durchwahl
 	for (uint8_t i = 0 ; i < 9 ; i++)
 		if (*aDurchwahl == DurchwahlTabelle[i] >> 1)
 			{
@@ -1602,10 +1608,11 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Durchwahl in Tabelle gefunden %u\r\n"), *aDurchwahl);
 				}
-			return true;
+			return !DurchwahlTabIstAusschluss; 
 			}
 	
-	return false;
+	return DurchwahlTabIstAusschluss;
+		// ok, falls gewählte Nummer nicht in der Liste enthalten ist UND 'Ausschluss-Flag' gesetzt ist.
 	}
 	
 
@@ -2137,7 +2144,7 @@ static void SocketBearbeiten()
 		&& KurzTimerVal(&iTelexBlindSocketAbbauVerzoegerung) >= 3 * KurzTimerFreq)
 		{
 		if (ProtokollLevel >= AblaufInfo)
-			ProtokollierenITelex_P(PSTR("* i-Telex-Blindsocket selbst getrennt\r\n" ));
+			ProtokollierenITelex_P(PSTR("* iTelex-Blindsocket selbst getrennt\r\n" ));
 		CloseTCPSocket(iTelexBlindSocketHandle);
 		iTelexBlindSocketHandle = NO_SOCKET_USED;
 		}
@@ -5056,6 +5063,7 @@ static void DurchwahlTabelleDekodieren(char *s)
 	uint8_t AnzSt = 0; // Anzahl Stellen
 	uint8_t WahlNr = 0; // Bisherige Nummer
 	
+	DurchwahlTabIstAusschluss = false; // bis das Zeichen # kommt
 	while (i < 9)
 		{
 		switch (*s)
@@ -5085,6 +5093,15 @@ static void DurchwahlTabelleDekodieren(char *s)
 				WahlNr = 0;
 				break;
 
+			case '#': // Ausschluss-Flag
+				if (AnzSt == 0 && i == 0) // darf nur ganz am Anfang stehen
+					{
+					DurchwahlTabIstAusschluss = true;
+					break;
+					}
+				// ansonsten wie ein illegales Zeichen behandeln und abbrechen.
+				// daher hier kein break;
+					
 			case '\0':
 			default:
 				while (i < 9)
@@ -5764,7 +5781,7 @@ void itelex_cgi_config_intern(void *pStruct)
 		CgiFormCheckbox_P(ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P, AlternativSucheBeiBesetzt);
 						
 		readConfig_P(DurchwahlTabelle_P, Buf);
-		CgiFormInputFieldText_P(ISTR(DurchwahlenListe, Sprache), DurchwahlTabelle_P, 30, Buf);
+		CgiFormInputFieldText_P(ISTR(DurchwahlenListe, Sprache), DurchwahlTabelle_P, 31, Buf);
 
 		CgiFormDropdown_P(ISTR(DatumDruckModus, Sprache), DatumDruckModus_P, 4, AutoDatumSelList, DatumDruckModus);
 
@@ -5872,17 +5889,33 @@ void itelex_cgi_config_intern(void *pStruct)
 				
 			if (Neu)
 				{
+				// Durchwahl-Liste aus CGI-Anfrage holen
 				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, DurchwahlTabelle_P)], 33);
 				Buf[33] = '\0';
+				
+				// ...dekodieren... (in Liste speichern)
 				DurchwahlTabelleDekodieren(Buf);
-				AdresseZuWahlStr(DurchwahlTabelle[0], Buf);
+				
+				// ... und neu kodieren (nach Buf)
+				if (DurchwahlTabIstAusschluss)
+					{
+					Buf[0] = '#';
+					AdresseZuWahlStr(DurchwahlTabelle[0], Buf + 1);
+					}
+				else
+					AdresseZuWahlStr(DurchwahlTabelle[0], Buf);
+				
 				for (uint8_t i = 1 ; i < 9 ; i++)
 					{
 					uint8_t len = strlen(Buf);
 					Buf[len] = ','; // Komma angefügt
 					AdresseZuWahlStr(DurchwahlTabelle[i], Buf + len + 1);
 					}
+					
+				// in EEPROM speichern
 				changeConfig_P(DurchwahlTabelle_P, Buf);
+				
+				// als Bestätigung ausgeben
 				printf_P(PSTR("<br>"));
 				printf_P(ISTR(DurchwahlenListe, Sprache));
 				printf_P(ISTR(GeaendertIn, Sprache));
@@ -6565,6 +6598,8 @@ extern void itelex_init1(void)
 
 	for (i = 0 ; i < 9 ; i++)
 		DurchwahlTabelle[i] = 0;
+	DurchwahlTabIstAusschluss = false;
+	
 	if (readConfig_P(DurchwahlTabelle_P, Buf) == 1)
 		DurchwahlTabelleDekodieren(Buf); // Ergebnis wird ignoriert
 

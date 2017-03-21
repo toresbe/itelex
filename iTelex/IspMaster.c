@@ -819,7 +819,7 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	
 	// da der Rest Zeitkritisch ist wird der Bildschirmaufbau erstmal zuende gebracht.
 	LED_on(BLAU); 
-	printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after all LED on i-Telex board went off again."));
+	printf_P(PSTR("<p>Click <a href=\"isp.cgi\">here</a> after all LED on ethernet interface board went off again."));
 	cgi_PrintHttpheaderEnd();
 	STDOUT_Flush();
 	CloseTCPSocket(http_request->HTTP_SOCKET); // ist erfoderlich, damit erstmal die Meldung erscheint.

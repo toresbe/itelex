@@ -45,8 +45,8 @@ _STRTABENTRY(TeilnehmerServerWiederErreichbar, "Teilnehmer-Server wieder erreich
 _STRTABENTRY(KeineVerbindungZumMailServerAusgang, "Keine Verbindung zum Mail-Server fuer Ausgang", "No connection to server for outgoing mails")
 _STRTABENTRY(MailNichtInDieserVersion, "Mail in dieser Version nicht unterstuetzt", "Mail not supported in this version")
 _STRTABENTRY(ServerAusWegenFehlenderUhrzeit, 
-	"Zeit-Server war nicht verfuegbar, teilnehmer-server nicht gestartet. bitte i-telex neu starten.", 
-	"time server not available. subscriber server not started, please restart i-telex again.")
+	"Zeit-Server war nicht verfuegbar, teilnehmer-server nicht gestartet. bitte diese schnittstelle neu starten.", 
+	"time server not available. subscriber server not started, please restart this interface again.")
 _STRTABENTRY(TeilnehmerBesetzt, "Teilnehmer besetzt", "Subscriber busy")
 _STRTABENTRY(TeilnehmerNichtErreichbar, "Teilnehmer nicht erreichbar", "Subscriber not available")
 _STRTABENTRY(TeilnehmerNichtErlaubt, "Teilnehmer nicht erlaubt", "Subscriber not allowed")
@@ -79,7 +79,7 @@ _STRTABENTRY(FalschesKonfigKennwortEingegeben, "unautorisierter Zugriff auf Konf
 _STRTABENTRY(Druckspiegel, "Druckspiegel", "printed text")
 _STRTABENTRY(TexteingabeStartetFernschreiber, "Texteingabe startet Fernschreiber", "Enter text to start printer")
 _STRTABENTRY(AndereVerbindungBesteht, "Es besteht bereits eine andere Verbindung, bitte warten.", "Connection busy, please wait.")
-_STRTABENTRY(ModulDeaktiviert, "i-Telex ist deaktiviert. Bitte sp&auml;ter wieder versuchen.", "i-Telex is de-activated. Try again later.")
+_STRTABENTRY(ModulDeaktiviert, "Schnittstelle ist deaktiviert. Bitte sp&auml;ter wieder versuchen.", "Interface is de-activated. Try again later.")
 _STRTABENTRY(HtmlTextEingabe, "Eingabe: ", "Enter text: ")
 _STRTABENTRY(HtmlTextEingabeAbsenden, " Absenden ", " Send ")
 _STRTABENTRY(HtmlTextEingabeAktualisieren, "Aktualisieren", "Refresh")
@@ -108,7 +108,7 @@ _STRTABENTRY(InternesKennwortFehlt,
 			 "First select password in <a href=\"itelexcfg-intern.cgi?spr=en\" target=\"main\">Settings for the local TxP-system</a>!")
 _STRTABENTRY(GesperrtBestaetigung, 
 			 "Konfigurationsseiten sind nun gesperrt. Zur Freigabe wieder das Passwort eingeben oder Taste der Baugruppe 2 x dr&uuml;cken.", 
-			 "Configuration pages are locked again. For unlocking enter password or push button at i-telex hardware module twice.")
+			 "Configuration pages are locked again. For unlocking enter password or push button at ethernet interface module twice.")
 _STRTABENTRY(ITelexRufnummer, "eigene Rufnummer im i-telex-Netz", "Subscriber's number")
 _STRTABENTRY(ITelexRufnummerZuKurz, "<big><b>&lt;=== muss fünf bis neun Ziffern haben!</b></big>", "<big><b>&lt;=== must have five to nine digits!</b></big>")
 _STRTABENTRY(RufnrServerAnmeldGeheimzahl, "Geheimzahl zur Anmeldung beim Rufnummern-Server", "PIN for sign in at subscriber directory server")
