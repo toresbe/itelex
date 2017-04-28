@@ -1,3 +1,9 @@
+Ab Build 731:
+Durchwahl-Liste kann auch als Negativ-Liste definiert werden
+
+Ab Build 724:
+Teilnehmerserver mit Abruf-Statistik
+
 Ab Build 711:
 Protokollierung der Verbindungs-Eingänge aller TCP-Sockets
 
