@@ -1827,68 +1827,78 @@ static void SocketBearbeiten()
 	// Verbindungsabbruch durch Gegenseite?
 	// --------------------------------------------------
 	if (iTelexSocketHandle != NO_SOCKET_USED 
-		&& CheckSocketState(iTelexSocketHandle) == SOCKET_NOT_USE
-		&& SocketInBufUsed == 0) // Verbindungsabbau verzögern bis Puffer verarbeiet.
+		&& CheckSocketState(iTelexSocketHandle) == SOCKET_NOT_USE)
 		{ // ID#242 ID#342 ID#314 ************************************************
-		switch (iTelexSocketProtokoll)
-			{
-			case iTelexProt:
-				if (!iTelexSocketAbbauGeplant)
-					{
-					if (ProtokollLevel >= NurFehler)
-						ProtokollierenITelex_P(PSTR("! Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n" ));
-			
-					#ifdef LEDROT_SOCKETERROR
-						LED_on(ROT);
-					#endif //def LEDROT_SOCKETERROR
-					break; // des switch
-					}
-				// sonst weiter mit Ascii, kein break;
-				
-			case Ascii:
-				// oder iTelexProt und AbbauGeplant
-				if (ProtokollLevel >= AblaufInfo)
-					{
-					ProtokollRegelblockStart();
-					ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
-					ProtokollRegelblockEnde();
-					}
-				
-				iTelexSocketMode = SocketIdle;
-				iTelexSocketIP = 0;
-				iTelexSocketAbbauGeplant = false;
-				SocketOutBufUsed = 0;
-				SocketInBufUsed = 0;
-				#ifdef LEDROT_SOCKETERROR
-					LED_off(ROT);
-				#endif //def LEDROT_SOCKETERROR
-				break;
-				
-			default:
-				if (!iTelexSocketAbbauGeplant)
-					ProtokollierenITelex_P(PSTR("! Socket wurde von Gegenstelle GETRENNT\r\n" ));
-					
-				else if (ProtokollLevel >= AblaufInfo)
-					ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
-					
-				if (Modus == ModEmailPOPVerbunden)
-					ModusWechsel(ModWarteGrundstellung);
-					
-				iTelexSocketMode = SocketIdle;
-				iTelexSocketIP = 0;
-				iTelexSocketAbbauGeplant = false;
-				SocketOutBufUsed = 0;
-				SocketInBufUsed = 0;
-				break;
-				
+		
+		if (iTelexSocketAbbauGeplant && SocketInBufUsed > 0)
+			{ // SocketInBuf löschen, wenn kein "Abnehmer" mehr da ist...
+			if (ProtokollLevel >= AblaufInfo)
+				Protokollieren_P(PSTR("* SocketInBuf geloescht, da Verbindung geplant abgebaut\r\n" ));
+			SocketInBufUsed = 0;
 			}
+		
+		if (SocketInBufUsed == 0) // Verbindungsabbau verzögern bis Puffer verarbeiet.
+			{
+			switch (iTelexSocketProtokoll)
+				{
+				case iTelexProt:
+					if (!iTelexSocketAbbauGeplant)
+						{
+						if (ProtokollLevel >= NurFehler)
+							ProtokollierenITelex_P(PSTR("! Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n" ));
+				
+						#ifdef LEDROT_SOCKETERROR
+							LED_on(ROT);
+						#endif //def LEDROT_SOCKETERROR
+						break; // des switch
+						}
+					// sonst weiter mit Ascii, kein break;
+					
+				case Ascii:
+					// oder iTelexProt und AbbauGeplant
+					if (ProtokollLevel >= AblaufInfo)
+						{
+						ProtokollRegelblockStart();
+						ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
+						ProtokollRegelblockEnde();
+						}
+					
+					iTelexSocketMode = SocketIdle;
+					iTelexSocketIP = 0;
+					iTelexSocketAbbauGeplant = false;
+					SocketOutBufUsed = 0;
+					SocketInBufUsed = 0;
+					#ifdef LEDROT_SOCKETERROR
+						LED_off(ROT);
+					#endif //def LEDROT_SOCKETERROR
+					break;
+					
+				default:
+					if (!iTelexSocketAbbauGeplant)
+						ProtokollierenITelex_P(PSTR("! Socket wurde von Gegenstelle GETRENNT\r\n" ));
+						
+					else if (ProtokollLevel >= AblaufInfo)
+						ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
+						
+					if (Modus == ModEmailPOPVerbunden)
+						ModusWechsel(ModWarteGrundstellung);
+						
+					iTelexSocketMode = SocketIdle;
+					iTelexSocketIP = 0;
+					iTelexSocketAbbauGeplant = false;
+					SocketOutBufUsed = 0;
+					SocketInBufUsed = 0;
+					break;
+					
+				}
 			
-		CloseTCPSocket(iTelexSocketHandle);
-		StartKurzTimer(&iTelexSocketAbbruchTimer);
-		StartKurzTimer(&iTelexSocketWiederholungVerzoegerung);
-		iTelexSocketHandle = NO_SOCKET_USED;
-		return; // GGf wieder Aufnahme der Verbindung beim nächsten Aufruf dieser funktion...
-		}
+			CloseTCPSocket(iTelexSocketHandle);
+			StartKurzTimer(&iTelexSocketAbbruchTimer);
+			StartKurzTimer(&iTelexSocketWiederholungVerzoegerung);
+			iTelexSocketHandle = NO_SOCKET_USED;
+			return; // GGf wieder Aufnahme der Verbindung beim nächsten Aufruf dieser funktion...
+			} // if (SocketInBufUsed == 0)
+		} // if (iTelexSocketHandle != NO_SOCKET_USED && CheckSocketState(iTelexSocketHandle) == SOCKET_NOT_USE)
 		
 	// soll offene Verbindung geschlossen werden?
 	// --------------------------------------------------
@@ -1907,8 +1917,6 @@ static void SocketBearbeiten()
 		iTelexSocketMode = SocketIdle;
 		iTelexSocketIP = 0;
 		iTelexSocketAbbauGeplant = false;
-		SocketOutBufUsed = 0;
-		SocketInBufUsed = 0;
 		#ifdef LEDROT_SOCKETERROR
 			LED_off(ROT);
 		#endif //def LEDROT_SOCKETERROR

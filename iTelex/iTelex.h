@@ -164,7 +164,7 @@ enum {
 
 	TLNSERV_SYNC_ENDE = 0x09,
 	//!< Meldung des sendenden Teilnehmer-Servers, sobald keine weiteren Datensätze
-	//!< zu senden sind. \n
+	//!< zu senden sind.
 	//!< Oder Meldung des empfangenden Teilnehmer-Servers, wenn dieser keine 
 	//!< weiteren Datensätze verarbeiten kann.
 
@@ -396,6 +396,7 @@ typedef union
 				
 			// für Code == TLNSERV_SYNC_QUITTUNG keine Daten.
 			// für Code == TLNSERV_AUSKUNFT_NICHTVERG keine Daten.
+			// für Code == TLNSERV_SYNC_ENDE keine Daten.
 			} ;
 		} ;
 	} TTlnServBuf; 
