@@ -1824,21 +1824,19 @@ static void SocketBearbeiten()
 			
 		} // CheckPortRequest(ITELEX_PORT) != NO_SOCKET_USED
 
+	if (Modus == ModWarteGrundstellung && SocketInBufUsed > 0)
+		{ // SocketInBuf löschen, wenn kein "Abnehmer" mehr da ist...
+		if (ProtokollLevel >= AblaufInfo)
+			ProtokollierenITelex_P(PSTR("* SocketInBuf geloescht, da nur noch auf Grundstellung gewartet wird\r\n" ));
+		SocketInBufUsed = 0;
+		}
+		
 	// Verbindungsabbruch durch Gegenseite?
 	// --------------------------------------------------
 	if (iTelexSocketHandle != NO_SOCKET_USED 
-		&& CheckSocketState(iTelexSocketHandle) == SOCKET_NOT_USE)
+		&& CheckSocketState(iTelexSocketHandle) == SOCKET_NOT_USE
+		&& SocketInBufUsed == 0) // Verbindungsabbau verzögern bis Puffer verarbeiet.
 		{ // ID#242 ID#342 ID#314 ************************************************
-		
-		if (iTelexSocketAbbauGeplant && SocketInBufUsed > 0)
-			{ // SocketInBuf löschen, wenn kein "Abnehmer" mehr da ist...
-			if (ProtokollLevel >= AblaufInfo)
-				Protokollieren_P(PSTR("* SocketInBuf geloescht, da Verbindung geplant abgebaut\r\n" ));
-			SocketInBufUsed = 0;
-			}
-		
-		if (SocketInBufUsed == 0) // Verbindungsabbau verzögern bis Puffer verarbeiet.
-			{
 			switch (iTelexSocketProtokoll)
 				{
 				case iTelexProt:
@@ -1897,14 +1895,13 @@ static void SocketBearbeiten()
 			StartKurzTimer(&iTelexSocketWiederholungVerzoegerung);
 			iTelexSocketHandle = NO_SOCKET_USED;
 			return; // GGf wieder Aufnahme der Verbindung beim nächsten Aufruf dieser funktion...
-			} // if (SocketInBufUsed == 0)
-		} // if (iTelexSocketHandle != NO_SOCKET_USED && CheckSocketState(iTelexSocketHandle) == SOCKET_NOT_USE)
+		} // if (iTelexSocketHandle != NO_SOCKET_USED && CheckSocketState(iTelexSocketHandle) == SOCKET_NOT_USE && SocketInBufUsed == 0)
 		
 	// soll offene Verbindung geschlossen werden?
 	// --------------------------------------------------
 	if (iTelexSocketHandle != NO_SOCKET_USED 
 		&& iTelexSocketAbbauGeplant 
-		&& iTelexSocketMode == SocketOriginate 
+		// && iTelexSocketMode == SocketOriginate   //! \todo ist das richtig so?
 		&& KurzTimerVal(&iTelexSocketAbbauVerzoegerung) > KurzTimerFreq * 15/10 // 1,5 Sekunden nach letzter Sendung...
 		&& SocketOutBufUsed == 0
 		&& SocketInBufUsed == 0)
