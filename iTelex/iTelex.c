@@ -611,7 +611,7 @@ typedef struct
 	} TServSocketLogEntry;
 	
 	
-enum { ServSocketLogMaxEntries = 20 };
+enum { ServSocketLogMaxEntries = 10 };
 	//!< Anzahl zulässiger Einträge in der Protokollierung der ankommenden TCP-Verbindungen.
 
 

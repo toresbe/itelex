@@ -23,7 +23,7 @@
 
 #ifdef iTelex
 
-enum { TlnBuchMemMax = 20000UL } ; //!< Größe des Teilnehmerverzeichnisses in Bytes
+enum { TlnBuchMemMax = 25000UL } ; //!< Größe des Teilnehmerverzeichnisses in Bytes
 
 
 //! Speicher des Teilnehmerverzeichnisses.
