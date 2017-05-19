@@ -466,6 +466,14 @@ const char iTelexChatEnText[] PROGMEM = {
 		
 #endif //def iTelex
 
+
+const char RobotsTxtName[] PROGMEM = "robots.txt";
+const char RobotsTxtData[] PROGMEM = {
+	"# robots.txt zum i-telex Web-Interface\r\n"
+	"User-agent: *\r\n"
+	"Disallow: /\r\n" } ;
+
+
 FILES files[] = {
 	{ files1, data1, TEXT, sizeof( data1 ) - 1 },
 	{ files2, data2, TEXT, sizeof( data2 ) - 1 },
@@ -498,6 +506,7 @@ FILES files[] = {
 	{ iTelexChatEnName, iTelexChatEnText, TEXT, sizeof( iTelexChatEnText ) - 1 },
 #endif
 	{ lochstr_hg_filename, lochstreifen_hg, PNG, sizeof( lochstreifen_hg ) },
+	{ RobotsTxtName, RobotsTxtData, TEXT, sizeof(RobotsTxtData) - 1 },
 	{ 0,0,0,0 }
 };
 #endif
