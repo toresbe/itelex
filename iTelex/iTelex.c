@@ -3352,7 +3352,9 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Client-Socket #%d Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n"), iTelexSocketHandle);
 			}
-			
+
+		//! \todo Durchwahl per *55* senden
+		
 		ModusWechsel(ModGehendVerbunden);
 		iTelexSocketProtokoll = Ascii;
 		return 0;
@@ -4204,6 +4206,8 @@ void itelex_thread()
 						break;
 					case AsciiHostname:
 					case AsciiIP:
+						if (TD.Durchwahl != 0)
+							sprintf_P(AsciiDruckPuffer + strlen(AsciiDruckPuffer), PSTR("(%d) "), TD.Durchwahl);
 						strcat_P(AsciiDruckPuffer, ISTR(TypAscii, LokaleSprache));
 						break;
 					case eMail:
