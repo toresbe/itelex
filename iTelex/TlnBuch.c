@@ -86,10 +86,10 @@ static uint8_t TlnEintragGroesse(TTlnDaten *Tln)
 			return Basis + 4 + 2 + 1 + 2;
 		
 		case AsciiHostname:
-			return Basis + strlen(Tln->Adresse)+1 + 2 + 1;
+			return Basis + strlen(Tln->Adresse)+1 + 2;
 			
 		case AsciiIP:
-			return Basis + 4 + 2 + 1;
+			return Basis + 4 + 2;
 		
 		case eMail:
 			return Basis + strlen(Tln->Adresse)+1;
@@ -159,13 +159,11 @@ static bool TlnEintragen(TTlnDaten *Tln, char *BuchP, bool DatumAktualisieren)
 		case AsciiHostname:
 			EINTRAGSTR(Tln->Adresse)
 			EINTRAG(uint16_t, Tln->Port, 2)
-			EINTRAG(uint8_t, Tln->Durchwahl, 1)
 			break;
 			
 		case AsciiIP:
 			EINTRAG(long, Tln->IPAdr, 4)
 			EINTRAG(uint16_t, Tln->Port, 2)
-			EINTRAG(uint8_t, Tln->Durchwahl, 1)
 			break;
 		
 		case eMail:
@@ -232,13 +230,13 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 		case AsciiHostname:
 			strcpy(Tln->Adresse, p);					p += strlen(Tln->Adresse)+1;
 			Tln->Port = *((uint16_t *) p);				p += 2;
-			Tln->Durchwahl = *((uint8_t *) p);			p += 1;
+			Tln->Durchwahl = 0;
 			break;
 			
 		case AsciiIP:
 			Tln->IPAdr = *((long *) p);					p += 4;
 			Tln->Port = *((uint16_t *) p);				p += 2;
-			Tln->Durchwahl = *((uint8_t *) p);			p += 1;
+			Tln->Durchwahl = 0;
 			break;
 		
 		case eMail:
@@ -1050,13 +1048,12 @@ static void TlnBuchTabelleAusgabe(TSprache Sprache, bool Freigegeben)
 					iptostr(TD.IPAdr, TD.Adresse);
 					// weiter mit AsciiHostname!
 				case AsciiHostname:
-					AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
 					printf_P(ISTR(TypAscii, Sprache));
 					printf_P(PSTR("</td>"
 						"<td align=\"left\">%s</td>" // Adresse
 						"<td align=\"center\">%u</td>" // Port
-						"<td align=\"center\">%s</td>" // Durchwahl
-						), TD.Adresse, TD.Port, Hilf);
+						"<td>&#160;</td>" // Durchwahl
+						), TD.Adresse, TD.Port);
 					break;
 
 				case eMail:
@@ -1398,24 +1395,9 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 					printf_P(ISTR(IPZusatz, Sprache), TD.Adresse);
 					}
 				TD.Port = atoi(http_request->argvalue[PharseGetValue_P(http_request, Port_P)]);
-				strncpy(Hilf, http_request->argvalue[PharseGetValue_P(http_request, Durchwahl_P)], 2);
-				Hilf[2] = '\0';
-				// Leerzeichen löschen:
-				if (Hilf[1] == ' ')
-					Hilf[1] = '\0';
-				if (Hilf[0] == ' ')
-					{
-					Hilf[0] = Hilf[1];
-					Hilf[1] = '\0';
-					}
-				TD.Durchwahl = WahlZuAdresse(atoi(Hilf), strlen(Hilf)) >> 1;
-				if (TD.Durchwahl == 110) 
-					TD.Durchwahl = 0; // eingabe von WahlZuAdresse(0) = 110
-				AdresseZuWahlStr(TD.Durchwahl << 1, Hilf);
+				TD.Durchwahl = 0;
 				printf_P(ISTR(Port, Sprache));
-				printf_P(PSTR(" %u "), TD.Port);
-				printf_P(ISTR(Durchwahl, Sprache));
-				printf_P(PSTR(" %s (%u)<br>"), Hilf, TD.Durchwahl);
+				printf_P(PSTR(" %u<br>"), TD.Port);
 				}
 
 			else if (strcmp_P(TypStr, ISTR(TypEMail, Sprache)) == 0)
