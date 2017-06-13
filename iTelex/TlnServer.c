@@ -202,30 +202,41 @@ static TKurzTimer SyncWarteTimer;
 	
 static uint16_t SyncWarteEnde;
 	//!< Wie lange soll bis zur nächsten Aktion gewartet werden.
-	//!< \n 20 Sekunden bis zur initialen Abholung von den Akuellen Daten nach Neustart eines
+	//!< \n 5 Sekunden bis zur initialen Abholung von den Akuellen Daten nach Neustart eines
 	//!< Teilnehmerauskunft-Servers.
 	//!< \n 30 Sekunden bis zur Sendung von aktualisierten Teilnehmer-Daten an den folgenden 
 	//!< Teilnehmerauskunft-Server.
 	//!< \n 10 Sekunden nach einem nicht erfolgreichen Verbindungsaufbau zu einem
 	//!< Partner-Teilnehmerauskunft-Server.
-	//!< \n 8 Minuten nach erfolgreicher Synchronisation an den ersten 
+	//!< \n 3 Minuten nach erfolgreicher Synchronisation an den ersten 
 	//!< Partner-Teilnehmerauskunft-Server bis zur Sendung an den nächsten Partner-Teilnehmerauskunft-Server.
 
 	
 static TLangTimer VollAbfrageTimer;
-	//!< nach Reset 1 Minute, bis erfolgreich von einem anderen Teilnehmerauskunft-Server 
+	//!< nach Reset 30 Sekunden, bis erfolgreich von einem anderen Teilnehmerauskunft-Server 
 	//!< alle Daten abgeholt worden sind.
 	//!< Danach 2 bis 4 Tage für regelmäßige Vergleiche "zur Sicherheit"
 	
-uint16_t VollAbfrageTimerEnde; // für HACK bei Taste wurde static entfernt.
+static uint16_t VollAbfrageTimerEnde; 
 	//!< Ende der Wartezeit für Vollabfrage. Siehe #VollAbfrageTimer.
 	
 static uint8_t VollAbfrageServerIndex;
 	//!< Partner für die nächste Vollabfrage.
 		
+static bool VollAbfrageErfolg;
+	//!< Speichert, ob nach einem Neustart wirklich ein Abgleich mit einem laufenden Server stattgefunden hat.
+	//!< Ist Bedingung für die Anlage von neuen Datensätzen bei DynIP.
+		
 
 static uint32_t TlnServAbfrageZaehler;
 	//!< Zählt wie oft der Teilnehmerserver von Nutzern abgefragt wird.
+
+
+static TLangTimer AutoEepromBackupTimer;
+	//!< nach Reset 10 Stunden, dann alle 4 Tage
+	
+static uint16_t AutoEepromBackupTimerEnde;
+	//!< Ende der Wartezeit für Automatisches EEPROM-Backup. Siehe #AutoEepromBackupTimer.
 	
 	
 static void KanalInit(TTlnServKanal* k, int aSocket)
@@ -299,6 +310,7 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 			ProtokollierenTlnServInt_P(Kanal, PSTR("* Rufnummer %lu zu wenig Ziffern\r\n"), tsb->SelbstAkt.RufNr);
 		return false;
 		}
+		
 	else if (TlnSuche(tsb->SelbstAkt.RufNr, false, &TD))
 		{ // Eintrag ist schon vorhanden
 		if (TD.Flags & TlnFlag_Lokal)
@@ -357,7 +369,15 @@ static bool TlnAktualisierung(TTlnServKanal *Kanal, TTlnServBuf *tsb, long TlnIP
 		} // Eintrag schon vorhanden
 		
 	else
-		{ // noch kein Eintrag vorhanden, neuen anlegen, aber gesperrt.
+		{ // noch kein Eintrag vorhanden, ...
+		if (!VollAbfrageErfolg)
+			{
+			if (ProtokollLevelTlnServ >= NurFehler)
+				ProtokollierenTlnServ_P(Kanal, PSTR("* Teilnehmerverzeichnis noch nicht synchronisiert\r\n"));
+			return false;
+			}
+
+		// ...neuen anlegen, aber gesperrt.
 		TlnDatenInit(&TD);
 		TD.Nummer = tsb->SelbstAkt.RufNr;
 		TD.Name[0] = '?';
@@ -658,7 +678,7 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					if (ProtokollLevelTlnServ >= DatenKurz)
 						{
 						ProtokollierenTlnServInt_P(Kanal, PSTR("Aktualisierung empfangen. Nummer %lu " ), TlnServBuf.SelbstAkt.RufNr);
-						ProtokollierenInt_P(PSTR("Auth %u " ), TlnServBuf.SelbstAkt.Pin);
+						//ProtokollierenInt_P(PSTR("Auth %u " ), TlnServBuf.SelbstAkt.Pin);
 						ProtokollierenInt_P(PSTR("Port %u\r\n" ), TlnServBuf.SelbstAkt.Port);
 						}
 					
@@ -672,7 +692,11 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 						} // TlnAktualisierung(...) = true
 					else
 						{
-						FehlerRueckmelden(PSTR("forbidden"), 0);
+						if (VollAbfrageErfolg) //! \todo Prio 2 nochmal prüfen, ob Ablehnung wirklich immer "forbidden" ist.
+							FehlerRueckmelden(PSTR("forbidden"), 0); // dann kann es nur eine unzulässige Aktualisierung gewesen sein.
+						else
+							FehlerRueckmelden(PSTR("delayed"), 0); // vielleicht nur ein temporärer Fehler
+						
 						Senden = true;
 						if (ProtokollLevelTlnServ >= NurFehler)
 							{
@@ -904,6 +928,9 @@ static void SocketBearbeiten(TTlnServKanal *Kanal)
 					VollAbfrageTimerEnde = 20 * 60 * LangTimerMinuteFaktor 
 											+ Zufallswert(0x1F) * 30 * LangTimerMinuteFaktor;
 						// nächste Voll-Abfrage in 20,0 bis 35,5 Stunden.
+						
+					VollAbfrageErfolg = true;
+					
 					} // if (Kanal->IstVollAbfrage)
 					
 				SyncWarteEnde = (120 - Zufallswert(0x3F)) * KurzTimerFreq; // 2 Minuten warten.
@@ -1255,6 +1282,15 @@ void itelex_tlnserv_thread()
 					
 		} // kein Socket offen und Wartezeit abgelaufen.
 	
+	if (KurzTimerVal(&SyncWarteTimer) > 10 * KurzTimerFreq 
+		&& LangTimerVal(&AutoEepromBackupTimer) >= AutoEepromBackupTimerEnde)
+		{
+		// TODO Backup im EEPROM
+		
+		StartLangTimer(&AutoEepromBackupTimer);
+		AutoEepromBackupTimerEnde = 4 * 24 * 60U * LangTimerMinuteFaktor;
+		}
+	
 	} // itelex_tlnserv_thread
 	
 	
@@ -1310,6 +1346,7 @@ void TlnServDebugPrint()
 	PRINTVAL(LangTimerVal(&VollAbfrageTimer));
 	PRINTVAL(VollAbfrageTimerEnde);
 	PRINTVAL(VollAbfrageServerIndex);
+	PRINTVAL(AutoEepromBackupTimerEnde - LangTimerVal(&AutoEepromBackupTimer));
 
 #undef PRINTVAL
 	}
@@ -1325,28 +1362,6 @@ void TlnServDebugPrint()
 void itelex_tlnserv_init()
 	{
 	uint8_t i;
-	
-	// EEPROM auslesen
-	/*
-	
-	char Buf[TlnAdresseMax];
-
-	if (readConfig_P(EigeneNummer_P, Buf) == 1)
-		BusEigenAdresse = WahlZuAdresse(atoi(Buf), strlen(Buf));
-	else
-		BusEigenAdresse = 22 << 1;
-	*/
-	
-	/*
-
-	timer0_init(iTelexTimerFreq); 
-	if (!timer0_RegisterCallbackFunction(itelex_timerEvent))
-		return;
-	*/
-	
-	/*
-	cgi_RegisterCGI( itelex_cgi_msg_In, PSTR("itelex-msg-in.cgi"));
-	*/
 
 	for (i = 0 ; i < AnzTlnServKanaele ; i++)
 		{
@@ -1380,8 +1395,12 @@ void itelex_tlnserv_init()
 	StartLangTimer(&VollAbfrageTimer);
 	VollAbfrageTimerEnde = 1 * LangTimerMinuteFaktor;
 	VollAbfrageServerIndex = 0;
+	VollAbfrageErfolg = false;
 
 	TlnServAbfrageZaehler = 0;
+
+	StartLangTimer(&AutoEepromBackupTimer);
+	AutoEepromBackupTimerEnde = 16 * 60 * LangTimerMinuteFaktor;
 	
 	struct TIME Time;
 	CLOCK_GetTime(&Time); // holt auch die aktuelle Zeitzone

@@ -424,10 +424,6 @@ static uint16_t NetzPort;
 static long NetzEigeneIP;
 	//!< Zurückgemeldete IP-Adresse im globalen Netz.
 
-static TKurzTimer GrundstellungPruefTimer;
-	//!< Prüft, ob mit Modus == ModRuhe auch iTelexSocketHandle == NO_SOCKET_USED ist.
-	//!< Wenn nicht, wird nach 10 Sekunden eine Meldung generiert.
-
 static struct TIME LetzterAnrufZeit;
 	//!< Speichert die Uhrzeit des letzten Ereignisses, welches die Einschaltung eines
 	//!< angeschlossenen Fernschreibers bewirkte.
@@ -4188,7 +4184,7 @@ void itelex_thread()
 				ModusWechsel(ModPufferDruckUndSchluss);
 				break;
 				}
-			if (TlnSuchMusterPasst(NamensucheSuchtext, &TD))
+			if (TlnSuchMusterPasst(NamensucheSuchtext, &TD) && TD.AdrArt != Geloescht)
 				{
 				sprintf_P(AsciiDruckPuffer, PSTR("%9ld - %s - "), TD.Nummer, TD.Name);
 				switch (TD.AdrArt)
@@ -4285,18 +4281,6 @@ void itelex_thread()
 		ModusWechsel(ModWarteGrundstellung);
 		}
 	
-	if (Modus == ModRuhe && (iTelexSocketHandle != NO_SOCKET_USED || iTelexSocketMode != SocketIdle))
-		{
-		if (KurzTimerVal(&GrundstellungPruefTimer) > 5 * KurzTimerFreq)
-			{
-			Diagnoseausgabe_P(PSTR("Grundstellung gestoert"), 1); // keine Englische Version, da nur ein Hack.
-			iTelexSocketHandle = NO_SOCKET_USED;
-			iTelexSocketMode = SocketIdle;
-			}
-		}
-	else
-		StartKurzTimer(&GrundstellungPruefTimer);
-		
 	// ==========================================================================
 	// Tastendruck?
 	// ==========================================================================
@@ -5654,6 +5638,14 @@ void itelex_cgi_msg_In( void * pStruct )
 			else
 				ModusWechsel(ModWarteGrundstellung);
 			}
+			
+		else if (strcmp_P(EingabeText, PSTR("&")) == 0)
+			{ // Erzeugt Abschaltung des HTML-Chat durch Timeout
+			if (ProtokollLevel >= AblaufInfo)
+				ProtokollierenITelex_P(PSTR("HTML-Chat-Abbruch --> Ausschaltung intern\r\n" ));
+			InterneVerbindungBeenden(true);
+			}
+			
 		}
 
 	cgi_PrintHttpheaderStart();
@@ -6720,8 +6712,6 @@ extern void itelex_init1(void)
 	SocketOutBufUsed = 0;
 	SocketInBufUsed = 0;
 
-	StartKurzTimer(&GrundstellungPruefTimer);
-	
 	iTelexBlindSocketHandle = NO_SOCKET_USED;
 	StartKurzTimer(&iTelexBlindSocketAbbauVerzoegerung);
 	
