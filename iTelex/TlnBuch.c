@@ -792,7 +792,8 @@ int TlnBuchLadeVonExternEeprom()
 			
 			
 //! Speichert das Teilnehmer-Verzeichnis auf dem externen EEPROM
-//------------------------------------------------------------
+//--------------------------------------------------------------
+//! \retval Anzahl Bytes im EEPROM oder negative Fehlernummer
 int TlnBuchSpeichereAufExternEeprom()
 	{
 	bool Ack;

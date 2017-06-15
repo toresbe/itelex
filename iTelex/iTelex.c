@@ -2871,6 +2871,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 			// Zahlen: unverarbeitete Daten / neue Daten / Daten insgesamt
 			}
 			
+//! \todo prüfen: ist dieser Teil nicht doppelt???
 		if (iTelexSocketProtokoll == Ascii && SocketInBufUsed > 0 && SocketInBuf[SocketInBufUsed-1] == '@')
 			SocketInBuf[SocketInBufUsed-1] = CodeChrWerDa;
 			// am Ende des Empfangs ein @ durch Werda ersetzen.
@@ -2879,8 +2880,8 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 	} // ITelexOderAsciiEmpfangVerarbeiten()
 
 	
-//! Wandelt Daten aus dem SendePuffer um.
-//---------------------------------------
+//! Wandelt Daten aus dem SendePuffer um im Protokoll "i-Telex"
+//-------------------------------------------------------------
 //! Bearbeitet auch Statusänderungen.
 static void ITelexDatenVerarbeiten()
 	{
@@ -2954,8 +2955,8 @@ static void ITelexDatenVerarbeiten()
 	} // ITelexDatenVerarbeiten()
 	
 
-//! Wandelt Daten aus dem SendePuffer um.
-//---------------------------------------
+//! Wandelt Daten aus dem SendePuffer um im ASCII-Protokoll
+//---------------------------------------------------------
 //! Bearbeitet auch Statusänderungen.
 static void AsciiDatenVerarbeiten()
 	{
@@ -2978,7 +2979,14 @@ static void AsciiDatenVerarbeiten()
 		uint8_t ProtAnz = 0;
 		while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3 - 10) // - 10 = Reserve für wichtige Daten
 			{
-			SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+			uint8_t code;
+			code = PufferAusg(&EmpfPuffer);
+			
+			if (EmpfPuffer.BuZiMode == ZiMode && code == TtyCodeZiWerDa && PufferLeer(&EmpfPuffer))
+				SocketOutBuf[SocketOutBufUsed] = '@'; //! \todo Konstante draus machen
+			else
+				SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(code, (char*) &EmpfPuffer.BuZiMode);
+			
 			if (SocketOutBuf[SocketOutBufUsed] != '\0')
 				{
 				SocketOutBufUsed++;
@@ -5639,8 +5647,8 @@ void itelex_cgi_msg_In( void * pStruct )
 				ModusWechsel(ModWarteGrundstellung);
 			}
 			
-		else if (strcmp_P(EingabeText, PSTR("&")) == 0)
-			{ // Erzeugt Abschaltung des HTML-Chat durch Timeout
+		else if (strcmp_P(EingabeText, PSTR("&")) == 0 && Modus == ModHtmlChatVerbunden)
+			{ // Bewirkt Abschaltung des HTML-Chat 'direkt'
 			if (ProtokollLevel >= AblaufInfo)
 				ProtokollierenITelex_P(PSTR("HTML-Chat-Abbruch --> Ausschaltung intern\r\n" ));
 			InterneVerbindungBeenden(true);
@@ -6896,9 +6904,6 @@ EEMEM char EE_ConfigData[] =
 	"FESTEHPST=1\r"
 	"EIGENENUMMER=66\r"
 	"HAUPTSTELLE=31\r"
-	"POPSERVER=winmail.qwmail.de\r"
-	"SMTPSERVER=winmail.qwmail.de\r"
-	"EMAILADR=xxx@teleprinter.net\r"
 	"EMAILFILTERKENNUNG=off\r"
 	"EMAILABFRTAKT=0\r"
 	"SELBSTANPER=45\r"

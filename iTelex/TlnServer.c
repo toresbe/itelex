@@ -1285,7 +1285,13 @@ void itelex_tlnserv_thread()
 	if (KurzTimerVal(&SyncWarteTimer) > 10 * KurzTimerFreq 
 		&& LangTimerVal(&AutoEepromBackupTimer) >= AutoEepromBackupTimerEnde)
 		{
-		// TODO Backup im EEPROM
+		int Res;
+		Res = TlnBuchSpeichereAufExternEeprom();
+
+		ProtokollierenTlnServInt_P(NULL, PSTR("Verzeichnis automatisch gespeichert, Res = %d\r\n"), Res);
+		
+		if (Res < 0) 
+			Diagnoseausgabe_P(PSTR("EEPROM failed"), 1);
 		
 		StartLangTimer(&AutoEepromBackupTimer);
 		AutoEepromBackupTimerEnde = 4 * 24 * 60U * LangTimerMinuteFaktor;
