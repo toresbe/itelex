@@ -1,3 +1,12 @@
+Ab Build 751:
+TlnServer: Automatisches Backup alle 3 Tage
+WerDa vereinheitlicht.
+
+Ab Build 748:
+HTML-Chat kann mit einem einzelnen & beendet werden.
+BugFix: Namens-Auskunft listet keine gelöschten Einträge mehr.
+BugFix: Trennung bei nicht leerem SocketInBuf / Schlusstaste
+
 Ab Build 731:
 Durchwahl-Liste kann auch als Negativ-Liste definiert werden
 
