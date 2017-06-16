@@ -233,7 +233,7 @@ static uint32_t TlnServAbfrageZaehler;
 
 
 static TLangTimer AutoEepromBackupTimer;
-	//!< nach Reset 10 Stunden, dann alle 4 Tage
+	//!< nach Reset 16 Stunden, dann alle 4 Tage
 	
 static uint16_t AutoEepromBackupTimerEnde;
 	//!< Ende der Wartezeit für Automatisches EEPROM-Backup. Siehe #AutoEepromBackupTimer.
