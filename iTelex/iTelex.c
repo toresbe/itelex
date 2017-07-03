@@ -258,7 +258,10 @@ static TKurzTimer HtmlDruckspiegelAnzeigeTimer;
 static TLangTimer BeideRuhigTimer;
 	//!< Zeit seit letztem Druck zum oder Schreibempfang vom Endgerät.
 	//!< Abschaltung nach 10 Minuten Ruhe.
-	
+
+static TKurzTimer MachineStartupTimer;
+	//!< Verzoegert das Senden vo Fernschreibzeichen direkt nach Anlauf 
+	//!< des Fernschreibers.
 
 int iTelexSocketHandle;
 	//!< Verweis auf Socket für iTelex-Kommunikation. Istzustand. Wenn ungültig, aber #iTelexSocketMode
@@ -1022,7 +1025,7 @@ void itelex_timerEvent(void)
 					SerUmTickZaehlerSend = 0;
 					SerUmSendBitNr = 2;
 					} // SerUmSendBitNr == SerUmSendStart
-				else if (SerUmSendBitNr == SerUmSendWarte && !PufferLeer(&SendePuffer))
+				else if (SerUmSendBitNr == SerUmSendWarte && !PufferLeer(&SendePuffer) && KurzTimerVal(&MachineStartupTimer) > KurzTimerFreq * 15 / 10)
 					{
 					SerUmSendDaten = PufferAusg(&SendePuffer);
 					SerUmSendBitNr = SerUmSendStart;
@@ -2480,7 +2483,7 @@ static void WahlAbbruchMeldung(char *msg)
 			if (Modus == ModGehendWaehlen)
 				{ 
 				BusSenden(BusQuittEin);
-//!\todo prio1 hier noch ein paar "Bu" in den Druckpuffer schreiben.				
+				StartKurzTimer(&MachineStartupTimer);
 				ModusWechsel(ModPufferDruckUndSchluss);
 				}
 			}
@@ -2748,6 +2751,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 				else if (Modus == ModGehendWaehlen)
 					{ // ID#227 **************************************************
 					BusSenden(BusQuittEin);
+					StartKurzTimer(&MachineStartupTimer);
 					ModusWechsel(ModGehendVerbunden);
 					}
 				if (len >= 1)
@@ -2783,8 +2787,8 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						iTelexSocketProtVersionVorschlag = ProtVorschlag;
 						}
 						
-					if (iTelexSocketProtVersion == 0 && SocketOutBufUsed < SocketOutBufMax - 10) // noch nichts festgelegt, also Gegenvorschlag senden.
-						{
+					if (iTelexSocketProtVersion == 0 && SocketOutBufUsed < SocketOutBufMax - 5 - strlen_P(SvnVersion_P)) 
+						{ // noch nichts festgelegt, also Gegenvorschlag senden.
 						SocketOutBuf[SocketOutBufUsed++] = ITELEXC_VERSION;
 						SocketOutBuf[SocketOutBufUsed++] = 1 + strlen_P(SvnVersion_P) + 1;
 						SocketOutBuf[SocketOutBufUsed++] = iTelexSocketProtVersionVorschlag;
@@ -3296,6 +3300,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 				BusSenden(BusQuittEin); 
 					//! \todo prüfen, ob der Start des FS nicht auch an das Ende der Authentifizierung am Email Server verschoben werden kann.
 					// Dann aber auch Testen, was bei voerzeitigem Abbruch der Verbindung passiert.
+				StartKurzTimer(&MachineStartupTimer);
 				ModusWechsel(ModGehendVerbunden);
 				return 0; // gut
 				}
@@ -3357,6 +3362,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			ProtokollierenInt_P(PSTR("Client-Socket #%d Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n"), iTelexSocketHandle);
 			}
 			
+		StartKurzTimer(&MachineStartupTimer);
 		ModusWechsel(ModGehendVerbunden);
 		iTelexSocketProtokoll = Ascii;
 		return 0;
@@ -3893,8 +3899,11 @@ void itelex_thread()
 							ProtokollierenITelex_P(PSTR("Namenssuche gestartet -> Einschalt-Quittung an TWI\r\n" ));
 						ModusWechsel(ModNamensucheEingabe);
 						BusSenden(BusQuittEin);
+						StartKurzTimer(&MachineStartupTimer);
+/* TODO check ob es wirklich entfallen kann...						
 						for (uint8_t i = 0 ; i < 5 ; i++)
 							PufferSpeich(&SendePuffer, TtyCodeBuUm); // kurze Verzögerung nach dem Einschalten.
+*/						
 						strcpy_P(AsciiDruckPuffer, ISTR(NamensucheTexteingabe, LokaleSprache));
 						}
 						
@@ -4078,6 +4087,7 @@ void itelex_thread()
 			ProtokollierenITelex_P(PSTR("Angerufener hat geantwortet -> Einschaltung intern\r\n" ));
 			
 		BusSenden(BusQuittEin);
+		StartKurzTimer(&MachineStartupTimer);
 		ModusWechsel(ModGehendVerbunden);
 		}
 		
