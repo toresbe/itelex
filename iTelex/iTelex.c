@@ -125,8 +125,10 @@ enum {
 	Text4 = _T("00 00");                                   // Füllzeichen
 	Text5 = _T("03 00");                                   // Ende
 
+
 */
-	
+
+
 
 #define PROTVERSION_AKTUELL 1
 	//!< Aktuelle = beste Protokollversion
@@ -380,6 +382,15 @@ static uint8_t DurchwahlTabelle[9];
 
 static bool DurchwahlTabIstAusschluss;
 	//!< Bei true enthält die #DurchwahlTabelle keine erlaubten, sondern verbotene Nummern
+
+//! Modus für die generierung Datum / Uhrzeit bei ankommenden Anrufen.	
+typedef enum 
+	{
+	DatumDruckKein,
+	DatumDruckLokal,
+	DatumDruckAnrufer,
+	DatumDruckBeide,
+	} TDatumDruckModus;
 	
 static TDatumDruckModus DatumDruckModus;
 	//!< Wird bei kommenden Verbindungen etwas automatisch gedruckt?
@@ -5784,6 +5795,11 @@ void itelex_cgi_config_intern(void *pStruct)
 	AutoDatumSelList[1] = ISTR(DatumDruckLokal, Sprache);
 	AutoDatumSelList[2] = ISTR(DatumDruckAnrufer, Sprache);
 	AutoDatumSelList[3] = ISTR(DatumDruckBeide, Sprache);
+	
+	const char *AltSuchSelList[3];
+	AltSuchSelList[0] = ISTR(ASBB_Niemals, Sprache);
+	AltSuchSelList[1] = ISTR(ASBB_NurHauptstelle, Sprache);
+	AltSuchSelList[2] = ISTR(ASBB_AuchDurchwahl, Sprache);
 		
 	cgi_PrintHttpheaderStart();
 
@@ -5800,9 +5816,7 @@ void itelex_cgi_config_intern(void *pStruct)
 		AdresseZuWahlStr(Hauptstelle, Buf);
 		CgiFormInputFieldText_P(ISTR(FesteHauptstelleNummer, Sprache), Hauptstelle_P, 2, Buf);
 
-		itoa(AlternativSucheBeiBesetzt, Buf, 10); // 10 ist die Basis für Dezimal!
-		CgiFormInputFieldText_P(ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P, 1, Buf);
-			//! \todo Umstellen auf DropDown
+		CgiFormDropdown_P(ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P, 3, AltSuchSelList, AlternativSucheBeiBesetzt);
 			
 		readConfig_P(DurchwahlTabelle_P, Buf);
 		CgiFormInputFieldText_P(ISTR(DurchwahlenListe, Sprache), DurchwahlTabelle_P, 31, Buf);
@@ -5846,7 +5860,7 @@ void itelex_cgi_config_intern(void *pStruct)
 		
 		// Eigene Nummer
 		// -------------
-		if (PharseCheckName_P(http_request, EigeneNummer_P))
+		if (PharseCheckName_P(http_request, EigeneNummer_P)) // CgiCheckULong_P geht nicht, da WahlZuAdresse() verwendet wird
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, EigeneNummer_P)], 2);
 			Buf[2] = '\0';
@@ -5871,7 +5885,7 @@ void itelex_cgi_config_intern(void *pStruct)
 		
 		// Nummer Hauptstelle
 		// ------------------
-		if (PharseCheckName_P(http_request, Hauptstelle_P))
+		if (PharseCheckName_P(http_request, Hauptstelle_P)) // CgiCheckULong_P geht nicht, da WahlZuAdresse() verwendet wird
 			{
 			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, Hauptstelle_P)], 2);
 			Buf[2] = '\0';
@@ -5899,32 +5913,8 @@ void itelex_cgi_config_intern(void *pStruct)
 			
 		// AlternativSucheBeiBesetzt
 		// -------------------------
-		//! \todo auf Listenauswahl umstellen.
-		if (PharseCheckName_P(http_request, AlternBeiBes_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, AlternBeiBes_P)], 3);
-			Buf[3] = '\0';
-			Neu = atoi(Buf);
-			printf_P(PSTR("<br>"));
-			printf_P(ISTR(AlternativSucheBeiBesetzt, Sprache));
-			if (Neu == AlternativSucheBeiBesetzt)
-				{
-				printf_P(ISTR(Unveraendert, Sprache));
-				printf_P(PSTR(": %s"), Buf);
-				}
-			else 
-				{
-				if (Neu > AltSuch_AuchDurchwahl)
-					{
-					Neu = AltSuch_AuchDurchwahl;
-					strcpy_P(Buf, PSTR("2"));
-					}
-				changeConfig_P(AlternBeiBes_P, Buf);
-				AlternativSucheBeiBesetzt = Neu;
-				printf_P(ISTR(GeaendertIn, Sprache));
-				printf_P(PSTR(": %s"), Buf);
-				}
-			}
+		AlternativSucheBeiBesetzt = CgiCheckULong_P(http_request, ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P,
+													AlternativSucheBeiBesetzt, AltSuch_Niemals, AltSuch_AuchDurchwahl, Sprache);
 		
 		// DurchwahlTabelle
 		// ----------------
@@ -5980,54 +5970,13 @@ void itelex_cgi_config_intern(void *pStruct)
 
 		// DatumDruckModus
 		// ----------------
-		char DatumDruckModusStr[20];
-		strncpy(DatumDruckModusStr, http_request->argvalue[PharseGetValue_P(http_request, DatumDruckModus_P)], sizeof(DatumDruckModusStr));
-		for (Neu = 0 ; Neu <= 3 ; Neu++)
-			if (strcmp_P(DatumDruckModusStr, AutoDatumSelList[Neu]) == 0)
-				break;
-		if (Neu <= 3) 	
-			{ // übereinstimmung gefunden
-			printf_P(PSTR("<br>"));
-			printf_P(ISTR(DatumDruckModus, Sprache));
-			if (DatumDruckModus != DatumDruckKein + Neu)
-				{ // geändert!
-				DatumDruckModus = DatumDruckKein + Neu;
-				itoa(DatumDruckModus, Buf, 10); // 10 ist die Basis für Dezimal!
-				changeConfig_P(DatumDruckModus_P, Buf);
-				printf_P(ISTR(GeaendertIn, Sprache));
-				printf_P(PSTR(": %s (%d)"), DatumDruckModusStr, DatumDruckModus);
-				}
-			else
-				printf_P(ISTR(Unveraendert, Sprache));
-			}
+		DatumDruckModus = CgiCheckULong_P(http_request, ISTR(DatumDruckModus, Sprache), DatumDruckModus_P,
+										  DatumDruckModus, DatumDruckKein, DatumDruckBeide, Sprache);
 			
 		// Druckzeilenlaenge
 		// -----------------
-		if (PharseCheckName_P(http_request, Druckzeilenlaenge_P))
-			{
-			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, Druckzeilenlaenge_P)], 3);
-			Buf[3] = '\0';
-			Neu = atoi(Buf);
-			printf_P(PSTR("<br>"));
-			printf_P(ISTR(Druckzeilenlaenge, Sprache));
-			if (Neu == Druckzeilenlaenge)
-				{
-				printf_P(ISTR(Unveraendert, Sprache));
-				printf_P(PSTR(": %s"), Buf);
-				}
-			else 
-				{
-				if (Neu < 10) 
-					{
-					Neu = 10;
-					strcpy_P(Buf, PSTR("10"));
-					}
-				changeConfig_P(Druckzeilenlaenge_P, Buf);
-				Druckzeilenlaenge = Neu;
-				printf_P(ISTR(GeaendertIn, Sprache));
-				printf_P(PSTR(": %s"), Buf);
-				}
-			}
+		Druckzeilenlaenge = CgiCheckULong_P(http_request, ISTR(Druckzeilenlaenge, Sprache), Druckzeilenlaenge_P, 
+										    Druckzeilenlaenge, 10, 255, Sprache);
 		
 		#endif // ITELEX_ANSCHLUSS
 
@@ -6036,15 +5985,17 @@ void itelex_cgi_config_intern(void *pStruct)
 		UhrzeitVerteilen = CgiCheckBool_P(http_request, ISTR(UhrzeitVerteilen, Sprache), UhrzeitVerteilen_P, UhrzeitVerteilen, Sprache);
 		
 		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 
-										 ProtokollLevel + (SocketProtokollEin ? 10 : 0), Sprache);
+										 ProtokollLevel + (SocketProtokollEin ? 10 : 0), 0, 19, Sprache);
 		SocketProtokollEin = ProtokollLevel >= 10;
 		if (SocketProtokollEin)
 			ProtokollLevel -= 10;
 
-		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, ProtokollLevelTlnServ, Sprache);
+		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 
+												ProtokollLevelTlnServ, 0, 9, Sprache);
 
 		#ifdef ITELEX_ANSCHLUSS
-		MeldungsdruckLevel = CgiCheckULong_P(http_request, ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, MeldungsdruckLevel, Sprache);
+		MeldungsdruckLevel = CgiCheckULong_P(http_request, ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, 
+											 MeldungsdruckLevel, 0, 9, Sprache);
 		#endif //def ITELEX_ANSCHLUSS
 
 		// KonfigPasswort
@@ -6174,18 +6125,20 @@ void itelex_cgi_config_extern(void *pStruct)
 		printf_P(PSTR("</a>"));
 
 		#ifdef ITELEX_ANSCHLUSS
-		NetzRufnummer = CgiCheckULong_P(http_request, ISTR(ITelexRufnummer, Sprache), NetzRufnummer_P, NetzRufnummer, Sprache);
+		NetzRufnummer = CgiCheckULong_P(http_request, ISTR(ITelexRufnummer, Sprache), NetzRufnummer_P, NetzRufnummer, 0, UINT32_MAX, Sprache);
 		if (NetzRufnummer < GlobRufnrMinWert)
 			printf_P(ISTR(ITelexRufnummerZuKurz, Sprache));
-		Geheimzahl = CgiCheckULong_P(http_request, ISTR(RufnrServerAnmeldGeheimzahl, Sprache), Geheimzahl_P, Geheimzahl, Sprache);
+		Geheimzahl = CgiCheckULong_P(http_request, ISTR(RufnrServerAnmeldGeheimzahl, Sprache), Geheimzahl_P, Geheimzahl, 0, UINT16_MAX, Sprache);
 
 		if (CgiCheckBool_P(http_request, ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIP_Phase != DynIP_Inaktiv, Sprache))
 			DynIP_Phase = DynIP_Bestaetigt; 
 		else
 			DynIP_Phase = DynIP_Inaktiv;
 			
-		SelbstAnrufPeriode = CgiCheckULong_P(http_request, ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, SelbstAnrufPeriode, Sprache);
-		NetzPort = CgiCheckULong_P(http_request, ISTR(OeffentlichePortNr, Sprache), NetzPort_P, NetzPort, Sprache);
+		SelbstAnrufPeriode = CgiCheckULong_P(http_request, ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, 
+											 SelbstAnrufPeriode, 0, UINT16_MAX, Sprache);
+		
+		NetzPort = CgiCheckULong_P(http_request, ISTR(OeffentlichePortNr, Sprache), NetzPort_P, NetzPort, 1, UINT16_MAX, Sprache);
 		
 		#endif //def ITELEX_ANSCHLUSS
 		
@@ -6198,7 +6151,8 @@ void itelex_cgi_config_extern(void *pStruct)
 		#endif //defined(ITELEX_ANSCHLUSS) || defined(ITELEX_TLNSERVER)
 
 		#ifdef ITELEX_TLNSERVER
-		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, TlnServSyncGeheimzahl, Sprache);
+		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, 
+												TlnServSyncGeheimzahl, 0, UINT32_MAX, Sprache);
 		#endif //def ITELEX_TLNSERVER
 		
 		SpeichereSpracheAlsLokal(Sprache);

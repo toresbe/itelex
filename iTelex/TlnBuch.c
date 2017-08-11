@@ -1272,7 +1272,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		bool DatenOk = true; // nur wenn gesetzt, wird auch gespeichert
 		uint32_t AltNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, AltNummer_P)]);
 		uint32_t NeuNummer = atol(http_request->argvalue[PharseGetValue_P(http_request, Nummer_P)]);
-			//! \todo Prio 3 Umstellen auf CgiCheckULong...
+		uint8_t TypSelNr = atoi(http_request->argvalue[PharseGetValue_P(http_request, Typ_P)]);
 		
 		// brauche alte Geheimzahl und alten Typ
 		if (NeuNummer == 0 || !TlnSuche(NeuNummer, true, &TD))
@@ -1284,8 +1284,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 		TD.Nummer = NeuNummer;
 		strncpy(TD.Name, http_request->argvalue[PharseGetValue_P(http_request, Name_P)], TlnNameMax-1);
 		TD.Flags = 0;
-		char TypStr[20];
-		strncpy(TypStr, http_request->argvalue[PharseGetValue_P(http_request, Typ_P)], sizeof(TypStr));
+		
 		strncpy(TD.Adresse, http_request->argvalue[PharseGetValue_P(http_request, Adresse_P)], TlnAdresseMax-1);
 		TD.Adresse[TlnAdresseMax-1] = '\0'; // sicherheitshalber abhacken.
 
@@ -1328,7 +1327,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			printf_P(PSTR("<br>"));
 			}
 
-		if (TD.Adresse[0] == '\0' || strcmp_P(TypStr, ISTR(TypGeloescht, Sprache)) == 0)
+		if (TD.Adresse[0] == '\0' || TypSelNr == 0)
 			// Leere Adresse --> löschen
 			{
 			TD.AdrArt = Geloescht;
@@ -1339,7 +1338,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 			{
 			TD.IPAdr = strtoip(TD.Adresse);
 			
-			if (strcmp_P(TypStr, ISTR(TypITelex, Sprache)) == 0)
+			if (TypSelNr == 1)
 				{
 				if (TD.IPAdr == 0)
 					{
@@ -1380,7 +1379,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P(PSTR(" %s (%u)<br>"), Hilf, TD.Durchwahl);
 				}
 				
-			else if (strcmp_P(TypStr, ISTR(TypAscii, Sprache)) == 0)
+			else if (TypSelNr == 2)
 				{
 				if (TD.IPAdr == 0)
 					{
@@ -1401,7 +1400,7 @@ void TlnBuch_Anzeige_CGI(void *pStruct)
 				printf_P(PSTR(" %u<br>"), TD.Port);
 				}
 
-			else if (strcmp_P(TypStr, ISTR(TypEMail, Sprache)) == 0)
+			else if (TypSelNr == 3)
 				{
 				printf_P(ISTR(TypEMail, Sprache));
 				printf_P(PSTR(": "));

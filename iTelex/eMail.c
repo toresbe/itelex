@@ -1011,7 +1011,7 @@ void itelex_cgi_email_config(void *pStruct)
 		
 		CgiCheckText_P(http_request, ISTR(EmailKonfigKennwort, Sprache), EmailEigenesPasswort_P, TlnAdresseMax, EmailEigenesPasswort, Sprache);
 		
-		EmailAbfrageTakt = CgiCheckULong_P(http_request, ISTR(EmailKonfigAbfragetakt, Sprache), EmailAbfrageTakt_P, EmailAbfrageTakt, Sprache);
+		EmailAbfrageTakt = CgiCheckULong_P(http_request, ISTR(EmailKonfigAbfragetakt, Sprache), EmailAbfrageTakt_P, EmailAbfrageTakt, 0, 250, Sprache);
 		
 		if (EmailAbfrageTakt != 0 
 			&& (EmailPOPServerAdresse[0] == '\0'

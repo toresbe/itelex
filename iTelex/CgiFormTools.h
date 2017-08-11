@@ -22,7 +22,8 @@ extern void CgiFormFinish_P(const char *ButtonText);
 
 extern void CgiCheckText_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, int Size, char *Value, TSprache Sprache);
 
-extern unsigned long CgiCheckULong_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, unsigned long Old, TSprache Sprache);
+extern unsigned long CgiCheckULong_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, 
+									 unsigned long Old, unsigned long Minimum, unsigned long Maximum, TSprache Sprache);
 
 extern bool CgiCheckBool_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, bool Old, TSprache Sprache);
 

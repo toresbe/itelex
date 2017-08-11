@@ -120,6 +120,8 @@ void CgiFormCheckbox_P(const char *FieldText, const char *FieldLabel, bool Value
 
 //! Auswahllisten-Feld in einem mit Tabelle strukturieten CGI-Eingabeformular
 //--------------------------------------------------------------------
+//! Als Wert (value) wird nicht der Text, sondern der Index aus #ItemList 
+//! (beginnend mit 0) per HTML zurückgegeben.
 //! \param FieldText Beschriftung des Feldes für den Anwender (im PROGMEM)
 //! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
 //! \param NItems Anzahl der Wahlmöglichkeiten
@@ -135,9 +137,9 @@ void CgiFormDropdown_P(const char *FieldText, const char *FieldLabel, uint8_t NI
 	for (uint8_t i = 0 ; i < NItems ; i++)
 		{
 		if (Value == i)
-			printf_P(PSTR("<option selected>"));
+			printf_P(PSTR("<option selected value=\"%d\">"), i);
 		else
-			printf_P(PSTR("<option>"));
+			printf_P(PSTR("<option value=\"%d\">"), i);
 		printf_P(*ItemList);
 		ItemList++;
 		printf_P(PSTR("</option>"));
@@ -195,7 +197,8 @@ void CgiCheckText_P(struct HTTP_REQUEST * http_request, const char *FieldText, c
 //! \param FieldLabel Name des Feldes für die Auswertung (im PROGMEM)
 //! \param Old Aktueller Wert des Feldes
 //! \return Neuer Wert der Variable
-unsigned long CgiCheckULong_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, unsigned long Old, TSprache Sprache)
+unsigned long CgiCheckULong_P(struct HTTP_REQUEST * http_request, const char *FieldText, const char *FieldLabel, 
+							  unsigned long Old, unsigned long Minimum, unsigned long Maximum, TSprache Sprache)
 	{
 	unsigned long Neu;
 	
@@ -204,7 +207,11 @@ unsigned long CgiCheckULong_P(struct HTTP_REQUEST * http_request, const char *Fi
 		strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, FieldLabel)], 10);
 		Buf[10] = '\0';
 		Neu = atol(Buf);
-		ltoa(Neu, Buf, 10);
+		if (Neu < Minimum)
+			Neu = Minimum;
+		else if (Neu > Maximum)
+			Neu = Maximum;
+		ultoa(Neu, Buf, 10);
 		printf_P(PSTR("<br>"));
 		printf_P(FieldText);
 		if (Neu == Old)

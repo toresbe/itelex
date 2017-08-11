@@ -314,16 +314,6 @@ typedef enum
 	} TTlnAdresseArt;
 	
 
-//! Modus für die generierung Datum / Uhrzeit bei ankommenden Anrufen.	
-typedef enum 
-	{
-	DatumDruckKein,
-	DatumDruckLokal,
-	DatumDruckAnrufer,
-	DatumDruckBeide,
-	} TDatumDruckModus;
-	
-	
 //! Datenstruktur für alle Informationen eines Teilnehmers.
 //! Achtung: Bei Änderungen berücksichtigen, dass auch der Datenaustausch 
 //! mit dem Teilnehmer-Server über dieses Format läuft.
