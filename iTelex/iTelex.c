@@ -368,8 +368,8 @@ static bool FesteHauptstelle;
 	//!< Wenn true, werden kommende Verbindungen immer auf die gleiche Endstelle gesendet
 	//!< werden sollen.
 
-static bool AlternativSucheBeiBesetzt;
-	//!< Wenn true, werden bei besetzter Hauptstelle andere Endgeräte probiert.
+static enum {AltSuch_Niemals, AltSuch_NurHauptstelle, AltSuch_AuchDurchwahl} AlternativSucheBeiBesetzt;
+	//!< Wenn gesetzt wird bei besetztem Gerät ggf. ein anderes gesucht.
 
 static bool LangeDienstmeldungen;
 	//!< Bei False wird "occ" oder "na" direkt nach dem Wählen ausgegeben. 
@@ -1633,17 +1633,23 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 		{
 		TestVerbParter = aDurchwahl * 2;
 		Stat = GetStatus(TestVerbParter);
-		if (Stat >= 0 && !BIT_IS_SET(Stat, StatBit_LeitungKennung))
-			// Gerät ist auf jeden Fall vorhanden und geeignet
-			if (BIT_IS_SET(Stat, StatBit_Frei))
-				; // alles gut
+		if (Stat < 0)
+			// Gerät gar nicht vorhanden -> dann doch Alternativsuche ggf. ausführen
+			TestVerbParter = 0; // Hauptstelle suchen
+			
+		else if (BIT_IS_SET(Stat, StatBit_Frei) && !BIT_IS_SET(Stat, StatBit_LeitungKennung))
+			// Gerät ist auf jeden Fall vorhanden und frei und keine Leitung
+			; // alles gut --> Am schluss wird vervollständigt
+			
+		else // tatsächlich besetzt oder nicht verfügbar 
+			if (AlternativSucheBeiBesetzt == AltSuch_AuchDurchwahl)
+				TestVerbParter = 0; // Hauptstelle suchen
+			
 			else
-				{ // besetzt
+				{ // Alternativsuche ist aber verboten für Durchwahlen
 				BusVerbPartner = 0;
 				return false;
 				}
-		else 
-			TestVerbParter = 0; // Hauptstelle suchen
 		}
 
 	if (TestVerbParter == 0)
@@ -1663,7 +1669,7 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 				&& (!BIT_IS_SET(Stat, StatBit_SpezialGeraetKennung) || (TestVerbParter == Hauptstelle)))
 				break; // gefunden, Hurra!
 				
-			if (!AlternativSucheBeiBesetzt)
+			if (AlternativSucheBeiBesetzt == AltSuch_Niemals)
 				{ // es soll kein anderer angerufen werden
 				BusVerbPartner = 0;
 				return false;
@@ -4313,7 +4319,8 @@ void itelex_thread()
 					ModusWechsel(ModDeaktiviert);
 				else
 					{
-					AlternativSucheBeiBesetzt = true; // damit auf jeden Fall gedruckt wird!
+					if (AlternativSucheBeiBesetzt == AltSuch_Niemals)
+						AlternativSucheBeiBesetzt = AltSuch_NurHauptstelle;
 					strcpy_P(AsciiDruckPuffer, ISTR(DiagInterneIP, LokaleSprache));
 					iptostr(myIP, AsciiDruckPuffer + strlen(AsciiDruckPuffer));
 					strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
@@ -5793,8 +5800,10 @@ void itelex_cgi_config_intern(void *pStruct)
 		AdresseZuWahlStr(Hauptstelle, Buf);
 		CgiFormInputFieldText_P(ISTR(FesteHauptstelleNummer, Sprache), Hauptstelle_P, 2, Buf);
 
-		CgiFormCheckbox_P(ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P, AlternativSucheBeiBesetzt);
-						
+		itoa(AlternativSucheBeiBesetzt, Buf, 10); // 10 ist die Basis für Dezimal!
+		CgiFormInputFieldText_P(ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P, 1, Buf);
+			//! \todo Umstellen auf DropDown
+			
 		readConfig_P(DurchwahlTabelle_P, Buf);
 		CgiFormInputFieldText_P(ISTR(DurchwahlenListe, Sprache), DurchwahlTabelle_P, 31, Buf);
 
@@ -5890,8 +5899,33 @@ void itelex_cgi_config_intern(void *pStruct)
 			
 		// AlternativSucheBeiBesetzt
 		// -------------------------
-		AlternativSucheBeiBesetzt = CgiCheckBool_P(http_request, ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P, AlternativSucheBeiBesetzt, Sprache);
-			
+		//! \todo auf Listenauswahl umstellen.
+		if (PharseCheckName_P(http_request, AlternBeiBes_P))
+			{
+			strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, AlternBeiBes_P)], 3);
+			Buf[3] = '\0';
+			Neu = atoi(Buf);
+			printf_P(PSTR("<br>"));
+			printf_P(ISTR(AlternativSucheBeiBesetzt, Sprache));
+			if (Neu == AlternativSucheBeiBesetzt)
+				{
+				printf_P(ISTR(Unveraendert, Sprache));
+				printf_P(PSTR(": %s"), Buf);
+				}
+			else 
+				{
+				if (Neu > AltSuch_AuchDurchwahl)
+					{
+					Neu = AltSuch_AuchDurchwahl;
+					strcpy_P(Buf, PSTR("2"));
+					}
+				changeConfig_P(AlternBeiBes_P, Buf);
+				AlternativSucheBeiBesetzt = Neu;
+				printf_P(ISTR(GeaendertIn, Sprache));
+				printf_P(PSTR(": %s"), Buf);
+				}
+			}
+		
 		// DurchwahlTabelle
 		// ----------------
 		// hier ist Neu nur ein Flag
@@ -6604,7 +6638,10 @@ extern void itelex_init1(void)
 
 	FesteHauptstelle = ReadConfigBool(FesteHst_P, false);
 
-	AlternativSucheBeiBesetzt = ReadConfigBool(AlternBeiBes_P, true);
+	if (readConfig_P(AlternBeiBes_P, Buf) == 1)
+		AlternativSucheBeiBesetzt = atoi(Buf);
+	else
+		AlternativSucheBeiBesetzt = AltSuch_NurHauptstelle;
 	
 	if (readConfig_P(Hauptstelle_P, Buf) == 1)
 		Hauptstelle = WahlZuAdresse(atoi(Buf), strlen(Buf));
@@ -6627,6 +6664,7 @@ extern void itelex_init1(void)
 		Geheimzahl = atoi(Buf);
 	else
 		Geheimzahl = 0;
+
 
 	if (ReadConfigBool(DynIPAktiv_P, false))
 		DynIP_Phase = DynIP_Fehler; 
