@@ -1,3 +1,6 @@
+Ab Build 757:
+Weiterleitung bei besetzt nun auch bei "Durchwahl" an Nebenstelle möglich.
+
 Ab Build 751:
 TlnServer: Automatisches Backup alle 3 Tage
 WerDa vereinheitlicht.
