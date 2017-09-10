@@ -6747,6 +6747,12 @@ extern void itelex_init1(void)
 		
 	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 
+	timer0_init(iTelexTimerFreq); 
+	if (!timer0_RegisterCallbackFunction(itelex_timerEvent))
+		return;
+
+	printf_P(PSTR("...Timer-Callback-Funktion ok\r\n"));
+	
 	if (!get_Taste()) // Gedrückt = LOW!
 		iTelexInit_BeiTasteGedrueckt();
 		
@@ -6766,12 +6772,6 @@ void itelex_init2()
 	{
 	printf_P(PSTR("itelex_init2:\r\n"));
 		
-	timer0_init(iTelexTimerFreq); 
-	if (!timer0_RegisterCallbackFunction(itelex_timerEvent))
-		return;
-
-	printf_P(PSTR("...Timer-Callback-Funktion ok\r\n"));
-
 	DebugSP1 = 0xCCCC; // Zeichen für bisher nicht gefüllt
 	DebugSP2 = 0xDDDD; // Zeichen für bisher nicht gefüllt
 	

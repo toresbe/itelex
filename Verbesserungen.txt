@@ -1,3 +1,6 @@
+Ab Build 761:
+BugFix: Konfig-Reset mit Tastendruck
+
 Ab Build 757:
 Weiterleitung bei besetzt nun auch bei "Durchwahl" an Nebenstelle möglich.
 
