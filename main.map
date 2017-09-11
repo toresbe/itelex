@@ -1106,7 +1106,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000    0x28cc2
+.text           0x00000000    0x28ce6
  *(.vectors)
  .vectors       0x00000000       0xcc c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6/crtm2561.o
                 0x00000000                __vectors
@@ -2509,577 +2509,577 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
                 0x0001699c       0xdc iTelex/iTelex.o
  .text.RamHexdump
                 0x00016a78       0x7a iTelex/iTelex.o
- .text.itelex_init2
-                0x00016af2      0x200 iTelex/iTelex.o
-                0x00016af2                itelex_init2
  .text.ExternDurchwahlPruefen
-                0x00016cf2       0xe4 iTelex/iTelex.o
+                0x00016af2       0xe4 iTelex/iTelex.o
  .text.DurchwahlTabelleDekodieren
-                0x00016dd6       0xac iTelex/iTelex.o
+                0x00016bd6       0xac iTelex/iTelex.o
  .text.itelex_init1
-                0x00016e82      0x79e iTelex/iTelex.o
-                0x00016e82                itelex_init1
+                0x00016c82      0x7a4 iTelex/iTelex.o
+                0x00016c82                itelex_init1
  .text.__vector_12
-                0x00017620       0xe0 iTelex/iTelex.o
-                0x00017620                __vector_12
+                0x00017426       0xe0 iTelex/iTelex.o
+                0x00017426                __vector_12
  .text.SpeichereSpracheAlsLokal
-                0x00017700       0x5e iTelex/iTelex.o
-                0x00017700                SpeichereSpracheAlsLokal
+                0x00017506       0x5e iTelex/iTelex.o
+                0x00017506                SpeichereSpracheAlsLokal
  .text.AdresseZuWahlStr
-                0x0001775e       0x58 iTelex/iTelex.o
-                0x0001775e                AdresseZuWahlStr
+                0x00017564       0x58 iTelex/iTelex.o
+                0x00017564                AdresseZuWahlStr
  .text.ProtokollierenITelex_P
-                0x000177b6       0x26 iTelex/iTelex.o
+                0x000175bc       0x26 iTelex/iTelex.o
  .text.TeilnehmerServerErfolgSpeichern
-                0x000177dc       0x60 iTelex/iTelex.o
-                0x000177dc                TeilnehmerServerErfolgSpeichern
+                0x000175e2       0x60 iTelex/iTelex.o
+                0x000175e2                TeilnehmerServerErfolgSpeichern
  .text.TeilnehmerServerFehlerSpeichern
-                0x0001783c       0x74 iTelex/iTelex.o
-                0x0001783c                TeilnehmerServerFehlerSpeichern
+                0x00017642       0x74 iTelex/iTelex.o
+                0x00017642                TeilnehmerServerFehlerSpeichern
  .text.AnwahlNummerInAsciiPuffer
-                0x000178b0       0xa2 iTelex/iTelex.o
+                0x000176b6       0xa2 iTelex/iTelex.o
  .text.ZeichenInHtmlSendeText
-                0x00017952       0x3c iTelex/iTelex.o
+                0x00017758       0x3c iTelex/iTelex.o
  .text.PruefeSprache
-                0x0001798e      0x12c iTelex/iTelex.o
-                0x0001798e                PruefeSprache
+                0x00017794      0x12c iTelex/iTelex.o
+                0x00017794                PruefeSprache
  .text.itelex_cgi_TwiTlnListe
-                0x00017aba      0x10c iTelex/iTelex.o
-                0x00017aba                itelex_cgi_TwiTlnListe
+                0x000178c0      0x10c iTelex/iTelex.o
+                0x000178c0                itelex_cgi_TwiTlnListe
  .text.itelex_cgi_config_sperren
-                0x00017bc6       0x40 iTelex/iTelex.o
-                0x00017bc6                itelex_cgi_config_sperren
+                0x000179cc       0x40 iTelex/iTelex.o
+                0x000179cc                itelex_cgi_config_sperren
  .text.itelex_cgi_msg_Out
-                0x00017c06      0x18e iTelex/iTelex.o
-                0x00017c06                itelex_cgi_msg_Out
+                0x00017a0c      0x18e iTelex/iTelex.o
+                0x00017a0c                itelex_cgi_msg_Out
  .text.SendeBusKdoSchluss
-                0x00017d94       0x6a iTelex/iTelex.o
+                0x00017b9a       0x6a iTelex/iTelex.o
  .text.itelex_cgi_debug
-                0x00017dfe      0xc42 iTelex/iTelex.o
-                0x00017dfe                itelex_cgi_debug
+                0x00017c04      0xc42 iTelex/iTelex.o
+                0x00017c04                itelex_cgi_debug
  .text.SendeStopkommando
-                0x00018a40       0x78 iTelex/iTelex.o
+                0x00018846       0x78 iTelex/iTelex.o
  .text.KommendInternAnwaehlen
-                0x00018ab8       0xc2 iTelex/iTelex.o
+                0x000188be       0xc2 iTelex/iTelex.o
  .text.ExterneVerbindungBeenden
-                0x00018b7a       0x74 iTelex/iTelex.o
+                0x00018980       0x74 iTelex/iTelex.o
  .text.SchreibeZeichenInSendePuffer
-                0x00018bee       0x80 iTelex/iTelex.o
+                0x000189f4       0x80 iTelex/iTelex.o
  .text.AsciiDruckPufferVerarbeiten
-                0x00018c6e      0x2cc iTelex/iTelex.o
-                0x00018c6e                AsciiDruckPufferVerarbeiten
+                0x00018a74      0x2cc iTelex/iTelex.o
+                0x00018a74                AsciiDruckPufferVerarbeiten
  .text.itelex_timerEvent
-                0x00018f3a      0x69e iTelex/iTelex.o
-                0x00018f3a                itelex_timerEvent
+                0x00018d40      0x6b0 iTelex/iTelex.o
+                0x00018d40                itelex_timerEvent
  .text.ModusWechsel
-                0x000195d8      0x5e4 iTelex/iTelex.o
-                0x000195d8                ModusWechsel
+                0x000193f0      0x5ea iTelex/iTelex.o
+                0x000193f0                ModusWechsel
+ .text.itelex_init2
+                0x000199da      0x206 iTelex/iTelex.o
+                0x000199da                itelex_init2
  .text.InterneVerbindungBeenden
-                0x00019bbc      0x116 iTelex/iTelex.o
-                0x00019bbc                InterneVerbindungBeenden
+                0x00019be0      0x116 iTelex/iTelex.o
+                0x00019be0                InterneVerbindungBeenden
  .text.Diagnoseausgabe_P
-                0x00019cd2       0xe6 iTelex/iTelex.o
-                0x00019cd2                Diagnoseausgabe_P
+                0x00019cf6       0xe6 iTelex/iTelex.o
+                0x00019cf6                Diagnoseausgabe_P
  .text.KonfigFreigabe
-                0x00019db8      0x246 iTelex/iTelex.o
-                0x00019db8                KonfigFreigabe
+                0x00019ddc      0x246 iTelex/iTelex.o
+                0x00019ddc                KonfigFreigabe
  .text.cgi_MemDump
-                0x00019ffe       0x52 iTelex/iTelex.o
-                0x00019ffe                cgi_MemDump
+                0x0001a022       0x52 iTelex/iTelex.o
+                0x0001a022                cgi_MemDump
  .text.cgi_SdDirectory
-                0x0001a050      0x36e iTelex/iTelex.o
-                0x0001a050                cgi_SdDirectory
+                0x0001a074      0x36e iTelex/iTelex.o
+                0x0001a074                cgi_SdDirectory
  .text.itelex_cgi_config_extern
-                0x0001a3be      0x462 iTelex/iTelex.o
-                0x0001a3be                itelex_cgi_config_extern
+                0x0001a3e2      0x462 iTelex/iTelex.o
+                0x0001a3e2                itelex_cgi_config_extern
  .text.itelex_cgi_config_intern
-                0x0001a820      0xa14 iTelex/iTelex.o
-                0x0001a820                itelex_cgi_config_intern
+                0x0001a844      0xa14 iTelex/iTelex.o
+                0x0001a844                itelex_cgi_config_intern
  .text.PruefeSpracheUndKonfigFreigabe
-                0x0001b234       0x20 iTelex/iTelex.o
-                0x0001b234                PruefeSpracheUndKonfigFreigabe
+                0x0001b258       0x20 iTelex/iTelex.o
+                0x0001b258                PruefeSpracheUndKonfigFreigabe
  .text.WahlAbbruchMeldung
-                0x0001b254      0x192 iTelex/iTelex.o
+                0x0001b278      0x192 iTelex/iTelex.o
  .text.ITelexOderAsciiEmpfangVerarbeiten
-                0x0001b3e6      0x7f6 iTelex/iTelex.o
+                0x0001b40a      0x7f6 iTelex/iTelex.o
  .text.SonstigeAnwahl
-                0x0001bbdc       0x74 iTelex/iTelex.o
-                0x0001bbdc                SonstigeAnwahl
+                0x0001bc00       0x74 iTelex/iTelex.o
+                0x0001bc00                SonstigeAnwahl
  .text.itelex_cgi_msg_In
-                0x0001bc50      0x256 iTelex/iTelex.o
-                0x0001bc50                itelex_cgi_msg_In
+                0x0001bc74      0x256 iTelex/iTelex.o
+                0x0001bc74                itelex_cgi_msg_In
  .text.Verbindungsaufbau
-                0x0001bea6      0x3ae iTelex/iTelex.o
-                0x0001bea6                Verbindungsaufbau
+                0x0001beca      0x3ae iTelex/iTelex.o
+                0x0001beca                Verbindungsaufbau
  .text.TeilnehmerServerSocketOeffnen1
-                0x0001c254      0x19e iTelex/iTelex.o
-                0x0001c254                TeilnehmerServerSocketOeffnen1
+                0x0001c278      0x19e iTelex/iTelex.o
+                0x0001c278                TeilnehmerServerSocketOeffnen1
  .text.TeilnehmerServerSocketOeffnen
-                0x0001c3f2       0x76 iTelex/iTelex.o
-                0x0001c3f2                TeilnehmerServerSocketOeffnen
+                0x0001c416       0x76 iTelex/iTelex.o
+                0x0001c416                TeilnehmerServerSocketOeffnen
  .text.RufnummerBeiTlnServerAbfragen
-                0x0001c468       0x72 iTelex/iTelex.o
+                0x0001c48c       0x72 iTelex/iTelex.o
  .text.itelex_thread
-                0x0001c4da     0x2f24 iTelex/iTelex.o
-                0x0001c4da                itelex_thread
+                0x0001c4fe     0x2f24 iTelex/iTelex.o
+                0x0001c4fe                itelex_thread
  .text.TlnMemSuche
-                0x0001f3fe       0x3c iTelex/TlnBuch.o
-                0x0001f3fe                TlnMemSuche
+                0x0001f422       0x3c iTelex/TlnBuch.o
+                0x0001f422                TlnMemSuche
  .text.EintragVergleichNummer
-                0x0001f43a       0xba iTelex/TlnBuch.o
+                0x0001f45e       0xba iTelex/TlnBuch.o
  .text.PruefsummeBerechnungSchritt
-                0x0001f4f4       0xb4 iTelex/TlnBuch.o
+                0x0001f518       0xb4 iTelex/TlnBuch.o
  .text.TlnBuchPruefsummeBerechnenSchritt
-                0x0001f5a8       0x72 iTelex/TlnBuch.o
-                0x0001f5a8                TlnBuchPruefsummeBerechnenSchritt
+                0x0001f5cc       0x72 iTelex/TlnBuch.o
+                0x0001f5cc                TlnBuchPruefsummeBerechnenSchritt
  .text.EintragVergleichDatum
-                0x0001f61a       0x6c iTelex/TlnBuch.o
+                0x0001f63e       0x6c iTelex/TlnBuch.o
  .text.TlnEintragGroesse
-                0x0001f686       0x76 iTelex/TlnBuch.o
+                0x0001f6aa       0x76 iTelex/TlnBuch.o
  .text.TlnBuchSortieren
-                0x0001f6fc       0xe0 iTelex/TlnBuch.o
+                0x0001f720       0xe0 iTelex/TlnBuch.o
  .text.EintragVergleichName
-                0x0001f7dc        0xa iTelex/TlnBuch.o
+                0x0001f800        0xa iTelex/TlnBuch.o
  .text.ExternEepromOeffnen
-                0x0001f7e6       0x66 iTelex/TlnBuch.o
+                0x0001f80a       0x66 iTelex/TlnBuch.o
  .text.TlnBuchLadeVonExternEeprom
-                0x0001f84c      0x19c iTelex/TlnBuch.o
-                0x0001f84c                TlnBuchLadeVonExternEeprom
+                0x0001f870      0x19c iTelex/TlnBuch.o
+                0x0001f870                TlnBuchLadeVonExternEeprom
  .text.TlnBuchInit
-                0x0001f9e8       0xdc iTelex/TlnBuch.o
-                0x0001f9e8                TlnBuchInit
+                0x0001fa0c       0xdc iTelex/TlnBuch.o
+                0x0001fa0c                TlnBuchInit
  .text.TlnSuchMusterPasst
-                0x0001fac4       0x1e iTelex/TlnBuch.o
-                0x0001fac4                TlnSuchMusterPasst
+                0x0001fae8       0x1e iTelex/TlnBuch.o
+                0x0001fae8                TlnSuchMusterPasst
  .text.TlnListerStart
-                0x0001fae2       0x30 iTelex/TlnBuch.o
-                0x0001fae2                TlnListerStart
+                0x0001fb06       0x30 iTelex/TlnBuch.o
+                0x0001fb06                TlnListerStart
  .text.TlnEintragen
-                0x0001fb12      0x560 iTelex/TlnBuch.o
+                0x0001fb36      0x560 iTelex/TlnBuch.o
  .text.TlnDatenInit
-                0x00020072        0xc iTelex/TlnBuch.o
-                0x00020072                TlnDatenInit
+                0x00020096        0xc iTelex/TlnBuch.o
+                0x00020096                TlnDatenInit
  .text.TlnLesen
-                0x0002007e      0x17e iTelex/TlnBuch.o
+                0x000200a2      0x17e iTelex/TlnBuch.o
  .text.TlnBuchSpeichereAufExternEeprom
-                0x000201fc      0x29e iTelex/TlnBuch.o
-                0x000201fc                TlnBuchSpeichereAufExternEeprom
+                0x00020220      0x29e iTelex/TlnBuch.o
+                0x00020220                TlnBuchSpeichereAufExternEeprom
  .text.TlnListerNaechster
-                0x0002049a       0x98 iTelex/TlnBuch.o
-                0x0002049a                TlnListerNaechster
+                0x000204be       0x98 iTelex/TlnBuch.o
+                0x000204be                TlnListerNaechster
  .text.TlnHinzufuegen
-                0x00020532      0x150 iTelex/TlnBuch.o
-                0x00020532                TlnHinzufuegen
+                0x00020556      0x150 iTelex/TlnBuch.o
+                0x00020556                TlnHinzufuegen
  .text.TlnSuche
-                0x00020682       0x46 iTelex/TlnBuch.o
-                0x00020682                TlnSuche
+                0x000206a6       0x46 iTelex/TlnBuch.o
+                0x000206a6                TlnSuche
  .text.TlnBuchTabelleAusgabe
-                0x000206c8      0x636 iTelex/TlnBuch.o
+                0x000206ec      0x636 iTelex/TlnBuch.o
  .text.TlnBuch_Anzeige_CGI
-                0x00020cfe      0xf44 iTelex/TlnBuch.o
-                0x00020cfe                TlnBuch_Anzeige_CGI
+                0x00020d22      0xf44 iTelex/TlnBuch.o
+                0x00020d22                TlnBuch_Anzeige_CGI
  .text.CgiFormFinish_P
-                0x00021c42       0x40 iTelex/CgiFormTools.o
-                0x00021c42                CgiFormFinish_P
+                0x00021c66       0x40 iTelex/CgiFormTools.o
+                0x00021c66                CgiFormFinish_P
  .text.CgiFormDropdown_P
-                0x00021c82      0x108 iTelex/CgiFormTools.o
-                0x00021c82                CgiFormDropdown_P
+                0x00021ca6      0x108 iTelex/CgiFormTools.o
+                0x00021ca6                CgiFormDropdown_P
  .text.CgiFormFieldIntro_P
-                0x00021d8a       0x56 iTelex/CgiFormTools.o
-                0x00021d8a                CgiFormFieldIntro_P
+                0x00021dae       0x56 iTelex/CgiFormTools.o
+                0x00021dae                CgiFormFieldIntro_P
  .text.CgiFormCheckbox_P
-                0x00021de0       0x56 iTelex/CgiFormTools.o
-                0x00021de0                CgiFormCheckbox_P
+                0x00021e04       0x56 iTelex/CgiFormTools.o
+                0x00021e04                CgiFormCheckbox_P
  .text.CgiFormInputFieldText_P
-                0x00021e36       0x5e iTelex/CgiFormTools.o
-                0x00021e36                CgiFormInputFieldText_P
+                0x00021e5a       0x5e iTelex/CgiFormTools.o
+                0x00021e5a                CgiFormInputFieldText_P
  .text.CgiFormInputFieldULong_P
-                0x00021e94       0x6c iTelex/CgiFormTools.o
-                0x00021e94                CgiFormInputFieldULong_P
+                0x00021eb8       0x6c iTelex/CgiFormTools.o
+                0x00021eb8                CgiFormInputFieldULong_P
  .text.CgiFormStartTabbed_P
-                0x00021f00       0x40 iTelex/CgiFormTools.o
-                0x00021f00                CgiFormStartTabbed_P
+                0x00021f24       0x40 iTelex/CgiFormTools.o
+                0x00021f24                CgiFormStartTabbed_P
  .text.CgiCheckBool_P
-                0x00021f40      0x150 iTelex/CgiFormTools.o
-                0x00021f40                CgiCheckBool_P
+                0x00021f64      0x150 iTelex/CgiFormTools.o
+                0x00021f64                CgiCheckBool_P
  .text.CgiCheckULong_P
-                0x00022090      0x1a0 iTelex/CgiFormTools.o
-                0x00022090                CgiCheckULong_P
+                0x000220b4      0x1a0 iTelex/CgiFormTools.o
+                0x000220b4                CgiCheckULong_P
  .text.CgiCheckText_P
-                0x00022230      0x13a iTelex/CgiFormTools.o
-                0x00022230                CgiCheckText_P
+                0x00022254      0x13a iTelex/CgiFormTools.o
+                0x00022254                CgiCheckText_P
  .text.ReadConfigBool
-                0x0002236a       0x38 iTelex/CgiFormTools.o
-                0x0002236a                ReadConfigBool
+                0x0002238e       0x38 iTelex/CgiFormTools.o
+                0x0002238e                ReadConfigBool
  .text.SwTwiForceStop
-                0x000223a2       0x9a iTelex/SwTwi.o
-                0x000223a2                SwTwiForceStop
+                0x000223c6       0x9a iTelex/SwTwi.o
+                0x000223c6                SwTwiForceStop
  .text.SwTwiInit
-                0x0002243c       0x26 iTelex/SwTwi.o
-                0x0002243c                SwTwiInit
+                0x00022460       0x26 iTelex/SwTwi.o
+                0x00022460                SwTwiInit
  .text.CheckLongTimer
-                0x00022462       0x2c iTelex/SwTwi.o
- .text.ReadBit  0x0002248e       0xf6 iTelex/SwTwi.o
- .text.SendBit  0x00022584       0xb2 iTelex/SwTwi.o
+                0x00022486       0x2c iTelex/SwTwi.o
+ .text.ReadBit  0x000224b2       0xf6 iTelex/SwTwi.o
+ .text.SendBit  0x000225a8       0xb2 iTelex/SwTwi.o
  .text.SwTwiReadByte
-                0x00022636       0x6e iTelex/SwTwi.o
-                0x00022636                SwTwiReadByte
+                0x0002265a       0x6e iTelex/SwTwi.o
+                0x0002265a                SwTwiReadByte
  .text.SwTwiSendByte
-                0x000226a4       0x68 iTelex/SwTwi.o
-                0x000226a4                SwTwiSendByte
+                0x000226c8       0x68 iTelex/SwTwi.o
+                0x000226c8                SwTwiSendByte
  .text.SwTwiStop
-                0x0002270c       0x9a iTelex/SwTwi.o
-                0x0002270c                SwTwiStop
+                0x00022730       0x9a iTelex/SwTwi.o
+                0x00022730                SwTwiStop
  .text.SwTwiStart
-                0x000227a6       0x7c iTelex/SwTwi.o
-                0x000227a6                SwTwiStart
+                0x000227ca       0x7c iTelex/SwTwi.o
+                0x000227ca                SwTwiStart
  .text.ProtokollRegelblockStart
-                0x00022822        0xa iTelex/Protokoll.o
-                0x00022822                ProtokollRegelblockStart
+                0x00022846        0xa iTelex/Protokoll.o
+                0x00022846                ProtokollRegelblockStart
  .text.ProtokollRegelblockEnde
-                0x0002282c        0x6 iTelex/Protokoll.o
-                0x0002282c                ProtokollRegelblockEnde
+                0x00022850        0x6 iTelex/Protokoll.o
+                0x00022850                ProtokollRegelblockEnde
  .text.ProtokollRegelblockAbbruch
-                0x00022832        0xa iTelex/Protokoll.o
-                0x00022832                ProtokollRegelblockAbbruch
+                0x00022856        0xa iTelex/Protokoll.o
+                0x00022856                ProtokollRegelblockAbbruch
  .text.ProtokollRegelblockLoeschen
-                0x0002283c       0x1e iTelex/Protokoll.o
-                0x0002283c                ProtokollRegelblockLoeschen
+                0x00022860       0x1e iTelex/Protokoll.o
+                0x00022860                ProtokollRegelblockLoeschen
  .text.ProtokollInit
-                0x0002285a       0x46 iTelex/Protokoll.o
-                0x0002285a                ProtokollInit
+                0x0002287e       0x46 iTelex/Protokoll.o
+                0x0002287e                ProtokollInit
  .text.ProtokollSpeichern
-                0x000228a0      0x364 iTelex/Protokoll.o
-                0x000228a0                ProtokollSpeichern
+                0x000228c4      0x364 iTelex/Protokoll.o
+                0x000228c4                ProtokollSpeichern
  .text.SpeichernBeiIdle
-                0x00022c04       0x14 iTelex/Protokoll.o
+                0x00022c28       0x14 iTelex/Protokoll.o
  .text.ProtokollRegelblockInit
-                0x00022c18       0x10 iTelex/Protokoll.o
-                0x00022c18                ProtokollRegelblockInit
+                0x00022c3c       0x10 iTelex/Protokoll.o
+                0x00022c3c                ProtokollRegelblockInit
  .text.ProtPraeparieren
-                0x00022c28      0x122 iTelex/Protokoll.o
+                0x00022c4c      0x122 iTelex/Protokoll.o
  .text.ProtokollierenMAC
-                0x00022d4a       0x34 iTelex/Protokoll.o
-                0x00022d4a                ProtokollierenMAC
+                0x00022d6e       0x34 iTelex/Protokoll.o
+                0x00022d6e                ProtokollierenMAC
  .text.ProtokollierenIPAdr
-                0x00022d7e       0x40 iTelex/Protokoll.o
-                0x00022d7e                ProtokollierenIPAdr
+                0x00022da2       0x40 iTelex/Protokoll.o
+                0x00022da2                ProtokollierenIPAdr
  .text.ProtokollierenInt_P
-                0x00022dbe       0x8c iTelex/Protokoll.o
-                0x00022dbe                ProtokollierenInt_P
+                0x00022de2       0x8c iTelex/Protokoll.o
+                0x00022de2                ProtokollierenInt_P
  .text.Protokollieren_P
-                0x00022e4a       0x2e iTelex/Protokoll.o
-                0x00022e4a                Protokollieren_P
+                0x00022e6e       0x2e iTelex/Protokoll.o
+                0x00022e6e                Protokollieren_P
  .text.ProtokollierenC
-                0x00022e78       0x2e iTelex/Protokoll.o
-                0x00022e78                ProtokollierenC
+                0x00022e9c       0x2e iTelex/Protokoll.o
+                0x00022e9c                ProtokollierenC
  .text.ProtokollierenPuffer
-                0x00022ea6       0xd8 iTelex/Protokoll.o
-                0x00022ea6                ProtokollierenPuffer
+                0x00022eca       0xd8 iTelex/Protokoll.o
+                0x00022eca                ProtokollierenPuffer
  .text.Protokollieren
-                0x00022f7e       0x2e iTelex/Protokoll.o
-                0x00022f7e                Protokollieren
+                0x00022fa2       0x2e iTelex/Protokoll.o
+                0x00022fa2                Protokollieren
  .text.KanalInit
-                0x00022fac       0x6e iTelex/TlnServer.o
+                0x00022fd0       0x6e iTelex/TlnServer.o
  .text.KanalFertig
-                0x0002301a       0x34 iTelex/TlnServer.o
+                0x0002303e       0x34 iTelex/TlnServer.o
  .text.TlnServTlnbuchEintragGeaendert
-                0x0002304e      0x110 iTelex/TlnServer.o
-                0x0002304e                TlnServTlnbuchEintragGeaendert
+                0x00023072      0x110 iTelex/TlnServer.o
+                0x00023072                TlnServTlnbuchEintragGeaendert
  .text.itelex_tlnserv_init
-                0x0002315e      0x1ec iTelex/TlnServer.o
-                0x0002315e                itelex_tlnserv_init
+                0x00023182      0x1ec iTelex/TlnServer.o
+                0x00023182                itelex_tlnserv_init
  .text.TlnServDebugPrint
-                0x0002334a      0x494 iTelex/TlnServer.o
-                0x0002334a                TlnServDebugPrint
+                0x0002336e      0x494 iTelex/TlnServer.o
+                0x0002336e                TlnServDebugPrint
  .text.ProtokollierenTlnSrv
-                0x000237de       0x60 iTelex/TlnServer.o
+                0x00023802       0x60 iTelex/TlnServer.o
  .text.ProtokollierenTlnServ_P
-                0x0002383e       0x12 iTelex/TlnServer.o
+                0x00023862       0x12 iTelex/TlnServer.o
  .text.ProtokollierenTlnServInt_P
-                0x00023850       0x2a iTelex/TlnServer.o
+                0x00023874       0x2a iTelex/TlnServer.o
  .text.TlnDatensatzSyncSenden
-                0x0002387a      0x168 iTelex/TlnServer.o
+                0x0002389e      0x168 iTelex/TlnServer.o
  .text.SocketDatenSenden
-                0x000239e2      0x140 iTelex/TlnServer.o
+                0x00023a06      0x140 iTelex/TlnServer.o
  .text.FehlerRueckmelden
-                0x00023b22       0x52 iTelex/TlnServer.o
+                0x00023b46       0x52 iTelex/TlnServer.o
  .text.itelex_tlnserv_thread
-                0x00023b74     0x13e2 iTelex/TlnServer.o
-                0x00023b74                itelex_tlnserv_thread
+                0x00023b98     0x13e2 iTelex/TlnServer.o
+                0x00023b98                itelex_tlnserv_thread
  .text.itelex_email_init
-                0x00024f56      0x12e iTelex/eMail.o
-                0x00024f56                itelex_email_init
+                0x00024f7a      0x12e iTelex/eMail.o
+                0x00024f7a                itelex_email_init
  .text.SMTPSchliessen
-                0x00025084       0x4a iTelex/eMail.o
-                0x00025084                SMTPSchliessen
+                0x000250a8       0x4a iTelex/eMail.o
+                0x000250a8                SMTPSchliessen
  .text.itelex_cgi_email_config
-                0x000250ce      0x422 iTelex/eMail.o
-                0x000250ce                itelex_cgi_email_config
+                0x000250f2      0x422 iTelex/eMail.o
+                0x000250f2                itelex_cgi_email_config
  .text.POP3Abbrechen
-                0x000254f0       0x48 iTelex/eMail.o
-                0x000254f0                POP3Abbrechen
+                0x00025514       0x48 iTelex/eMail.o
+                0x00025514                POP3Abbrechen
  .text.SMTPDatenVerarbeiten
-                0x00025538      0x45e iTelex/eMail.o
-                0x00025538                SMTPDatenVerarbeiten
+                0x0002555c      0x45e iTelex/eMail.o
+                0x0002555c                SMTPDatenVerarbeiten
  .text.SMTPOeffnen
-                0x00025996      0x144 iTelex/eMail.o
-                0x00025996                SMTPOeffnen
+                0x000259ba      0x144 iTelex/eMail.o
+                0x000259ba                SMTPOeffnen
  .text.POP3Einleiten
-                0x00025ada      0x222 iTelex/eMail.o
-                0x00025ada                POP3Einleiten
+                0x00025afe      0x222 iTelex/eMail.o
+                0x00025afe                POP3Einleiten
  .text.MailZeileVerarbeiten
-                0x00025cfc      0x1ac iTelex/eMail.o
-                0x00025cfc                MailZeileVerarbeiten
+                0x00025d20      0x1ac iTelex/eMail.o
+                0x00025d20                MailZeileVerarbeiten
  .text.POP3DatenVerarbeiten
-                0x00025ea8      0x3d8 iTelex/eMail.o
-                0x00025ea8                POP3DatenVerarbeiten
- .text.GetIStr  0x00026280       0x1a iTelex/StringTab.o
-                0x00026280                GetIStr
+                0x00025ecc      0x3d8 iTelex/eMail.o
+                0x00025ecc                POP3DatenVerarbeiten
+ .text.GetIStr  0x000262a4       0x1a iTelex/StringTab.o
+                0x000262a4                GetIStr
  .text.UpdateTimeFromNTP
-                0x0002629a       0xe2 iTelex/ConfigNtp.o
-                0x0002629a                UpdateTimeFromNTP
+                0x000262be       0xe2 iTelex/ConfigNtp.o
+                0x000262be                UpdateTimeFromNTP
  .text.ConfigNtpCgi
-                0x0002637c      0x26a iTelex/ConfigNtp.o
-                0x0002637c                ConfigNtpCgi
+                0x000263a0      0x26a iTelex/ConfigNtp.o
+                0x000263a0                ConfigNtpCgi
  .text.IspClose
-                0x000265e6       0x1e iTelex/IspMaster.o
+                0x0002660a       0x1e iTelex/IspMaster.o
  .text.InitIspMaster
-                0x00026604       0x1c iTelex/IspMaster.o
-                0x00026604                InitIspMaster
+                0x00026628       0x1c iTelex/IspMaster.o
+                0x00026628                InitIspMaster
  .text.IspEnable
-                0x00026620       0xb8 iTelex/IspMaster.o
+                0x00026644       0xb8 iTelex/IspMaster.o
  .text.FlashRead
-                0x000266d8       0x58 iTelex/IspMaster.o
+                0x000266fc       0x58 iTelex/IspMaster.o
  .text.BuildFullPath
-                0x00026730       0x84 iTelex/IspMaster.o
+                0x00026754       0x84 iTelex/IspMaster.o
  .text.HttpReadHeader
-                0x000267b4      0x1ce iTelex/IspMaster.o
-                0x000267b4                HttpReadHeader
- .text.HttpGet  0x00026982      0x10e iTelex/IspMaster.o
-                0x00026982                HttpGet
- .text.cgi_Isp  0x00026a90      0xc1a iTelex/IspMaster.o
-                0x00026a90                cgi_Isp
+                0x000267d8      0x1ce iTelex/IspMaster.o
+                0x000267d8                HttpReadHeader
+ .text.HttpGet  0x000269a6      0x10e iTelex/IspMaster.o
+                0x000269a6                HttpGet
+ .text.cgi_Isp  0x00026ab4      0xc1a iTelex/IspMaster.o
+                0x00026ab4                cgi_Isp
  .text.CLR_BIT_Status
-                0x000276aa       0x22 iTelex/Gemeinsam/BusKomm.o
-                0x000276aa                CLR_BIT_Status
+                0x000276ce       0x22 iTelex/Gemeinsam/BusKomm.o
+                0x000276ce                CLR_BIT_Status
  .text.SET_BIT_Status
-                0x000276cc       0x20 iTelex/Gemeinsam/BusKomm.o
-                0x000276cc                SET_BIT_Status
+                0x000276f0       0x20 iTelex/Gemeinsam/BusKomm.o
+                0x000276f0                SET_BIT_Status
  .text.EmpfByteSpeichern
-                0x000276ec       0x90 iTelex/Gemeinsam/BusKomm.o
+                0x00027710       0x90 iTelex/Gemeinsam/BusKomm.o
  .text.__vector_39
-                0x0002777c      0x368 iTelex/Gemeinsam/BusKomm.o
-                0x0002777c                __vector_39
+                0x000277a0      0x368 iTelex/Gemeinsam/BusKomm.o
+                0x000277a0                __vector_39
  .text.BusWarteFertig
-                0x00027ae4       0x12 iTelex/Gemeinsam/BusKomm.o
-                0x00027ae4                BusWarteFertig
+                0x00027b08       0x12 iTelex/Gemeinsam/BusKomm.o
+                0x00027b08                BusWarteFertig
  .text.BusSenden
-                0x00027af6       0x3c iTelex/Gemeinsam/BusKomm.o
-                0x00027af6                BusSenden
+                0x00027b1a       0x3c iTelex/Gemeinsam/BusKomm.o
+                0x00027b1a                BusSenden
  .text.BusRundsenden
-                0x00027b32       0x2a iTelex/Gemeinsam/BusKomm.o
-                0x00027b32                BusRundsenden
+                0x00027b56       0x2a iTelex/Gemeinsam/BusKomm.o
+                0x00027b56                BusRundsenden
  .text.GetStatus
-                0x00027b5c       0x54 iTelex/Gemeinsam/BusKomm.o
-                0x00027b5c                GetStatus
+                0x00027b80       0x54 iTelex/Gemeinsam/BusKomm.o
+                0x00027b80                GetStatus
  .text.BusEigenAdressePruefenUndSetzen
-                0x00027bb0       0x64 iTelex/Gemeinsam/BusKomm.o
-                0x00027bb0                BusEigenAdressePruefenUndSetzen
- .text.TwiInit  0x00027c14       0x70 iTelex/Gemeinsam/BusKomm.o
-                0x00027c14                TwiInit
+                0x00027bd4       0x64 iTelex/Gemeinsam/BusKomm.o
+                0x00027bd4                BusEigenAdressePruefenUndSetzen
+ .text.TwiInit  0x00027c38       0x70 iTelex/Gemeinsam/BusKomm.o
+                0x00027c38                TwiInit
  .text.WahlZuAdresse
-                0x00027c84       0x2c iTelex/Gemeinsam/BusKomm.o
-                0x00027c84                WahlZuAdresse
+                0x00027ca8       0x2c iTelex/Gemeinsam/BusKomm.o
+                0x00027ca8                WahlZuAdresse
  .text.AdresseZuWahl
-                0x00027cb0       0x2e iTelex/Gemeinsam/BusKomm.o
-                0x00027cb0                AdresseZuWahl
+                0x00027cd4       0x2e iTelex/Gemeinsam/BusKomm.o
+                0x00027cd4                AdresseZuWahl
  .text.GetEmpfByte
-                0x00027cde       0x4c iTelex/Gemeinsam/BusKomm.o
-                0x00027cde                GetEmpfByte
+                0x00027d02       0x4c iTelex/Gemeinsam/BusKomm.o
+                0x00027d02                GetEmpfByte
  .text.PufferInit
-                0x00027d2a        0xa iTelex/Gemeinsam/FifoPuffer.o
-                0x00027d2a                PufferInit
+                0x00027d4e        0xa iTelex/Gemeinsam/FifoPuffer.o
+                0x00027d4e                PufferInit
  .text.PufferLeer
-                0x00027d34       0x12 iTelex/Gemeinsam/FifoPuffer.o
-                0x00027d34                PufferLeer
+                0x00027d58       0x12 iTelex/Gemeinsam/FifoPuffer.o
+                0x00027d58                PufferLeer
  .text.PufferVoll
-                0x00027d46       0x40 iTelex/Gemeinsam/FifoPuffer.o
-                0x00027d46                PufferVoll
+                0x00027d6a       0x40 iTelex/Gemeinsam/FifoPuffer.o
+                0x00027d6a                PufferVoll
  .text.PufferSpeich
-                0x00027d86       0x4e iTelex/Gemeinsam/FifoPuffer.o
-                0x00027d86                PufferSpeich
+                0x00027daa       0x4e iTelex/Gemeinsam/FifoPuffer.o
+                0x00027daa                PufferSpeich
  .text.PufferAusg
-                0x00027dd4       0x2c iTelex/Gemeinsam/FifoPuffer.o
-                0x00027dd4                PufferAusg
+                0x00027df8       0x2c iTelex/Gemeinsam/FifoPuffer.o
+                0x00027df8                PufferAusg
  .text.PufferAnzahl
-                0x00027e00       0x1c iTelex/Gemeinsam/FifoPuffer.o
-                0x00027e00                PufferAnzahl
+                0x00027e24       0x1c iTelex/Gemeinsam/FifoPuffer.o
+                0x00027e24                PufferAnzahl
  .text.ZeichenZuCode
-                0x00027e1c       0x36 iTelex/Gemeinsam/BaudotCode.o
-                0x00027e1c                ZeichenZuCode
+                0x00027e40       0x36 iTelex/Gemeinsam/BaudotCode.o
+                0x00027e40                ZeichenZuCode
  .text.CodeZuZeichen
-                0x00027e52       0x3a iTelex/Gemeinsam/BaudotCode.o
-                0x00027e52                CodeZuZeichen
+                0x00027e76       0x3a iTelex/Gemeinsam/BaudotCode.o
+                0x00027e76                CodeZuZeichen
  .text.ZeichenZuCode2
-                0x00027e8c       0x7e iTelex/Gemeinsam/BaudotCode.o
-                0x00027e8c                ZeichenZuCode2
- .text.libgcc   0x00027f0a       0x3e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_mulsi3.o)
-                0x00027f0a                __mulsi3
- .text.libgcc   0x00027f48       0x28 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_udivmodhi4.o)
-                0x00027f48                __udivmodhi4
- .text.libgcc   0x00027f70       0x26 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_divmodhi4.o)
-                0x00027f70                __divmodhi4
-                0x00027f70                _div
- .text.libgcc   0x00027f96       0x44 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_udivmodsi4.o)
-                0x00027f96                __udivmodsi4
- .text.libgcc   0x00027fda       0x38 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_prologue.o)
-                0x00027fda                __prologue_saves__
- .text.libgcc   0x00028012       0x36 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_epilogue.o)
-                0x00028012                __epilogue_restores__
+                0x00027eb0       0x7e iTelex/Gemeinsam/BaudotCode.o
+                0x00027eb0                ZeichenZuCode2
+ .text.libgcc   0x00027f2e       0x3e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_mulsi3.o)
+                0x00027f2e                __mulsi3
+ .text.libgcc   0x00027f6c       0x28 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_udivmodhi4.o)
+                0x00027f6c                __udivmodhi4
+ .text.libgcc   0x00027f94       0x26 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_divmodhi4.o)
+                0x00027f94                __divmodhi4
+                0x00027f94                _div
+ .text.libgcc   0x00027fba       0x44 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_udivmodsi4.o)
+                0x00027fba                __udivmodsi4
+ .text.libgcc   0x00027ffe       0x38 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_prologue.o)
+                0x00027ffe                __prologue_saves__
+ .text.libgcc   0x00028036       0x36 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_epilogue.o)
+                0x00028036                __epilogue_restores__
  .text.avr-libc
-                0x00028048      0x20a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(malloc.o)
-                0x00028048                malloc
-                0x000281a2                free
+                0x0002806c      0x20a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(malloc.o)
+                0x0002806c                malloc
+                0x000281c6                free
  .text.avr-libc
-                0x00028252       0x3a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(atoi.o)
-                0x00028252                atoi
+                0x00028276       0x3a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(atoi.o)
+                0x00028276                atoi
  .text.avr-libc
-                0x0002828c       0x4c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(atol.o)
-                0x0002828c                atol
+                0x000282b0       0x4c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(atol.o)
+                0x000282b0                atol
  .text.avr-libc
-                0x000282d8       0x1a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcmp_P.o)
-                0x000282d8                memcmp_P
+                0x000282fc       0x1a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcmp_P.o)
+                0x000282fc                memcmp_P
  .text.avr-libc
-                0x000282f2       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcpy_P.o)
-                0x000282f2                memcpy_P
+                0x00028316       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcpy_P.o)
+                0x00028316                memcpy_P
  .text.avr-libc
-                0x00028304       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcat_P.o)
-                0x00028304                strcat_P
+                0x00028328       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcat_P.o)
+                0x00028328                strcat_P
  .text.avr-libc
-                0x0002831a       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strchr_P.o)
-                0x0002831a                strchr_P
+                0x0002833e       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strchr_P.o)
+                0x0002833e                strchr_P
  .text.avr-libc
-                0x00028330       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcmp_P.o)
-                0x00028330                strcmp_P
+                0x00028354       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcmp_P.o)
+                0x00028354                strcmp_P
  .text.avr-libc
-                0x00028342        0xe c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcpy_P.o)
-                0x00028342                strcpy_P
+                0x00028366        0xe c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcpy_P.o)
+                0x00028366                strcpy_P
  .text.avr-libc
-                0x00028350       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strlen_P.o)
-                0x00028350                strlen_P
+                0x00028374       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strlen_P.o)
+                0x00028374                strlen_P
  .text.avr-libc
-                0x00028362       0x30 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncasecmp_P.o)
-                0x00028362                strncasecmp_P
+                0x00028386       0x30 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncasecmp_P.o)
+                0x00028386                strncasecmp_P
  .text.avr-libc
-                0x00028392       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncat_P.o)
-                0x00028392                strncat_P
+                0x000283b6       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncat_P.o)
+                0x000283b6                strncat_P
  .text.avr-libc
-                0x000283b2       0x1c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncmp_P.o)
-                0x000283b2                strncmp_P
+                0x000283d6       0x1c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncmp_P.o)
+                0x000283d6                strncmp_P
  .text.avr-libc
-                0x000283ce       0x34 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strstr_P.o)
-                0x000283ce                strstr_P
+                0x000283f2       0x34 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strstr_P.o)
+                0x000283f2                strstr_P
  .text.avr-libc
-                0x00028402       0x1a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcmp.o)
-                0x00028402                memcmp
+                0x00028426       0x1a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcmp.o)
+                0x00028426                memcmp
  .text.avr-libc
-                0x0002841c       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcpy.o)
-                0x0002841c                memcpy
+                0x00028440       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcpy.o)
+                0x00028440                memcpy
  .text.avr-libc
-                0x0002842e       0x22 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memmove.o)
-                0x0002842e                memmove
+                0x00028452       0x22 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memmove.o)
+                0x00028452                memmove
  .text.avr-libc
-                0x00028450        0xe c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memset.o)
-                0x00028450                memset
+                0x00028474        0xe c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memset.o)
+                0x00028474                memset
  .text.avr-libc
-                0x0002845e       0x26 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcasecmp.o)
-                0x0002845e                strcasecmp
+                0x00028482       0x26 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcasecmp.o)
+                0x00028482                strcasecmp
  .text.avr-libc
-                0x00028484       0x4a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcasestr.o)
-                0x00028484                strcasestr
+                0x000284a8       0x4a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcasestr.o)
+                0x000284a8                strcasestr
  .text.avr-libc
-                0x000284ce       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcat.o)
-                0x000284ce                strcat
+                0x000284f2       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcat.o)
+                0x000284f2                strcat
  .text.avr-libc
-                0x000284e4       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strchr.o)
-                0x000284e4                strchr
+                0x00028508       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strchr.o)
+                0x00028508                strchr
  .text.avr-libc
-                0x000284fa       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcmp.o)
-                0x000284fa                strcmp
+                0x0002851e       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcmp.o)
+                0x0002851e                strcmp
  .text.avr-libc
-                0x0002850c        0xe c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcpy.o)
-                0x0002850c                strcpy
+                0x00028530        0xe c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcpy.o)
+                0x00028530                strcpy
  .text.avr-libc
-                0x0002851a       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strlen.o)
-                0x0002851a                strlen
+                0x0002853e       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strlen.o)
+                0x0002853e                strlen
  .text.avr-libc
-                0x0002852c       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncat.o)
-                0x0002852c                strncat
+                0x00028550       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncat.o)
+                0x00028550                strncat
  .text.avr-libc
-                0x0002854c       0x1c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncmp.o)
-                0x0002854c                strncmp
+                0x00028570       0x1c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncmp.o)
+                0x00028570                strncmp
  .text.avr-libc
-                0x00028568       0x1e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncpy.o)
-                0x00028568                strncpy
+                0x0002858c       0x1e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncpy.o)
+                0x0002858c                strncpy
  .text.avr-libc
-                0x00028586       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strrchr.o)
-                0x00028586                strrchr
+                0x000285aa       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strrchr.o)
+                0x000285aa                strrchr
  .text.avr-libc
-                0x0002859c       0x3e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(itoa.o)
-                0x0002859c                itoa
+                0x000285c0       0x3e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(itoa.o)
+                0x000285c0                itoa
  .text.avr-libc
-                0x000285da       0x2a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(mulsi10.o)
-                0x000285da                __mulsi_const_10
+                0x000285fe       0x2a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(mulsi10.o)
+                0x000285fe                __mulsi_const_10
  .text.avr-libc
-                0x00028604       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(mul10.o)
-                0x00028604                __mulhi_const_10
+                0x00028628       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(mul10.o)
+                0x00028628                __mulhi_const_10
  .text.avr-libc
-                0x00028614       0x46 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(ultoa.o)
-                0x00028614                ultoa
+                0x00028638       0x46 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(ultoa.o)
+                0x00028638                ultoa
  .text.avr-libc
-                0x0002865a       0x22 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(printf.o)
-                0x0002865a                printf
+                0x0002867e       0x22 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(printf.o)
+                0x0002867e                printf
  .text.avr-libc
-                0x0002867c       0x44 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(printf_p.o)
-                0x0002867c                printf_P
+                0x000286a0       0x44 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(printf_p.o)
+                0x000286a0                printf_P
  .text.avr-libc
-                0x000286c0       0x60 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(sprintf_p.o)
-                0x000286c0                sprintf_P
+                0x000286e4       0x60 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(sprintf_p.o)
+                0x000286e4                sprintf_P
  .text.avr-libc
-                0x00028720      0x3f2 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(vfprintf_std.o)
-                0x00028720                vfprintf
+                0x00028744      0x3f2 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(vfprintf_std.o)
+                0x00028744                vfprintf
  .text.avr-libc
-                0x00028b12       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(eerd_block_atmega2561.o)
-                0x00028b12                __eerd_block_m2561
-                0x00028b16                __eerd_blraw_m2561
+                0x00028b36       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(eerd_block_atmega2561.o)
+                0x00028b36                __eerd_block_m2561
+                0x00028b3a                __eerd_blraw_m2561
  .text.avr-libc
-                0x00028b32       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(eerd_byte_atmega2561.o)
-                0x00028b32                __eerd_byte_m2561
+                0x00028b56       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(eerd_byte_atmega2561.o)
+                0x00028b56                __eerd_byte_m2561
  .text.avr-libc
-                0x00028b42       0x1c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(eewr_byte_atmega2561.o)
-                0x00028b42                __eewr_byte_m2561
-                0x00028b44                __eewr_r18_m2561
+                0x00028b66       0x1c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(eewr_byte_atmega2561.o)
+                0x00028b66                __eewr_byte_m2561
+                0x00028b68                __eewr_r18_m2561
  .text.avr-libc
-                0x00028b5e       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strnlen_P.o)
-                0x00028b5e                strnlen_P
+                0x00028b82       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strnlen_P.o)
+                0x00028b82                strnlen_P
  .text.avr-libc
-                0x00028b74       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strnlen.o)
-                0x00028b74                strnlen
+                0x00028b98       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strnlen.o)
+                0x00028b98                strnlen
  .text.avr-libc
-                0x00028b8a       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strrev.o)
-                0x00028b8a                strrev
+                0x00028bae       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strrev.o)
+                0x00028bae                strrev
  .text.avr-libc
-                0x00028baa       0x58 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(fputc.o)
-                0x00028baa                fputc
+                0x00028bce       0x58 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(fputc.o)
+                0x00028bce                fputc
  .text.avr-libc
-                0x00028c02       0xbc c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(ultoa_invert.o)
-                0x00028c02                __ultoa_invert
-                0x00028cbe                . = ALIGN (0x2)
+                0x00028c26       0xbc c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(ultoa_invert.o)
+                0x00028c26                __ultoa_invert
+                0x00028ce2                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x00028cbe        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_exit.o)
-                0x00028cbe                exit
-                0x00028cbe                _exit
+ .fini9         0x00028ce2        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_exit.o)
+                0x00028ce2                exit
+                0x00028ce2                _exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -3098,11 +3098,11 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x00028cbe        0x4 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_exit.o)
+ .fini0         0x00028ce2        0x4 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_exit.o)
  *(.fini0)
-                0x00028cc2                _etext = .
+                0x00028ce6                _etext = .
 
-.data           0x00802200      0x110 load address 0x00028cc2
+.data           0x00802200      0x110 load address 0x00028ce6
                 0x00802200                PROVIDE (__data_start, .)
  *(.data)
  .data          0x00802200        0xa system/config/eeconfig.o
@@ -3307,32 +3307,32 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .bss.FalscherCode
                 0x008072ab        0x1 iTelex/iTelex.o
                 0x008072ab                FalscherCode
- .bss.Sprache.5893
+ .bss.Sprache.5895
                 0x008072ac        0x1 iTelex/iTelex.o
- .bss.Sprache.5769
+ .bss.Sprache.5771
                 0x008072ad        0x1 iTelex/iTelex.o
- .bss.Sprache.5654
+ .bss.Sprache.5656
                 0x008072ae        0x1 iTelex/iTelex.o
- .bss.Sprache.5588
+ .bss.Sprache.5590
                 0x008072af        0x1 iTelex/iTelex.o
- .bss.Sprache.5569
+ .bss.Sprache.5571
                 0x008072b0        0x1 iTelex/iTelex.o
- .bss.Sprache.5389
+ .bss.Sprache.5391
                 0x008072b1        0x1 iTelex/iTelex.o
- .bss.Sprache.5299
+ .bss.Sprache.5301
                 0x008072b2        0x1 iTelex/iTelex.o
- .bss.Sprache.5268
+ .bss.Sprache.5270
                 0x008072b3        0x1 iTelex/iTelex.o
- .bss.Sprache.4977
+ .bss.Sprache.4979
                 0x008072b4        0x1 iTelex/iTelex.o
- .bss.TSB.4523  0x008072b5       0x66 iTelex/iTelex.o
- .bss.MinuteLetzeRundsendung.4574
+ .bss.TSB.4525  0x008072b5       0x66 iTelex/iTelex.o
+ .bss.MinuteLetzeRundsendung.4576
                 0x0080731b        0x1 iTelex/iTelex.o
- .bss.TasteTimer.3058
+ .bss.TasteTimer.3059
                 0x0080731c        0x2 iTelex/iTelex.o
- .bss.TasteZustandIntern.3057
+ .bss.TasteZustandIntern.3058
                 0x0080731e        0x1 iTelex/iTelex.o
- .bss.ZeitUeberwachungAusgabePuffer.2881
+ .bss.ZeitUeberwachungAusgabePuffer.2882
                 0x0080731f       0x4b iTelex/iTelex.o
  .bss.SerUmEmpfMarkZaehl
                 0x0080736a        0x2 iTelex/iTelex.o
@@ -3617,14 +3617,14 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .bss.EEUsageDummy
                 0x00809106        0x1 iTelex/iTelex.o
                 0x00809106                EEUsageDummy
- .bss.Sprache.2846
+ .bss.Sprache.2847
                 0x00809107        0x1 iTelex/TlnBuch.o
  .bss.PruefsummeIst
                 0x00809108        0x4 iTelex/TlnBuch.o
  .bss.PruefsummeBerechnungIndex
                 0x0080910c        0x2 iTelex/TlnBuch.o
  .bss.Buf       0x0080910e       0xff iTelex/CgiFormTools.o
- .bss.LastTimer1Val.1498
+ .bss.LastTimer1Val.1499
                 0x0080920d        0x2 iTelex/SwTwi.o
  .bss.TaktViertel
                 0x0080920f        0x1 iTelex/SwTwi.o
@@ -3690,7 +3690,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .bss.TlnServSyncGeheimzahl
                 0x0080980f        0x4 iTelex/TlnServer.o
                 0x0080980f                TlnServSyncGeheimzahl
- .bss.Sprache.2771
+ .bss.Sprache.2772
                 0x00809813        0x1 iTelex/eMail.o
  .bss.EmailPOPServerAdresse
                 0x00809814       0x28 iTelex/eMail.o
@@ -3724,7 +3724,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
                 0x008098e8        0x1 iTelex/eMail.o
  .bss.Zeilenanfang
                 0x008098e9        0x1 iTelex/eMail.o
- .bss.Sprache.2244
+ .bss.Sprache.2245
                 0x008098ea        0x1 iTelex/ConfigNtp.o
  .bss.NTPUpdateDiffSeconds
                 0x008098eb        0x2 iTelex/ConfigNtp.o
@@ -3800,8 +3800,8 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  COMMON         0x00809a58        0x6 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(iob.o)
                 0x00809a58                __iob
                 0x00809a5e                PROVIDE (__bss_end, .)
-                0x00028cc2                __data_load_start = LOADADDR (.data)
-                0x00028dd2                __data_load_end = (__data_load_start + SIZEOF (.data))
+                0x00028ce6                __data_load_start = LOADADDR (.data)
+                0x00028df6                __data_load_end = (__data_load_start + SIZEOF (.data))
 
 .noinit         0x00809a5e     0x622b
                 0x00809a5e                PROVIDE (__noinit_start, .)
@@ -4205,7 +4205,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_pubnames
                 0x00005f5c       0x6b iTelex/Gemeinsam/BaudotCode.o
 
-.debug_info     0x00000000    0x25709
+.debug_info     0x00000000    0x25717
  *(.debug_info)
  .debug_info    0x00000000       0xb6 main.o
  .debug_info    0x000000b6      0x1f9 hardware/ext_int/ext_int.o
@@ -4322,19 +4322,19 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_info    0x00011328       0x68 apps/mp3-streamingclient/mp3-streaming.o
  .debug_info    0x00011390       0x68 apps/mp3-streamingclient/mp3-clientserver.o
  .debug_info    0x000113f8       0x6b apps/can/can_eth_rep.o
- .debug_info    0x00011463     0x7ea5 iTelex/iTelex.o
- .debug_info    0x00019308     0x1b8c iTelex/TlnBuch.o
- .debug_info    0x0001ae94      0xcee iTelex/CgiFormTools.o
- .debug_info    0x0001bb82      0x65b iTelex/SwTwi.o
- .debug_info    0x0001c1dd      0x912 iTelex/Protokoll.o
- .debug_info    0x0001caef     0x2559 iTelex/TlnServer.o
- .debug_info    0x0001f048     0x1788 iTelex/eMail.o
- .debug_info    0x000207d0     0x20a8 iTelex/StringTab.o
- .debug_info    0x00022878      0x970 iTelex/ConfigNtp.o
- .debug_info    0x000231e8     0x1a0d iTelex/IspMaster.o
- .debug_info    0x00024bf5      0x599 iTelex/Gemeinsam/BusKomm.o
- .debug_info    0x0002518e      0x2e5 iTelex/Gemeinsam/FifoPuffer.o
- .debug_info    0x00025473      0x296 iTelex/Gemeinsam/BaudotCode.o
+ .debug_info    0x00011463     0x7eac iTelex/iTelex.o
+ .debug_info    0x0001930f     0x1b8c iTelex/TlnBuch.o
+ .debug_info    0x0001ae9b      0xcee iTelex/CgiFormTools.o
+ .debug_info    0x0001bb89      0x65b iTelex/SwTwi.o
+ .debug_info    0x0001c1e4      0x912 iTelex/Protokoll.o
+ .debug_info    0x0001caf6     0x2559 iTelex/TlnServer.o
+ .debug_info    0x0001f04f     0x178f iTelex/eMail.o
+ .debug_info    0x000207de     0x20a8 iTelex/StringTab.o
+ .debug_info    0x00022886      0x970 iTelex/ConfigNtp.o
+ .debug_info    0x000231f6     0x1a0d iTelex/IspMaster.o
+ .debug_info    0x00024c03      0x599 iTelex/Gemeinsam/BusKomm.o
+ .debug_info    0x0002519c      0x2e5 iTelex/Gemeinsam/FifoPuffer.o
+ .debug_info    0x00025481      0x296 iTelex/Gemeinsam/BaudotCode.o
  *(.gnu.linkonce.wi.*)
 
 .debug_abbrev   0x00000000     0x727c
@@ -4468,7 +4468,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_abbrev  0x00006fe7      0x16f iTelex/Gemeinsam/FifoPuffer.o
  .debug_abbrev  0x00007156      0x126 iTelex/Gemeinsam/BaudotCode.o
 
-.debug_line     0x00000000    0x18e14
+.debug_line     0x00000000    0x18e34
  *(.debug_line)
  .debug_line    0x00000000       0xfe main.o
  .debug_line    0x000000fe      0x261 hardware/ext_int/ext_int.o
@@ -4585,19 +4585,19 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_line    0x0000c0fe       0x3e apps/mp3-streamingclient/mp3-streaming.o
  .debug_line    0x0000c13c       0x3e apps/mp3-streamingclient/mp3-clientserver.o
  .debug_line    0x0000c17a       0x3e apps/can/can_eth_rep.o
- .debug_line    0x0000c1b8     0x67b6 iTelex/iTelex.o
- .debug_line    0x0001296e     0x1287 iTelex/TlnBuch.o
- .debug_line    0x00013bf5      0x443 iTelex/CgiFormTools.o
- .debug_line    0x00014038      0x6b7 iTelex/SwTwi.o
- .debug_line    0x000146ef      0x75f iTelex/Protokoll.o
- .debug_line    0x00014e4e     0x1368 iTelex/TlnServer.o
- .debug_line    0x000161b6      0xe52 iTelex/eMail.o
- .debug_line    0x00017008      0x101 iTelex/StringTab.o
- .debug_line    0x00017109      0x306 iTelex/ConfigNtp.o
- .debug_line    0x0001740f      0xde8 iTelex/IspMaster.o
- .debug_line    0x000181f7      0x754 iTelex/Gemeinsam/BusKomm.o
- .debug_line    0x0001894b      0x290 iTelex/Gemeinsam/FifoPuffer.o
- .debug_line    0x00018bdb      0x239 iTelex/Gemeinsam/BaudotCode.o
+ .debug_line    0x0000c1b8     0x67d6 iTelex/iTelex.o
+ .debug_line    0x0001298e     0x1287 iTelex/TlnBuch.o
+ .debug_line    0x00013c15      0x443 iTelex/CgiFormTools.o
+ .debug_line    0x00014058      0x6b7 iTelex/SwTwi.o
+ .debug_line    0x0001470f      0x75f iTelex/Protokoll.o
+ .debug_line    0x00014e6e     0x1368 iTelex/TlnServer.o
+ .debug_line    0x000161d6      0xe52 iTelex/eMail.o
+ .debug_line    0x00017028      0x101 iTelex/StringTab.o
+ .debug_line    0x00017129      0x306 iTelex/ConfigNtp.o
+ .debug_line    0x0001742f      0xde8 iTelex/IspMaster.o
+ .debug_line    0x00018217      0x754 iTelex/Gemeinsam/BusKomm.o
+ .debug_line    0x0001896b      0x290 iTelex/Gemeinsam/FifoPuffer.o
+ .debug_line    0x00018bfb      0x239 iTelex/Gemeinsam/BaudotCode.o
 
 .debug_frame    0x00000000     0x2740
  *(.debug_frame)
@@ -4684,7 +4684,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_frame   0x00002680       0x80 iTelex/Gemeinsam/FifoPuffer.o
  .debug_frame   0x00002700       0x40 iTelex/Gemeinsam/BaudotCode.o
 
-.debug_str      0x00000000     0x9f27
+.debug_str      0x00000000     0x9f3a
  *(.debug_str)
  .debug_str     0x00000000       0x89 main.o
                                  0xc7 (size before relaxing)
@@ -4852,93 +4852,93 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
                                 0x1ca (size before relaxing)
  .debug_str     0x000034ab       0xb4 apps/httpd/cgibin/cgi-bin.o
                                 0x1f3 (size before relaxing)
- .debug_str     0x0000355f      0x235 apps/httpd/files.o
+ .debug_str     0x0000355f      0x24f apps/httpd/files.o
                                 0x49f (size before relaxing)
- .debug_str     0x00003794       0x4d apps/telnet/telnet.o
+ .debug_str     0x000037ae       0x4d apps/telnet/telnet.o
                                 0x12a (size before relaxing)
- .debug_str     0x000037e1      0x120 apps/cron/cron.o
+ .debug_str     0x000037fb      0x120 apps/cron/cron.o
                                 0x22b (size before relaxing)
- .debug_str     0x00003901       0x1b apps/apps_init.o
+ .debug_str     0x0000391b       0x1b apps/apps_init.o
                                  0xad (size before relaxing)
- .debug_str     0x0000391c       0x1d apps/modul_init.o
+ .debug_str     0x00003936       0x1d apps/modul_init.o
                                  0xaf (size before relaxing)
- .debug_str     0x00003939       0x18 apps/modules/lcd_info.o
+ .debug_str     0x00003953       0x18 apps/modules/lcd_info.o
                                  0xaa (size before relaxing)
- .debug_str     0x00003951       0x2c apps/modules/cmd_foo.o
+ .debug_str     0x0000396b       0x2c apps/modules/cmd_foo.o
                                 0x140 (size before relaxing)
- .debug_str     0x0000397d       0x17 apps/modules/cmd_mon.o
+ .debug_str     0x00003997       0x17 apps/modules/cmd_mon.o
                                  0xa9 (size before relaxing)
- .debug_str     0x00003994       0x2b apps/modules/cmd_arp.o
+ .debug_str     0x000039ae       0x2b apps/modules/cmd_arp.o
                                  0xdf (size before relaxing)
- .debug_str     0x000039bf       0x57 apps/modules/cmd_stats.o
+ .debug_str     0x000039d9       0x57 apps/modules/cmd_stats.o
                                 0x219 (size before relaxing)
- .debug_str     0x00003a16       0x32 apps/modules/cmd_reset.o
+ .debug_str     0x00003a30       0x32 apps/modules/cmd_reset.o
                                 0x162 (size before relaxing)
- .debug_str     0x00003a48       0x2a apps/modules/cmd_dns.o
+ .debug_str     0x00003a62       0x2a apps/modules/cmd_dns.o
                                  0xce (size before relaxing)
- .debug_str     0x00003a72       0x17 apps/modules/cmd_adc.o
+ .debug_str     0x00003a8c       0x17 apps/modules/cmd_adc.o
                                  0xa9 (size before relaxing)
- .debug_str     0x00003a89       0x18 apps/modules/cmd_gpio.o
+ .debug_str     0x00003aa3       0x18 apps/modules/cmd_gpio.o
                                  0xaa (size before relaxing)
- .debug_str     0x00003aa1       0x66 apps/modules/cmd_ifconfig.o
+ .debug_str     0x00003abb       0x66 apps/modules/cmd_ifconfig.o
                                 0x1be (size before relaxing)
- .debug_str     0x00003b07       0x5a apps/modules/cmd_ntp.o
+ .debug_str     0x00003b21       0x5a apps/modules/cmd_ntp.o
                                 0x1b7 (size before relaxing)
- .debug_str     0x00003b61       0x8d apps/modules/cmd_dyndns.o
+ .debug_str     0x00003b7b       0x8d apps/modules/cmd_dyndns.o
                                 0x1cd (size before relaxing)
- .debug_str     0x00003bee       0x26 apps/modules/cmd_temp.o
+ .debug_str     0x00003c08       0x26 apps/modules/cmd_temp.o
                                  0xdb (size before relaxing)
- .debug_str     0x00003c14       0x2f apps/modules/cmd_cron.o
+ .debug_str     0x00003c2e       0x2f apps/modules/cmd_cron.o
                                 0x157 (size before relaxing)
- .debug_str     0x00003c43       0x1b apps/modules/cmd_twitter.o
+ .debug_str     0x00003c5d       0x1b apps/modules/cmd_twitter.o
                                  0xad (size before relaxing)
- .debug_str     0x00003c5e       0x32 apps/modules/cmd_eemem.o
+ .debug_str     0x00003c78       0x32 apps/modules/cmd_eemem.o
                                 0x16f (size before relaxing)
- .debug_str     0x00003c90       0x17 apps/modules/cmd_twi.o
+ .debug_str     0x00003caa       0x17 apps/modules/cmd_twi.o
                                  0xa9 (size before relaxing)
- .debug_str     0x00003ca7       0x1b apps/modules/cmd_onewire.o
+ .debug_str     0x00003cc1       0x1b apps/modules/cmd_onewire.o
                                  0xad (size before relaxing)
- .debug_str     0x00003cc2       0x1a apps/modules/cmd_stream.o
+ .debug_str     0x00003cdc       0x1a apps/modules/cmd_stream.o
                                  0xac (size before relaxing)
- .debug_str     0x00003cdc       0x19 apps/modules/cmd_tafel.o
+ .debug_str     0x00003cf6       0x19 apps/modules/cmd_tafel.o
                                  0xab (size before relaxing)
- .debug_str     0x00003cf5       0x17 apps/modules/impulse.o
+ .debug_str     0x00003d0f       0x17 apps/modules/impulse.o
                                  0xa9 (size before relaxing)
- .debug_str     0x00003d0c       0x30 apps/modules/hal.o
+ .debug_str     0x00003d26       0x30 apps/modules/hal.o
                                  0xca (size before relaxing)
- .debug_str     0x00003d3c       0x19 apps/modules/temp_json.o
+ .debug_str     0x00003d56       0x19 apps/modules/temp_json.o
                                  0xab (size before relaxing)
- .debug_str     0x00003d55       0x29 apps/mp3-streamingclient/mp3-streaming.o
+ .debug_str     0x00003d6f       0x29 apps/mp3-streamingclient/mp3-streaming.o
                                  0xbb (size before relaxing)
- .debug_str     0x00003d7e       0x2c apps/mp3-streamingclient/mp3-clientserver.o
+ .debug_str     0x00003d98       0x2c apps/mp3-streamingclient/mp3-clientserver.o
                                  0xbe (size before relaxing)
- .debug_str     0x00003daa       0x17 apps/can/can_eth_rep.o
+ .debug_str     0x00003dc4       0x17 apps/can/can_eth_rep.o
                                  0xa9 (size before relaxing)
- .debug_str     0x00003dc1     0x2d30 iTelex/iTelex.o
-                               0x33e7 (size before relaxing)
- .debug_str     0x00006af1      0x506 iTelex/TlnBuch.o
+ .debug_str     0x00003ddb     0x2d43 iTelex/iTelex.o
+                               0x33fa (size before relaxing)
+ .debug_str     0x00006b1e      0x506 iTelex/TlnBuch.o
                                0x1a3c (size before relaxing)
- .debug_str     0x00006ff7      0x12f iTelex/CgiFormTools.o
+ .debug_str     0x00007024      0x12f iTelex/CgiFormTools.o
                                0x1203 (size before relaxing)
- .debug_str     0x00007126      0x120 iTelex/SwTwi.o
+ .debug_str     0x00007153      0x120 iTelex/SwTwi.o
                                 0x29c (size before relaxing)
- .debug_str     0x00007246      0x1fe iTelex/Protokoll.o
+ .debug_str     0x00007273      0x1fe iTelex/Protokoll.o
                                 0x463 (size before relaxing)
- .debug_str     0x00007444      0x35f iTelex/TlnServer.o
+ .debug_str     0x00007471      0x35f iTelex/TlnServer.o
                                0x1a52 (size before relaxing)
- .debug_str     0x000077a3      0x374 iTelex/eMail.o
-                               0x1a85 (size before relaxing)
- .debug_str     0x00007b17     0x1df1 iTelex/StringTab.o
+ .debug_str     0x000077d0      0x374 iTelex/eMail.o
+                               0x1a98 (size before relaxing)
+ .debug_str     0x00007b44     0x1df1 iTelex/StringTab.o
                                0x1eca (size before relaxing)
- .debug_str     0x00009908       0x99 iTelex/ConfigNtp.o
+ .debug_str     0x00009935       0x99 iTelex/ConfigNtp.o
                                0x122e (size before relaxing)
- .debug_str     0x000099a1      0x2aa iTelex/IspMaster.o
+ .debug_str     0x000099ce      0x2aa iTelex/IspMaster.o
                                 0x7fb (size before relaxing)
- .debug_str     0x00009c4b      0x1f2 iTelex/Gemeinsam/BusKomm.o
+ .debug_str     0x00009c78      0x1f2 iTelex/Gemeinsam/BusKomm.o
                                 0x3cd (size before relaxing)
- .debug_str     0x00009e3d       0x87 iTelex/Gemeinsam/FifoPuffer.o
+ .debug_str     0x00009e6a       0x6d iTelex/Gemeinsam/FifoPuffer.o
                                 0x14e (size before relaxing)
- .debug_str     0x00009ec4       0x63 iTelex/Gemeinsam/BaudotCode.o
+ .debug_str     0x00009ed7       0x63 iTelex/Gemeinsam/BaudotCode.o
                                 0x180 (size before relaxing)
 
 .debug_loc      0x00000000    0x106db
