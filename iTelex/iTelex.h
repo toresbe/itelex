@@ -269,6 +269,10 @@ typedef enum
 		//!< Verbindung zum POP Dienst des Email-Servers ist hergestellt,
 		//!< Drucker ist eingeschaltet und Druckbereit
 		
+	ModInitialisierend = 99,
+		//!< In der Initialisierungsphase bis zum aktivieren des thread 
+		//!< Für i-Telex.
+		
 	} TModus;
 	
 

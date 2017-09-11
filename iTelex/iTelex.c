@@ -944,20 +944,24 @@ void itelex_timerEvent(void)
 	if (WatchdogTestTimerEnde == 0 || KurzTimerVal(&WatchdogTestTimer) < WatchdogTestTimerEnde)
 		wdt_reset();
 	
-	if (KurzTimerVal(&iTelexThreadCheckTimer) > 90 * KurzTimerFreq) // nach 90 Sekunden Reset
-		{ 
-		ProtokollierenITelex_P(PSTR("! Reset wegen nicht-Aufruf von itelex_thread()\r\n"));
-		ProtokollSpeichern(true);
-		softreset();
-		}
+	if (Modus != ModInitialisierend)
+		{
+		if (KurzTimerVal(&iTelexThreadCheckTimer) > 90 * KurzTimerFreq) // nach 90 Sekunden Reset
+			{ 
+			ProtokollierenITelex_P(PSTR("! Reset wegen nicht-Aufruf von itelex_thread()\r\n"));
+			ProtokollSpeichern(true);
+			softreset();
+			}
 		
 #if defined(LEDROT_ITELEXTHREADBLOCK)
-	if (KurzTimerVal(&iTelexThreadCheckTimer) > KurzTimerFreq * 5/10) // nach halber Sekunde geht rot an
-		LED_on(ROT);
+		if (KurzTimerVal(&iTelexThreadCheckTimer) > KurzTimerFreq * 5/10) // nach halber Sekunde geht rot an
+			LED_on(ROT);
 #endif //defined(LEDROT_ITELEXTHREADBLOCK)
 		
-	TwiWatchdogCount++; 
+		TwiWatchdogCount++; 
 		
+		} // if Modus != ModInitialisierend
+			
 #ifdef ITELEX_ANSCHLUSS
 		
 	if (Modus == ModKommendVerbunden 
@@ -1130,10 +1134,10 @@ void itelex_timerEvent(void)
 				TwiLebenszeichenZaehler = iTelexTimerFreq * 5/10; // alle 0,5 Sekunden
 				}
 			}
-		} // if Modus != Ruhe
+		} // if ModusTwiVerbunden()
 
 #endif //def ITELEX_ANSCHLUSS
-		
+
 	// Taste prüfen und auswerten
 	// -------------------------------
 	static enum { TasteAus, TasteEin, TasteSperr } TasteZustandIntern;
@@ -1201,8 +1205,9 @@ void itelex_timerEvent(void)
 	if (t0c > Timer0Callback_Max)
 		Timer0Callback_Max = t0c; // Dauer der Funktion itelex_timerEvent()
 		
-	CheckSocketConnectionStateChanges();
-		// hier werden Änderungen der TCP_sockettable nur aufgezeichnet.
+	if (Modus != ModInitialisierend)
+		CheckSocketConnectionStateChanges();
+			// hier werden Änderungen der TCP_sockettable nur aufgezeichnet.
 	
 	if (SP < Debug_LowestSP)
 		Debug_LowestSP = SP;
@@ -1534,6 +1539,9 @@ void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_FsMeldBetrieb);
 			SET_BIT_Status(StatBit_Verbunden);
 			break;
+			
+		case ModInitialisierend:
+			break; // kann eigentlich gar nicht sein...
 			
 		default:
 			return; // nix wird geändert
@@ -6537,6 +6545,8 @@ extern void itelex_init1(void)
 	uint16_t i; // für mehrere Zwecke
 	char Buf[TlnNameMax]; // unversell verwendet, TlnNameMax ist auch der längste erlaubte Wert in der Konfig.
 		
+	Modus = ModInitialisierend; 
+	
 	WatchdogTestTimerEnde = 0;
 	
 	init_Taste();
@@ -6864,6 +6874,9 @@ void itelex_init2()
 	
 	void UseEEConfig();
 	UseEEConfig();
+	
+	ModusWechsel(ModRuhe);
+	
 	}
 
 
