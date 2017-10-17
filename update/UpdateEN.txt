@@ -1,9 +1,9 @@
-How to update the Software of an i-telex board.
-===============================================
+How to update the Software of an ethernet board in the i-telex system
+=====================================================================
 
-You need: A windows XP or windows 7 pc with an serial interface (RS232) or an USB-to-serial adapter and a null-modem-cable.
+You need: A Windows XP or Windows 7 PC with an serial interface (RS232) or an USB-to-serial adapter and a null-modem-cable.
 
-If you already updateted your i-telex once go you'll only need to change the file main.hex in your update directory and start with step 7.
+If you already updateted your ethernet board once go you'll only need to change the file main.hex in your update directory and start with step 7.
 
 1. Download all the files where you found this manual to the windows pc to any directory. This directory is called the "update directory"
 
@@ -19,11 +19,15 @@ If you already updateted your i-telex once go you'll only need to change the fil
 
 7. Connect the null-modem-cable to the serial interface or the adapter and to the i-telex-board (which must be powered and active).
 
-8. Start "upload" or "upload.bat" from the update directory. A Window with black background should appear with a text "COM 1 at 38400 Baud: " and a "propelling" dash.
+8. Start "upload" or "upload.bat" from the update directory. A window with black background should appear with a text "COM 1 at 38400 Baud: " and a 'propelling' dash.
 
-9. Press the button if the i-telex board for less then half a second. The blue LED should light up.
+9. Restart the ethernet board. Press the button if the ethernet board for less then half a second. 
 
-10. Press the button if the i-telex board for abould one second. The blue LED should go off for a very short period and light up again and stay on. The propelling dash should disappear and a the following text should be visible:
+9a. If the blue LED lights up, press and hold the button if the ethernet board for approximately one second. The blue LED should go off for a very short period and light up again and stay on.
+
+9b. If the blue LED did not light up by pressing the button, switch off the power of the i-telex system and on again. 
+
+10. The propelling dash should disappear and a the following text should be visible:
 COM 1 at 38400 Baud: Connected
 Bootloader V2.1
 Target: xxxxx fboot.DEF
@@ -32,7 +36,7 @@ Size available: xxxxxx Byte
 Program main.hex: 00000 - yyyyy
 The "yyyyy" will be updated every few seconds.
 
-11. Be patient until the blue LED goes off. This should take two to three minutes.
+11. Be patient until the blue LED goes off. This should take two to five minutes.
 COM 1 at 38400 Baud: Connected
 Bootloader V2.1
 Target: xxxxx fboot.DEF
@@ -44,3 +48,5 @@ CRC: o.k.
 Elapsed time: 0.00 seconds
 
 12. Finished!
+
+If something goes wrong during the update repeat the steps 8 to 12.
