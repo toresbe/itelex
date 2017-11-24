@@ -227,6 +227,10 @@ volatile TPuffer SendePuffer;
 	
 volatile TPuffer EmpfPuffer; 
 	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Endgerät -> Netz.
+
+TBaudotMode BaudotMode;
+	//!< Für alle Umwandlungen Baudot - Ascii der aktuelle Status
+	
 	
 char AsciiDruckPuffer[AsciiDruckPufferMax+4];
 	//!< Puffer für zu druckenden Text (Netz -> Endgerät), mit Null abgeschlossen
@@ -1312,7 +1316,8 @@ void ModusWechsel(TModus neu)
 			BusEmpfMark = true;
 			SendeMark = true;
 			PufferInit(&SendePuffer);
-			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			PufferInit(&EmpfPuffer); 
+			BaudotMode = 0;
 			SeriellUmsetzInit();
 			SendenBeschleunigen = false;
 			iTelexSocketProtokoll = iTelexProt;
@@ -1366,7 +1371,8 @@ void ModusWechsel(TModus neu)
 			BusEmpfMark = true;
 			SendeMark = true;
 			PufferInit(&SendePuffer);
-			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			PufferInit(&EmpfPuffer); 
+			BaudotMode = 0;
 			SeriellUmsetzInit();
 			AsciiDruckPuffer[0] = '\0';
 			AsciiHilfPuffer[0] = '\0';
@@ -1427,7 +1433,8 @@ void ModusWechsel(TModus neu)
 			LED_on(GRUEN);
 			LED_off(BLAU);
 			PufferInit(&SendePuffer);
-			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			PufferInit(&EmpfPuffer); 
+			BaudotMode = 0;
 			BusEmpfMark = true;
 			SendeMark = true;
 			SeriellUmsetzInit();
@@ -1527,7 +1534,8 @@ void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_FsBefBetrieb);
 			LED_on(BLAU);
 			PufferInit(&SendePuffer);
-			PufferInit(&EmpfPuffer); EmpfPuffer.BuZiMode = BuMode;
+			PufferInit(&EmpfPuffer); 
+			BaudotMode = 0;
 			BusEmpfMark = true;
 			SendeMark = true;
 			SeriellUmsetzInit();
@@ -1572,7 +1580,7 @@ static bool SchreibeZeichenInSendePuffer(char c)
 		}
 	else 
 		{
-		if (ZeichenZuCode2(c, (char*) &SendePuffer.BuZiMode, &Code1, &Code2))
+		if (ZeichenZuCode2(c, &BaudotMode, &Code1, &Code2))
 			{ // Zeichen erfolgreich in Baudot-Code umgesetzt
 			return PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2));
 			}
@@ -3011,10 +3019,10 @@ static void AsciiDatenVerarbeiten()
 			uint8_t code;
 			code = PufferAusg(&EmpfPuffer);
 			
-			if (EmpfPuffer.BuZiMode == ZiMode && code == TtyCodeZiWerDa && PufferLeer(&EmpfPuffer))
+			if (BaudotMode_IstZiffern(BaudotMode) && code == TtyCodeZiWerDa && PufferLeer(&EmpfPuffer))
 				SocketOutBuf[SocketOutBufUsed] = '@'; //! \todo Konstante draus machen
 			else
-				SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(code, (char*) &EmpfPuffer.BuZiMode);
+				SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(code, &BaudotMode);
 			
 			if (SocketOutBuf[SocketOutBufUsed] != '\0')
 				{
@@ -3477,8 +3485,8 @@ void AsciiDruckPufferVerarbeiten()
 		
 		for (dpi = 0 ; AsciiDruckPuffer[dpi] != '\0' && hpi < AsciiHilfPufferMax - 2 && ZeilePos <= Druckzeilenlaenge ; dpi++)
 			{
-			if (ZeichenZuCode(AsciiDruckPuffer[dpi], BuMode) != 255 
-				|| ZeichenZuCode(AsciiDruckPuffer[dpi], ZiMode) != 255)
+			if (ZeichenZuCode(AsciiDruckPuffer[dpi], 0) != 255 
+				|| ZeichenZuCode(AsciiDruckPuffer[dpi], BaudotMode_Ziffern) != 255)
 				{ // Zeichen direkt druckbar.
 				AsciiHilfPuffer[hpi++] = AsciiDruckPuffer[dpi];
 				
@@ -3652,7 +3660,7 @@ static void DatumUhrzeitDrucken()
 		PufferSpeich(&SendePuffer, TtyCodeZiUm);
 		for (uint8_t i = 0 ; i < strlen(Text) ; i++)
 			{
-			uint8_t Code = ZeichenZuCode(Text[i], ZiMode);
+			uint8_t Code = ZeichenZuCode(Text[i], BaudotMode_Ziffern);
 			if (Code != 255)
 				PufferSpeich(&SendePuffer, Code);
 			}
@@ -3668,12 +3676,15 @@ static void DatumUhrzeitDrucken()
 		PufferSpeich(&EmpfPuffer, TtyCodeZiUm);
 		for (uint8_t i = 0 ; i < strlen(Text) ; i++)
 			{
-			uint8_t Code = ZeichenZuCode(Text[i], ZiMode);
+			uint8_t Code = ZeichenZuCode(Text[i], BaudotMode_Ziffern);
 			if (Code != 255)
 				PufferSpeich(&EmpfPuffer, Code);
 			}
 		}
 		
+	BaudotMode_SetZiffern(BaudotMode);
+	BaudotMode_SetEmpfangen(BaudotMode);
+	
 	} // DatumUhrzeitDrucken()
 	
 
@@ -4150,7 +4161,7 @@ void itelex_thread()
 		{
 		while (!PufferLeer(&EmpfPuffer))
 			{
-			char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+			char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), &BaudotMode);
 			uint8_t SuchTextLen = strlen(NamensucheSuchtext);
 			
 			if (z == '\r' || z == '\n')
@@ -4456,7 +4467,7 @@ void itelex_thread()
 		{ // am Fernschreiber eigegebene Zeichen nach Ascii umwandeln 
 		while (!PufferLeer(&EmpfPuffer))
 			{
-			ZeichenInHtmlSendeText(CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode));
+			ZeichenInHtmlSendeText(CodeZuZeichen(PufferAusg(&EmpfPuffer), &BaudotMode));
 			StartLangTimer(&BeideRuhigTimer);
 			}
 

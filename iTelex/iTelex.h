@@ -43,6 +43,7 @@
 
 #include "Defports.h"
 #include "FifoPuffer.h"
+#include "BaudotCode.h"
 
 #include "iTelex/StringTab.h"
 
@@ -431,6 +432,8 @@ extern volatile uint16_t KurzTimerCnt;
 extern volatile TPuffer SendePuffer; 
 	
 extern volatile TPuffer EmpfPuffer; 
+
+extern TBaudotMode BaudotMode;
 
 extern char AsciiDruckPuffer[AsciiDruckPufferMax+4];
 		

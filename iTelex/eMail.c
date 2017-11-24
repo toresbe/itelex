@@ -810,7 +810,7 @@ void SMTPDatenVerarbeiten()
 		case EingabeMailTo:
 			while (!PufferLeer(&EmpfPuffer) && strlen(EmailEmpfaenger) < sizeof(EmailEmpfaenger) - 1)
 				{
-				char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+				char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), &BaudotMode);
 				if (z == '\r' || z == '\n')
 					{
 					if (strlen(EmailEmpfaenger) == 0)
@@ -867,7 +867,7 @@ void SMTPDatenVerarbeiten()
 		case MailSubject:
 			while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3 - 10) // - 10 = Reserve für wichtige Daten
 				{
-				char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+				char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), &BaudotMode);
 				if (z == '\r' || z == '\n')
 					{
 					if (Zeilenanfang)
@@ -899,7 +899,7 @@ void SMTPDatenVerarbeiten()
 		case MailData:
 			while (!PufferLeer(&EmpfPuffer) && SocketOutBufUsed < SocketOutBufMax - 3 - 10) // - 10 = Reserve für wichtige Daten
 				{
-				char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), (char*) &EmpfPuffer.BuZiMode);
+				char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), &BaudotMode);
 				if (z != '\0' && z != '#')
 					SocketOutBuf[SocketOutBufUsed++] = z;
 				}
