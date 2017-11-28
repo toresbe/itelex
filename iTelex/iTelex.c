@@ -1573,13 +1573,16 @@ void SocketBufInit()
 static bool SchreibeZeichenInSendePuffer(char c)
 	{
 	uint8_t Code1, Code2;
-	
+
+/* TODO nach Test löschen	
 	if (c == CodeChrWerDa) 
 		{ // Kennungsgeber besonders behandeln...
+		BaudotMode_SetZiffern(BaudotMode);
 		return PufferSpeich(&SendePuffer, TtyCodeZiUm) && PufferSpeich(&SendePuffer, TtyCodeZiWerDa);
 		}
 	else 
 		{
+*/			
 		if (ZeichenZuCode2(c, &BaudotMode, &Code1, &Code2))
 			{ // Zeichen erfolgreich in Baudot-Code umgesetzt
 			return PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2));
@@ -1589,7 +1592,7 @@ static bool SchreibeZeichenInSendePuffer(char c)
 			{
 			return false;
 			}
-		} // kein Werda
+/*		} // kein Werda */
 	}
 			
 
@@ -3019,7 +3022,7 @@ static void AsciiDatenVerarbeiten()
 			uint8_t code;
 			code = PufferAusg(&EmpfPuffer);
 			
-			if (BaudotMode_IstZiffern(BaudotMode) && code == TtyCodeZiWerDa && PufferLeer(&EmpfPuffer))
+			if (BaudotMode_IstZiffern(BaudotMode) && code == TtyCodeZiWerDa)
 				SocketOutBuf[SocketOutBufUsed] = '@'; //! \todo Konstante draus machen
 			else
 				SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(code, &BaudotMode);
@@ -3487,7 +3490,7 @@ void AsciiDruckPufferVerarbeiten()
 			{
 			if (ZeichenZuCode(AsciiDruckPuffer[dpi], 0) != 255 
 				|| ZeichenZuCode(AsciiDruckPuffer[dpi], BaudotMode_Ziffern) != 255)
-				{ // Zeichen direkt druckbar.
+				{ // Zeichen direkt druckbar. ZeichenZuCode() wird nur als Test verwendet. 
 				AsciiHilfPuffer[hpi++] = AsciiDruckPuffer[dpi];
 				
 				if (AsciiDruckPuffer[dpi] == '\r')
@@ -3664,6 +3667,7 @@ static void DatumUhrzeitDrucken()
 			if (Code != 255)
 				PufferSpeich(&SendePuffer, Code);
 			}
+		// BaudotMode wird am Ende der Funktion korrekt gesetzt.
 		}
 		
 	if (DatumDruckModus == DatumDruckAnrufer || DatumDruckModus == DatumDruckBeide)
