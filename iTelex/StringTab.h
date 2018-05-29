@@ -104,6 +104,8 @@ _STRTABENTRY(DatumDruckKein, "aus", "off")
 _STRTABENTRY(DatumDruckLokal, "nur lokal", "only local")
 _STRTABENTRY(DatumDruckAnrufer, "nur beim Anrufer", "only at caller")
 _STRTABENTRY(DatumDruckBeide, "lokal und Anrufer", "local and caller")
+_STRTABENTRY(ImpressAenderZeile, "zu &auml;ndernde Zeile", "line to change")
+_STRTABENTRY(ImpressAenderTest, "neuer Text", "new text")
 _STRTABENTRY(KonnteNichtGeaendertWerden, " konnte nicht ge&auml;ndert werden", " could not be changed")
 _STRTABENTRY(KennwortGgfGeaendert, "<br>Kennwort ggf. ge&auml;ndert.", "<br>Password changed if necessary")
 _STRTABENTRY(InternesKennwortFehlt, 

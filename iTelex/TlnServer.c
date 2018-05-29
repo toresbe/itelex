@@ -553,7 +553,7 @@ static void TlnDatensatzSyncSenden(TTlnServKanal *Kanal)
 		}
 	TlnServBuf.Code = TLNSERV_SYNC_ENDE;
 	TlnServBuf.PureData[0] = '\0';
-	TlnServBuf.DataLen = 1;
+	TlnServBuf.DataLen = 0;
 	KanalFertig(Kanal);
 	} // TlnDatensatzSyncSenden()
 		

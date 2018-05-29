@@ -158,6 +158,7 @@ const char data4[] PROGMEM = {
 	#if defined(iTelex)
 	" / <a href=\"itelex-menu-de.html\">i-Telex (Deutsch)</a>"
 	" / <a href=\"itelex-menu-en.html\">i-Telex (English)</a>"
+	" / <a href=\"itelex-credits.cgi\">Impressum / credits</a>"
 	#endif
 	#if defined(HTTPSERVER_STREAM)
 		" / <a href=\"stream.html\">Stream</a>"
@@ -302,7 +303,7 @@ const char data7[] PROGMEM = {
 	"build on AVR-libc version: " __AVR_LIBC_VERSION_STRING__ "/" __AVR_LIBC_DATE_STRING__ 
 	" with avr-gcc " __VERSION__ "\r\n"
 	"\r\n"
-	"(c)2006-2017   Software: Fred Sonnenrein\r\n"
+	"(c)2006-2018   Software: Fred Sonnenrein\r\n"
 	"based on OpenMCP by Dirk Brosswick\r\n"
 	"</pre></p><br>"
 	"<p>Our homepage: <a href=\"http://www.i-telex.net/\" target=\"blank\">www.i-telex.net</a>"
@@ -389,6 +390,7 @@ const char iTelexCfgMenuDeText[] PROGMEM = {
 	"<a href=\"itelex-menu-de.html\">zur&uuml;ck</a>"
 	" / <a href=\"itelexcfg-intern.cgi?spr=de\" target=\"main\">Einstellungen im lokalen System</a>"
 	" / <a href=\"itelexcfg-extern.cgi?spr=de\" target=\"main\">Einstellungen im i-Telex-Netz</a>"
+	" / <a href=\"itelex-credits.cgi?spr=de\" target=\"main\">Impressum</a>"
 #ifdef ITELEX_EMAIL
 	" / <a href=\"itelexcfg-email.cgi?spr=de\" target=\"main\">eMail-Einstellungen</a>"
 #endif //def ITELEX_EMAIL	
@@ -414,6 +416,7 @@ const char iTelexCfgMenuEnText[] PROGMEM = {
 	"<a href=\"itelex-menu-en.html\">back</a>"
 	" / <a href=\"itelexcfg-intern.cgi?spr=en\" target=\"main\">local settings</a>"
 	" / <a href=\"itelexcfg-extern.cgi?spr=en\" target=\"main\">i-Telex network settings</a>"
+	" / <a href=\"itelex-credits.cgi?spr=en\" target=\"main\">credits</a>"
 #ifdef ITELEX_EMAIL
 	" / <a href=\"itelexcfg-email.cgi?spr=en\" target=\"main\">eMail settings</a>"
 #endif //def ITELEX_EMAIL	
