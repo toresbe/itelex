@@ -3491,8 +3491,8 @@ void AsciiDruckPufferVerarbeiten()
 		
 		for (dpi = 0 ; AsciiDruckPuffer[dpi] != '\0' && hpi < AsciiHilfPufferMax - 2 && ZeilePos <= Druckzeilenlaenge ; dpi++)
 			{
-			if (ZeichenZuCode(AsciiDruckPuffer[dpi], 0) != 255 
-				|| ZeichenZuCode(AsciiDruckPuffer[dpi], BaudotMode_Ziffern) != 255)
+			if (ZeichenZuCode(AsciiDruckPuffer[dpi], BaudotMode_BuchstabenGesendet) != 255 
+				|| ZeichenZuCode(AsciiDruckPuffer[dpi], BaudotMode_ZiffernGesendet) != 255)
 				{ // Zeichen direkt druckbar. ZeichenZuCode() wird nur als Test verwendet. 
 				AsciiHilfPuffer[hpi++] = AsciiDruckPuffer[dpi];
 				
@@ -3666,7 +3666,7 @@ static void DatumUhrzeitDrucken()
 		PufferSpeich(&SendePuffer, TtyCodeZiUm);
 		for (uint8_t i = 0 ; i < strlen(Text) ; i++)
 			{
-			uint8_t Code = ZeichenZuCode(Text[i], BaudotMode_Ziffern);
+			uint8_t Code = ZeichenZuCode(Text[i], BaudotMode_ZiffernGesendet);
 			if (Code != 255)
 				PufferSpeich(&SendePuffer, Code);
 			}
@@ -3683,14 +3683,13 @@ static void DatumUhrzeitDrucken()
 		PufferSpeich(&EmpfPuffer, TtyCodeZiUm);
 		for (uint8_t i = 0 ; i < strlen(Text) ; i++)
 			{
-			uint8_t Code = ZeichenZuCode(Text[i], BaudotMode_Ziffern);
+			uint8_t Code = ZeichenZuCode(Text[i], BaudotMode_ZiffernGesendet);
 			if (Code != 255)
 				PufferSpeich(&EmpfPuffer, Code);
 			}
 		}
 		
-	BaudotMode_SetZiffern(BaudotMode);
-	BaudotMode_SetEmpfangen(BaudotMode);
+	BaudotMode = BaudotMode_ZiffernGesendet;
 	
 	} // DatumUhrzeitDrucken()
 	
