@@ -5582,10 +5582,7 @@ static void PrintCreditsHTTP(bool with_lineno)
 		if (with_lineno)
 			printf_P(PSTR("%2d: "), i);
 
-		if (LineBuf[0] == '!')
-			printf_P(PSTR("%s<br>"), LineBuf + 1); // das ! überspringen
-		else
-			printf_P(PSTR("<pre>%s</pre><br>"), LineBuf);
+		printf_P(PSTR("%s<br>"), LineBuf); 
 		}
 	}
 
@@ -5600,6 +5597,7 @@ void itelex_cgi_credits( void * pStruct )
 	bool is_open; // free for editing
 	static TSprache Sprache;
 	char Buf[CREDITS_LINE_LENGTH+1];
+	char ZeileNrStr[15];
 	uint8_t ZeileNr; 
 	
 	http_request = (struct HTTP_REQUEST *) pStruct;
@@ -5612,18 +5610,10 @@ void itelex_cgi_credits( void * pStruct )
 	PrintCreditsHTTP(is_open);
 		// bei is_open werden die Zeilen des Impressums numeriert.
 		
-	Buf[0] = '\0';
-	
 	if (is_open)
 		{
-		CgiFormStartTabbed_P(PSTR("itelex-credits.cgi"));
-
-		CgiFormInputFieldText_P(ISTR(ImpressAenderZeile, Sprache), ImpressAendZeile_P, 2, Buf);
-
-		CgiFormInputFieldText_P(ISTR(ImpressAenderTest, Sprache), ImpressAendText_P, CREDITS_LINE_LENGTH - 1, Buf);
-
-		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
-
+		ZeileNrStr[0] = '\0';
+		Buf[0] = '\0';
 		if (http_request->argc > 0)
 			{
 			if (PharseCheckName_P(http_request, ImpressAendZeile_P)) 
@@ -5637,12 +5627,23 @@ void itelex_cgi_credits( void * pStruct )
 					printf_P(PSTR("[%d] --> %s<br>"), ZeileNr, Buf);
 					
 					writeConfig(CreditsLineID(ZeileNr), Buf);
+					
+					itoa(ZeileNr, ZeileNrStr, 10);
 					}
 				else
 					printf_P(PSTR("wrong line nr. %d<br>"), ZeileNr);
 				}
 			// else nothing, because
 			}
+			
+		CgiFormStartTabbed_P(PSTR("itelex-credits.cgi"));
+
+		CgiFormInputFieldText_P(ISTR(ImpressAenderZeile, Sprache), ImpressAendZeile_P, 2, ZeileNrStr);
+
+		CgiFormInputFieldText_P(ISTR(ImpressAenderTest, Sprache), ImpressAendText_P, CREDITS_LINE_LENGTH - 1, Buf);
+
+		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
+
 		} // if is_open
 		
 	cgi_PrintHttpheaderEnd();
