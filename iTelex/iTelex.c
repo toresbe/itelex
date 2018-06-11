@@ -647,7 +647,7 @@ extern struct TCP_SOCKET TCP_sockettable[];
 
 
 #define CREDITS_LINES 10
-#define CREDITS_LINE_LENGTH 60
+#define CREDITS_LINE_LENGTH 120
 // Impressum / credits itself are stored only in EEPROM
 
 	
@@ -5601,41 +5601,42 @@ void itelex_cgi_credits( void * pStruct )
 	uint8_t ZeileNr; 
 	
 	http_request = (struct HTTP_REQUEST *) pStruct;
-	
+
+	bool MitParameter = http_request->argc > 0;
+		// muss vor PruefeSprache stehen.
+		
 	PruefeSprache(pStruct, &Sprache);	
-	
-	is_open = KonfigFreigabe(pStruct, Sprache, http_request->argc > 0);
+
+	is_open = KonfigFreigabe(pStruct, Sprache, MitParameter);
 		// Wenn bereits ein Parameter m HTTP-Request ist, dann auf jeden Fall das Kennwort abfragen
+
+	Buf[0] = '\0';
+	ZeileNrStr[0] = '\0';
+
+	cgi_PrintHttpheaderStart();
 	
-	PrintCreditsHTTP(is_open);
-		// bei is_open werden die Zeilen des Impressums numeriert.
+	// ggf. Änderungen auswerten, damit diese gleich angezeigt werden können.
+	if (is_open)
+		{
+		if (PharseCheckName_P(http_request, ImpressAendZeile_P)) 
+			{
+			ZeileNr = atoi(http_request->argvalue[PharseGetValue_P(http_request, ImpressAendZeile_P)]);
+			if (ZeileNr > 0 && ZeileNr <= CREDITS_LINES && PharseCheckName_P(http_request, ImpressAendText_P)) 
+				{
+				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, ImpressAendText_P)], CREDITS_LINE_LENGTH - 1);
+				Buf[CREDITS_LINE_LENGTH - 1] = '\0';
+				
+				printf_P(PSTR("[%d] --> %s<br>: %d"), ZeileNr, Buf, changeConfig(CreditsLineID(ZeileNr), Buf));
+					
+				itoa(ZeileNr, ZeileNrStr, 10);
+				}
+			else
+				printf_P(PSTR("invalid line nr. %d<br>"), ZeileNr);
+			}
+		}
 		
 	if (is_open)
 		{
-		ZeileNrStr[0] = '\0';
-		Buf[0] = '\0';
-		if (http_request->argc > 0)
-			{
-			if (PharseCheckName_P(http_request, ImpressAendZeile_P)) 
-				{
-				ZeileNr = atoi(http_request->argvalue[PharseGetValue_P(http_request, ImpressAendZeile_P)]);
-				if (ZeileNr > 0 && ZeileNr <= CREDITS_LINES && PharseCheckName_P(http_request, ImpressAendText_P)) 
-					{
-					strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, ImpressAendText_P)], CREDITS_LINE_LENGTH - 1);
-					Buf[CREDITS_LINE_LENGTH - 1] = '\0';
-					
-					printf_P(PSTR("[%d] --> %s<br>"), ZeileNr, Buf);
-					
-					writeConfig(CreditsLineID(ZeileNr), Buf);
-					
-					itoa(ZeileNr, ZeileNrStr, 10);
-					}
-				else
-					printf_P(PSTR("wrong line nr. %d<br>"), ZeileNr);
-				}
-			// else nothing, because
-			}
-			
 		CgiFormStartTabbed_P(PSTR("itelex-credits.cgi"));
 
 		CgiFormInputFieldText_P(ISTR(ImpressAenderZeile, Sprache), ImpressAendZeile_P, 2, ZeileNrStr);
@@ -5645,10 +5646,13 @@ void itelex_cgi_credits( void * pStruct )
 		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
 
 		} // if is_open
+
+	if (!MitParameter || is_open)
+		PrintCreditsHTTP(is_open);
 		
 	cgi_PrintHttpheaderEnd();
 
-	}
+	} // itelex_cgi_credits()
 	
 
 #ifdef ITELEX_ANSCHLUSS

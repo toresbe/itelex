@@ -39,7 +39,7 @@
 
 	#include <stddef.h>
 
-	#define MAX_CGI_ENTRYS 		20
+	#define MAX_CGI_ENTRYS 		30
 
 	typedef void ( * DYN_CGI_CALLBACK ) ( void * pStruct );
 

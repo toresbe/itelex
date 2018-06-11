@@ -154,11 +154,11 @@ const char data4[] PROGMEM = {
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
-	"<a href=\"info.html\"target=\"main\">Info</a>"
+	"<a href=\"info.html\" target=\"main\">Info</a>"
 	#if defined(iTelex)
 	" / <a href=\"itelex-menu-de.html\">i-Telex (Deutsch)</a>"
 	" / <a href=\"itelex-menu-en.html\">i-Telex (English)</a>"
-	" / <a href=\"itelex-credits.cgi\">Impressum / credits</a>"
+	" / <a href=\"itelex-credits.cgi\" target=\"main\">Impressum / credits</a>"
 	#endif
 	#if defined(HTTPSERVER_STREAM)
 		" / <a href=\"stream.html\">Stream</a>"
