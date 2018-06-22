@@ -5621,22 +5621,34 @@ void itelex_cgi_credits( void * pStruct )
 		if (PharseCheckName_P(http_request, ImpressAendZeile_P)) 
 			{
 			ZeileNr = atoi(http_request->argvalue[PharseGetValue_P(http_request, ImpressAendZeile_P)]);
-			if (ZeileNr > 0 && ZeileNr <= CREDITS_LINES && PharseCheckName_P(http_request, ImpressAendText_P)) 
+			if (ZeileNr > 0 && ZeileNr <= CREDITS_LINES)
 				{
-				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, ImpressAendText_P)], CREDITS_LINE_LENGTH - 1);
-				Buf[CREDITS_LINE_LENGTH - 1] = '\0';
+				if (PharseCheckName_P(http_request, ImpressAendText_P))
+					{
+					strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, ImpressAendText_P)], CREDITS_LINE_LENGTH - 1);
+					Buf[CREDITS_LINE_LENGTH - 1] = '\0';
+					}
+				else
+					Buf[0] = '\0';
 				
-				printf_P(PSTR("[%d] --> %s<br>: %d"), ZeileNr, Buf, changeConfig(CreditsLineID(ZeileNr), Buf));
-					
+				if (Buf[0] == '\0')
+					{ // store old content to Buf to allow editing
+					if (readConfig(CreditsLineID(ZeileNr), Buf) != 1)
+						Buf[0] = '\0';
+					}
+				else
+					{ // change Credits line
+					if (Buf[0] == '-' && Buf[1] == '\0')
+						Buf[0] = '\0'; // single - entered deletes old content
+						
+					printf_P(PSTR("[%d] --> %s: %d"), ZeileNr, Buf, changeConfig(CreditsLineID(ZeileNr), Buf));
+					}
 				itoa(ZeileNr, ZeileNrStr, 10);
 				}
 			else
 				printf_P(PSTR("invalid line nr. %d<br>"), ZeileNr);
 			}
-		}
-		
-	if (is_open)
-		{
+			
 		CgiFormStartTabbed_P(PSTR("itelex-credits.cgi"));
 
 		CgiFormInputFieldText_P(ISTR(ImpressAenderZeile, Sprache), ImpressAendZeile_P, 2, ZeileNrStr);

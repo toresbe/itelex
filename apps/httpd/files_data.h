@@ -277,6 +277,7 @@ const char data7[] PROGMEM = {
 	"<pre><p>"
 	"  Welcome to\r\n"
 	"______________________________________________\r\n"
+	"                                              \r\n"
 	"  OOO      OOOOO  OOOOO  O      OOOOO  O   O  \r\n"
 	"   O         O    O      O      O       O O   \r\n"
 	" .............................................\r\n"
