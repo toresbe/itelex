@@ -16,6 +16,7 @@
 ///			ein Eintrag in der Arp-Table möglich
 /// \date	06-04-2008 Arp umgebaut, Arp-Table geht jetzt und es kommen keine fails mehr vor
 /// \date 	01-22-2011 Patch von Andreas Merkle (web@blue-andi.de) eingefügt, Pufferüberschreiber-Fehler
+/// \date 	03-07-2018 Patch von Fred Sonnenrein: ARP-Antwort geht 'direkt' a den Absender (destIP = sourceIP)
 //****************************************************************************/
 /*
  *  This program is free software; you can redistribute it and/or modify
@@ -92,6 +93,7 @@ void arp( int packet_lenght, char *ethernetbuffer)
 								for ( i = 0; i < 6; i++ )ARP_packet->ARP_destMac[i] = ARP_packet->ARP_sourceMac[i]; // MAC und IP umkopieren
 								// meine mac und ip als absender einsetzen
 								for ( i = 0; i < 6 ; i++ )ARP_packet->ARP_sourceMac[i] = mymac[i]; // MAC einsetzen
+								ARP_packet->ARP_destIP = ARP_packet->ARP_sourceIP; // return to sender
 								ARP_packet->ARP_sourceIP = myIP ; // IP einsetzen
 								// sourceMAC in destMAC eintragen und meine MAC in sourceMAC kopieren
 								for( i = 0 ; i < 6 ; i++){	
