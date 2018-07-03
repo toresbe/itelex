@@ -336,6 +336,88 @@ char SocketOutBuf[SocketOutBufMax+4]; //!< TCP-Sendepuffer
 uint8_t ProtokollPhase;
 	//!< für POP3 und SMTP ein Speicher für den aktuellen Kommunikationsschritt
 
+
+//*** NEU RemoteServer ****:
+
+/*
+Diese Funktion erlaubt die Verwendung des i-Telex an IP-Anschlüssen mit nicht öffentlicher 
+IP-Adresse. 
+Dazu baut das i-Telex im Ruhezustand eine Verbindung zum "Remote Server" auf.
+Sobald dann ein anderer Teilnehmer eine Verbindung zum Remote Server herstellt, wird
+diese auf das i-Telex hier durchverbunden.
+
+Ablauf: 
+
+Anrufer		Tln-Server		Remote Server		Anschluss (dieser)
+
+										RemConnect       X
+								X  	   <----------       X
+								X                        X
+					SELSBTAKT   X		Heartbeat        X
+				X   <--------	X      ----------->      X
+	            X               X                        X
+				X   IPRUECKMELD X                        X
+                X   ----------> X                        X
+				                X       RemConfirm       X
+								X      ----------->      X
+								X       Heartbeat        X
+								X      <-----------      X
+								X       Heartbeat        X
+								X      ----------->      X
+								                         X
+       ABFRAGE                                           X
+	X --------> X                                        X
+    X  AUSKUNFT X                                        X
+	X <-------- X                                        X
+	X                                                    X
+	X       normaler Anruf      X                        X
+	X        ----------->       X                        X
+	X			                X       RemCall          X
+	X							X      ----------->      X
+	X							X       RemAck           X
+	X							X      <-----------      X
+	X							X   ("Durchverbindung")  X
+	X							X                        X
+	X		i-Telex-Daten		X     i-Telex-Daten      X
+	X		<----------->		X     <----------->      X
+								
+	
+*/
+
+static bool RemoteServerActive;
+	//! Generelle Aktivierung der Verbindung über den RemoteServer
+	//! Schließt sich mit DynIPAktiv aus!
+
+
+static enum { 
+	RemServInactive,  // Remote server not connected, but may be needed
+	RemServStarting,  // Remote server connected, but no confirmation received yet
+	RemServConnected, // Remote server is connected
+	RemServDisconnecing, // Hangup sent to remote server, waiting for disconnection
+} RemoteServerLinkStatus;
+
+
+static int RemoteServerLinkSocketID;
+	//!< Über diesen Socket wird eine Verbindung zum "Remote Server" gehalten.
+
+
+static char RemoteServerSocketBuf[SocketInBufMax+4]; 
+	//!< Buffer for sending and receiving on RemoteServer
+
+static uint16_t RemoteServerSocketBufUsed;
+	//!< Amount of used Buffer in RemoteServerSocketBuf
+	
+static TKurzTimer RemoteServerActionTimer;
+	//!< Timer for several purposes regarding actions with RemoteServerLink: 
+	//!< Periodic sending of heartbeat, Delay for closing the connection
+
+static TKurzTimer RemoteServerCheckTimer;
+	//!< Timer for several purposes regarding checking of RemoteServerLink: 
+	//!< Periodic receiption of heartbeat, Maximum delay of confirmation
+
+	
+// =====================================================================
+	
 	
 bool TlnBuchOffen;	
 	//!< Soll das Teilnehmer-Verzeichnis offen sein oder nicht?
@@ -1740,9 +1822,93 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 	return Res;
 	
 	} // KommendInternAnwaehlen()
-	
 
-//! Socket bearbeiten.
+
+//! RemoteServer bearbeiten.
+//---------------------------------------------------------------------------
+//! Aufgaben:
+//!  - Verbindung zum RemoteServer herstellen wenn aktiv und Verbindungszustand "Leerlauf"
+//!  - Verbindung zum RemoteServer trennen wenn nicht mehr benötigt
+//!  - Bei bestehender Verbindung Daten senden und empfangen
+
+static void RemoteServerBearbeiten()
+	{
+	// Daten empfangen bei bestehender Verbindung
+	// ------------------------------------------
+	if (RemoteServerLinkSocketID != NO_SOCKET_USED)
+		{
+		int InCount = GetBytesInSocketData(RemoteServerLinkSocketID);
+		
+		if (InCount >= SocketInBufMax - RemoteServerSocketBufUsed)
+			{
+			if (ProtokollLevel >= NurFehler) 
+				{
+				ProtokollierenITelex();
+				ProtokollierenInt_P(PSTR("* RemoteServSocket Empfang drohender Ueberlauf: Empfang von %d " ), InCount);
+				ProtokollierenInt_P(PSTR("limitiert auf %d\r\n" ), SocketInBufMax - RemoteServerSocketBufUsed);
+				}
+				
+			InCount = SocketInBufMax - RemoteServerSocketBufUsed;
+			}
+		
+		if (InCount > 0)
+			{
+			int Res = GetSocketData(RemoteServerLinkSocketID, InCount, RemoteServerSocketBuf + RemoteServerSocketBufUsed);
+			
+			if (ProtokollLevel >= DatenDetailliert) // Daten explizit
+				{
+				ProtokollierenITelex();
+				ProtokollierenInt_P(PSTR("RemoteServSocket Empfang: (%d/" ), InCount);
+				ProtokollierenInt_P(PSTR("%d)"), Res);
+				if (Res > 0)
+					ProtokollierenPuffer(RemoteServerSocketBuf + RemoteServerSocketBufUsed, Res);
+				ProtokollierenInt_P(PSTR(" --> BufUsed %u\r\n"), RemoteServerSocketBufUsed + Res);
+				}		
+				
+			if (Res > 0)
+				{
+				RemoteServerSocketBufUsed += Res;
+				}
+			}
+		}
+	
+	// Verbindung abbauen wenn nicht (mehr) benötigt
+	// ---------------------------------------------
+	if (Modus != ModRuhe || !RemoteServerActive)
+		{
+		if (RemoteServerLinkStatus == RemServStarting || RemoteServerLinkStatus == RemServConnected)
+			{
+			TODO Verbindungsabbausignal senden
+			
+			RemoteServerLinkStatus = RemServDisconnecing;
+			StartKurzTimer(&RemoteServerCheckTimer);
+			}
+		} // if Modus != ModRuhe
+		
+	if (RemoteServerLinkStatus == RemServDisconnecing && KurzTimerVal(&RemoteServerCheckTimer) > 2000)
+		{
+		Socket schließen
+		RemoteServerLinkStatus = RemServInactive;
+		}
+	
+	// Verbindungsabbau des Servers berücksichtigen
+	// ---------------------------------------------
+	
+	// Verbindung aufbauen, falls keine besteht
+	// ----------------------------------------
+	
+	// Empfangene Daten auswerten
+	// --------------------------
+	
+	// Daten senden bei Bedarf
+	// -----------------------
+	
+	
+	
+	} // RemoteServerBearbeiten()
+
+
+//! i-Telex Socket bearbeiten.
 //---------------------------------------------------------------------------
 //! Aufgaben:
 //!  - Empfangene Daten in den Socket-Empfangspuffer schreiben
@@ -6196,6 +6362,7 @@ const PROGMEM char Geheimzahl_P[] = "PIN";
 const PROGMEM char DynIPAktiv_P[] = "DYNIPAKTIV";
 const PROGMEM char NetzPort_P[] = "NETZPORT";
 const PROGMEM char SelbstAnrufPeriode_P[] = "SELBSTANPER";
+const PROGMEM char RemoteServerNutzen_P[] = "REMSERVAKTIV";
 
 #endif // ITELEX_ANSCHLUSS
 
@@ -6237,9 +6404,10 @@ void itelex_cgi_config_extern(void *pStruct)
 		#ifdef ITELEX_ANSCHLUSS
 		CgiFormInputFieldULong_P(ISTR(ITelexRufnummer, Sprache), NetzRufnummer_P, 10, NetzRufnummer);
 		CgiFormInputFieldULong_P(ISTR(RufnrServerAnmeldGeheimzahl, Sprache), Geheimzahl_P, 6, Geheimzahl);
+		CgiFormInputFieldULong_P(ISTR(OeffentlichePortNr, Sprache), NetzPort_P, 6, NetzPort);
 		CgiFormCheckbox_P(ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIP_Phase != DynIP_Inaktiv);
 		CgiFormInputFieldULong_P(ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, 3, SelbstAnrufPeriode);
-		CgiFormInputFieldULong_P(ISTR(OeffentlichePortNr, Sprache), NetzPort_P, 6, NetzPort);
+		CgiFormCheckbox_P(ISTR(RemoteServerNutzen, Sprache), RemoteServerNutzen_P, RemoteServerActive);
 		#endif // ITELEX_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
@@ -6263,6 +6431,7 @@ void itelex_cgi_config_extern(void *pStruct)
 		if (NetzRufnummer < GlobRufnrMinWert)
 			printf_P(ISTR(ITelexRufnummerZuKurz, Sprache));
 		Geheimzahl = CgiCheckULong_P(http_request, ISTR(RufnrServerAnmeldGeheimzahl, Sprache), Geheimzahl_P, Geheimzahl, 0, UINT16_MAX, Sprache);
+		NetzPort = CgiCheckULong_P(http_request, ISTR(OeffentlichePortNr, Sprache), NetzPort_P, NetzPort, 1, UINT16_MAX, Sprache);
 
 		if (CgiCheckBool_P(http_request, ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIP_Phase != DynIP_Inaktiv, Sprache))
 			DynIP_Phase = DynIP_Bestaetigt; 
@@ -6271,9 +6440,17 @@ void itelex_cgi_config_extern(void *pStruct)
 			
 		SelbstAnrufPeriode = CgiCheckULong_P(http_request, ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, 
 											 SelbstAnrufPeriode, 0, UINT16_MAX, Sprache);
-		
-		NetzPort = CgiCheckULong_P(http_request, ISTR(OeffentlichePortNr, Sprache), NetzPort_P, NetzPort, 1, UINT16_MAX, Sprache);
-		
+											
+		if (CgiCheckBool_P(http_request, ISTR(RemoteServerNutzen, Sprache), RemoteServerNutzen_P, RemoteServerActive, Sprache))
+			{
+			if (DynIP_Phase == DynIP_Inaktiv) 
+				RemoteServerActive = true;
+			else
+				printf_P(ISTR(RemoteServerAusschlussDynIP, Sprache));
+			}
+		else
+			RemoteServerActive = false;
+					
 		#endif //def ITELEX_ANSCHLUSS
 		
 		#if defined(ITELEX_ANSCHLUSS) || defined(ITELEX_TLNSERVER)
@@ -6755,23 +6932,27 @@ extern void itelex_init1(void)
 	else
 		Geheimzahl = 0;
 
+	if (readConfig_P(NetzPort_P, Buf) == 1)
+		NetzPort = atol(Buf);
+	else
+		NetzPort = ITELEX_PORT;
 
 	if (ReadConfigBool(DynIPAktiv_P, false))
 		DynIP_Phase = DynIP_Fehler; 
 			// Damit ist erst mal Selbst-Anruf ausgeschaltet, aber die Aktualisierung wird bald ausgeführt.
 	else
 		DynIP_Phase = DynIP_Inaktiv;
-		
+	
+	if (ReadConfigBool(RemoteServerNutzen_P, false) && DynIP_Phase == DynIP_Inaktiv) // Ausschluss von DynIP und RemoteServer!
+		RemoteServerActive = true;
+	else
+		RemoteServerActive = false;
+	
 	if (readConfig_P(SelbstAnrufPeriode_P, Buf) == 1)
 		SelbstAnrufPeriode = atoi(Buf);
 	else
 		SelbstAnrufPeriode = 45;
 	
-	if (readConfig_P(NetzPort_P, Buf) == 1)
-		NetzPort = atol(Buf);
-	else
-		NetzPort = ITELEX_PORT;
-
 	if (readConfig_P(DatumDruckModus_P, Buf) == 1)
 		DatumDruckModus = atoi(Buf);
 	else
@@ -6868,6 +7049,10 @@ extern void itelex_init1(void)
 	SelbstAnrufSocketHandle = NO_SOCKET_USED;
 
 	ZeitUeberwachungInit(&SelbstAnrufZeitUeberwachung, 1 * KurzTimerFreq);
+
+	RemoteServerLinkSocketID = NO_SOCKET_USED;
+	RemoteServerLinkStatus = RemServInactive;
+	RemoteServerSocketBufUsed = 0;
 	
 	InitServSocketLog();
 	

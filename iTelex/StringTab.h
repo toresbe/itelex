@@ -120,6 +120,8 @@ _STRTABENTRY(RufnrServerAnmeldGeheimzahl, "Geheimzahl zur Anmeldung beim Rufnumm
 _STRTABENTRY(DynIPAktiv, "Dynamische IP-Aktualisierung aktiv", "Dynamic update of IP address active")
 _STRTABENTRY(VerbindungstestPeriode, "Verbindungstest-Periode (0 f&uuml;r kein Test)", "Loopback test period (0 to switch off)")
 _STRTABENTRY(OeffentlichePortNr, "&ouml;ffentliche Port-Nummer", "Public internet port number")
+_STRTABENTRY(RemoteServerNutzen, "Verbindungsbr&uuml;ckenserver verwenden", "Use remote connection server")
+_STRTABENTRY(RemoteServerAusschlussDynIP, "Verbindungsbr&uuml;ckenserver und Dynamische IP nicht gemeinsam verwendbar.", "Remote connection server and dynamic IP are exclusive")
 _STRTABENTRY(RufnrServerAdr, "Adresse des Teilnehmer-Server", "Subscriber directory server address")
 _STRTABENTRY(TlnServSyncGeheimzahl, "Geheimzahl f&uuml;r Server-Synchronisierung", "PIN for directory server synchronisation")
 _STRTABENTRY(TwiTlnListeAnfang, "Status der angeschlossenen Module:<p>", "Status of all connected hardware modules:<p>")
