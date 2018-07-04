@@ -1831,6 +1831,8 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 //!  - Verbindung zum RemoteServer trennen wenn nicht mehr benötigt
 //!  - Bei bestehender Verbindung Daten senden und empfangen
 
+/* TODO Deaktiviert, da versehentlich im trunk bearbeitet
+
 static void RemoteServerBearbeiten()
 	{
 	// Daten empfangen bei bestehender Verbindung
@@ -1907,6 +1909,7 @@ static void RemoteServerBearbeiten()
 	
 	} // RemoteServerBearbeiten()
 
+*/
 
 //! i-Telex Socket bearbeiten.
 //---------------------------------------------------------------------------
