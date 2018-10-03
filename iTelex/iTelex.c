@@ -4116,6 +4116,11 @@ void itelex_thread()
 							PufferSpeich(&SendePuffer, TtyCodeBuUm); // kurze Verzögerung nach dem Einschalten.
 */						
 						strcpy_P(AsciiDruckPuffer, ISTR(NamensucheTexteingabe, LokaleSprache));
+						
+						// und noch eine Buchstaben-Umschaltung dran hängen:
+						uint8_t len = strlen(AsciiDruckPuffer);
+						AsciiDruckPuffer[len] = CodeChrBuUm;
+						AsciiDruckPuffer[len+1] = '\0';
 						}
 						
 					else // es war keine 0 als erster Stelle
