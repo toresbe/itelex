@@ -4395,7 +4395,7 @@ void itelex_thread()
 					}
 				} // z == WR oder ZL
 				
-			else if (z != '\0' && z != '#' && SuchTextLen < TlnNameMax - 1)
+			else if (z >= ' ' && z != '#' && SuchTextLen < TlnNameMax - 1)
 				{
 				if (z != ' ' || SuchTextLen > 0)
 					{
