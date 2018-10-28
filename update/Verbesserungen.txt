@@ -1,3 +1,9 @@
+Ab Build 797:
+Bugfix: Namenssuche bei Geräten mit Tastaturwahl
+
+Ab Build 781:
+Impressum auf der HTML-Seite
+
 Ab Build 763:
 BugFix: Konfig-Reset mit Tastendruck
 

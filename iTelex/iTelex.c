@@ -4395,6 +4395,13 @@ void itelex_thread()
 					}
 				} // z == WR oder ZL
 				
+			else if (z == CodeChrWerDa)
+			{ // WerDa empfangen, zu 99% von einer Schnittstelle mit Tastaturwahl verursacht --> Buchstaben-Umschaltung zurücksenden.
+				uint8_t len = strlen(AsciiDruckPuffer);
+				AsciiDruckPuffer[len] = CodeChrBuUm; // damit wird auch in Empfangsrichtung wieder auf Buchstaben geschaltet.
+				AsciiDruckPuffer[len+1] = '\0';
+			}
+			
 			else if (z >= ' ' && z != '#' && SuchTextLen < TlnNameMax - 1)
 				{
 				if (z != ' ' || SuchTextLen > 0)
