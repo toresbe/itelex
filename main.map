@@ -1106,7 +1106,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000    0x292e8
+.text           0x00000000    0x29470
  *(.vectors)
  .vectors       0x00000000       0xcc c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6/crtm2561.o
                 0x00000000                __vectors
@@ -1205,7 +1205,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
                 0x000032f4                configname_account
  .progmem.data  0x000036f5      0x3c4 apps/modules/cmd_cron.o
  .progmem.data  0x00003ab9       0xc0 apps/modules/cmd_eemem.o
- .progmem.data  0x00003b79     0x2737 iTelex/iTelex.o
+ .progmem.data  0x00003b79     0x2820 iTelex/iTelex.o
                 0x00003bc6                KonfigPasswort_P
                 0x00003bdb                ProtokollLevel_P
                 0x00003c04                SocketLog_P
@@ -1238,376 +1238,375 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
                 0x00003c54                DatumDruckModus_P
                 0x00003b7d                UebersetzUr
                 0x00003c3a                AlternBeiBes_P
- .progmem.data  0x000062b0      0x56e iTelex/TlnBuch.o
-                0x000062b0                ExternEepromInit_P
- .progmem.data  0x0000681e      0x228 iTelex/CgiFormTools.o
- .progmem.data  0x00006a46      0x14e iTelex/Protokoll.o
- .progmem.data  0x00006b94      0xd51 iTelex/TlnServer.o
- .progmem.data  0x000078e5      0x3c7 iTelex/eMail.o
-                0x00007903                EmailEigenesPasswort_P
-                0x000078fa                EmailEigeneAdresse_P
-                0x0000792e                EmailDruckZiel_P
-                0x0000791b                EmailAusgabeFilternKennung_P
-                0x0000790d                EmailAbfrageTakt_P
-                0x000078ef                EmailSMTPServerAdresse_P
-                0x000078e5                EmailPOPServerAdresse_P
- .progmem.data  0x00007cac     0x2d9a iTelex/StringTab.o
-                0x00009f9d                stren_AlteNummerNichtGeloescht
-                0x00008949                strde_Druckzeilenlaenge
-                0x00009cd6                strde_TypEMail
-                0x00009c4f                stren_Adresse
-                0x0000907b                strde_OeffentlichePortNr
-                0x0000a644                strde_POPFehlerAnfang
-                0x0000a3ac                strde_EmailKonfigPopServer
-                0x00009212                strde_TwiTlnListeAnfang
-                0x0000829a                strde_NamensucheErgebnisse
-                0x000092a3                stren_TwiTlnListeEnde
-                0x000087a1                strde_FesteHauptstelleNummer
-                0x000090dc                stren_RemoteServerNutzen
-                0x0000a421                strde_EmailKonfigKennwort
-                0x00008aa4                stren_DiagnoseLevel
-                0x00008067                stren_TeilnehmerNichtErlaubt
-                0x00008b04                strde_TlnVerzeichnisOffen
-                0x00008ef6                stren_ITelexRufnummer
-                0x00009c7d                stren_TlnverzAttrLokal
-                0x0000a04b                stren_EepromSpeicherErfolg
-                0x0000a1b6                stren_ZurueckZumTeilnehmerverzeichnis
-                0x00008e5f                stren_GesperrtBestaetigung
-                0x0000a3fa                strde_EmailKonfigEigeneAdresse
-                0x000081c8                stren_NamensucheBitteWarten
-                0x00007f08                stren_MailNichtInDieserVersion
-                0x0000944b                strde_TeilnehmerverzeichnisHtmlKopf
-                0x0000a4b0                strde_EmailKonfigFilterNurTX
-                0x0000887a                stren_ASBB_Niemals
-                0x0000a330                stren_EmailEmpfangStartzeile
-                0x0000870a                strde_EigeneAmtsnummer
-                0x00007ede                strde_MailNichtInDieserVersion
-                0x0000a217                stren_ZusatzEepromFehler
-                0x000092e7                stren_Weiter
-                0x00007f2b                strde_ServerAusWegenFehlenderUhrzeit
-                0x00009f5f                strde_AlteNummerNichtGeloescht
-                0x000085c7                strde_TexteingabeStartetFernschreiber
-                0x00007eb3                stren_KeineVerbindungZumMailServerAusgang
-                0x0000a36b                strde_EmailEingabeBetreff
-                0x00009a40                stren_TeilnehmerverzeichnisAktionenOffen
-                0x00008c95                stren_KonnteNichtGeaendertWerden
-                0x00009025                strde_VerbindungstestPeriode
-                0x00009c8c                stren_TlnverzAttrGesperrt
-                0x0000a770                stren_NtpServerHostname
-                0x000089b5                stren_UhrzeitVerteilen
-                0x0000a520                stren_EmailKonfigDruckZiel
-                0x00008009                stren_TeilnehmerBesetzt
-                0x00009ce2                strde_AktionAendern
-                0x00009238                stren_TwiTlnListeAnfang
-                0x00009001                stren_DynIPAktiv
-                0x00008702                stren_HtmlTextEingabeAktualisieren
-                0x000082bb                stren_NamensucheErgebnisse
-                0x00008182                strde_NamensucheTexteingabe
-                0x00008f7f                strde_RufnrServerAnmeldGeheimzahl
-                0x0000a747                stren_NtpOn
-                0x00009c42                stren_Name
-                0x0000811d                strde_AnschlussInternBesetzt
-                0x00009cb2                stren_TypGeloescht
-                0x0000877a                stren_FesteHauptstelle
-                0x00008821                strde_AlternativSucheBeiBesetzt
-                0x00008532                stren_SeiteGesperrt
-                0x0000a5ad                stren_EmailKonfigFehler
-                0x0000814c                strde_TWITimeout
-                0x0000a4fe                strde_EmailKonfigDruckZiel
-                0x00009fd0                strde_EepromSpeicherFehler
-                0x00008bf5                strde_DatumDruckAnrufer
-                0x00009f4b                stren_EintragUnveraendert
-                0x00008222                strde_NamensucheServerAbbruch
-                0x00009d4e                strde_MeldungTlneintragRufnummer
-                0x00008ae3                stren_KonfigPasswort
-                0x0000857c                stren_FalschesKonfigKennwortEingegeben
-                0x00008b7f                stren_LangeDienstmeldungen
-                0x00009c83                strde_TlnverzAttrGesperrt
-                0x000084f5                stren_KennwortFalsch
-                0x00008a27                strde_ProtokollLevelTlnServer
-                0x000082dc                strde_NamensucheListenende
-                0x000081c0                strde_NamensucheBitteWarten
-                0x00007da8                strde_KeinTeilnehmerServerErreichbar
-                0x000080e9                strde_VerbindungGetrennt
-                0x00008136                stren_AnschlussInternBesetzt
-                0x00008abc                strde_KonfigPasswort
-                0x0000932b                strde_EinstellungenUebernehmen
-                0x0000a67a                strde_MailFehlerIPNichtErmittelbar
-                0x000086cb                strde_HtmlTextEingabe
-                0x000091bd                strde_TlnServSyncGeheimzahl
-                0x00008cab                strde_KennwortGgfGeaendert
-                0x0000a45b                strde_EmailKonfigAbfragetakt
-                0x00009971                strde_TeilnehmerverzeichnisAktionenOffen
-                0x000092aa                strde_NeueEinstellungen
-                0x00008b32                stren_TlnVerzeichnisOffen
-                0x0000a6db                strde_SMTPFehlerDirekt
-                0x000086d5                stren_HtmlTextEingabe
-                0x00008735                stren_EigeneAmtsnummer
-                0x0000941e                stren_VollstaendigesTeilnehmerverzeichnis
-                0x00008fde                strde_DynIPAktiv
-                0x000084aa                stren_KennwortAbfrage
-                0x00009d03                stren_AktionHinzufuegen
-                0x000092c9                stren_NeueEinstellungen
-                0x0000a7e6                IStrList
-                0x00008992                strde_UhrzeitVerteilen
-                0x000088b2                strde_ASBB_AuchDurchwahl
-                0x0000a37c                stren_EmailEingabeBetreff
-                0x00008c38                strde_ImpressAenderZeile
-                0x000081f8                stren_NamensucheZuKurz
-                0x00009cf3                strde_AktionHinzufuegen
-                0x00008f46                stren_ITelexRufnummerZuKurz
-                0x00009c47                strde_Adresse
-                0x00007e35                strde_TeilnehmerServerWiederErreichbar
-                0x0000a111                stren_KomplettGeloescht
-                0x0000a40f                stren_EmailKonfigEigeneAdresse
-                0x0000807e                strde_TeilnehmerGestoert
-                0x0000816c                stren_TWITimeout
-                0x00007d49                strde_ZeitueberschreitungWiederaufnahme
-                0x00009d95                strde_EhemalsLong
-                0x00009c57                strde_Port
-                0x000084d7                strde_KennwortFalsch
-                0x00008bdc                stren_DatumDruckKein
-                0x000080f8                strde_SonstigeMeldung
-                0x000081a0                stren_NamensucheTexteingabe
-                0x000091e9                stren_TlnServSyncGeheimzahl
-                0x0000a028                strde_EepromSpeicherErfolg
-                0x0000a231                strde_NeuTeilnehmer
-                0x0000a6c8                stren_MailFehlerNotConnected
-                0x0000a2b7                strde_ServerAnmeldungFalscheGeheimzahl
-                0x00008c69                stren_ImpressAenderTest
-                0x00008bd8                strde_DatumDruckKein
-                0x0000927f                stren_TwiTlnListeEintrag
-                0x0000a757                strde_NtpServerHostname
-                0x0000863e                stren_AndereVerbindungBesteht
-                0x0000810b                stren_SonstigeMeldung
-                0x00007df5                stren_KeinTeilnehmerServerErreichbar
-                0x0000a1ff                strde_ZusatzEepromFehler
-                0x000084c6                strde_KennwortFreigeben
-                0x000080f2                stren_VerbindungGetrennt
-                0x0000a78f                stren_Zeitzone
-                0x00009e43                strde_LokaleSpracheGespeichert
-                0x00007ff6                strde_TeilnehmerBesetzt
-                0x00008bea                stren_DatumDruckLokal
-                0x00009265                strde_TwiTlnListeEintrag
-                0x000081d0                strde_NamensucheZuKurz
-                0x0000930d                strde_GeaendertIn
-                0x00009df6                stren_TypUnbekannt
-                0x00007e85                strde_KeineVerbindungZumMailServerAusgang
-                0x0000931f                stren_GeaendertIn
-                0x0000830d                strde_Datum
-                0x00008b63                strde_LangeDienstmeldungen
-                0x0000a690                stren_MailFehlerIPNichtErmittelbar
-                0x00009dc8                strde_IPZusatz
-                0x00008280                stren_NamensucheNurLokal
-                0x000092f0                strde_Unveraendert
-                0x00009c5c                stren_Port
-                0x00009c36                stren_Rufnummer
-                0x00008894                stren_ASBB_NurHauptstelle
-                0x00009b9e                stren_TeilnehmerverzeichnisAktionenLeerOffen
-                0x00008035                stren_TeilnehmerNichtErreichbar
-                0x00009db9                stren_HostnameZusatz
-                0x0000a3e6                stren_EmailKonfigSmtpServer
-                0x00008313                stren_Datum
-                0x00009e0f                strde_KeineAenderung
-                0x00009199                stren_RufnrServerAdr
-                0x00009cee                stren_AktionAendern
-                0x00009ca8                strde_TypGeloescht
-                0x0000a72b                strde_NtpOn
-                0x00009d9f                stren_EhemalsLong
-                0x0000a614                strde_SMTPFehlerAnfang
-                0x00008605                strde_AndereVerbindungBesteht
-                0x000088c5                stren_ASBB_AuchDurchwahl
-                0x00009054                stren_VerbindungstestPeriode
-                0x00009e8a                strde_RufnummerDoppelt
-                0x00008019                strde_TeilnehmerNichtErreichbar
-                0x00009098                stren_OeffentlichePortNr
-                0x00008876                strde_ASBB_Niemals
-                0x00009cdc                stren_TypEMail
-                0x00008c4f                stren_ImpressAenderZeile
-                0x00008880                strde_ASBB_NurHauptstelle
-                0x000085ba                stren_Druckspiegel
-                0x00008cee                strde_InternesKennwortFehlt
-                0x00009c6b                stren_Durchwahl
-                0x00008de2                strde_GesperrtBestaetigung
-                0x000086ed                stren_HtmlTextEingabeAbsenden
-                0x000085e9                stren_TexteingabeStartetFernschreiber
-                0x0000a266                strde_TeilnehmerlisteVoll
-                0x0000854c                strde_FalschesKonfigKennwortEingegeben
-                0x00007f97                stren_ServerAusWegenFehlenderUhrzeit
-                0x00008faf                stren_RufnrServerAnmeldGeheimzahl
-                0x00008ed5                strde_ITelexRufnummer
-                0x00008c5e                strde_ImpressAenderTest
-                0x000090f9                strde_RemoteServerAusschlussDynIP
-                0x00008971                stren_Druckzeilenlaenge
-                0x00009ca2                stren_TlnverzAttrDyn
-                0x00009c77                strde_TlnverzAttrLokal
-                0x0000a3bf                stren_EmailKonfigPopServer
-                0x0000a124                strde_UngueltigerCgiAufruf
-                0x0000a0fa                strde_KomplettGeloescht
-                0x00009cce                stren_TypITelex
-                0x00009e6a                stren_LokaleSpracheGespeichert
-                0x0000a347                strde_EmailEingabeEmpfaenger
-                0x0000a6a9                strde_MailFehlerNotConnected
-                0x0000a3d2                strde_EmailKonfigSmtpServer
-                0x00009302                stren_Unveraendert
-                0x00008bbb                stren_DatumDruckModus
-                0x0000883b                stren_AlternativSucheBeiBesetzt
-                0x0000a0bd                strde_EepromLadenErfolg
-                0x00007cac                strde_AnrufAbgewiesenWegenBesetzt
-                0x00008b95                strde_DatumDruckModus
-                0x000092e0                strde_Weiter
-                0x0000a163                strde_ZurueckZumTeilnehmerverzeichnis
-                0x00008f0a                strde_ITelexRufnummerZuKurz
-                0x00008be0                strde_DatumDruckLokal
-                0x00008345                strde_SelbstAnrufMehrfachVersagt
-                0x0000a6fe                stren_SMTPFehlerDirekt
-                0x00009f06                strde_EintragGespeichert
-                0x0000a53b                strde_EmailKonfigFehler
-                0x00008749                strde_FesteHauptstelle
-                0x00009f2e                strde_EintragUnveraendert
-                0x00009299                strde_TwiTlnListeEnde
-                0x00007e58                stren_TeilnehmerServerWiederErreichbar
-                0x0000823e                stren_NamensucheServerAbbruch
-                0x0000a62a                stren_SMTPFehlerAnfang
-                0x0000a440                stren_EmailKonfigKennwort
-                0x0000a786                strde_Zeitzone
-                0x00008302                stren_DiagInterneIP
-                0x0000a093                stren_EepromLadenFehler
-                0x000084d0                stren_KennwortFreigeben
-                0x00009d74                stren_MeldungTlneintragRufnummer
-                0x0000a318                strde_EmailEmpfangStartzeile
-                0x00008a0a                stren_ProtokollLevel
-                0x00008482                strde_KennwortAbfrage
-                0x000089d5                strde_ProtokollLevel
-                0x00008919                stren_DurchwahlenListe
-                0x00009145                stren_RemoteServerAusschlussDynIP
-                0x00008a7a                strde_DiagnoseLevel
-                0x0000a39a                stren_EmailEingabeText
-                0x00009cc6                strde_TypITelex
-                0x00008a57                stren_ProtokollLevelTlnServer
-                0x0000a38d                strde_EmailEingabeText
-                0x000086f4                strde_HtmlTextEingabeAktualisieren
-                0x00008c15                strde_DatumDruckBeide
-                0x000083a4                stren_SelbstAnrufMehrfachVersagt
-                0x00007d7f                stren_ZeitueberschreitungWiederaufnahme
-                0x00009347                stren_EinstellungenUebernehmen
-                0x0000939b                strde_UeberschriftOeffentlichesTeilnehmerverzeichnis
-                0x000093f9                strde_VollstaendigesTeilnehmerverzeichnis
-                0x0000a7b9                stren_AutoSommerzeit
-                0x0000917b                strde_RufnrServerAdr
-                0x000090b4                strde_RemoteServerNutzen
-                0x0000843d                strde_InternesVerzeichnisVoll
-                0x00009dda                strde_TypUnbekannt
-                0x0000a147                stren_UngueltigerCgiAufruf
-                0x00009c93                strde_Typ
-                0x00009dd1                stren_IPZusatz
-                0x000088f0                strde_DurchwahlenListe
-                0x0000a798                strde_AutoSommerzeit
-                0x0000a0dc                stren_EepromLadenErfolg
-                0x00008c06                stren_DatumDruckAnrufer
-                0x00009ed5                stren_RufnummerDoppelt
-                0x0000a359                stren_EmailEingabeEmpfaenger
-                0x0000a2eb                stren_ServerAnmeldungFalscheGeheimzahl
-                0x00008c72                strde_KonnteNichtGeaendertWerden
-                0x000086e2                strde_HtmlTextEingabeAbsenden
-                0x0000a068                strde_EepromLadenFehler
-                0x0000865c                strde_ModulDeaktiviert
-                0x00009daa                strde_HostnameZusatz
-                0x00007cd5                stren_AnrufAbgewiesenWegenBesetzt
-                0x0000850d                strde_SeiteGesperrt
-                0x00008092                stren_TeilnehmerGestoert
-                0x0000a4d7                stren_EmailKonfigFilterNurTX
-                0x0000a24d                stren_NeuTeilnehmer
-                0x000082e9                stren_NamensucheListenende
-                0x00008d6e                stren_InternesKennwortFehlt
-                0x00009379                stren_UeberschriftTeilnehmerverzeichnis
-                0x00009d07                strde_Rufnummer0NichtErlaubt
-                0x000096ea                stren_TeilnehmerverzeichnisHtmlKopf
-                0x0000869f                stren_ModulDeaktiviert
-                0x000087e2                stren_FesteHauptstelleNummer
-                0x00008ccc                stren_KennwortGgfGeaendert
-                0x00008462                stren_InternesVerzeichnisVoll
-                0x00009c3d                strde_Name
-                0x00009356                strde_UeberschriftTeilnehmerverzeichnis
-                0x00007cfa                strde_MehrfacheSendeFehler
-                0x00009c2c                strde_Rufnummer
-                0x00009c61                strde_Durchwahl
-                0x00008421                stren_NummerNichtBekannt
-                0x00009c97                stren_Typ
-                0x00009e2e                stren_KeineAenderung
-                0x00009d2d                stren_Rufnummer0NichtErlaubt
-                0x0000a65f                stren_POPFehlerAnfang
-                0x00009aed                strde_TeilnehmerverzeichnisAktionenLeerOffen
-                0x000080c9                stren_TeilnehmerAbgeschaltet
-                0x000082f5                strde_DiagInterneIP
-                0x00009cba                strde_TypAscii
-                0x0000a491                stren_EmailKonfigAbfragetakt
-                0x0000804e                strde_TeilnehmerNichtErlaubt
-                0x00008c27                stren_DatumDruckBeide
-                0x000080a6                strde_TeilnehmerAbgeschaltet
-                0x00009c9c                strde_TlnverzAttrDyn
-                0x000085ad                strde_Druckspiegel
-                0x00008402                strde_NummerNichtBekannt
-                0x00007d20                stren_MehrfacheSendeFehler
-                0x00009cc0                stren_TypAscii
-                0x00008318                strde_DiagnoseEinleitung
-                0x00009f1e                stren_EintragGespeichert
-                0x00009fff                stren_EepromSpeicherFehler
-                0x00008262                strde_NamensucheNurLokal
-                0x000093d0                stren_UeberschriftOeffentlichesTeilnehmerverzeichnis
-                0x0000a295                stren_TeilnehmerlisteVoll
-                0x0000832e                stren_DiagnoseEinleitung
- .progmem.data  0x0000aa46       0xb3 iTelex/ConfigNtp.o
-                0x0000aa54                UtcZoneStr_P
-                0x0000aa46                NtpOn_P
-                0x0000aa5c                AutoDst_P
-                0x0000aa4a                NtpServerStr_P
- .progmem.data  0x0000aaf9      0x71a iTelex/IspMaster.o
-                0x0000ab02                ProgID_P
-                0x0000aaf9                BinServerPath_P
-                0x0000ab09                ClickToContinue_P
- .progmem.data  0x0000b213       0x40 iTelex/Gemeinsam/BaudotCode.o
-                0x0000b233                TtyCodeTabZi
-                0x0000b213                TtyCodeTabBu
-                0x0000b254                . = ALIGN (0x2)
- *fill*         0x0000b253        0x1 00
-                0x0000b254                __trampolines_start = .
+ .progmem.data  0x00006399      0x56e iTelex/TlnBuch.o
+                0x00006399                ExternEepromInit_P
+ .progmem.data  0x00006907      0x228 iTelex/CgiFormTools.o
+ .progmem.data  0x00006b2f      0x14e iTelex/Protokoll.o
+ .progmem.data  0x00006c7d      0xd51 iTelex/TlnServer.o
+ .progmem.data  0x000079ce      0x3c7 iTelex/eMail.o
+                0x000079ec                EmailEigenesPasswort_P
+                0x000079e3                EmailEigeneAdresse_P
+                0x00007a17                EmailDruckZiel_P
+                0x00007a04                EmailAusgabeFilternKennung_P
+                0x000079f6                EmailAbfrageTakt_P
+                0x000079d8                EmailSMTPServerAdresse_P
+                0x000079ce                EmailPOPServerAdresse_P
+ .progmem.data  0x00007d95     0x2d9a iTelex/StringTab.o
+                0x0000a086                stren_AlteNummerNichtGeloescht
+                0x00008a32                strde_Druckzeilenlaenge
+                0x00009dbf                strde_TypEMail
+                0x00009d38                stren_Adresse
+                0x00009164                strde_OeffentlichePortNr
+                0x0000a72d                strde_POPFehlerAnfang
+                0x0000a495                strde_EmailKonfigPopServer
+                0x000092fb                strde_TwiTlnListeAnfang
+                0x00008383                strde_NamensucheErgebnisse
+                0x0000938c                stren_TwiTlnListeEnde
+                0x0000888a                strde_FesteHauptstelleNummer
+                0x000091c5                stren_RemoteServerNutzen
+                0x0000a50a                strde_EmailKonfigKennwort
+                0x00008b8d                stren_DiagnoseLevel
+                0x00008150                stren_TeilnehmerNichtErlaubt
+                0x00008bed                strde_TlnVerzeichnisOffen
+                0x00008fdf                stren_ITelexRufnummer
+                0x00009d66                stren_TlnverzAttrLokal
+                0x0000a134                stren_EepromSpeicherErfolg
+                0x0000a29f                stren_ZurueckZumTeilnehmerverzeichnis
+                0x00008f48                stren_GesperrtBestaetigung
+                0x0000a4e3                strde_EmailKonfigEigeneAdresse
+                0x000082b1                stren_NamensucheBitteWarten
+                0x00007ff1                stren_MailNichtInDieserVersion
+                0x00009534                strde_TeilnehmerverzeichnisHtmlKopf
+                0x0000a599                strde_EmailKonfigFilterNurTX
+                0x00008963                stren_ASBB_Niemals
+                0x0000a419                stren_EmailEmpfangStartzeile
+                0x000087f3                strde_EigeneAmtsnummer
+                0x00007fc7                strde_MailNichtInDieserVersion
+                0x0000a300                stren_ZusatzEepromFehler
+                0x000093d0                stren_Weiter
+                0x00008014                strde_ServerAusWegenFehlenderUhrzeit
+                0x0000a048                strde_AlteNummerNichtGeloescht
+                0x000086b0                strde_TexteingabeStartetFernschreiber
+                0x00007f9c                stren_KeineVerbindungZumMailServerAusgang
+                0x0000a454                strde_EmailEingabeBetreff
+                0x00009b29                stren_TeilnehmerverzeichnisAktionenOffen
+                0x00008d7e                stren_KonnteNichtGeaendertWerden
+                0x0000910e                strde_VerbindungstestPeriode
+                0x00009d75                stren_TlnverzAttrGesperrt
+                0x0000a859                stren_NtpServerHostname
+                0x00008a9e                stren_UhrzeitVerteilen
+                0x0000a609                stren_EmailKonfigDruckZiel
+                0x000080f2                stren_TeilnehmerBesetzt
+                0x00009dcb                strde_AktionAendern
+                0x00009321                stren_TwiTlnListeAnfang
+                0x000090ea                stren_DynIPAktiv
+                0x000087eb                stren_HtmlTextEingabeAktualisieren
+                0x000083a4                stren_NamensucheErgebnisse
+                0x0000826b                strde_NamensucheTexteingabe
+                0x00009068                strde_RufnrServerAnmeldGeheimzahl
+                0x0000a830                stren_NtpOn
+                0x00009d2b                stren_Name
+                0x00008206                strde_AnschlussInternBesetzt
+                0x00009d9b                stren_TypGeloescht
+                0x00008863                stren_FesteHauptstelle
+                0x0000890a                strde_AlternativSucheBeiBesetzt
+                0x0000861b                stren_SeiteGesperrt
+                0x0000a696                stren_EmailKonfigFehler
+                0x00008235                strde_TWITimeout
+                0x0000a5e7                strde_EmailKonfigDruckZiel
+                0x0000a0b9                strde_EepromSpeicherFehler
+                0x00008cde                strde_DatumDruckAnrufer
+                0x0000a034                stren_EintragUnveraendert
+                0x0000830b                strde_NamensucheServerAbbruch
+                0x00009e37                strde_MeldungTlneintragRufnummer
+                0x00008bcc                stren_KonfigPasswort
+                0x00008665                stren_FalschesKonfigKennwortEingegeben
+                0x00008c68                stren_LangeDienstmeldungen
+                0x00009d6c                strde_TlnverzAttrGesperrt
+                0x000085de                stren_KennwortFalsch
+                0x00008b10                strde_ProtokollLevelTlnServer
+                0x000083c5                strde_NamensucheListenende
+                0x000082a9                strde_NamensucheBitteWarten
+                0x00007e91                strde_KeinTeilnehmerServerErreichbar
+                0x000081d2                strde_VerbindungGetrennt
+                0x0000821f                stren_AnschlussInternBesetzt
+                0x00008ba5                strde_KonfigPasswort
+                0x00009414                strde_EinstellungenUebernehmen
+                0x0000a763                strde_MailFehlerIPNichtErmittelbar
+                0x000087b4                strde_HtmlTextEingabe
+                0x000092a6                strde_TlnServSyncGeheimzahl
+                0x00008d94                strde_KennwortGgfGeaendert
+                0x0000a544                strde_EmailKonfigAbfragetakt
+                0x00009a5a                strde_TeilnehmerverzeichnisAktionenOffen
+                0x00009393                strde_NeueEinstellungen
+                0x00008c1b                stren_TlnVerzeichnisOffen
+                0x0000a7c4                strde_SMTPFehlerDirekt
+                0x000087be                stren_HtmlTextEingabe
+                0x0000881e                stren_EigeneAmtsnummer
+                0x00009507                stren_VollstaendigesTeilnehmerverzeichnis
+                0x000090c7                strde_DynIPAktiv
+                0x00008593                stren_KennwortAbfrage
+                0x00009dec                stren_AktionHinzufuegen
+                0x000093b2                stren_NeueEinstellungen
+                0x0000a8cf                IStrList
+                0x00008a7b                strde_UhrzeitVerteilen
+                0x0000899b                strde_ASBB_AuchDurchwahl
+                0x0000a465                stren_EmailEingabeBetreff
+                0x00008d21                strde_ImpressAenderZeile
+                0x000082e1                stren_NamensucheZuKurz
+                0x00009ddc                strde_AktionHinzufuegen
+                0x0000902f                stren_ITelexRufnummerZuKurz
+                0x00009d30                strde_Adresse
+                0x00007f1e                strde_TeilnehmerServerWiederErreichbar
+                0x0000a1fa                stren_KomplettGeloescht
+                0x0000a4f8                stren_EmailKonfigEigeneAdresse
+                0x00008167                strde_TeilnehmerGestoert
+                0x00008255                stren_TWITimeout
+                0x00007e32                strde_ZeitueberschreitungWiederaufnahme
+                0x00009e7e                strde_EhemalsLong
+                0x00009d40                strde_Port
+                0x000085c0                strde_KennwortFalsch
+                0x00008cc5                stren_DatumDruckKein
+                0x000081e1                strde_SonstigeMeldung
+                0x00008289                stren_NamensucheTexteingabe
+                0x000092d2                stren_TlnServSyncGeheimzahl
+                0x0000a111                strde_EepromSpeicherErfolg
+                0x0000a31a                strde_NeuTeilnehmer
+                0x0000a7b1                stren_MailFehlerNotConnected
+                0x0000a3a0                strde_ServerAnmeldungFalscheGeheimzahl
+                0x00008d52                stren_ImpressAenderTest
+                0x00008cc1                strde_DatumDruckKein
+                0x00009368                stren_TwiTlnListeEintrag
+                0x0000a840                strde_NtpServerHostname
+                0x00008727                stren_AndereVerbindungBesteht
+                0x000081f4                stren_SonstigeMeldung
+                0x00007ede                stren_KeinTeilnehmerServerErreichbar
+                0x0000a2e8                strde_ZusatzEepromFehler
+                0x000085af                strde_KennwortFreigeben
+                0x000081db                stren_VerbindungGetrennt
+                0x0000a878                stren_Zeitzone
+                0x00009f2c                strde_LokaleSpracheGespeichert
+                0x000080df                strde_TeilnehmerBesetzt
+                0x00008cd3                stren_DatumDruckLokal
+                0x0000934e                strde_TwiTlnListeEintrag
+                0x000082b9                strde_NamensucheZuKurz
+                0x000093f6                strde_GeaendertIn
+                0x00009edf                stren_TypUnbekannt
+                0x00007f6e                strde_KeineVerbindungZumMailServerAusgang
+                0x00009408                stren_GeaendertIn
+                0x000083f6                strde_Datum
+                0x00008c4c                strde_LangeDienstmeldungen
+                0x0000a779                stren_MailFehlerIPNichtErmittelbar
+                0x00009eb1                strde_IPZusatz
+                0x00008369                stren_NamensucheNurLokal
+                0x000093d9                strde_Unveraendert
+                0x00009d45                stren_Port
+                0x00009d1f                stren_Rufnummer
+                0x0000897d                stren_ASBB_NurHauptstelle
+                0x00009c87                stren_TeilnehmerverzeichnisAktionenLeerOffen
+                0x0000811e                stren_TeilnehmerNichtErreichbar
+                0x00009ea2                stren_HostnameZusatz
+                0x0000a4cf                stren_EmailKonfigSmtpServer
+                0x000083fc                stren_Datum
+                0x00009ef8                strde_KeineAenderung
+                0x00009282                stren_RufnrServerAdr
+                0x00009dd7                stren_AktionAendern
+                0x00009d91                strde_TypGeloescht
+                0x0000a814                strde_NtpOn
+                0x00009e88                stren_EhemalsLong
+                0x0000a6fd                strde_SMTPFehlerAnfang
+                0x000086ee                strde_AndereVerbindungBesteht
+                0x000089ae                stren_ASBB_AuchDurchwahl
+                0x0000913d                stren_VerbindungstestPeriode
+                0x00009f73                strde_RufnummerDoppelt
+                0x00008102                strde_TeilnehmerNichtErreichbar
+                0x00009181                stren_OeffentlichePortNr
+                0x0000895f                strde_ASBB_Niemals
+                0x00009dc5                stren_TypEMail
+                0x00008d38                stren_ImpressAenderZeile
+                0x00008969                strde_ASBB_NurHauptstelle
+                0x000086a3                stren_Druckspiegel
+                0x00008dd7                strde_InternesKennwortFehlt
+                0x00009d54                stren_Durchwahl
+                0x00008ecb                strde_GesperrtBestaetigung
+                0x000087d6                stren_HtmlTextEingabeAbsenden
+                0x000086d2                stren_TexteingabeStartetFernschreiber
+                0x0000a34f                strde_TeilnehmerlisteVoll
+                0x00008635                strde_FalschesKonfigKennwortEingegeben
+                0x00008080                stren_ServerAusWegenFehlenderUhrzeit
+                0x00009098                stren_RufnrServerAnmeldGeheimzahl
+                0x00008fbe                strde_ITelexRufnummer
+                0x00008d47                strde_ImpressAenderTest
+                0x000091e2                strde_RemoteServerAusschlussDynIP
+                0x00008a5a                stren_Druckzeilenlaenge
+                0x00009d8b                stren_TlnverzAttrDyn
+                0x00009d60                strde_TlnverzAttrLokal
+                0x0000a4a8                stren_EmailKonfigPopServer
+                0x0000a20d                strde_UngueltigerCgiAufruf
+                0x0000a1e3                strde_KomplettGeloescht
+                0x00009db7                stren_TypITelex
+                0x00009f53                stren_LokaleSpracheGespeichert
+                0x0000a430                strde_EmailEingabeEmpfaenger
+                0x0000a792                strde_MailFehlerNotConnected
+                0x0000a4bb                strde_EmailKonfigSmtpServer
+                0x000093eb                stren_Unveraendert
+                0x00008ca4                stren_DatumDruckModus
+                0x00008924                stren_AlternativSucheBeiBesetzt
+                0x0000a1a6                strde_EepromLadenErfolg
+                0x00007d95                strde_AnrufAbgewiesenWegenBesetzt
+                0x00008c7e                strde_DatumDruckModus
+                0x000093c9                strde_Weiter
+                0x0000a24c                strde_ZurueckZumTeilnehmerverzeichnis
+                0x00008ff3                strde_ITelexRufnummerZuKurz
+                0x00008cc9                strde_DatumDruckLokal
+                0x0000842e                strde_SelbstAnrufMehrfachVersagt
+                0x0000a7e7                stren_SMTPFehlerDirekt
+                0x00009fef                strde_EintragGespeichert
+                0x0000a624                strde_EmailKonfigFehler
+                0x00008832                strde_FesteHauptstelle
+                0x0000a017                strde_EintragUnveraendert
+                0x00009382                strde_TwiTlnListeEnde
+                0x00007f41                stren_TeilnehmerServerWiederErreichbar
+                0x00008327                stren_NamensucheServerAbbruch
+                0x0000a713                stren_SMTPFehlerAnfang
+                0x0000a529                stren_EmailKonfigKennwort
+                0x0000a86f                strde_Zeitzone
+                0x000083eb                stren_DiagInterneIP
+                0x0000a17c                stren_EepromLadenFehler
+                0x000085b9                stren_KennwortFreigeben
+                0x00009e5d                stren_MeldungTlneintragRufnummer
+                0x0000a401                strde_EmailEmpfangStartzeile
+                0x00008af3                stren_ProtokollLevel
+                0x0000856b                strde_KennwortAbfrage
+                0x00008abe                strde_ProtokollLevel
+                0x00008a02                stren_DurchwahlenListe
+                0x0000922e                stren_RemoteServerAusschlussDynIP
+                0x00008b63                strde_DiagnoseLevel
+                0x0000a483                stren_EmailEingabeText
+                0x00009daf                strde_TypITelex
+                0x00008b40                stren_ProtokollLevelTlnServer
+                0x0000a476                strde_EmailEingabeText
+                0x000087dd                strde_HtmlTextEingabeAktualisieren
+                0x00008cfe                strde_DatumDruckBeide
+                0x0000848d                stren_SelbstAnrufMehrfachVersagt
+                0x00007e68                stren_ZeitueberschreitungWiederaufnahme
+                0x00009430                stren_EinstellungenUebernehmen
+                0x00009484                strde_UeberschriftOeffentlichesTeilnehmerverzeichnis
+                0x000094e2                strde_VollstaendigesTeilnehmerverzeichnis
+                0x0000a8a2                stren_AutoSommerzeit
+                0x00009264                strde_RufnrServerAdr
+                0x0000919d                strde_RemoteServerNutzen
+                0x00008526                strde_InternesVerzeichnisVoll
+                0x00009ec3                strde_TypUnbekannt
+                0x0000a230                stren_UngueltigerCgiAufruf
+                0x00009d7c                strde_Typ
+                0x00009eba                stren_IPZusatz
+                0x000089d9                strde_DurchwahlenListe
+                0x0000a881                strde_AutoSommerzeit
+                0x0000a1c5                stren_EepromLadenErfolg
+                0x00008cef                stren_DatumDruckAnrufer
+                0x00009fbe                stren_RufnummerDoppelt
+                0x0000a442                stren_EmailEingabeEmpfaenger
+                0x0000a3d4                stren_ServerAnmeldungFalscheGeheimzahl
+                0x00008d5b                strde_KonnteNichtGeaendertWerden
+                0x000087cb                strde_HtmlTextEingabeAbsenden
+                0x0000a151                strde_EepromLadenFehler
+                0x00008745                strde_ModulDeaktiviert
+                0x00009e93                strde_HostnameZusatz
+                0x00007dbe                stren_AnrufAbgewiesenWegenBesetzt
+                0x000085f6                strde_SeiteGesperrt
+                0x0000817b                stren_TeilnehmerGestoert
+                0x0000a5c0                stren_EmailKonfigFilterNurTX
+                0x0000a336                stren_NeuTeilnehmer
+                0x000083d2                stren_NamensucheListenende
+                0x00008e57                stren_InternesKennwortFehlt
+                0x00009462                stren_UeberschriftTeilnehmerverzeichnis
+                0x00009df0                strde_Rufnummer0NichtErlaubt
+                0x000097d3                stren_TeilnehmerverzeichnisHtmlKopf
+                0x00008788                stren_ModulDeaktiviert
+                0x000088cb                stren_FesteHauptstelleNummer
+                0x00008db5                stren_KennwortGgfGeaendert
+                0x0000854b                stren_InternesVerzeichnisVoll
+                0x00009d26                strde_Name
+                0x0000943f                strde_UeberschriftTeilnehmerverzeichnis
+                0x00007de3                strde_MehrfacheSendeFehler
+                0x00009d15                strde_Rufnummer
+                0x00009d4a                strde_Durchwahl
+                0x0000850a                stren_NummerNichtBekannt
+                0x00009d80                stren_Typ
+                0x00009f17                stren_KeineAenderung
+                0x00009e16                stren_Rufnummer0NichtErlaubt
+                0x0000a748                stren_POPFehlerAnfang
+                0x00009bd6                strde_TeilnehmerverzeichnisAktionenLeerOffen
+                0x000081b2                stren_TeilnehmerAbgeschaltet
+                0x000083de                strde_DiagInterneIP
+                0x00009da3                strde_TypAscii
+                0x0000a57a                stren_EmailKonfigAbfragetakt
+                0x00008137                strde_TeilnehmerNichtErlaubt
+                0x00008d10                stren_DatumDruckBeide
+                0x0000818f                strde_TeilnehmerAbgeschaltet
+                0x00009d85                strde_TlnverzAttrDyn
+                0x00008696                strde_Druckspiegel
+                0x000084eb                strde_NummerNichtBekannt
+                0x00007e09                stren_MehrfacheSendeFehler
+                0x00009da9                stren_TypAscii
+                0x00008401                strde_DiagnoseEinleitung
+                0x0000a007                stren_EintragGespeichert
+                0x0000a0e8                stren_EepromSpeicherFehler
+                0x0000834b                strde_NamensucheNurLokal
+                0x000094b9                stren_UeberschriftOeffentlichesTeilnehmerverzeichnis
+                0x0000a37e                stren_TeilnehmerlisteVoll
+                0x00008417                stren_DiagnoseEinleitung
+ .progmem.data  0x0000ab2f       0xb3 iTelex/ConfigNtp.o
+                0x0000ab3d                UtcZoneStr_P
+                0x0000ab2f                NtpOn_P
+                0x0000ab45                AutoDst_P
+                0x0000ab33                NtpServerStr_P
+ .progmem.data  0x0000abe2      0x71a iTelex/IspMaster.o
+                0x0000abeb                ProgID_P
+                0x0000abe2                BinServerPath_P
+                0x0000abf2                ClickToContinue_P
+ .progmem.data  0x0000b2fc       0x40 iTelex/Gemeinsam/BaudotCode.o
+                0x0000b31c                TtyCodeTabZi
+                0x0000b2fc                TtyCodeTabBu
+                0x0000b33c                . = ALIGN (0x2)
+                0x0000b33c                __trampolines_start = .
  *(.trampolines)
- .trampolines   0x0000b254       0x74 linker stubs
+ .trampolines   0x0000b33c       0x78 linker stubs
  *(.trampolines*)
-                0x0000b2c8                __trampolines_end = .
+                0x0000b3b4                __trampolines_end = .
  *(.jumptables)
  *(.jumptables*)
  *(.lowtext)
  *(.lowtext*)
-                0x0000b2c8                __ctors_start = .
+                0x0000b3b4                __ctors_start = .
  *(.ctors)
-                0x0000b2c8                __ctors_end = .
-                0x0000b2c8                __dtors_start = .
+                0x0000b3b4                __ctors_end = .
+                0x0000b3b4                __dtors_start = .
  *(.dtors)
-                0x0000b2c8                __dtors_end = .
+                0x0000b3b4                __dtors_end = .
  SORT(*)(.ctors)
  SORT(*)(.dtors)
  *(.init0)
- .init0         0x0000b2c8        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6/crtm2561.o
-                0x0000b2c8                __init
+ .init0         0x0000b3b4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6/crtm2561.o
+                0x0000b3b4                __init
  *(.init0)
  *(.init1)
- .init1         0x0000b2c8       0x20 system/softreset/softreset.o
-                0x0000b2c8                wdt_init
+ .init1         0x0000b3b4       0x20 system/softreset/softreset.o
+                0x0000b3b4                wdt_init
  *(.init1)
  *(.init2)
- .init2         0x0000b2e8       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6/crtm2561.o
+ .init2         0x0000b3d4       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6/crtm2561.o
  *(.init2)
  *(.init3)
- .init3         0x0000b2f8       0xd2 hardware/memory/xram.o
-                0x0000b2f8                init_xram
+ .init3         0x0000b3e4       0xd2 hardware/memory/xram.o
+                0x0000b3e4                init_xram
  *(.init3)
  *(.init4)
- .init4         0x0000b3ca       0x1a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6/crtm2561.o
-                0x0000b3ca                __do_copy_data
- .init4         0x0000b3e4       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_clear_bss.o)
-                0x0000b3e4                __do_clear_bss
+ .init4         0x0000b4b6       0x1a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6/crtm2561.o
+                0x0000b4b6                __do_copy_data
+ .init4         0x0000b4d0       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_clear_bss.o)
+                0x0000b4d0                __do_clear_bss
  *(.init4)
  *(.init5)
  *(.init5)
@@ -1618,1485 +1617,1485 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  *(.init8)
  *(.init8)
  *(.init9)
- .init9         0x0000b3f4        0x6 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6/crtm2561.o
+ .init9         0x0000b4e0        0x6 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6/crtm2561.o
  *(.init9)
  *(.text)
- .text          0x0000b3fa        0x4 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6/crtm2561.o
-                0x0000b3fa                __vector_22
-                0x0000b3fa                __vector_28
-                0x0000b3fa                __vector_32
-                0x0000b3fa                __vector_34
-                0x0000b3fa                __vector_24
-                0x0000b3fa                __vector_46
-                0x0000b3fa                __bad_interrupt
-                0x0000b3fa                __vector_31
-                0x0000b3fa                __vector_35
-                0x0000b3fa                __vector_23
-                0x0000b3fa                __vector_30
-                0x0000b3fa                __vector_45
-                0x0000b3fa                __vector_11
-                0x0000b3fa                __vector_13
-                0x0000b3fa                __vector_19
-                0x0000b3fa                __vector_49
-                0x0000b3fa                __vector_41
-                0x0000b3fa                __vector_43
-                0x0000b3fa                __vector_33
-                0x0000b3fa                __vector_47
-                0x0000b3fa                __vector_44
-                0x0000b3fa                __vector_9
-                0x0000b3fa                __vector_15
-                0x0000b3fa                __vector_29
-                0x0000b3fa                __vector_40
-                0x0000b3fa                __vector_48
-                0x0000b3fa                __vector_14
-                0x0000b3fa                __vector_10
-                0x0000b3fa                __vector_50
-                0x0000b3fa                __vector_16
-                0x0000b3fa                __vector_18
-                0x0000b3fa                __vector_20
-                0x0000b3fa                __vector_42
-                0x0000b3fe                . = ALIGN (0x2)
+ .text          0x0000b4e6        0x4 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6/crtm2561.o
+                0x0000b4e6                __vector_22
+                0x0000b4e6                __vector_28
+                0x0000b4e6                __vector_32
+                0x0000b4e6                __vector_34
+                0x0000b4e6                __vector_24
+                0x0000b4e6                __vector_46
+                0x0000b4e6                __bad_interrupt
+                0x0000b4e6                __vector_31
+                0x0000b4e6                __vector_35
+                0x0000b4e6                __vector_23
+                0x0000b4e6                __vector_30
+                0x0000b4e6                __vector_45
+                0x0000b4e6                __vector_11
+                0x0000b4e6                __vector_13
+                0x0000b4e6                __vector_19
+                0x0000b4e6                __vector_49
+                0x0000b4e6                __vector_41
+                0x0000b4e6                __vector_43
+                0x0000b4e6                __vector_33
+                0x0000b4e6                __vector_47
+                0x0000b4e6                __vector_44
+                0x0000b4e6                __vector_9
+                0x0000b4e6                __vector_15
+                0x0000b4e6                __vector_29
+                0x0000b4e6                __vector_40
+                0x0000b4e6                __vector_48
+                0x0000b4e6                __vector_14
+                0x0000b4e6                __vector_10
+                0x0000b4e6                __vector_50
+                0x0000b4e6                __vector_16
+                0x0000b4e6                __vector_18
+                0x0000b4e6                __vector_20
+                0x0000b4e6                __vector_42
+                0x0000b4ea                . = ALIGN (0x2)
  *(.text.*)
- .text.main     0x0000b3fe       0x36 main.o
-                0x0000b3fe                main
+ .text.main     0x0000b4ea       0x36 main.o
+                0x0000b4ea                main
  .text.EXTINT_init
-                0x0000b434        0xa hardware/ext_int/ext_int.o
-                0x0000b434                EXTINT_init
+                0x0000b520        0xa hardware/ext_int/ext_int.o
+                0x0000b520                EXTINT_init
  .text.EXTINT_free
-                0x0000b43e       0x1e hardware/ext_int/ext_int.o
-                0x0000b43e                EXTINT_free
+                0x0000b52a       0x1e hardware/ext_int/ext_int.o
+                0x0000b52a                EXTINT_free
  .text.EXTINT_set
-                0x0000b45c       0x9a hardware/ext_int/ext_int.o
-                0x0000b45c                EXTINT_set
+                0x0000b548       0x9a hardware/ext_int/ext_int.o
+                0x0000b548                EXTINT_set
  .text.EXTINT_block
-                0x0000b4f6       0x20 hardware/ext_int/ext_int.o
-                0x0000b4f6                EXTINT_block
+                0x0000b5e2       0x20 hardware/ext_int/ext_int.o
+                0x0000b5e2                EXTINT_block
  .text.__vector_1
-                0x0000b516       0x56 hardware/ext_int/ext_int.o
-                0x0000b516                __vector_1
+                0x0000b602       0x56 hardware/ext_int/ext_int.o
+                0x0000b602                __vector_1
  .text.__vector_2
-                0x0000b56c       0x56 hardware/ext_int/ext_int.o
-                0x0000b56c                __vector_2
+                0x0000b658       0x56 hardware/ext_int/ext_int.o
+                0x0000b658                __vector_2
  .text.__vector_3
-                0x0000b5c2       0x56 hardware/ext_int/ext_int.o
-                0x0000b5c2                __vector_3
+                0x0000b6ae       0x56 hardware/ext_int/ext_int.o
+                0x0000b6ae                __vector_3
  .text.__vector_4
-                0x0000b618       0x56 hardware/ext_int/ext_int.o
-                0x0000b618                __vector_4
+                0x0000b704       0x56 hardware/ext_int/ext_int.o
+                0x0000b704                __vector_4
  .text.__vector_5
-                0x0000b66e       0x56 hardware/ext_int/ext_int.o
-                0x0000b66e                __vector_5
+                0x0000b75a       0x56 hardware/ext_int/ext_int.o
+                0x0000b75a                __vector_5
  .text.__vector_6
-                0x0000b6c4       0x56 hardware/ext_int/ext_int.o
-                0x0000b6c4                __vector_6
+                0x0000b7b0       0x56 hardware/ext_int/ext_int.o
+                0x0000b7b0                __vector_6
  .text.__vector_7
-                0x0000b71a       0x56 hardware/ext_int/ext_int.o
-                0x0000b71a                __vector_7
+                0x0000b806       0x56 hardware/ext_int/ext_int.o
+                0x0000b806                __vector_7
  .text.__vector_8
-                0x0000b770       0x56 hardware/ext_int/ext_int.o
-                0x0000b770                __vector_8
+                0x0000b85c       0x56 hardware/ext_int/ext_int.o
+                0x0000b85c                __vector_8
  .text.CLOCK_ReleaseCountdownTimer
-                0x0000b7c6       0x18 system/clock/clock.o
-                0x0000b7c6                CLOCK_ReleaseCountdownTimer
+                0x0000b8b2       0x18 system/clock/clock.o
+                0x0000b8b2                CLOCK_ReleaseCountdownTimer
  .text.CLOCK_monthlen
-                0x0000b7de       0x1a system/clock/clock.o
-                0x0000b7de                CLOCK_monthlen
+                0x0000b8ca       0x1a system/clock/clock.o
+                0x0000b8ca                CLOCK_monthlen
  .text.CLOCK_decode_time
-                0x0000b7f8      0x2e8 system/clock/clock.o
-                0x0000b7f8                CLOCK_decode_time
+                0x0000b8e4      0x2e8 system/clock/clock.o
+                0x0000b8e4                CLOCK_decode_time
  .text.CLOCK_tick
-                0x0000bae0      0x190 system/clock/clock.o
-                0x0000bae0                CLOCK_tick
+                0x0000bbcc      0x190 system/clock/clock.o
+                0x0000bbcc                CLOCK_tick
  .text.CLOCK_SetTime
-                0x0000bc70       0x22 system/clock/clock.o
-                0x0000bc70                CLOCK_SetTime
+                0x0000bd5c       0x22 system/clock/clock.o
+                0x0000bd5c                CLOCK_SetTime
  .text.CLOCK_GetTime
-                0x0000bc92       0x22 system/clock/clock.o
-                0x0000bc92                CLOCK_GetTime
+                0x0000bd7e       0x22 system/clock/clock.o
+                0x0000bd7e                CLOCK_GetTime
  .text.CLOCK_GetCountdownTimer
-                0x0000bcb4       0x34 system/clock/clock.o
-                0x0000bcb4                CLOCK_GetCountdownTimer
+                0x0000bda0       0x34 system/clock/clock.o
+                0x0000bda0                CLOCK_GetCountdownTimer
  .text.CLOCK_SetCountdownTimer
-                0x0000bce8       0x48 system/clock/clock.o
-                0x0000bce8                CLOCK_SetCountdownTimer
+                0x0000bdd4       0x48 system/clock/clock.o
+                0x0000bdd4                CLOCK_SetCountdownTimer
  .text.CLOCK_RegisterCountdowntimer
-                0x0000bd30       0x44 system/clock/clock.o
-                0x0000bd30                CLOCK_RegisterCountdowntimer
+                0x0000be1c       0x44 system/clock/clock.o
+                0x0000be1c                CLOCK_RegisterCountdowntimer
  .text.CLOCK_RegisterCallbackFunction
-                0x0000bd74       0x7c system/clock/clock.o
-                0x0000bd74                CLOCK_RegisterCallbackFunction
+                0x0000be60       0x7c system/clock/clock.o
+                0x0000be60                CLOCK_RegisterCallbackFunction
  .text.CLOCK_init
-                0x0000bdf0       0xa2 system/clock/clock.o
-                0x0000bdf0                CLOCK_init
+                0x0000bedc       0xa2 system/clock/clock.o
+                0x0000bedc                CLOCK_init
  .text.timer1_init
-                0x0000be92       0x48 hardware/timer1/timer1.o
-                0x0000be92                timer1_init
+                0x0000bf7e       0x48 hardware/timer1/timer1.o
+                0x0000bf7e                timer1_init
  .text.timer1_stop
-                0x0000beda        0xc hardware/timer1/timer1.o
-                0x0000beda                timer1_stop
+                0x0000bfc6        0xc hardware/timer1/timer1.o
+                0x0000bfc6                timer1_stop
  .text.timer1_free
-                0x0000bee6        0xc hardware/timer1/timer1.o
-                0x0000bee6                timer1_free
+                0x0000bfd2        0xc hardware/timer1/timer1.o
+                0x0000bfd2                timer1_free
  .text.__vector_17
-                0x0000bef2       0x5a hardware/timer1/timer1.o
-                0x0000bef2                __vector_17
+                0x0000bfde       0x5a hardware/timer1/timer1.o
+                0x0000bfde                __vector_17
  .text.timer1_RegisterCallbackFunction
-                0x0000bf4c       0x26 hardware/timer1/timer1.o
-                0x0000bf4c                timer1_RegisterCallbackFunction
+                0x0000c038       0x26 hardware/timer1/timer1.o
+                0x0000c038                timer1_RegisterCallbackFunction
  .text.timer1_wait
-                0x0000bf72       0x24 hardware/timer1/timer1.o
-                0x0000bf72                timer1_wait
+                0x0000c05e       0x24 hardware/timer1/timer1.o
+                0x0000c05e                timer1_wait
  .text.timer1_getcounter
-                0x0000bf96        0xc hardware/timer1/timer1.o
-                0x0000bf96                timer1_getcounter
+                0x0000c082        0xc hardware/timer1/timer1.o
+                0x0000c082                timer1_getcounter
  .text.SPI_init
-                0x0000bfa2       0x28 hardware/spi/spi_core.o
-                0x0000bfa2                SPI_init
+                0x0000c08e       0x28 hardware/spi/spi_core.o
+                0x0000c08e                SPI_init
  .text.SPI_ReadWrite
-                0x0000bfca       0x2c hardware/spi/spi_core.o
-                0x0000bfca                SPI_ReadWrite
+                0x0000c0b6       0x2c hardware/spi/spi_core.o
+                0x0000c0b6                SPI_ReadWrite
  .text.SPI_ReadBlock
-                0x0000bff6       0x2c hardware/spi/spi_core.o
-                0x0000bff6                SPI_ReadBlock
+                0x0000c0e2       0x2c hardware/spi/spi_core.o
+                0x0000c0e2                SPI_ReadBlock
  .text.UART_init
-                0x0000c022       0x24 hardware/uart/uart_core.o
-                0x0000c022                UART_init
+                0x0000c10e       0x24 hardware/uart/uart_core.o
+                0x0000c10e                UART_init
  .text.UART_SendByte
-                0x0000c046       0x22 hardware/uart/uart_core.o
-                0x0000c046                UART_SendByte
+                0x0000c132       0x22 hardware/uart/uart_core.o
+                0x0000c132                UART_SendByte
  .text.UART_GetByte
-                0x0000c068       0x24 hardware/uart/uart_core.o
-                0x0000c068                UART_GetByte
+                0x0000c154       0x24 hardware/uart/uart_core.o
+                0x0000c154                UART_GetByte
  .text.UART_GetBytesinRxBuffer
-                0x0000c08c       0x24 hardware/uart/uart_core.o
-                0x0000c08c                UART_GetBytesinRxBuffer
+                0x0000c178       0x24 hardware/uart/uart_core.o
+                0x0000c178                UART_GetBytesinRxBuffer
  .text.UART_GetBytesinTxBuffer
-                0x0000c0b0       0x24 hardware/uart/uart_core.o
-                0x0000c0b0                UART_GetBytesinTxBuffer
+                0x0000c19c       0x24 hardware/uart/uart_core.o
+                0x0000c19c                UART_GetBytesinTxBuffer
  .text.__vector_27
-                0x0000c0d4       0x36 hardware/uart/mega/uart_0.o
-                0x0000c0d4                __vector_27
+                0x0000c1c0       0x36 hardware/uart/mega/uart_0.o
+                0x0000c1c0                __vector_27
  .text.__vector_26
-                0x0000c10a       0x82 hardware/uart/mega/uart_0.o
-                0x0000c10a                __vector_26
+                0x0000c1f6       0x82 hardware/uart/mega/uart_0.o
+                0x0000c1f6                __vector_26
  .text.__vector_25
-                0x0000c18c       0x76 hardware/uart/mega/uart_0.o
-                0x0000c18c                __vector_25
+                0x0000c278       0x76 hardware/uart/mega/uart_0.o
+                0x0000c278                __vector_25
  .text.__vector_38
-                0x0000c202       0x36 hardware/uart/mega/uart_1.o
-                0x0000c202                __vector_38
+                0x0000c2ee       0x36 hardware/uart/mega/uart_1.o
+                0x0000c2ee                __vector_38
  .text.UART_1_GetBytesinRxBuffer
-                0x0000c238       0x18 hardware/uart/mega/uart_1.o
-                0x0000c238                UART_1_GetBytesinRxBuffer
+                0x0000c324       0x18 hardware/uart/mega/uart_1.o
+                0x0000c324                UART_1_GetBytesinRxBuffer
  .text.UART_1_GetByte
-                0x0000c250       0x2c hardware/uart/mega/uart_1.o
-                0x0000c250                UART_1_GetByte
+                0x0000c33c       0x2c hardware/uart/mega/uart_1.o
+                0x0000c33c                UART_1_GetByte
  .text.__vector_37
-                0x0000c27c       0x82 hardware/uart/mega/uart_1.o
-                0x0000c27c                __vector_37
+                0x0000c368       0x82 hardware/uart/mega/uart_1.o
+                0x0000c368                __vector_37
  .text.UART_1_SendByte
-                0x0000c2fe       0x96 hardware/uart/mega/uart_1.o
-                0x0000c2fe                UART_1_SendByte
+                0x0000c3ea       0x96 hardware/uart/mega/uart_1.o
+                0x0000c3ea                UART_1_SendByte
  .text.__vector_36
-                0x0000c394       0x76 hardware/uart/mega/uart_1.o
-                0x0000c394                __vector_36
+                0x0000c480       0x76 hardware/uart/mega/uart_1.o
+                0x0000c480                __vector_36
  .text.UART_1_init
-                0x0000c40a       0x44 hardware/uart/mega/uart_1.o
-                0x0000c40a                UART_1_init
+                0x0000c4f6       0x44 hardware/uart/mega/uart_1.o
+                0x0000c4f6                UART_1_init
  .text.GPIO_setdirection
-                0x0000c44e      0x184 hardware/gpio/gpio_core.o
-                0x0000c44e                GPIO_setdirection
+                0x0000c53a      0x184 hardware/gpio/gpio_core.o
+                0x0000c53a                GPIO_setdirection
  .text.GPIO_setPin
-                0x0000c5d2       0xb6 hardware/gpio/gpio_core.o
-                0x0000c5d2                GPIO_setPin
+                0x0000c6be       0xb6 hardware/gpio/gpio_core.o
+                0x0000c6be                GPIO_setPin
  .text.GPIO_clearPin
-                0x0000c688       0xc2 hardware/gpio/gpio_core.o
-                0x0000c688                GPIO_clearPin
+                0x0000c774       0xc2 hardware/gpio/gpio_core.o
+                0x0000c774                GPIO_clearPin
  .text.enc28j60WriteBuffer
-                0x0000c74a       0x4a hardware/network/enc28j60.o
-                0x0000c74a                enc28j60WriteBuffer
+                0x0000c836       0x4a hardware/network/enc28j60.o
+                0x0000c836                enc28j60WriteBuffer
  .text.enc28j60WriteOp
-                0x0000c794       0x32 hardware/network/enc28j60.o
-                0x0000c794                enc28j60WriteOp
+                0x0000c880       0x32 hardware/network/enc28j60.o
+                0x0000c880                enc28j60WriteOp
  .text.enc28j60SetBank
-                0x0000c7c6       0x44 hardware/network/enc28j60.o
-                0x0000c7c6                enc28j60SetBank
+                0x0000c8b2       0x44 hardware/network/enc28j60.o
+                0x0000c8b2                enc28j60SetBank
  .text.enc28j60Write
-                0x0000c80a       0x18 hardware/network/enc28j60.o
-                0x0000c80a                enc28j60Write
+                0x0000c8f6       0x18 hardware/network/enc28j60.o
+                0x0000c8f6                enc28j60Write
  .text.nicSetMacAddress
-                0x0000c822       0x3c hardware/network/enc28j60.o
-                0x0000c822                nicSetMacAddress
+                0x0000c90e       0x3c hardware/network/enc28j60.o
+                0x0000c90e                nicSetMacAddress
  .text.enc28j60ReadOp
-                0x0000c85e       0x3e hardware/network/enc28j60.o
-                0x0000c85e                enc28j60ReadOp
+                0x0000c94a       0x3e hardware/network/enc28j60.o
+                0x0000c94a                enc28j60ReadOp
  .text.enc28j60Read
-                0x0000c89c       0x10 hardware/network/enc28j60.o
-                0x0000c89c                enc28j60Read
+                0x0000c988       0x10 hardware/network/enc28j60.o
+                0x0000c988                enc28j60Read
  .text.enc28j60PacketSend
-                0x0000c8ac       0x6a hardware/network/enc28j60.o
-                0x0000c8ac                enc28j60PacketSend
+                0x0000c998       0x6a hardware/network/enc28j60.o
+                0x0000c998                enc28j60PacketSend
  .text.enc28j60GetRev
-                0x0000c916        0x8 hardware/network/enc28j60.o
-                0x0000c916                enc28j60GetRev
+                0x0000ca02        0x8 hardware/network/enc28j60.o
+                0x0000ca02                enc28j60GetRev
  .text.enc28j60PhyWrite
-                0x0000c91e       0x2e hardware/network/enc28j60.o
-                0x0000c91e                enc28j60PhyWrite
+                0x0000ca0a       0x2e hardware/network/enc28j60.o
+                0x0000ca0a                enc28j60PhyWrite
  .text.enc28j60Init
-                0x0000c94c       0xb4 hardware/network/enc28j60.o
-                0x0000c94c                enc28j60Init
+                0x0000ca38       0xb4 hardware/network/enc28j60.o
+                0x0000ca38                enc28j60Init
  .text.enc28j60PhyRead
-                0x0000ca00       0x3a hardware/network/enc28j60.o
-                0x0000ca00                enc28j60PhyRead
+                0x0000caec       0x3a hardware/network/enc28j60.o
+                0x0000caec                enc28j60PhyRead
  .text.enc28j60Linkcheck
-                0x0000ca3a       0x12 hardware/network/enc28j60.o
-                0x0000ca3a                enc28j60Linkcheck
+                0x0000cb26       0x12 hardware/network/enc28j60.o
+                0x0000cb26                enc28j60Linkcheck
  .text.enc28j60EnableFullDuplex
-                0x0000ca4c       0x3c hardware/network/enc28j60.o
-                0x0000ca4c                enc28j60EnableFullDuplex
+                0x0000cb38       0x3c hardware/network/enc28j60.o
+                0x0000cb38                enc28j60EnableFullDuplex
  .text.enc28j60ReadBuffer
-                0x0000ca88       0x40 hardware/network/enc28j60.o
-                0x0000ca88                enc28j60ReadBuffer
+                0x0000cb74       0x40 hardware/network/enc28j60.o
+                0x0000cb74                enc28j60ReadBuffer
  .text.enc28j60PacketReceive
-                0x0000cac8      0x126 hardware/network/enc28j60.o
-                0x0000cac8                enc28j60PacketReceive
+                0x0000cbb4      0x126 hardware/network/enc28j60.o
+                0x0000cbb4                enc28j60PacketReceive
  .text.MemTestValue
-                0x0000cbee       0x30 hardware/memory/xram.o
- .text.LED_off  0x0000cc1e       0x14 hardware/led/led_core.o
-                0x0000cc1e                LED_off
- .text.LED_on   0x0000cc32       0x14 hardware/led/led_core.o
-                0x0000cc32                LED_on
+                0x0000ccda       0x30 hardware/memory/xram.o
+ .text.LED_off  0x0000cd0a       0x14 hardware/led/led_core.o
+                0x0000cd0a                LED_off
+ .text.LED_on   0x0000cd1e       0x14 hardware/led/led_core.o
+                0x0000cd1e                LED_on
  .text.LED_init
-                0x0000cc46       0x28 hardware/led/led_core.o
-                0x0000cc46                LED_init
+                0x0000cd32       0x28 hardware/led/led_core.o
+                0x0000cd32                LED_init
  .text.SPI0_init
-                0x0000cc6e       0x18 hardware/spi/spi_0.o
-                0x0000cc6e                SPI0_init
+                0x0000cd5a       0x18 hardware/spi/spi_0.o
+                0x0000cd5a                SPI0_init
  .text.SPI0_ReadWrite
-                0x0000cc86        0xc hardware/spi/spi_0.o
-                0x0000cc86                SPI0_ReadWrite
+                0x0000cd72        0xc hardware/spi/spi_0.o
+                0x0000cd72                SPI0_ReadWrite
  .text.SPI0_FastMem2Write
-                0x0000cc92       0x2c hardware/spi/spi_0.o
-                0x0000cc92                SPI0_FastMem2Write
+                0x0000cd7e       0x2c hardware/spi/spi_0.o
+                0x0000cd7e                SPI0_FastMem2Write
  .text.SPI0_FastRead2Mem
-                0x0000ccbe       0x2e hardware/spi/spi_0.o
-                0x0000ccbe                SPI0_FastRead2Mem
+                0x0000cdaa       0x2e hardware/spi/spi_0.o
+                0x0000cdaa                SPI0_FastRead2Mem
  .text.SPI1_init
-                0x0000ccec       0x1c hardware/spi/spi_1.o
-                0x0000ccec                SPI1_init
+                0x0000cdd8       0x1c hardware/spi/spi_1.o
+                0x0000cdd8                SPI1_init
  .text.SPI1_ReadWrite
-                0x0000cd08       0x1c hardware/spi/spi_1.o
-                0x0000cd08                SPI1_ReadWrite
+                0x0000cdf4       0x1c hardware/spi/spi_1.o
+                0x0000cdf4                SPI1_ReadWrite
  .text.SPI1_FastMem2Write
-                0x0000cd24       0x36 hardware/spi/spi_1.o
-                0x0000cd24                SPI1_FastMem2Write
+                0x0000ce10       0x36 hardware/spi/spi_1.o
+                0x0000ce10                SPI1_FastMem2Write
  .text.SPI1_FastRead2Mem
-                0x0000cd5a       0x3e hardware/spi/spi_1.o
-                0x0000cd5a                SPI1_FastRead2Mem
+                0x0000ce46       0x3e hardware/spi/spi_1.o
+                0x0000ce46                SPI1_FastRead2Mem
  .text.SPI2_init
-                0x0000cd98        0xc hardware/spi/spi_2.o
-                0x0000cd98                SPI2_init
+                0x0000ce84        0xc hardware/spi/spi_2.o
+                0x0000ce84                SPI2_init
  .text.SPI2_ReadWrite
-                0x0000cda4       0x34 hardware/spi/spi_2.o
-                0x0000cda4                SPI2_ReadWrite
+                0x0000ce90       0x34 hardware/spi/spi_2.o
+                0x0000ce90                SPI2_ReadWrite
  .text.SPI2_FastMem2Write
-                0x0000cdd8       0x42 hardware/spi/spi_2.o
-                0x0000cdd8                SPI2_FastMem2Write
+                0x0000cec4       0x42 hardware/spi/spi_2.o
+                0x0000cec4                SPI2_FastMem2Write
  .text.SPI2_FastRead2Mem
-                0x0000ce1a       0x38 hardware/spi/spi_2.o
-                0x0000ce1a                SPI2_FastRead2Mem
+                0x0000cf06       0x38 hardware/spi/spi_2.o
+                0x0000cf06                SPI2_FastRead2Mem
  .text.timer0_init
-                0x0000ce52       0x3a hardware/timer0/timer0.o
-                0x0000ce52                timer0_init
+                0x0000cf3e       0x3a hardware/timer0/timer0.o
+                0x0000cf3e                timer0_init
  .text.__vector_21
-                0x0000ce8c       0x5a hardware/timer0/timer0.o
-                0x0000ce8c                __vector_21
+                0x0000cf78       0x5a hardware/timer0/timer0.o
+                0x0000cf78                __vector_21
  .text.timer0_RegisterCallbackFunction
-                0x0000cee6       0x26 hardware/timer0/timer0.o
-                0x0000cee6                timer0_RegisterCallbackFunction
+                0x0000cfd2       0x26 hardware/timer0/timer0.o
+                0x0000cfd2                timer0_RegisterCallbackFunction
  .text.sd_raw_send_command
-                0x0000cf0c       0x9c hardware/sd_raw/sd_raw.o
+                0x0000cff8       0x9c hardware/sd_raw/sd_raw.o
  .text.unselect_card
-                0x0000cfa8       0x14 hardware/sd_raw/sd_raw.o
-                0x0000cfa8                unselect_card
+                0x0000d094       0x14 hardware/sd_raw/sd_raw.o
+                0x0000d094                unselect_card
  .text.select_card
-                0x0000cfbc       0x16 hardware/sd_raw/sd_raw.o
-                0x0000cfbc                select_card
+                0x0000d0a8       0x16 hardware/sd_raw/sd_raw.o
+                0x0000d0a8                select_card
  .text.sd_raw_read
-                0x0000cfd2      0x104 hardware/sd_raw/sd_raw.o
-                0x0000cfd2                sd_raw_read
+                0x0000d0be      0x104 hardware/sd_raw/sd_raw.o
+                0x0000d0be                sd_raw_read
  .text.sd_raw_read_interval
-                0x0000d0d6       0x88 hardware/sd_raw/sd_raw.o
-                0x0000d0d6                sd_raw_read_interval
+                0x0000d1c2       0x88 hardware/sd_raw/sd_raw.o
+                0x0000d1c2                sd_raw_read_interval
  .text.sd_raw_write
-                0x0000d15e      0x12e hardware/sd_raw/sd_raw.o
-                0x0000d15e                sd_raw_write
+                0x0000d24a      0x12e hardware/sd_raw/sd_raw.o
+                0x0000d24a                sd_raw_write
  .text.sd_raw_write_interval
-                0x0000d28c       0x88 hardware/sd_raw/sd_raw.o
-                0x0000d28c                sd_raw_write_interval
+                0x0000d378       0x88 hardware/sd_raw/sd_raw.o
+                0x0000d378                sd_raw_write_interval
  .text.sd_raw_init
-                0x0000d314      0x102 hardware/sd_raw/sd_raw.o
-                0x0000d314                sd_raw_init
- .text.icmp     0x0000d416       0xe8 system/net/icmp.o
-                0x0000d416                icmp
+                0x0000d400      0x102 hardware/sd_raw/sd_raw.o
+                0x0000d400                sd_raw_init
+ .text.icmp     0x0000d502       0xe8 system/net/icmp.o
+                0x0000d502                icmp
  .text.UDP_GetSocketState
-                0x0000d4fe       0x36 system/net/udp.o
-                0x0000d4fe                UDP_GetSocketState
+                0x0000d5ea       0x36 system/net/udp.o
+                0x0000d5ea                UDP_GetSocketState
  .text.UDP_GetByteInBuffer
-                0x0000d534       0x34 system/net/udp.o
-                0x0000d534                UDP_GetByteInBuffer
+                0x0000d620       0x34 system/net/udp.o
+                0x0000d620                UDP_GetByteInBuffer
  .text.UDP_FreeBuffer
-                0x0000d568       0x40 system/net/udp.o
-                0x0000d568                UDP_FreeBuffer
+                0x0000d654       0x40 system/net/udp.o
+                0x0000d654                UDP_FreeBuffer
  .text.UDP_CloseSocket
-                0x0000d5a8       0x98 system/net/udp.o
-                0x0000d5a8                UDP_CloseSocket
+                0x0000d694       0x98 system/net/udp.o
+                0x0000d694                UDP_CloseSocket
  .text.UDP_init
-                0x0000d640       0x1a system/net/udp.o
-                0x0000d640                UDP_init
+                0x0000d72c       0x1a system/net/udp.o
+                0x0000d72c                UDP_init
  .text.UDP_Getfreesocket
-                0x0000d65a       0x2a system/net/udp.o
-                0x0000d65a                UDP_Getfreesocket
+                0x0000d746       0x2a system/net/udp.o
+                0x0000d746                UDP_Getfreesocket
  .text.MakeUDPheader
-                0x0000d684       0x8c system/net/udp.o
-                0x0000d684                MakeUDPheader
+                0x0000d770       0x8c system/net/udp.o
+                0x0000d770                MakeUDPheader
  .text.UDP_GetSocket
-                0x0000d710      0x120 system/net/udp.o
-                0x0000d710                UDP_GetSocket
- .text.udp      0x0000d830      0x150 system/net/udp.o
-                0x0000d830                udp
+                0x0000d7fc      0x120 system/net/udp.o
+                0x0000d7fc                UDP_GetSocket
+ .text.udp      0x0000d91c      0x150 system/net/udp.o
+                0x0000d91c                udp
  .text.UDP_SendPacket
-                0x0000d980       0xca system/net/udp.o
-                0x0000d980                UDP_SendPacket
+                0x0000da6c       0xca system/net/udp.o
+                0x0000da6c                UDP_SendPacket
  .text.UDP_RegisterSocket
-                0x0000da4a      0x18a system/net/udp.o
-                0x0000da4a                UDP_RegisterSocket
- .text.LockTCP  0x0000dbd4        0x6 system/net/tcp.o
-                0x0000dbd4                LockTCP
- .text.FreeTCP  0x0000dbda        0x8 system/net/tcp.o
-                0x0000dbda                FreeTCP
+                0x0000db36      0x18a system/net/udp.o
+                0x0000db36                UDP_RegisterSocket
+ .text.LockTCP  0x0000dcc0        0x6 system/net/tcp.o
+                0x0000dcc0                LockTCP
+ .text.FreeTCP  0x0000dcc6        0x8 system/net/tcp.o
+                0x0000dcc6                FreeTCP
  .text.Getfreesocket
-                0x0000dbe2       0x3a system/net/tcp.o
-                0x0000dbe2                Getfreesocket
+                0x0000dcce       0x3a system/net/tcp.o
+                0x0000dcce                Getfreesocket
  .text.RegisterTCPPort
-                0x0000dc1c       0x34 system/net/tcp.o
-                0x0000dc1c                RegisterTCPPort
+                0x0000dd08       0x34 system/net/tcp.o
+                0x0000dd08                RegisterTCPPort
  .text.CheckPortInList
-                0x0000dc50       0x32 system/net/tcp.o
-                0x0000dc50                CheckPortInList
+                0x0000dd3c       0x32 system/net/tcp.o
+                0x0000dd3c                CheckPortInList
  .text.CheckPortRequest
-                0x0000dc82       0x56 system/net/tcp.o
-                0x0000dc82                CheckPortRequest
+                0x0000dd6e       0x56 system/net/tcp.o
+                0x0000dd6e                CheckPortRequest
  .text.CheckSocketState
-                0x0000dcd8       0x26 system/net/tcp.o
-                0x0000dcd8                CheckSocketState
+                0x0000ddc4       0x26 system/net/tcp.o
+                0x0000ddc4                CheckSocketState
  .text.FlushSocketData
-                0x0000dcfe       0x32 system/net/tcp.o
-                0x0000dcfe                FlushSocketData
+                0x0000ddea       0x32 system/net/tcp.o
+                0x0000ddea                FlushSocketData
  .text.GetBytesInSocketData
-                0x0000dd30       0x32 system/net/tcp.o
-                0x0000dd30                GetBytesInSocketData
+                0x0000de1c       0x32 system/net/tcp.o
+                0x0000de1c                GetBytesInSocketData
  .text.TCP_pharseOptions
-                0x0000dd62       0x90 system/net/tcp.o
-                0x0000dd62                TCP_pharseOptions
+                0x0000de4e       0x90 system/net/tcp.o
+                0x0000de4e                TCP_pharseOptions
  .text.CopyTCPdata2socketbuffer
-                0x0000ddf2       0x9c system/net/tcp.o
-                0x0000ddf2                CopyTCPdata2socketbuffer
+                0x0000dede       0x9c system/net/tcp.o
+                0x0000dede                CopyTCPdata2socketbuffer
  .text.GetSocket
-                0x0000de8e       0xd6 system/net/tcp.o
-                0x0000de8e                GetSocket
+                0x0000df7a       0xd6 system/net/tcp.o
+                0x0000df7a                GetSocket
  .text.RegisterSocket
-                0x0000df64      0x160 system/net/tcp.o
-                0x0000df64                RegisterSocket
+                0x0000e050      0x160 system/net/tcp.o
+                0x0000e050                RegisterSocket
  .text.MakeTCPheader
-                0x0000e0c4      0x292 system/net/tcp.o
-                0x0000e0c4                MakeTCPheader
+                0x0000e1b0      0x292 system/net/tcp.o
+                0x0000e1b0                MakeTCPheader
  .text.Connect2IP
-                0x0000e356      0x252 system/net/tcp.o
-                0x0000e356                Connect2IP
+                0x0000e442      0x252 system/net/tcp.o
+                0x0000e442                Connect2IP
  .text.GetByteFromSocketData
-                0x0000e5a8       0x90 system/net/tcp.o
-                0x0000e5a8                GetByteFromSocketData
+                0x0000e694       0x90 system/net/tcp.o
+                0x0000e694                GetByteFromSocketData
  .text.GetSocketData
-                0x0000e638      0x10c system/net/tcp.o
-                0x0000e638                GetSocketData
+                0x0000e724      0x10c system/net/tcp.o
+                0x0000e724                GetSocketData
  .text.SendData_RPE
-                0x0000e744      0x1dc system/net/tcp.o
-                0x0000e744                SendData_RPE
+                0x0000e830      0x1dc system/net/tcp.o
+                0x0000e830                SendData_RPE
  .text.CloseTCPSocket
-                0x0000e920      0x166 system/net/tcp.o
-                0x0000e920                CloseTCPSocket
+                0x0000ea0c      0x166 system/net/tcp.o
+                0x0000ea0c                CloseTCPSocket
  .text.PutSocketData_RPE
-                0x0000ea86      0x11e system/net/tcp.o
-                0x0000ea86                PutSocketData_RPE
+                0x0000eb72      0x11e system/net/tcp.o
+                0x0000eb72                PutSocketData_RPE
  .text.TCPTimeOutHandler
-                0x0000eba4       0xdc system/net/tcp.o
-                0x0000eba4                TCPTimeOutHandler
- .text.tcp      0x0000ec80      0x7ac system/net/tcp.o
-                0x0000ec80                tcp
+                0x0000ec90       0xdc system/net/tcp.o
+                0x0000ec90                TCPTimeOutHandler
+ .text.tcp      0x0000ed6c      0x7ac system/net/tcp.o
+                0x0000ed6c                tcp
  .text.tcp_init
-                0x0000f42c       0xd6 system/net/tcp.o
-                0x0000f42c                tcp_init
+                0x0000f518       0xd6 system/net/tcp.o
+                0x0000f518                tcp_init
  .text.MakeETHheader
-                0x0000f502       0x36 system/net/ethernet.o
-                0x0000f502                MakeETHheader
+                0x0000f5ee       0x36 system/net/ethernet.o
+                0x0000f5ee                MakeETHheader
  .text.FreeEthernet
-                0x0000f538       0x4e system/net/ethernet.o
-                0x0000f538                FreeEthernet
+                0x0000f624       0x4e system/net/ethernet.o
+                0x0000f624                FreeEthernet
  .text.LockEthernet
-                0x0000f586       0x4e system/net/ethernet.o
-                0x0000f586                LockEthernet
+                0x0000f672       0x4e system/net/ethernet.o
+                0x0000f672                LockEthernet
  .text.sendEthernetframe
-                0x0000f5d4       0x70 system/net/ethernet.o
-                0x0000f5d4                sendEthernetframe
+                0x0000f6c0       0x70 system/net/ethernet.o
+                0x0000f6c0                sendEthernetframe
  .text.EthernetInit
-                0x0000f644       0x5c system/net/ethernet.o
-                0x0000f644                EthernetInit
+                0x0000f730       0x5c system/net/ethernet.o
+                0x0000f730                EthernetInit
  .text.ethernet
-                0x0000f6a0       0xac system/net/ethernet.o
-                0x0000f6a0                ethernet
+                0x0000f78c       0xac system/net/ethernet.o
+                0x0000f78c                ethernet
  .text.ARP_Timeouthandler
-                0x0000f74c       0x1a system/net/arp.o
-                0x0000f74c                ARP_Timeouthandler
+                0x0000f838       0x1a system/net/arp.o
+                0x0000f838                ARP_Timeouthandler
  .text.GetARPtableEntry
-                0x0000f766       0x86 system/net/arp.o
-                0x0000f766                GetARPtableEntry
+                0x0000f852       0x86 system/net/arp.o
+                0x0000f852                GetARPtableEntry
  .text.mactostr
-                0x0000f7ec       0x8c system/net/arp.o
-                0x0000f7ec                mactostr
- .text.arp      0x0000f878      0x12c system/net/arp.o
-                0x0000f878                arp
+                0x0000f8d8       0x8c system/net/arp.o
+                0x0000f8d8                mactostr
+ .text.arp      0x0000f964      0x12c system/net/arp.o
+                0x0000f964                arp
  .text.GetIP2MAC
-                0x0000f9a4      0x224 system/net/arp.o
-                0x0000f9a4                GetIP2MAC
+                0x0000fa90      0x224 system/net/arp.o
+                0x0000fa90                GetIP2MAC
  .text.ARP_INIT
-                0x0000fbc8       0x1a system/net/arp.o
-                0x0000fbc8                ARP_INIT
- .text.iptostr  0x0000fbe2       0x62 system/net/ip.o
-                0x0000fbe2                iptostr
- .text.strtoip  0x0000fc44       0xa6 system/net/ip.o
-                0x0000fc44                strtoip
+                0x0000fcb4       0x1a system/net/arp.o
+                0x0000fcb4                ARP_INIT
+ .text.iptostr  0x0000fcce       0x62 system/net/ip.o
+                0x0000fcce                iptostr
+ .text.strtoip  0x0000fd30       0xa6 system/net/ip.o
+                0x0000fd30                strtoip
  .text.MakeIPheader
-                0x0000fcea       0xa6 system/net/ip.o
-                0x0000fcea                MakeIPheader
- .text.ip       0x0000fd90       0x78 system/net/ip.o
-                0x0000fd90                ip
+                0x0000fdd6       0xa6 system/net/ip.o
+                0x0000fdd6                MakeIPheader
+ .text.ip       0x0000fe7c       0x78 system/net/ip.o
+                0x0000fe7c                ip
  .text.DHCP_AddOption
-                0x0000fe08      0x1c0 system/net/dhcpc.o
-                0x0000fe08                DHCP_AddOption
+                0x0000fef4      0x1c0 system/net/dhcpc.o
+                0x0000fef4                DHCP_AddOption
  .text.DHCP_buildheader
-                0x0000ffc8       0xce system/net/dhcpc.o
-                0x0000ffc8                DHCP_buildheader
+                0x000100b4       0xce system/net/dhcpc.o
+                0x000100b4                DHCP_buildheader
  .text.DHCP_ParseOption
-                0x00010096      0x114 system/net/dhcpc.o
-                0x00010096                DHCP_ParseOption
+                0x00010182      0x114 system/net/dhcpc.o
+                0x00010182                DHCP_ParseOption
  .text.DHCP_SendRequest
-                0x000101aa      0x17e system/net/dhcpc.o
-                0x000101aa                DHCP_SendRequest
+                0x00010296      0x17e system/net/dhcpc.o
+                0x00010296                DHCP_SendRequest
  .text.DHCP_SendDiscover
-                0x00010328      0x120 system/net/dhcpc.o
-                0x00010328                DHCP_SendDiscover
+                0x00010414      0x120 system/net/dhcpc.o
+                0x00010414                DHCP_SendDiscover
  .text.DHCP_GetConfig
-                0x00010448      0x11c system/net/dhcpc.o
-                0x00010448                DHCP_GetConfig
+                0x00010534      0x11c system/net/dhcpc.o
+                0x00010534                DHCP_GetConfig
  .text.NTP_GetTime
-                0x00010564      0x1e2 system/net/ntp.o
-                0x00010564                NTP_GetTime
+                0x00010650      0x1e2 system/net/ntp.o
+                0x00010650                NTP_GetTime
  .text.DNS_convertHostName
-                0x00010746       0x70 system/net/dns.o
-                0x00010746                DNS_convertHostName
+                0x00010832       0x70 system/net/dns.o
+                0x00010832                DNS_convertHostName
  .text.DNS_ResolveName
-                0x000107b6      0x17a system/net/dns.o
-                0x000107b6                DNS_ResolveName
+                0x000108a2      0x17a system/net/dns.o
+                0x000108a2                DNS_ResolveName
  .text.DNS_ResolveName_P
-                0x00010930       0x28 system/net/dns.o
-                0x00010930                DNS_ResolveName_P
+                0x00010a1c       0x28 system/net/dns.o
+                0x00010a1c                DNS_ResolveName_P
  .text.network_init
-                0x00010958      0x4ec system/net/network.o
-                0x00010958                network_init
+                0x00010a44      0x4ec system/net/network.o
+                0x00010a44                network_init
  .text.ChangeEndian16bit
-                0x00010e44        0xc system/math/math.o
-                0x00010e44                ChangeEndian16bit
+                0x00010f30        0xc system/math/math.o
+                0x00010f30                ChangeEndian16bit
  .text.Checksum_16
-                0x00010e50       0x86 system/math/checksum.o
-                0x00010e50                Checksum_16
+                0x00010f3c       0x86 system/math/checksum.o
+                0x00010f3c                Checksum_16
  .text.STDOUT_INIT
-                0x00010ed6       0x38 system/stdout/stdout.o
-                0x00010ed6                STDOUT_INIT
+                0x00010fc2       0x38 system/stdout/stdout.o
+                0x00010fc2                STDOUT_INIT
  .text.STDOUT_Flush
-                0x00010f0e       0x3c system/stdout/stdout.o
-                0x00010f0e                STDOUT_Flush
+                0x00010ffa       0x3c system/stdout/stdout.o
+                0x00010ffa                STDOUT_Flush
  .text.STDOUT_set
-                0x00010f4a       0x2e system/stdout/stdout.o
-                0x00010f4a                STDOUT_set
+                0x00011036       0x2e system/stdout/stdout.o
+                0x00011036                STDOUT_set
  .text.STDOUT_restore
-                0x00010f78       0x1c system/stdout/stdout.o
-                0x00010f78                STDOUT_restore
+                0x00011064       0x1c system/stdout/stdout.o
+                0x00011064                STDOUT_restore
  .text.STDOUT_save
-                0x00010f94       0x1c system/stdout/stdout.o
-                0x00010f94                STDOUT_save
+                0x00011080       0x1c system/stdout/stdout.o
+                0x00011080                STDOUT_save
  .text.STDOUT_Get_Byte
-                0x00010fb0       0x5a system/stdout/stdout.o
-                0x00010fb0                STDOUT_Get_Byte
+                0x0001109c       0x5a system/stdout/stdout.o
+                0x0001109c                STDOUT_Get_Byte
  .text.STDOUT_Send_Byte
-                0x0001100a       0x5a system/stdout/stdout.o
-                0x0001100a                STDOUT_Send_Byte
+                0x000110f6       0x5a system/stdout/stdout.o
+                0x000110f6                STDOUT_Send_Byte
  .text.setprotectConfig
-                0x00011064        0xa system/config/eeconfig.o
-                0x00011064                setprotectConfig
+                0x00011150        0xa system/config/eeconfig.o
+                0x00011150                setprotectConfig
  .text.getConfigsizeUsed
-                0x0001106e       0x52 system/config/eeconfig.o
-                0x0001106e                getConfigsizeUsed
+                0x0001115a       0x52 system/config/eeconfig.o
+                0x0001115a                getConfigsizeUsed
  .text.checkConfigName
-                0x000110c0       0xd0 system/config/eeconfig.o
-                0x000110c0                checkConfigName
+                0x000111ac       0xd0 system/config/eeconfig.o
+                0x000111ac                checkConfigName
  .text.checkConfigName_P
-                0x00011190       0x50 system/config/eeconfig.o
-                0x00011190                checkConfigName_P
+                0x0001127c       0x50 system/config/eeconfig.o
+                0x0001127c                checkConfigName_P
  .text.deleteConfig
-                0x000111e0       0xda system/config/eeconfig.o
-                0x000111e0                deleteConfig
+                0x000112cc       0xda system/config/eeconfig.o
+                0x000112cc                deleteConfig
  .text.deleteConfig_P
-                0x000112ba       0x50 system/config/eeconfig.o
-                0x000112ba                deleteConfig_P
+                0x000113a6       0x50 system/config/eeconfig.o
+                0x000113a6                deleteConfig_P
  .text.writeConfig
-                0x0001130a       0xe4 system/config/eeconfig.o
-                0x0001130a                writeConfig
+                0x000113f6       0xe4 system/config/eeconfig.o
+                0x000113f6                writeConfig
  .text.changeConfig
-                0x000113ee       0x2c system/config/eeconfig.o
-                0x000113ee                changeConfig
+                0x000114da       0x2c system/config/eeconfig.o
+                0x000114da                changeConfig
  .text.changeConfig_P
-                0x0001141a       0x54 system/config/eeconfig.o
-                0x0001141a                changeConfig_P
+                0x00011506       0x54 system/config/eeconfig.o
+                0x00011506                changeConfig_P
  .text.readConfig
-                0x0001146e       0xe0 system/config/eeconfig.o
-                0x0001146e                readConfig
+                0x0001155a       0xe0 system/config/eeconfig.o
+                0x0001155a                readConfig
  .text.readConfig_P
-                0x0001154e       0x54 system/config/eeconfig.o
-                0x0001154e                readConfig_P
+                0x0001163a       0x54 system/config/eeconfig.o
+                0x0001163a                readConfig_P
  .text.makeConfig
-                0x000115a2       0x5a system/config/eeconfig.o
-                0x000115a2                makeConfig
+                0x0001168e       0x5a system/config/eeconfig.o
+                0x0001168e                makeConfig
  .text.PrintConfig
-                0x000115fc      0x130 system/config/eeconfig.o
-                0x000115fc                PrintConfig
+                0x000116e8      0x130 system/config/eeconfig.o
+                0x000116e8                PrintConfig
  .text.findConfig
-                0x0001172c       0xc2 system/config/eeconfig.o
-                0x0001172c                findConfig
+                0x00011818       0xc2 system/config/eeconfig.o
+                0x00011818                findConfig
  .text.Config_Init
-                0x000117ee        0xe system/config/eeconfig.o
-                0x000117ee                Config_Init
+                0x000118da        0xe system/config/eeconfig.o
+                0x000118da                Config_Init
  .text.softreset
-                0x000117fc       0x5a system/softreset/softreset.o
-                0x000117fc                softreset
+                0x000118e8       0x5a system/softreset/softreset.o
+                0x000118e8                softreset
  .text.INIT_FIFO
-                0x00011856       0x22 system/buffer/fifo.o
-                0x00011856                INIT_FIFO
+                0x00011942       0x22 system/buffer/fifo.o
+                0x00011942                INIT_FIFO
  .text.Get_FIFO
-                0x00011878       0x58 system/buffer/fifo.o
-                0x00011878                Get_FIFO
+                0x00011964       0x58 system/buffer/fifo.o
+                0x00011964                Get_FIFO
  .text.Get_Bytes_in_FIFO
-                0x000118d0       0x32 system/buffer/fifo.o
-                0x000118d0                Get_Bytes_in_FIFO
+                0x000119bc       0x32 system/buffer/fifo.o
+                0x000119bc                Get_Bytes_in_FIFO
  .text.Put_Byte_in_FIFO
-                0x00011902       0xaa system/buffer/fifo.o
-                0x00011902                Put_Byte_in_FIFO
+                0x000119ee       0xaa system/buffer/fifo.o
+                0x000119ee                Put_Byte_in_FIFO
  .text.Get_Byte_from_FIFO
-                0x000119ac       0x92 system/buffer/fifo.o
-                0x000119ac                Get_Byte_from_FIFO
+                0x00011a98       0x92 system/buffer/fifo.o
+                0x00011a98                Get_Byte_from_FIFO
  .text.Flush_FIFO
-                0x00011a3e       0x3e system/buffer/fifo.o
-                0x00011a3e                Flush_FIFO
+                0x00011b2a       0x3e system/buffer/fifo.o
+                0x00011b2a                Flush_FIFO
  .text.Get_FIFOrestsize
-                0x00011a7c       0x34 system/buffer/fifo.o
-                0x00011a7c                Get_FIFOrestsize
+                0x00011b68       0x34 system/buffer/fifo.o
+                0x00011b68                Get_FIFOrestsize
  .text.Get_Block_from_FIFO
-                0x00011ab0       0xfe system/buffer/fifo.o
-                0x00011ab0                Get_Block_from_FIFO
+                0x00011b9c       0xfe system/buffer/fifo.o
+                0x00011b9c                Get_Block_from_FIFO
  .text.Put_Block_in_FIFO
-                0x00011bae      0x102 system/buffer/fifo.o
-                0x00011bae                Put_Block_in_FIFO
- .text.init     0x00011cb0      0x216 system/init.o
-                0x00011cb0                init
+                0x00011c9a      0x102 system/buffer/fifo.o
+                0x00011c9a                Put_Block_in_FIFO
+ .text.init     0x00011d9c      0x216 system/init.o
+                0x00011d9c                init
  .text.base64_encode
-                0x00011ec6       0xec system/base64/base64.o
-                0x00011ec6                base64_encode
+                0x00011fb2       0xec system/base64/base64.o
+                0x00011fb2                base64_encode
  .text.DYNDNS_pharseHTTPheader
-                0x00011fb2      0x164 system/net/dyndns.o
-                0x00011fb2                DYNDNS_pharseHTTPheader
+                0x0001209e      0x164 system/net/dyndns.o
+                0x0001209e                DYNDNS_pharseHTTPheader
  .text.DYNDNS_getPublicIP
-                0x00012116      0x15a system/net/dyndns.o
-                0x00012116                DYNDNS_getPublicIP
+                0x00012202      0x15a system/net/dyndns.o
+                0x00012202                DYNDNS_getPublicIP
  .text.DYNDNS_updateIP
-                0x00012270      0x162 system/net/dyndns.o
-                0x00012270                DYNDNS_updateIP
+                0x0001235c      0x162 system/net/dyndns.o
+                0x0001235c                DYNDNS_updateIP
  .text.THREAD_init
-                0x000123d2       0x20 system/thread/thread.o
-                0x000123d2                THREAD_init
+                0x000124be       0x20 system/thread/thread.o
+                0x000124be                THREAD_init
  .text.THREAD_RegisterThread
-                0x000123f2       0x56 system/thread/thread.o
-                0x000123f2                THREAD_RegisterThread
+                0x000124de       0x56 system/thread/thread.o
+                0x000124de                THREAD_RegisterThread
  .text.THREAD_mainloop
-                0x00012448       0x54 system/thread/thread.o
-                0x00012448                THREAD_mainloop
- .text.atoh     0x0001249c       0x24 system/string/string.o
-                0x0001249c                atoh
+                0x00012534       0x54 system/thread/thread.o
+                0x00012534                THREAD_mainloop
+ .text.atoh     0x00012588       0x24 system/string/string.o
+                0x00012588                atoh
  .text.strtobin
-                0x000124c0       0x8a system/string/string.o
-                0x000124c0                strtobin
- .text.htons    0x0001254a        0xc system/net/endian.o
-                0x0001254a                htons
- .text.htonl    0x00012556       0x16 system/net/endian.o
-                0x00012556                htonl
+                0x000125ac       0x8a system/string/string.o
+                0x000125ac                strtobin
+ .text.htons    0x00012636        0xc system/net/endian.o
+                0x00012636                htons
+ .text.htonl    0x00012642       0x16 system/net/endian.o
+                0x00012642                htonl
  .text.fat_get_next_cluster
-                0x0001256c       0x80 system/filesystem/fat.o
+                0x00012658       0x80 system/filesystem/fat.o
  .text.fat_free_clusters
-                0x000125ec       0xb4 system/filesystem/fat.o
+                0x000126d8       0xb4 system/filesystem/fat.o
  .text.fat_append_clusters
-                0x000126a0      0x142 system/filesystem/fat.o
+                0x0001278c      0x142 system/filesystem/fat.o
  .text.fat_clear_cluster_callback
-                0x000127e2        0x6 system/filesystem/fat.o
+                0x000128ce        0x6 system/filesystem/fat.o
  .text.fat_cluster_offset
-                0x000127e8       0x4c system/filesystem/fat.o
+                0x000128d4       0x4c system/filesystem/fat.o
  .text.fat_read_file
-                0x00012834      0x1d8 system/filesystem/fat.o
-                0x00012834                fat_read_file
+                0x00012920      0x1d8 system/filesystem/fat.o
+                0x00012920                fat_read_file
  .text.fat_reset_dir
-                0x00012a0c       0x1a system/filesystem/fat.o
-                0x00012a0c                fat_reset_dir
+                0x00012af8       0x1a system/filesystem/fat.o
+                0x00012af8                fat_reset_dir
  .text.fat_dir_entry_read_callback
-                0x00012a26      0x1ae system/filesystem/fat.o
+                0x00012b12      0x1ae system/filesystem/fat.o
  .text.fat_delete_file
-                0x00012bd4       0xc2 system/filesystem/fat.o
-                0x00012bd4                fat_delete_file
+                0x00012cc0       0xc2 system/filesystem/fat.o
+                0x00012cc0                fat_delete_file
  .text.fat_get_fs_free
-                0x00012c96       0xe4 system/filesystem/fat.o
-                0x00012c96                fat_get_fs_free
+                0x00012d82       0xe4 system/filesystem/fat.o
+                0x00012d82                fat_get_fs_free
  .text.fat_get_fs_free_16_callback
-                0x00012d7a       0x32 system/filesystem/fat.o
+                0x00012e66       0x32 system/filesystem/fat.o
  .text.fat_clear_cluster
-                0x00012dac       0x62 system/filesystem/fat.o
+                0x00012e98       0x62 system/filesystem/fat.o
  .text.fat_read_dir
-                0x00012e0e      0x138 system/filesystem/fat.o
-                0x00012e0e                fat_read_dir
+                0x00012efa      0x138 system/filesystem/fat.o
+                0x00012efa                fat_read_dir
  .text.fat_find_offset_for_dir_entry
-                0x00012f46      0x17e system/filesystem/fat.o
+                0x00013032      0x17e system/filesystem/fat.o
  .text.fat_write_dir_entry
-                0x000130c4      0x2fa system/filesystem/fat.o
+                0x000131b0      0x2fa system/filesystem/fat.o
  .text.fat_create_file
-                0x000133be       0xa6 system/filesystem/fat.o
-                0x000133be                fat_create_file
+                0x000134aa       0xa6 system/filesystem/fat.o
+                0x000134aa                fat_create_file
  .text.fat_resize_file
-                0x00013464      0x1d6 system/filesystem/fat.o
-                0x00013464                fat_resize_file
+                0x00013550      0x1d6 system/filesystem/fat.o
+                0x00013550                fat_resize_file
  .text.fat_seek_file
-                0x0001363a       0xaa system/filesystem/fat.o
-                0x0001363a                fat_seek_file
+                0x00013726       0xaa system/filesystem/fat.o
+                0x00013726                fat_seek_file
  .text.fat_write_file
-                0x000136e4      0x246 system/filesystem/fat.o
-                0x000136e4                fat_write_file
+                0x000137d0      0x246 system/filesystem/fat.o
+                0x000137d0                fat_write_file
  .text.fat_close_dir
-                0x0001392a        0xa system/filesystem/fat.o
-                0x0001392a                fat_close_dir
+                0x00013a16        0xa system/filesystem/fat.o
+                0x00013a16                fat_close_dir
  .text.fat_close_file
-                0x00013934        0xa system/filesystem/fat.o
-                0x00013934                fat_close_file
+                0x00013a20        0xa system/filesystem/fat.o
+                0x00013a20                fat_close_file
  .text.fat_open_dir
-                0x0001393e       0x62 system/filesystem/fat.o
-                0x0001393e                fat_open_dir
+                0x00013a2a       0x62 system/filesystem/fat.o
+                0x00013a2a                fat_open_dir
  .text.fat_open_file
-                0x000139a0       0x66 system/filesystem/fat.o
-                0x000139a0                fat_open_file
+                0x00013a8c       0x66 system/filesystem/fat.o
+                0x00013a8c                fat_open_file
  .text.fat_open
-                0x00013a06      0x2e2 system/filesystem/fat.o
-                0x00013a06                fat_open
+                0x00013af2      0x2e2 system/filesystem/fat.o
+                0x00013af2                fat_open
  .text.fat_get_dir_entry_of_path
-                0x00013ce8       0xfa system/filesystem/fat.o
-                0x00013ce8                fat_get_dir_entry_of_path
+                0x00013dd4       0xfa system/filesystem/fat.o
+                0x00013dd4                fat_get_dir_entry_of_path
  .text.partition_open
-                0x00013de2      0x1ac system/filesystem/partition.o
-                0x00013de2                partition_open
+                0x00013ece      0x1ac system/filesystem/partition.o
+                0x00013ece                partition_open
  .text.FILE_init
-                0x00013f8e       0x98 system/filesystem/filesystem.o
-                0x00013f8e                FILE_init
+                0x0001407a       0x98 system/filesystem/filesystem.o
+                0x0001407a                FILE_init
  .text.SHELL_init
-                0x00014026       0x20 system/shell/shell.o
-                0x00014026                SHELL_init
+                0x00014112       0x20 system/shell/shell.o
+                0x00014112                SHELL_init
  .text.SHELL_RegisterCMD
-                0x00014046       0x56 system/shell/shell.o
-                0x00014046                SHELL_RegisterCMD
+                0x00014132       0x56 system/shell/shell.o
+                0x00014132                SHELL_RegisterCMD
  .text.SHELL_runcmd
-                0x0001409c       0xce system/shell/shell.o
-                0x0001409c                SHELL_runcmd
+                0x00014188       0xce system/shell/shell.o
+                0x00014188                SHELL_runcmd
  .text.SHELL_pharse
-                0x0001416a       0xb8 system/shell/shell.o
-                0x0001416a                SHELL_pharse
+                0x00014256       0xb8 system/shell/shell.o
+                0x00014256                SHELL_pharse
  .text.SHELL_runcmdextern_P
-                0x00014222       0x38 system/shell/shell.o
-                0x00014222                SHELL_runcmdextern_P
+                0x0001430e       0x38 system/shell/shell.o
+                0x0001430e                SHELL_runcmdextern_P
  .text.SHELL_runcmdextern
-                0x0001425a       0x26 system/shell/shell.o
-                0x0001425a                SHELL_runcmdextern
+                0x00014346       0x26 system/shell/shell.o
+                0x00014346                SHELL_runcmdextern
  .text.httpd_thread
-                0x00014280      0x1f8 apps/httpd/httpd2.o
-                0x00014280                httpd_thread
+                0x0001436c      0x1f8 apps/httpd/httpd2.o
+                0x0001436c                httpd_thread
  .text.httpd_init
-                0x00014478       0x58 apps/httpd/httpd2.o
-                0x00014478                httpd_init
+                0x00014564       0x58 apps/httpd/httpd2.o
+                0x00014564                httpd_init
  .text.PharseCheckName_P
-                0x000144d0       0x52 apps/httpd/httpd2_pharse.o
-                0x000144d0                PharseCheckName_P
+                0x000145bc       0x52 apps/httpd/httpd2_pharse.o
+                0x000145bc                PharseCheckName_P
  .text.PharseGetValue_P
-                0x00014522       0x50 apps/httpd/httpd2_pharse.o
-                0x00014522                PharseGetValue_P
+                0x0001460e       0x50 apps/httpd/httpd2_pharse.o
+                0x0001460e                PharseGetValue_P
  .text.DecodeRequestString
-                0x00014572       0x6c apps/httpd/httpd2_pharse.o
-                0x00014572                DecodeRequestString
+                0x0001465e       0x6c apps/httpd/httpd2_pharse.o
+                0x0001465e                DecodeRequestString
  .text.PharseRequest
-                0x000145de      0x17e apps/httpd/httpd2_pharse.o
-                0x000145de                PharseRequest
+                0x000146ca      0x17e apps/httpd/httpd2_pharse.o
+                0x000146ca                PharseRequest
  .text.cgi_init
-                0x0001475c       0x20 apps/httpd/cgibin/cgi-bin.o
-                0x0001475c                cgi_init
+                0x00014848       0x20 apps/httpd/cgibin/cgi-bin.o
+                0x00014848                cgi_init
  .text.cgi_RegisterCGI
-                0x0001477c       0x56 apps/httpd/cgibin/cgi-bin.o
-                0x0001477c                cgi_RegisterCGI
+                0x00014868       0x56 apps/httpd/cgibin/cgi-bin.o
+                0x00014868                cgi_RegisterCGI
  .text.cgi_PrintHttpheaderEnd
-                0x000147d2       0x1a apps/httpd/cgibin/cgi-bin.o
-                0x000147d2                cgi_PrintHttpheaderEnd
+                0x000148be       0x1a apps/httpd/cgibin/cgi-bin.o
+                0x000148be                cgi_PrintHttpheaderEnd
  .text.cgi_PrintHttpheaderStart
-                0x000147ec       0x1a apps/httpd/cgibin/cgi-bin.o
-                0x000147ec                cgi_PrintHttpheaderStart
+                0x000148d8       0x1a apps/httpd/cgibin/cgi-bin.o
+                0x000148d8                cgi_PrintHttpheaderStart
  .text.check_cgibin
-                0x00014806       0x86 apps/httpd/cgibin/cgi-bin.o
-                0x00014806                check_cgibin
+                0x000148f2       0x86 apps/httpd/cgibin/cgi-bin.o
+                0x000148f2                check_cgibin
  .text.check_files
-                0x0001488c      0x4a8 apps/httpd/files.o
-                0x0001488c                check_files
+                0x00014978      0x4a8 apps/httpd/files.o
+                0x00014978                check_files
  .text.telnet_thread
-                0x00014d34      0x1de apps/telnet/telnet.o
-                0x00014d34                telnet_thread
+                0x00014e20      0x1de apps/telnet/telnet.o
+                0x00014e20                telnet_thread
  .text.telnet_init
-                0x00014f12       0x38 apps/telnet/telnet.o
-                0x00014f12                telnet_init
+                0x00014ffe       0x38 apps/telnet/telnet.o
+                0x00014ffe                telnet_init
  .text.CRON_checkhit
-                0x00014f4a       0xb0 apps/cron/cron.o
-                0x00014f4a                CRON_checkhit
+                0x00015036       0xb0 apps/cron/cron.o
+                0x00015036                CRON_checkhit
  .text.CRON_getentry
-                0x00014ffa       0x5a apps/cron/cron.o
-                0x00014ffa                CRON_getentry
+                0x000150e6       0x5a apps/cron/cron.o
+                0x000150e6                CRON_getentry
  .text.CRON_findentry
-                0x00015054       0x88 apps/cron/cron.o
-                0x00015054                CRON_findentry
+                0x00015140       0x88 apps/cron/cron.o
+                0x00015140                CRON_findentry
  .text.CRON_delentry
-                0x000150dc       0x5a apps/cron/cron.o
-                0x000150dc                CRON_delentry
+                0x000151c8       0x5a apps/cron/cron.o
+                0x000151c8                CRON_delentry
  .text.CRON_getfreeentry
-                0x00015136       0xfc apps/cron/cron.o
-                0x00015136                CRON_getfreeentry
+                0x00015222       0xfc apps/cron/cron.o
+                0x00015222                CRON_getfreeentry
  .text.CRON_addentry
-                0x00015232       0x6a apps/cron/cron.o
-                0x00015232                CRON_addentry
+                0x0001531e       0x6a apps/cron/cron.o
+                0x0001531e                CRON_addentry
  .text.CRON_exec
-                0x0001529c       0x98 apps/cron/cron.o
-                0x0001529c                CRON_exec
+                0x00015388       0x98 apps/cron/cron.o
+                0x00015388                CRON_exec
  .text.CRON_thread
-                0x00015334       0x56 apps/cron/cron.o
-                0x00015334                CRON_thread
+                0x00015420       0x56 apps/cron/cron.o
+                0x00015420                CRON_thread
  .text.CRON_init
-                0x0001538a       0x50 apps/cron/cron.o
-                0x0001538a                CRON_init
+                0x00015476       0x50 apps/cron/cron.o
+                0x00015476                CRON_init
  .text.CRON_reloadcrontable
-                0x000153da       0xd6 apps/cron/cron.o
-                0x000153da                CRON_reloadcrontable
+                0x000154c6       0xd6 apps/cron/cron.o
+                0x000154c6                CRON_reloadcrontable
  .text.apps_init
-                0x000154b0        0xa apps/apps_init.o
-                0x000154b0                apps_init
+                0x0001559c        0xa apps/apps_init.o
+                0x0001559c                apps_init
  .text.modul_init
-                0x000154ba       0x18 apps/modul_init.o
-                0x000154ba                modul_init
- .text.cgi_foo  0x000154d2        0x2 apps/modules/cmd_foo.o
-                0x000154d2                cgi_foo
+                0x000155a6       0x18 apps/modul_init.o
+                0x000155a6                modul_init
+ .text.cgi_foo  0x000155be        0x2 apps/modules/cmd_foo.o
+                0x000155be                cgi_foo
  .text.init_cmd_foo
-                0x000154d4        0xa apps/modules/cmd_foo.o
-                0x000154d4                init_cmd_foo
- .text.cmd_arp  0x000154de       0xd4 apps/modules/cmd_arp.o
-                0x000154de                cmd_arp
+                0x000155c0        0xa apps/modules/cmd_foo.o
+                0x000155c0                init_cmd_foo
+ .text.cmd_arp  0x000155ca       0xd4 apps/modules/cmd_arp.o
+                0x000155ca                cmd_arp
  .text.init_cmd_arp
-                0x000155b2        0xc apps/modules/cmd_arp.o
-                0x000155b2                init_cmd_arp
+                0x0001569e        0xc apps/modules/cmd_arp.o
+                0x0001569e                init_cmd_arp
  .text.cgi_stats
-                0x000155be       0xf2 apps/modules/cmd_stats.o
-                0x000155be                cgi_stats
+                0x000156aa       0xf2 apps/modules/cmd_stats.o
+                0x000156aa                cgi_stats
  .text.cmd_stats
-                0x000156b0      0x1a4 apps/modules/cmd_stats.o
-                0x000156b0                cmd_stats
+                0x0001579c      0x1a4 apps/modules/cmd_stats.o
+                0x0001579c                cmd_stats
  .text.init_cmd_stats
-                0x00015854       0x18 apps/modules/cmd_stats.o
-                0x00015854                init_cmd_stats
+                0x00015940       0x18 apps/modules/cmd_stats.o
+                0x00015940                init_cmd_stats
  .text.cgi_reset
-                0x0001586c       0xd0 apps/modules/cmd_reset.o
-                0x0001586c                cgi_reset
+                0x00015958       0xd0 apps/modules/cmd_reset.o
+                0x00015958                cgi_reset
  .text.cmd_reset
-                0x0001593c        0xa apps/modules/cmd_reset.o
-                0x0001593c                cmd_reset
+                0x00015a28        0xa apps/modules/cmd_reset.o
+                0x00015a28                cmd_reset
  .text.init_cmd_reset
-                0x00015946       0x18 apps/modules/cmd_reset.o
-                0x00015946                init_cmd_reset
- .text.cmd_dns  0x0001595e       0x90 apps/modules/cmd_dns.o
-                0x0001595e                cmd_dns
+                0x00015a32       0x18 apps/modules/cmd_reset.o
+                0x00015a32                init_cmd_reset
+ .text.cmd_dns  0x00015a4a       0x90 apps/modules/cmd_dns.o
+                0x00015a4a                cmd_dns
  .text.init_cmd_dns
-                0x000159ee        0xc apps/modules/cmd_dns.o
-                0x000159ee                init_cmd_dns
+                0x00015ada        0xc apps/modules/cmd_dns.o
+                0x00015ada                init_cmd_dns
  .text.cmd_ifconfig
-                0x000159fa      0x168 apps/modules/cmd_ifconfig.o
-                0x000159fa                cmd_ifconfig
+                0x00015ae6      0x168 apps/modules/cmd_ifconfig.o
+                0x00015ae6                cmd_ifconfig
  .text.cgi_network
-                0x00015b62      0x3ba apps/modules/cmd_ifconfig.o
-                0x00015b62                cgi_network
+                0x00015c4e      0x3ba apps/modules/cmd_ifconfig.o
+                0x00015c4e                cgi_network
  .text.init_cmd_ifconfig
-                0x00015f1c       0x18 apps/modules/cmd_ifconfig.o
-                0x00015f1c                init_cmd_ifconfig
- .text.cmd_ntp  0x00015f34      0x158 apps/modules/cmd_ntp.o
-                0x00015f34                cmd_ntp
+                0x00016008       0x18 apps/modules/cmd_ifconfig.o
+                0x00016008                init_cmd_ifconfig
+ .text.cmd_ntp  0x00016020      0x158 apps/modules/cmd_ntp.o
+                0x00016020                cmd_ntp
  .text.init_cmd_ntp
-                0x0001608c        0xc apps/modules/cmd_ntp.o
-                0x0001608c                init_cmd_ntp
+                0x00016178        0xc apps/modules/cmd_ntp.o
+                0x00016178                init_cmd_ntp
  .text.cgi_dyndns
-                0x00016098      0x208 apps/modules/cmd_dyndns.o
-                0x00016098                cgi_dyndns
+                0x00016184      0x208 apps/modules/cmd_dyndns.o
+                0x00016184                cgi_dyndns
  .text.cmd_dyndns
-                0x000162a0      0x112 apps/modules/cmd_dyndns.o
-                0x000162a0                cmd_dyndns
+                0x0001638c      0x112 apps/modules/cmd_dyndns.o
+                0x0001638c                cmd_dyndns
  .text.init_cmd_dyndns
-                0x000163b2       0x18 apps/modules/cmd_dyndns.o
-                0x000163b2                init_cmd_dyndns
+                0x0001649e       0x18 apps/modules/cmd_dyndns.o
+                0x0001649e                init_cmd_dyndns
  .text.cgi_cron
-                0x000163ca      0x29c apps/modules/cmd_cron.o
-                0x000163ca                cgi_cron
+                0x000164b6      0x29c apps/modules/cmd_cron.o
+                0x000164b6                cgi_cron
  .text.init_cmd_cron
-                0x00016666        0xc apps/modules/cmd_cron.o
-                0x00016666                init_cmd_cron
+                0x00016752        0xc apps/modules/cmd_cron.o
+                0x00016752                init_cmd_cron
  .text.cgi_eemem
-                0x00016672       0x46 apps/modules/cmd_eemem.o
-                0x00016672                cgi_eemem
+                0x0001675e       0x46 apps/modules/cmd_eemem.o
+                0x0001675e                cgi_eemem
  .text.cmd_eemem
-                0x000166b8      0x14c apps/modules/cmd_eemem.o
-                0x000166b8                cmd_eemem
+                0x000167a4      0x14c apps/modules/cmd_eemem.o
+                0x000167a4                cmd_eemem
  .text.init_cmd_eemem
-                0x00016804       0x18 apps/modules/cmd_eemem.o
-                0x00016804                init_cmd_eemem
+                0x000168f0       0x18 apps/modules/cmd_eemem.o
+                0x000168f0                init_cmd_eemem
  .text.ZeitUeberwachungInit
-                0x0001681c       0x1e iTelex/iTelex.o
-                0x0001681c                ZeitUeberwachungInit
+                0x00016908       0x1e iTelex/iTelex.o
+                0x00016908                ZeitUeberwachungInit
  .text.ZeitUeberwachungStart
-                0x0001683a       0x1a iTelex/iTelex.o
-                0x0001683a                ZeitUeberwachungStart
+                0x00016926       0x1a iTelex/iTelex.o
+                0x00016926                ZeitUeberwachungStart
  .text.ZeitUeberwachungEnde
-                0x00016854       0x72 iTelex/iTelex.o
-                0x00016854                ZeitUeberwachungEnde
+                0x00016940       0x72 iTelex/iTelex.o
+                0x00016940                ZeitUeberwachungEnde
  .text.Zufallswert
-                0x000168c6       0xb2 iTelex/iTelex.o
-                0x000168c6                Zufallswert
+                0x000169b2       0xb2 iTelex/iTelex.o
+                0x000169b2                Zufallswert
  .text.SeriellUmsetzInit
-                0x00016978       0x1a iTelex/iTelex.o
+                0x00016a64       0x1a iTelex/iTelex.o
  .text.ModusTwiVerbunden
-                0x00016992       0x4c iTelex/iTelex.o
+                0x00016a7e       0x4c iTelex/iTelex.o
  .text.SocketBufInit
-                0x000169de       0x28 iTelex/iTelex.o
-                0x000169de                SocketBufInit
+                0x00016aca       0x28 iTelex/iTelex.o
+                0x00016aca                SocketBufInit
  .text.TeilnehmerServerVerfuegbar
-                0x00016a06       0x98 iTelex/iTelex.o
-                0x00016a06                TeilnehmerServerVerfuegbar
+                0x00016af2       0x98 iTelex/iTelex.o
+                0x00016af2                TeilnehmerServerVerfuegbar
  .text.UseEEConfig
-                0x00016a9e       0x22 iTelex/iTelex.o
-                0x00016a9e                UseEEConfig
+                0x00016b8a       0x22 iTelex/iTelex.o
+                0x00016b8a                UseEEConfig
  .text.get_datetime
-                0x00016ac0       0x4c iTelex/iTelex.o
-                0x00016ac0                get_datetime
+                0x00016bac       0x4c iTelex/iTelex.o
+                0x00016bac                get_datetime
  .text.CheckTCPServerConnect
-                0x00016b0c      0x128 iTelex/iTelex.o
-                0x00016b0c                CheckTCPServerConnect
+                0x00016bf8      0x128 iTelex/iTelex.o
+                0x00016bf8                CheckTCPServerConnect
  .text.IntelHexWriteLine
-                0x00016c34       0xdc iTelex/iTelex.o
+                0x00016d20       0xdc iTelex/iTelex.o
  .text.RamHexdump
-                0x00016d10       0x7a iTelex/iTelex.o
+                0x00016dfc       0x7a iTelex/iTelex.o
  .text.ExternDurchwahlPruefen
-                0x00016d8a       0xe4 iTelex/iTelex.o
+                0x00016e76       0xe4 iTelex/iTelex.o
  .text.DurchwahlTabelleDekodieren
-                0x00016e6e       0xac iTelex/iTelex.o
+                0x00016f5a       0xac iTelex/iTelex.o
  .text.itelex_init1
-                0x00016f1a      0x7da iTelex/iTelex.o
-                0x00016f1a                itelex_init1
+                0x00017006      0x7da iTelex/iTelex.o
+                0x00017006                itelex_init1
  .text.__vector_12
-                0x000176f4       0xe0 iTelex/iTelex.o
-                0x000176f4                __vector_12
+                0x000177e0       0xe0 iTelex/iTelex.o
+                0x000177e0                __vector_12
  .text.SpeichereSpracheAlsLokal
-                0x000177d4       0x5e iTelex/iTelex.o
-                0x000177d4                SpeichereSpracheAlsLokal
+                0x000178c0       0x5e iTelex/iTelex.o
+                0x000178c0                SpeichereSpracheAlsLokal
  .text.AdresseZuWahlStr
-                0x00017832       0x58 iTelex/iTelex.o
-                0x00017832                AdresseZuWahlStr
+                0x0001791e       0x58 iTelex/iTelex.o
+                0x0001791e                AdresseZuWahlStr
  .text.ProtokollierenITelex_P
-                0x0001788a       0x26 iTelex/iTelex.o
+                0x00017976       0x26 iTelex/iTelex.o
  .text.TeilnehmerServerErfolgSpeichern
-                0x000178b0       0x60 iTelex/iTelex.o
-                0x000178b0                TeilnehmerServerErfolgSpeichern
+                0x0001799c       0x60 iTelex/iTelex.o
+                0x0001799c                TeilnehmerServerErfolgSpeichern
  .text.TeilnehmerServerFehlerSpeichern
-                0x00017910       0x74 iTelex/iTelex.o
-                0x00017910                TeilnehmerServerFehlerSpeichern
+                0x000179fc       0x74 iTelex/iTelex.o
+                0x000179fc                TeilnehmerServerFehlerSpeichern
  .text.AnwahlNummerInAsciiPuffer
-                0x00017984       0xa2 iTelex/iTelex.o
+                0x00017a70       0xa2 iTelex/iTelex.o
  .text.ZeichenInHtmlSendeText
-                0x00017a26       0x3c iTelex/iTelex.o
+                0x00017b12       0x3c iTelex/iTelex.o
  .text.CreditsLineID
-                0x00017a62       0x3c iTelex/iTelex.o
+                0x00017b4e       0x3c iTelex/iTelex.o
  .text.PruefeSprache
-                0x00017a9e      0x12c iTelex/iTelex.o
-                0x00017a9e                PruefeSprache
+                0x00017b8a      0x12c iTelex/iTelex.o
+                0x00017b8a                PruefeSprache
  .text.itelex_cgi_TwiTlnListe
-                0x00017bca      0x10c iTelex/iTelex.o
-                0x00017bca                itelex_cgi_TwiTlnListe
+                0x00017cb6      0x10c iTelex/iTelex.o
+                0x00017cb6                itelex_cgi_TwiTlnListe
  .text.itelex_cgi_config_sperren
-                0x00017cd6       0x40 iTelex/iTelex.o
-                0x00017cd6                itelex_cgi_config_sperren
+                0x00017dc2       0x40 iTelex/iTelex.o
+                0x00017dc2                itelex_cgi_config_sperren
  .text.itelex_cgi_msg_Out
-                0x00017d16      0x18e iTelex/iTelex.o
-                0x00017d16                itelex_cgi_msg_Out
+                0x00017e02      0x18e iTelex/iTelex.o
+                0x00017e02                itelex_cgi_msg_Out
  .text.SendeBusKdoSchluss
-                0x00017ea4       0x6a iTelex/iTelex.o
+                0x00017f90       0x6a iTelex/iTelex.o
  .text.itelex_cgi_debug
-                0x00017f0e      0xc42 iTelex/iTelex.o
-                0x00017f0e                itelex_cgi_debug
+                0x00017ffa      0xc42 iTelex/iTelex.o
+                0x00017ffa                itelex_cgi_debug
  .text.SendeStopkommando
-                0x00018b50       0x78 iTelex/iTelex.o
+                0x00018c3c       0x78 iTelex/iTelex.o
  .text.KommendInternAnwaehlen
-                0x00018bc8       0xc2 iTelex/iTelex.o
+                0x00018cb4       0xc2 iTelex/iTelex.o
  .text.ExterneVerbindungBeenden
-                0x00018c8a       0x74 iTelex/iTelex.o
+                0x00018d76       0x74 iTelex/iTelex.o
  .text.SchreibeZeichenInSendePuffer
-                0x00018cfe       0x54 iTelex/iTelex.o
+                0x00018dea       0x54 iTelex/iTelex.o
  .text.AsciiDruckPufferVerarbeiten
-                0x00018d52      0x2cc iTelex/iTelex.o
-                0x00018d52                AsciiDruckPufferVerarbeiten
+                0x00018e3e      0x308 iTelex/iTelex.o
+                0x00018e3e                AsciiDruckPufferVerarbeiten
  .text.itelex_timerEvent
-                0x0001901e      0x6b0 iTelex/iTelex.o
-                0x0001901e                itelex_timerEvent
+                0x00019146      0x6b0 iTelex/iTelex.o
+                0x00019146                itelex_timerEvent
  .text.ModusWechsel
-                0x000196ce      0x5e2 iTelex/iTelex.o
-                0x000196ce                ModusWechsel
+                0x000197f6      0x5e2 iTelex/iTelex.o
+                0x000197f6                ModusWechsel
  .text.itelex_init2
-                0x00019cb0      0x212 iTelex/iTelex.o
-                0x00019cb0                itelex_init2
+                0x00019dd8      0x212 iTelex/iTelex.o
+                0x00019dd8                itelex_init2
  .text.InterneVerbindungBeenden
-                0x00019ec2      0x116 iTelex/iTelex.o
-                0x00019ec2                InterneVerbindungBeenden
+                0x00019fea      0x116 iTelex/iTelex.o
+                0x00019fea                InterneVerbindungBeenden
  .text.Diagnoseausgabe_P
-                0x00019fd8       0xe6 iTelex/iTelex.o
-                0x00019fd8                Diagnoseausgabe_P
+                0x0001a100       0xe6 iTelex/iTelex.o
+                0x0001a100                Diagnoseausgabe_P
  .text.KonfigFreigabe
-                0x0001a0be      0x246 iTelex/iTelex.o
-                0x0001a0be                KonfigFreigabe
+                0x0001a1e6      0x246 iTelex/iTelex.o
+                0x0001a1e6                KonfigFreigabe
  .text.cgi_MemDump
-                0x0001a304       0x52 iTelex/iTelex.o
-                0x0001a304                cgi_MemDump
+                0x0001a42c       0x52 iTelex/iTelex.o
+                0x0001a42c                cgi_MemDump
  .text.cgi_SdDirectory
-                0x0001a356      0x36e iTelex/iTelex.o
-                0x0001a356                cgi_SdDirectory
+                0x0001a47e      0x36e iTelex/iTelex.o
+                0x0001a47e                cgi_SdDirectory
  .text.itelex_cgi_config_extern
-                0x0001a6c4      0x4d6 iTelex/iTelex.o
-                0x0001a6c4                itelex_cgi_config_extern
+                0x0001a7ec      0x4d6 iTelex/iTelex.o
+                0x0001a7ec                itelex_cgi_config_extern
  .text.itelex_cgi_config_intern
-                0x0001ab9a      0xa14 iTelex/iTelex.o
-                0x0001ab9a                itelex_cgi_config_intern
+                0x0001acc2      0xa14 iTelex/iTelex.o
+                0x0001acc2                itelex_cgi_config_intern
  .text.itelex_cgi_credits
-                0x0001b5ae      0x284 iTelex/iTelex.o
-                0x0001b5ae                itelex_cgi_credits
+                0x0001b6d6      0x284 iTelex/iTelex.o
+                0x0001b6d6                itelex_cgi_credits
  .text.PruefeSpracheUndKonfigFreigabe
-                0x0001b832       0x20 iTelex/iTelex.o
-                0x0001b832                PruefeSpracheUndKonfigFreigabe
+                0x0001b95a       0x20 iTelex/iTelex.o
+                0x0001b95a                PruefeSpracheUndKonfigFreigabe
  .text.WahlAbbruchMeldung
-                0x0001b852      0x192 iTelex/iTelex.o
+                0x0001b97a      0x192 iTelex/iTelex.o
  .text.ITelexOderAsciiEmpfangVerarbeiten
-                0x0001b9e4      0x7f6 iTelex/iTelex.o
+                0x0001bb0c      0x7f6 iTelex/iTelex.o
  .text.SonstigeAnwahl
-                0x0001c1da       0x74 iTelex/iTelex.o
-                0x0001c1da                SonstigeAnwahl
+                0x0001c302       0x74 iTelex/iTelex.o
+                0x0001c302                SonstigeAnwahl
  .text.itelex_cgi_msg_In
-                0x0001c24e      0x256 iTelex/iTelex.o
-                0x0001c24e                itelex_cgi_msg_In
+                0x0001c376      0x256 iTelex/iTelex.o
+                0x0001c376                itelex_cgi_msg_In
  .text.Verbindungsaufbau
-                0x0001c4a4      0x3ae iTelex/iTelex.o
-                0x0001c4a4                Verbindungsaufbau
+                0x0001c5cc      0x3ae iTelex/iTelex.o
+                0x0001c5cc                Verbindungsaufbau
  .text.TeilnehmerServerSocketOeffnen1
-                0x0001c852      0x19e iTelex/iTelex.o
-                0x0001c852                TeilnehmerServerSocketOeffnen1
+                0x0001c97a      0x19e iTelex/iTelex.o
+                0x0001c97a                TeilnehmerServerSocketOeffnen1
  .text.TeilnehmerServerSocketOeffnen
-                0x0001c9f0       0x76 iTelex/iTelex.o
-                0x0001c9f0                TeilnehmerServerSocketOeffnen
+                0x0001cb18       0x76 iTelex/iTelex.o
+                0x0001cb18                TeilnehmerServerSocketOeffnen
  .text.RufnummerBeiTlnServerAbfragen
-                0x0001ca66       0x72 iTelex/iTelex.o
+                0x0001cb8e       0x72 iTelex/iTelex.o
  .text.itelex_thread
-                0x0001cad8     0x2f52 iTelex/iTelex.o
-                0x0001cad8                itelex_thread
+                0x0001cc00     0x2fb2 iTelex/iTelex.o
+                0x0001cc00                itelex_thread
  .text.TlnMemSuche
-                0x0001fa2a       0x3c iTelex/TlnBuch.o
-                0x0001fa2a                TlnMemSuche
+                0x0001fbb2       0x3c iTelex/TlnBuch.o
+                0x0001fbb2                TlnMemSuche
  .text.EintragVergleichNummer
-                0x0001fa66       0xba iTelex/TlnBuch.o
+                0x0001fbee       0xba iTelex/TlnBuch.o
  .text.PruefsummeBerechnungSchritt
-                0x0001fb20       0xb4 iTelex/TlnBuch.o
+                0x0001fca8       0xb4 iTelex/TlnBuch.o
  .text.TlnBuchPruefsummeBerechnenSchritt
-                0x0001fbd4       0x72 iTelex/TlnBuch.o
-                0x0001fbd4                TlnBuchPruefsummeBerechnenSchritt
+                0x0001fd5c       0x72 iTelex/TlnBuch.o
+                0x0001fd5c                TlnBuchPruefsummeBerechnenSchritt
  .text.EintragVergleichDatum
-                0x0001fc46       0x6c iTelex/TlnBuch.o
+                0x0001fdce       0x6c iTelex/TlnBuch.o
  .text.TlnEintragGroesse
-                0x0001fcb2       0x76 iTelex/TlnBuch.o
+                0x0001fe3a       0x76 iTelex/TlnBuch.o
  .text.TlnBuchSortieren
-                0x0001fd28       0xe0 iTelex/TlnBuch.o
+                0x0001feb0       0xe0 iTelex/TlnBuch.o
  .text.EintragVergleichName
-                0x0001fe08        0xa iTelex/TlnBuch.o
+                0x0001ff90        0xa iTelex/TlnBuch.o
  .text.ExternEepromOeffnen
-                0x0001fe12       0x66 iTelex/TlnBuch.o
+                0x0001ff9a       0x66 iTelex/TlnBuch.o
  .text.TlnBuchLadeVonExternEeprom
-                0x0001fe78      0x19c iTelex/TlnBuch.o
-                0x0001fe78                TlnBuchLadeVonExternEeprom
+                0x00020000      0x19c iTelex/TlnBuch.o
+                0x00020000                TlnBuchLadeVonExternEeprom
  .text.TlnBuchInit
-                0x00020014       0xdc iTelex/TlnBuch.o
-                0x00020014                TlnBuchInit
+                0x0002019c       0xdc iTelex/TlnBuch.o
+                0x0002019c                TlnBuchInit
  .text.TlnSuchMusterPasst
-                0x000200f0       0x1e iTelex/TlnBuch.o
-                0x000200f0                TlnSuchMusterPasst
+                0x00020278       0x1e iTelex/TlnBuch.o
+                0x00020278                TlnSuchMusterPasst
  .text.TlnListerStart
-                0x0002010e       0x30 iTelex/TlnBuch.o
-                0x0002010e                TlnListerStart
+                0x00020296       0x30 iTelex/TlnBuch.o
+                0x00020296                TlnListerStart
  .text.TlnEintragen
-                0x0002013e      0x560 iTelex/TlnBuch.o
+                0x000202c6      0x560 iTelex/TlnBuch.o
  .text.TlnDatenInit
-                0x0002069e        0xc iTelex/TlnBuch.o
-                0x0002069e                TlnDatenInit
+                0x00020826        0xc iTelex/TlnBuch.o
+                0x00020826                TlnDatenInit
  .text.TlnLesen
-                0x000206aa      0x17e iTelex/TlnBuch.o
+                0x00020832      0x17e iTelex/TlnBuch.o
  .text.TlnBuchSpeichereAufExternEeprom
-                0x00020828      0x29e iTelex/TlnBuch.o
-                0x00020828                TlnBuchSpeichereAufExternEeprom
+                0x000209b0      0x29e iTelex/TlnBuch.o
+                0x000209b0                TlnBuchSpeichereAufExternEeprom
  .text.TlnListerNaechster
-                0x00020ac6       0x98 iTelex/TlnBuch.o
-                0x00020ac6                TlnListerNaechster
+                0x00020c4e       0x98 iTelex/TlnBuch.o
+                0x00020c4e                TlnListerNaechster
  .text.TlnHinzufuegen
-                0x00020b5e      0x150 iTelex/TlnBuch.o
-                0x00020b5e                TlnHinzufuegen
+                0x00020ce6      0x150 iTelex/TlnBuch.o
+                0x00020ce6                TlnHinzufuegen
  .text.TlnSuche
-                0x00020cae       0x46 iTelex/TlnBuch.o
-                0x00020cae                TlnSuche
+                0x00020e36       0x46 iTelex/TlnBuch.o
+                0x00020e36                TlnSuche
  .text.TlnBuchTabelleAusgabe
-                0x00020cf4      0x636 iTelex/TlnBuch.o
+                0x00020e7c      0x636 iTelex/TlnBuch.o
  .text.TlnBuch_Anzeige_CGI
-                0x0002132a      0xf44 iTelex/TlnBuch.o
-                0x0002132a                TlnBuch_Anzeige_CGI
+                0x000214b2      0xf44 iTelex/TlnBuch.o
+                0x000214b2                TlnBuch_Anzeige_CGI
  .text.CgiFormFinish_P
-                0x0002226e       0x40 iTelex/CgiFormTools.o
-                0x0002226e                CgiFormFinish_P
+                0x000223f6       0x40 iTelex/CgiFormTools.o
+                0x000223f6                CgiFormFinish_P
  .text.CgiFormDropdown_P
-                0x000222ae      0x108 iTelex/CgiFormTools.o
-                0x000222ae                CgiFormDropdown_P
+                0x00022436      0x108 iTelex/CgiFormTools.o
+                0x00022436                CgiFormDropdown_P
  .text.CgiFormFieldIntro_P
-                0x000223b6       0x56 iTelex/CgiFormTools.o
-                0x000223b6                CgiFormFieldIntro_P
+                0x0002253e       0x56 iTelex/CgiFormTools.o
+                0x0002253e                CgiFormFieldIntro_P
  .text.CgiFormCheckbox_P
-                0x0002240c       0x56 iTelex/CgiFormTools.o
-                0x0002240c                CgiFormCheckbox_P
+                0x00022594       0x56 iTelex/CgiFormTools.o
+                0x00022594                CgiFormCheckbox_P
  .text.CgiFormInputFieldText_P
-                0x00022462       0x5e iTelex/CgiFormTools.o
-                0x00022462                CgiFormInputFieldText_P
+                0x000225ea       0x5e iTelex/CgiFormTools.o
+                0x000225ea                CgiFormInputFieldText_P
  .text.CgiFormInputFieldULong_P
-                0x000224c0       0x6c iTelex/CgiFormTools.o
-                0x000224c0                CgiFormInputFieldULong_P
+                0x00022648       0x6c iTelex/CgiFormTools.o
+                0x00022648                CgiFormInputFieldULong_P
  .text.CgiFormStartTabbed_P
-                0x0002252c       0x40 iTelex/CgiFormTools.o
-                0x0002252c                CgiFormStartTabbed_P
+                0x000226b4       0x40 iTelex/CgiFormTools.o
+                0x000226b4                CgiFormStartTabbed_P
  .text.CgiCheckBool_P
-                0x0002256c      0x150 iTelex/CgiFormTools.o
-                0x0002256c                CgiCheckBool_P
+                0x000226f4      0x150 iTelex/CgiFormTools.o
+                0x000226f4                CgiCheckBool_P
  .text.CgiCheckULong_P
-                0x000226bc      0x1a0 iTelex/CgiFormTools.o
-                0x000226bc                CgiCheckULong_P
+                0x00022844      0x1a0 iTelex/CgiFormTools.o
+                0x00022844                CgiCheckULong_P
  .text.CgiCheckText_P
-                0x0002285c      0x13a iTelex/CgiFormTools.o
-                0x0002285c                CgiCheckText_P
+                0x000229e4      0x13a iTelex/CgiFormTools.o
+                0x000229e4                CgiCheckText_P
  .text.ReadConfigBool
-                0x00022996       0x38 iTelex/CgiFormTools.o
-                0x00022996                ReadConfigBool
+                0x00022b1e       0x38 iTelex/CgiFormTools.o
+                0x00022b1e                ReadConfigBool
  .text.SwTwiForceStop
-                0x000229ce       0x9a iTelex/SwTwi.o
-                0x000229ce                SwTwiForceStop
+                0x00022b56       0x9a iTelex/SwTwi.o
+                0x00022b56                SwTwiForceStop
  .text.SwTwiInit
-                0x00022a68       0x26 iTelex/SwTwi.o
-                0x00022a68                SwTwiInit
+                0x00022bf0       0x26 iTelex/SwTwi.o
+                0x00022bf0                SwTwiInit
  .text.CheckLongTimer
-                0x00022a8e       0x2c iTelex/SwTwi.o
- .text.ReadBit  0x00022aba       0xf6 iTelex/SwTwi.o
- .text.SendBit  0x00022bb0       0xb2 iTelex/SwTwi.o
+                0x00022c16       0x2c iTelex/SwTwi.o
+ .text.ReadBit  0x00022c42       0xf6 iTelex/SwTwi.o
+ .text.SendBit  0x00022d38       0xb2 iTelex/SwTwi.o
  .text.SwTwiReadByte
-                0x00022c62       0x6e iTelex/SwTwi.o
-                0x00022c62                SwTwiReadByte
+                0x00022dea       0x6e iTelex/SwTwi.o
+                0x00022dea                SwTwiReadByte
  .text.SwTwiSendByte
-                0x00022cd0       0x68 iTelex/SwTwi.o
-                0x00022cd0                SwTwiSendByte
+                0x00022e58       0x68 iTelex/SwTwi.o
+                0x00022e58                SwTwiSendByte
  .text.SwTwiStop
-                0x00022d38       0x9a iTelex/SwTwi.o
-                0x00022d38                SwTwiStop
+                0x00022ec0       0x9a iTelex/SwTwi.o
+                0x00022ec0                SwTwiStop
  .text.SwTwiStart
-                0x00022dd2       0x7c iTelex/SwTwi.o
-                0x00022dd2                SwTwiStart
+                0x00022f5a       0x7c iTelex/SwTwi.o
+                0x00022f5a                SwTwiStart
  .text.ProtokollRegelblockStart
-                0x00022e4e        0xa iTelex/Protokoll.o
-                0x00022e4e                ProtokollRegelblockStart
+                0x00022fd6        0xa iTelex/Protokoll.o
+                0x00022fd6                ProtokollRegelblockStart
  .text.ProtokollRegelblockEnde
-                0x00022e58        0x6 iTelex/Protokoll.o
-                0x00022e58                ProtokollRegelblockEnde
+                0x00022fe0        0x6 iTelex/Protokoll.o
+                0x00022fe0                ProtokollRegelblockEnde
  .text.ProtokollRegelblockAbbruch
-                0x00022e5e        0xa iTelex/Protokoll.o
-                0x00022e5e                ProtokollRegelblockAbbruch
+                0x00022fe6        0xa iTelex/Protokoll.o
+                0x00022fe6                ProtokollRegelblockAbbruch
  .text.ProtokollRegelblockLoeschen
-                0x00022e68       0x1e iTelex/Protokoll.o
-                0x00022e68                ProtokollRegelblockLoeschen
+                0x00022ff0       0x1e iTelex/Protokoll.o
+                0x00022ff0                ProtokollRegelblockLoeschen
  .text.ProtokollInit
-                0x00022e86       0x46 iTelex/Protokoll.o
-                0x00022e86                ProtokollInit
+                0x0002300e       0x46 iTelex/Protokoll.o
+                0x0002300e                ProtokollInit
  .text.ProtokollSpeichern
-                0x00022ecc      0x364 iTelex/Protokoll.o
-                0x00022ecc                ProtokollSpeichern
+                0x00023054      0x364 iTelex/Protokoll.o
+                0x00023054                ProtokollSpeichern
  .text.SpeichernBeiIdle
-                0x00023230       0x14 iTelex/Protokoll.o
+                0x000233b8       0x14 iTelex/Protokoll.o
  .text.ProtokollRegelblockInit
-                0x00023244       0x10 iTelex/Protokoll.o
-                0x00023244                ProtokollRegelblockInit
+                0x000233cc       0x10 iTelex/Protokoll.o
+                0x000233cc                ProtokollRegelblockInit
  .text.ProtPraeparieren
-                0x00023254      0x122 iTelex/Protokoll.o
+                0x000233dc      0x122 iTelex/Protokoll.o
  .text.ProtokollierenMAC
-                0x00023376       0x34 iTelex/Protokoll.o
-                0x00023376                ProtokollierenMAC
+                0x000234fe       0x34 iTelex/Protokoll.o
+                0x000234fe                ProtokollierenMAC
  .text.ProtokollierenIPAdr
-                0x000233aa       0x40 iTelex/Protokoll.o
-                0x000233aa                ProtokollierenIPAdr
+                0x00023532       0x40 iTelex/Protokoll.o
+                0x00023532                ProtokollierenIPAdr
  .text.ProtokollierenInt_P
-                0x000233ea       0x8c iTelex/Protokoll.o
-                0x000233ea                ProtokollierenInt_P
+                0x00023572       0x8c iTelex/Protokoll.o
+                0x00023572                ProtokollierenInt_P
  .text.Protokollieren_P
-                0x00023476       0x2e iTelex/Protokoll.o
-                0x00023476                Protokollieren_P
+                0x000235fe       0x2e iTelex/Protokoll.o
+                0x000235fe                Protokollieren_P
  .text.ProtokollierenC
-                0x000234a4       0x2e iTelex/Protokoll.o
-                0x000234a4                ProtokollierenC
+                0x0002362c       0x2e iTelex/Protokoll.o
+                0x0002362c                ProtokollierenC
  .text.ProtokollierenPuffer
-                0x000234d2       0xd8 iTelex/Protokoll.o
-                0x000234d2                ProtokollierenPuffer
+                0x0002365a       0xd8 iTelex/Protokoll.o
+                0x0002365a                ProtokollierenPuffer
  .text.Protokollieren
-                0x000235aa       0x2e iTelex/Protokoll.o
-                0x000235aa                Protokollieren
+                0x00023732       0x2e iTelex/Protokoll.o
+                0x00023732                Protokollieren
  .text.KanalInit
-                0x000235d8       0x6e iTelex/TlnServer.o
+                0x00023760       0x6e iTelex/TlnServer.o
  .text.KanalFertig
-                0x00023646       0x34 iTelex/TlnServer.o
+                0x000237ce       0x34 iTelex/TlnServer.o
  .text.TlnServTlnbuchEintragGeaendert
-                0x0002367a      0x110 iTelex/TlnServer.o
-                0x0002367a                TlnServTlnbuchEintragGeaendert
+                0x00023802      0x110 iTelex/TlnServer.o
+                0x00023802                TlnServTlnbuchEintragGeaendert
  .text.itelex_tlnserv_init
-                0x0002378a      0x1ec iTelex/TlnServer.o
-                0x0002378a                itelex_tlnserv_init
+                0x00023912      0x1ec iTelex/TlnServer.o
+                0x00023912                itelex_tlnserv_init
  .text.TlnServDebugPrint
-                0x00023976      0x494 iTelex/TlnServer.o
-                0x00023976                TlnServDebugPrint
+                0x00023afe      0x494 iTelex/TlnServer.o
+                0x00023afe                TlnServDebugPrint
  .text.ProtokollierenTlnSrv
-                0x00023e0a       0x60 iTelex/TlnServer.o
+                0x00023f92       0x60 iTelex/TlnServer.o
  .text.ProtokollierenTlnServ_P
-                0x00023e6a       0x12 iTelex/TlnServer.o
+                0x00023ff2       0x12 iTelex/TlnServer.o
  .text.ProtokollierenTlnServInt_P
-                0x00023e7c       0x2a iTelex/TlnServer.o
+                0x00024004       0x2a iTelex/TlnServer.o
  .text.TlnDatensatzSyncSenden
-                0x00023ea6      0x166 iTelex/TlnServer.o
+                0x0002402e      0x166 iTelex/TlnServer.o
  .text.SocketDatenSenden
-                0x0002400c      0x140 iTelex/TlnServer.o
+                0x00024194      0x140 iTelex/TlnServer.o
  .text.FehlerRueckmelden
-                0x0002414c       0x52 iTelex/TlnServer.o
+                0x000242d4       0x52 iTelex/TlnServer.o
  .text.itelex_tlnserv_thread
-                0x0002419e     0x13e2 iTelex/TlnServer.o
-                0x0002419e                itelex_tlnserv_thread
+                0x00024326     0x13e2 iTelex/TlnServer.o
+                0x00024326                itelex_tlnserv_thread
  .text.itelex_email_init
-                0x00025580      0x12e iTelex/eMail.o
-                0x00025580                itelex_email_init
+                0x00025708      0x12e iTelex/eMail.o
+                0x00025708                itelex_email_init
  .text.SMTPSchliessen
-                0x000256ae       0x4a iTelex/eMail.o
-                0x000256ae                SMTPSchliessen
+                0x00025836       0x4a iTelex/eMail.o
+                0x00025836                SMTPSchliessen
  .text.itelex_cgi_email_config
-                0x000256f8      0x422 iTelex/eMail.o
-                0x000256f8                itelex_cgi_email_config
+                0x00025880      0x422 iTelex/eMail.o
+                0x00025880                itelex_cgi_email_config
  .text.POP3Abbrechen
-                0x00025b1a       0x48 iTelex/eMail.o
-                0x00025b1a                POP3Abbrechen
+                0x00025ca2       0x48 iTelex/eMail.o
+                0x00025ca2                POP3Abbrechen
  .text.SMTPDatenVerarbeiten
-                0x00025b62      0x45e iTelex/eMail.o
-                0x00025b62                SMTPDatenVerarbeiten
+                0x00025cea      0x45e iTelex/eMail.o
+                0x00025cea                SMTPDatenVerarbeiten
  .text.SMTPOeffnen
-                0x00025fc0      0x144 iTelex/eMail.o
-                0x00025fc0                SMTPOeffnen
+                0x00026148      0x144 iTelex/eMail.o
+                0x00026148                SMTPOeffnen
  .text.POP3Einleiten
-                0x00026104      0x222 iTelex/eMail.o
-                0x00026104                POP3Einleiten
+                0x0002628c      0x222 iTelex/eMail.o
+                0x0002628c                POP3Einleiten
  .text.MailZeileVerarbeiten
-                0x00026326      0x1ac iTelex/eMail.o
-                0x00026326                MailZeileVerarbeiten
+                0x000264ae      0x1ac iTelex/eMail.o
+                0x000264ae                MailZeileVerarbeiten
  .text.POP3DatenVerarbeiten
-                0x000264d2      0x3d8 iTelex/eMail.o
-                0x000264d2                POP3DatenVerarbeiten
- .text.GetIStr  0x000268aa       0x1a iTelex/StringTab.o
-                0x000268aa                GetIStr
+                0x0002665a      0x3d8 iTelex/eMail.o
+                0x0002665a                POP3DatenVerarbeiten
+ .text.GetIStr  0x00026a32       0x1a iTelex/StringTab.o
+                0x00026a32                GetIStr
  .text.UpdateTimeFromNTP
-                0x000268c4       0xe2 iTelex/ConfigNtp.o
-                0x000268c4                UpdateTimeFromNTP
+                0x00026a4c       0xe2 iTelex/ConfigNtp.o
+                0x00026a4c                UpdateTimeFromNTP
  .text.ConfigNtpCgi
-                0x000269a6      0x26a iTelex/ConfigNtp.o
-                0x000269a6                ConfigNtpCgi
+                0x00026b2e      0x26a iTelex/ConfigNtp.o
+                0x00026b2e                ConfigNtpCgi
  .text.IspClose
-                0x00026c10       0x1e iTelex/IspMaster.o
+                0x00026d98       0x1e iTelex/IspMaster.o
  .text.InitIspMaster
-                0x00026c2e       0x1c iTelex/IspMaster.o
-                0x00026c2e                InitIspMaster
+                0x00026db6       0x1c iTelex/IspMaster.o
+                0x00026db6                InitIspMaster
  .text.IspEnable
-                0x00026c4a       0xb8 iTelex/IspMaster.o
+                0x00026dd2       0xb8 iTelex/IspMaster.o
  .text.FlashRead
-                0x00026d02       0x58 iTelex/IspMaster.o
+                0x00026e8a       0x58 iTelex/IspMaster.o
  .text.BuildFullPath
-                0x00026d5a       0x84 iTelex/IspMaster.o
+                0x00026ee2       0x84 iTelex/IspMaster.o
  .text.HttpReadHeader
-                0x00026dde      0x1ce iTelex/IspMaster.o
-                0x00026dde                HttpReadHeader
- .text.HttpGet  0x00026fac      0x10e iTelex/IspMaster.o
-                0x00026fac                HttpGet
- .text.cgi_Isp  0x000270ba      0xc1a iTelex/IspMaster.o
-                0x000270ba                cgi_Isp
+                0x00026f66      0x1ce iTelex/IspMaster.o
+                0x00026f66                HttpReadHeader
+ .text.HttpGet  0x00027134      0x10e iTelex/IspMaster.o
+                0x00027134                HttpGet
+ .text.cgi_Isp  0x00027242      0xc1a iTelex/IspMaster.o
+                0x00027242                cgi_Isp
  .text.CLR_BIT_Status
-                0x00027cd4       0x22 iTelex/Gemeinsam/BusKomm.o
-                0x00027cd4                CLR_BIT_Status
+                0x00027e5c       0x22 iTelex/Gemeinsam/BusKomm.o
+                0x00027e5c                CLR_BIT_Status
  .text.SET_BIT_Status
-                0x00027cf6       0x20 iTelex/Gemeinsam/BusKomm.o
-                0x00027cf6                SET_BIT_Status
+                0x00027e7e       0x20 iTelex/Gemeinsam/BusKomm.o
+                0x00027e7e                SET_BIT_Status
  .text.EmpfByteSpeichern
-                0x00027d16       0x90 iTelex/Gemeinsam/BusKomm.o
+                0x00027e9e       0x90 iTelex/Gemeinsam/BusKomm.o
  .text.__vector_39
-                0x00027da6      0x368 iTelex/Gemeinsam/BusKomm.o
-                0x00027da6                __vector_39
+                0x00027f2e      0x368 iTelex/Gemeinsam/BusKomm.o
+                0x00027f2e                __vector_39
  .text.BusWarteFertig
-                0x0002810e       0x12 iTelex/Gemeinsam/BusKomm.o
-                0x0002810e                BusWarteFertig
+                0x00028296       0x12 iTelex/Gemeinsam/BusKomm.o
+                0x00028296                BusWarteFertig
  .text.BusSenden
-                0x00028120       0x3c iTelex/Gemeinsam/BusKomm.o
-                0x00028120                BusSenden
+                0x000282a8       0x3c iTelex/Gemeinsam/BusKomm.o
+                0x000282a8                BusSenden
  .text.BusRundsenden
-                0x0002815c       0x2a iTelex/Gemeinsam/BusKomm.o
-                0x0002815c                BusRundsenden
+                0x000282e4       0x2a iTelex/Gemeinsam/BusKomm.o
+                0x000282e4                BusRundsenden
  .text.GetStatus
-                0x00028186       0x54 iTelex/Gemeinsam/BusKomm.o
-                0x00028186                GetStatus
+                0x0002830e       0x54 iTelex/Gemeinsam/BusKomm.o
+                0x0002830e                GetStatus
  .text.BusEigenAdressePruefenUndSetzen
-                0x000281da       0x64 iTelex/Gemeinsam/BusKomm.o
-                0x000281da                BusEigenAdressePruefenUndSetzen
- .text.TwiInit  0x0002823e       0x70 iTelex/Gemeinsam/BusKomm.o
-                0x0002823e                TwiInit
+                0x00028362       0x64 iTelex/Gemeinsam/BusKomm.o
+                0x00028362                BusEigenAdressePruefenUndSetzen
+ .text.TwiInit  0x000283c6       0x70 iTelex/Gemeinsam/BusKomm.o
+                0x000283c6                TwiInit
  .text.WahlZuAdresse
-                0x000282ae       0x2c iTelex/Gemeinsam/BusKomm.o
-                0x000282ae                WahlZuAdresse
+                0x00028436       0x2c iTelex/Gemeinsam/BusKomm.o
+                0x00028436                WahlZuAdresse
  .text.AdresseZuWahl
-                0x000282da       0x2e iTelex/Gemeinsam/BusKomm.o
-                0x000282da                AdresseZuWahl
+                0x00028462       0x2e iTelex/Gemeinsam/BusKomm.o
+                0x00028462                AdresseZuWahl
  .text.GetEmpfByte
-                0x00028308       0x4c iTelex/Gemeinsam/BusKomm.o
-                0x00028308                GetEmpfByte
+                0x00028490       0x4c iTelex/Gemeinsam/BusKomm.o
+                0x00028490                GetEmpfByte
  .text.PufferInit
-                0x00028354        0x8 iTelex/Gemeinsam/FifoPuffer.o
-                0x00028354                PufferInit
+                0x000284dc        0x8 iTelex/Gemeinsam/FifoPuffer.o
+                0x000284dc                PufferInit
  .text.PufferLeer
-                0x0002835c       0x12 iTelex/Gemeinsam/FifoPuffer.o
-                0x0002835c                PufferLeer
+                0x000284e4       0x12 iTelex/Gemeinsam/FifoPuffer.o
+                0x000284e4                PufferLeer
  .text.PufferVoll
-                0x0002836e       0x40 iTelex/Gemeinsam/FifoPuffer.o
-                0x0002836e                PufferVoll
+                0x000284f6       0x40 iTelex/Gemeinsam/FifoPuffer.o
+                0x000284f6                PufferVoll
  .text.PufferSpeich
-                0x000283ae       0x4e iTelex/Gemeinsam/FifoPuffer.o
-                0x000283ae                PufferSpeich
+                0x00028536       0x4e iTelex/Gemeinsam/FifoPuffer.o
+                0x00028536                PufferSpeich
  .text.PufferAusg
-                0x000283fc       0x2c iTelex/Gemeinsam/FifoPuffer.o
-                0x000283fc                PufferAusg
+                0x00028584       0x2c iTelex/Gemeinsam/FifoPuffer.o
+                0x00028584                PufferAusg
  .text.PufferAnzahl
-                0x00028428       0x1c iTelex/Gemeinsam/FifoPuffer.o
-                0x00028428                PufferAnzahl
+                0x000285b0       0x1c iTelex/Gemeinsam/FifoPuffer.o
+                0x000285b0                PufferAnzahl
  .text.CodeZuZeichen
-                0x00028444       0x36 iTelex/Gemeinsam/BaudotCode.o
-                0x00028444                CodeZuZeichen
+                0x000285cc       0x36 iTelex/Gemeinsam/BaudotCode.o
+                0x000285cc                CodeZuZeichen
  .text.ZeichenZuCode
-                0x0002847a       0x32 iTelex/Gemeinsam/BaudotCode.o
-                0x0002847a                ZeichenZuCode
+                0x00028602       0x32 iTelex/Gemeinsam/BaudotCode.o
+                0x00028602                ZeichenZuCode
  .text.ZeichenZuCode2
-                0x000284ac       0x84 iTelex/Gemeinsam/BaudotCode.o
-                0x000284ac                ZeichenZuCode2
- .text.libgcc   0x00028530       0x3e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_mulsi3.o)
-                0x00028530                __mulsi3
- .text.libgcc   0x0002856e       0x28 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_udivmodhi4.o)
-                0x0002856e                __udivmodhi4
- .text.libgcc   0x00028596       0x26 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_divmodhi4.o)
-                0x00028596                __divmodhi4
-                0x00028596                _div
- .text.libgcc   0x000285bc       0x44 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_udivmodsi4.o)
-                0x000285bc                __udivmodsi4
- .text.libgcc   0x00028600       0x38 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_prologue.o)
-                0x00028600                __prologue_saves__
- .text.libgcc   0x00028638       0x36 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_epilogue.o)
-                0x00028638                __epilogue_restores__
+                0x00028634       0x84 iTelex/Gemeinsam/BaudotCode.o
+                0x00028634                ZeichenZuCode2
+ .text.libgcc   0x000286b8       0x3e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_mulsi3.o)
+                0x000286b8                __mulsi3
+ .text.libgcc   0x000286f6       0x28 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_udivmodhi4.o)
+                0x000286f6                __udivmodhi4
+ .text.libgcc   0x0002871e       0x26 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_divmodhi4.o)
+                0x0002871e                __divmodhi4
+                0x0002871e                _div
+ .text.libgcc   0x00028744       0x44 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_udivmodsi4.o)
+                0x00028744                __udivmodsi4
+ .text.libgcc   0x00028788       0x38 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_prologue.o)
+                0x00028788                __prologue_saves__
+ .text.libgcc   0x000287c0       0x36 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_epilogue.o)
+                0x000287c0                __epilogue_restores__
  .text.avr-libc
-                0x0002866e      0x20a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(malloc.o)
-                0x0002866e                malloc
-                0x000287c8                free
+                0x000287f6      0x20a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(malloc.o)
+                0x000287f6                malloc
+                0x00028950                free
  .text.avr-libc
-                0x00028878       0x3a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(atoi.o)
-                0x00028878                atoi
+                0x00028a00       0x3a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(atoi.o)
+                0x00028a00                atoi
  .text.avr-libc
-                0x000288b2       0x4c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(atol.o)
-                0x000288b2                atol
+                0x00028a3a       0x4c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(atol.o)
+                0x00028a3a                atol
  .text.avr-libc
-                0x000288fe       0x1a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcmp_P.o)
-                0x000288fe                memcmp_P
+                0x00028a86       0x1a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcmp_P.o)
+                0x00028a86                memcmp_P
  .text.avr-libc
-                0x00028918       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcpy_P.o)
-                0x00028918                memcpy_P
+                0x00028aa0       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcpy_P.o)
+                0x00028aa0                memcpy_P
  .text.avr-libc
-                0x0002892a       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcat_P.o)
-                0x0002892a                strcat_P
+                0x00028ab2       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcat_P.o)
+                0x00028ab2                strcat_P
  .text.avr-libc
-                0x00028940       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strchr_P.o)
-                0x00028940                strchr_P
+                0x00028ac8       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strchr_P.o)
+                0x00028ac8                strchr_P
  .text.avr-libc
-                0x00028956       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcmp_P.o)
-                0x00028956                strcmp_P
+                0x00028ade       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcmp_P.o)
+                0x00028ade                strcmp_P
  .text.avr-libc
-                0x00028968        0xe c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcpy_P.o)
-                0x00028968                strcpy_P
+                0x00028af0        0xe c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcpy_P.o)
+                0x00028af0                strcpy_P
  .text.avr-libc
-                0x00028976       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strlen_P.o)
-                0x00028976                strlen_P
+                0x00028afe       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strlen_P.o)
+                0x00028afe                strlen_P
  .text.avr-libc
-                0x00028988       0x30 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncasecmp_P.o)
-                0x00028988                strncasecmp_P
+                0x00028b10       0x30 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncasecmp_P.o)
+                0x00028b10                strncasecmp_P
  .text.avr-libc
-                0x000289b8       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncat_P.o)
-                0x000289b8                strncat_P
+                0x00028b40       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncat_P.o)
+                0x00028b40                strncat_P
  .text.avr-libc
-                0x000289d8       0x1c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncmp_P.o)
-                0x000289d8                strncmp_P
+                0x00028b60       0x1c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncmp_P.o)
+                0x00028b60                strncmp_P
  .text.avr-libc
-                0x000289f4       0x34 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strstr_P.o)
-                0x000289f4                strstr_P
+                0x00028b7c       0x34 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strstr_P.o)
+                0x00028b7c                strstr_P
  .text.avr-libc
-                0x00028a28       0x1a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcmp.o)
-                0x00028a28                memcmp
+                0x00028bb0       0x1a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcmp.o)
+                0x00028bb0                memcmp
  .text.avr-libc
-                0x00028a42       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcpy.o)
-                0x00028a42                memcpy
+                0x00028bca       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memcpy.o)
+                0x00028bca                memcpy
  .text.avr-libc
-                0x00028a54       0x22 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memmove.o)
-                0x00028a54                memmove
+                0x00028bdc       0x22 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memmove.o)
+                0x00028bdc                memmove
  .text.avr-libc
-                0x00028a76        0xe c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memset.o)
-                0x00028a76                memset
+                0x00028bfe        0xe c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(memset.o)
+                0x00028bfe                memset
  .text.avr-libc
-                0x00028a84       0x26 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcasecmp.o)
-                0x00028a84                strcasecmp
+                0x00028c0c       0x26 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcasecmp.o)
+                0x00028c0c                strcasecmp
  .text.avr-libc
-                0x00028aaa       0x4a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcasestr.o)
-                0x00028aaa                strcasestr
+                0x00028c32       0x4a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcasestr.o)
+                0x00028c32                strcasestr
  .text.avr-libc
-                0x00028af4       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcat.o)
-                0x00028af4                strcat
+                0x00028c7c       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcat.o)
+                0x00028c7c                strcat
  .text.avr-libc
-                0x00028b0a       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strchr.o)
-                0x00028b0a                strchr
+                0x00028c92       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strchr.o)
+                0x00028c92                strchr
  .text.avr-libc
-                0x00028b20       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcmp.o)
-                0x00028b20                strcmp
+                0x00028ca8       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcmp.o)
+                0x00028ca8                strcmp
  .text.avr-libc
-                0x00028b32        0xe c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcpy.o)
-                0x00028b32                strcpy
+                0x00028cba        0xe c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strcpy.o)
+                0x00028cba                strcpy
  .text.avr-libc
-                0x00028b40       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strlen.o)
-                0x00028b40                strlen
+                0x00028cc8       0x12 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strlen.o)
+                0x00028cc8                strlen
  .text.avr-libc
-                0x00028b52       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncat.o)
-                0x00028b52                strncat
+                0x00028cda       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncat.o)
+                0x00028cda                strncat
  .text.avr-libc
-                0x00028b72       0x1c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncmp.o)
-                0x00028b72                strncmp
+                0x00028cfa       0x1c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncmp.o)
+                0x00028cfa                strncmp
  .text.avr-libc
-                0x00028b8e       0x1e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncpy.o)
-                0x00028b8e                strncpy
+                0x00028d16       0x1e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strncpy.o)
+                0x00028d16                strncpy
  .text.avr-libc
-                0x00028bac       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strrchr.o)
-                0x00028bac                strrchr
+                0x00028d34       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strrchr.o)
+                0x00028d34                strrchr
  .text.avr-libc
-                0x00028bc2       0x3e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(itoa.o)
-                0x00028bc2                itoa
+                0x00028d4a       0x3e c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(itoa.o)
+                0x00028d4a                itoa
  .text.avr-libc
-                0x00028c00       0x2a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(mulsi10.o)
-                0x00028c00                __mulsi_const_10
+                0x00028d88       0x2a c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(mulsi10.o)
+                0x00028d88                __mulsi_const_10
  .text.avr-libc
-                0x00028c2a       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(mul10.o)
-                0x00028c2a                __mulhi_const_10
+                0x00028db2       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(mul10.o)
+                0x00028db2                __mulhi_const_10
  .text.avr-libc
-                0x00028c3a       0x46 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(ultoa.o)
-                0x00028c3a                ultoa
+                0x00028dc2       0x46 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(ultoa.o)
+                0x00028dc2                ultoa
  .text.avr-libc
-                0x00028c80       0x22 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(printf.o)
-                0x00028c80                printf
+                0x00028e08       0x22 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(printf.o)
+                0x00028e08                printf
  .text.avr-libc
-                0x00028ca2       0x44 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(printf_p.o)
-                0x00028ca2                printf_P
+                0x00028e2a       0x44 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(printf_p.o)
+                0x00028e2a                printf_P
  .text.avr-libc
-                0x00028ce6       0x60 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(sprintf_p.o)
-                0x00028ce6                sprintf_P
+                0x00028e6e       0x60 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(sprintf_p.o)
+                0x00028e6e                sprintf_P
  .text.avr-libc
-                0x00028d46      0x3f2 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(vfprintf_std.o)
-                0x00028d46                vfprintf
+                0x00028ece      0x3f2 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(vfprintf_std.o)
+                0x00028ece                vfprintf
  .text.avr-libc
-                0x00029138       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(eerd_block_atmega2561.o)
-                0x00029138                __eerd_block_m2561
-                0x0002913c                __eerd_blraw_m2561
+                0x000292c0       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(eerd_block_atmega2561.o)
+                0x000292c0                __eerd_block_m2561
+                0x000292c4                __eerd_blraw_m2561
  .text.avr-libc
-                0x00029158       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(eerd_byte_atmega2561.o)
-                0x00029158                __eerd_byte_m2561
+                0x000292e0       0x10 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(eerd_byte_atmega2561.o)
+                0x000292e0                __eerd_byte_m2561
  .text.avr-libc
-                0x00029168       0x1c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(eewr_byte_atmega2561.o)
-                0x00029168                __eewr_byte_m2561
-                0x0002916a                __eewr_r18_m2561
+                0x000292f0       0x1c c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(eewr_byte_atmega2561.o)
+                0x000292f0                __eewr_byte_m2561
+                0x000292f2                __eewr_r18_m2561
  .text.avr-libc
-                0x00029184       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strnlen_P.o)
-                0x00029184                strnlen_P
+                0x0002930c       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strnlen_P.o)
+                0x0002930c                strnlen_P
  .text.avr-libc
-                0x0002919a       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strnlen.o)
-                0x0002919a                strnlen
+                0x00029322       0x16 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strnlen.o)
+                0x00029322                strnlen
  .text.avr-libc
-                0x000291b0       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strrev.o)
-                0x000291b0                strrev
+                0x00029338       0x20 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(strrev.o)
+                0x00029338                strrev
  .text.avr-libc
-                0x000291d0       0x58 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(fputc.o)
-                0x000291d0                fputc
+                0x00029358       0x58 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(fputc.o)
+                0x00029358                fputc
  .text.avr-libc
-                0x00029228       0xbc c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(ultoa_invert.o)
-                0x00029228                __ultoa_invert
-                0x000292e4                . = ALIGN (0x2)
+                0x000293b0       0xbc c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(ultoa_invert.o)
+                0x000293b0                __ultoa_invert
+                0x0002946c                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x000292e4        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_exit.o)
-                0x000292e4                exit
-                0x000292e4                _exit
+ .fini9         0x0002946c        0x0 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_exit.o)
+                0x0002946c                exit
+                0x0002946c                _exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -3115,11 +3114,11 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x000292e4        0x4 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_exit.o)
+ .fini0         0x0002946c        0x4 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a(_exit.o)
  *(.fini0)
-                0x000292e8                _etext = .
+                0x00029470                _etext = .
 
-.data           0x00802200      0x110 load address 0x000292e8
+.data           0x00802200      0x110 load address 0x00029470
                 0x00802200                PROVIDE (__data_start, .)
  *(.data)
  .data          0x00802200        0xa system/config/eeconfig.o
@@ -3324,30 +3323,30 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .bss.FalscherCode
                 0x008072d3        0x1 iTelex/iTelex.o
                 0x008072d3                FalscherCode
- .bss.Sprache.6002
+ .bss.Sprache.6019
                 0x008072d4        0x1 iTelex/iTelex.o
- .bss.Sprache.5878
+ .bss.Sprache.5895
                 0x008072d5        0x1 iTelex/iTelex.o
- .bss.Sprache.5763
+ .bss.Sprache.5780
                 0x008072d6        0x1 iTelex/iTelex.o
- .bss.Sprache.5691
+ .bss.Sprache.5708
                 0x008072d7        0x1 iTelex/iTelex.o
- .bss.Sprache.5671
+ .bss.Sprache.5688
                 0x008072d8        0x1 iTelex/iTelex.o
- .bss.Sprache.5491
+ .bss.Sprache.5508
                 0x008072d9        0x1 iTelex/iTelex.o
- .bss.Sprache.5401
+ .bss.Sprache.5418
                 0x008072da        0x1 iTelex/iTelex.o
- .bss.Sprache.5370
+ .bss.Sprache.5387
                 0x008072db        0x1 iTelex/iTelex.o
- .bss.Sprache.5332
+ .bss.Sprache.5349
                 0x008072dc        0x1 iTelex/iTelex.o
- .bss.NameBuf.5303
+ .bss.NameBuf.5320
                 0x008072dd       0x14 iTelex/iTelex.o
- .bss.Sprache.5012
+ .bss.Sprache.5029
                 0x008072f1        0x1 iTelex/iTelex.o
- .bss.TSB.4551  0x008072f2       0x66 iTelex/iTelex.o
- .bss.MinuteLetzeRundsendung.4602
+ .bss.TSB.4564  0x008072f2       0x66 iTelex/iTelex.o
+ .bss.MinuteLetzeRundsendung.4615
                 0x00807358        0x1 iTelex/iTelex.o
  .bss.TasteTimer.3088
                 0x00807359        0x2 iTelex/iTelex.o
@@ -3832,8 +3831,8 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  COMMON         0x00809a9a        0x6 c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/../../../../avr/lib/avr6\libc.a(iob.o)
                 0x00809a9a                __iob
                 0x00809aa0                PROVIDE (__bss_end, .)
-                0x000292e8                __data_load_start = LOADADDR (.data)
-                0x000293f8                __data_load_end = (__data_load_start + SIZEOF (.data))
+                0x00029470                __data_load_start = LOADADDR (.data)
+                0x00029580                __data_load_end = (__data_load_start + SIZEOF (.data))
 
 .noinit         0x00809aa0     0x622b
                 0x00809aa0                PROVIDE (__noinit_start, .)
@@ -4237,7 +4236,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_pubnames
                 0x000060c0       0x6b iTelex/Gemeinsam/BaudotCode.o
 
-.debug_info     0x00000000    0x25c00
+.debug_info     0x00000000    0x25cc4
  *(.debug_info)
  .debug_info    0x00000000       0xb6 main.o
  .debug_info    0x000000b6      0x1f9 hardware/ext_int/ext_int.o
@@ -4354,19 +4353,19 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_info    0x00011328       0x68 apps/mp3-streamingclient/mp3-streaming.o
  .debug_info    0x00011390       0x68 apps/mp3-streamingclient/mp3-clientserver.o
  .debug_info    0x000113f8       0x6b apps/can/can_eth_rep.o
- .debug_info    0x00011463     0x81ea iTelex/iTelex.o
- .debug_info    0x0001964d     0x1ba8 iTelex/TlnBuch.o
- .debug_info    0x0001b1f5      0xd0a iTelex/CgiFormTools.o
- .debug_info    0x0001beff      0x65b iTelex/SwTwi.o
- .debug_info    0x0001c55a      0x912 iTelex/Protokoll.o
- .debug_info    0x0001ce6c     0x2575 iTelex/TlnServer.o
- .debug_info    0x0001f3e1     0x17b6 iTelex/eMail.o
- .debug_info    0x00020b97     0x2178 iTelex/StringTab.o
- .debug_info    0x00022d0f      0x98c iTelex/ConfigNtp.o
- .debug_info    0x0002369b     0x1a0d iTelex/IspMaster.o
- .debug_info    0x000250a8      0x599 iTelex/Gemeinsam/BusKomm.o
- .debug_info    0x00025641      0x2d0 iTelex/Gemeinsam/FifoPuffer.o
- .debug_info    0x00025911      0x2ef iTelex/Gemeinsam/BaudotCode.o
+ .debug_info    0x00011463     0x82ae iTelex/iTelex.o
+ .debug_info    0x00019711     0x1ba8 iTelex/TlnBuch.o
+ .debug_info    0x0001b2b9      0xd0a iTelex/CgiFormTools.o
+ .debug_info    0x0001bfc3      0x65b iTelex/SwTwi.o
+ .debug_info    0x0001c61e      0x912 iTelex/Protokoll.o
+ .debug_info    0x0001cf30     0x2575 iTelex/TlnServer.o
+ .debug_info    0x0001f4a5     0x17b6 iTelex/eMail.o
+ .debug_info    0x00020c5b     0x2178 iTelex/StringTab.o
+ .debug_info    0x00022dd3      0x98c iTelex/ConfigNtp.o
+ .debug_info    0x0002375f     0x1a0d iTelex/IspMaster.o
+ .debug_info    0x0002516c      0x599 iTelex/Gemeinsam/BusKomm.o
+ .debug_info    0x00025705      0x2d0 iTelex/Gemeinsam/FifoPuffer.o
+ .debug_info    0x000259d5      0x2ef iTelex/Gemeinsam/BaudotCode.o
  *(.gnu.linkonce.wi.*)
 
 .debug_abbrev   0x00000000     0x7286
@@ -4500,7 +4499,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_abbrev  0x00006ff8      0x16f iTelex/Gemeinsam/FifoPuffer.o
  .debug_abbrev  0x00007167      0x11f iTelex/Gemeinsam/BaudotCode.o
 
-.debug_line     0x00000000    0x19041
+.debug_line     0x00000000    0x1909b
  *(.debug_line)
  .debug_line    0x00000000       0xfe main.o
  .debug_line    0x000000fe      0x261 hardware/ext_int/ext_int.o
@@ -4617,19 +4616,19 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_line    0x0000c106       0x3e apps/mp3-streamingclient/mp3-streaming.o
  .debug_line    0x0000c144       0x3e apps/mp3-streamingclient/mp3-clientserver.o
  .debug_line    0x0000c182       0x3e apps/can/can_eth_rep.o
- .debug_line    0x0000c1c0     0x69fc iTelex/iTelex.o
- .debug_line    0x00012bbc     0x1287 iTelex/TlnBuch.o
- .debug_line    0x00013e43      0x443 iTelex/CgiFormTools.o
- .debug_line    0x00014286      0x6b7 iTelex/SwTwi.o
- .debug_line    0x0001493d      0x75f iTelex/Protokoll.o
- .debug_line    0x0001509c     0x1368 iTelex/TlnServer.o
- .debug_line    0x00016404      0xe58 iTelex/eMail.o
- .debug_line    0x0001725c      0x101 iTelex/StringTab.o
- .debug_line    0x0001735d      0x306 iTelex/ConfigNtp.o
- .debug_line    0x00017663      0xde9 iTelex/IspMaster.o
- .debug_line    0x0001844c      0x754 iTelex/Gemeinsam/BusKomm.o
- .debug_line    0x00018ba0      0x288 iTelex/Gemeinsam/FifoPuffer.o
- .debug_line    0x00018e28      0x219 iTelex/Gemeinsam/BaudotCode.o
+ .debug_line    0x0000c1c0     0x6a56 iTelex/iTelex.o
+ .debug_line    0x00012c16     0x1287 iTelex/TlnBuch.o
+ .debug_line    0x00013e9d      0x443 iTelex/CgiFormTools.o
+ .debug_line    0x000142e0      0x6b7 iTelex/SwTwi.o
+ .debug_line    0x00014997      0x75f iTelex/Protokoll.o
+ .debug_line    0x000150f6     0x1368 iTelex/TlnServer.o
+ .debug_line    0x0001645e      0xe58 iTelex/eMail.o
+ .debug_line    0x000172b6      0x101 iTelex/StringTab.o
+ .debug_line    0x000173b7      0x306 iTelex/ConfigNtp.o
+ .debug_line    0x000176bd      0xde9 iTelex/IspMaster.o
+ .debug_line    0x000184a6      0x754 iTelex/Gemeinsam/BusKomm.o
+ .debug_line    0x00018bfa      0x288 iTelex/Gemeinsam/FifoPuffer.o
+ .debug_line    0x00018e82      0x219 iTelex/Gemeinsam/BaudotCode.o
 
 .debug_frame    0x00000000     0x2760
  *(.debug_frame)
@@ -4973,7 +4972,7 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_str     0x0000a1db       0xc4 iTelex/Gemeinsam/BaudotCode.o
                                 0x230 (size before relaxing)
 
-.debug_loc      0x00000000    0x106af
+.debug_loc      0x00000000    0x10a1c
  *(.debug_loc)
  .debug_loc     0x00000000       0xe8 hardware/ext_int/ext_int.o
  .debug_loc     0x000000e8      0x340 system/clock/clock.o
@@ -5036,19 +5035,19 @@ LOAD c:/winavr-20100110/bin/../lib/gcc/avr/4.3.3/avr6\libgcc.a
  .debug_loc     0x000091e4       0xe0 apps/modules/cmd_cron.o
  .debug_loc     0x000092c4       0xa0 apps/modules/cmd_eemem.o
  .debug_loc     0x00009364       0x18 apps/modules/hal.o
- .debug_loc     0x0000937c     0x3663 iTelex/iTelex.o
- .debug_loc     0x0000c9df     0x10c5 iTelex/TlnBuch.o
- .debug_loc     0x0000daa4      0x62f iTelex/CgiFormTools.o
- .debug_loc     0x0000e0d3      0x204 iTelex/SwTwi.o
- .debug_loc     0x0000e2d7      0x438 iTelex/Protokoll.o
- .debug_loc     0x0000e70f      0xa78 iTelex/TlnServer.o
- .debug_loc     0x0000f187      0x483 iTelex/eMail.o
- .debug_loc     0x0000f60a       0x30 iTelex/StringTab.o
- .debug_loc     0x0000f63a       0x48 iTelex/ConfigNtp.o
- .debug_loc     0x0000f682      0xb03 iTelex/IspMaster.o
- .debug_loc     0x00010185      0x25d iTelex/Gemeinsam/BusKomm.o
- .debug_loc     0x000103e2      0x103 iTelex/Gemeinsam/FifoPuffer.o
- .debug_loc     0x000104e5      0x1ca iTelex/Gemeinsam/BaudotCode.o
+ .debug_loc     0x0000937c     0x39c0 iTelex/iTelex.o
+ .debug_loc     0x0000cd3c     0x10c5 iTelex/TlnBuch.o
+ .debug_loc     0x0000de01      0x62f iTelex/CgiFormTools.o
+ .debug_loc     0x0000e430      0x204 iTelex/SwTwi.o
+ .debug_loc     0x0000e634      0x438 iTelex/Protokoll.o
+ .debug_loc     0x0000ea6c      0xa78 iTelex/TlnServer.o
+ .debug_loc     0x0000f4e4      0x483 iTelex/eMail.o
+ .debug_loc     0x0000f967       0x30 iTelex/StringTab.o
+ .debug_loc     0x0000f997       0x48 iTelex/ConfigNtp.o
+ .debug_loc     0x0000f9df      0xb03 iTelex/IspMaster.o
+ .debug_loc     0x000104e2      0x25d iTelex/Gemeinsam/BusKomm.o
+ .debug_loc     0x0001073f      0x103 iTelex/Gemeinsam/FifoPuffer.o
+ .debug_loc     0x00010842      0x1da iTelex/Gemeinsam/BaudotCode.o
 
 .debug_macinfo
  *(.debug_macinfo)

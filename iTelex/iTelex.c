@@ -3777,6 +3777,13 @@ void AsciiDruckPufferVerarbeiten()
 			ki++;
 			}
 
+		if (ProtokollLevel >= DatenDetailliert)
+			{
+			ProtokollierenITelex(); // HACK
+			ProtokollierenInt_P(PSTR("Ascii-Verarbeitung: %u Zeichen aus AsciiHilfPuffer verarbeitet,"), ki);
+			ProtokollierenInt_P(PSTR("BaudotMode = %d"), BaudotMode);
+			}
+			
 		if (ki > 0)
 			memmove(AsciiHilfPuffer, AsciiHilfPuffer + ki, strlen(AsciiHilfPuffer) - ki + 1); 
 		
@@ -4341,14 +4348,9 @@ void itelex_thread()
 		{
 		while (!PufferLeer(&EmpfPuffer))
 			{
-ProtokollierenITelex(); // HACK
-ProtokollierenInt_P(PSTR("NamenSucheEingabe Code empfangen bei BaudotMode = %u "), BaudotMode);
-				
 			char z = CodeZuZeichen(PufferAusg(&EmpfPuffer), &BaudotMode);
 			uint8_t SuchTextLen = strlen(NamensucheSuchtext);
 
-ProtokollierenInt_P(PSTR("--> Zeichen %02x "), z);
-			
 			if (z == '\r' || z == '\n')
 				{
 				if (SuchTextLen == 0)
@@ -4406,8 +4408,6 @@ ProtokollierenInt_P(PSTR("--> Zeichen %02x "), z);
 				AsciiDruckPuffer[len] = CodeChrBuUm; // damit wird auch in Empfangsrichtung wieder auf Buchstaben geschaltet.
 				AsciiDruckPuffer[len+1] = ' '; // damit der KG-Abruf-Automat wirklich ruhe gibt
 				AsciiDruckPuffer[len+2] = '\0';
-ProtokollierenITelex(); // HACK
-ProtokollierenInt_P(PSTR("NamenSucheEingabe WerDa empfangen bei len(AsciiDruckPuffer) = %u "), len);
 			}
 			
 			else if (z >= ' ' && z != '#' && SuchTextLen < TlnNameMax - 1)
