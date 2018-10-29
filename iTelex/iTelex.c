@@ -4399,7 +4399,8 @@ void itelex_thread()
 			{ // WerDa empfangen, zu 99% von einer Schnittstelle mit Tastaturwahl verursacht --> Buchstaben-Umschaltung zurücksenden.
 				uint8_t len = strlen(AsciiDruckPuffer);
 				AsciiDruckPuffer[len] = CodeChrBuUm; // damit wird auch in Empfangsrichtung wieder auf Buchstaben geschaltet.
-				AsciiDruckPuffer[len+1] = '\0';
+				AsciiDruckPuffer[len+1] = ' '; // damit der KG-Abruf-Automat wirklich ruhe gibt
+				AsciiDruckPuffer[len+2] = '\0';
 			}
 			
 			else if (z >= ' ' && z != '#' && SuchTextLen < TlnNameMax - 1)
