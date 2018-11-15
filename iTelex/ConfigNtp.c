@@ -134,10 +134,9 @@ void ConfigNtpCgi( void * pStruct )
 		// Zeit holen
 		if (NtpOn)
 			{
-			CLOCK_GetTime(&Time);
-			Time.timezone = atoi(UtcZoneStr);
-			Time.use_summertime = AutoDstOn;
-			CLOCK_SetTime(&Time); 
+			UpdateTimezone();
+			UpdateTimeFromNTP();
+			CLOCK_GetTime(&Time); 
 			printf_P(PSTR("<br>%02u.%02u.%04u %02d:%02d:%02d"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
 			}
 		}

@@ -1,3 +1,6 @@
+Ab Build 807:
+NTP-Einstellungen stollten auf Anhieb funktionieren
+
 Ab Build 804:
 Bugfix: Namenssuche bei Geräten mit Tastaturwahl
 
