@@ -85,7 +85,7 @@ void ConfigNtpCgi( void * pStruct )
 	bool AutoDstOn;
 	struct TIME Time;
 	
-	NtpOn = ReadConfigBool(NtpOn_P, true);
+	NtpOn = ReadConfigBool(NtpOn_P, false);
 	
 	AutoDstOn = ReadConfigBool(AutoDst_P, true);
 	
@@ -129,18 +129,20 @@ void ConfigNtpCgi( void * pStruct )
 		
 		SpeichereSpracheAlsLokal(Sprache);
 
-		// Zeit holen
-		CLOCK_GetTime(&Time);
-		Time.timezone = atoi(UtcZoneStr);
-		Time.use_summertime = AutoDstOn;
-		CLOCK_SetTime(&Time);
+		printf_P(PSTR("<br>"));
 		
+		// Zeit holen
+		if (NtpOn)
+			{
+			CLOCK_GetTime(&Time);
+			Time.timezone = atoi(UtcZoneStr);
+			Time.use_summertime = AutoDstOn;
+			CLOCK_SetTime(&Time); 
+			printf_P(PSTR("<br>%02u.%02u.%04u %02d:%02d:%02d"), Time.DD, Time.MM, Time.YY, Time.hh, Time.mm, Time.ss);
+			}
 		}
 
 	cgi_PrintHttpheaderEnd();
-
-	if (NtpOn && http_request->argc != 0)
-		UpdateTimeFromNTP();
 	
 	}
 
