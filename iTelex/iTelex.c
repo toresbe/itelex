@@ -2200,7 +2200,7 @@ static void SocketBearbeiten()
 		{
 		iTelexSocketHandle = Connect2IP(iTelexSocketIP, iTelexSocketPort); 
 	 
-		if (iTelexSocketHandle == -1)
+		if (iTelexSocketHandle == SOCKET_ERROR)
 			{ 
 			// Verbindung konnte nicht aufgebaut werden
 			if (ProtokollLevel >= NurFehler)
@@ -3320,7 +3320,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 	if (TeilnehmerServerIP[ServerI] != -1)
 		{
 		Res = Connect2IP(TeilnehmerServerIP[ServerI], ITELEX_TLNSERV_PORT);
-		if (Res != -1)
+		if (Res != SOCKET_ERROR)
 			{
 			if (ProtokollLevel >= AblaufInfo)
 				{
@@ -3534,7 +3534,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 	// und hier wird geöffet...
 	iTelexSocketHandle = Connect2IP(iTelexSocketIP, iTelexSocketPort); 
 	 
-	if (iTelexSocketHandle == -1)
+	if (iTelexSocketHandle == SOCKET_ERROR)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
 		if (ProtokollLevel >= NurFehler)
@@ -4795,7 +4795,7 @@ void itelex_thread()
 					ZeitUeberwachungStart(&SelbstAnrufZeitUeberwachung);
 					
 					SelbstAnrufSocketHandle = Connect2IP(NetzEigeneIP, NetzPort); 
-					if (SelbstAnrufSocketHandle == -1)
+					if (SelbstAnrufSocketHandle == SOCKET_ERROR)
 						{ 
 						// Verbindung konnte nicht aufgebaut werden
 						if (ProtokollLevel >= NurFehler)

@@ -1,0 +1,27 @@
+occ
+occupied
+Teilnehmer ist besetzt. D.h. die Verbindung zum i-Telex des gerufenen Teilnehmers wurde erfolgreich aufgebaut, dieser war aber mit einer bestehenden Verbindung belegt.
+
+nc
+no connection
+Teilnehmer konnte nicht erreicht werden. Entweder ist die Anlage ausgeschaltet oder die ip-Adresse die im Teilnehmer-Server gespeichert ist, stimmt nicht mehr
+
+na
+not allowed
+Es wurde eine Nebenstelle per Durchwahl versucht anzusprechen, die durch den Teilnehmer als nicht "amtsberechtigt" markiert wurde. (D.h. in der Liste der erlaubten Durchwahlen ist die nicht eingegeben.
+Eigentlich sollte dies nicht vorkommen, da die offizielle Teilnehmer-Liste nur Nummern mit freigegebenen Durchwahlen enthält.
+
+der
+derailed
+entweder: Teilnehmer-Server sendete ungültigen Datensatz
+oder: angewählter Teilnehmer hat kein funktionierenden Fernschreiber "online"
+
+abs
+absent
+Der angewählte Teilnehmer hat seinen Anschluss deaktiviert (mit der Taste der i-Telex-Karte die blaue LED eingeschaltet)
+
+bk
+break
+Wegen ungültiger Wahl (z.B. zu lange Pause beim Wählen) wurde die Verbindung von der "Vermittlung" (eigentlich doch vom eigenen i-Telex) getrennt.
+
+

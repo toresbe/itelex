@@ -294,7 +294,7 @@ void POP3Einleiten()
 	// und hier wird geöffet...
 	iTelexSocketHandle = Connect2IP(ServerIP, 110); 
 	 
-	if (iTelexSocketHandle == -1)
+	if (iTelexSocketHandle == SOCKET_ERROR)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
 		Protokollieren_P(PSTR("iTelex POP: ! Client-Socket zum Server konnte nicht geoeffnet werden\r\n"));
@@ -659,7 +659,7 @@ bool SMTPOeffnen(char *EmfaengerName)
 	// und hier wird geöffet...
 	iTelexSocketHandle = Connect2IP(ServerIP, 25); 
 	 
-	if (iTelexSocketHandle == -1)
+	if (iTelexSocketHandle == SOCKET_ERROR)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
 		Protokollieren_P(PSTR("iTelex SMTP: ! Client-Socket zum SMTP-Server konnte nicht geoeffnet werden\r\n"));
