@@ -528,6 +528,9 @@ static struct TIME LetzterAnrufZeit;
 	//!< Speichert die Uhrzeit des letzten Ereignisses, welches die Einschaltung eines
 	//!< angeschlossenen Fernschreibers bewirkte.
 	
+static TKurzTimer AnrufSignalTimer;
+	//!< Schaltet nach X Sekunden wieder das Anrufsignal aus.
+	
 	
 #endif // ITELEX_ANSCHLUSS
 	
@@ -1473,6 +1476,8 @@ void ModusWechsel(TModus neu)
 		case ModKommendEinschalten:
 			SET_BIT_Status(StatBit_FsBefBetrieb);
 			SET_BIT_Status(StatBit_FsBefEin);
+			set_AnrufSignal();
+			StartKurzTimer(&AnrufSignalTimer);
 			break;
 		
 		case ModKommendWarteEinQuitt: // Warte auf Einschalt-Quittung des Endgeräts
@@ -5282,6 +5287,13 @@ void itelex_thread()
 	// RamCorrTestStep(); // TODO: Konfigurierbar machen.
 	
 	// ==========================================================================
+	// Anrufsignal ggf. wieder ausschalten
+	// ==========================================================================
+	
+	if (KurzTimerVal(&AnrufSignalTimer) > 3000) 
+		clr_AnrufSignal();
+	
+	// ==========================================================================
 	// HACK Status-Signale Seriell
 	// ==========================================================================
 
@@ -6878,6 +6890,7 @@ extern void itelex_init1(void)
 	init_Taste();
 	init_RTS();
 	init_CTS();
+	init_AnrufSignal();
 
 	ProtokollInit();
 	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);

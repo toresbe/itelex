@@ -63,11 +63,15 @@
 // Port-Definitionen
 // ================================================================
 
+// TODO umstellen auf GPIO...???
+
 DEFPORTINPULL(Taste, B, 3);
 
 DEFPORTOUT(RTS, D, 4)
 
 DEFPORTIN(CTS, D, 5)
+
+DEFPORTOUT(AnrufSignal, B, 1); // auf Prog-Stecker Pin 7. Die anderen Pins des Prog-Steckers mit mit dem SPI besetzt!
 
 
 // LEDs
