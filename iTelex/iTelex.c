@@ -398,9 +398,8 @@ Anrufer     Tln-Server      Remote Server       Anschluss (dieser)
     X       <----------->       X     <----------->      X
     X                           X                        X
     
-RemoteServer beendet Durchverbindung nach Durchleitung 
-eines ITELEXC_ENDE oder ITELEXC_STOP Telegramms
-
+RemoteServer beendet Durchverbindung sobald eine der 
+beteiligten Nachbarn die Verbindung trennt.
     
 */
 
@@ -433,10 +432,18 @@ static TKurzTimer RemoteServerActionTimer;
 	//!< Periodic sending of heartbeat, delay for closing the socket after sending "END",
 	//!< delay for re-opening the connection.
 
+static uint16_t RemoteServerReconnectTimerEnd;
+	//!< Handles increasing (each failed attempt) delay times for reconnection.
+
 static TKurzTimer RemoteServerCheckTimer;
 	//!< Timer for several purposes regarding checking of RemoteServerLink: 
 	//!< Periodic receiption of heartbeat, Maximum delay of confirmation
 
+static uint8_t RemoteServerAddressIndex; 
+	//!< Which remote server shall be used next time?
+	
+	
+	
 	
 // =====================================================================
 	
@@ -1701,25 +1708,15 @@ static bool SchreibeZeichenInSendePuffer(char c)
 	{
 	uint8_t Code1, Code2;
 
-/* TODO nach Test löschen	
-	if (c == CodeChrWerDa) 
-		{ // Kennungsgeber besonders behandeln...
-		BaudotMode_SetZiffern(BaudotMode);
-		return PufferSpeich(&SendePuffer, TtyCodeZiUm) && PufferSpeich(&SendePuffer, TtyCodeZiWerDa);
+	if (ZeichenZuCode2(c, &BaudotMode, &Code1, &Code2))
+		{ // Zeichen erfolgreich in Baudot-Code umgesetzt
+		return PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2));
 		}
-	else 
+	else
+		// Zeichen ist nicht darstellbar, also löschen
 		{
-*/			
-		if (ZeichenZuCode2(c, &BaudotMode, &Code1, &Code2))
-			{ // Zeichen erfolgreich in Baudot-Code umgesetzt
-			return PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2));
-			}
-		else
-			// Zeichen ist nicht darstellbar, also löschen
-			{
-			return false;
-			}
-/*		} // kein Werda */
+		return false;
+		}
 	}
 			
 
@@ -1903,7 +1900,31 @@ static void FalschGeheimzahlWurdeGemeldet()
 
 
 
-	//! Unterfunktion von RemoteServerBearbeiten()
+//! Unterfunktionen von RemoteServerBearbeiten()
+
+static void RemoteServerUseAnotherOne()
+	{
+	uint8_t i; // counts the changes...
+	
+	RemoteServerReconnectTimerEnd += RemoteServerReconnectTimerEnd / 2;
+	
+	if (RemoteServerReconnectTimerEnd < 2 * KurzTimerFreq)
+		RemoteServerReconnectTimerEnd = 2 * KurzTimerFreq;
+	else if (RemoteServerReconnectTimerEnd > 120 * KurzTimerFreq)
+		RemoteServerReconnectTimerEnd = 120 * KurzTimerFreq;
+	
+	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
+		{
+		RemoteServerAddressIndex++;
+		if (RemoteServerAddressIndex >= ANZ_TEILNEHMER_SERVER)
+			RemoteServerAddressIndex = 0;
+		
+		if (TeilnehmerServerAdresse[RemoteServerAddressIndex][0] != '\0')
+			return;
+		
+		}
+	}
+
 	
 static void RemoteServerSendBufferIfNotEmpty()
 	{
@@ -1920,6 +1941,16 @@ static void RemoteServerSendBufferIfNotEmpty()
 				ProtokollierenPuffer(RemoteServerSocketBuf, RemoteServerSocketBufUsed);
 				ProtokollierenInt_P(PSTR(" --> Res %d\r\n"), Res);
 				}
+				
+			if (Res != RemoteServerSocketBufUsed)
+				{
+				ProtokollierenITelex_P(PSTR("! RemoteServer wird wegen Sendefehler getrennt.\r\n"));
+				CloseTCPSocket(RemoteServerLinkSocketHandle);
+				RemoteServerLinkSocketHandle = NO_SOCKET_USED;
+				RemoteServerLinkStatus = RemServNotConnected;
+				RemoteServerUseAnotherOne();
+				}
+
 			}
 		else
 			{
@@ -1994,7 +2025,10 @@ static void RemoteServerBearbeiten()
 			if (RemoteServerLinkStatus == RemServDisconnecting)
 				ProtokollierenITelex_P(PSTR("RemoteServer hat Socket korrekt geschlossen.\r\n"));
 			else
+				{
 				ProtokollierenITelex_P(PSTR("* RemoteServer hat Socket UNGEPLANT geschlossen.\r\n"));
+				RemoteServerUseAnotherOne();
+				}
 			}
 		RemoteServerLinkSocketHandle = NO_SOCKET_USED;
 		RemoteServerLinkStatus = RemServNotConnected;
@@ -2086,6 +2120,7 @@ static void RemoteServerBearbeiten()
 				RemoteServerLinkSocketHandle = NO_SOCKET_USED;
 				StartKurzTimer(&RemoteServerActionTimer); // damit Wiederaufbau verzögert wird.
 				RemoteServerLinkStatus = RemServNotConnected;
+				RemoteServerUseAnotherOne();
 				break;
 				
 			default:
@@ -2139,6 +2174,7 @@ static void RemoteServerBearbeiten()
 			RemoteServerLinkStatus = RemServDisconnecting;
 			StartKurzTimer(&RemoteServerCheckTimer);
 			StartKurzTimer(&RemoteServerActionTimer);
+			// KEIN Wechsel des Servers!
 			}
 		} // if Modus != ModRuhe
 		
@@ -2147,17 +2183,25 @@ static void RemoteServerBearbeiten()
 	if (Modus == ModRuhe 
 		&& RemoteServerActive 
 		&& RemoteServerLinkStatus == RemServNotConnected 
-		&& KurzTimerVal(&RemoteServerActionTimer) > 2 * KurzTimerFreq)
+		&& KurzTimerVal(&RemoteServerActionTimer) >= RemoteServerReconnectTimerEnd)
 		{
 		StartKurzTimer(&RemoteServerActionTimer);
 			
 		long RemoteServerIP;
-		RemoteServerIP = DNS_ResolveName(TeilnehmerServerAdresse[0]); // TODO wechselnde server
+	
+		// TODO umstellen auf eine allgemeinere "Server-Verbinden-Funktion"
+		
+		RemoteServerIP = strtoip(TeilnehmerServerAdresse[RemoteServerAddressIndex]);	// Annahme: eine IP-Adresse angegeben
+
+		if (RemoteServerIP == 0) // ist es doch eine Hostname?
+			RemoteServerIP = DNS_ResolveName(TeilnehmerServerAdresse[RemoteServerAddressIndex]); 
+		
 		if (RemoteServerIP == -1)
 			{
 			if (ProtokollLevel >= NurFehler)
 				ProtokollierenITelex_P(PSTR("! Remote Server Hostname unbekannt\r\n"));
 			RemoteServerLinkSocketHandle = NO_SOCKET_USED;
+			RemoteServerUseAnotherOne();
 			return; // nichts mehr machbar hier.
 			}
 			
@@ -2167,15 +2211,18 @@ static void RemoteServerBearbeiten()
 			if (ProtokollLevel >= NurFehler)
 				ProtokollierenITelex_P(PSTR("! Remote Server konnte nicht geoeffnet werden\r\n"));
 			RemoteServerLinkSocketHandle = NO_SOCKET_USED;
+			RemoteServerUseAnotherOne();
 			return; // nichts mehr machbar hier.
 			}
 			
 		RemoteServerLinkStatus = RemServStarting;
 		StartKurzTimer(&RemoteServerCheckTimer);
+		
+		RemoteServerReconnectTimerEnd = 1 * KurzTimerFreq; // 1 second
 
 		RemoteServerSocketBuf[0] = ITELEXC_REMOTE_CONNECT;
 		RemoteServerSocketBuf[1] = 0x06; // 4 Byte eigene Nummer und 2 Byte Geheimzahl
-		*((uint32_t *)(RemoteServerSocketBuf+2)) = NetzRufnummer; // TODO prüfen ob das richtig kodiert wird.
+		*((uint32_t *)(RemoteServerSocketBuf+2)) = NetzRufnummer; 
 		*((uint16_t *)(RemoteServerSocketBuf+6)) = Geheimzahl;
 		RemoteServerSocketBufUsed = 8;
 		}
@@ -3706,9 +3753,12 @@ bool TeilnehmerServerSocketOeffnen(PGM_P Grund)
 	if (TeilnehmerServerSocket != NO_SOCKET_USED)
 		return true; // ist schon offen...
 		
-	int ServerI;
+	int ServerI, BestServerI;
+	BestServerI = 0;
+
+	// TODO: als erstes den mit der geringsten Fehleranzahl finden
+	// for (ServerI = 1 ; ServerI < ANZ_TEILNEHMER_SERVER ; ServerI++)
 	
-	// TODO: den mit der geringsten Fehlerzahl nehmen.
 	for (ServerI = 0 ; ServerI < ANZ_TEILNEHMER_SERVER ; ServerI++)
 		{
 		TeilnehmerServerSocket = TeilnehmerServerSocketOeffnen1(ServerI, Grund);
@@ -5906,13 +5956,14 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(SocketAnzahlZeichenQuittiert);
 	PRINTVAL(SocketAnzahlZeichenEmpfangen);
 	
-	// TODO später mal nach unten verschieben
 	PRINTVAL(RemoteServerActive);
 	PRINTVAL(RemoteServerLinkStatus);
 	PRINTVAL(RemoteServerLinkSocketHandle);
 	PRINTVAL(RemoteServerSocketBufUsed); // sollte immer 0 sein
 	PRINTVAL(KurzTimerVal(&RemoteServerActionTimer));
+	PRINTVAL(RemoteServerReconnectTimerEnd);
 	PRINTVAL(KurzTimerVal(&RemoteServerCheckTimer));
+	PRINTVAL(RemoteServerAddressIndex);
 	
 	PRINTVAL(DynIP_Phase);
 	PRINTVAL(LangTimerVal(&DynIPAktualisierungTimer));
@@ -7410,6 +7461,8 @@ extern void itelex_init1(void)
 	RemoteServerLinkSocketHandle = NO_SOCKET_USED;
 	RemoteServerLinkStatus = RemServNotConnected;
 	RemoteServerSocketBufUsed = 0;
+	RemoteServerAddressIndex = 0;
+	RemoteServerReconnectTimerEnd = 0;
 	
 	InitServSocketLog();
 	
