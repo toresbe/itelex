@@ -37,18 +37,11 @@
 	#define NTP_OK			0
 	#define NTP_ERROR		-1
 
-	#define NTP_SIZE		4
-
 	#define MAX_NTP_FAILED	5
 
 	#define SecondsPerDay	86400
 	#define SecondsPerHour	3600
 	#define SecondsPerMin	60
-	
-	union DATE {
-		unsigned char DateByte[4];
-		unsigned long Date;
-	};
 
 #endif /* _NTP_H */
 //@}

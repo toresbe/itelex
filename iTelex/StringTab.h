@@ -69,6 +69,9 @@ _STRTABENTRY(DiagnoseEinleitung, "\r\n///interne meldung ", "\r\n///internal mes
 _STRTABENTRY(SelbstAnrufMehrfachVersagt, 
 			 "Selbst-Anruf mehrfach versagt, Router-Konfiguration pruefen.\r\nSelbst-Anruf wurde abgeschaltet.", 
 			 "Loopback call failed constantly. Check router configuration.\r\nLoopback-Test was switched off.")
+_STRTABENTRY(FalscheGeheimzahlBewirktAbschaltung, 
+			 "geheimzahl fuer anmeldung beim rufnummern-server falsch.\r\nbitte bei server-administrator melden.\r\ndynamische ip aktualisierung und remote-server anbindung wurden abgeschaltet.", 
+			 "PIN for sign in at subscriber directory server wrong.\r\npleace contact a server-administrator.\r\ndynamic ip update and remote connection server switched off now.")
 _STRTABENTRY(NummerNichtBekannt, "gewaehlte Nummer nicht bekannt", "subscriber number not known")
 _STRTABENTRY(InternesVerzeichnisVoll, "internes Rufnummern-Verzeichnis voll", "internal directory out of space")
 _STRTABENTRY(KennwortAbfrage, "Seite gesperrt! Bitte Kennwort eingeben", "Page locked! Enter password")
@@ -109,8 +112,8 @@ _STRTABENTRY(ImpressAenderTest, "neuer Text", "new text")
 _STRTABENTRY(KonnteNichtGeaendertWerden, " konnte nicht ge&auml;ndert werden", " could not be changed")
 _STRTABENTRY(KennwortGgfGeaendert, "<br>Kennwort ggf. ge&auml;ndert.", "<br>Password changed if necessary")
 _STRTABENTRY(InternesKennwortFehlt, 
-			 "zun&auml;chst Passwort in <a href=\"itelexcfg-intern.cgi?spr=de\" target=\"main\">Einstellungen im lokalen TxP-System</a> eingeben!", 
-			 "First select password in <a href=\"itelexcfg-intern.cgi?spr=en\" target=\"main\">Settings for the local TxP-system</a>!")
+			 "zun&auml;chst Passwort in <a href=\"itelexcfg-intern.cgi?spr=de\" target=\"main\">Einstellungen im lokalen System</a> eingeben!", 
+			 "First select password in <a href=\"itelexcfg-intern.cgi?spr=en\" target=\"main\">Settings for the local system</a>!")
 _STRTABENTRY(GesperrtBestaetigung, 
 			 "Konfigurationsseiten sind nun gesperrt. Zur Freigabe wieder das Passwort eingeben oder Taste der Baugruppe 2 x dr&uuml;cken.", 
 			 "Configuration pages are locked again. For unlocking enter password or push button at ethernet interface module twice.")

@@ -209,7 +209,8 @@ void network_init( void )
 			{
 				timedif = atoi( ip );
 				readConfig_P ( PSTR("NTPSERVER"), ip );
-				if( NTP_GetTime( 0 , ip, timedif ) == NTP_OK )
+				
+				if( NTP_GetTime( strtoip(ip) , ip, timedif ) == NTP_OK )
 				{
 					CLOCK_GetTime ( &Time );
 					printf_P( PSTR(" Zeit: %02d:%02d:%02d.%02d\r\n"),Time.hh,Time.mm,Time.ss,Time.ms);

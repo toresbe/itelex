@@ -5,6 +5,8 @@
  *  Mon Aug 28 11:36:49 2006
  *  Copyright  2006  Dirk Broßwick
  *  Email: sharandac@snafu.de
+ *
+ *  Changed to 'real' NTP protocol, Fred Sonnenrein 29.11.2018
  ****************************************************************************/
 ///	\ingroup network
 ///	\defgroup NTP NTP-Funktionen (ntp.c)
@@ -33,6 +35,7 @@
 #include <avr/pgmspace.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <avr/interrupt.h>
 
 #include "system/clock/clock.h"
@@ -43,6 +46,11 @@
 #include "udp.h"
 #include "ntp.h"
 #include "dns.h"
+
+
+enum { NtpPacketSize = 48 } ;
+
+
 
 // #define NTP_DEBUG
 
@@ -56,14 +64,12 @@
 /*------------------------------------------------------------------------------------------------------------*/
 unsigned int NTP_GetTime( unsigned long IP, char * dnsbuffer, int timedif )
 	{
-		char buffer[ NTP_SIZE ];
-		int i=0, socket, timer, retval = NTP_ERROR;
+		char buffer[ NtpPacketSize ];
+		int socket, timer, retval = NTP_ERROR;
 
 #if defined(NTP_DEBUG)
 		char String[30];
 #endif
-		
-		union DATE ZeitInSek;
 		
 		struct TIME time;
 
@@ -87,7 +93,7 @@ unsigned int NTP_GetTime( unsigned long IP, char * dnsbuffer, int timedif )
 			return( NTP_ERROR );
 		}
 		// UDP-socket aufmachen für Bootp
-		socket = UDP_RegisterSocket( IP , 37 , NTP_SIZE , buffer);
+		socket = UDP_RegisterSocket( IP , 123 , NtpPacketSize , buffer);
 		// Wenn Fehler aufgetretten, return
 		if ( socket == UDP_SOCKET_ERROR ) 
 		{
@@ -97,8 +103,23 @@ unsigned int NTP_GetTime( unsigned long IP, char * dnsbuffer, int timedif )
 #if defined(NTP_DEBUG)
 			printf_P( PSTR("UDP-Socket aufgemacht zur %s.\r\n"), iptostr( IP, String ) );
 #endif
-		// leeres UDP-Packet an Time-server senden
-		UDP_SendPacket( socket, 0 , buffer);
+		// UDP-Packet an Time-server senden
+		memset(buffer, 0, NtpPacketSize);
+		  // Initialize values needed to form NTP request
+		  // (see URL above for details on the packets)
+		buffer[0] = 0x1b;  //  ALT: 0b11100011;   // LI, Version, Mode
+/* TODO nach bewährung löschen
+		buffer[1] = 0;     // Stratum, or type of clock
+		buffer[2] = 6;     // Polling Interval
+		buffer[3] = 0xEC;  // Peer Clock Precision
+						   // 8 bytes of zero for Root Delay & Root Dispersion
+		buffer[12] = 49;
+		buffer[13] = 0x4E;
+		buffer[14] = 49;
+		buffer[15] = 52;
+*/
+
+		UDP_SendPacket(socket, NtpPacketSize , buffer);
 
 #if defined(NTP_DEBUG)
 		printf_P( PSTR("UDP-Packet gesendet.\r\n"));
@@ -107,7 +128,7 @@ unsigned int NTP_GetTime( unsigned long IP, char * dnsbuffer, int timedif )
 		timer = CLOCK_RegisterCountdowntimer();
 		if ( timer == CLOCK_FAILED ) return ( NTP_ERROR );
 
-		CLOCK_SetCountdownTimer( timer , 500, MSECOUND );
+		CLOCK_SetCountdownTimer( timer , 1500, MSECOUND );
 
 #if defined(NTP_DEBUG)
 		printf_P( PSTR("Warte auf Antwort."));
@@ -118,16 +139,20 @@ unsigned int NTP_GetTime( unsigned long IP, char * dnsbuffer, int timedif )
 			// Wenn Time-Server geantwortet hat inerhalb des Timeouts, hier weiter
 			if ( UDP_GetSocketState( socket ) == UDP_SOCKET_BUSY && ( CLOCK_GetCountdownTimer( timer ) != 0 ) )
 			{
-				// Sind 4 Bytes empfangen worden, wenn ja okay, sonst fehler
-				if ( UDP_GetByteInBuffer( socket ) >= 4 )
+				// Sind genug Bytes empfangen worden, wenn ja okay, sonst fehler
+				if ( UDP_GetByteInBuffer( socket ) >= NtpPacketSize )
 				{				
 					// Daten kopieren und Zeit ausrechnen
-					for ( i = 0 ; i < 4 ; i++ ) 
-						ZeitInSek.DateByte[ i ] = buffer[ 3 - i ];
+					unsigned long secsSince1900;
+					// convert four bytes starting at location 40 to a long integer
+					secsSince1900 = ((unsigned long)buffer[40] << 24)
+								  | ((unsigned long)buffer[41] << 16)
+								  | ((unsigned long)buffer[42] << 8)
+								  | ((unsigned long)buffer[43]);
 
 					CLOCK_GetTime( &time );
 
-					time.time = ZeitInSek.Date;
+					time.time = secsSince1900;
 					time.timezone = timedif;
 					
 					CLOCK_decode_time( &time );
@@ -154,7 +179,7 @@ unsigned int NTP_GetTime( unsigned long IP, char * dnsbuffer, int timedif )
 			if ( CLOCK_GetCountdownTimer( timer ) == 0 )
 			{
 #if defined(NTP_DEBUG)
-				printf_P( PSTR("Timeout beun warten auf Antwort.\r\n"));
+				printf_P( PSTR("Timeout beim warten auf Antwort.\r\n"));
 #endif
 				retval = NTP_ERROR;
 				break;
