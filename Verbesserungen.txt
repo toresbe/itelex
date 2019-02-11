@@ -1,3 +1,10 @@
+Ab Build 823:
+Anrufsignalisierung
+RemoteServer
+
+Ab Build 811: 
+für Zeitserver-Abfrage wird nun tatsächlich NTP verwendet
+
 Ab Build 807:
 NTP-Einstellungen sollten auf Anhieb funktionieren
 
