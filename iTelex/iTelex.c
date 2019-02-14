@@ -1934,7 +1934,8 @@ static void RemoteServerSendBufferIfNotEmpty()
 			{
 			int Res = PutSocketData_RPE(RemoteServerLinkSocketHandle, RemoteServerSocketBufUsed, RemoteServerSocketBuf, RAM);
 
-			if (ProtokollLevel >= DatenDetailliert)
+			if (ProtokollLevel >= AuchRegelmaessiges
+				|| (ProtokollLevel >= DatenDetailliert && RemoteServerSocketBuf[0] != 0))
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("RemoteServer Sendung: (%u)" ), RemoteServerSocketBufUsed);
@@ -1998,7 +1999,8 @@ static void RemoteServerBearbeiten()
 			{
 			int Res = GetSocketData(RemoteServerLinkSocketHandle, InCount, RemoteServerSocketBuf + RemoteServerSocketBufUsed);
 			
-			if (ProtokollLevel >= DatenDetailliert) // Daten explizit
+			if (ProtokollLevel >= AuchRegelmaessiges
+				|| (ProtokollLevel >= DatenDetailliert && RemoteServerSocketBuf[0] != 0))
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("RemoteServer Empfang: (%d/" ), InCount);
@@ -5647,7 +5649,7 @@ void itelex_thread()
 	// Anrufsignal ggf. wieder ausschalten
 	// ==========================================================================
 	
-	if (KurzTimerVal(&AnrufSignalTimer) > 3000) 
+	if (KurzTimerVal(&AnrufSignalTimer) > 3 * KurzTimerFreq) // TODO konfigurierbar.
 		clr_AnrufSignal();
 	
 	// ==========================================================================
