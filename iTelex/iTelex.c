@@ -1913,6 +1913,12 @@ static void RemoteServerUseAnotherOne()
 	else if (RemoteServerReconnectTimerEnd > 120 * KurzTimerFreq)
 		RemoteServerReconnectTimerEnd = 120 * KurzTimerFreq;
 	
+	if (ProtokollLevel >= NurFehler)
+		{
+		ProtokollierenITelex_P(PSTR("* Remote Server Wechsel, neue Verzoegerung "));
+		ProtokollierenInt_P(PSTR("%d/100 sek\r\n"), RemoteServerReconnectTimerEnd);
+		}
+	
 	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
 		{
 		RemoteServerAddressIndex++;
@@ -2201,7 +2207,11 @@ static void RemoteServerBearbeiten()
 		if (RemoteServerIP == -1)
 			{
 			if (ProtokollLevel >= NurFehler)
-				ProtokollierenITelex_P(PSTR("! Remote Server Hostname unbekannt\r\n"));
+				{
+				ProtokollierenITelex_P(PSTR("! Remote Server Hostname "));
+				Protokollieren(TeilnehmerServerAdresse[RemoteServerAddressIndex]);
+				Protokollieren_P(PSTR(" unbekannt\r\n"));
+				}
 			RemoteServerLinkSocketHandle = NO_SOCKET_USED;
 			RemoteServerUseAnotherOne();
 			return; // nichts mehr machbar hier.
@@ -2211,10 +2221,21 @@ static void RemoteServerBearbeiten()
 		if (RemoteServerLinkSocketHandle == SOCKET_ERROR)
 			{ // Verbindung konnte nicht aufgebaut werden
 			if (ProtokollLevel >= NurFehler)
-				ProtokollierenITelex_P(PSTR("! Remote Server konnte nicht geoeffnet werden\r\n"));
+				{
+				ProtokollierenITelex_P(PSTR("! Remote Server "));
+				Protokollieren(TeilnehmerServerAdresse[RemoteServerAddressIndex]);
+				Protokollieren_P(PSTR(" konnte nicht geoeffnet werden\r\n"));
+				}
 			RemoteServerLinkSocketHandle = NO_SOCKET_USED;
 			RemoteServerUseAnotherOne();
 			return; // nichts mehr machbar hier.
+			}
+			
+		if (ProtokollLevel >= AblaufInfo)
+			{
+			ProtokollierenITelex_P(PSTR("Remote Server "));
+			Protokollieren(TeilnehmerServerAdresse[RemoteServerAddressIndex]);
+			Protokollieren_P(PSTR(" erfolgreich geoeffnet\r\n"));
 			}
 			
 		RemoteServerLinkStatus = RemServStarting;
