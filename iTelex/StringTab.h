@@ -39,9 +39,9 @@ _STRTABENTRY(AnrufAbgewiesenWegenBesetzt, "kommender Anruf abgewiesen wegen bese
 _STRTABENTRY(MehrfacheSendeFehler, "Mehrfache Fehler beim Senden ins Netz", "Multiple errors while sending on network")
 _STRTABENTRY(ZeitueberschreitungWiederaufnahme, "Zeitueberschreitung bei Wiederaufnahme der Verbindung", "Timeout while waiting for a reconnection")
 _STRTABENTRY(KeinTeilnehmerServerErreichbar, 
-	"Kein Teilnehmer-Server erreichbar: Verbindungsversuche koennen fehlschlagen.", 
-	"No subscriber directory server available: Connections may fail.")
-_STRTABENTRY(TeilnehmerServerWiederErreichbar, "Teilnehmer-Server wieder erreicht.", "Subscriber directory server available again.")
+	"kein teilnehmer- / verbindungs-server erreichbar: verbindungsversuche koennen fehlschlagen.", 
+	"no subscriber directory / connection server available: Connections may fail.")
+_STRTABENTRY(TeilnehmerServerWiederErreichbar, "server wieder erreicht.", "server available again.")
 _STRTABENTRY(KeineVerbindungZumMailServerAusgang, "Keine Verbindung zum Mail-Server fuer Ausgang", "No connection to server for outgoing mails")
 _STRTABENTRY(MailNichtInDieserVersion, "Mail in dieser Version nicht unterstuetzt", "Mail not supported in this version")
 _STRTABENTRY(ServerAusWegenFehlenderUhrzeit, 
