@@ -442,7 +442,11 @@ static TKurzTimer RemoteServerCheckTimer;
 static uint8_t RemoteServerAddressIndex; 
 	//!< Which remote server shall be used next time?
 	
+static TLangTimer RemoteServerErrorMessageDelay;
+	//!< in case of temporary failures of the remote server this time delays the warning message for some minutes
 	
+static bool RemoteServerErrorMessageSent;
+	//!< if this flag is set the user shall already be informed about the failed remote servers
 	
 	
 // =====================================================================
@@ -2049,7 +2053,7 @@ static void RemoteServerBearbeiten()
 	if (RemoteServerSocketBufUsed > 0)
 		{
 		int BytesProcessed = 0;
-		
+
 		switch (RemoteServerSocketBuf[0])
 			{
 			case ITELEXC_REMOTE_CONFIRM:
@@ -2062,6 +2066,12 @@ static void RemoteServerBearbeiten()
 					BytesProcessed = 1;
 				// TODO? process additional data?
 				FalschGeheimzahlZaehler = 0;
+				if (RemoteServerErrorMessageSent)
+					{
+					Diagnoseausgabe_P(ISTR(TeilnehmerServerWiederErreichbar, LokaleSprache), 1);	
+					RemoteServerErrorMessageSent = false;
+					}
+				StartLangTimer(&RemoteServerErrorMessageDelay);
 				break;
 				
 			case ITELEXC_REMOTE_CALL:
@@ -2108,6 +2118,7 @@ static void RemoteServerBearbeiten()
 				
 			case ITELEXC_NULL:
 				StartKurzTimer(&RemoteServerCheckTimer);
+				StartLangTimer(&RemoteServerErrorMessageDelay);
 				if (RemoteServerSocketBufUsed > 1)
 					BytesProcessed = RemoteServerSocketBuf[1] + 2;
 				else
@@ -2159,8 +2170,8 @@ static void RemoteServerBearbeiten()
 			
 	// Timeout prüfen
 	// --------------
-	if ((RemoteServerLinkStatus == RemServConnected && KurzTimerVal(&RemoteServerCheckTimer) > 25 * KurzTimerFreq)
-		|| (RemoteServerLinkStatus == RemServStarting && KurzTimerVal(&RemoteServerCheckTimer) > 15 * KurzTimerFreq))
+	if ((RemoteServerLinkStatus == RemServConnected && KurzTimerVal(&RemoteServerCheckTimer) >= 35 * KurzTimerFreq)
+		|| (RemoteServerLinkStatus == RemServStarting && KurzTimerVal(&RemoteServerCheckTimer) >= 15 * KurzTimerFreq))
 		{
 		RemoteServerLinkStatus = RemServSendStop; // Ende und dann trennen.
 		}
@@ -2176,14 +2187,39 @@ static void RemoteServerBearbeiten()
 				{
 				ProtokollierenITelex_P(PSTR("RemoteServer sende Ende\r\n"));
 				}
-			RemoteServerSocketBuf[0] = ITELEXC_ENDE;
-			RemoteServerSocketBuf[1] = 0x00;
-			RemoteServerSocketBufUsed = 2;
+				
+			if (Modus == ModRuhe || !RemoteServerActive)
+				{ // Nicht mehr über den Remote-Server verbunden -> nc
+				RemoteServerSocketBuf[0] = ITELEXC_ENDE;
+				RemoteServerSocketBuf[1] = 0x02;
+				RemoteServerSocketBuf[2] = 'n';
+				RemoteServerSocketBuf[3] = 'c';
+				RemoteServerSocketBufUsed = 4;
+				}
+			else if (Modus == ModDeaktiviert)
+				{ // Abgeschaltet --> abc
+				RemoteServerSocketBuf[0] = ITELEXC_ENDE;
+				RemoteServerSocketBuf[1] = 0x03;
+				RemoteServerSocketBuf[2] = 'a';
+				RemoteServerSocketBuf[3] = 'b';
+				RemoteServerSocketBuf[4] = 's';
+				RemoteServerSocketBufUsed = 5;
+				}
+			else
+				{ // Besetzt --> occ
+				RemoteServerSocketBuf[0] = ITELEXC_ENDE;
+				RemoteServerSocketBuf[1] = 0x03;
+				RemoteServerSocketBuf[2] = 'o';
+				RemoteServerSocketBuf[3] = 'c';
+				RemoteServerSocketBuf[4] = 'c';
+				RemoteServerSocketBufUsed = 5;
+				}
 			RemoteServerLinkStatus = RemServDisconnecting;
 			StartKurzTimer(&RemoteServerCheckTimer);
 			StartKurzTimer(&RemoteServerActionTimer);
 			// KEIN Wechsel des Servers!
 			}
+		StartLangTimer(&RemoteServerErrorMessageDelay);
 		} // if Modus != ModRuhe
 		
 	// Verbindung aufbauen wenn sinnvoll
@@ -2194,7 +2230,15 @@ static void RemoteServerBearbeiten()
 		&& KurzTimerVal(&RemoteServerActionTimer) >= RemoteServerReconnectTimerEnd)
 		{
 		StartKurzTimer(&RemoteServerActionTimer);
-			
+
+		// because of two return statements below handling errors the printout of the 
+		// diagnostic message is done here.
+		if (!RemoteServerErrorMessageSent && LangTimerVal(&RemoteServerErrorMessageDelay) >= 10 * LangTimerMinuteFaktor)
+			{
+			Diagnoseausgabe_P(ISTR(KeinTeilnehmerServerErreichbar, LokaleSprache), 1);	
+			RemoteServerErrorMessageSent = true;
+			}
+		
 		long RemoteServerIP;
 	
 		// TODO umstellen auf eine allgemeinere "Server-Verbinden-Funktion"
@@ -7486,6 +7530,8 @@ extern void itelex_init1(void)
 	RemoteServerSocketBufUsed = 0;
 	RemoteServerAddressIndex = 0;
 	RemoteServerReconnectTimerEnd = 0;
+	StartLangTimer(&RemoteServerErrorMessageDelay);
+	RemoteServerErrorMessageSent = false;
 	
 	InitServSocketLog();
 	
