@@ -1912,8 +1912,8 @@ static void RemoteServerUseAnotherOne()
 	
 	RemoteServerReconnectTimerEnd += RemoteServerReconnectTimerEnd / 2;
 	
-	if (RemoteServerReconnectTimerEnd < 2 * KurzTimerFreq)
-		RemoteServerReconnectTimerEnd = 2 * KurzTimerFreq;
+	if (RemoteServerReconnectTimerEnd < 5 * KurzTimerFreq)
+		RemoteServerReconnectTimerEnd = 5 * KurzTimerFreq;
 	else if (RemoteServerReconnectTimerEnd > 120 * KurzTimerFreq)
 		RemoteServerReconnectTimerEnd = 120 * KurzTimerFreq;
 	
@@ -2025,27 +2025,6 @@ static void RemoteServerBearbeiten()
 				RemoteServerSocketBufUsed += Res;
 				}
 			}
-		}
-
-	// Verbindungsabbau des Servers detektieren
-	// ----------------------------------------
-	if (RemoteServerLinkSocketHandle != NO_SOCKET_USED 
-		&& CheckSocketState(RemoteServerLinkSocketHandle) == SOCKET_NOT_USE)
-		{
-		if (ProtokollLevel >= AblaufInfo)
-			{
-			if (RemoteServerLinkStatus == RemServDisconnecting)
-				ProtokollierenITelex_P(PSTR("RemoteServer hat Socket korrekt geschlossen.\r\n"));
-			else
-				{
-				ProtokollierenITelex_P(PSTR("* RemoteServer hat Socket UNGEPLANT geschlossen.\r\n"));
-				RemoteServerUseAnotherOne();
-				}
-			}
-		RemoteServerLinkSocketHandle = NO_SOCKET_USED;
-		RemoteServerLinkStatus = RemServNotConnected;
-		StartKurzTimer(&RemoteServerActionTimer);
-		// ggf. noch vorhandener Pufferinhalt wird verworfen.
 		}
 
 	// Empfangene Daten auswerten
@@ -2160,21 +2139,40 @@ static void RemoteServerBearbeiten()
 			{ // Puffer ist nur TEILWEISE bearbeitet
 			RemoteServerSocketBufUsed -= BytesProcessed;
 			memmove(RemoteServerSocketBuf, RemoteServerSocketBuf + BytesProcessed, RemoteServerSocketBufUsed);
-			return; // Puffer ist noch nicht leer, also darf auch nichts 'reingeschrieben werden.
 			}
-		else 
-			// Puffer wurde gar nicht bearbeitet, ist aber auch nicht leer --> weiter warten
-			return;
 		
 		} // if (RemoteServerSocketBufUsed > 0) <-- das sind die empfangenen Daten
-			
+
+	// Verbindungsabbau des Servers detektieren
+	// ----------------------------------------
+	if (RemoteServerLinkSocketHandle != NO_SOCKET_USED 
+		&& CheckSocketState(RemoteServerLinkSocketHandle) == SOCKET_NOT_USE)
+		{
+		if (ProtokollLevel >= AblaufInfo)
+			{
+			if (RemoteServerLinkStatus == RemServDisconnecting)
+				ProtokollierenITelex_P(PSTR("RemoteServer hat Socket korrekt geschlossen.\r\n"));
+			else
+				{
+				ProtokollierenITelex_P(PSTR("* RemoteServer hat Socket UNGEPLANT geschlossen.\r\n"));
+				RemoteServerUseAnotherOne();
+				}
+			}
+		RemoteServerLinkSocketHandle = NO_SOCKET_USED;
+		RemoteServerLinkStatus = RemServNotConnected;
+		StartKurzTimer(&RemoteServerActionTimer);
+		RemoteServerSocketBufUsed = 0; // ggf. noch vorhandener Pufferinhalt verwerfen.
+		}
+
 	// Timeout prüfen
 	// --------------
 	if ((RemoteServerLinkStatus == RemServConnected && KurzTimerVal(&RemoteServerCheckTimer) >= 35 * KurzTimerFreq)
-		|| (RemoteServerLinkStatus == RemServStarting && KurzTimerVal(&RemoteServerCheckTimer) >= 15 * KurzTimerFreq))
+		|| (RemoteServerLinkStatus == RemServStarting && KurzTimerVal(&RemoteServerCheckTimer) >= 25 * KurzTimerFreq))
 		{
 		RemoteServerLinkStatus = RemServSendStop; // Ende und dann trennen.
 		}
+	else if (RemoteServerSocketBufUsed > 0)
+		return; // auf weitere Daten warten, da ein unvollständiges Telegramm empfangen wurde. Aber nur, wenn es keinen Timeout gegeben hat.
 		
 	// Verbindung abbauen wenn nicht (mehr) benötigt
 	// ---------------------------------------------
@@ -2214,13 +2212,24 @@ static void RemoteServerBearbeiten()
 				RemoteServerSocketBuf[4] = 'c';
 				RemoteServerSocketBufUsed = 5;
 				}
+				
 			RemoteServerLinkStatus = RemServDisconnecting;
-			StartKurzTimer(&RemoteServerCheckTimer);
-			StartKurzTimer(&RemoteServerActionTimer);
 			// KEIN Wechsel des Servers!
+
+			StartKurzTimer(&RemoteServerActionTimer);
+			StartKurzTimer(&RemoteServerCheckTimer);
+			
+			RemoteServerReconnectTimerEnd = 1 * KurzTimerFreq; // 1 second
 			}
-		StartLangTimer(&RemoteServerErrorMessageDelay);
-		} // if Modus != ModRuhe
+		
+		if (RemoteServerLinkStatus == RemServNotConnected)
+			{ // wenn die Verbindung gewollt nicht genutzt wird, alle Timer rücksetzen
+			StartKurzTimer(&RemoteServerActionTimer);
+			StartKurzTimer(&RemoteServerCheckTimer);
+			StartLangTimer(&RemoteServerErrorMessageDelay);
+			}
+			
+		} // if Modus != ModRuhe || !RemoteServerActive || Status == RemServSendStop
 		
 	// Verbindung aufbauen wenn sinnvoll
 	// ---------------------------------
@@ -2229,8 +2238,6 @@ static void RemoteServerBearbeiten()
 		&& RemoteServerLinkStatus == RemServNotConnected 
 		&& KurzTimerVal(&RemoteServerActionTimer) >= RemoteServerReconnectTimerEnd)
 		{
-		StartKurzTimer(&RemoteServerActionTimer);
-
 		// because of two return statements below handling errors the printout of the 
 		// diagnostic message is done here.
 		if (!RemoteServerErrorMessageSent && LangTimerVal(&RemoteServerErrorMessageDelay) >= 10 * LangTimerMinuteFaktor)
@@ -2258,10 +2265,14 @@ static void RemoteServerBearbeiten()
 				}
 			RemoteServerLinkSocketHandle = NO_SOCKET_USED;
 			RemoteServerUseAnotherOne();
+			StartKurzTimer(&RemoteServerActionTimer); 
 			return; // nichts mehr machbar hier.
 			}
 			
 		RemoteServerLinkSocketHandle = Connect2IP(RemoteServerIP, 49491); // HACK / TODO configurable Port
+		
+		StartKurzTimer(&RemoteServerActionTimer); // erst nach dem Connect starten, damit der 5 sekunden-Timeout nicht mit gemessen wird.
+		
 		if (RemoteServerLinkSocketHandle == SOCKET_ERROR)
 			{ // Verbindung konnte nicht aufgebaut werden
 			if (ProtokollLevel >= NurFehler)
@@ -2281,18 +2292,20 @@ static void RemoteServerBearbeiten()
 			Protokollieren(TeilnehmerServerAdresse[RemoteServerAddressIndex]);
 			Protokollieren_P(PSTR(" erfolgreich geoeffnet\r\n"));
 			}
-			
-		RemoteServerLinkStatus = RemServStarting;
-		StartKurzTimer(&RemoteServerCheckTimer);
 		
-		RemoteServerReconnectTimerEnd = 1 * KurzTimerFreq; // 1 second
-
 		RemoteServerSocketBuf[0] = ITELEXC_REMOTE_CONNECT;
 		RemoteServerSocketBuf[1] = 0x06; // 4 Byte eigene Nummer und 2 Byte Geheimzahl
 		*((uint32_t *)(RemoteServerSocketBuf+2)) = NetzRufnummer; 
 		*((uint16_t *)(RemoteServerSocketBuf+6)) = Geheimzahl;
 		RemoteServerSocketBufUsed = 8;
-		}
+
+		RemoteServerLinkStatus = RemServStarting;
+
+		StartKurzTimer(&RemoteServerCheckTimer);
+		RemoteServerReconnectTimerEnd = 10 * KurzTimerFreq; 
+			// bei erfolgreichem Verbinden sollte der nächste Wiederaufbau nicht so schnell nötig sein.
+		
+		} // if (ModRuhe && RemoteServerActive && RemServNotConnected && RemoteServerActionTimer >= RemoteServerReconnectTimerEnd)
 	
 	// Lebenszeichen
 	// -------------
