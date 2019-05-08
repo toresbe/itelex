@@ -1912,8 +1912,8 @@ static void RemoteServerUseAnotherOne()
 	
 	RemoteServerReconnectTimerEnd += RemoteServerReconnectTimerEnd / 2;
 	
-	if (RemoteServerReconnectTimerEnd < 5 * KurzTimerFreq)
-		RemoteServerReconnectTimerEnd = 5 * KurzTimerFreq;
+	if (RemoteServerReconnectTimerEnd < 4 * KurzTimerFreq)
+		RemoteServerReconnectTimerEnd = 4 * KurzTimerFreq;
 	else if (RemoteServerReconnectTimerEnd > 120 * KurzTimerFreq)
 		RemoteServerReconnectTimerEnd = 120 * KurzTimerFreq;
 	
@@ -2219,7 +2219,7 @@ static void RemoteServerBearbeiten()
 			StartKurzTimer(&RemoteServerActionTimer);
 			StartKurzTimer(&RemoteServerCheckTimer);
 			
-			RemoteServerReconnectTimerEnd = 1 * KurzTimerFreq; // 1 second
+			RemoteServerReconnectTimerEnd = 3 * KurzTimerFreq; // 1 second
 			}
 		
 		if (RemoteServerLinkStatus == RemServNotConnected)
@@ -2302,7 +2302,7 @@ static void RemoteServerBearbeiten()
 		RemoteServerLinkStatus = RemServStarting;
 
 		StartKurzTimer(&RemoteServerCheckTimer);
-		RemoteServerReconnectTimerEnd = 10 * KurzTimerFreq; 
+		RemoteServerReconnectTimerEnd = 3 * KurzTimerFreq; 
 			// bei erfolgreichem Verbinden sollte der nächste Wiederaufbau nicht so schnell nötig sein.
 		
 		} // if (ModRuhe && RemoteServerActive && RemServNotConnected && RemoteServerActionTimer >= RemoteServerReconnectTimerEnd)
