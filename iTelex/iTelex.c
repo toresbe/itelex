@@ -6897,7 +6897,8 @@ void itelex_cgi_config_extern(void *pStruct)
 			CgiFormInputFieldText_P(ISTR(RufnrServerAdr, Sprache), RufnrServerAdr_P[i], TlnAdresseMax, TeilnehmerServerAdresse[i]);
 
 		#ifdef ITELEX_TLNSERVER
-		CgiFormInputFieldULong_P(ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, 10, TlnServSyncGeheimzahl);
+//		CgiFormInputFieldULong_P(ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, 10, TlnServSyncGeheimzahl);
+// deaktiviert, da Teilnehmerserver eigentlich nicht mehr gebraucht.
 		#endif //def ITELEX_TLNSERVER
 		
 		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
@@ -6947,8 +6948,9 @@ void itelex_cgi_config_extern(void *pStruct)
 		#endif //defined(ITELEX_ANSCHLUSS) || defined(ITELEX_TLNSERVER)
 
 		#ifdef ITELEX_TLNSERVER
-		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, 
-												TlnServSyncGeheimzahl, 0, UINT32_MAX, Sprache);
+//		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, 
+//												TlnServSyncGeheimzahl, 0, UINT32_MAX, Sprache);
+// deaktiviert, da Teilnehmerserver eigentlich nicht mehr gebraucht.
 		#endif //def ITELEX_TLNSERVER
 		
 		SpeichereSpracheAlsLokal(Sprache);
