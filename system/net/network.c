@@ -120,7 +120,7 @@ void network_init( void )
 #if defined(DHCP) && defined(UDP)
 
 	if (  checkConfigName_P( PSTR("DHCP") ) == -1 ) 
-	{
+	{ // if not defined treat as "on" -- default
 		// DHCP-Config holen
 		printf_P( DHCP_TRY_P );
 		if ( !DHCP_GetConfig () )

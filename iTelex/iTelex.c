@@ -2219,7 +2219,7 @@ static void RemoteServerBearbeiten()
 			StartKurzTimer(&RemoteServerActionTimer);
 			StartKurzTimer(&RemoteServerCheckTimer);
 			
-			RemoteServerReconnectTimerEnd = 3 * KurzTimerFreq; // 1 second
+			RemoteServerReconnectTimerEnd = 3 * KurzTimerFreq; // 3 seconds
 			}
 		
 		if (RemoteServerLinkStatus == RemServNotConnected)

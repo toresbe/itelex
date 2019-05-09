@@ -144,7 +144,7 @@ void cgi_network( void * pStruct )
   		printf_P( PSTR( "<tr>"
 					   	"<td align=\"right\">DHCP active</td>"
 					    "<td><input type=\"checkbox\" name=\"DHCP\" value=\"on\" " )); 
-		if ( !strcmp_P( IP, PSTR("on") ) )
+		if (checkConfigName_P(PSTR("DHCP")) == -1 || !strcmp_P( IP, PSTR("on") ) ) // default is on, so if DCHPnot defined in config treat it as on
 						printf_P( PSTR("checked"));
 		printf_P( PSTR(	"></td>"
   						"</tr>") );
