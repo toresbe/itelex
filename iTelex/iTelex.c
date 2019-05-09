@@ -6948,9 +6948,9 @@ void itelex_cgi_config_extern(void *pStruct)
 		#endif //defined(ITELEX_ANSCHLUSS) || defined(ITELEX_TLNSERVER)
 
 		#ifdef ITELEX_TLNSERVER
-//		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, 
-//												TlnServSyncGeheimzahl, 0, UINT32_MAX, Sprache);
-// deaktiviert, da Teilnehmerserver eigentlich nicht mehr gebraucht.
+		TlnServSyncGeheimzahl = CgiCheckULong_P(http_request, ISTR(TlnServSyncGeheimzahl, Sprache), TlnServSyncGeheimzahl_P, 
+												TlnServSyncGeheimzahl, 0, UINT32_MAX, Sprache);
+		// ist nicht mehr im Form enthalten, kann aber manuell in die Adresszeile eingegeben werden.
 		#endif //def ITELEX_TLNSERVER
 		
 		SpeichereSpracheAlsLokal(Sprache);
