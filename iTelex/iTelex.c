@@ -5792,6 +5792,8 @@ static void DurchwahlTabelleDekodieren(char *s)
 					
 			case '\0':
 			default:
+				if (AnzSt != 0)
+					i++;
 				while (i < 9)
 					DurchwahlTabelle[i++] = 0;
 				return;
