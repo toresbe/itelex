@@ -63,6 +63,7 @@ _STRTABENTRY(NamensucheServerAbbruch, "fehler bei server-abfrage. ", "error in s
 _STRTABENTRY(NamensucheNurLokal, "lokal vorhandene eintraege:\r\n", "locally stored entries:\r\n")
 _STRTABENTRY(NamensucheErgebnisse, "   nummer - name - verbindung:\r\n", "   number - name - connection:\r\n")
 _STRTABENTRY(NamensucheListenende, "ende ++++\r\n\n", "end ++++\r\n\n")
+_STRTABENTRY(NamensucheKeineGefunden, "kein passender eintrag\r\n", "no matching entry\r\n")
 _STRTABENTRY(DiagInterneIP, "interne IP: ", "local IP: ")
 _STRTABENTRY(Datum, "Datum", "Date")
 _STRTABENTRY(DiagnoseEinleitung, "\r\n///interne meldung ", "\r\n///internal message ")

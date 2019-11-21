@@ -543,7 +543,7 @@ static char NamensucheSuchtext[TlnNameMax];
 
 static TTlnListerDat NamenssucheLister;
 	//!< Datensatz für das Absuchen des Teilnehmer-Verzeichnisses nach Namensteil.
-	//!< Nur gültig bei #Modus == #ModNamensucheAusgabe.
+	//!< Nur gültig bei #Modus == #ModNamensucheAusgabeAnfang oder #ModNamensucheAusgabeWeiter.
 	
 static uint32_t NetzRufnummer;
 	//!< Rufnummer des eigenen Anschlusses im ip-telex-Netz
@@ -1038,7 +1038,8 @@ static bool ModusTwiVerbunden()
 			|| Modus == ModMeldungsdruckWarteEinQuitt
 			|| Modus == ModNamensucheEingabe
 			|| Modus == ModNamensucheServerAbfrage
-			|| Modus == ModNamensucheAusgabe
+			|| Modus == ModNamensucheAusgabeAnfang
+			|| Modus == ModNamensucheAusgabeWeiter
 			|| Modus == ModEmailPOPWarteEinQuitt
 			|| Modus == ModEmailPOPDruckend);
 	}
@@ -1110,7 +1111,8 @@ void itelex_timerEvent(void)
 		|| Modus == ModPufferDruckUndSchluss
 		|| Modus == ModNamensucheEingabe
 		|| Modus == ModNamensucheServerAbfrage
-		|| Modus == ModNamensucheAusgabe
+		|| Modus == ModNamensucheAusgabeAnfang
+		|| Modus == ModNamensucheAusgabeWeiter
 		|| Modus == ModEmailPOPDruckend)
 		{ // ist Verbunden, also Pegel senden und empfangen
 		bool NeuMark = true; // wird beim Senden vielleicht noch geändert
@@ -1637,17 +1639,27 @@ void ModusWechsel(TModus neu)
 			LED_off(GRUEN);
 			LED_off(BLAU);
 			StartKurzTimer(&SchreibPauseTimer);
-			AsciiDruckPuffer[0] = '\0';
 			NamensucheSuchtext[0] = '\0';
+
+			strcpy_P(AsciiDruckPuffer, ISTR(NamensucheTexteingabe, LokaleSprache));
+			
+			// und noch eine Buchstaben-Umschaltung dran hängen:
+			uint8_t len = strlen(AsciiDruckPuffer);
+			AsciiDruckPuffer[len] = CodeChrBuUm;
+			AsciiDruckPuffer[len+1] = '\0';
+			
 			break;
 			
 		case ModNamensucheServerAbfrage:
 		    // überhaupt was tun????
 			break;
 			
-		case ModNamensucheAusgabe:
-			strcat_P(AsciiDruckPuffer, ISTR(NamensucheErgebnisse, LokaleSprache));
+		case ModNamensucheAusgabeAnfang:
 			TlnListerStart(&NamenssucheLister);
+			break;
+			
+		case ModNamensucheAusgabeWeiter:
+			strcat_P(AsciiDruckPuffer, ISTR(NamensucheErgebnisse, LokaleSprache));
 			break;
 
 		case ModEmailPOPVerbunden:
@@ -2821,7 +2833,8 @@ void InterneVerbindungBeenden(bool Force)
 		case ModMeldungsdruckWarteEinQuitt:
 		case ModNamensucheEingabe:
 		case ModNamensucheServerAbfrage:
-		case ModNamensucheAusgabe:
+		case ModNamensucheAusgabeAnfang:
+		case ModNamensucheAusgabeWeiter:
 			if (Force)
 				{
 				SendeBusKdoSchluss();
@@ -4060,7 +4073,8 @@ void AsciiDruckPufferVerarbeiten()
 		&& Modus != ModPufferDruckUndSchluss
 		&& Modus != ModNamensucheEingabe
 		&& Modus != ModNamensucheServerAbfrage
-		&& Modus != ModNamensucheAusgabe)
+		&& Modus != ModNamensucheAusgabeAnfang
+		&& Modus != ModNamensucheAusgabeWeiter)
 		return; // Drucken nicht möglich.
 		
 	if (!PufferLeer(&SendePuffer))
@@ -4536,16 +4550,6 @@ void itelex_thread()
 						ModusWechsel(ModNamensucheEingabe);
 						BusSenden(BusQuittEin);
 						StartKurzTimer(&MachineStartupTimer);
-/* TODO check ob es wirklich entfallen kann...						
-						for (uint8_t i = 0 ; i < 5 ; i++)
-							PufferSpeich(&SendePuffer, TtyCodeBuUm); // kurze Verzögerung nach dem Einschalten.
-*/						
-						strcpy_P(AsciiDruckPuffer, ISTR(NamensucheTexteingabe, LokaleSprache));
-						
-						// und noch eine Buchstaben-Umschaltung dran hängen:
-						uint8_t len = strlen(AsciiDruckPuffer);
-						AsciiDruckPuffer[len] = CodeChrBuUm;
-						AsciiDruckPuffer[len+1] = '\0';
 						}
 						
 					else // es war keine 0 als erster Stelle
@@ -4789,7 +4793,7 @@ void itelex_thread()
 #ifdef ITELEX_TLNSERVER
 					else if (TlnServSyncGeheimzahl != 0)
 						{ // Gerät ist selbst Teilnehmer-Server, Abfrage nicht erforderlich
-						ModusWechsel(ModNamensucheAusgabe);
+						ModusWechsel(ModNamensucheAusgabeAnfang);
 						}
 
 #endif //def ITELEX_TLNSERVER
@@ -4813,7 +4817,7 @@ void itelex_thread()
 							{
 							strcat_P(AsciiDruckPuffer, ISTR(KeinTeilnehmerServerErreichbar, LokaleSprache));
 							strcat_P(AsciiDruckPuffer, ISTR(NamensucheNurLokal, LokaleSprache));
-							ModusWechsel(ModNamensucheAusgabe);
+							ModusWechsel(ModNamensucheAusgabeAnfang);
 							}
 						
 						}
@@ -4841,19 +4845,28 @@ void itelex_thread()
 			} // while !PufferLeer(EmpfPuffer)
 		} // if (Modus == ModNamensucheEingabe)
 			
-	if (Modus == ModNamensucheAusgabe)
+	if (Modus == ModNamensucheAusgabeAnfang || Modus == ModNamensucheAusgabeWeiter)
 		{
 		while (AsciiDruckPuffer[0] == '\0')
 			{ // Puffer ist leer
 			TTlnDaten TD;
 			if (!TlnListerNaechster(&NamenssucheLister, &TD))
 				{
-				strcpy_P(AsciiDruckPuffer, ISTR(NamensucheListenende, LokaleSprache));
-				ModusWechsel(ModPufferDruckUndSchluss);
+				if (Modus == ModNamensucheAusgabeAnfang)
+					{
+					strcpy_P(AsciiDruckPuffer, ISTR(NamensucheKeineGefunden, LokaleSprache)); 
+					ModusWechsel(ModNamensucheEingabe); // todo prüfen ob prompt ausgegeben wird
+					}
+				else
+					{
+					strcpy_P(AsciiDruckPuffer, ISTR(NamensucheListenende, LokaleSprache)); 
+					ModusWechsel(ModPufferDruckUndSchluss);
+					}
 				break;
 				}
 			if (TlnSuchMusterPasst(NamensucheSuchtext, &TD) && TD.AdrArt != Geloescht)
 				{
+				ModusWechsel(ModNamensucheAusgabeWeiter); // kann auch sein, dass es gar kein Wechsel ist. (wird innerhalb von ModusWechsel() geprüft)
 				sprintf_P(AsciiDruckPuffer, PSTR("%9ld - %s - "), TD.Nummer, TD.Name);
 				switch (TD.AdrArt)
 					{
@@ -4877,7 +4890,7 @@ void itelex_thread()
 				strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 				}
 			} // while (AsciiDruckPuffer[0] == '\0')
-		} // if (Modus == ModNamensucheAusgabe)
+		} // if (Modus == ModNamensucheAusgabeAnfang || Modus == ModNamensucheAusgabeWeiter)
 		
 	// ==========================================================================
 	// Timeouts? (auch 2 Sekunden Wahlpause...)
@@ -5412,7 +5425,7 @@ void itelex_thread()
 						{
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheNurLokal, LokaleSprache));
-						ModusWechsel(ModNamensucheAusgabe);
+						ModusWechsel(ModNamensucheAusgabeAnfang);
 						}
 					
 					break;
@@ -5542,7 +5555,7 @@ void itelex_thread()
 				case TLNSERV_SYNC_ENDE:
 					ProtokollierenITelex_P(PSTR("TlnServer meldet Listenende\r\n"));
 					if (Modus == ModNamensucheServerAbfrage)
-						ModusWechsel(ModNamensucheAusgabe); 
+						ModusWechsel(ModNamensucheAusgabeAnfang); 
 						// bewirkt auch, dass unten die Verbindung zum Teilnehmer-Server abgebaut wird.
 					break;
 				
@@ -5559,7 +5572,7 @@ void itelex_thread()
 						strcat(AsciiDruckPuffer, TSB.PureData);
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheNurLokal, LokaleSprache));
-						ModusWechsel(ModNamensucheAusgabe);
+						ModusWechsel(ModNamensucheAusgabeAnfang);
 						}
 						
 					else if (DynIP_Phase == DynIP_LaeuftGerade)
@@ -5585,7 +5598,7 @@ void itelex_thread()
 						{
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheServerAbbruch, LokaleSprache));
 						strcat_P(AsciiDruckPuffer, ISTR(NamensucheNurLokal, LokaleSprache));
-						ModusWechsel(ModNamensucheAusgabe);
+						ModusWechsel(ModNamensucheAusgabeAnfang);
 						}
 					
 					else if (SelbstAnrufPhase == SelbstAnrufRuhe)

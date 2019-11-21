@@ -257,8 +257,11 @@ typedef enum
 		//!< Name wurde eingegeben, Abfrage des Servers ist gestartet, warte auf 
 		//!< Rückmeldungen.
 
-	ModNamensucheAusgabe = 43,
-		//!< Abfrage des Servers ist beendet, gebe Einträge aus dem Verzeichnis aus.
+	ModNamensucheAusgabeAnfang = 43,
+		//!< Abfrage des Servers ist beendet, suche ersten Eintrag zur Ausgabe.
+		
+	ModNamensucheAusgabeWeiter = 44,
+		//!< Erster dem Suchmuster entsprechender Eintrag wurde ausgegeben, suche nach weiteren.
 		
 	ModEmailPOPVerbunden = 51,
 		//!< Verbindung zum POP Dienst des Email-Servers ist hergestellt.
