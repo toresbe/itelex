@@ -1641,7 +1641,7 @@ void ModusWechsel(TModus neu)
 			StartKurzTimer(&SchreibPauseTimer);
 			NamensucheSuchtext[0] = '\0';
 
-			strcpy_P(AsciiDruckPuffer, ISTR(NamensucheTexteingabe, LokaleSprache));
+			strcat_P(AsciiDruckPuffer, ISTR(NamensucheTexteingabe, LokaleSprache));
 			
 			// und noch eine Buchstaben-Umschaltung dran hängen:
 			uint8_t len = strlen(AsciiDruckPuffer);
@@ -4547,6 +4547,7 @@ void itelex_thread()
 						{ // Namenssuche starten.
 						if (ProtokollLevel >= AblaufInfo)
 							ProtokollierenITelex_P(PSTR("Namenssuche gestartet -> Einschalt-Quittung an TWI\r\n" ));
+						AsciiDruckPuffer[0] = '\0';
 						ModusWechsel(ModNamensucheEingabe);
 						BusSenden(BusQuittEin);
 						StartKurzTimer(&MachineStartupTimer);
@@ -4779,7 +4780,7 @@ void itelex_thread()
 					; // WR / ZL am Zeilenanfang ignorieren
 				else
 					{
-					ProtokollierenITelex_P(PSTR("Starte Namenssuche mit <"));
+					ProtokollierenITelex_P(PSTR("Starte Namenssuche fuer <"));
 					Protokollieren(NamensucheSuchtext);
 					ProtokollierenInt_P(PSTR("> len = %d\r\n"), SuchTextLen);
 
@@ -4867,6 +4868,7 @@ void itelex_thread()
 			if (TlnSuchMusterPasst(NamensucheSuchtext, &TD) && TD.AdrArt != Geloescht)
 				{
 				ModusWechsel(ModNamensucheAusgabeWeiter); // kann auch sein, dass es gar kein Wechsel ist. (wird innerhalb von ModusWechsel() geprüft)
+					// wenn es ein Wechsel war, wird auch die Überschrift gedruckt.
 				sprintf_P(AsciiDruckPuffer, PSTR("%9ld - %s - "), TD.Nummer, TD.Name);
 				switch (TD.AdrArt)
 					{
