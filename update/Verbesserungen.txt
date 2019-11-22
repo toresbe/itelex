@@ -1,3 +1,10 @@
+Ab Build 845:
+Namenssuche: Bei "nicht gefunden" wird keine Uberschrift gedruckt und erneut nach dem Namen gefragt.
+
+Ab Build 834:
+RemoteServer timing verbessert
+Netzwerk-Konfig Bugfix
+
 Ab Build 825:
 Anrufsignalisierung
 RemoteServer fertiggestellt
