@@ -1740,7 +1740,7 @@ static bool SchreibeZeichenInSendePuffer(char c)
 //! DurchwahlTabelle an.
 //-----------------------------------------------------------------------			
 //! \param aDurchwahl Zeiger auf Variable mit gewählter Durchwahl.
-//! Werte von 101 bis 109 sind einstellige Ziffern, siehe WahlZuAdresse()
+//! Werte von 101 bis 110 sind einstellige Ziffern, siehe WahlZuAdresse()
 //! \retval true Durchwahl war zugelassen.
 static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	{
@@ -3311,7 +3311,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						ProtokollierenITelex_P(PSTR("* verspaetete Einschaltung\r\n"));
 						}
 					}
-				else // Baudot-Code-Block ist noch nicht vollständig UND noch entsprechend Platz im Sendepuffer
+				else // Baudot-Code-Block ist noch nicht vollständig ODER kein Platz im Sendepuffer
 					{
 					if (!SendenBeschleunigen && (ProtokollLevel >= AblaufInfo))
 						ProtokollierenITelex_P(PSTR("SendenBeschleunigen EIN\r\n"));
@@ -3551,8 +3551,8 @@ static void ITelexDatenVerarbeiten()
 			uint16_t len = PufferAnzahl(&EmpfPuffer);
 			if (len > SocketOutBufMax - 10 - 3 - SocketOutBufUsed)
 				len = SocketOutBufMax - 10 - 3 - SocketOutBufUsed;
-			if (len > 255)
-				len = 245;
+			if (len > 50)
+				len = 50; // für alte i-Telex Versionen mit 50 Byte Puffer in "SendePuffer"
 				
 			if (ProtokollLevel == DatenKurz) // Datenmengen
 				{
@@ -4548,8 +4548,8 @@ void itelex_thread()
 						if (ProtokollLevel >= AblaufInfo)
 							ProtokollierenITelex_P(PSTR("Namenssuche gestartet -> Einschalt-Quittung an TWI\r\n" ));
 						AsciiDruckPuffer[0] = '\0';
-						ModusWechsel(ModNamensucheEingabe);
 						BusSenden(BusQuittEin);
+						ModusWechsel(ModNamensucheEingabe);
 						StartKurzTimer(&MachineStartupTimer);
 						}
 						
@@ -4856,7 +4856,7 @@ void itelex_thread()
 				if (Modus == ModNamensucheAusgabeAnfang)
 					{
 					strcpy_P(AsciiDruckPuffer, ISTR(NamensucheKeineGefunden, LokaleSprache)); 
-					ModusWechsel(ModNamensucheEingabe); // todo prüfen ob prompt ausgegeben wird
+					ModusWechsel(ModNamensucheEingabe);
 					}
 				else
 					{
@@ -4869,7 +4869,7 @@ void itelex_thread()
 				{
 				ModusWechsel(ModNamensucheAusgabeWeiter); // kann auch sein, dass es gar kein Wechsel ist. (wird innerhalb von ModusWechsel() geprüft)
 					// wenn es ein Wechsel war, wird auch die Überschrift gedruckt.
-				sprintf_P(AsciiDruckPuffer, PSTR("%9ld - %s - "), TD.Nummer, TD.Name);
+				sprintf_P(AsciiDruckPuffer + strlen(AsciiDruckPuffer), PSTR("%9ld - %s - "), TD.Nummer, TD.Name);
 				switch (TD.AdrArt)
 					{
 					case Geloescht:
