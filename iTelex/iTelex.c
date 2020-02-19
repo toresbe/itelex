@@ -7406,7 +7406,7 @@ extern void itelex_init1(void)
 	if (readConfig_P(EigeneNummer_P, Buf) == 1)
 		BusEigenAdresse = WahlZuAdresse(atoi(Buf), strlen(Buf));
 	else
-		BusEigenAdresse = 22 << 1;
+		BusEigenAdresse = 110 << 1; // 110 = Codierung für Durchwahl 0
 
 	FesteHauptstelle = ReadConfigBool(FesteHst_P, false);
 
