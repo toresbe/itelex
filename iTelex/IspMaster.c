@@ -354,6 +354,31 @@ static bool ReadFlashIdentity(char *Ident)
 	}
 	
 
+//! Liest die Signatur des angeschlossenen Chips aus
+// -------------------------------------------------
+//! \param SigBytes zeigt auf einen 3-Byte-Array
+
+static bool ReadSignatureBytes(uint8_t *SigBytes)
+	{
+	if (!IspEnable())
+		return false;
+
+	uint8_t i;
+	
+	for (i = 0 ; i < 3 ; i++)
+		{
+		if (!SigRead(i, SigBytes + i))
+			{
+			IspClose();
+			return false;
+			}
+		}
+	
+	IspClose();
+	return true;
+	}
+
+
 #if 0 // kein Testen mehr erforderlich
 	
 //! Testfunktion in der Debugging-Phase
@@ -688,14 +713,14 @@ static void BuildFullPath(char *Path, char *Ident, PGM_P Extension, char *FullPa
 //! Startet den Programmiervorgang entsprechend der Daten aus #ProgDatenTab.
 //--------------------------------------------------------------------------
 	
-static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
+static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_REQUEST * http_request)
 	{
 	char FullPath[200];
 	int SocketID;
 	int Res;
-	char Buf[64];
+	char Buf[64]; // TODO erhöhen
 	char Rett;
-	uint8_t Signature[3];
+	uint8_t SignaturSoll[3];
 	uint8_t Fuses[3];
 	TKurzTimer AbbruchTimer;
 	int16_t HttpHeadCode;
@@ -732,7 +757,6 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 	
 	BuildFullPath(http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)], Ident, PSTR(".txt"), FullPath);
 
-	//TEST: Fuses laden
 	SocketID = HttpGet(FullPath);
 	if (SocketID < 0)
 		{
@@ -771,45 +795,59 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 
 	Buf[Res] = '\0';
 
-	// erstes Wort ist Signature
+	// Datei enthält paarweise eine Chip-Signatur und die zugehörigen Fuse-Bytes.
+	// In der Schleife wird die Signatur des angeschlossenen Chips mit der "gewünschten" Signatur verglichen.
 	i = 0;
-	while (Buf[i] > ' ')
-		i++; // erstes druckbares Zeichen finden
-	
-	Rett = Buf[i];
-	Buf[i] = '\0';
-	Res = strtobin(Buf, (char *) Signature, 3);
-	Buf[i] = Rett;
-	
-	if (Res == 0)
-		{ // Umwandlung der Signatur erfolgreich. Jetzt zweites Wort suchen
-		i = i + 1;
+	do
+		{
+		// Leerzeichen am Anfang überspringen
 		while (Buf[i] != '\0' && Buf[i] <= ' ')
 			i++; //Steuerzeichen und Spaces überspringen
-		Start = i;
+		Start = i; // erstes Wort ist erwartete Signatur
 		while (Buf[i] > ' ')
-			i++; // erstes druckbares Zeichen finden
-
+			i++; // erstes Trennzeichen finden
+		
 		Rett = Buf[i];
 		Buf[i] = '\0';
-		Res = strtobin(Buf + Start, (char *) Fuses, 3);
+		Res = strtobin(Buf + Start, (char *) SignaturSoll, 3);
 		Buf[i] = Rett;
+			
+		if (Res == 0)
+			{ // Umwandlung der Signatur erfolgreich. Jetzt zweites Wort suchen
+			i = i + 1;
+			while (Buf[i] != '\0' && Buf[i] <= ' ')
+				i++; //Steuerzeichen und Spaces überspringen
+			Start = i;
+			while (Buf[i] > ' ')
+				i++; // erstes druckbares Zeichen finden
+
+			Rett = Buf[i];
+			Buf[i] = '\0';
+			Res = strtobin(Buf + Start, (char *) Fuses, 3);
+			Buf[i] = Rett;
+			
+			// Res sollte jetzt immer noch 0 sein. 0 = strtobin war erfolgreich
+			}
+
+		if (Res != 0)
+			{
+			CloseTCPSocket(SocketID);
+			if (Buf[Start] == '+')
+				printf_P(PSTR("<p>Actual chip signature not fitting to allowed signaltures in %s."), FullPath); // Listenende erreicht
+			else
+				printf_P(PSTR("<p>Invalid signature / fuses format in file %s: %s position %d."), FullPath, Buf, Start); // Format-Problem
+				
+			printf_P(ClickToContinue_P);
+			cgi_PrintHttpheaderEnd();
+			return;
+			}
 		
-		// Res sollte jetzt immer noch 0 sein. 0 = strtobin war erfolgreich
-		}
+		} while (SignaturIst[0] != SignaturSoll[0] && SignaturIst[1] != SignaturSoll[1] && SignaturIst[2] != SignaturSoll[2]);
 
 	CloseTCPSocket(SocketID);
-
-	if (Res != 0)
-		{
-		printf_P(PSTR("<p>Invalid data in %s: %s"), FullPath, Buf);
-		printf_P(ClickToContinue_P);
-		cgi_PrintHttpheaderEnd();
-		return;
-		}
 	
 	printf_P(PSTR("<p>Read from %s: Signature %02X %02X %02X, Fuses %02X %02X %02X"), 
-		FullPath, Signature[0], Signature[1], Signature[2], Fuses[0], Fuses[1], Fuses[2]);
+		FullPath, SignaturSoll[0], SignaturSoll[1], SignaturSoll[2], Fuses[0], Fuses[1], Fuses[2]);
 	
 	// jetzt die eigentlichen Programmdaten
 	
@@ -857,38 +895,15 @@ static void ProgrammiereVomNetz(char *Ident, struct HTTP_REQUEST * http_request)
 		return;
 		}
 
-	// read and verify signature
 	FehlerBytes = 0;
+	
+	// start with programming of fuses
 	for (i = 0 ; i < 3 ; i++)
 		{
-		if (SigRead(i, &readback))
-			if (readback == Signature[i])
-				; // super
-			else
-				{
-				if (i != 2) // das dritte Signatur-Byte kann auch mal abweichen (Mega168 / Mega168P)
-					FehlerBytes++; // failed
-				else
-					strcat_P(IspDiagnoseText, PSTR("Warning: "));
-				sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), 
-						  PSTR("Signature mismatch: byte %d is %02X should be %02X.<br>"), i, readback, Signature[i]);
-				}
-		else
+		if (Fuses[i] != 0)
 			{
-			sprintf_P(IspDiagnoseText + strlen(IspDiagnoseText), PSTR("Signature read error byte %d.<br>"), i);
-			FehlerBytes++; // failed
-			}
-		}
-		
-	if (FehlerBytes == 0)
-		{ // no errors so far -> program fuses
-		for (i = 0 ; i < 3 ; i++)
-			{
-			if (Fuses[i] != 0)
-				{
-				if (!FuseProgAndVerify(0, Fuses[0]))
-					FehlerBytes++; // failed, Message already stored
-				}
+			if (!FuseProgAndVerify(0, Fuses[0]))
+				FehlerBytes++; // failed, Message already stored
 			}
 		}
 
@@ -1044,6 +1059,7 @@ void cgi_Isp(void *pStruct)
 	//static TSprache Sprache;
 	char BinServerPath[120]; 
 	char Ident[50];
+	uint8_t SignaturIst[3];
 
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
@@ -1102,14 +1118,24 @@ void cgi_Isp(void *pStruct)
 				cgi_PrintHttpheaderEnd();
 				} 
 			}
-		LED_off(BLAU);
 
 		if (strncmp_P(Ident, PSTR("TxP2"), 4) == 0)
 			memcpy_P(Ident, PSTR("itlx"), 4);
 		
+		if (!ReadSignatureBytes(SignaturIst))
+			{ // Chip-Signatur konnte nicht geladen werden.
+			cgi_PrintHttpheaderStart();
+			printf_P(PSTR("<big>Signature readout failed. Check connection to target board.</big>"));
+			printf_P(ClickToContinue_P);
+			cgi_PrintHttpheaderEnd();
+			Ident[0] = '\0';
+			}
+			
+		LED_off(BLAU);
+
 		if (Ident[0] != '\0')
 			{ // Identifikation scheint gültig (entweder automatisch ermittelt oder von Hand eingegeben)
-			ProgrammiereVomNetz(Ident, http_request); 
+			ProgrammiereVomNetz(Ident, SignaturIst, http_request); 
 			}
 				
 		} // if (PharseCheckName_P(http_request, ProgID_P))
