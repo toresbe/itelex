@@ -842,7 +842,7 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 			return;
 			}
 		
-		} while (SignaturIst[0] != SignaturSoll[0] && SignaturIst[1] != SignaturSoll[1] && SignaturIst[2] != SignaturSoll[2]);
+		} while (SignaturIst[0] != SignaturSoll[0] || SignaturIst[1] != SignaturSoll[1] || SignaturIst[2] != SignaturSoll[2]);
 
 	CloseTCPSocket(SocketID);
 	
