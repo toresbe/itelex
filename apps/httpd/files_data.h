@@ -158,6 +158,8 @@ const char data4[] PROGMEM = {
 	#if defined(iTelex)
 	" / <a href=\"itelex-menu-de.html\">i-Telex (Deutsch)</a>"
 	" / <a href=\"itelex-menu-en.html\">i-Telex (English)</a>"
+	" / <a href=\"itelex-menu-it.html\">i-Telex (Italiano)</a>"
+	" / <a href=\"itelex-menu-nl.html\">i-Telex (Dutch)</a>"
 	" / <a href=\"itelex-credits.cgi\" target=\"main\">Impressum / credits</a>"
 	#endif
 	#if defined(HTTPSERVER_STREAM)
@@ -201,6 +203,30 @@ const char NetzwerkMenuEnText[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"itelexcfg-menu-en.html\">back</a> / <a href=\"network.cgi?spr=en\" target=\"main\">Infos</a> / <a href=\"network.cgi?spr=en&config\" target=\"main\">Configuration</a>"
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n"	};
+	
+const char NetzwerkMenuItName[] PROGMEM = "network-it.html";
+const char NetzwerkMenuItText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" TODO übersetzen 
+	"<a href=\"itelexcfg-menu-it.html\">back</a> / <a href=\"network.cgi?spr=it\" target=\"main\">Infos</a> / <a href=\"network.cgi?spr=it&config\" target=\"main\">Configuration</a>"
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n"	};
+	
+const char NetzwerkMenuNlName[] PROGMEM = "network-nl.html";
+const char NetzwerkMenuNlText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" TODO übersetzen 
+	"<a href=\"itelexcfg-menu-nl.html\">back</a> / <a href=\"network.cgi?spr=nl\" target=\"main\">Infos</a> / <a href=\"network.cgi?spr=nl&config\" target=\"main\">Configuration</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
@@ -270,6 +296,72 @@ const char SystemMenuEnText[] PROGMEM = {
 	"\r\n\r\n"	};
 #endif
 
+
+const char SystemMenuItName[] PROGMEM = "system-it.html";
+const char SystemMenuItText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"itelexcfg-menu-it.html\">back</a> " TODO übersetzen
+#if defined(HTTPSERVER_RESET)
+	"/ <a href=\"reset.cgi?spr=it\" target=\"main\">Reset</a>"
+#endif
+#if defined(HTTPSERVER_NTP) || defined(iTelex)
+	" / <a href=\"ntp.cgi?spr=it\" target=\"main\">NTP</a>"
+#endif
+#if defined(HTTPSERVER_DYNDNS)
+	" / <a href=\"dyndns.cgi?spr=it\" target=\"main\">DynDNS</a>"
+#endif
+#if defined(HTTPSERVER_TWITTER)
+	" / <a href=\"twitter.cgi\" target=\"main\">Twitter</a>"
+#endif
+#if defined(HTTPSERVER_EEMEM)
+	" / <a href=\"eemem.cgi?spr=it\" target=\"main\">EEmem</a>"
+#endif
+#if defined(HTTPSERVER_CRON)
+	" / <a href=\"cron.cgi?spr=it\" target=\"main\">cron</a>"
+#endif
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n"	};
+#endif
+
+
+
+const char SystemMenuNlName[] PROGMEM = "system-nl.html";
+const char SystemMenuNlText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"itelexcfg-menu-nl.html\">back</a> "
+#if defined(HTTPSERVER_RESET)
+	"/ <a href=\"reset.cgi?spr=nl\" target=\"main\">Reset</a>"
+#endif
+#if defined(HTTPSERVER_NTP) || defined(iTelex)
+	" / <a href=\"ntp.cgi?spr=nl\" target=\"main\">NTP</a>"
+#endif
+#if defined(HTTPSERVER_DYNDNS)
+	" / <a href=\"dyndns.cgi?spr=nl\" target=\"main\">DynDNS</a>"
+#endif
+#if defined(HTTPSERVER_TWITTER)
+	" / <a href=\"twitter.cgi\" target=\"main\">Twitter</a>"
+#endif
+#if defined(HTTPSERVER_EEMEM)
+	" / <a href=\"eemem.cgi?spr=nl\" target=\"main\">EEmem</a>"
+#endif
+#if defined(HTTPSERVER_CRON)
+	" / <a href=\"cron.cgi?spr=nl\" target=\"main\">cron</a>"
+#endif
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n"	};
+#endif
+
+
 const char files7[] PROGMEM = "info.html";
 const char data7[] PROGMEM = {
 	"<HTML>"
@@ -304,7 +396,7 @@ const char data7[] PROGMEM = {
 	"build on AVR-libc version: " __AVR_LIBC_VERSION_STRING__ "/" __AVR_LIBC_DATE_STRING__ 
 	" with avr-gcc " __VERSION__ "\r\n"
 	"\r\n"
-	"(c)2006-2019   Software: Fred Sonnenrein\r\n"
+	"(c)2006-2020   Software: Fred Sonnenrein\r\n"
 	"based on OpenMCP by Dirk Brosswick\r\n"
 	"</pre></p><br>"
 	"<p>Our homepage: <a href=\"http://www.i-telex.net/\" target=\"blank\">www.i-telex.net</a>"
@@ -353,7 +445,7 @@ const char iTelexMainMenuDeText[] PROGMEM = {
 	" / <a href=\"itelex-tlnverz.cgi?spr=de\" target=\"main\">Teilnehmer-Verzeichnis</a>"
 	" / <a href=\"itelexcfg-menu-de.html\">i-Telex-Einstellungen</a>"
 	" / <a href=\"itelex-debug.cgi\" target=\"main\">Debug-Infos</a>"
-	" / <a href=\"itelex-twitlnliste.cgi?spr=de\" target=\"main\">Bus-Tln-Liste</a>"
+	" / <a href=\"itelex-twitlnliste.cgi?spr=de\" target=\"main\">Modul-Liste</a>"
 #if defined(MMC)
 	" / <a href=\"sddir.cgi\" target=\"main\">SD-Karte</a>"
 #endif //defined(MMC)
@@ -374,6 +466,46 @@ const char iTelexMainMenuEnText[] PROGMEM = {
 	" / <a href=\"itelexcfg-menu-en.html\">i-Telex settings</a>"
 	" / <a href=\"itelex-debug.cgi\" target=\"main\">debug info</a>"
 	" / <a href=\"itelex-twitlnliste.cgi?spr=en\" target=\"main\">list of modules</a>"
+#if defined(MMC)
+	" / <a href=\"sddir.cgi\" target=\"main\">SD card</a>"
+#endif //defined(MMC)
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n" } ;
+
+const char iTelexMainMenuItName[] PROGMEM = "itelex-menu-it.html";
+const char iTelexMainMenuItText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" ÜBERSETZEN
+	"<a href=\"mainmenu.html\">back</a>"
+	" / <a href=\"itelex-msg-it.html\" target=\"main\">Send message</a>"
+	" / <a href=\"itelex-tlnverz.cgi?spr=it\" target=\"main\">Subscriber directory</a>"
+	" / <a href=\"itelexcfg-menu-it.html\">i-Telex settings</a>"
+	" / <a href=\"itelex-debug.cgi\" target=\"main\">debug info</a>"
+	" / <a href=\"itelex-twitlnliste.cgi?spr=it\" target=\"main\">list of modules</a>"
+#if defined(MMC)
+	" / <a href=\"sddir.cgi\" target=\"main\">SD card</a>"
+#endif //defined(MMC)
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n" } ;
+
+const char iTelexMainMenuNlName[] PROGMEM = "itelex-menu-nl.html";
+const char iTelexMainMenuNlText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"mainmenu.html\">back</a>"
+	" / <a href=\"itelex-msg-nl.html\" target=\"main\">Send message</a>" ÜBERSETZEN
+	" / <a href=\"itelex-tlnverz.cgi?spr=nl\" target=\"main\">Subscriber directory</a>"
+	" / <a href=\"itelexcfg-menu-nl.html\">i-Telex settings</a>"
+	" / <a href=\"itelex-debug.cgi\" target=\"main\">debug info</a>"
+	" / <a href=\"itelex-twitlnliste.cgi?spr=nl\" target=\"main\">list of modules</a>"
 #if defined(MMC)
 	" / <a href=\"sddir.cgi\" target=\"main\">SD card</a>"
 #endif //defined(MMC)
@@ -433,6 +565,58 @@ const char iTelexCfgMenuEnText[] PROGMEM = {
 	"\r\n\r\n" } ;
 
 	
+const char iTelexCfgMenuItName[] PROGMEM = "itelexcfg-menu-it.html";
+const char iTelexCfgMenuItText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"itelex-menu-it.html\">back</a>"
+	" / <a href=\"itelexcfg-intern.cgi?spr=it\" target=\"main\">local settings</a>"
+	" / <a href=\"itelexcfg-extern.cgi?spr=it\" target=\"main\">i-Telex network settings</a>"
+	" / <a href=\"itelex-credits.cgi?spr=it\" target=\"main\">credits</a>"
+#ifdef ITELEX_EMAIL
+	" / <a href=\"itelexcfg-email.cgi?spr=it\" target=\"main\">eMail settings</a>"
+#endif //def ITELEX_EMAIL	
+#ifdef HTTPSERVER_NETCONFIG
+	" / <a href=\"network-it.html\">Network</a>"
+#endif
+#ifdef HTTPSERVER_SYSTEM
+	" / <a href=\"system-it.html\">System</a>"
+#endif
+	" / <a href=\"itelexcfg-sperren.cgi?spr=it\" target=\"main\">lock</a>"
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n" } ;
+
+	
+const char iTelexCfgMenuNlName[] PROGMEM = "itelexcfg-menu-nl.html";
+const char iTelexCfgMenuNlText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
+	"</HEAD>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"itelex-menu-nl.html\">back</a>"
+	" / <a href=\"itelexcfg-intern.cgi?spr=nl\" target=\"main\">local settings</a>"
+	" / <a href=\"itelexcfg-extern.cgi?spr=nl\" target=\"main\">i-Telex network settings</a>"
+	" / <a href=\"itelex-credits.cgi?spr=nl\" target=\"main\">credits</a>"
+#ifdef ITELEX_EMAIL
+	" / <a href=\"itelexcfg-email.cgi?spr=nl\" target=\"main\">eMail settings</a>"
+#endif //def ITELEX_EMAIL	
+#ifdef HTTPSERVER_NETCONFIG
+	" / <a href=\"network-nl.html\">Network</a>"
+#endif
+#ifdef HTTPSERVER_SYSTEM
+	" / <a href=\"system-nl.html\">System</a>"
+#endif
+	" / <a href=\"itelexcfg-sperren.cgi?spr=nl\" target=\"main\">lock</a>"
+	"</BODY>"
+	"</HTML>"
+	"\r\n\r\n" } ;
+
+	
 const char iTelexChatDeName[] PROGMEM = "itelex-msg-de.html";
 const char iTelexChatDeText[] PROGMEM = {
 	"<HTML>"
@@ -468,6 +652,40 @@ const char iTelexChatEnText[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n" } ;
 		
+const char iTelexChatItName[] PROGMEM = "itelex-msg-it.html";
+const char iTelexChatItText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"</HEAD>"
+	"<frameset rows=\"*,60\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
+	"<frame src=\"itelex-msg-out.cgi?spr=it\" name=\"MsgOut\" scrolling=\"auto\">"
+	"<frame src=\"itelex-msg-in.cgi?spr=it\" name=\"MsgIn\" scrolling=\"no\">"
+	"<noframes>"
+	"<body>"
+	"<p>Ihr Browser unterstützt keine Frames!</p>"
+	"</body>"
+	"</noframes>"
+	"</frameset>"
+	"</HTML>"
+	"\r\n\r\n" } ;
+		
+const char iTelexChatNlName[] PROGMEM = "itelex-msg-nl.html";
+const char iTelexChatNlText[] PROGMEM = {
+	"<HTML>"
+	"<HEAD>"
+	"</HEAD>"
+	"<frameset rows=\"*,60\" scrolling=\"no\" frameborder=\"2\" border=\"2\" framespacing=\"2\" bordercolor=\"#000000\">"
+	"<frame src=\"itelex-msg-out.cgi?spr=nl\" name=\"MsgOut\" scrolling=\"auto\">"
+	"<frame src=\"itelex-msg-in.cgi?spr=nl\" name=\"MsgIn\" scrolling=\"no\">"
+	"<noframes>"
+	"<body>"
+	"<p>Ihr Browser unterstützt keine Frames!</p>"
+	"</body>"
+	"</noframes>"
+	"</frameset>"
+	"</HTML>"
+	"\r\n\r\n" } ;
+		
 #endif //def iTelex
 
 
@@ -488,10 +706,14 @@ FILES files[] = {
 #ifdef HTTPSERVER_NETCONFIG
 	{ NetzwerkMenuDeName, NetzwerkMenuDeText, TEXT, sizeof( NetzwerkMenuDeText ) - 1 },
 	{ NetzwerkMenuEnName, NetzwerkMenuEnText, TEXT, sizeof( NetzwerkMenuEnText ) - 1 },
+	{ NetzwerkMenuItName, NetzwerkMenuItText, TEXT, sizeof( NetzwerkMenuItText ) - 1 },
+	{ NetzwerkMenuNlName, NetzwerkMenuNlText, TEXT, sizeof( NetzwerkMenuNlText ) - 1 },
 #endif
 #ifdef HTTPSERVER_SYSTEM
 	{ SystemMenuDeName, SystemMenuDeText, TEXT, sizeof( SystemMenuDeText ) - 1 },
 	{ SystemMenuEnName, SystemMenuEnText, TEXT, sizeof( SystemMenuEnText ) - 1 },
+	{ SystemMenuItName, SystemMenuItText, TEXT, sizeof( SystemMenuItText ) - 1 },
+	{ SystemMenuNlName, SystemMenuNlText, TEXT, sizeof( SystemMenuNlText ) - 1 },
 #endif
 	{ files7, data7, TEXT, sizeof( data7 ) - 1 },
 	{ files8, data8, TEXT, sizeof( data8 ) - 1 },
@@ -504,10 +726,16 @@ FILES files[] = {
 #if defined(iTelex)
 	{ iTelexMainMenuDeName, iTelexMainMenuDeText, TEXT, sizeof( iTelexMainMenuDeText ) - 1 },
 	{ iTelexMainMenuEnName, iTelexMainMenuEnText, TEXT, sizeof( iTelexMainMenuEnText ) - 1 },
+	{ iTelexMainMenuItName, iTelexMainMenuItText, TEXT, sizeof( iTelexMainMenuItText ) - 1 },
+	{ iTelexMainMenuNlName, iTelexMainMenuNlText, TEXT, sizeof( iTelexMainMenuNlText ) - 1 },
 	{ iTelexCfgMenuDeName, iTelexCfgMenuDeText, TEXT, sizeof( iTelexCfgMenuDeText ) - 1 },
 	{ iTelexCfgMenuEnName, iTelexCfgMenuEnText, TEXT, sizeof( iTelexCfgMenuEnText ) - 1 },
+	{ iTelexCfgMenuItName, iTelexCfgMenuItText, TEXT, sizeof( iTelexCfgMenuItText ) - 1 },
+	{ iTelexCfgMenuNlName, iTelexCfgMenuNlText, TEXT, sizeof( iTelexCfgMenuNlText ) - 1 },
 	{ iTelexChatDeName, iTelexChatDeText, TEXT, sizeof( iTelexChatDeText ) - 1 },
 	{ iTelexChatEnName, iTelexChatEnText, TEXT, sizeof( iTelexChatEnText ) - 1 },
+	{ iTelexChatItName, iTelexChatItText, TEXT, sizeof( iTelexChatItText ) - 1 },
+	{ iTelexChatNlName, iTelexChatNlText, TEXT, sizeof( iTelexChatNlText ) - 1 },
 #endif
 	{ lochstr_hg_filename, lochstreifen_hg, PNG, sizeof( lochstreifen_hg ) },
 	{ RobotsTxtName, RobotsTxtData, TEXT, sizeof(RobotsTxtData) - 1 },
