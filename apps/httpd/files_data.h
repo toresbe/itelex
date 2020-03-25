@@ -294,7 +294,6 @@ const char SystemMenuEnText[] PROGMEM = {
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
-#endif
 
 
 const char SystemMenuItName[] PROGMEM = "system-it.html";
@@ -326,8 +325,6 @@ const char SystemMenuItText[] PROGMEM = {
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
-#endif
-
 
 
 const char SystemMenuNlName[] PROGMEM = "system-nl.html";
@@ -359,6 +356,7 @@ const char SystemMenuNlText[] PROGMEM = {
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
+
 #endif
 
 
@@ -690,6 +688,7 @@ const char iTelexChatNlText[] PROGMEM = {
 
 
 const char RobotsTxtName[] PROGMEM = "robots.txt";
+
 const char RobotsTxtData[] PROGMEM = {
 	"# robots.txt zum i-telex Web-Interface\r\n"
 	"User-agent: *\r\n"
@@ -741,6 +740,7 @@ FILES files[] = {
 	{ RobotsTxtName, RobotsTxtData, TEXT, sizeof(RobotsTxtData) - 1 },
 	{ 0,0,0,0 }
 };
+
 #endif
 
 #endif /* FILES_DATA_H */
