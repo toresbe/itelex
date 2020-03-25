@@ -225,7 +225,7 @@ const char NetzwerkMenuNlText[] PROGMEM = {
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
-	"<BODY bgcolor=\"#C0FFC0\">" TODO übersetzen 
+	"<BODY bgcolor=\"#C0FFC0\">"
 	"<a href=\"itelexcfg-menu-nl.html\">terug</a> / <a href=\"network.cgi?spr=nl\" target=\"main\">Info's</a> / <a href=\"network.cgi?spr=nl&config\" target=\"main\">Configuratie</a>"
 	"</BODY>"
 	"</HTML>"

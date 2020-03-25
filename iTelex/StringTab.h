@@ -56,9 +56,9 @@ _STRTABENTRY(MailNichtInDieserVersion, "Mail in dieser Version nicht unterstuetz
 _STRTABENTRY(ServerAusWegenFehlenderUhrzeit, 
 	"Zeit-Server war nicht verfuegbar, teilnehmer-server nicht gestartet. bitte diese schnittstelle neu starten.", 
 	"time server not available. subscriber server not started, please restart this interface again.",
-	"Server per l'orario non disponibile, riavviare l'interfaccia per favore."
+	"Server per l'orario non disponibile, riavviare l'interfaccia per favore.",
 	"Server voor de tijd is niet beschikbaar, gelieve het interface nieuw op te starten")
-_STRTABENTRY(TeilnehmerBesetzt, "Teilnehmer besetzt", "Subscriber busy","Abbonato occupato", "Abonnee is bezet")
+_STRTABENTRY(TeilnehmerBesetzt, "Teilnehmer besetzt", "Subscriber busy", "Abbonato occupato", "Abonnee is bezet")
 _STRTABENTRY(TeilnehmerNichtErreichbar, "Teilnehmer nicht erreichbar", "Subscriber not available", 
 	"Abbonato non raggiungibile", "abonnee niet bereikbaar")
 _STRTABENTRY(TeilnehmerNichtErlaubt, "Teilnehmer nicht erlaubt", "Subscriber not allowed", "Abbonato non permesso", "abonnee niet toegestaan" )
@@ -145,7 +145,7 @@ _STRTABENTRY(UhrzeitVerteilen, "Uhrzeit an andere Module verteilen", "Broadcast 
 	"trasmettere l'orario ad altri moduli", "tijd aan andere modulen zenden")
 _STRTABENTRY(ProtokollLevel, "Tiefe der Protokollierung an serieller Schnittstelle", "Logging level at serial port",
 	"Profondita' di protocollo alla porta seriale", "Protocol diepte aan de seriele poort.")
-_STRTABENTRY(ProtokollLevelTlnServer, "Tiefe der Protokollierung f&uuml;r Teiln-Server", "Logging level for directory server"
+_STRTABENTRY(ProtokollLevelTlnServer, "Tiefe der Protokollierung f&uuml;r Teiln-Server", "Logging level for directory server",
 	"Profondita' di protocollo del server abbonati", "Protocol diepte voor de abonnee server")
 _STRTABENTRY(DiagnoseLevel, "Level f&uuml;r Druckausgabe von Meldungen", "Message filtering level",
 	"livello filtraggio messaggi","filter niveau voor berichten")
@@ -171,17 +171,21 @@ _STRTABENTRY(InternesKennwortFehlt,
 	"zun&auml;chst Passwort in <a href=\"itelexcfg-intern.cgi?spr=de\" target=\"main\">Einstellungen im lokalen System</a> eingeben!", 
 	"First select password in <a href=\"itelexcfg-intern.cgi?spr=en\" target=\"main\">Settings for the local system</a>!",
 	"Selezione password in <a href=\"itelexcfg-intern.cgi?spr=it\" target=\"main\">Parametri sistema locale</a>!",
-	"Kies passwoord eerst in <a href=\"itelexcfg-intern.cgi?spr=nl\" target=\"main\">Parameters in lokaal systeem</a>!"))
+	"Kies passwoord eerst in <a href=\"itelexcfg-intern.cgi?spr=nl\" target=\"main\">Parameters in lokaal systeem</a>!")
 _STRTABENTRY(GesperrtBestaetigung, 
 	"Konfigurationsseiten sind nun gesperrt. Zur Freigabe wieder das Passwort eingeben oder Taste der Baugruppe 2 x dr&uuml;cken.", 
 	"Configuration pages are locked again. For unlocking enter password or push button at ethernet interface module twice.",
 	"Configuratione e' bloccata adesso. Per sbloccare digitare password o premi pulsante sulla scheda ethernet 2 volte.",
 	"Konfiguratie is nu geblokkeerd. Opheffing door passwoord ingave of de drukknop op de ethernetkaart 2x drukken")
-_STRTABENTRY(ITelexRufnummer, "eigene Rufnummer im i-telex-Netz", "Subscriber's number","Proprio numero nella rete i-telex","eigen nummer in het i-telex net",
+	
+_STRTABENTRY(ITelexRufnummer, "eigene Rufnummer im i-telex-Netz", "Subscriber's number", "Proprio numero nella rete i-telex", "eigen nummer in het i-telex net")
+
 _STRTABENTRY(ITelexRufnummerZuKurz, "<big><b>&lt;=== muss fünf bis neun Ziffern haben!</b></big>", "<big><b>&lt;=== must have five to nine digits!</b></big>",
 	"<big><b>&lt;=== deve avere almeno 5 fino a 9 cifre!</b></big>", "<big><b>&lt;=== moet tenminste 5 to 9 cijfers zijn!</b></big>")
+
 _STRTABENTRY(RufnrServerAnmeldGeheimzahl, "Geheimzahl zur Anmeldung beim Rufnummern-Server", "PIN for sign in at subscriber directory server",
 	"PIN per accedere al server abbonati", "PIN voor aanmelding bij de abonnee server")
+
 _STRTABENTRY(DynIPAktiv, "Dynamische IP-Aktualisierung aktiv", "Dynamic update of IP address active",
 	"Aggiornamento IP dinamico e' attivo","Dynamische IP aktualisering is aktief")
 _STRTABENTRY(VerbindungstestPeriode, "Verbindungstest-Periode (0 f&uuml;r kein Test)", "Loopback test period (0 to switch off)",
@@ -207,7 +211,7 @@ _STRTABENTRY(TlnServSyncGeheimzahl,
 	"PIN for directory server synchronisation",
 	"PIN per syncronizzazione server",
 	"PIN voor de server synchronisering")
-_STRTABENTRY(TwiTlnListeAnfang, "Status der angeschlossenen Module:<p>", "Status of all connected hardware modules:<p>"
+_STRTABENTRY(TwiTlnListeAnfang, "Status der angeschlossenen Module:<p>", "Status of all connected hardware modules:<p>",
 	"Stato di tutti moduli collegati: <p>", "Status van alle voorhandene modulen <P>")
 _STRTABENTRY(TwiTlnListeEintrag, "Nummer %s Status %02X<br>", "Number %s status %02X<br>", "Numero %s stato %02X<br>", "Nummer %s status %02X<br>")
 _STRTABENTRY(TwiTlnListeEnde, "+++fertig","+++end","+++fine","+++einde")
@@ -293,10 +297,10 @@ _STRTABENTRY(TeilnehmerverzeichnisAktionenOffen,
 	"<a href=\"itelex-tlnverz.cgi?clear\">komplett l&ouml;schen</a><br>", 
 	"<a href=\"itelex-tlnverz.cgi?save\">save non-volatile</a><br>" 
 	"<a href=\"itelex-tlnverz.cgi?load\">discard all changes</a><br>"
-	"<a href=\"itelex-tlnverz.cgi?clear\">clear all</a><br>"
+	"<a href=\"itelex-tlnverz.cgi?clear\">clear all</a><br>",
 	"<a href=\"itelex-tlnverz.cgi?save\">salva non-volatile</a><br>" 
 	"<a href=\"itelex-tlnverz.cgi?load\">annulla cambiamenti</a><br>"
-	"<a href=\"itelex-tlnverz.cgi?clear\">elimina tutti</a><br>"
+	"<a href=\"itelex-tlnverz.cgi?clear\">elimina tutti</a><br>",
 	"<a href=\"itelex-tlnverz.cgi?save\">save niet vluchtig</a><br>" 
 	"<a href=\"itelex-tlnverz.cgi?load\">annuleer alle veranderingen</a><br>"
 	"<a href=\"itelex-tlnverz.cgi?clear\">wis alles</a><br>")
@@ -319,20 +323,20 @@ _STRTABENTRY(TeilnehmerverzeichnisAktionenLeerOffen,
 _STRTABENTRY(Rufnummer, "Rufnummer", "Number", "Numero", "Nummer")
 _STRTABENTRY(Name, "Name", "Name","Nome","Naam")
 _STRTABENTRY(Adresse, "Adresse", "Address","Indirizzo","Adres")
-_STRTABENTRY(Port, "Port", "Port",Porta","Poort")
-_STRTABENTRY(Durchwahl, "Durchwahl", "Direct dial","Estensione","Extensie")
-_STRTABENTRY(TlnverzAttrLokal, "Lokal", "local","Locale","Lokaal")
-_STRTABENTRY(TlnverzAttrGesperrt, "gesperrt", "locked","Bloccata","Geblokkeerd")
-_STRTABENTRY(Typ, "Typ", "Type","tipo","Type")
+_STRTABENTRY(Port, "Port", "Port", "Porta", "Poort")
+_STRTABENTRY(Durchwahl, "Durchwahl", "Direct dial", "Estensione", "Extensie")
+_STRTABENTRY(TlnverzAttrLokal, "Lokal", "local", "Locale", "Lokaal")
+_STRTABENTRY(TlnverzAttrGesperrt, "gesperrt", "locked", "Bloccata", "Geblokkeerd")
+_STRTABENTRY(Typ, "Typ", "Type", "Tipo", "Type")
 _STRTABENTRY(TlnverzAttrDyn, "DynIP", "DynIP", "DynIP", "DynIP")
 _STRTABENTRY(TypGeloescht, "geloescht", "deleted","cancellato","gewist")
 _STRTABENTRY(TypAscii, "Ascii", "ASCII","ASCII","ASCII")
-_STRTABENTRY(TypITelex, "i-Telex", "i-Telex","i-Telex","i-Telex")
-_STRTABENTRY(TypEMail, "eMail", "eMail","eMail", "eMail")
-_STRTABENTRY(AktionAendern, "&Auml;ndern", "edit","editare","edit")
-_STRTABENTRY(AktionHinzufuegen, "Hinzuf&uuml;gen", "add","aggiungi","toevoegen")
-_STRTABENTRY(Rufnummer0NichtErlaubt, "<b>Rufnummer 0 nicht erlaubt!</b><br>", "<b>Number 0 not allowed!</b><br>"
-	"<b>Numero 0 non permesso!</b><br>","<b>Nummer 0 mag niet!</b><br>")
+_STRTABENTRY(TypITelex, "i-Telex", "i-Telex", "i-Telex", "i-Telex")
+_STRTABENTRY(TypEMail, "eMail", "eMail", "eMail", "eMail")
+_STRTABENTRY(AktionAendern, "&Auml;ndern", "edit", "editare", "edit")
+_STRTABENTRY(AktionHinzufuegen, "Hinzuf&uuml;gen", "add", "aggiungi", "toevoegen")
+_STRTABENTRY(Rufnummer0NichtErlaubt, "<b>Rufnummer 0 nicht erlaubt!</b><br>", "<b>Number 0 not allowed!</b><br>",
+	"<b>Numero 0 non permesso!</b><br>", "<b>Nummer 0 mag niet!</b><br>")
 _STRTABENTRY(MeldungTlneintragRufnummer, "Teilnehmereintrag:<br>Rufnummer: %ld ", "Directory entry:<br>Number: %ld ",
 	"Voce elenco: <br>Number: %ld ", "Data lijst<br>Number: %ld ")
 _STRTABENTRY(EhemalsLong, "ehem. %ld", "former %ld" , "precedente %ld", "voormalig %ld")
@@ -349,7 +353,9 @@ _STRTABENTRY(RufnummerDoppelt,
 			"<b>Nummer reeds in gebruik, verandering niet doorgevoerd</b><br>")
 
 _STRTABENTRY(EintragGespeichert, "Eintrag gespeichert<br>", "Entry saved<br>", "Voce salvata<br>","Data weggeschreven<br>")
+
 _STRTABENTRY(EintragUnveraendert, "Eintrag unver&auml;ndert<br>", "Entry unchanged<br>", "Voce non cambiata<br>","Data niet veranderd<br>")
+
 _STRTABENTRY(AlteNummerNichtGeloescht, 
 			"<b>Alte Nummer %ld konnte nicht gel&ouml;scht werden!</b><br>", 
 			"<b>Former number %ld could not be deleted!</b><br>",
@@ -373,9 +379,9 @@ _STRTABENTRY(EepromLadenErfolg, "Erfolgreich geladen (%d Bytes)", "loaded succes
 			"Laden is gelukt (%d byte)")
 
 _STRTABENTRY(KomplettGeloescht, "komplett gel&ouml;scht", "completely cleared","completamente cancellato", "alles gewist")
-_STRTABENTRY(UngueltigerCgiAufruf, "Fehler: ungueltiger CGI-Aufruf: %s", "Error: invalid cgi-call: %s"
-			"Errore: invalido cgi-call: %s"
-			"Fout: invalide cgi-call: %s")
+
+_STRTABENTRY(UngueltigerCgiAufruf, "Fehler: ungueltiger CGI-Aufruf: %s", "Error: invalid cgi-call: %s",
+			"Errore: invalido cgi-call: %s", "Fout: invalide cgi-call: %s")
 
 _STRTABENTRY(ZurueckZumTeilnehmerverzeichnis, 
 			"<br>Zur&uuml;ck zum <a href=\"itelex-tlnverz.cgi?spr=de\">Teilnehmer-Verzeichnis</a>", 

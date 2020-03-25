@@ -5909,9 +5909,9 @@ bool KonfigFreigabe(void *pStruct, TSprache Sprache, bool Abfragen)
 	
 //! Kann am Anfang jeder cgi-Funktion aufgerufen werden, um eine Sprachselektion zu ermöglichen. 
 // -----------------------------------------------------------------------------------------------------------------------
-//! \param 	pStruct	Struktur auf den HTTP_Request. Die Sprachangabe muss als "spr=de" oder "spr=en" erfolgt
-//! sein. Ist die Sprachangabe das einzige Attribut des CGI-Requests wird die Anzahl der Parameter
-//! des CGI Requests auf Null gesetzt.
+//! \param 	pStruct	Struktur auf den HTTP_Request. Die Sprachangabe muss als "spr=de" oder 
+//! "spr=en" oder "=it" oder "=nl" erfolgt sein. Ist die Sprachangabe das einzige Attribut 
+//! des CGI-Requests wird die Anzahl der Parameter des CGI Requests auf Null gesetzt.
 //! \retval true wenn eine Angabe gefunden wurde.
 
 bool PruefeSprache(void *pStruct, TSprache *Sprache)
@@ -5953,6 +5953,10 @@ bool PruefeSprache(void *pStruct, TSprache *Sprache)
 		*Sprache = Deutsch;
 	else if (strcmp_P(SprachAngabe, PSTR("en")) == 0)
 		*Sprache = Englisch;
+	else if (strcmp_P(SprachAngabe, PSTR("it")) == 0)
+		*Sprache = Italienisch;
+	else if (strcmp_P(SprachAngabe, PSTR("nl")) == 0)
+		*Sprache = Niederlaendisch;
 	else
 		return false;
 		
