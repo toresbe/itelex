@@ -159,7 +159,7 @@ const char data4[] PROGMEM = {
 	" / <a href=\"itelex-menu-de.html\">i-Telex (Deutsch)</a>"
 	" / <a href=\"itelex-menu-en.html\">i-Telex (English)</a>"
 	" / <a href=\"itelex-menu-it.html\">i-Telex (Italiano)</a>"
-	" / <a href=\"itelex-menu-nl.html\">i-Telex (Dutch)</a>"
+	" / <a href=\"itelex-menu-nl.html\">i-Telex (Nederlands)</a>"
 	" / <a href=\"itelex-credits.cgi\" target=\"main\">Impressum / credits</a>"
 	#endif
 	#if defined(HTTPSERVER_STREAM)
@@ -213,8 +213,8 @@ const char NetzwerkMenuItText[] PROGMEM = {
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
-	"<BODY bgcolor=\"#C0FFC0\">" TODO übersetzen 
-	"<a href=\"itelexcfg-menu-it.html\">back</a> / <a href=\"network.cgi?spr=it\" target=\"main\">Infos</a> / <a href=\"network.cgi?spr=it&config\" target=\"main\">Configuration</a>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"itelexcfg-menu-it.html\">indietro</a> / <a href=\"network.cgi?spr=it\" target=\"main\">Info</a> / <a href=\"network.cgi?spr=it&config\" target=\"main\">Configurazione</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
@@ -226,7 +226,7 @@ const char NetzwerkMenuNlText[] PROGMEM = {
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" TODO übersetzen 
-	"<a href=\"itelexcfg-menu-nl.html\">back</a> / <a href=\"network.cgi?spr=nl\" target=\"main\">Infos</a> / <a href=\"network.cgi?spr=nl&config\" target=\"main\">Configuration</a>"
+	"<a href=\"itelexcfg-menu-nl.html\">terug</a> / <a href=\"network.cgi?spr=nl\" target=\"main\">Info's</a> / <a href=\"network.cgi?spr=nl&config\" target=\"main\">Configuratie</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
@@ -304,9 +304,9 @@ const char SystemMenuItText[] PROGMEM = {
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
-	"<a href=\"itelexcfg-menu-it.html\">back</a> " TODO übersetzen
+	"<a href=\"itelexcfg-menu-it.html\">indietro</a> "
 #if defined(HTTPSERVER_RESET)
-	"/ <a href=\"reset.cgi?spr=it\" target=\"main\">Reset</a>"
+	"/ <a href=\"reset.cgi?spr=it\" target=\"main\">Ripristino</a>"
 #endif
 #if defined(HTTPSERVER_NTP) || defined(iTelex)
 	" / <a href=\"ntp.cgi?spr=it\" target=\"main\">NTP</a>"
@@ -318,7 +318,7 @@ const char SystemMenuItText[] PROGMEM = {
 	" / <a href=\"twitter.cgi\" target=\"main\">Twitter</a>"
 #endif
 #if defined(HTTPSERVER_EEMEM)
-	" / <a href=\"eemem.cgi?spr=it\" target=\"main\">EEmem</a>"
+	" / <a href=\"eemem.cgi?spr=it\" target=\"main\">EEmemoria</a>"
 #endif
 #if defined(HTTPSERVER_CRON)
 	" / <a href=\"cron.cgi?spr=it\" target=\"main\">cron</a>"
@@ -337,7 +337,7 @@ const char SystemMenuNlText[] PROGMEM = {
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
-	"<a href=\"itelexcfg-menu-nl.html\">back</a> "
+	"<a href=\"itelexcfg-menu-nl.html\">terug</a> "
 #if defined(HTTPSERVER_RESET)
 	"/ <a href=\"reset.cgi?spr=nl\" target=\"main\">Reset</a>"
 #endif
@@ -351,7 +351,7 @@ const char SystemMenuNlText[] PROGMEM = {
 	" / <a href=\"twitter.cgi\" target=\"main\">Twitter</a>"
 #endif
 #if defined(HTTPSERVER_EEMEM)
-	" / <a href=\"eemem.cgi?spr=nl\" target=\"main\">EEmem</a>"
+	" / <a href=\"eemem.cgi?spr=nl\" target=\"main\">EEgeheugen</a>"
 #endif
 #if defined(HTTPSERVER_CRON)
 	" / <a href=\"cron.cgi?spr=nl\" target=\"main\">cron</a>"
@@ -479,15 +479,15 @@ const char iTelexMainMenuItText[] PROGMEM = {
 	"<HEAD>"
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
-	"<BODY bgcolor=\"#C0FFC0\">" ÜBERSETZEN
-	"<a href=\"mainmenu.html\">back</a>"
-	" / <a href=\"itelex-msg-it.html\" target=\"main\">Send message</a>"
-	" / <a href=\"itelex-tlnverz.cgi?spr=it\" target=\"main\">Subscriber directory</a>"
-	" / <a href=\"itelexcfg-menu-it.html\">i-Telex settings</a>"
-	" / <a href=\"itelex-debug.cgi\" target=\"main\">debug info</a>"
-	" / <a href=\"itelex-twitlnliste.cgi?spr=it\" target=\"main\">list of modules</a>"
+	"<BODY bgcolor=\"#C0FFC0\">" 
+	"<a href=\"mainmenu.html\">indietro</a>"
+	" / <a href=\"itelex-msg-it.html\" target=\"main\">Trasmettere messaggio</a>"
+	" / <a href=\"itelex-tlnverz.cgi?spr=it\" target=\"main\">Elenco abbonati</a>"
+	" / <a href=\"itelexcfg-menu-it.html\">Parametri i-Telex</a>"
+	" / <a href=\"itelex-debug.cgi\" target=\"main\">Debug-Info</a>"
+	" / <a href=\"itelex-twitlnliste.cgi?spr=it\" target=\"main\">Elenco Schede</a>"
 #if defined(MMC)
-	" / <a href=\"sddir.cgi\" target=\"main\">SD card</a>"
+	" / <a href=\"sddir.cgi\" target=\"main\">Scheda SD</a>"
 #endif //defined(MMC)
 	"</BODY>"
 	"</HTML>"
@@ -500,14 +500,14 @@ const char iTelexMainMenuNlText[] PROGMEM = {
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
-	"<a href=\"mainmenu.html\">back</a>"
-	" / <a href=\"itelex-msg-nl.html\" target=\"main\">Send message</a>" ÜBERSETZEN
-	" / <a href=\"itelex-tlnverz.cgi?spr=nl\" target=\"main\">Subscriber directory</a>"
-	" / <a href=\"itelexcfg-menu-nl.html\">i-Telex settings</a>"
-	" / <a href=\"itelex-debug.cgi\" target=\"main\">debug info</a>"
-	" / <a href=\"itelex-twitlnliste.cgi?spr=nl\" target=\"main\">list of modules</a>"
+	"<a href=\"mainmenu.html\">terug</a>"
+	" / <a href=\"itelex-msg-nl.html\" target=\"main\">Bericht verzenden</a>"
+	" / <a href=\"itelex-tlnverz.cgi?spr=nl\" target=\"main\">Abonnee lijst</a>"
+	" / <a href=\"itelexcfg-menu-nl.html\">Parameters i-Telex</a>"
+	" / <a href=\"itelex-debug.cgi\" target=\"main\">Debug-Info's</a>"
+	" / <a href=\"itelex-twitlnliste.cgi?spr=nl\" target=\"main\">Kaarten Lijst</a>"
 #if defined(MMC)
-	" / <a href=\"sddir.cgi\" target=\"main\">SD card</a>"
+	" / <a href=\"sddir.cgi\" target=\"main\">SD Kaart</a>"
 #endif //defined(MMC)
 	"</BODY>"
 	"</HTML>"
@@ -572,20 +572,20 @@ const char iTelexCfgMenuItText[] PROGMEM = {
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
-	"<a href=\"itelex-menu-it.html\">back</a>"
-	" / <a href=\"itelexcfg-intern.cgi?spr=it\" target=\"main\">local settings</a>"
-	" / <a href=\"itelexcfg-extern.cgi?spr=it\" target=\"main\">i-Telex network settings</a>"
-	" / <a href=\"itelex-credits.cgi?spr=it\" target=\"main\">credits</a>"
+	"<a href=\"itelex-menu-it.html\">indietro</a>"
+	" / <a href=\"itelexcfg-intern.cgi?spr=it\" target=\"main\">Parametri sistema locale</a>"
+	" / <a href=\"itelexcfg-extern.cgi?spr=it\" target=\"main\">Parametri rete i-Telex</a>"
+	" / <a href=\"itelex-credits.cgi?spr=it\" target=\"main\">Impressum</a>"
 #ifdef ITELEX_EMAIL
-	" / <a href=\"itelexcfg-email.cgi?spr=it\" target=\"main\">eMail settings</a>"
+	" / <a href=\"itelexcfg-email.cgi?spr=it\" target=\"main\">Parameti eMail</a>"
 #endif //def ITELEX_EMAIL	
 #ifdef HTTPSERVER_NETCONFIG
-	" / <a href=\"network-it.html\">Network</a>"
+	" / <a href=\"network-it.html\">Rete</a>"
 #endif
 #ifdef HTTPSERVER_SYSTEM
-	" / <a href=\"system-it.html\">System</a>"
+	" / <a href=\"system-it.html\">Sistema</a>"
 #endif
-	" / <a href=\"itelexcfg-sperren.cgi?spr=it\" target=\"main\">lock</a>"
+	" / <a href=\"itelexcfg-sperren.cgi?spr=it\" target=\"main\">Blockare</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n" } ;
@@ -598,20 +598,20 @@ const char iTelexCfgMenuNlText[] PROGMEM = {
 	"<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">"
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
-	"<a href=\"itelex-menu-nl.html\">back</a>"
-	" / <a href=\"itelexcfg-intern.cgi?spr=nl\" target=\"main\">local settings</a>"
-	" / <a href=\"itelexcfg-extern.cgi?spr=nl\" target=\"main\">i-Telex network settings</a>"
-	" / <a href=\"itelex-credits.cgi?spr=nl\" target=\"main\">credits</a>"
+	"<a href=\"itelex-menu-nl.html\">terug</a>"
+	" / <a href=\"itelexcfg-intern.cgi?spr=nl\" target=\"main\">Parameters lokaal system</a>"
+	" / <a href=\"itelexcfg-extern.cgi?spr=nl\" target=\"main\">Parameters i-Telex net</a>"
+	" / <a href=\"itelex-credits.cgi?spr=nl\" target=\"main\">Impressum</a>"
 #ifdef ITELEX_EMAIL
-	" / <a href=\"itelexcfg-email.cgi?spr=nl\" target=\"main\">eMail settings</a>"
+	" / <a href=\"itelexcfg-email.cgi?spr=nl\" target=\"main\">eMail Parameters</a>"
 #endif //def ITELEX_EMAIL	
 #ifdef HTTPSERVER_NETCONFIG
-	" / <a href=\"network-nl.html\">Network</a>"
+	" / <a href=\"network-nl.html\">Netwerk</a>"
 #endif
 #ifdef HTTPSERVER_SYSTEM
 	" / <a href=\"system-nl.html\">System</a>"
 #endif
-	" / <a href=\"itelexcfg-sperren.cgi?spr=nl\" target=\"main\">lock</a>"
+	" / <a href=\"itelexcfg-sperren.cgi?spr=nl\" target=\"main\">Blokkeren</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n" } ;
@@ -662,7 +662,7 @@ const char iTelexChatItText[] PROGMEM = {
 	"<frame src=\"itelex-msg-in.cgi?spr=it\" name=\"MsgIn\" scrolling=\"no\">"
 	"<noframes>"
 	"<body>"
-	"<p>Ihr Browser unterstützt keine Frames!</p>"
+	"<p>Suo browser non supporta Frames!</p>"
 	"</body>"
 	"</noframes>"
 	"</frameset>"
@@ -679,7 +679,7 @@ const char iTelexChatNlText[] PROGMEM = {
 	"<frame src=\"itelex-msg-in.cgi?spr=nl\" name=\"MsgIn\" scrolling=\"no\">"
 	"<noframes>"
 	"<body>"
-	"<p>Ihr Browser unterstützt keine Frames!</p>"
+	"<p>Uw browser staat geen frames toe!</p>"
 	"</body>"
 	"</noframes>"
 	"</frameset>"
