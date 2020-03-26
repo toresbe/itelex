@@ -160,7 +160,7 @@ _STRTABENTRY(DatumDruckModus, "Datum bei Anrufen automatisch drucken", "Print da
 _STRTABENTRY(DatumDruckKein, "aus", "off", "spento", "uit")
 _STRTABENTRY(DatumDruckLokal, "nur lokal", "only local", "solo locale","alleen lokaal")
 _STRTABENTRY(DatumDruckAnrufer, "nur beim Anrufer", "only at caller", "solo dalla chiamante", "alleen bij de beller")
-_STRTABENTRY(DatumDruckBeide, "lokal und Anrufer", "local and caller","localmente e chiamente","Lokaal en bij beller")
+_STRTABENTRY(DatumDruckBeide, "lokal und Anrufer", "local and caller","localmente e chiamante","Lokaal en bij beller")
 _STRTABENTRY(ImpressAenderZeile, "zu &auml;ndernde Zeile", "line to change", "Riga da cambiare", "Regel te veranderen")
 _STRTABENTRY(ImpressAenderTest, "neuer Text", "new text", "Test nuovo", "Nieuwe text")
 _STRTABENTRY(KonnteNichtGeaendertWerden, " konnte nicht ge&auml;ndert werden", " could not be changed",
@@ -301,7 +301,7 @@ _STRTABENTRY(TeilnehmerverzeichnisAktionenOffen,
 	"<a href=\"itelex-tlnverz.cgi?save\">salva non-volatile</a><br>" 
 	"<a href=\"itelex-tlnverz.cgi?load\">annulla cambiamenti</a><br>"
 	"<a href=\"itelex-tlnverz.cgi?clear\">elimina tutti</a><br>",
-	"<a href=\"itelex-tlnverz.cgi?save\">save niet vluchtig</a><br>" 
+	"<a href=\"itelex-tlnverz.cgi?save\">niet vluchtig opslaan</a><br>" 
 	"<a href=\"itelex-tlnverz.cgi?load\">annuleer alle veranderingen</a><br>"
 	"<a href=\"itelex-tlnverz.cgi?clear\">wis alles</a><br>")
 

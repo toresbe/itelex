@@ -583,7 +583,7 @@ const char iTelexCfgMenuItText[] PROGMEM = {
 #ifdef HTTPSERVER_SYSTEM
 	" / <a href=\"system-it.html\">Sistema</a>"
 #endif
-	" / <a href=\"itelexcfg-sperren.cgi?spr=it\" target=\"main\">Blockare</a>"
+	" / <a href=\"itelexcfg-sperren.cgi?spr=it\" target=\"main\">Bloccare</a>"
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n" } ;
