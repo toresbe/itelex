@@ -3082,9 +3082,9 @@ static void WahlAbbruchMeldung(char *msg)
 	if (ProtokollLevel >= AblaufInfo)
 		{
 		ProtokollierenITelex();
-		Protokollieren_P(PSTR("WahlAbbruchMeldung <"));
+		Protokollieren_P(PSTR("WahlAbbruchMeldung"));
 		ProtokollierenPuffer(msg, strlen(msg));
-		Protokollieren_P(PSTR(">\r\n"));
+		Protokollieren_P(PSTR("\r\n"));
 		}
 	
 	if (LangeDienstmeldungen)
@@ -6934,6 +6934,8 @@ void itelex_cgi_config_extern(void *pStruct)
 		// SelbstAnrufPeriode wird aus dem EEPROM geholt, um echte Konfig-Änderungen zu erkennen.
 		// denn als Hack wird diese Variable manchmal wegen Fehlern durch das Programm auf 0 gesetzt,
 		// ohne das EEPROM zu ändern.
+		char Buf[TlnNameMax];
+		
 		if (readConfig_P(SelbstAnrufPeriode_P, Buf) == 1)
 			SelbstAnrufPeriode = atoi(Buf);
 		else
