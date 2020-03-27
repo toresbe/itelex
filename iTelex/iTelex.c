@@ -3878,19 +3878,27 @@ bool TeilnehmerServerSocketOeffnen(PGM_P Grund)
 //! \retval 1 Verbindung konnte nicht hergestellt werden.
 //! \retval 2 Keine gültigen Daten im Datensatz oder keine Verbindung zum e-Mail-Server.
 
-uint8_t Verbindungsaufbau(TTlnDaten* td)
+uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 	{
 	switch (td->AdrArt)
 		{
 		case iTelexIP:
 		case iTelexDynIP:
 		case AsciiIP:
+			if (td->Port == 0)
+				{
+				if (MeldungAusgeben)
+					WahlAbbruchMeldung("abs");
+				return 1;
+				}
+				
 			if (ProtokollLevel >= AblaufInfo)
 				{
 				ProtokollierenITelex_P(PSTR("Verbindungsaufbau zu IP "));
 				ProtokollierenIPAdr(td->IPAdr);
 				ProtokollierenInt_P(PSTR(" Port %u\r\n"), td->Port);
 				}
+			
 			iTelexSocketIP = td->IPAdr;
 			iTelexSocketPort = td->Port;
 			// Mode wird nach erfolgreichem Öffnen gesetzt.
@@ -3898,6 +3906,13 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			
 		case iTelexHostname:
 		case AsciiHostname:
+			if (td->Port == 0)
+				{
+				if (MeldungAusgeben)
+					WahlAbbruchMeldung("abs");
+				return 1;
+				}
+
 			td->IPAdr = DNS_ResolveName(td->Adresse); 
 				// IPAdr wird 'missbraucht' aber nicht gespeichert
 			if (td->IPAdr != -1)
@@ -3922,6 +3937,10 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 					Protokollieren(td->Adresse);
 					Protokollieren_P(PSTR(" nicht gefunden\r\n"));
 					}
+					
+				if (MeldungAusgeben)
+					WahlAbbruchMeldung("nc");
+
 				return 1;
 				}
 			break;
@@ -3946,10 +3965,15 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			else
 				{
 				Diagnoseausgabe_P(ISTR(KeineVerbindungZumMailServerAusgang, LokaleSprache), 2);
+				if (MeldungAusgeben)
+					WahlAbbruchMeldung("der");
+				
 				return 2; // schlecht
 				}
 #else
 			ProtokollierenITelex_P(PSTR("! eMail nicht unterstuetzt\r\n" ));
+			if (MeldungAusgeben)
+				WahlAbbruchMeldung("der");
 			Diagnoseausgabe_P(ISTR(MailNichtInDieserVersion, LokaleSprache), 3);
 			return 2;
 #endif //ndef ITELEX_EMAIL		
@@ -3957,6 +3981,9 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 		default:
 			if (ProtokollLevel >= NurFehler)
 				ProtokollierenITelex_P(PSTR("* Teilnehmer ist GELOESCHT\r\n" ));
+
+			if (MeldungAusgeben)
+				WahlAbbruchMeldung("abs");
 				
 			return 2;
 			
@@ -3973,6 +4000,10 @@ uint8_t Verbindungsaufbau(TTlnDaten* td)
 			
 		iTelexSocketHandle = NO_SOCKET_USED;
 		iTelexSocketMode = SocketIdle;
+
+		if (MeldungAusgeben)
+			WahlAbbruchMeldung("nc");
+
 		return 1;
 		}
 
@@ -4580,9 +4611,8 @@ void itelex_thread()
 								
 							if ((GewaehlterTln.Flags & TlnFlag_Lokal) != 0)
 								{ // es ist ein lokaler Eintrag
-								if (Verbindungsaufbau(&GewaehlterTln) != 0)
+								if (Verbindungsaufbau(&GewaehlterTln, true) != 0)
 									{ // Verbindungsaufbau war nicht erfolgreich --> Wahl-Schritt 4a)
-									WahlAbbruchMeldung("nc");
 									InterneVerbindungBeenden(true);
 									TlnServerAbfrageWiederholungssperre = true;
 									}
@@ -4916,11 +4946,12 @@ void itelex_thread()
 		// ggf. läuft eine Server-Abfrage, die wurde aber noch nicht beantwortet.
 		// -> Wahl-Schritt 3c)
 		WahlVerbAufbauNach5SekundenVersuchen = false; // nur ein Mal...
-		if (Verbindungsaufbau(&GewaehlterTln) == 2)
+		if (Verbindungsaufbau(&GewaehlterTln, false) == 2) 
 			{ // ungültige Daten oder e-Mail gestört -> Abbruch
 			WahlAbbruchMeldung("der"); 
 			InterneVerbindungBeenden(true);
 			}
+		// bei Rückgabe von 1 gibt es noch den zweiten Versuch nach Antwort des Teilnehmerservers
 		}
 		
 	if (Modus == ModGehendWaehlen 
@@ -5478,15 +5509,12 @@ void itelex_thread()
 						
 						if (iTelexSocketMode == SocketIdle && TSB.TlnAuskunft.Nummer == Wahlnummer)
 							{ // erhaltenen Datensatz auch zum Verbindungsaufbau nutzen -> Wahl-Schritt 3b)
-							if (Verbindungsaufbau(&GewaehlterTln) == 0)
+							if (Verbindungsaufbau(&GewaehlterTln, true) == 0)
 								// erfolgreich
 								Diagnoseausgabe_P(NULL, 3);
 							
 							else // nicht erfolgreich
-								{
-								WahlAbbruchMeldung("nc");
 								InterneVerbindungBeenden(true); // Wahl-Schritt 4a)
-								}
 								
 							}
 						} // if (Modus == ModGehendWaehlen)
@@ -6903,6 +6931,14 @@ void itelex_cgi_config_extern(void *pStruct)
 
 	if ( http_request->argc == 0 )
 		{
+		// SelbstAnrufPeriode wird aus dem EEPROM geholt, um echte Konfig-Änderungen zu erkennen.
+		// denn als Hack wird diese Variable manchmal wegen Fehlern durch das Programm auf 0 gesetzt,
+		// ohne das EEPROM zu ändern.
+		if (readConfig_P(SelbstAnrufPeriode_P, Buf) == 1)
+			SelbstAnrufPeriode = atoi(Buf);
+		else
+			SelbstAnrufPeriode = 45;
+		
 		CgiFormStartTabbed_P(PSTR("itelexcfg-extern.cgi"));
 
 		#ifdef ITELEX_ANSCHLUSS
