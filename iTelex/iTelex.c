@@ -2983,6 +2983,16 @@ static int16_t AnwahlNummerInAsciiPuffer(bool InPufferLoeschen)
 		return 0;
 	} // AnwahlNummerInAsciiPuffer()
 
+
+//! Prüft, ob ein Zugriff duch einen Browser o.ä. erfolgte
+//--------------------------------------------------------
+static bool IstAnwahlDurchFremdprogramm()
+	{
+	if (strstr_P(AsciiDruckPuffer, PSTR("HTTP")) != NULL)
+		return true;
+	return false;
+	}
+	
 	
 //! Schreibt ein Ende-Kommando mit Zusatztext in den Socket-Sendepuffer
 //---------------------------------------------------------------------
@@ -3263,8 +3273,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						}
 					else
 						{ 
-						SendeStopkommando(PSTR("na")); 
-						iTelexSocketAbbauGeplant = true;
+						SendeStopkommando(PSTR("na")); // setzt auch iTelexSocketAbbauGeplant = true;
 						ModusWechsel(ModWarteGrundstellung);
 						}
 					}
@@ -3379,8 +3388,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						}
 					else
 						{
-						SendeStopkommando(PSTR("occ")); //! \todo Prio 1 Testen
-						iTelexSocketAbbauGeplant = true;
+						SendeStopkommando(PSTR("occ")); //! \todo Prio 1 Testen // setzt auch iTelexSocketAbbauGeplant = true
 						ModusWechsel(ModWarteGrundstellung);
 						}
 					} // if Modus == ModKommendVerbVorstufe
@@ -3515,6 +3523,21 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 		if (iTelexSocketProtokoll == Ascii && SocketInBufUsed > 0 && SocketInBuf[SocketInBufUsed-1] == '@')
 			SocketInBuf[SocketInBufUsed-1] = CodeChrWerDa;
 			// am Ende des Empfangs ein @ durch Werda ersetzen.
+			
+		if (Modus == ModKommendVerbVorstufe && AnzAsciiEmpf > 0 && IstAnwahlDurchFremdprogramm())
+			{
+			if (ProtokollLevel >= AblaufInfo) // Datenmengen protokollieren
+				{
+				ProtokollierenITelex();
+				Protokollieren_P(PSTR("Anwahl durch Fremdprogramm:"));
+				ProtokollierenPuffer(AsciiDruckPuffer, strlen(AsciiDruckPuffer));
+				Protokollieren_P(PSTR("\r\n"));
+				}
+				
+			iTelexSocketAbbauGeplant = true;
+			ModusWechsel(ModWarteGrundstellung);
+			}
+
 			
 		} // if GetBytesInSocketData > 0
 	} // ITelexOderAsciiEmpfangVerarbeiten()
