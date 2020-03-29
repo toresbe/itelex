@@ -49,4 +49,5 @@ Elapsed time: 0.00 seconds
 
 12. Finished!
 
-If something goes wrong during the update repeat the steps 8 to 12.
+If something goes wrong during the update repeat the steps 8 to 12. In most cases the 
+button won't work, so try step 9b.

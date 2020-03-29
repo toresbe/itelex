@@ -1,3 +1,9 @@
+Ab Build 863:
+Sprachen Italienisch und Niederländisch
+Bei Datensatz mit Port = 0 wird "abs" gemeldet
+HTTP-Requestst werden ignoriert und nicht mehr gedruckt.
+ATmega328 können auch beim Spezial-Kabel-Update verwendet werden.
+
 Ab Build 845:
 Namenssuche: Bei "nicht gefunden" wird keine Uberschrift gedruckt und erneut nach dem Namen gefragt.
 

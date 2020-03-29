@@ -51,6 +51,5 @@ Elapsed time: 0.00 seconds
 
 
 Falls der Updatevorgang korrekt beginnt (bei Schritt 10 erscheint "Connected"), dann aber aus irgendeinem 
-Grund nicht erfolgreich beendet wird, MUSS der Updatevorgang wie folgt wiederholt werden, da das 
-nur teilweise hochgeladenen Programm auf dem Ethernet-Board nicht lauffähig ist.
-Es ist ab Schritt 8 zu wiederholen.
+Grund nicht erfolgreich beendet wird, MUSS der Updatevorgang ab Schritt 8 wiederholt werden, die Taste
+(Schritt 9) ist aber voraussichtlich nicht mehr verwendbar, also Schritt 9b durchführen.
