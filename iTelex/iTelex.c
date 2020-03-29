@@ -2451,7 +2451,8 @@ static void SocketBearbeiten()
 				PutSocketData_RPE(iTelexBlindSocketHandle, 5, PSTR("\004\003occ"), FLASH); // 004 = ITELEXC_STOP
 				// SendeStopkommando kann nicht benutzt werden, da der Code in den BlindSocket gesendet werden muss.
 				
-				Diagnoseausgabe_P(ISTR(AnrufAbgewiesenWegenBesetzt, LokaleSprache), 4);
+				if (Modus != ModKommendVerbVorstufe) // das ist ein Indiz für einen HTTP-Request, die kommen ggf. mehrfach...
+					Diagnoseausgabe_P(ISTR(AnrufAbgewiesenWegenBesetzt, LokaleSprache), 4);
 				}
 			}
 			
@@ -2986,10 +2987,15 @@ static int16_t AnwahlNummerInAsciiPuffer(bool InPufferLoeschen)
 
 //! Prüft, ob ein Zugriff duch einen Browser o.ä. erfolgte
 //--------------------------------------------------------
+//! Sucht im Empfangspuffer nach charakteristischen ASCII-Sequenzen.
 static bool IstAnwahlDurchFremdprogramm()
 	{
-	if (strstr_P(AsciiDruckPuffer, PSTR("HTTP")) != NULL)
+	if (SocketInBufUsed < 5)
+		return false;
+	
+	if (memmem_P(SocketInBuf, SocketInBufUsed, PSTR("HTTP"), 4) != NULL)
 		return true;
+	
 	return false;
 	}
 	
@@ -3523,21 +3529,6 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 		if (iTelexSocketProtokoll == Ascii && SocketInBufUsed > 0 && SocketInBuf[SocketInBufUsed-1] == '@')
 			SocketInBuf[SocketInBufUsed-1] = CodeChrWerDa;
 			// am Ende des Empfangs ein @ durch Werda ersetzen.
-			
-		if (Modus == ModKommendVerbVorstufe && AnzAsciiEmpf > 0 && IstAnwahlDurchFremdprogramm())
-			{
-			if (ProtokollLevel >= AblaufInfo) // Datenmengen protokollieren
-				{
-				ProtokollierenITelex();
-				Protokollieren_P(PSTR("Anwahl durch Fremdprogramm:"));
-				ProtokollierenPuffer(AsciiDruckPuffer, strlen(AsciiDruckPuffer));
-				Protokollieren_P(PSTR("\r\n"));
-				}
-				
-			iTelexSocketAbbauGeplant = true;
-			ModusWechsel(ModWarteGrundstellung);
-			}
-
 			
 		} // if GetBytesInSocketData > 0
 	} // ITelexOderAsciiEmpfangVerarbeiten()
@@ -4735,11 +4726,28 @@ void itelex_thread()
 	// ======================================================================
 
 	SocketBearbeiten();
+
+	// Auf HTML-Request oder ähnliches reagieren
+	// -----------------------------------------
+	if (Modus == ModKommendVerbVorstufe && IstAnwahlDurchFremdprogramm())
+		{	
+		if (ProtokollLevel >= AblaufInfo) // Datenmengen protokollieren
+			{
+			ProtokollierenITelex();
+			Protokollieren_P(PSTR("* Fremdprotokoll erkannt:"));
+			ProtokollierenPuffer(SocketInBuf, SocketInBufUsed);
+			Protokollieren_P(PSTR("\r\n"));
+			}
+
+		SocketInBufUsed = 0; // alles verwefen
+		iTelexSocketAbbauGeplant = true;
+		ModusWechsel(ModWarteGrundstellung);
+		} // Modus == ModKommendVerbVorstufe &&  IstAnwahlDurchFremdprogramm()
 	
-	// Verbindungsabbau bearbeiten
-	// ---------------------------
 	if (iTelexSocketMode == SocketIdle)
 		{
+		// Verbindungsabbau bearbeiten
+		// ---------------------------
 		if (Modus == ModGehendVerbunden
 			|| (Modus >= ModKommendVerbVorstufe && Modus <= ModKommendVerbunden)
 			|| (Modus >= ModEmailPOPVerbunden && Modus <= ModEmailPOPDruckend))
@@ -4748,7 +4756,9 @@ void itelex_thread()
 			}
 		} // if (iTelexSocketMode == SocketIdle)
 	else
-		{
+		{ 
+		// Empfangene Daten verarbeiten
+		// ----------------------------
 		switch (iTelexSocketProtokoll)
 			{
 			case Ascii:
@@ -4819,7 +4829,7 @@ void itelex_thread()
 			ModusWechsel(ModWarteGrundstellung);
 			}
 		} // if Modus == ModKommendEinschalten
-			
+		
 	if (Modus == ModNamensucheEingabe)
 		{
 		while (!PufferLeer(&EmpfPuffer))
