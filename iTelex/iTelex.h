@@ -205,10 +205,10 @@ enum {
 	//!< Mindestwert der Nummer von global gültigen Rufnummern
 	//!< Ziffernzahl muss #GlobRufnrMinZiffern entsprechen.
 	
-	AsciiProtZeichenWerDa = '@';
+	AsciiProtZeichenWerDa = '@',
 	//!< Ersatz-Zeichen für Werda im Socket-ASCII-Modus.
 	
-	AsciiProtZeichenKlingel = '%';
+	AsciiProtZeichenKlingel = '%',
 	//!< Ersatz-Zeichen für Klingel im Socket-ASCII-Modus.
 	
 	} ; // Ende Konstanten
