@@ -3198,6 +3198,13 @@ static uint8_t FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 	return 0;
 	}
 	
+	
+static bool IsCommonAsciiControl(char c)
+	{
+	return c == '\r' || c == '\n' || c == CodeChrKlingel || c == CodeChrWerDa || c == '\010' /*Backspace*/ || c == '\011' /*Tab*/
+			|| c == CodeChrBuUm || c == CodeChrZiUm || (c >= ' ' && c <= '~') || c >= 0xa0;
+	}
+
 
 //! Interpretiert empfangene Daten vom Socket und schiebt diese in den 
 //! EmpfPuffer.
@@ -3217,14 +3224,17 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 			// ****************************************************************
 			
 			// im Folgenden KEIN switch verwenden wegen break!
-			if (c == '\r' || c == '\n' || (c >= ' ' && c <= '~'))
-				{ // ein ASCII-Zeichen
+			if (c == '\r' || c == '\n' || (c >= ' ' && c <= '~')
+				|| (IsCommonAsciiControl(c) && iTelexSocketProtokoll == Ascii && (i == SocketInBufUsed-1 || IsCommonAsciiControl(SocketInBuf[i+1]))))
+				{ // ein ASCII-Zeichen ODER ein "übliches" Ascii-Steuerzeichen im Ascii-Modus an letzter Stelle oder gefolgt von einem weiteren Ascii-Zeichen
 				// ID#246 ID#344 *****************************************************
 				iTelexSocketProtokoll = Ascii;
 				int alen = strlen(AsciiDruckPuffer);
 				if (alen < AsciiDruckPufferMax-2)
 					{
-					if (c == '@' && i == SocketInBufUsed - 1) // das Zeichen war ein @ und es war das letzte des Empfangs
+					if (c == AsciiProtZeichenKlingel)
+						AsciiDruckPuffer[alen] = CodeChrKlingel;
+					else if (c == AsciiProtZeichenWerDa) 
 						AsciiDruckPuffer[alen] = CodeChrWerDa;
 					else
 						AsciiDruckPuffer[alen] = c;
@@ -3524,12 +3534,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 			ProtokollierenInt_P(PSTR("%4d\r\n"), low(SocketAnzahlZeichenEmpfangen));
 			// Zahlen: unverarbeitete Daten / neue Daten / Daten insgesamt
 			}
-			
-//! \todo prüfen: ist dieser Teil nicht doppelt???
-		if (iTelexSocketProtokoll == Ascii && SocketInBufUsed > 0 && SocketInBuf[SocketInBufUsed-1] == '@')
-			SocketInBuf[SocketInBufUsed-1] = CodeChrWerDa;
-			// am Ende des Empfangs ein @ durch Werda ersetzen.
-			
+		
 		} // if GetBytesInSocketData > 0
 	} // ITelexOderAsciiEmpfangVerarbeiten()
 
@@ -3636,10 +3641,13 @@ static void AsciiDatenVerarbeiten()
 			uint8_t code;
 			code = PufferAusg(&EmpfPuffer);
 			
-			if (BaudotMode_IstZiffern(BaudotMode) && code == TtyCodeZiWerDa)
-				SocketOutBuf[SocketOutBufUsed] = '@'; //! \todo Konstante draus machen
+			char c = CodeZuZeichen(code, &BaudotMode);
+			if (c == CodeChrKlingel)
+				SocketOutBuf[SocketOutBufUsed] = AsciiProtZeichenKlingel;
+			else if (c == CodeChrWerDa)
+				SocketOutBuf[SocketOutBufUsed] = AsciiProtZeichenWerDa;
 			else
-				SocketOutBuf[SocketOutBufUsed] = CodeZuZeichen(code, &BaudotMode);
+				SocketOutBuf[SocketOutBufUsed] = c;
 			
 			if (SocketOutBuf[SocketOutBufUsed] != '\0')
 				{
@@ -6497,10 +6505,12 @@ void itelex_cgi_msg_In( void * pStruct )
 		AsciiDruckPuffer[AsciiDruckPufferMax-3] = '\0'; // sicherheitshalber
 		
 		// falls letztes Zeichen ein @ war, ändern in Werda, falls nicht WR und ZL anfügen.
-		if (AsciiDruckPuffer[strlen(AsciiDruckPuffer)-1] == '@')
+		if (AsciiDruckPuffer[strlen(AsciiDruckPuffer)-1] == AsciiProtZeichenWerDa)
 			AsciiDruckPuffer[strlen(AsciiDruckPuffer)-1] = CodeChrWerDa;
 		else
 			strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
+		
+		// TODO AsciiProtZeichenKlingel ersetzen?
 			
 		// Ergebnis protokollieren
 		if (ProtokollLevel >= AblaufInfo)
