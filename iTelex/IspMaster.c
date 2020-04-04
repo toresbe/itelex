@@ -720,6 +720,7 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 	int Res;
 	char Buf[64]; // TODO erhöhen
 	char Rett;
+	uint8_t BufUsed;
 	uint8_t SignaturSoll[3];
 	uint8_t Fuses[3];
 	TKurzTimer AbbruchTimer;
@@ -781,25 +782,39 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 		{
 		changeConfig_P(BinServerPath_P, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
 		}
+
+	BufUsed = 0;
 	
-	Res = GetSocketData(SocketID, sizeof(Buf)-1, Buf);
-
-	if (Res <= 0)
-		{
-		CloseTCPSocket(SocketID);
-		printf_P(PSTR("<p>Error reading %s (code %d)."), FullPath, HttpHeadCode);
-		printf_P(ClickToContinue_P);
-		cgi_PrintHttpheaderEnd();
-		return;
-		}
-
-	Buf[Res] = '\0';
-
 	// Datei enthält paarweise eine Chip-Signatur und die zugehörigen Fuse-Bytes.
 	// In der Schleife wird die Signatur des angeschlossenen Chips mit der "gewünschten" Signatur verglichen.
 	i = 0;
 	do
 		{
+		// Puffer füllen
+		Res = GetSocketData(SocketID, sizeof(Buf) - 1 - BufUsed, Buf + BufUsed);
+
+		ProtokollierenInt_P(PSTR("Read start at pos %d"), BufUsed);
+		ProtokollierenInt_P(PSTR(" reading %d bytes\r\n"), Res);
+
+		if (Res <= 0)
+			{
+			CloseTCPSocket(SocketID);
+			printf_P(PSTR("<p>Error reading %s (code %d)."), FullPath, HttpHeadCode);
+			printf_P(ClickToContinue_P);
+			cgi_PrintHttpheaderEnd();
+			return;
+			}
+
+		BufUsed += Res;
+		
+		Buf[BufUsed] = '\0';
+
+		i = 0;
+
+		Protokollieren_P(PSTR("Buffer content: >>>"));
+		Protokollieren(Buf);
+		Protokollieren_P(PSTR("<<<\r\n"))
+		
 		// Leerzeichen am Anfang überspringen
 		while (Buf[i] != '\0' && Buf[i] <= ' ')
 			i++; //Steuerzeichen und Spaces überspringen
@@ -812,6 +827,9 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 		Res = strtobin(Buf + Start, (char *) SignaturSoll, 3);
 		Buf[i] = Rett;
 			
+		ProtokollierenInt_P(PSTR("signature code from pos %d"), Start);
+		ProtokollierenInt_P(PSTR(" to pos %d\r\n"), i);
+
 		if (Res == 0)
 			{ // Umwandlung der Signatur erfolgreich. Jetzt zweites Wort suchen
 			i = i + 1;
@@ -825,15 +843,20 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 			Buf[i] = '\0';
 			Res = strtobin(Buf + Start, (char *) Fuses, 3);
 			Buf[i] = Rett;
+
+			ProtokollierenInt_P(PSTR("fuse code from pos %d"), Start);
+			ProtokollierenInt_P(PSTR(" to pos %d\r\n"), i);
 			
 			// Res sollte jetzt immer noch 0 sein. 0 = strtobin war erfolgreich
 			}
 
 		if (Res != 0)
 			{
+			ProtokollierenInt_P(PSTR("Decode error %d\r\n"), Res);
+			
 			CloseTCPSocket(SocketID);
 			if (Buf[Start] == '+')
-				printf_P(PSTR("<p>Actual chip signature not fitting to allowed signaltures in %s."), FullPath); // Listenende erreicht
+				printf_P(PSTR("<p>Actual chip signature fits not to allowed signaltures in %s."), FullPath); // Listenende erreicht
 			else
 				printf_P(PSTR("<p>Invalid signature / fuses format in file %s: %s position %d."), FullPath, Buf, Start); // Format-Problem
 				
@@ -841,6 +864,8 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 			cgi_PrintHttpheaderEnd();
 			return;
 			}
+		
+		memmove(Buf, Buf + i, BufUsed - i);
 		
 		} while (SignaturIst[0] != SignaturSoll[0] || SignaturIst[1] != SignaturSoll[1] || SignaturIst[2] != SignaturSoll[2]);
 
