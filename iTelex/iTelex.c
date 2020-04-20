@@ -3202,6 +3202,7 @@ static uint8_t FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 static bool IsCommonAsciiControl(char c)
 	{
 	return c == '\r' || c == '\n' || c == CodeChrKlingel || c == CodeChrWerDa 
+		|| c == '\005' /*ENQ = Werda*/
 		|| c == '\010' /*Backspace*/ || c == '\011' /*Tab*/
 		|| c == '\033' /*ESC*/
 		|| c == CodeChrBuUm || c == CodeChrZiUm || (c >= ' ' && c <= '~') || c >= 0xa0;
