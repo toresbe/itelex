@@ -796,7 +796,7 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 		ProtokollierenInt_P(PSTR("Read start at pos %d"), BufUsed);
 		ProtokollierenInt_P(PSTR(" reading %d bytes\r\n"), Res);
 
-		if (Res <= 0)
+		if (Res < 0)
 			{
 			CloseTCPSocket(SocketID);
 			printf_P(PSTR("<p>Error reading %s (code %d)."), FullPath, HttpHeadCode);
@@ -813,7 +813,7 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 
 		Protokollieren_P(PSTR("Buffer content: >>>"));
 		Protokollieren(Buf);
-		Protokollieren_P(PSTR("<<<\r\n"))
+		Protokollieren_P(PSTR("<<<\r\n"));
 		
 		// Leerzeichen am Anfang überspringen
 		while (Buf[i] != '\0' && Buf[i] <= ' ')
@@ -866,6 +866,7 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 			}
 		
 		memmove(Buf, Buf + i, BufUsed - i);
+		BufUsed -= i;
 		
 		} while (SignaturIst[0] != SignaturSoll[0] || SignaturIst[1] != SignaturSoll[1] || SignaturIst[2] != SignaturSoll[2]);
 
