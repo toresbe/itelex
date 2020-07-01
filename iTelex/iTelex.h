@@ -307,7 +307,8 @@ typedef enum {
 	
 	
  //! Was geht über den Socket 'rüber.	
- typedef enum {
+typedef enum {
+	ProtUnknown,	//!< noch nicht klar, wird nur bei kommenden Verbingungen verwendet
 	iTelexProt,		//!< Das eigene Protokoll
 	Ascii,			//!< Ascii, also telnet
 #ifdef ITELEX_EMAIL

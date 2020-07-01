@@ -1891,7 +1891,7 @@ static void KommendeVerbindungInitialisieren()
 	iTelexSocketAbbauGeplant = false;
 	iTelexSocketProtVersion = 0;
 	iTelexSocketProtVersionVorschlag = 0; // auf Gegenvorschlag warten
-	iTelexSocketProtokoll = Ascii; // solange nichts anderes bekannt...
+	iTelexSocketProtokoll = ProtUnknown; // solange nichts anderes bekannt...
 	StartKurzTimer(&iTelexSocketAbbruchTimer);
 	StartKurzTimer(&iTelexSocketAbbauVerzoegerung);
 	SocketBufInit();
@@ -2486,6 +2486,7 @@ static void SocketBearbeiten()
 						}
 					// sonst weiter mit Ascii, kein break;
 					
+				case ProtUnknown:
 				case Ascii:
 					// oder iTelexProt und AbbauGeplant
 					if (ProtokollLevel >= AblaufInfo)
@@ -2900,6 +2901,7 @@ static void ExterneVerbindungBeenden()
 		{
 		switch (iTelexSocketProtokoll)
 			{
+			case ProtUnknown:
 			case Ascii:
 				iTelexSocketAbbauGeplant = true;
 				break;
@@ -3351,6 +3353,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 
 			else if (c == ITELEXC_STOP || c == ITELEXC_ENDE)
 				{
+				iTelexSocketProtokoll = iTelexProt;
 				uint8_t len = SocketInBuf[i+1];
 				if (i + 2 + len > SocketInBufUsed)
 					len = SocketInBufUsed - i - 2;
@@ -3472,7 +3475,8 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 				} // c == ITELEXC_VERSION
 
 			else if (c == ITELEXC_SELBSTANRUF)
-				{ 
+				{
+				iTelexSocketProtokoll = iTelexProt;
 				uint8_t len = SocketInBuf[i+1];
 				if (len >= 2 && SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
 					{
@@ -4772,6 +4776,7 @@ void itelex_thread()
 		// ----------------------------
 		switch (iTelexSocketProtokoll)
 			{
+			case ProtUnknown:
 			case Ascii:
 				AsciiDatenVerarbeiten();
 				break;
