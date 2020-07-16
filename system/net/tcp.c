@@ -33,6 +33,7 @@
 ///         (z.B. bei Abfrage von checkip.dyndns.com) noch auslesbar sind.
 /// \date	12-11-2012: Fred Sonnenrein: GetSocketData liefert vernünftigen Rückgabewert, wenn mehr Daten im Fifo als
 ///         im Puffer Platz sind.
+/// \date	15-07-2020: Bernd Laengerich: Korrektur TCP-Handshake Verbindungsabbau
 //****************************************************************************/
 /*
  *  This program is free software; you can redistribute it and/or modify
@@ -362,6 +363,15 @@ void tcp( int packet_lenght, char * ethernetbuffer)
 
 		if ( TCP_packet->TCP_ControllFlags == ( TCP_FIN_FLAG | TCP_ACK_FLAG) )
 		{
+			// 20201016 BLH fix missing ACK?
+			if ( TCP_sockettable[ socket ].ConnectionState == SOCKET_WAIT2FIN )
+			{
+				TCP_sockettable[ socket ].AcknowledgeNumber = ntohl ( TCP_packet->TCP_SequenceNumber ) + 1;
+				MakeTCPheader( socket, TCP_ACK_FLAG, 0 , ( MAX_RECIVEBUFFER_LENGHT - Get_Bytes_in_FIFO ( TCP_sockettable[ socket ].fifo ) ) , ethernetbuffer );
+				TCP_sockettable[ socket ].Timeoutcounter = 0 ;
+				TCP_sockettable[ socket ].ConnectionState = SOCKET_NOT_USE ;
+			}
+			// 20201016 BLH fix missing ACK?
 			if ( TCP_sockettable[ socket ].ConnectionState == SOCKET_WAIT2FINACK )
 			{
 				TCP_sockettable[ socket ].AcknowledgeNumber = ntohl ( TCP_packet->TCP_SequenceNumber ) + 1;
