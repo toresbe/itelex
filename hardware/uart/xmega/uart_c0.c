@@ -62,7 +62,7 @@ void UART_C0_init( void )
 	/* USARTC0, 8 Data bits, No Parity, 1 Stop bit. */
 	USART_Format_Set( &USARTC0 , USART_CHSIZE_8BIT_gc, USART_PMODE_DISABLED_gc, 0 );
 	/* Set Baudrate to 9600 bps */
-	USART_Baudrate_Set( &USARTC0 , ( UBRR_VAL ) , 0 );
+	USART_Baudrate_Set( &USARTC0 , ( UBRR_VAL + 3 ) , 0 );
 	/* Enable both RX and TX. */
 	USART_Rx_Enable( &USARTC0 );
 	USART_Tx_Enable( &USARTC0 );

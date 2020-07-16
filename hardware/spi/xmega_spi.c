@@ -42,13 +42,13 @@ void xmega_spi_init( int SPI_ID )
 	PORT_t * port = (void *) ( 0x0600 | ( ( SPI_ID + 2 ) << 5 ) );
 
 	/* MOSI and SCK as output. */
-	port->OUT |= SPI_MOSI_bm | SPI_SCK_bm | SPI_SS_bm ;
-	port->DIR |= SPI_MOSI_bm | SPI_SCK_bm | SPI_SS_bm ;
+	port->OUTSET |= SPI_MOSI_bm | SPI_SCK_bm | SPI_SS_bm ;
+	port->DIRSET |= SPI_MOSI_bm | SPI_SCK_bm | SPI_SS_bm ;
 	/* MISO as Input. */
-	port->DIR &= ~SPI_MISO_bm;
+	port->DIRCLR = SPI_MISO_bm;
 
-	spi->CTRL = SPI_CLK2X_bm | SPI_ENABLE_bm | SPI_MASTER_bm ;
 	spi->CTRL = SPI_ENABLE_bm | SPI_MASTER_bm ;
+//	spi->CTRL = SPI_CLK2X_bm | SPI_ENABLE_bm | SPI_MASTER_bm;
 }
 
 char xmega_spi_ReadWrite( int SPI_ID, char Data )
@@ -69,14 +69,10 @@ void xmega_spi_WriteBlock( int SPI_ID, char * Block, int len )
 {
 	// Set SPI baseaddress errechnen
 	SPI_t * spi = (void *) ( 0x08c0 | ( SPI_ID << 8 ) );
-
-	char * spi_status = (char *) &spi->STATUS ;
-	char * spi_data = (char *) &spi->DATA ;
-	
 	char data;
-	
+
 	// ersten Wert senden
-	*spi_data = *Block++;
+	spi->DATA = *Block++;
 	len--;
 
 	while( len )
@@ -85,13 +81,13 @@ void xmega_spi_WriteBlock( int SPI_ID, char * Block, int len )
 		// nachdem das senden des vorherigen Wertes fertig ist,
 		data = *Block++;
 		// warten auf fertig
-		while( !( *spi_status ) );
+		while( !(spi->STATUS & SPI_IF_bm ) );
 		// Wert aus Register senden
-		*spi_data = data;
+		spi->DATA = data;
 		// Counter erhöhen
 		len--;
 	}
-	while( !( *spi_status ) );
+	while( !(spi->STATUS & SPI_IF_bm ) );
 
 	return;
 }
@@ -100,28 +96,24 @@ void xmega_spi_ReadBlock( int SPI_ID, char * Block, int len )
 {
 	// Set SPI baseaddress errechnen
 	SPI_t * spi = (void *) ( 0x08c0 | ( SPI_ID << 8 ) );
-
-	char * spi_status = (char *) &spi->STATUS ;
-	char * spi_data = (char *) &spi->DATA ;
-
 	char data;
 	
-	// Dummy Wert senden
-	*spi_data = 0x00;
-	
+	// dummy wert senden
+	spi->DATA = 0x00;
+	// auf fertig warten
 	while( len )
 	{
 		len--;
 		// warten auf fertig
-		while( !( *spi_status ) );
+		while( !(spi->STATUS & SPI_IF_bm ) );
 		// Dummy Wert senden
-		*spi_data = 0x00;
+		spi->DATA = 0x00;
 		// Daten einlesen
-		data = *spi_data;
+		data = spi->DATA;
 		// speichern
 		*Block++ = data;
 	}
-	while( !( *spi_status ) );
+	while( !(spi->STATUS & SPI_IF_bm ) );
 
 	return;
 }

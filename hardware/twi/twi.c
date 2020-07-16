@@ -29,8 +29,8 @@
 #include <util/delay.h>
 
 /**
- * \ingroup hardware
- * \addtogroup TWI_mega Stellt Funktioen für den TWI-Bus(I2C) bereit (twi.c)
+ * \ingroup Hardware
+ * \addtogroup TWI Stellt Funktioen für den TWI-Bus(I2C) bereit (twi.c)
  * \date	12-05-2010: TWI neu implementiert, das alte hatte so seine Fehler die ich nicht
  *			tolerieren konnte.
  * \date	12-06-2010: So, noch eine bisschen Foo um den Bus zu erkennen ob der tut.
@@ -39,9 +39,9 @@
  */
 
 /**
- * \file
  *
  * \author Dirk Broßwick
+ *
  */
 
 #include "config.h"

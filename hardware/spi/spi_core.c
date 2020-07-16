@@ -29,16 +29,17 @@
 #include <string.h>
 
 /**
- * \ingroup hardware
- * \addtogroup spi_core Interface für den SPI_Bus
+ *
+ * \ingroup Hardware
+ * \addtogroup spi_core Interface für den SPI_Bus (spi_core.c/h)
  *
  * @{
  */
 
 /**
- * \file
  *
  * \author Dirk Broßwick
+ *
  */
 
 #include "spi_core.h"

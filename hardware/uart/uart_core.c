@@ -27,7 +27,7 @@
 #include "config.h"
 
 /**
- * \ingroup hardware
+ * \ingroup Hardware
  * \addtogroup UART Interface um die Uart anzusprechen (uart_core.c).
  *
  * Mit diesen Interface koennen alle UARTs angeprochen werden.
@@ -36,7 +36,6 @@
  */
 
 /**
- * \file
  *
  * \author Dirk Broßwick
  */
@@ -73,10 +72,12 @@
 
 #elif defined( ATXM2 )
 	#include "hardware/uart/xmega/uart_c1.h"
+	#include "hardware/uart/xmega/uart_d0.h"
 	#include "hardware/uart/xmega/uart_e0.h"
 
 	UART_NUM uart_num[ ] = {
 		{ UART_C1_init , UART_C1_SendByte , UART_C1_GetByte , UART_C1_GetBytesinRxBuffer , UART_C1_GetBytesinRxBuffer } ,
+		{ UART_D0_init , UART_D0_SendByte , UART_D0_GetByte , UART_D0_GetBytesinRxBuffer , UART_D0_GetBytesinRxBuffer } ,
 		{ UART_E0_init , UART_E0_SendByte , UART_E0_GetByte , UART_E0_GetBytesinRxBuffer , UART_E0_GetBytesinRxBuffer } ,
 		};
 
