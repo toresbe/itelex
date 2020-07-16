@@ -130,7 +130,7 @@ void SPI1_FastRead2Mem( char * buffer, int Datalenght )
 	int Counter = 0;
 	char data;
 
-	while( Counter <= Datalenght )
+	while( Counter < Datalenght )
 	{
 		// warten auf fertig
 		while ( !( UCSR0A & (1<<UDRE0)) );
@@ -153,7 +153,7 @@ void SPI1_FastRead2Mem( char * buffer, int Datalenght )
 	int Counter = 0;
 	char data;
 
-	while( Counter <= Datalenght )
+	while( Counter < Datalenght )
 	{
 		// warten auf fertig
 		while ( !( UCSR1A & (1<<UDRE1)) );
