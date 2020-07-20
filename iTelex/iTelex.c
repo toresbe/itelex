@@ -2452,7 +2452,14 @@ static void SocketBearbeiten()
 				// SendeStopkommando kann nicht benutzt werden, da der Code in den BlindSocket gesendet werden muss.
 				
 				if (Modus != ModKommendVerbVorstufe) // das ist ein Indiz für einen HTTP-Request, die kommen ggf. mehrfach...
-					Diagnoseausgabe_P(ISTR(AnrufAbgewiesenWegenBesetzt, LokaleSprache), 4);
+					{
+					if (Diagnoseausgabe_P(ISTR(AnrufAbgewiesenWegenBesetzt, LokaleSprache), 4)
+						&& strlen(DiagnosePuffer) < DiagnosePufferMax - 16 /*IP*/ - 10 /*Status*/)
+						{ // Text wurde in den Diagnosepuffer geschrieben, jetzt noch ergänzungen...
+						iptostr(TCP_sockettable[NewServerSocket].SourceIP, DiagnosePuffer + strlen(DiagnosePuffer));
+						sprintf_P(DiagnosePuffer + strlen(DiagnosePuffer), PSTR(" %d"), Modus);
+						}
+					}
 				}
 			}
 			
