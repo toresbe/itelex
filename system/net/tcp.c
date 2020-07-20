@@ -154,8 +154,8 @@ void tcp( int packet_lenght, char * ethernetbuffer)
 		long i;
 		int socket;
 		
-		struct ETH_header *ETH_packet; 		// ETH_struct anlegen
-		ETH_packet = (struct ETH_header *) ethernetbuffer;
+//		struct ETH_header *ETH_packet; 		// ETH_struct anlegen
+//		ETH_packet = (struct ETH_header *) ethernetbuffer;
 		struct IP_header *IP_packet;		// IP_struct anlegen
 		IP_packet = ( struct IP_header *) &ethernetbuffer[ETHERNET_HEADER_LENGTH];
 		struct TCP_header *TCP_packet;		// TCP_struct anlegen
@@ -256,7 +256,7 @@ void tcp( int packet_lenght, char * ethernetbuffer)
 
 				// Callback ausführen falls hinterlegt
 				if ( TCP_sockettable[ socket ].TCP_CallbackFunc != NULL )
-					TCP_sockettable[ socket ].TCP_CallbackFunc( socket );
+					TCP_sockettable[ socket ].TCP_CallbackFunc( socket, TCP_sockettable[ socket ].fifo );
 
 				// ACK senden
 				MakeTCPheader( socket, TCP_ACK_FLAG, 0 , ( MAX_RECIVEBUFFER_LENGHT - Get_Bytes_in_FIFO ( TCP_sockettable[ socket ].fifo ) ) , ethernetbuffer );
@@ -510,8 +510,8 @@ int Getfreesocket( void )
 /*------------------------------------------------------------------------------------------------------------*/
 int GetSocket( char * ethernetbuffer )
 {
-	struct ETH_header *ETH_packet; 		// ETH_struct anlegen
-	ETH_packet = (struct ETH_header *) ethernetbuffer;
+//	struct ETH_header *ETH_packet; 		// ETH_struct anlegen
+//	ETH_packet = (struct ETH_header *) ethernetbuffer;
 	struct IP_header *IP_packet;		// IP_struct anlegen
 	IP_packet = ( struct IP_header *) &ethernetbuffer[ETHERNET_HEADER_LENGTH];
 	struct TCP_header *TCP_packet;		// TCP_struct anlegen
@@ -568,7 +568,7 @@ int GetSocket( char * ethernetbuffer )
 		TCP_sockettable[ socket ].SendetBytes = 0;
 		memcpy( TCP_sockettable[ socket ].MACadress, ETH_packet->ETH_sourceMac, 6 );
 		Flush_FIFO( TCP_sockettable[ socket ].fifo );
-		TCP_sockettable[ socket ].TCP_CallbackFunc = NULL; // Ob das hier wirklich richtig ist?
+		TCP_sockettable[ socket ].TCP_CallbackFunc = NULL;
 	}
 
 	return( socket );
@@ -580,7 +580,7 @@ void RegisterTCPCallBack( int socket , TCP_CALLBACK_FUNC pFunc )
 	sreg_temp = SREG;
 	cli();
 	
-	TCP_sockettable[ socket ].TCP_CallbackFunc = pFunc;	
+	TCP_sockettable[ socket ].TCP_CallbackFunc = pFunc;
 
 	SREG = sreg_temp;
 
@@ -682,8 +682,8 @@ int CopyTCPdata2socketbuffer( int Socket, int Datalenght ,  char *ethernetbuffer
 {
 	int Offset;
 
-	struct ETH_header *ETH_packet; 		// ETH_struct anlegen
-	ETH_packet = (struct ETH_header *) ethernetbuffer;
+//	struct ETH_header *ETH_packet; 		// ETH_struct anlegen
+//	ETH_packet = (struct ETH_header *) ethernetbuffer;
 	struct IP_header *IP_packet;		// IP_struct anlegen
 	IP_packet = ( struct IP_header *) &ethernetbuffer[ETHERNET_HEADER_LENGTH];
 	struct TCP_header *TCP_packet;		// TCP_struct anlegen
@@ -845,13 +845,11 @@ void CloseTCPSocket( int Socket)
 
 	char ethernetbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ];
 
-	struct TCP_header *TCP_packet;		// TCP_struct anlegen
-	TCP_packet = ( struct TCP_header *) &ethernetbuffer[ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];
+//	struct TCP_header *TCP_packet;		// TCP_struct anlegen
+//	TCP_packet = ( struct TCP_header *) &ethernetbuffer[ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];
 
 	MakeTCPheader( Socket, TCP_FIN_FLAG | TCP_ACK_FLAG , 0, ( MAX_RECIVEBUFFER_LENGHT - Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) ) , ethernetbuffer );
-	
-	if (TCP_sockettable[ Socket ].ConnectionState <= SOCKET_READY) // HACK Son Test
-		TCP_sockettable[ Socket ].ConnectionState = SOCKET_WAIT2FINACK;
+	TCP_sockettable[ Socket ].ConnectionState = SOCKET_WAIT2FINACK;
 
 	FreeEthernet();		
 
@@ -879,6 +877,7 @@ void CloseTCPSocket( int Socket)
 			TCP_sockettable[ Socket ].Timeoutcounter = 0;
 			TCP_sockettable[ Socket ].ConnectionState = SOCKET_NOT_USE ;
 #endif
+			TCP_sockettable[ Socket ].TCP_CallbackFunc = NULL;
 			CLOCK_ReleaseCountdownTimer( timer );
 			break;
 		}
@@ -923,6 +922,12 @@ void TCP_pharseOptions( int Socket, unsigned char * Optionfield, int length )
 #endif
 	return;
 }
+
+int GetFIFO( int socket )
+{
+	return( TCP_sockettable[ socket ].fifo );
+}
+
 /*-----------------------------------------------------------------------------------------------------------*/
 /*!\brief Sendet Daten ueber ein Socket aus dem RAM/FLASH/EEPROM.
  * \param	Socket		Die Socketnummer die zum versnden benutzt werden soll.
@@ -941,8 +946,8 @@ int SendData_RPE( int Socket, int Datalenght, char * Sendbuffer, char Mode, int 
 
 	char ethernetbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH + MAX_TCP_Datalenght ];
 
-	struct TCP_header *TCP_packet;		// TCP_struct anlegen
-	TCP_packet = ( struct TCP_header *) &ethernetbuffer[ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];	
+//	struct TCP_header *TCP_packet;		// TCP_struct anlegen
+//	TCP_packet = ( struct TCP_header *) &ethernetbuffer[ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];	
 
 	int Offset = ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ;
 	int i;
@@ -1095,29 +1100,25 @@ int PutSocketData_RPE( int Socket, int Datalenght, char * Sendbuffer, char Mode 
  * \param	fifo		Fifo in den die Daten kopiert werden sollen.
  * \param	bufferlen	Anzahl der Bytes die kopiert werden soll.
  * \retval	Datalenght	Anzahl der kopierten Bytes oder -1 bei Fehler.
- * \todo    Fred Sonnenrein: Was passiert, wenn Get_FIFOrestsize ( fifo ) < bufferlen aber > 0 ? Ist mir erst mal
- *          egal, 
  */
 /*------------------------------------------------------------------------------------------------------------*/	
 int GetSocketDataToFIFO( int Socket , int fifo, int bufferlen )
 	{
-		if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( SOCKET_ERROR );
+		if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( SOCKET_ERROR );
 		if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 ) return ( 0 );
 		
 		LockEthernet();
 		
-		int i = 0;
-
 		if ( ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) >= bufferlen ) && ( Get_FIFOrestsize ( fifo ) >= bufferlen ) )
 		{
-			i = Get_FIFO_to_FIFO( TCP_sockettable[ Socket ].fifo , bufferlen, fifo );
+			Get_FIFO_to_FIFO( TCP_sockettable[ Socket ].fifo , bufferlen, fifo );
 			// sende ein Windowupdate-Paket wenn buffer zu 7/8 frei ist
-			if ( TCP_sockettable[Socket].ConnectionState != SOCKET_READY && Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) < ( MAX_RECIVEBUFFER_LENGHT / 2 ) )
+			if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) < ( MAX_RECIVEBUFFER_LENGHT / 2 ) )
 			{
 				char ackbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ];
 
-				struct TCP_header *TCP_packet;		// TCP_struct anlegen
-				TCP_packet = ( struct TCP_header *)&ackbuffer[ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];							
+//				struct TCP_header *TCP_packet;		// TCP_struct anlegen
+//				TCP_packet = ( struct TCP_header *)&ackbuffer[ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];							
 
 				MakeTCPheader( Socket, TCP_ACK_FLAG , 0 , MAX_RECIVEBUFFER_LENGHT - Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) , ackbuffer );
 			}
@@ -1142,7 +1143,7 @@ int GetSocketDataToFIFO( int Socket , int fifo, int bufferlen )
 /*------------------------------------------------------------------------------------------------------------*/	
 int GetSocketData( int Socket , int bufferlen, char *buffer)
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( SOCKET_ERROR );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( SOCKET_ERROR );
 	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 ) return ( 0 );
 
 	LockEthernet();
@@ -1153,7 +1154,6 @@ int GetSocketData( int Socket , int bufferlen, char *buffer)
 	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) > bufferlen )
 	{
 		Get_Block_from_FIFO ( TCP_sockettable[ Socket ].fifo, bufferlen, buffer );
-		i = bufferlen;
 	}
 	else
 	{
@@ -1165,12 +1165,12 @@ int GetSocketData( int Socket , int bufferlen, char *buffer)
 	}
 
 	// sende ein Windowupdate-Paket wenn buffer zu 3/4 frei ist
-	if ( TCP_sockettable[Socket].ConnectionState == SOCKET_READY && Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) < ( MAX_RECIVEBUFFER_LENGHT / 2 ) )
+	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) < ( MAX_RECIVEBUFFER_LENGHT / 2 ) )
 	{
 		char ackbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ];
 
-		struct TCP_header *TCP_packet;		// TCP_struct anlegen
-		TCP_packet = ( struct TCP_header *)&ackbuffer[ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];							
+//		struct TCP_header *TCP_packet;		// TCP_struct anlegen
+//		TCP_packet = ( struct TCP_header *)&ackbuffer[ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];							
 
 		MakeTCPheader( Socket, TCP_ACK_FLAG , 0 , MAX_RECIVEBUFFER_LENGHT - Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) , ackbuffer );
 	}
@@ -1183,12 +1183,12 @@ int GetSocketData( int Socket , int bufferlen, char *buffer)
 /*-----------------------------------------------------------------------------------------------------------*/
 /*!\brief Löscht den Empfangspuffer
  * \param	Socket		Socketnummer von welchen der Puffer gelöscht werden soll.
- * \retval	Die Anzahl der gelöschten Bytes.
+ * \retval	Die Anzahl der kopierten Bytes.
  */
 /*------------------------------------------------------------------------------------------------------------*/	
 int FlushSocketData( int Socket )
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( SOCKET_ERROR );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( SOCKET_ERROR );
 
 	return( Flush_FIFO( TCP_sockettable[ Socket ].fifo ) );
 }
@@ -1201,7 +1201,7 @@ int FlushSocketData( int Socket )
 /*------------------------------------------------------------------------------------------------------------*/	
 int GetBytesInSocketData( int Socket )
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( SOCKET_ERROR );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( SOCKET_ERROR );
 
 	return( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) );
 }
@@ -1214,7 +1214,7 @@ int GetBytesInSocketData( int Socket )
 /*------------------------------------------------------------------------------------------------------------*/	
 char GetByteFromSocketData( int Socket )
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( 0 );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( 0 );
 
 	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 ) return ( 0 );
 
@@ -1224,11 +1224,11 @@ char GetByteFromSocketData( int Socket )
 
 	Data = Get_Byte_from_FIFO ( TCP_sockettable[ Socket ].fifo );
 	// Sendet ein Update wenn Buffer leer
-	if ( TCP_sockettable[Socket].ConnectionState == SOCKET_READY && Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 )
+	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 )
 	{
 		char ackbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ];
-		struct TCP_header *TCP_packet;		// TCP_struct anlegen
-		TCP_packet = ( struct TCP_header *)&ackbuffer[ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];
+//		struct TCP_header *TCP_packet;		// TCP_struct anlegen
+//		TCP_packet = ( struct TCP_header *)&ackbuffer[ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];
 		MakeTCPheader( Socket, TCP_ACK_FLAG , 0 , MAX_RECIVEBUFFER_LENGHT - Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) , ackbuffer );
 	}
 
@@ -1276,8 +1276,8 @@ int Connect2IP( long IP, unsigned int Port )
 
 	char ethernetbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ];
 
-	struct TCP_header * TCP_packet;		// TCP_struct anlegen
-	TCP_packet = ( struct TCP_header *) &ethernetbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];
+//	struct TCP_header * TCP_packet;		// TCP_struct anlegen
+//	TCP_packet = ( struct TCP_header *) &ethernetbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT ];
 
 	// Register den SOCKET
 	TCP_sockettable[ Socket ].SourcePort = Port ;
@@ -1289,6 +1289,7 @@ int Connect2IP( long IP, unsigned int Port )
 	Flush_FIFO ( TCP_sockettable[ Socket ].fifo );
 	TCP_sockettable[ Socket ].Windowsize = 0;
 	TCP_sockettable[ Socket ].SendetBytes = 0;		
+	TCP_sockettable[ Socket ].TCP_CallbackFunc = NULL;
 	MakeTCPheader( Socket, TCP_SYN_FLAG , 0 , MAX_RECIVEBUFFER_LENGHT - Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) , ethernetbuffer );
 
 	FreeEthernet();
@@ -1319,6 +1320,7 @@ int Connect2IP( long IP, unsigned int Port )
 			TCP_sockettable[ Socket ].Timeoutcounter = 0 ;
 			TCP_sockettable[ Socket ].ConnectionState = SOCKET_NOT_USE ;
 #endif
+			TCP_sockettable[ Socket ].TCP_CallbackFunc = NULL;
 			CLOCK_ReleaseCountdownTimer( timer );
 			Socket = SOCKET_ERROR;
 			break;
