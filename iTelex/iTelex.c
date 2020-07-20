@@ -2454,10 +2454,11 @@ static void SocketBearbeiten()
 				if (Modus != ModKommendVerbVorstufe) // das ist ein Indiz für einen HTTP-Request, die kommen ggf. mehrfach...
 					{
 					if (Diagnoseausgabe_P(ISTR(AnrufAbgewiesenWegenBesetzt, LokaleSprache), 4)
-						&& strlen(DiagnosePuffer) < DiagnosePufferMax - 16 /*IP*/ - 10 /*Status*/)
+						&& strlen(DiagnosePuffer) < DiagnosePufferMax - 16 /*IP*/ - 16 /*Status und andere Zeichen*/)
 						{ // Text wurde in den Diagnosepuffer geschrieben, jetzt noch ergänzungen...
+						strcat_P(DiagnosePuffer, PSTR("  "));
 						iptostr(TCP_sockettable[NewServerSocket].SourceIP, DiagnosePuffer + strlen(DiagnosePuffer));
-						sprintf_P(DiagnosePuffer + strlen(DiagnosePuffer), PSTR(" %d"), Modus);
+						sprintf_P(DiagnosePuffer + strlen(DiagnosePuffer), PSTR(" modus %d"), Modus);
 						}
 					}
 				}
