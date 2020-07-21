@@ -35,7 +35,6 @@
  *
  * \author Dirk Broßwick
  */
-
 #include <avr/pgmspace.h>
 #include <avr/version.h>
 #include <stdio.h>
@@ -68,7 +67,7 @@ void THREAD_init( void )
  * \return	-1 wenn ein Fehler aufgetreten ist oder einen positiven Wert wenn erfolgeich.
  */
 /*------------------------------------------------------------------------------------------------------------*/
-int THREAD_RegisterThread( THREAD_CALLBACK thread_function, const prog_char * thread_name )
+int THREAD_RegisterThread( THREAD_CALLBACK thread_function, const char * thread_name )
 {
 	int i,retval;
 

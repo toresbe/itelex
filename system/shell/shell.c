@@ -67,7 +67,7 @@ void SHELL_init( void )
  * \return	NONE
  */
 /*------------------------------------------------------------------------------------------------------------*/
-int SHELL_RegisterCMD( DYN_SHELL_CALLBACK dynshell_function, const prog_char * funktionname )
+int SHELL_RegisterCMD( DYN_SHELL_CALLBACK dynshell_function, const char * funktionname )
 {
 	int i,retval;
 
@@ -203,7 +203,7 @@ int SHELL_runcmdextern( char * cmdstring )
  * \return	int			0 wenn Kommando gefunden, bei Fehler -1.
  */
 /*------------------------------------------------------------------------------------------------------------*/
-int SHELL_runcmdextern_P( const prog_char * cmdstring_P )
+int SHELL_runcmdextern_P( const char * cmdstring_P )
 {
 	char * argv[ MAX_ARGC ];
 	int argc;

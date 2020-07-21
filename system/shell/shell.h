@@ -27,21 +27,21 @@
 
 	#define SHELL_BUFFER_LEN	64
 
-	#define MAX_SHELL_ENTRYS	12
+	#define MAX_SHELL_ENTRYS	16
 	#define MAX_ARGC			4
 
 	typedef int ( * DYN_SHELL_CALLBACK ) ( int argc, char ** argv );
 
 	struct DYN_SHELL {
 		volatile	DYN_SHELL_CALLBACK		dynshell_function;
-		const 		prog_char 				* functionname;
+		const char  						* functionname;
 	};
 
 	void SHELL_init( void );
-	int SHELL_RegisterCMD( DYN_SHELL_CALLBACK dynshell_function, const prog_char * funktionname );
+	int SHELL_RegisterCMD( DYN_SHELL_CALLBACK dynshell_function, const char * funktionname );
 	int SHELL_pharse( char * BUFFER, char ** argv, int max_argc );
 	int SHELL_runcmd( int argc, char ** argv );
 	int SHELL_runcmdextern( char * cmdstring );
-	int SHELL_runcmdextern_P( const prog_char * cmdstring_P );
+	int SHELL_runcmdextern_P( const char * cmdstring_P );
 
 #endif // SHELL_H

@@ -48,8 +48,9 @@
 	#define TEMP_H
 
 	void TEMP_init( void );
+	void TempCache_Timeouthandler( void );
 	int TEMP_readtempstr( char * SensorData );
-	int TEMP_readtemp( char Sensor );
+	int TEMP_readtemp( int Sensor );
 	char * TEMP_Temp2String( int Temp, char * TempString );
 	void TEMP_Sensor2String( char Sensor, char * SensorString );
 	char * TEMP_getSensorConfig( char Sensor, char * SensorString );
@@ -57,15 +58,22 @@
 	void TEMP_thread( void );
 	void TEMP_config_cgi( void * pStruct );
 
-	#define TEMP_MAX_SENSORS	8
-	#define TEMP_ERROR			0x8000
+	#define TEMP_MAX_SENSORS		8
+	#define TEMP_ERROR				0x8000
+	#define TEMPSENSOR_STORETIME	45
 
-	#define SENSOR_PORT			4223
+	#define SENSOR_PORT				4223
 
 	struct TempRequest {
 		char Sensor;
 		int Temp;
 	};
+
+	struct TempCache {
+		unsigned int counter;
+		unsigned int temp;
+	};
+
 #endif
 
 /**

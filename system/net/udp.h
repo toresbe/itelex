@@ -124,7 +124,7 @@
 	int UDP_BackToListen( int socket );
 
 	#if defined(EXTMEM)
-		#define MAX_UDP_CONNECTIONS 6
+		#define MAX_UDP_CONNECTIONS 8
 	#else
 		#define MAX_UDP_CONNECTIONS 3
 	#endif

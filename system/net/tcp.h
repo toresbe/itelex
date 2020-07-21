@@ -33,7 +33,7 @@
 	extern unsigned int RXErrorUnsort;
 	extern unsigned int RXErrorOldSeq;
 
-	typedef void ( * TCP_CALLBACK_FUNC ) ( int socket );
+	typedef void ( * TCP_CALLBACK_FUNC ) ( int socket, int fifo );
 
 	void tcp_init( void );
 
@@ -44,6 +44,7 @@
 
 	int Getfreesocket(void);
 	int GetSocket( char * buffer);
+	int GetFIFO( int socket );
 	int RegisterSocket( char *buffer);
 	
 	int CopyTCPdata2socketbuffer( int Socket, int Datalenght , char *buffer);

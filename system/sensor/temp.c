@@ -69,11 +69,11 @@
 	#include "system/config/eeconfig.h"
 	#include "hardware/led/led_core.h"
 #endif
-
-const char TEMP_EECONFIGNAME_P[] PROGMEM = "TEMPSENSOR_%02d";
-
 #include "system/string/string.h"
 #include "temp.h"
+
+const char TEMP_EECONFIGNAME_P[] PROGMEM = "TEMPSENSOR_%02d";
+struct TempCache TEMPCache [ TEMP_MAX_SENSORS ];
 
 /*------------------------------------------------------------------------------------------------------------*/
 /**
@@ -85,7 +85,35 @@ void TEMP_init( void )
 #if defined(UDP)
 		THREAD_RegisterThread( TEMP_thread , PSTR("Tempsensor thread"));
 #endif
+#if defined(HTTPSERVER)
 	cgi_RegisterCGI( TEMP_config_cgi, PSTR("tempconfig.cgi"));
+#endif
+	for( int i = 0 ; i < TEMP_MAX_SENSORS ; i++ )
+	{
+		TEMPCache[ i ].counter = 0;
+		TEMPCache[ i ].temp = TEMP_ERROR;
+	}
+	
+	CLOCK_RegisterCallbackFunction( TempCache_Timeouthandler, SECOUND );
+}
+
+/*------------------------------------------------------------------------------------------------------------*/
+/**
+ * \brief	Timeouthandler für gecachte Temperaturwerte
+ */
+/*------------------------------------------------------------------------------------------------------------*/
+void TempCache_Timeouthandler( void )
+{
+	for ( int i = 0 ; i < TEMP_MAX_SENSORS ; i++ )
+		
+	if ( TEMPCache[ i ].counter != 0 )
+	{
+		TEMPCache[ i ].counter--;
+		if ( TEMPCache[ i ].counter == 0 )
+		{
+			TEMPCache[ i ].temp = TEMP_ERROR;
+		}
+	}
 }
 
 /*------------------------------------------------------------------------------------------------------------*/
@@ -104,10 +132,6 @@ void TEMP_init( void )
 /*------------------------------------------------------------------------------------------------------------*/
 int TEMP_readtempstr( char * SensorConfig )
 {
-#if defined(TWI) || defined(ONEWIRE)
-	char ID[8];
-#endif
-
 	char * BUS_String = NULL;
 	char * ID_String = NULL;
 	char * NAME_String = NULL;
@@ -141,6 +165,10 @@ int TEMP_readtempstr( char * SensorConfig )
 		}
 		SensorConfig++;
 	}
+
+#if defined(TWI) || defined(ONEWIRE)
+	char ID[8];
+#endif
 
 #if defined(TWI)
 	if ( !strcmp_P( BUS_String, PSTR("TWI") ) )
@@ -195,15 +223,27 @@ int TEMP_readtempstr( char * SensorConfig )
  * \return	TEMP_ERROR wenn Fehler, sonst Temperatur im 8.8 Format.
  */
 /*------------------------------------------------------------------------------------------------------------*/
-int TEMP_readtemp( char Sensor )
+int TEMP_readtemp( int Sensor )
 {
 	int Temp = TEMP_ERROR;
-//	char TEMPSENSOR[64] = "\0";
 	char TEMPSENSOR[64];
 
-	if ( TEMP_getSensorConfig( Sensor, TEMPSENSOR ) != NULL )
-	    Temp = TEMP_readtempstr( TEMPSENSOR );
-
+	if ( TEMPCache[ Sensor ].counter != 0 )
+	{
+		Temp = TEMPCache[ Sensor ].temp;
+	}
+	else
+	{
+		if ( TEMP_getSensorConfig( Sensor, TEMPSENSOR ) != NULL )
+		{
+			Temp = TEMP_readtempstr( TEMPSENSOR );
+			TEMPCache[ Sensor ].temp = Temp;
+			if ( Temp == TEMP_ERROR )
+				TEMPCache[ Sensor ].counter = 0;
+			else
+				TEMPCache[ Sensor ].counter = TEMPSENSOR_STORETIME;
+		}
+	}
 	return( Temp );
 }
 

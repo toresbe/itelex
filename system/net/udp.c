@@ -1,36 +1,47 @@
-/*!\file udp.c \brief Stellt die UDP Funktionalitaet bereit*/
-//***************************************************************************
-//*            udp.c
-//*
-//*  Mon Jul 31 21:46:47 2006
-//*  Copyright  2006  Dirk Broßwick
-//*  Email: sharandac@snafu.de
-///	\ingroup network
-///	\defgroup UDP Der UDP Stack fuer Mikrocontroller (udp.c)
-///	\code #include "arp.h" \endcode
-///	\code #include "ethernet.h" \endcode
-///	\code #include "ip.h" \endcode
-///	\code #include "udp.h" \endcode
-///	\par Uebersicht
-///		Der UDP-Stack für Mikrocontroller. Behandelt komplett den UDP-Stack
-/// mit Verbindungsaufbau und Abbau.
-//****************************************************************************/
+/***************************************************************************
+ *            udp.c
+ *
+ *  Mon Jul 31 21:46:47 2006
+ *  Copyright  2006  Dirk Broßwick
+ *  Email: sharandac@snafu.de
+ *
+ ****************************************************************************/
+
 /*
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Library General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
-//@{
+
+/**
+ *
+ * \ingroup network
+ * \addtogroup UDP Der UDP Stack fuer Mikrocontroller (udp.c)
+ * \code #include "udp.h" \endcode
+ *
+ * \par Uebersicht
+ * Der UDP-Stack für Mikrocontroller. Behandelt komplett den UDP-Stack
+ * mit Verbindungsaufbau und Abbau.
+ *
+ * @{
+ */
+
+/**
+ *
+ * \author Dirk Broßwick
+ *
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -75,8 +86,6 @@ void udp( int packet_lenght, char * ethernetbuffer )
 {
 	int i, socket , Offset;
 
-	struct ETH_header * ETH_packet; 		// ETH_struct anlegen
-	ETH_packet = (struct ETH_header *) ethernetbuffer;
 	struct IP_header * IP_packet;		// IP_struct anlegen
 	IP_packet = ( struct IP_header *) &ethernetbuffer[ETHERNET_HEADER_LENGTH];
 	struct UDP_header * UDP_packet;		// TCP_struct anlegen
@@ -303,13 +312,9 @@ int UDP_SendPacket( int socket, int Datalenght, char * UDP_Databuffer )
 	char * ethernetbuffer;
 	ethernetbuffer = (char*) __builtin_alloca (( size_t ) ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + UDP_HEADER_LENGHT + Datalenght );
 
-	struct ETH_header * ETH_packet; 		// ETH_struct anlegen
-	ETH_packet = (struct ETH_header *) ethernetbuffer;
 	struct IP_header * IP_packet;		// IP_struct anlegen
 	IP_packet = ( struct IP_header *) &ethernetbuffer[ETHERNET_HEADER_LENGTH];
 	IP_packet->IP_Version_Headerlen = 0x45; // Standart IPv4 und Headerlenght 20byte
-	struct UDP_header * UDP_packet;		// TCP_struct anlegen
-	UDP_packet = ( struct UDP_header *) &ethernetbuffer[ETHERNET_HEADER_LENGTH + ((IP_packet->IP_Version_Headerlen & 0x0f) * 4 )];
 		
 	int offset = ETHERNET_HEADER_LENGTH + ((IP_packet->IP_Version_Headerlen & 0x0f) * 4 ) + UDP_HEADER_LENGHT;
 
@@ -401,7 +406,7 @@ int UDP_RegisterCallback( int socket, UDP_Callback pFunc )
 	}
 	
 /* -----------------------------------------------------------------------------------------------------------*/
-/*!\brief Gibt den UDP-Puffer wieder zum empfang frei. Danach werden wieder UDP-Daten angenommen und in den Puffer kopiert.
+/*!\brief Gibt den UDP-Puffer, welche für einer UDP-Verbindung zugeordnet ist, wieder zum empfang frei.
  * \param	socket		Die Socketnummer die freigegeben werden soll.
  * \return	NONE
  */
@@ -424,7 +429,7 @@ int UDP_FreeBuffer( int socket )
 	}
 	
 /* -----------------------------------------------------------------------------------------------------------*/
-/*!\brief Gibt den UDP-Puffer wieder zum empfang frei. Danach werden wieder UDP-Daten angenommen und in den Puffer kopiert.
+/*!\brief Gibt den UDP-Puffer, welcher keiner UDP-Verbindung zugeordnet ist, wieder zum empfang frei.
  * \param	socket		Die Socketnummer die freigegeben werden soll.
  * \return	NONE
  */
@@ -565,8 +570,6 @@ int MakeUDPheader( int socket, int Datalenght, char * ethernetbuffer )
 {
 	if ( socket >= MAX_UDP_CONNECTIONS ) return( UDP_SOCKET_ERROR );
 	
-	struct ETH_header * ETH_packet; 		// ETH_struct anlegen
-	ETH_packet = (struct ETH_header *) ethernetbuffer;
 	struct IP_header * IP_packet;		// IP_struct anlegen
 	IP_packet = ( struct IP_header *) &ethernetbuffer[ETHERNET_HEADER_LENGTH];
 	struct UDP_header * UDP_packet;		// TCP_struct anlegen
@@ -605,4 +608,7 @@ int UDP_Getfreesocket( void )
 		SREG = temp;
 		return( socket );
 	}
-//@}
+
+/**
+ * @}
+**/

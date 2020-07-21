@@ -42,17 +42,17 @@
 
 	#include <avr/pgmspace.h>  
 
-	#define THREAD_MAX	11
+	#define THREAD_MAX	16
 
 	typedef void ( * THREAD_CALLBACK ) ( void );
 
 	void THREAD_init( void );
-	int THREAD_RegisterThread( THREAD_CALLBACK thread_function, const prog_char * thread_name );
+	int THREAD_RegisterThread( THREAD_CALLBACK thread_function, const char * thread_name);
 	void THREAD_mainloop( void );
 
 	struct THREAD {
 		volatile	THREAD_CALLBACK			thread_function;
-		const 		prog_char 				* thread_name;
+		const char			   				* thread_name;
 	};
 
 #endif

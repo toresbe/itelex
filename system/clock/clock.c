@@ -22,7 +22,7 @@
  */
 
 /**
- * \addtogroup system
+ * \ingroup system
  * \addtogroup CLOCK Die Clockfunktion für den Microcontroller als Zeitbasis (clock.c)
  *
  * \date	03-06-2008: Neuen Code hinzugefügt, geht jetzt schneller, die Callbacks und 
@@ -41,13 +41,14 @@
  */
 
 /**
- * \file
+ *
  * Die Clockfunktion für den Microcontroller als Zeitbasis (clock.c)
  *
  * \par Uebersicht
  *		Stellt funktionen bereit um eine genaue Zeit zu realisieren und funktionen
  *		um Zeitgesteuert eigene Funktionen die man hinterlegt aufzurufen
  * \author Dirk Broßwick
+ *
  */
 
 #include <avr/interrupt.h>
@@ -58,7 +59,7 @@
 #include <stddef.h>
 
 #include "hardware/timer1/timer1.h"
-#include "clock.h"
+#include "system/clock/clock.h"
 	
 struct CALLBACK Clock_CallBack_Table [ MAX_CLOCK_CALLBACKS ]; 
 
@@ -399,7 +400,7 @@ void CLOCK_delay(unsigned int ms)
 		}	
 }
 
-PROGMEM char wday_str[] = "So\0Mo\0Di\0Mi\0Do\0Fr\0Sa";
+const char wday_str[] PROGMEM = "So\0Mo\0Di\0Mi\0Do\0Fr\0Sa";
 
 /**
  * \brief Gibt fuer den Aktuellen Monat die Anzahl der Tage aus.
