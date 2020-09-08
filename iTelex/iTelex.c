@@ -2005,7 +2005,8 @@ static void RemoteServerBearbeiten()
 		{
 		int InCount = GetBytesInSocketData(RemoteServerLinkSocketHandle);
 		
-		if (InCount >= SocketInBufMax - RemoteServerSocketBufUsed)
+		if (InCount > 0 && InCount >= SocketInBufMax - RemoteServerSocketBufUsed)
+			// InCount > 0 wirg geprüft, da zweiter Vergleich mit unsigned Werten arbeitet.
 			{
 			if (ProtokollLevel >= NurFehler) 
 				{
@@ -2571,7 +2572,7 @@ static void SocketBearbeiten()
 
 		int InCount = GetBytesInSocketData(iTelexSocketHandle);
 		
-		if (SocketInBufUsed + InCount > SocketInBufMax)
+		if (InCount > 0 && SocketInBufUsed + InCount > SocketInBufMax)
 			{
 			if (ProtokollLevel >= NurFehler) 
 				{
