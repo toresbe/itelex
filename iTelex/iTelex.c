@@ -181,6 +181,10 @@ volatile static uint8_t SerUmTickZaehlerEmpf; //!< Zähler der Einzel-Ticks beim
 
 volatile static uint8_t SerUmTickZaehlerSend; //!< Zähler der Einzel-Ticks beim Senden
 
+static uint8_t SerUmTicksProBit; //!< Dieser Wert wird an die gewünschte Baudrate angepasst.
+
+static uint8_t SerUmTicksProStopBit; //!< Dieser Wert wird an die gewünschte Baudrate angepasst.
+
 
 volatile uint16_t KurzTimerCnt;
 //!< Die KurzTimer-Basisvariable
@@ -676,16 +680,16 @@ static TZeitUeberwachung SelbstAnrufZeitUeberwachung;
 #endif // ITELEX_ANSCHLUSS
 	
 
-#ifndef BIT_LENGTH
-
-//! Bit-Länge in Millisekunden
-#define BIT_LENGTH 20
-
-#endif
-
 	
 //! Sollfrequenz des Aufrufs von itelex_timerEvent()
-enum { iTelexTimerFreq = 10000 / BIT_LENGTH } ; // 10 Takten je Bit, im Millisekunden
+enum { iTelexTimerFreq = 900 } ; // Fester Wert, dieser passt gut zu folgenden Baudraten:
+// 45,45 Baud -> 19,8 -> gerundet 20 Tics pro Bit
+// 50 Baud -> exakt 18 Tics pro Bit
+// 75 Baud -> exakt 12 Tics pro Bit
+// 100 Baud -> exakt 9 Tics pro Bit (Problem bei 1,5 Stop-Bits -> wird verlängert auf 14 Ticks für Stop-Bit
+
+// Wert muss aber auch ein ganzzahliges Vielfaches von #KurzTimerFreq sein!
+// ========================================================================
 
 
 char DiagnosePuffer[DiagnosePufferMax];
@@ -1018,7 +1022,9 @@ static void SeriellUmsetzInit(void)
 	{
 	SerUmEmpfBitNr = SerUmEmpfWarte;
 	SerUmSendBitNr = SerUmSendWarte;
-	SerUmTickZaehlerEmpf = 10;
+	SerUmTicksProBit = iTelexTimerFreq / 50; // 50 = Baudrate!
+	SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*50); // 50 = Baudrate!
+	SerUmTickZaehlerEmpf = SerUmTicksProBit;
 	SerUmTickZaehlerSend = 0;
 	SendeMark = true;
 	}
@@ -1120,7 +1126,7 @@ void itelex_timerEvent(void)
 		if (SerUmEmpfBitNr != SerUmEmpfWarte && SerUmEmpfBitNr != SerUmEmpfFertig)
 			{ // Empfang läuft
 			if (--SerUmTickZaehlerEmpf <= 2)
-				{ // 3 Abtast-Zeitpunkte (Zaehler = 2,1,0) im Bit
+				{ // 3 Abtast-Zeitpunkte (Zaehler = 2,1,0) im Bit  TODO ggf mehr?
 				if (BusEmpfMark)
 					SerUmEmpfMarkZaehl++;
 				}
@@ -1158,7 +1164,7 @@ void itelex_timerEvent(void)
 					}
 
 				SerUmEmpfMarkZaehl = 0;
-				SerUmTickZaehlerEmpf = 10;
+				SerUmTickZaehlerEmpf = SerUmTicksProBit;
 				} // Abtastung eines Bits abgeschlossen
 			StartKurzTimer(&SchreibPauseTimer);
 			} // if Empfang läuft
@@ -1170,7 +1176,7 @@ void itelex_timerEvent(void)
 				SerUmEmpfDaten = 0;
 				SerUmEmpfFehler = false;
 				SerUmEmpfMarkZaehl = 0;
-				SerUmTickZaehlerEmpf = 6; // nicht 10, da in der Mitte der Bits abgetastet wird
+				SerUmTickZaehlerEmpf = SerUmTicksProBit / 2 + 1; // damit 3 Abstastungen in der Mitte des Bits stattfinden.
 				}
 			else
 				{
@@ -1197,15 +1203,13 @@ void itelex_timerEvent(void)
 			if (SerUmSendBitNr == 8) // Stop-Bit läuft
 				{
 				NeuMark = true;
-				if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 12 : 14)) // 12 und 14 weil ein weiterer Zyklus in SerUmSendWarte verbracht wird.
-				//if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 12 : 16)) // HACK Wert 16: Simulation zu schneller Sender
-				//if (++SerUmTickZaehlerSend >= ((!get_Taste() || SendenBeschleunigen) ? 12 : 14)) // HACK Test des schnellen Sendens....
+				if (++SerUmTickZaehlerSend >= SerUmTicksProStopBit - (SendenBeschleunigen ? 3 : 1)) // 1 weil ein weiterer Zyklus in SerUmSendWarte verbracht wird.
 					SerUmSendBitNr = SerUmSendWarte; // fertig für die nächsten Daten
 				}
 			else
 				{ // Start oder Datenbit läuft
 				NeuMark = BIT_IS_SET(SerUmSendDaten, 7);
-				if (++SerUmTickZaehlerSend >= 10)
+				if (++SerUmTickZaehlerSend >= SerUmTicksProBit)
 					{
 					SerUmSendDaten <<= 1;
 					SerUmSendBitNr++;
@@ -7680,7 +7684,8 @@ extern void itelex_init1(void)
 		
 	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 
-	timer0_init(iTelexTimerFreq); 
+	timer0_init(iTelexTimerFreq); // TODO ggf. timer0_init() anpassen, indem der Prescaler besser ausgewählt wird.
+	
 	if (!timer0_RegisterCallbackFunction(itelex_timerEvent))
 		return;
 
