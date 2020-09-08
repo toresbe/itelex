@@ -1022,8 +1022,17 @@ static void SeriellUmsetzInit(void)
 	{
 	SerUmEmpfBitNr = SerUmEmpfWarte;
 	SerUmSendBitNr = SerUmSendWarte;
-	SerUmTicksProBit = iTelexTimerFreq / 50; // 50 = Baudrate!
-	SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*50); // 50 = Baudrate!
+	// HACK TODO konfigurierbare Werte
+	if (BusVerbPartner >= (70 << 1) && BusVerbPartner <= (79 << 1))
+		{
+		SerUmTicksProBit = iTelexTimerFreq / 75;
+		SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*75); // 50 = Baudrate!
+		}
+	else
+		{
+		SerUmTicksProBit = iTelexTimerFreq / 50; // 50 = Baudrate!
+		SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*50); // 50 = Baudrate!
+		}
 	SerUmTickZaehlerEmpf = SerUmTicksProBit;
 	SerUmTickZaehlerSend = 0;
 	SendeMark = true;
@@ -1539,6 +1548,7 @@ void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_FsBefEin);
 			StartKurzTimer(&BusQuittTimer);
 			StartLangTimer(&BeideRuhigTimer);
+			SeriellUmsetzInit(); // nochmal hier, damit die richtige Baudrate berücksichtigt wird.
 			break;
 	
 		case ModKommendVerbunden: 
@@ -1642,6 +1652,7 @@ void ModusWechsel(TModus neu)
 			LED_on(GELB);
 			LED_off(GRUEN);
 			LED_off(BLAU);
+			SeriellUmsetzInit();
 			StartKurzTimer(&SchreibPauseTimer);
 			NamensucheSuchtext[0] = '\0';
 
@@ -6193,7 +6204,9 @@ void itelex_cgi_debug( void * pStruct )
 				 TeilnehmerServerAdresse[i], TeilnehmerServerFehlerZaehler[i], LangTimerVal(&TeilnehmerServerSperrTimer[i]));
 		}
 
-	/*
+	//*
+	PRINTVAL(BusVerbPartner);
+	PRINTVAL(SerUmTicksProBit);
 	PRINTVAL(BusEmpfMark);
 	PRINTVAL(SerUmTickZaehlerEmpf);
 	PRINTVAL(SerUmEmpfBitNr); 
