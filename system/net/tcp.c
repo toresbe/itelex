@@ -1248,6 +1248,9 @@ int Connect2IP( long IP, unsigned int Port )
 {
 	int Socket, i;
 	struct TIME time;
+	// Son 09.09.2020:
+	static uint16_t free_port_nr;
+	bool check_free;
 
 	// hole einen freien SOCKET
 	Socket = Getfreesocket();
@@ -1272,7 +1275,29 @@ int Connect2IP( long IP, unsigned int Port )
 
 	// Socket reservieren
 	TCP_sockettable[ Socket ].ConnectionState = SOCKET_SYNINIT;
-	TCP_sockettable[ Socket ].DestinationPort =~ time.ss + time.ms;
+	
+	// Son 09.09.2020:
+	// former: TCP_sockettable[ Socket ].DestinationPort =~ time.ss + time.ms;
+	do
+	{
+		if (free_port_nr >= 0xfe00 || free_port_nr < 0x1000)
+			free_port_nr = 0x1000;
+		else
+			free_port_nr++;
+		
+		check_free = true;
+		for (i = 0 ; i < MAX_TCP_CONNECTIONS ; i++)
+		{
+			if (free_port_nr == TCP_sockettable[i].SourcePort || free_port_nr == TCP_sockettable[i].DestinationPort)
+				// regdardless if open or not
+			{
+				check_free = false;
+				break;
+			}
+		}
+	}
+	while (!check_free);
+	TCP_sockettable[ Socket ].DestinationPort = free_port_nr;
 
 	char ethernetbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ];
 
