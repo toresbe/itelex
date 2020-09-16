@@ -1023,16 +1023,29 @@ static void SeriellUmsetzInit(void)
 	SerUmEmpfBitNr = SerUmEmpfWarte;
 	SerUmSendBitNr = SerUmSendWarte;
 	// HACK TODO konfigurierbare Werte
-	if (BusVerbPartner >= (70 << 1) && BusVerbPartner <= (79 << 1))
+	if ((BusVerbPartner >> 1) >= 90 && (BusVerbPartner >> 1) <= 99)
+		{
+		SerUmTicksProBit = iTelexTimerFreq / 100;
+		SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*100); // 100 = Baudrate!
+		}
+	else if ((BusVerbPartner >> 1) >= 70 && (BusVerbPartner >> 1) <= 79)
 		{
 		SerUmTicksProBit = iTelexTimerFreq / 75;
-		SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*75); // 50 = Baudrate!
+		SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*75); // 75 = Baudrate!
 		}
 	else
 		{
 		SerUmTicksProBit = iTelexTimerFreq / 50; // 50 = Baudrate!
 		SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*50); // 50 = Baudrate!
 		}
+
+	if (ProtokollLevel >= AblaufInfo)
+		{
+		ProtokollierenITelex();
+		ProtokollierenInt_P(PSTR("SeriellUmsetzInit: BusVerbPartner = %u"), BusVerbPartner);
+		ProtokollierenInt_P(PSTR(", SerUmTicksProBit = %u\r\n"), SerUmTicksProBit);
+		}
+
 	SerUmTickZaehlerEmpf = SerUmTicksProBit;
 	SerUmTickZaehlerSend = 0;
 	SendeMark = true;
@@ -1501,6 +1514,7 @@ void ModusWechsel(TModus neu)
 			LED_on(GELB);
 			LED_off(GRUEN);
 			LED_off(BLAU);
+			SeriellUmsetzInit();
 			StartKurzTimer(&SchreibPauseTimer);
 			StartLangTimer(&BeideRuhigTimer);
 			break;
@@ -2020,7 +2034,8 @@ static void RemoteServerBearbeiten()
 		{
 		int InCount = GetBytesInSocketData(RemoteServerLinkSocketHandle);
 		
-		if (InCount >= SocketInBufMax - RemoteServerSocketBufUsed)
+		if (InCount > 0 && InCount >= SocketInBufMax - RemoteServerSocketBufUsed)
+			// InCount > 0 wirg geprüft, da zweiter Vergleich mit unsigned Werten arbeitet.
 			{
 			if (ProtokollLevel >= NurFehler) 
 				{
@@ -2586,7 +2601,7 @@ static void SocketBearbeiten()
 
 		int InCount = GetBytesInSocketData(iTelexSocketHandle);
 		
-		if (SocketInBufUsed + InCount > SocketInBufMax)
+		if (InCount > 0 && SocketInBufUsed + InCount > SocketInBufMax)
 			{
 			if (ProtokollLevel >= NurFehler) 
 				{

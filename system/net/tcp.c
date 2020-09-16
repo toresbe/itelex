@@ -1104,16 +1104,18 @@ int PutSocketData_RPE( int Socket, int Datalenght, char * Sendbuffer, char Mode 
 /*------------------------------------------------------------------------------------------------------------*/	
 int GetSocketDataToFIFO( int Socket , int fifo, int bufferlen )
 	{
-		if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( SOCKET_ERROR );
+		if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( SOCKET_ERROR );
 		if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 ) return ( 0 );
 		
 		LockEthernet();
 		
+		int i = 0;
+
 		if ( ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) >= bufferlen ) && ( Get_FIFOrestsize ( fifo ) >= bufferlen ) )
 		{
-			Get_FIFO_to_FIFO( TCP_sockettable[ Socket ].fifo , bufferlen, fifo );
+			i = Get_FIFO_to_FIFO( TCP_sockettable[ Socket ].fifo , bufferlen, fifo );
 			// sende ein Windowupdate-Paket wenn buffer zu 7/8 frei ist
-			if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) < ( MAX_RECIVEBUFFER_LENGHT / 2 ) )
+			if ( TCP_sockettable[Socket].ConnectionState != SOCKET_READY && Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) < ( MAX_RECIVEBUFFER_LENGHT / 2 ) )
 			{
 				char ackbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ];
 
@@ -1143,7 +1145,7 @@ int GetSocketDataToFIFO( int Socket , int fifo, int bufferlen )
 /*------------------------------------------------------------------------------------------------------------*/	
 int GetSocketData( int Socket , int bufferlen, char *buffer)
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( SOCKET_ERROR );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( SOCKET_ERROR );
 	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 ) return ( 0 );
 
 	LockEthernet();
@@ -1154,6 +1156,7 @@ int GetSocketData( int Socket , int bufferlen, char *buffer)
 	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) > bufferlen )
 	{
 		Get_Block_from_FIFO ( TCP_sockettable[ Socket ].fifo, bufferlen, buffer );
+		i = bufferlen;
 	}
 	else
 	{
@@ -1165,7 +1168,7 @@ int GetSocketData( int Socket , int bufferlen, char *buffer)
 	}
 
 	// sende ein Windowupdate-Paket wenn buffer zu 3/4 frei ist
-	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) < ( MAX_RECIVEBUFFER_LENGHT / 2 ) )
+	if ( TCP_sockettable[Socket].ConnectionState == SOCKET_READY && Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) < ( MAX_RECIVEBUFFER_LENGHT / 2 ) )
 	{
 		char ackbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ];
 
@@ -1201,7 +1204,7 @@ int FlushSocketData( int Socket )
 /*------------------------------------------------------------------------------------------------------------*/	
 int GetBytesInSocketData( int Socket )
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( SOCKET_ERROR );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( SOCKET_ERROR );
 
 	return( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) );
 }
@@ -1214,7 +1217,7 @@ int GetBytesInSocketData( int Socket )
 /*------------------------------------------------------------------------------------------------------------*/	
 char GetByteFromSocketData( int Socket )
 {
-	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS || TCP_sockettable[Socket].ConnectionState != SOCKET_READY ) return( 0 );
+	if ( Socket < 0 || Socket >= MAX_TCP_CONNECTIONS ) return( 0 );
 
 	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 ) return ( 0 );
 
@@ -1224,7 +1227,7 @@ char GetByteFromSocketData( int Socket )
 
 	Data = Get_Byte_from_FIFO ( TCP_sockettable[ Socket ].fifo );
 	// Sendet ein Update wenn Buffer leer
-	if ( Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 )
+	if ( TCP_sockettable[Socket].ConnectionState == SOCKET_READY && Get_Bytes_in_FIFO ( TCP_sockettable[ Socket ].fifo ) == 0 )
 	{
 		char ackbuffer[ ETHERNET_HEADER_LENGTH + IP_HEADER_LENGHT + TCP_HEADER_LENGTH ];
 //		struct TCP_header *TCP_packet;		// TCP_struct anlegen
