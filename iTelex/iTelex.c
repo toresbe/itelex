@@ -4729,7 +4729,9 @@ void itelex_thread()
 
 				if (ProtokollLevel >= AblaufInfo)
 					ProtokollierenITelex_P(PSTR("TWI Ausschaltung intern\r\n"));
-					
+
+				// TODO müsste hier nicht "der" gesendet werden, wenn im Anwahl-Status (also Modus == ModKommendWarteEinQuitt)
+				
 				// ID#212 ********************************************
 				// ID#224 ********************************************
 				if (Modus != ModRuhe)
@@ -5060,8 +5062,8 @@ void itelex_thread()
 		ModusWechsel(ModWarteGrundstellung);
 		}
 		
-	if (Modus == ModKommendWarteEinQuitt && KurzTimerVal(&BusQuittTimer) > 8 * KurzTimerFreq)
-		{ // 8 Sekunden keine Einschalt-Quittung empfangen
+	if (Modus == ModKommendWarteEinQuitt && KurzTimerVal(&BusQuittTimer) > 30 * KurzTimerFreq) // TODO Konfigurierbar?
+		{ // 30 Sekunden keine Einschalt-Quittung empfangen
 		// ID#332 ***************************************************************
 		if (ProtokollLevel >= NurFehler)
 			ProtokollierenITelex_P(PSTR("! Timeout beim Warten auf die Einschaltquittung\r\n" ));
