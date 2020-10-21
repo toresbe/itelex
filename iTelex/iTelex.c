@@ -832,6 +832,76 @@ void ZeitUeberwachungAbbruch(TZeitUeberwachung *zue)
 	}
 	
 
+bool ParseInt16(char **pp, int16_t *val)
+	{
+	char *p;
+	int8_t Vorz;
+	int16_t Wert;
+	bool Res;
+
+	p = *pp;
+	Res = false;
+	Wert = 0;
+	Vorz = 0;
+	while (true)
+		{
+		if (*p == '-')
+			if (Vorz == 0) // noch nicht gesetzt
+				Vorz = -1;
+			else // schon eine Ziffer oder ein - gehabt
+				return false;
+		else if (*p == '+')
+			if (Vorz == 0) // noch nicht gesetzt
+				Vorz = 1;
+			else // schon eine Ziffer oder ein - gehabt
+				return false;
+		else if (*p >= '0' && *p <= '9')
+			{
+			Wert = 10 * Wert + (*p) - '0';
+			if (Vorz == 0)
+				Vorz = 1;
+			Res = true;
+			}
+		else 
+			break;
+		p++;
+		}
+		
+	if (!Res)
+		return false;
+	
+	*pp = p;	
+	*val = Vorz * Wert;
+	return true;
+	}
+			
+	
+bool ParseNstAddresse(char **pp, uint8_t *nst)
+	{
+	char *p2;
+	int16_t nr;
+	
+	p2 = *pp;
+	if (p2[0] == '-')
+		{
+		*nst = 0;
+		(*pp)++;
+		return true;
+		}
+		
+	if (!ParseInt16(&p2, &nr))
+		return false;
+	
+	if (nr < 0 || nr > 99 || p2 > (*pp) + 2)
+						//   ^^^^^^^^^^^^^^ mehr als 2 Ziffern
+		return false;
+	
+	*nst = WahlZuAdresse(nr, p2 - (*pp));
+	*pp = p2;
+	return true;
+	}
+		
+	
 //! Gibt des aktuellen Stand der Zeitueberwachung aus.
 //----------------------------------------------------	
 //! Ausgabe erfolgt in den #ZeitUeberwachungAusgabePuffer.
@@ -1042,7 +1112,7 @@ static void SeriellUmsetzInit(void)
 	if (ProtokollLevel >= AblaufInfo)
 		{
 		ProtokollierenITelex();
-		ProtokollierenInt_P(PSTR("SeriellUmsetzInit: BusVerbPartner = %u"), BusVerbPartner);
+		ProtokollierenInt_P(PSTR("SeriellUmsetzInit: BusVerbPartner = %u"), BusVerbPartner >> 1);
 		ProtokollierenInt_P(PSTR(", SerUmTicksProBit = %u\r\n"), SerUmTicksProBit);
 		}
 
@@ -1538,7 +1608,6 @@ void ModusWechsel(TModus neu)
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); 
 			BaudotMode = 0;
-			SeriellUmsetzInit();
 			AsciiDruckPuffer[0] = '\0';
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
@@ -1562,7 +1631,7 @@ void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_FsBefEin);
 			StartKurzTimer(&BusQuittTimer);
 			StartLangTimer(&BeideRuhigTimer);
-			SeriellUmsetzInit(); // nochmal hier, damit die richtige Baudrate berücksichtigt wird.
+			SeriellUmsetzInit();
 			break;
 	
 		case ModKommendVerbunden: 
@@ -1828,7 +1897,7 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 	uint8_t TestVerbParter = 0;
 	
 	// Durchwahl prüfen...
-	if (aDurchwahl * 2 >= BusAdrMin && aDurchwahl * 2 <= BusAdrEndgeraetMax)
+	if (aDurchwahl * 2 >= BusAdrMin && aDurchwahl * 2 <= BusAdrMax)
 		{
 		TestVerbParter = aDurchwahl * 2;
 		Stat = GetStatus(TestVerbParter);
@@ -1877,7 +1946,7 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 			// nächsten probieren
 			TestVerbParter += 2;
 			
-			if (TestVerbParter > BusAdrEndgeraetMax)
+			if (TestVerbParter > BusAdrMax)
 				// Ende der Liste --> also von vorn.
 				TestVerbParter = BusAdrMin;
 				
@@ -4309,9 +4378,9 @@ void AsciiDruckPufferVerarbeiten()
 
 		if (ProtokollLevel >= DatenDetailliert)
 			{
-			ProtokollierenITelex(); // HACK
+			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Ascii-Verarbeitung: %u Zeichen aus AsciiHilfPuffer verarbeitet,"), ki);
-			ProtokollierenInt_P(PSTR("BaudotMode = %d"), BaudotMode);
+			ProtokollierenInt_P(PSTR("BaudotMode = %d\r\n"), BaudotMode);
 			}
 			
 		if (ki > 0)
