@@ -229,6 +229,8 @@ typedef enum
 	ModGehendWaehlen = 2,
 		//!< Einschaltkommando erhalten, Wahlaufforderung gesendet, 
 		//!< ggf. auch schon Wahlziffern empfangen.
+	ModGehendWarteEinQuitt = 3,
+		//!< Wahl abgeschlossen, Socket geöffnet, Endgerät wird gerade eingeschaltet.
 	ModGehendVerbunden = 4,
 		//!< Wahl abgeschlossen, Socket geöffnet, Endgerät eingeschaltet.
 	

@@ -500,6 +500,10 @@ static bool LangeDienstmeldungen;
 	//!< Bei False wird "occ" oder "na" direkt nach dem Wählen ausgegeben. 
 	//!< Bei True wird der rufende Fernschreiber ausgeschaltet und eine Diagnosemeldung generiert.
 	
+static bool TWIHandshakeNeu;
+	//!< Bei true wird auch bei ausgehender Wahl ein BusKdoEin gesendet statt BusQuittEin
+	
+	
 static uint8_t DurchwahlTabelle[9];
 	//!< Liste der Nebenstellen-Nummern bei kommenden Rufen mit Durchwahl
 
@@ -1127,6 +1131,7 @@ static bool ModusTwiVerbunden()
 	{
 	return (Modus == ModGehendReserv 
 			|| Modus == ModGehendWaehlen 
+			|| Modus == ModGehendWarteEinQuitt
 			|| Modus == ModGehendVerbunden 
 			|| Modus == ModKommendWarteEinQuitt 
 			|| Modus == ModKommendVerbunden 
@@ -1573,6 +1578,18 @@ void ModusWechsel(TModus neu)
 			StartKurzTimer(&WahlPauseTimer);
 			break;
 	
+		case ModGehendWarteEinQuitt:
+			CLR_BIT_Status(StatBit_FsMeldBetrieb);
+			CLR_BIT_Status(StatBit_FsMeldEin);
+			SET_BIT_Status(StatBit_FsBefBetrieb);
+			SET_BIT_Status(StatBit_FsBefEin);
+			BusEmpfMark = true;
+			SendeMark = true;
+			LED_on(GELB);
+			LED_off(GRUEN);
+			LED_off(BLAU);
+			break;
+		
 		case ModGehendVerbunden:
 			SET_BIT_Status(StatBit_Verbunden);
 			SET_BIT_Status(StatBit_FsMeldBetrieb);
@@ -2937,6 +2954,7 @@ void InterneVerbindungBeenden(bool Force)
 		{
 		case ModGehendReserv:
 		case ModGehendWaehlen:
+		case ModGehendWarteEinQuitt:
 		case ModHtmlChatWarteEinQuitt:
 		case ModHtmlChatVerbunden:
 		case ModMeldungsdruckWarteEinQuitt:
@@ -3243,9 +3261,17 @@ static void WahlAbbruchMeldung(char *msg)
 			strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 			if (Modus == ModGehendWaehlen)
 				{ 
-				BusSenden(BusQuittEin);
-				StartKurzTimer(&MachineStartupTimer);
-				ModusWechsel(ModPufferDruckUndSchluss);
+				if (TWIHandshakeNeu)
+					{
+					BusSenden(BusKdoEin); 
+					ModusWechsel(ModPufferDruckUndSchluss); // TODO hier was anderes...
+					}
+				else
+					{
+					BusSenden(BusQuittEin); 
+					StartKurzTimer(&MachineStartupTimer);
+					ModusWechsel(ModPufferDruckUndSchluss);
+					}
 				}
 			}
 		} // else !LangeDienstmeldungen
@@ -3523,9 +3549,17 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					} // if Modus == ModKommendVerbVorstufe
 				else if (Modus == ModGehendWaehlen)
 					{ // ID#227 **************************************************
-					BusSenden(BusQuittEin);
-					StartKurzTimer(&MachineStartupTimer);
-					ModusWechsel(ModGehendVerbunden);
+					if (TWIHandshakeNeu)
+						{
+						BusSenden(BusKdoEin);
+						ModusWechsel(ModGehendWarteEinQuitt);
+						}
+					else
+						{
+						BusSenden(BusQuittEin);
+						StartKurzTimer(&MachineStartupTimer);
+						ModusWechsel(ModGehendVerbunden);
+						}
 					}
 				if (len >= 1)
 					SocketAnzahlZeichenQuittiert = (uint8_t) SocketInBuf[i+2];
@@ -4091,12 +4125,21 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 					ProtokollierenInt_P(PSTR("Client-Socket #%d SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n"), iTelexSocketHandle);
 					}
 					
-				BusSenden(BusQuittEin); 
-					//! \todo prüfen, ob der Start des FS nicht auch an das Ende der Authentifizierung am Email Server verschoben werden kann.
-					// Dann aber auch Testen, was bei voerzeitigem Abbruch der Verbindung passiert.
-				StartKurzTimer(&MachineStartupTimer);
-				ModusWechsel(ModGehendVerbunden);
-				return 0; // gut
+				//! \todo prüfen, ob der Start des FS nicht auch an das Ende der Authentifizierung am Email Server verschoben werden kann.
+				// Dann aber auch Testen, was bei voerzeitigem Abbruch der Verbindung passiert.
+				if (TWIHandshakeNeu)
+					{
+					BusSenden(BusKdoEin); 
+					ModusWechsel(ModGehendWarteEinQuitt);
+					return 0; // gut
+					}
+				else
+					{
+					BusSenden(BusQuittEin); 
+					StartKurzTimer(&MachineStartupTimer);
+					ModusWechsel(ModGehendVerbunden);
+					return 0; // gut
+					}
 				}
 			else
 				{
@@ -4161,15 +4204,23 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 	
 	if (td->AdrArt == AsciiHostname || td->AdrArt == AsciiIP)
 		{ // ID#226 *********************************************
-		BusSenden(BusQuittEin);
 		if (ProtokollLevel >= AblaufInfo)
 			{
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Client-Socket #%d Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n"), iTelexSocketHandle);
 			}
-			
-		StartKurzTimer(&MachineStartupTimer);
-		ModusWechsel(ModGehendVerbunden);
+
+		if (TWIHandshakeNeu)
+			{
+			BusSenden(BusKdoEin);
+			ModusWechsel(ModGehendWarteEinQuitt);
+			}
+		else
+			{
+			BusSenden(BusQuittEin);
+			StartKurzTimer(&MachineStartupTimer);
+			ModusWechsel(ModGehendVerbunden);
+			}
 		iTelexSocketProtokoll = Ascii;
 		return 0;
 		}
@@ -4650,6 +4701,13 @@ void itelex_thread()
 					DatumUhrzeitDrucken();
 					}
 
+				else if (Modus == ModGehendWarteEinQuitt)
+					{
+					if (ProtokollLevel >= AblaufInfo)
+						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung intern / gehend\r\n" ));
+					ModusWechsel(ModGehendVerbunden);
+					}
+				
 				else if (Modus == ModHtmlChatWarteEinQuitt)
 					{ 
 					if (ProtokollLevel >= AblaufInfo)
@@ -4682,7 +4740,7 @@ void itelex_thread()
 				if (ProtokollLevel >= AblaufInfo)
 					ProtokollierenITelex_P(PSTR("TWI Wahlaufforderung intern / kommend\r\n" ));
 					
-				FalschCodeEmpfangen(BusQuittEin);
+				FalschCodeEmpfangen(BusKdoWahlFreigabe);
 				break;
 				
 			case BusKdoWahlziffer0 ... BusKdoWahlziffer9:
@@ -4715,9 +4773,17 @@ void itelex_thread()
 						if (ProtokollLevel >= AblaufInfo)
 							ProtokollierenITelex_P(PSTR("Namenssuche gestartet -> Einschalt-Quittung an TWI\r\n" ));
 						AsciiDruckPuffer[0] = '\0';
-						BusSenden(BusQuittEin);
-						ModusWechsel(ModNamensucheEingabe);
-						StartKurzTimer(&MachineStartupTimer);
+						if (TWIHandshakeNeu)
+							{
+							BusSenden(BusKdoEin);
+							ModusWechsel(ModNamensucheEingabe); // TODO was neues 
+							}
+						else
+							{
+							BusSenden(BusQuittEin);
+							StartKurzTimer(&MachineStartupTimer);
+							ModusWechsel(ModNamensucheEingabe);
+							}
 						}
 						
 					else // es war keine 0 als erster Stelle
@@ -4768,7 +4834,7 @@ void itelex_thread()
 					} // if Modus == ModGehendWaehlen
 					
 				else
-					FalschCodeEmpfangen(BusQuittEin);
+					FalschCodeEmpfangen(Code);
 					
 				break; // case BusKdoWahlziffer0 ... BusKdoWahlziffer9:
 				
@@ -4920,9 +4986,17 @@ void itelex_thread()
 		if (ProtokollLevel >= AblaufInfo)
 			ProtokollierenITelex_P(PSTR("Angerufener hat geantwortet -> Einschaltung intern\r\n" ));
 			
-		BusSenden(BusQuittEin);
-		StartKurzTimer(&MachineStartupTimer);
-		ModusWechsel(ModGehendVerbunden);
+		if (TWIHandshakeNeu)
+			{
+			BusSenden(BusKdoEin);
+			ModusWechsel(ModGehendWarteEinQuitt);
+			}
+		else
+			{
+			BusSenden(BusQuittEin);
+			StartKurzTimer(&MachineStartupTimer);
+			ModusWechsel(ModGehendVerbunden);
+			}
 		}
 		
 	if (Modus == ModKommendEinschalten)
@@ -7706,6 +7780,8 @@ extern void itelex_init1(void)
 	LangeDienstmeldungen = ReadConfigBool(LangeDienstmeldungen_P, false);
 	
 	UhrzeitVerteilen = ReadConfigBool(UhrzeitVerteilen_P, true);
+
+	TWIHandshakeNeu = true; // TODO konfigurierbar!
 	
 	if (readConfig_P(MeldungsdruckLevel_P, Buf) == 1)
 		MeldungsdruckLevel = atoi(Buf);
