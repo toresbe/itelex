@@ -1139,6 +1139,7 @@ static bool ModusTwiVerbunden()
 			|| Modus == ModHtmlChatWarteEinQuitt
 			|| Modus == ModHtmlChatVerbunden
 			|| Modus == ModMeldungsdruckWarteEinQuitt
+			|| Modus == ModNamensucheWarteEinQuitt
 			|| Modus == ModNamensucheEingabe
 			|| Modus == ModNamensucheServerAbfrage
 			|| Modus == ModNamensucheAusgabeAnfang
@@ -1660,7 +1661,7 @@ void ModusWechsel(TModus neu)
 			StartKurzTimer(&SchreibPauseTimer);
 			StartLangTimer(&BeideRuhigTimer);
 			break;
-	
+			
 		case ModPufferDruckUndSchluss: 
 			CLR_BIT_Status(StatBit_Verbunden);
 			StartLangTimer(&BeideRuhigTimer);
@@ -1740,7 +1741,13 @@ void ModusWechsel(TModus neu)
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
 			break;
-			
+
+		case ModNamensucheWarteEinQuitt:
+			SET_BIT_Status(StatBit_FsBefBetrieb);
+			SET_BIT_Status(StatBit_FsBefEin);
+			LED_on(GELB);
+			break;
+		
 		case ModNamensucheEingabe:
 			SET_BIT_Status(StatBit_Verbunden);
 			SET_BIT_Status(StatBit_FsMeldBetrieb);
@@ -2660,7 +2667,6 @@ static void SocketBearbeiten()
 	// --------------------------------------------------
 	if (iTelexSocketHandle != NO_SOCKET_USED 
 		&& iTelexSocketAbbauGeplant 
-		// && iTelexSocketMode == SocketOriginate   //! \todo ist das richtig so?
 		&& KurzTimerVal(&iTelexSocketAbbauVerzoegerung) > KurzTimerFreq * 15/10 // 1,5 Sekunden nach letzter Sendung...
 		&& SocketOutBufUsed == 0
 		&& SocketInBufUsed == 0)
@@ -2958,6 +2964,7 @@ void InterneVerbindungBeenden(bool Force)
 		case ModHtmlChatWarteEinQuitt:
 		case ModHtmlChatVerbunden:
 		case ModMeldungsdruckWarteEinQuitt:
+		case ModNamensucheWarteEinQuitt:
 		case ModNamensucheEingabe:
 		case ModNamensucheServerAbfrage:
 		case ModNamensucheAusgabeAnfang:
@@ -3264,7 +3271,7 @@ static void WahlAbbruchMeldung(char *msg)
 				if (TWIHandshakeNeu)
 					{
 					BusSenden(BusKdoEin); 
-					ModusWechsel(ModPufferDruckUndSchluss); // TODO hier was anderes...
+					ModusWechsel(ModMeldungsdruckWarteEinQuitt);
 					}
 				else
 					{
@@ -4551,8 +4558,8 @@ bool CheckTCPServerConnect(long IP, unsigned int Port)
 	
 	
 	// Behelf: Port 11811 erstmal ausschließen TODO entfernen und durch "rückgängigmachen" im Erfolgsfall ersetzen.
-	if (Port == 11811)
-		return true;
+	// if (Port == 11811)
+		// return true;
 	
 	NeuI = ServSocketLogMaxEntries;
 	
@@ -4708,6 +4715,13 @@ void itelex_thread()
 					ModusWechsel(ModGehendVerbunden);
 					}
 				
+				else if (Modus == ModNamensucheWarteEinQuitt)
+					{
+					if (ProtokollLevel >= AblaufInfo)
+						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung intern / Namenssuche\r\n" ));
+					ModusWechsel(ModNamensucheEingabe);
+					}
+				
 				else if (Modus == ModHtmlChatWarteEinQuitt)
 					{ 
 					if (ProtokollLevel >= AblaufInfo)
@@ -4776,7 +4790,7 @@ void itelex_thread()
 						if (TWIHandshakeNeu)
 							{
 							BusSenden(BusKdoEin);
-							ModusWechsel(ModNamensucheEingabe); // TODO was neues 
+							ModusWechsel(ModNamensucheWarteEinQuitt);
 							}
 						else
 							{
