@@ -229,8 +229,6 @@ typedef enum
 	ModGehendWaehlen = 2,
 		//!< Einschaltkommando erhalten, Wahlaufforderung gesendet, 
 		//!< ggf. auch schon Wahlziffern empfangen.
-	ModGehendWarteEinQuitt = 3,
-		//!< Wahl abgeschlossen, Socket geöffnet, Endgerät wird gerade eingeschaltet.
 	ModGehendVerbunden = 4,
 		//!< Wahl abgeschlossen, Socket geöffnet, Endgerät eingeschaltet.
 	
@@ -243,7 +241,7 @@ typedef enum
 	ModKommendWarteEinQuitt = 13, 
 		//!< Warte auf Einschalt-Quittung des Endgeräts
 	ModKommendVerbunden = 14, 
-
+	
 	ModPufferDruckUndSchluss = 18,
 	ModWarteSchlussQuitt = 19,
 	
@@ -258,20 +256,17 @@ typedef enum
 		//!< Wartet darauf, dass nach Ausschaltung des lokalen Endgerätes der 
 		//!< Socket wieder geschlossen ist und alles andere auch die Grundstellung hat.
 	
-	ModNamensucheWarteEinQuitt = 41,
-		//!< Nach Wahl von "0" wird der Fs gestartet
-	
-	ModNamensucheEingabe = 42,
-		//!< Nach Wahl von "0" ist der Fs gestartet und die Abfrage eines Namens-Musters ausgegeben,
+	ModNamensucheEingabe = 41,
+		//!< Nach Wahl von "0" wird die Abfrage eines Namens-Musters gestartet.
 		
-	ModNamensucheServerAbfrage = 43,
+	ModNamensucheServerAbfrage = 42,
 		//!< Name wurde eingegeben, Abfrage des Servers ist gestartet, warte auf 
 		//!< Rückmeldungen.
 
-	ModNamensucheAusgabeAnfang = 44,
+	ModNamensucheAusgabeAnfang = 43,
 		//!< Abfrage des Servers ist beendet, suche ersten Eintrag zur Ausgabe.
 		
-	ModNamensucheAusgabeWeiter = 45,
+	ModNamensucheAusgabeWeiter = 44,
 		//!< Erster dem Suchmuster entsprechender Eintrag wurde ausgegeben, suche nach weiteren.
 		
 	ModEmailPOPVerbunden = 51,
