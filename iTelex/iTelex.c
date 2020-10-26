@@ -6840,16 +6840,16 @@ const PROGMEM char UhrzeitVerteilen_P[] = "ZEITRUNDSEND";
 #endif // ITELEX_ANSCHLUSS
 
 
-	
+
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface zum Ändern der Einstellungen des iTelex-Interface bezüglich der Einbindung
- * in das lokale iTelex-System
+ * in das lokale iTelex-System, Teil interne Systemzusammenstellung
  * \param 	pStruct	Struktur auf den HTTP_Request
  * \return	NONE
  */
 /*------------------------------------------------------------------------------------------------------------*/
  
-void itelex_cgi_config_intern(void *pStruct)
+void itelex_cgi_config_intern_konfiguration(void *pStruct)
 	{
 	static TSprache Sprache;
 	
@@ -6862,12 +6862,6 @@ void itelex_cgi_config_intern(void *pStruct)
 	if (!KonfigFreigabe(pStruct, Sprache, true))
 		return;
 
-	const char *AutoDatumSelList[4];
-	AutoDatumSelList[0] = ISTR(DatumDruckKein, Sprache);
-	AutoDatumSelList[1] = ISTR(DatumDruckLokal, Sprache);
-	AutoDatumSelList[2] = ISTR(DatumDruckAnrufer, Sprache);
-	AutoDatumSelList[3] = ISTR(DatumDruckBeide, Sprache);
-	
 	const char *AltSuchSelList[3];
 	AltSuchSelList[0] = ISTR(ASBB_Niemals, Sprache);
 	AltSuchSelList[1] = ISTR(ASBB_NurHauptstelle, Sprache);
@@ -6877,7 +6871,7 @@ void itelex_cgi_config_intern(void *pStruct)
 
 	if ( http_request->argc == 0 )
 		{
-		CgiFormStartTabbed_P(PSTR("itelexcfg-intern.cgi"));
+		CgiFormStartTabbed_P(PSTR("itelexcfg-intkonf.cgi"));
 
 		#ifdef ITELEX_ANSCHLUSS
 		AdresseZuWahlStr(BusEigenAdresse, Buf);
@@ -6893,28 +6887,6 @@ void itelex_cgi_config_intern(void *pStruct)
 		readConfig_P(DurchwahlTabelle_P, Buf);
 		CgiFormInputFieldText_P(ISTR(DurchwahlenListe, Sprache), DurchwahlTabelle_P, 31, Buf);
 
-		CgiFormDropdown_P(ISTR(DatumDruckModus, Sprache), DatumDruckModus_P, 4, AutoDatumSelList, DatumDruckModus);
-
-		itoa(Druckzeilenlaenge, Buf, 10); // 10 ist die Basis für Dezimal!
-		CgiFormInputFieldText_P(ISTR(Druckzeilenlaenge, Sprache), Druckzeilenlaenge_P, 3, Buf);
-		
-		#endif //def ITELEX_ANSCHLUSS
-		
-		CgiFormCheckbox_P(ISTR(UhrzeitVerteilen, Sprache), UhrzeitVerteilen_P, UhrzeitVerteilen);
-
-		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 2, ProtokollLevel + (SocketProtokollEin ? 10 : 0));
-		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
-
-		#ifdef ITELEX_ANSCHLUSS
-		CgiFormInputFieldULong_P(ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
-		#endif //def ITELEX_ANSCHLUSS
-		
-		CgiFormInputFieldText_P(ISTR(KonfigPasswort, Sprache), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
-		
-		CgiFormCheckbox_P(ISTR(TlnVerzeichnisOffen, Sprache), TlnBuchOffen_P, TlnBuchOffen);
-
-		#ifdef ITELEX_ANSCHLUSS
-		CgiFormCheckbox_P(ISTR(LangeDienstmeldungen, Sprache), LangeDienstmeldungen_P, LangeDienstmeldungen);
 		#endif //def ITELEX_ANSCHLUSS
 
 		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
@@ -6924,7 +6896,7 @@ void itelex_cgi_config_intern(void *pStruct)
 		uint8_t Neu;
 
 		printf_P(ISTR(NeueEinstellungen, Sprache));
-		printf_P(PSTR("<a href=\"itelexcfg-intern.cgi\">"));
+		printf_P(PSTR("<a href=\"itelexcfg-intkonf.cgi\">"));
 		printf_P(ISTR(Weiter, Sprache));
 		printf_P(PSTR("</a>"));
 
@@ -6954,7 +6926,7 @@ void itelex_cgi_config_intern(void *pStruct)
 			else
 				printf_P(ISTR(KonnteNichtGeaendertWerden, Sprache));
 			}
-		
+
 		// Nummer Hauptstelle
 		// ------------------
 		if (PharseCheckName_P(http_request, Hauptstelle_P)) // CgiCheckULong_P geht nicht, da WahlZuAdresse() verwendet wird
@@ -6987,7 +6959,7 @@ void itelex_cgi_config_intern(void *pStruct)
 		// -------------------------
 		AlternativSucheBeiBesetzt = CgiCheckULong_P(http_request, ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P,
 													AlternativSucheBeiBesetzt, AltSuch_Niemals, AltSuch_AuchDurchwahl, Sprache);
-		
+
 		// DurchwahlTabelle
 		// ----------------
 		// hier ist Neu nur ein Flag
@@ -7040,6 +7012,89 @@ void itelex_cgi_config_intern(void *pStruct)
 				}
 			}
 
+		SpeichereSpracheAlsLokal(Sprache);
+		
+		} // else argc > 0
+		
+	cgi_PrintHttpheaderEnd();
+
+	} // itelex_cgi_config_intern_konfiguration()
+	
+
+/*------------------------------------------------------------------------------------------------------------*/
+/*!\brief Das CGI-Interface zum Ändern der Einstellungen des iTelex-Interface bezüglich der Einbindung
+ * in das lokale iTelex-System, Systemverhalten allgemein
+ * \param 	pStruct	Struktur auf den HTTP_Request
+ * \return	NONE
+ */
+/*------------------------------------------------------------------------------------------------------------*/
+ 
+void itelex_cgi_config_intern_betrieb(void *pStruct)
+	{
+	static TSprache Sprache;
+	
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+	char Buf[35];
+
+	PruefeSprache(pStruct, &Sprache);	
+	
+	if (!KonfigFreigabe(pStruct, Sprache, true))
+		return;
+
+	const char *AutoDatumSelList[4];
+	AutoDatumSelList[0] = ISTR(DatumDruckKein, Sprache);
+	AutoDatumSelList[1] = ISTR(DatumDruckLokal, Sprache);
+	AutoDatumSelList[2] = ISTR(DatumDruckAnrufer, Sprache);
+	AutoDatumSelList[3] = ISTR(DatumDruckBeide, Sprache);
+
+	cgi_PrintHttpheaderStart();
+
+	if ( http_request->argc == 0 )
+		{
+		CgiFormStartTabbed_P(PSTR("itelexcfg-intbetr.cgi"));
+
+		#ifdef ITELEX_ANSCHLUSS
+		CgiFormDropdown_P(ISTR(DatumDruckModus, Sprache), DatumDruckModus_P, 4, AutoDatumSelList, DatumDruckModus);
+
+		itoa(Druckzeilenlaenge, Buf, 10); // 10 ist die Basis für Dezimal!
+		CgiFormInputFieldText_P(ISTR(Druckzeilenlaenge, Sprache), Druckzeilenlaenge_P, 3, Buf);
+		
+		#endif //def ITELEX_ANSCHLUSS
+		
+		CgiFormCheckbox_P(ISTR(UhrzeitVerteilen, Sprache), UhrzeitVerteilen_P, UhrzeitVerteilen);
+
+		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 2, ProtokollLevel + (SocketProtokollEin ? 10 : 0));
+		
+		#ifdef ITELEX_TLNSERVER
+		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
+		#endif //def ITELEX_TLNSERVER
+
+		#ifdef ITELEX_ANSCHLUSS
+		CgiFormInputFieldULong_P(ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
+		#endif //def ITELEX_ANSCHLUSS
+		
+		CgiFormInputFieldText_P(ISTR(KonfigPasswort, Sprache), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
+		
+		CgiFormCheckbox_P(ISTR(TlnVerzeichnisOffen, Sprache), TlnBuchOffen_P, TlnBuchOffen);
+
+		#ifdef ITELEX_ANSCHLUSS
+		CgiFormCheckbox_P(ISTR(LangeDienstmeldungen, Sprache), LangeDienstmeldungen_P, LangeDienstmeldungen);
+		#endif //def ITELEX_ANSCHLUSS
+
+		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
+		}
+	else // argc > 0
+		{
+		uint8_t Neu;
+
+		printf_P(ISTR(NeueEinstellungen, Sprache));
+		printf_P(PSTR("<a href=\"itelexcfg-intbetr.cgi\">"));
+		printf_P(ISTR(Weiter, Sprache));
+		printf_P(PSTR("</a>"));
+
+		#ifdef ITELEX_ANSCHLUSS
+		
 		// DatumDruckModus
 		// ----------------
 		DatumDruckModus = CgiCheckULong_P(http_request, ISTR(DatumDruckModus, Sprache), DatumDruckModus_P,
@@ -7062,8 +7117,10 @@ void itelex_cgi_config_intern(void *pStruct)
 		if (SocketProtokollEin)
 			ProtokollLevel -= 10;
 
+		#ifdef ITELEX_TLNSERVER
 		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 
 												ProtokollLevelTlnServ, 0, 9, Sprache);
+		#endif //def ITELEX_TLNSERVER
 
 		#ifdef ITELEX_ANSCHLUSS
 		MeldungsdruckLevel = CgiCheckULong_P(http_request, ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, 
@@ -7092,7 +7149,7 @@ void itelex_cgi_config_intern(void *pStruct)
 		
 	cgi_PrintHttpheaderEnd();
 
-	} // itelex_cgi_config_intern()
+	} // itelex_cgi_config_intern_betrieb()
 	
 
 /*------------------------------------------------------------------------------------------------------------*/
@@ -7912,7 +7969,8 @@ void itelex_init2()
 	
 	#endif // ITELEX_ANSCHLUSS
 	
-	cgi_RegisterCGI( itelex_cgi_config_intern, PSTR("itelexcfg-intern.cgi"));
+	cgi_RegisterCGI( itelex_cgi_config_intern_konfiguration, PSTR("itelexcfg-intkonf.cgi"));
+	cgi_RegisterCGI( itelex_cgi_config_intern_betrieb, PSTR("itelexcfg-intbetr.cgi"));
 	cgi_RegisterCGI( itelex_cgi_config_extern, PSTR("itelexcfg-extern.cgi"));
 	cgi_RegisterCGI( itelex_cgi_config_sperren, PSTR("itelexcfg-sperren.cgi"));
 	cgi_RegisterCGI( itelex_cgi_debug, PSTR("itelex-debug.cgi"));
