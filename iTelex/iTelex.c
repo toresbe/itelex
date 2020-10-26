@@ -351,7 +351,7 @@ uint8_t ProtokollPhase;
 	//!< für POP3 und SMTP ein Speicher für den aktuellen Kommunikationsschritt
 
 
-//*** NEU RemoteServer ****:
+//*** RemoteServer ****:
 
 /*
 Diese Funktion erlaubt die Verwendung des i-Telex an IP-Anschlüssen mit nicht öffentlicher 
@@ -515,6 +515,14 @@ static uint8_t DurchwahlTabelle[9];
 
 static bool DurchwahlTabIstAusschluss;
 	//!< Bei true enthält die #DurchwahlTabelle keine erlaubten, sondern verbotene Nummern
+
+
+enum { BaudrateListeLen = 40 };
+
+static char BaudrateListe[BaudrateListeLen + 1];
+	//!< Definition der zu nutzenden Baudrate: Beispiel: 70-78:75,19:100,*:50
+	//!< bedeutet Nebenstellen 70 bis 78 haben 75 Baud, Nummer 19 hat 100 Baud, alle anderen 50 Baud.
+
 
 //! Modus für die generierung Datum / Uhrzeit bei ankommenden Anrufen.	
 typedef enum 
@@ -858,13 +866,13 @@ bool ParseInt16(char **pp, int16_t *val)
 		if (*p == '-')
 			if (Vorz == 0) // noch nicht gesetzt
 				Vorz = -1;
-			else // schon eine Ziffer oder ein - gehabt
-				return false;
+			else // schon eine Ziffer oder ein Vorzeichen gehabt
+				break;
 		else if (*p == '+')
 			if (Vorz == 0) // noch nicht gesetzt
 				Vorz = 1;
-			else // schon eine Ziffer oder ein - gehabt
-				return false;
+			else // schon eine Ziffer oder ein Vorzeichen gehabt
+				break;
 		else if (*p >= '0' && *p <= '9')
 			{
 			Wert = 10 * Wert + (*p) - '0';
@@ -902,7 +910,7 @@ bool ParseNstAddresse(char **pp, uint8_t *nst)
 	if (!ParseInt16(&p2, &nr))
 		return false;
 	
-	if (nr < 0 || nr > 99 || p2 > (*pp) + 2)
+	if (nr < 0 || nr > 99 || p2 - (*pp) > 2)
 						//   ^^^^^^^^^^^^^^ mehr als 2 Ziffern
 		return false;
 	
@@ -910,7 +918,84 @@ bool ParseNstAddresse(char **pp, uint8_t *nst)
 	*pp = p2;
 	return true;
 	}
+
+
+void ParseSkipSpace(char **pp)
+	{
+	while (**pp == ' ')
+		(*pp)++;
+	}
+
+
+//! Sucht aus der Tabelle die zu verwendende Baudrate aus.
+//--------------------------------------------------------
+//! Verwendet die globale Tabelle #BaudrateListe
+//! \retval >0 Baudrate
+//! \retval <=0 Position des Fehlers in der Zeichenkette #BaudrateListe
+	
+int16_t BaudrateErmitteln(uint8_t nst, char *aBaudTab)
+	{
+	char *p;
+	bool BereichJa;
+	uint8_t nst2;
+	int16_t baud;
+	
+	p = aBaudTab;
+	while (true)
+		{
+		ParseSkipSpace(&p);
+		if (*p == '*')
+			{
+			BereichJa = (nst != 0);
+			p++;
+			}
+		else 
+			{
+			if (!ParseNstAddresse(&p, &nst2))
+				return -(p - aBaudTab);
+
+			ParseSkipSpace(&p);
+			if (*p == '-')
+				{
+				BereichJa = (nst >= nst2);
+				p++;
+				ParseSkipSpace(&p);
+				if (!ParseNstAddresse(&p, &nst2))
+					return -(p - aBaudTab);
+					
+				BereichJa &= (nst <= nst2);
+				}
+			else
+				BereichJa = (nst == nst2);
+			}
 		
+		ParseSkipSpace(&p);
+		
+		if (*p != ':')
+			return -(p - aBaudTab);
+
+		p++;
+		ParseSkipSpace(&p);
+		
+		if (!ParseInt16(&p, &baud))
+			return -(p - aBaudTab);
+		
+		if (BereichJa)
+			return baud;
+		
+		ParseSkipSpace(&p);
+		
+		if (*p == '\0')
+			return 1; // Ende des String korrekt erreicht
+		
+		if (*p != ',')
+			// nur Komma als Aufzählungs-Trenner erlaubt
+			return -(p - aBaudTab);
+			
+		p++;
+		}
+	} // BaudrateErmitteln(uint8_t nst, char *aBaudTab)
+			
 	
 //! Gibt des aktuellen Stand der Zeitueberwachung aus.
 //----------------------------------------------------	
@@ -1100,24 +1185,17 @@ static void PrintSocketConnectionStateChanges()
 //! Initialisiert die serielle Umsetzung 
 static void SeriellUmsetzInit(void)
 	{
+	int16_t Baud;
+	
 	SerUmEmpfBitNr = SerUmEmpfWarte;
 	SerUmSendBitNr = SerUmSendWarte;
-	// HACK TODO konfigurierbare Werte
-	if ((BusVerbPartner >> 1) >= 90 && (BusVerbPartner >> 1) <= 99)
-		{
-		SerUmTicksProBit = iTelexTimerFreq / 100;
-		SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*100); // 100 = Baudrate!
-		}
-	else if ((BusVerbPartner >> 1) >= 70 && (BusVerbPartner >> 1) <= 79)
-		{
-		SerUmTicksProBit = iTelexTimerFreq / 75;
-		SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*75); // 75 = Baudrate!
-		}
-	else
-		{
-		SerUmTicksProBit = iTelexTimerFreq / 50; // 50 = Baudrate!
-		SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*50); // 50 = Baudrate!
-		}
+	
+	Baud = BaudrateErmitteln(BusVerbPartner, BaudrateListe);
+	if (Baud <= 1) // 1 ist auch ein Fehlerwert, nämlich "nicht gefunden"
+		Baud = 50;
+		
+	SerUmTicksProBit = iTelexTimerFreq / Baud;
+	SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*Baud);
 
 	if (ProtokollLevel >= AblaufInfo)
 		{
@@ -1645,7 +1723,7 @@ void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_FsBefEin);
 			StartKurzTimer(&BusQuittTimer);
 			StartLangTimer(&BeideRuhigTimer);
-			WarteStartupQuitt = true;
+			WarteStartupQuitt = false;
 			SeriellUmsetzInit();
 			break;
 	
@@ -4595,6 +4673,7 @@ bool CheckTCPServerConnect(long IP, unsigned int Port)
 //! Ausgabe der Einträge in der Zugriffs-Tabelle für kommende TCP-Verbindungen
 //----------------------------------------------------------------------------
 //! Macht den Puffer #DiagnosePuffer so voll es geht.
+
 static void PrintServSocketLogTabEntry()
 	{
 	uint8_t i; // Index in der ServSocketLogTab
@@ -6833,11 +6912,13 @@ const PROGMEM char FesteHst_P[] = "FESTEHPST";
 const PROGMEM char MeldungsdruckLevel_P[] = "MELDRUCK";
 const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
 const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
+const PROGMEM char BaudrateListe_P[] = "BAUDTAB";
+const PROGMEM char TWIHandshakeNeu_P[] = "TWINEU";
 const PROGMEM char DatumDruckModus_P[] = "AUTODATUM";
 const PROGMEM char Druckzeilenlaenge_P[] = "ZEILENLAENGE";
 const PROGMEM char UhrzeitVerteilen_P[] = "ZEITRUNDSEND";
 
-#endif // ITELEX_ANSCHLUSS
+#endif //def ITELEX_ANSCHLUSS
 
 
 
@@ -6849,13 +6930,15 @@ const PROGMEM char UhrzeitVerteilen_P[] = "ZEITRUNDSEND";
  */
 /*------------------------------------------------------------------------------------------------------------*/
  
+#ifdef ITELEX_ANSCHLUSS
+
 void itelex_cgi_config_intern_konfiguration(void *pStruct)
 	{
 	static TSprache Sprache;
 	
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
-	char Buf[35];
+	char Buf[sizeof(BaudrateListe)];
 
 	PruefeSprache(pStruct, &Sprache);	
 	
@@ -6873,7 +6956,6 @@ void itelex_cgi_config_intern_konfiguration(void *pStruct)
 		{
 		CgiFormStartTabbed_P(PSTR("itelexcfg-intkonf.cgi"));
 
-		#ifdef ITELEX_ANSCHLUSS
 		AdresseZuWahlStr(BusEigenAdresse, Buf);
 		CgiFormInputFieldText_P(ISTR(EigeneAmtsnummer, Sprache), EigeneNummer_P, 2, Buf);
 
@@ -6887,8 +6969,10 @@ void itelex_cgi_config_intern_konfiguration(void *pStruct)
 		readConfig_P(DurchwahlTabelle_P, Buf);
 		CgiFormInputFieldText_P(ISTR(DurchwahlenListe, Sprache), DurchwahlTabelle_P, 31, Buf);
 
-		#endif //def ITELEX_ANSCHLUSS
+		CgiFormInputFieldText_P(ISTR(BaudrateListe, Sprache), BaudrateListe_P, sizeof(BaudrateListe)-1, BaudrateListe);
 
+		CgiFormCheckbox_P(ISTR(NeuesTWIProtokoll, Sprache), TWIHandshakeNeu_P, TWIHandshakeNeu);
+		
 		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
 		}
 	else // argc > 0
@@ -6900,8 +6984,6 @@ void itelex_cgi_config_intern_konfiguration(void *pStruct)
 		printf_P(ISTR(Weiter, Sprache));
 		printf_P(PSTR("</a>"));
 
-		#ifdef ITELEX_ANSCHLUSS
-		
 		// Eigene Nummer
 		// -------------
 		if (PharseCheckName_P(http_request, EigeneNummer_P)) // CgiCheckULong_P geht nicht, da WahlZuAdresse() verwendet wird
@@ -6973,8 +7055,8 @@ void itelex_cgi_config_intern_konfiguration(void *pStruct)
 			if (Neu)
 				{
 				// Durchwahl-Liste aus CGI-Anfrage holen
-				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, DurchwahlTabelle_P)], 33);
-				Buf[33] = '\0';
+				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, DurchwahlTabelle_P)], sizeof(Buf) - 1);
+				Buf[sizeof(Buf) - 1] = '\0';
 				
 				// ...dekodieren... (in Liste speichern)
 				DurchwahlTabelleDekodieren(Buf);
@@ -7012,6 +7094,57 @@ void itelex_cgi_config_intern_konfiguration(void *pStruct)
 				}
 			}
 
+		// Baudraten-Liste
+		// ---------------
+		if (PharseCheckName_P(http_request, BaudrateListe_P))
+			{
+			printf_P(PSTR("<br>"));
+			printf_P(ISTR(BaudrateListe, Sprache));
+
+			if (readConfig_P(BaudrateListe_P, Buf) == 1)
+				Neu = strcmp(Buf, http_request->argvalue[PharseGetValue_P(http_request, BaudrateListe_P)]) != 0;
+			else
+				Neu = true;
+		
+			if (Neu)
+				{
+				// Baudrate-Liste aus CGI-Anfrage holen
+				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, BaudrateListe_P)], sizeof(Buf) - 1);
+				Buf[sizeof(Buf) - 1] = '\0';
+				
+				// ...probehalber dekodieren...
+				int16_t res;
+				res = BaudrateErmitteln(0, Buf); // 0 ist eine unerlaubte Nebenstellen-Nummer, 
+					// daher muss der "Code-String" Buf bis zum Ende überprüft werden.
+
+				if (res == 1)
+					{
+					printf_P(ISTR(GeaendertIn, Sprache));
+					printf_P(PSTR(": %s"), Buf);
+					strncpy(BaudrateListe, Buf, sizeof(BaudrateListe));
+					changeConfig_P(BaudrateListe_P, Buf);
+					}
+				else if (res <= 0)
+					{
+					printf_P(PSTR(": <b>"));
+					printf_P(ISTR(FehlerMitPos, Sprache));
+					char h = Buf[-res]; // zeichen an Fehlerposition retten
+					Buf[-res] = '\0';
+					printf_P(PSTR("%s&gt;&gt;&gt;%c%s</b>"), Buf, h, Buf + (-res) + 1);
+					}
+					
+				}
+			else
+				{
+				printf_P(ISTR(Unveraendert, Sprache));
+				printf_P(PSTR(": %s"), BaudrateListe);
+				}
+			}
+
+		// neues TWI-Protokoll
+		// -------------------
+		TWIHandshakeNeu = CgiCheckBool_P(http_request, ISTR(NeuesTWIProtokoll, Sprache), TWIHandshakeNeu_P, TWIHandshakeNeu, Sprache);
+		
 		SpeichereSpracheAlsLokal(Sprache);
 		
 		} // else argc > 0
@@ -7019,6 +7152,8 @@ void itelex_cgi_config_intern_konfiguration(void *pStruct)
 	cgi_PrintHttpheaderEnd();
 
 	} // itelex_cgi_config_intern_konfiguration()
+
+#endif //def ITELEX_ANSCHLUSS
 	
 
 /*------------------------------------------------------------------------------------------------------------*/
@@ -7086,8 +7221,6 @@ void itelex_cgi_config_intern_betrieb(void *pStruct)
 		}
 	else // argc > 0
 		{
-		uint8_t Neu;
-
 		printf_P(ISTR(NeueEinstellungen, Sprache));
 		printf_P(PSTR("<a href=\"itelexcfg-intbetr.cgi\">"));
 		printf_P(ISTR(Weiter, Sprache));
@@ -7766,6 +7899,13 @@ extern void itelex_init1(void)
 	if (readConfig_P(DurchwahlTabelle_P, Buf) == 1)
 		DurchwahlTabelleDekodieren(Buf); // Ergebnis wird ignoriert
 
+	if (readConfig_P(BaudrateListe_P, BaudrateListe))
+		; // ok
+	else
+		strcpy_P(BaudrateListe, PSTR("*:50"));
+	
+	TWIHandshakeNeu = ReadConfigBool(TWIHandshakeNeu_P, false);
+	
 	if (readConfig_P(NetzRufnummer_P, Buf) == 1)
 		NetzRufnummer = atol(Buf);
 	else
@@ -7842,8 +7982,6 @@ extern void itelex_init1(void)
 	
 	UhrzeitVerteilen = ReadConfigBool(UhrzeitVerteilen_P, true);
 
-	TWIHandshakeNeu = true; // TODO konfigurierbar!
-	
 	if (readConfig_P(MeldungsdruckLevel_P, Buf) == 1)
 		MeldungsdruckLevel = atoi(Buf);
 	else

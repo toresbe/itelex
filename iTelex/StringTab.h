@@ -139,6 +139,12 @@ _STRTABENTRY(ASBB_AuchDurchwahl, "auch bei Durchwahl", "also for direct calls to
 	"anche per chiamate alle estensioni","ook bij verbindingen aan extensies")
 _STRTABENTRY(DurchwahlenListe, "erlaubte Durchwahlen (mit Komma trennen)", "Secondary call numbers list (separate by comma)",
 	"Estensioni disponibili (separare con virgola)", "Beschikbare extensies (met komma's scheiden)")
+_STRTABENTRY(BaudrateListe, "Baudraten der Module (Beispiel: 70-79:75,*:50)", "Baudrates of modules (example: 70-79:75,*:50)",
+	"TODO", "TODO")
+_STRTABENTRY(NeuesTWIProtokoll, 
+	"Neues internes Busprotokoll verwenden (ab Version 450)", 
+	"Use new internal bus protocol (from version 450)",
+	"TODO", "TODO")
 _STRTABENTRY(Druckzeilenlaenge, "Automatischer Zeilenumbruch an Position", "Automatic line break at position",
 	"Da capo automatico al posizione", "Automatische regeleinde aan positie")
 _STRTABENTRY(UhrzeitVerteilen, "Uhrzeit an andere Module verteilen", "Broadcast time to other modules",
@@ -222,6 +228,12 @@ _STRTABENTRY(Weiter, "weiter", "continue","continuare","volgende")
 _STRTABENTRY(Unveraendert, " unver&auml;ndert", " unchanged"," invariato"," geen verandering")
 _STRTABENTRY(GeaendertIn, " ge&auml;ndert in", " changed to", " cambiato in","veranderd in")
 _STRTABENTRY(EinstellungenUebernehmen, "Einstellung &Uuml;bernehmen", "Submit changes","Conferma cambio","Bevestig verandering")
+_STRTABENTRY(FehlerMitPos, 
+	"fehlerhafte Angabe (siehe hinter &gt;&gt;&gt; ): ",
+	"invalid entry (see after &gt;&gt;&gt; ): ",
+	"TODO fehlerhafte Angabe (siehe hinter &gt;&gt;&gt; ): ",
+	"TODO fehlerhafte Angabe (siehe hinter &gt;&gt;&gt; ): ")
+
 
 // für TlnBuch.c:
 _STRTABENTRY(UeberschriftTeilnehmerverzeichnis, 
