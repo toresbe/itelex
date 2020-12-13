@@ -1660,6 +1660,7 @@ void ModusWechsel(TModus neu)
 			Wahlziffern = 0;
 			TlnDatenInit(&GewaehlterTln);
 			TlnServerAbfrageWiederholungssperre = true; // wird nach erster Ziffer auf false gesetzt
+			SeriellUmsetzInit(); // für den Fall eines Wechsels nach #ModPufferDruckUndSchluss wegen nicht erfolgreicher Verbindung
 			StartKurzTimer(&WahlPauseTimer);
 			break;
 	
