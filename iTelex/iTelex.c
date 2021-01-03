@@ -582,6 +582,18 @@ static long NetzEigeneIP;
 static uint8_t FalschGeheimzahlZaehler;
 	//!< Zählt wie oft eine Rückmeldung "falsche Geheimzahl" empfangen wurde.
 	
+
+//! Modus für die Annahme von Ascii-Verbindungen	
+typedef enum 
+	{
+	AsciiModusAus,
+	AsciiModusMitDurchwahl,
+	AsciiModusEin,
+	} TAsciiEmpfModus;
+	
+	
+static TAsciiEmpfModus AsciiEmpfModus;
+
 	
 static struct TIME LetzterAnrufZeit;
 	//!< Speichert die Uhrzeit des letzten Ereignisses, welches die Einschaltung eines
@@ -6916,6 +6928,7 @@ const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
 const PROGMEM char BaudrateListe_P[] = "BAUDTAB";
 const PROGMEM char TWIHandshakeNeu_P[] = "TWINEU";
 const PROGMEM char DatumDruckModus_P[] = "AUTODATUM";
+const PROGMEM char AsciiEmpfModus_P[] = "ASCIIEMPF";
 const PROGMEM char Druckzeilenlaenge_P[] = "ZEILENLAENGE";
 const PROGMEM char UhrzeitVerteilen_P[] = "ZEITRUNDSEND";
 
@@ -7183,6 +7196,11 @@ void itelex_cgi_config_intern_betrieb(void *pStruct)
 	AutoDatumSelList[1] = ISTR(DatumDruckLokal, Sprache);
 	AutoDatumSelList[2] = ISTR(DatumDruckAnrufer, Sprache);
 	AutoDatumSelList[3] = ISTR(DatumDruckBeide, Sprache);
+	
+	const char *AsciiEmpfModusSelList[3];
+	AsciiEmpfModusSelList[AsciiModusAus] = ISTR(AsciiModus_Nie, Sprache);
+	AsciiEmpfModusSelList[AsciiModusMitDurchwahl] = ISTR(AsciiModus_NurBeiDurchwahl, Sprache);
+	AsciiEmpfModusSelList[AsciiModusEin] = ISTR(AsciiModus_Immer, Sprache);
 
 	cgi_PrintHttpheaderStart();
 
@@ -7192,6 +7210,8 @@ void itelex_cgi_config_intern_betrieb(void *pStruct)
 
 		#ifdef ITELEX_ANSCHLUSS
 		CgiFormDropdown_P(ISTR(DatumDruckModus, Sprache), DatumDruckModus_P, 4, AutoDatumSelList, DatumDruckModus);
+		
+		CgiFormDropdown_P(ISTR(AsciiEmpfModus, Sprache), AsciiEmpfModus_P, 3, AsciiEmpfModusSelList, AsciiEmpfModus);
 
 		itoa(Druckzeilenlaenge, Buf, 10); // 10 ist die Basis für Dezimal!
 		CgiFormInputFieldText_P(ISTR(Druckzeilenlaenge, Sprache), Druckzeilenlaenge_P, 3, Buf);
@@ -7233,6 +7253,11 @@ void itelex_cgi_config_intern_betrieb(void *pStruct)
 		// ----------------
 		DatumDruckModus = CgiCheckULong_P(http_request, ISTR(DatumDruckModus, Sprache), DatumDruckModus_P,
 										  DatumDruckModus, DatumDruckKein, DatumDruckBeide, Sprache);
+			
+		// AsciiEmpfModus
+		// --------------
+		AsciiEmpfModus = CgiCheckULong_P(http_request, ISTR(AsciiEmpfModus, Sprache), AsciiEmpfModus_P,
+										 AsciiEmpfModus, AsciiModusAus, AsciiModusEin, Sprache);
 			
 		// Druckzeilenlaenge
 		// -----------------
@@ -7944,6 +7969,11 @@ extern void itelex_init1(void)
 		DatumDruckModus = atoi(Buf);
 	else
 		DatumDruckModus = DatumDruckBeide;
+	
+	if (readConfig_P(AsciiEmpfModus_P, Buf) == 1)
+		AsciiEmpfModus = atoi(Buf);
+	else
+		AsciiEmpfModus = AsciiModusEin;
 	
 	if (readConfig_P(Druckzeilenlaenge_P, Buf) == 1)
 		Druckzeilenlaenge = atoi(Buf);
