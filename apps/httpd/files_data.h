@@ -394,7 +394,7 @@ const char data7[] PROGMEM = {
 	"build on AVR-libc version: " __AVR_LIBC_VERSION_STRING__ "/" __AVR_LIBC_DATE_STRING__ 
 	" with avr-gcc " __VERSION__ "\r\n"
 	"\r\n"
-	"(c)2006-2020   Software: Fred Sonnenrein\r\n"
+	"(c)2006-2021   Software: Fred Sonnenrein\r\n"
 	"based on OpenMCP by Dirk Brosswick\r\n"
 	"</pre></p><br>"
 	"<p>Our homepage: <a href=\"http://www.i-telex.net/\" target=\"blank\">www.i-telex.net</a>"
@@ -519,7 +519,8 @@ const char iTelexCfgMenuDeText[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"itelex-menu-de.html\">zur&uuml;ck</a>"
-	" / <a href=\"itelexcfg-intern.cgi?spr=de\" target=\"main\">Einstellungen im lokalen System</a>"
+	" / <a href=\"itelexcfg-intkonf.cgi?spr=de\" target=\"main\">Lokale Ger&auml;te-Konfiguration</a>"
+	" / <a href=\"itelexcfg-intbetr.cgi?spr=de\" target=\"main\">Lokale Betriebseinstellungen</a>"
 	" / <a href=\"itelexcfg-extern.cgi?spr=de\" target=\"main\">Einstellungen im i-Telex-Netz</a>"
 	" / <a href=\"itelex-credits.cgi?spr=de\" target=\"main\">Impressum</a>"
 #ifdef ITELEX_EMAIL
@@ -545,7 +546,8 @@ const char iTelexCfgMenuEnText[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"itelex-menu-en.html\">back</a>"
-	" / <a href=\"itelexcfg-intern.cgi?spr=en\" target=\"main\">local settings</a>"
+	" / <a href=\"itelexcfg-intkonf.cgi?spr=en\" target=\"main\">local module configuration</a>"
+	" / <a href=\"itelexcfg-intbetr.cgi?spr=en\" target=\"main\">local functionality</a>"
 	" / <a href=\"itelexcfg-extern.cgi?spr=en\" target=\"main\">i-Telex network settings</a>"
 	" / <a href=\"itelex-credits.cgi?spr=en\" target=\"main\">credits</a>"
 #ifdef ITELEX_EMAIL
@@ -571,7 +573,8 @@ const char iTelexCfgMenuItText[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"itelex-menu-it.html\">indietro</a>"
-	" / <a href=\"itelexcfg-intern.cgi?spr=it\" target=\"main\">Parametri sistema locale</a>"
+	" / <a href=\"itelexcfg-intkonf.cgi?spr=it\" target=\"main\">Configurazione modulo locale</a>"
+	" / <a href=\"itelexcfg-intbetr.cgi?spr=it\" target=\"main\">Parametri funzionamento locale</a>"
 	" / <a href=\"itelexcfg-extern.cgi?spr=it\" target=\"main\">Parametri rete i-Telex</a>"
 	" / <a href=\"itelex-credits.cgi?spr=it\" target=\"main\">Impressum</a>"
 #ifdef ITELEX_EMAIL
@@ -597,7 +600,8 @@ const char iTelexCfgMenuNlText[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"itelex-menu-nl.html\">terug</a>"
-	" / <a href=\"itelexcfg-intern.cgi?spr=nl\" target=\"main\">Parameters lokaal system</a>"
+	" / <a href=\"itelexcfg-intkonf.cgi?spr=nl\" target=\"main\">Lokale moduul konfiguratie</a>"
+	" / <a href=\"itelexcfg-intbetr.cgi?spr=nl\" target=\"main\">Lokale bedrijfsinstellingen</a>"
 	" / <a href=\"itelexcfg-extern.cgi?spr=nl\" target=\"main\">Parameters i-Telex net</a>"
 	" / <a href=\"itelex-credits.cgi?spr=nl\" target=\"main\">Impressum</a>"
 #ifdef ITELEX_EMAIL

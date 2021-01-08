@@ -181,6 +181,10 @@ volatile static uint8_t SerUmTickZaehlerEmpf; //!< Zähler der Einzel-Ticks beim
 
 volatile static uint8_t SerUmTickZaehlerSend; //!< Zähler der Einzel-Ticks beim Senden
 
+static uint8_t SerUmTicksProBit; //!< Dieser Wert wird an die gewünschte Baudrate angepasst.
+
+static uint8_t SerUmTicksProStopBit; //!< Dieser Wert wird an die gewünschte Baudrate angepasst.
+
 
 volatile uint16_t KurzTimerCnt;
 //!< Die KurzTimer-Basisvariable
@@ -225,7 +229,7 @@ static TKurzTimer BusQuittTimer;
 static TKurzTimer iTelexSocketLebenszeichenTimer;
 	//!< Alle 3,5 bis 4 Sekunden ein Lebenszeichen senden...
 
-	
+
 volatile TPuffer SendePuffer; 
 	//!< Puffer (mit Baudot-Codes gefüllt) für die Richtung Netz -> Endgerät.
 	
@@ -269,9 +273,15 @@ static TLangTimer BeideRuhigTimer;
 	//!< Zeit seit letztem Druck zum oder Schreibempfang vom Endgerät.
 	//!< Abschaltung nach 10 Minuten Ruhe.
 
-static TKurzTimer MachineStartupTimer;
-	//!< Verzoegert das Senden vo Fernschreibzeichen direkt nach Anlauf 
+static TKurzTimer MachineStartupTimer; 
+	//!< Verzoegert das Senden von Fernschreibzeichen direkt nach Anlauf 
 	//!< des Fernschreibers.
+
+bool WarteStartupQuitt;
+	//!< Ersatz für #MachineStartupTimer bei neuem TWI-Handshake.
+	//!< Verhindert das Senden von Zeichen aus dem Puffer, solange kein BusQuittEin
+	//!< Empfangen wurde
+
 
 int iTelexSocketHandle;
 	//!< Verweis auf Socket für iTelex-Kommunikation. Istzustand. Wenn ungültig, aber #iTelexSocketMode
@@ -341,7 +351,7 @@ uint8_t ProtokollPhase;
 	//!< für POP3 und SMTP ein Speicher für den aktuellen Kommunikationsschritt
 
 
-//*** NEU RemoteServer ****:
+//*** RemoteServer ****:
 
 /*
 Diese Funktion erlaubt die Verwendung des i-Telex an IP-Anschlüssen mit nicht öffentlicher 
@@ -496,11 +506,23 @@ static bool LangeDienstmeldungen;
 	//!< Bei False wird "occ" oder "na" direkt nach dem Wählen ausgegeben. 
 	//!< Bei True wird der rufende Fernschreiber ausgeschaltet und eine Diagnosemeldung generiert.
 	
+static bool TWIHandshakeNeu;
+	//!< Bei true wird auch bei ausgehender Wahl ein BusKdoEin gesendet statt BusQuittEin
+	
+	
 static uint8_t DurchwahlTabelle[9];
 	//!< Liste der Nebenstellen-Nummern bei kommenden Rufen mit Durchwahl
 
 static bool DurchwahlTabIstAusschluss;
 	//!< Bei true enthält die #DurchwahlTabelle keine erlaubten, sondern verbotene Nummern
+
+
+enum { BaudrateListeLen = 40 };
+
+static char BaudrateListe[BaudrateListeLen + 1];
+	//!< Definition der zu nutzenden Baudrate: Beispiel: 70-78:75,19:100,*:50
+	//!< bedeutet Nebenstellen 70 bis 78 haben 75 Baud, Nummer 19 hat 100 Baud, alle anderen 50 Baud.
+
 
 //! Modus für die generierung Datum / Uhrzeit bei ankommenden Anrufen.	
 typedef enum 
@@ -560,6 +582,18 @@ static long NetzEigeneIP;
 static uint8_t FalschGeheimzahlZaehler;
 	//!< Zählt wie oft eine Rückmeldung "falsche Geheimzahl" empfangen wurde.
 	
+
+//! Modus für die Annahme von Ascii-Verbindungen	
+typedef enum 
+	{
+	AsciiModusAus,
+	AsciiModusNurMitDurchwahl,
+	AsciiModusEin,
+	} TAsciiEmpfModus;
+	
+	
+static TAsciiEmpfModus AsciiEmpfModus;
+
 	
 static struct TIME LetzterAnrufZeit;
 	//!< Speichert die Uhrzeit des letzten Ereignisses, welches die Einschaltung eines
@@ -676,16 +710,16 @@ static TZeitUeberwachung SelbstAnrufZeitUeberwachung;
 #endif // ITELEX_ANSCHLUSS
 	
 
-#ifndef BIT_LENGTH
-
-//! Bit-Länge in Millisekunden
-#define BIT_LENGTH 20
-
-#endif
-
 	
 //! Sollfrequenz des Aufrufs von itelex_timerEvent()
-enum { iTelexTimerFreq = 10000 / BIT_LENGTH } ; // 10 Takten je Bit, im Millisekunden
+enum { iTelexTimerFreq = 900 } ; // Fester Wert, dieser passt gut zu folgenden Baudraten:
+// 45,45 Baud -> 19,8 -> gerundet 20 Tics pro Bit
+// 50 Baud -> exakt 18 Tics pro Bit
+// 75 Baud -> exakt 12 Tics pro Bit
+// 100 Baud -> exakt 9 Tics pro Bit (Problem bei 1,5 Stop-Bits -> wird verlängert auf 14 Ticks für Stop-Bit
+
+// Wert muss aber auch ein ganzzahliges Vielfaches von #KurzTimerFreq sein!
+// ========================================================================
 
 
 char DiagnosePuffer[DiagnosePufferMax];
@@ -828,6 +862,153 @@ void ZeitUeberwachungAbbruch(TZeitUeberwachung *zue)
 	}
 	
 
+bool ParseInt16(char **pp, int16_t *val)
+	{
+	char *p;
+	int8_t Vorz;
+	int16_t Wert;
+	bool Res;
+
+	p = *pp;
+	Res = false;
+	Wert = 0;
+	Vorz = 0;
+	while (true)
+		{
+		if (*p == '-')
+			if (Vorz == 0) // noch nicht gesetzt
+				Vorz = -1;
+			else // schon eine Ziffer oder ein Vorzeichen gehabt
+				break;
+		else if (*p == '+')
+			if (Vorz == 0) // noch nicht gesetzt
+				Vorz = 1;
+			else // schon eine Ziffer oder ein Vorzeichen gehabt
+				break;
+		else if (*p >= '0' && *p <= '9')
+			{
+			Wert = 10 * Wert + (*p) - '0';
+			if (Vorz == 0)
+				Vorz = 1;
+			Res = true;
+			}
+		else 
+			break;
+		p++;
+		}
+		
+	if (!Res)
+		return false;
+	
+	*pp = p;	
+	*val = Vorz * Wert;
+	return true;
+	}
+			
+	
+bool ParseNstAddresse(char **pp, uint8_t *nst)
+	{
+	char *p2;
+	int16_t nr;
+	
+	p2 = *pp;
+	if (p2[0] == '-')
+		{
+		*nst = 0;
+		(*pp)++;
+		return true;
+		}
+		
+	if (!ParseInt16(&p2, &nr))
+		return false;
+	
+	if (nr < 0 || nr > 99 || p2 - (*pp) > 2)
+						//   ^^^^^^^^^^^^^^ mehr als 2 Ziffern
+		return false;
+	
+	*nst = WahlZuAdresse(nr, p2 - (*pp));
+	*pp = p2;
+	return true;
+	}
+
+
+void ParseSkipSpace(char **pp)
+	{
+	while (**pp == ' ')
+		(*pp)++;
+	}
+
+
+//! Sucht aus der Tabelle die zu verwendende Baudrate aus.
+//--------------------------------------------------------
+//! Verwendet die globale Tabelle #BaudrateListe
+//! \retval >0 Baudrate
+//! \retval <=0 Position des Fehlers in der Zeichenkette #BaudrateListe
+	
+int16_t BaudrateErmitteln(uint8_t nst, char *aBaudTab)
+	{
+	char *p;
+	bool BereichJa;
+	uint8_t nst2;
+	int16_t baud;
+	
+	p = aBaudTab;
+	while (true)
+		{
+		ParseSkipSpace(&p);
+		if (*p == '*')
+			{
+			BereichJa = (nst != 0);
+			p++;
+			}
+		else 
+			{
+			if (!ParseNstAddresse(&p, &nst2))
+				return -(p - aBaudTab);
+
+			ParseSkipSpace(&p);
+			if (*p == '-')
+				{
+				BereichJa = (nst >= nst2);
+				p++;
+				ParseSkipSpace(&p);
+				if (!ParseNstAddresse(&p, &nst2))
+					return -(p - aBaudTab);
+					
+				BereichJa &= (nst <= nst2);
+				}
+			else
+				BereichJa = (nst == nst2);
+			}
+		
+		ParseSkipSpace(&p);
+		
+		if (*p != ':')
+			return -(p - aBaudTab);
+
+		p++;
+		ParseSkipSpace(&p);
+		
+		if (!ParseInt16(&p, &baud))
+			return -(p - aBaudTab);
+		
+		if (BereichJa)
+			return baud;
+		
+		ParseSkipSpace(&p);
+		
+		if (*p == '\0')
+			return 1; // Ende des String korrekt erreicht
+		
+		if (*p != ',')
+			// nur Komma als Aufzählungs-Trenner erlaubt
+			return -(p - aBaudTab);
+			
+		p++;
+		}
+	} // BaudrateErmitteln(uint8_t nst, char *aBaudTab)
+			
+	
 //! Gibt des aktuellen Stand der Zeitueberwachung aus.
 //----------------------------------------------------	
 //! Ausgabe erfolgt in den #ZeitUeberwachungAusgabePuffer.
@@ -1016,9 +1197,26 @@ static void PrintSocketConnectionStateChanges()
 //! Initialisiert die serielle Umsetzung 
 static void SeriellUmsetzInit(void)
 	{
+	int16_t Baud;
+	
 	SerUmEmpfBitNr = SerUmEmpfWarte;
 	SerUmSendBitNr = SerUmSendWarte;
-	SerUmTickZaehlerEmpf = 10;
+	
+	Baud = BaudrateErmitteln(BusVerbPartner, BaudrateListe);
+	if (Baud <= 1) // 1 ist auch ein Fehlerwert, nämlich "nicht gefunden"
+		Baud = 50;
+		
+	SerUmTicksProBit = iTelexTimerFreq / Baud;
+	SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*Baud);
+
+	if (ProtokollLevel >= AblaufInfo)
+		{
+		ProtokollierenITelex();
+		ProtokollierenInt_P(PSTR("SeriellUmsetzInit: BusVerbPartner = %u"), BusVerbPartner >> 1);
+		ProtokollierenInt_P(PSTR(", SerUmTicksProBit = %u\r\n"), SerUmTicksProBit);
+		}
+
+	SerUmTickZaehlerEmpf = SerUmTicksProBit;
 	SerUmTickZaehlerSend = 0;
 	SendeMark = true;
 	}
@@ -1120,7 +1318,7 @@ void itelex_timerEvent(void)
 		if (SerUmEmpfBitNr != SerUmEmpfWarte && SerUmEmpfBitNr != SerUmEmpfFertig)
 			{ // Empfang läuft
 			if (--SerUmTickZaehlerEmpf <= 2)
-				{ // 3 Abtast-Zeitpunkte (Zaehler = 2,1,0) im Bit
+				{ // 3 Abtast-Zeitpunkte (Zaehler = 2,1,0) im Bit  TODO ggf mehr?
 				if (BusEmpfMark)
 					SerUmEmpfMarkZaehl++;
 				}
@@ -1158,7 +1356,7 @@ void itelex_timerEvent(void)
 					}
 
 				SerUmEmpfMarkZaehl = 0;
-				SerUmTickZaehlerEmpf = 10;
+				SerUmTickZaehlerEmpf = SerUmTicksProBit;
 				} // Abtastung eines Bits abgeschlossen
 			StartKurzTimer(&SchreibPauseTimer);
 			} // if Empfang läuft
@@ -1170,7 +1368,7 @@ void itelex_timerEvent(void)
 				SerUmEmpfDaten = 0;
 				SerUmEmpfFehler = false;
 				SerUmEmpfMarkZaehl = 0;
-				SerUmTickZaehlerEmpf = 6; // nicht 10, da in der Mitte der Bits abgetastet wird
+				SerUmTickZaehlerEmpf = SerUmTicksProBit / 2 + 1; // damit 3 Abstastungen in der Mitte des Bits stattfinden.
 				}
 			else
 				{
@@ -1182,7 +1380,7 @@ void itelex_timerEvent(void)
 					SerUmTickZaehlerSend = 0;
 					SerUmSendBitNr = 2;
 					} // SerUmSendBitNr == SerUmSendStart
-				else if (SerUmSendBitNr == SerUmSendWarte && !PufferLeer(&SendePuffer) && KurzTimerVal(&MachineStartupTimer) > KurzTimerFreq * 15 / 10)
+				else if (SerUmSendBitNr == SerUmSendWarte && !PufferLeer(&SendePuffer) && KurzTimerVal(&MachineStartupTimer) > KurzTimerFreq * 15 / 10 && !WarteStartupQuitt)
 					{
 					SerUmSendDaten = PufferAusg(&SendePuffer);
 					SerUmSendBitNr = SerUmSendStart;
@@ -1197,15 +1395,13 @@ void itelex_timerEvent(void)
 			if (SerUmSendBitNr == 8) // Stop-Bit läuft
 				{
 				NeuMark = true;
-				if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 12 : 14)) // 12 und 14 weil ein weiterer Zyklus in SerUmSendWarte verbracht wird.
-				//if (++SerUmTickZaehlerSend >= (SendenBeschleunigen ? 12 : 16)) // HACK Wert 16: Simulation zu schneller Sender
-				//if (++SerUmTickZaehlerSend >= ((!get_Taste() || SendenBeschleunigen) ? 12 : 14)) // HACK Test des schnellen Sendens....
+				if (++SerUmTickZaehlerSend >= SerUmTicksProStopBit - (SendenBeschleunigen ? 3 : 1)) // 1 weil ein weiterer Zyklus in SerUmSendWarte verbracht wird.
 					SerUmSendBitNr = SerUmSendWarte; // fertig für die nächsten Daten
 				}
 			else
 				{ // Start oder Datenbit läuft
 				NeuMark = BIT_IS_SET(SerUmSendDaten, 7);
-				if (++SerUmTickZaehlerSend >= 10)
+				if (++SerUmTickZaehlerSend >= SerUmTicksProBit)
 					{
 					SerUmSendDaten <<= 1;
 					SerUmSendBitNr++;
@@ -1436,6 +1632,7 @@ void ModusWechsel(TModus neu)
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
 			StartKurzTimer(&SelbstAnrufTimer);
+			WarteStartupQuitt = false;
 			break;
 	
 		// Gehend = vom internen Anschluss zum Netz, Reservierung ist eingegangen
@@ -1466,6 +1663,7 @@ void ModusWechsel(TModus neu)
 			SocketAnzahlZeichenGesendet = 0;
 			SocketAnzahlZeichenQuittiert = 0;
 			SocketSendeFehlerZaehler = 0;
+			WarteStartupQuitt = false;
 			StartLangTimer(&BeideRuhigTimer);
 			break;
 	
@@ -1474,6 +1672,7 @@ void ModusWechsel(TModus neu)
 			Wahlziffern = 0;
 			TlnDatenInit(&GewaehlterTln);
 			TlnServerAbfrageWiederholungssperre = true; // wird nach erster Ziffer auf false gesetzt
+			SeriellUmsetzInit(); // für den Fall eines Wechsels nach #ModPufferDruckUndSchluss wegen nicht erfolgreicher Verbindung
 			StartKurzTimer(&WahlPauseTimer);
 			break;
 	
@@ -1488,6 +1687,7 @@ void ModusWechsel(TModus neu)
 			LED_on(GELB);
 			LED_off(GRUEN);
 			LED_off(BLAU);
+			SeriellUmsetzInit();
 			StartKurzTimer(&SchreibPauseTimer);
 			StartLangTimer(&BeideRuhigTimer);
 			break;
@@ -1511,7 +1711,6 @@ void ModusWechsel(TModus neu)
 			PufferInit(&SendePuffer);
 			PufferInit(&EmpfPuffer); 
 			BaudotMode = 0;
-			SeriellUmsetzInit();
 			AsciiDruckPuffer[0] = '\0';
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
@@ -1521,6 +1720,7 @@ void ModusWechsel(TModus neu)
 			SocketAnzahlZeichenGesendet = 0;
 			SocketAnzahlZeichenQuittiert = 0;
 			SocketSendeFehlerZaehler = 0;
+			WarteStartupQuitt = false;
 			break;
 
 		case ModKommendEinschalten:
@@ -1531,10 +1731,13 @@ void ModusWechsel(TModus neu)
 			break;
 		
 		case ModKommendWarteEinQuitt: // Warte auf Einschalt-Quittung des Endgeräts
+			// TODO 1 prüfen ob das auch mit WarteStartupQuitt erledigt werden kann
 			SET_BIT_Status(StatBit_FsBefBetrieb);
 			SET_BIT_Status(StatBit_FsBefEin);
 			StartKurzTimer(&BusQuittTimer);
 			StartLangTimer(&BeideRuhigTimer);
+			WarteStartupQuitt = false;
+			SeriellUmsetzInit();
 			break;
 	
 		case ModKommendVerbunden: 
@@ -1546,7 +1749,7 @@ void ModusWechsel(TModus neu)
 			StartKurzTimer(&SchreibPauseTimer);
 			StartLangTimer(&BeideRuhigTimer);
 			break;
-	
+			
 		case ModPufferDruckUndSchluss: 
 			CLR_BIT_Status(StatBit_Verbunden);
 			StartLangTimer(&BeideRuhigTimer);
@@ -1584,6 +1787,7 @@ void ModusWechsel(TModus neu)
 			SocketAnzahlZeichenQuittiert = 0;
 			SocketSendeFehlerZaehler = 0;
 			StartLangTimer(&BeideRuhigTimer);
+			WarteStartupQuitt = false;
 			break;
 	
 		case ModHtmlChatVerbunden: 
@@ -1625,6 +1829,7 @@ void ModusWechsel(TModus neu)
 			AsciiDruckPuffer[0] = '\0';
 			AsciiHilfPuffer[0] = '\0';
 			AsciiHilfZeilenanfang = 0;
+			WarteStartupQuitt = false;
 			break;
 			
 		case ModNamensucheEingabe:
@@ -1638,6 +1843,7 @@ void ModusWechsel(TModus neu)
 			LED_on(GELB);
 			LED_off(GRUEN);
 			LED_off(BLAU);
+			SeriellUmsetzInit();
 			StartKurzTimer(&SchreibPauseTimer);
 			NamensucheSuchtext[0] = '\0';
 
@@ -1691,6 +1897,7 @@ void ModusWechsel(TModus neu)
 			SeriellUmsetzInit();
 			SendenBeschleunigen = false;
 			StartLangTimer(&BeideRuhigTimer);
+			WarteStartupQuitt = false;
 			break;
 		
 		case ModEmailPOPDruckend:
@@ -1799,7 +2006,7 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 	uint8_t TestVerbParter = 0;
 	
 	// Durchwahl prüfen...
-	if (aDurchwahl * 2 >= BusAdrMin && aDurchwahl * 2 <= BusAdrEndgeraetMax)
+	if (aDurchwahl * 2 >= BusAdrMin && aDurchwahl * 2 <= BusAdrMax)
 		{
 		TestVerbParter = aDurchwahl * 2;
 		Stat = GetStatus(TestVerbParter);
@@ -1848,7 +2055,7 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 			// nächsten probieren
 			TestVerbParter += 2;
 			
-			if (TestVerbParter > BusAdrEndgeraetMax)
+			if (TestVerbParter > BusAdrMax)
 				// Ende der Liste --> also von vorn.
 				TestVerbParter = BusAdrMin;
 				
@@ -2545,7 +2752,6 @@ static void SocketBearbeiten()
 	// --------------------------------------------------
 	if (iTelexSocketHandle != NO_SOCKET_USED 
 		&& iTelexSocketAbbauGeplant 
-		// && iTelexSocketMode == SocketOriginate   //! \todo ist das richtig so?
 		&& KurzTimerVal(&iTelexSocketAbbauVerzoegerung) > KurzTimerFreq * 15/10 // 1,5 Sekunden nach letzter Sendung...
 		&& SocketOutBufUsed == 0
 		&& SocketInBufUsed == 0)
@@ -2984,7 +3190,20 @@ static int16_t AnwahlNummerInAsciiPuffer(bool InPufferLoeschen)
 			else
 				return 0;
 			} // zweites Zeichen ist Ziffer
-		else if (AsciiDruckPuffer[1] == '\0')
+		else if (AsciiDruckPuffer[1] == '-')
+			{
+			if (AsciiDruckPuffer[2] == '*') // *-* wird vom Wetterdienst benutzt -> Hauptstelle anrufen
+				{
+				if (InPufferLoeschen)
+					memmove(AsciiDruckPuffer, AsciiDruckPuffer + 3, strlen(AsciiDruckPuffer) + 1 - 3);
+				return Hauptstelle >> 1;
+				}
+			else if (AsciiDruckPuffer[2] == '\0') // unvollständig
+				return -1;
+			else
+				return 0;
+			}
+		else if (AsciiDruckPuffer[1] == '\0') // unvollständig
 			return -1;
 		else
 			return 0;
@@ -3145,8 +3364,16 @@ static void WahlAbbruchMeldung(char *msg)
 			strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 			if (Modus == ModGehendWaehlen)
 				{ 
-				BusSenden(BusQuittEin);
-				StartKurzTimer(&MachineStartupTimer);
+				if (TWIHandshakeNeu)
+					{
+					BusSenden(BusKdoEin); 
+					WarteStartupQuitt = true;
+					}
+				else
+					{
+					BusSenden(BusQuittEin); 
+					StartKurzTimer(&MachineStartupTimer);
+					}
 				ModusWechsel(ModPufferDruckUndSchluss);
 				}
 			}
@@ -3265,22 +3492,42 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 				if (Modus == ModKommendVerbVorstufe)
 					// ID#311 *******************************************************
 					{
-					if (AnwahlNummerInAsciiPuffer(false) >= 0)
+					bool AnrufAbweisen = false; // with abhängig vom Modus jetzt gesetzt
+					
+					// TODO TEST:::
+					if (AsciiEmpfModus == AsciiModusAus)
+						AnrufAbweisen = true; // unabhängig davon ob mit Durchwahl oder nicht
+						
+					else if (AnwahlNummerInAsciiPuffer(false) >= 0)
 						{
 						Durchwahl = AnwahlNummerInAsciiPuffer(true);
-						if (ExternDurchwahlPruefen(&Durchwahl))
+						
+						if (AsciiEmpfModus == AsciiModusNurMitDurchwahl && Durchwahl == 0)
+							AnrufAbweisen = true;
+						else if (ExternDurchwahlPruefen(&Durchwahl))
 							{
 							ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
 							}
 						else
 							{ 
-							SendeStopkommando(PSTR("na")); //! \todo Test
-							iTelexSocketAbbauGeplant = true;
-							ModusWechsel(ModWarteGrundstellung);
+							SendeStopkommando(PSTR("na"));
+							AnrufAbweisen = true;
 							}
 							
 						}
 					// sonst auf weitere Zeichen warten.
+					
+					if (AnrufAbweisen)
+						{ // Ascii-Modus verboten
+						if (ProtokollLevel >= AblaufInfo)
+							{
+							ProtokollierenITelex();
+							ProtokollierenInt_P(PSTR("*Ascii-Anruf abgewiesen (AsciiEmpfModus=%u)\r\n"), AsciiEmpfModus);
+							}
+						iTelexSocketAbbauGeplant = true;
+						ModusWechsel(ModWarteGrundstellung);
+						}
+						
 					}
 
 				} // ASCII-Zeichen oder WR oder ZL
@@ -3425,8 +3672,19 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					} // if Modus == ModKommendVerbVorstufe
 				else if (Modus == ModGehendWaehlen)
 					{ // ID#227 **************************************************
-					BusSenden(BusQuittEin);
-					StartKurzTimer(&MachineStartupTimer);
+					if (ProtokollLevel >= AblaufInfo)
+						ProtokollierenITelex_P(PSTR("Quittungstelegramm erhalten -> Einschalt-Kdo/Quit an TWI\r\n" ));
+				
+					if (TWIHandshakeNeu)
+						{
+						BusSenden(BusKdoEin);
+						WarteStartupQuitt = true;
+						}
+					else
+						{
+						BusSenden(BusQuittEin);
+						StartKurzTimer(&MachineStartupTimer);
+						}
 					ModusWechsel(ModGehendVerbunden);
 					}
 				if (len >= 1)
@@ -3990,13 +4248,21 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 				if (ProtokollLevel >= AblaufInfo)
 					{
 					ProtokollierenITelex();
-					ProtokollierenInt_P(PSTR("Client-Socket #%d SMTP erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n"), iTelexSocketHandle);
+					ProtokollierenInt_P(PSTR("Client-Socket #%d SMTP erfolgreich geoeffnet -> Einschalt-Kdo/Quit an TWI\r\n"), iTelexSocketHandle);
 					}
 					
-				BusSenden(BusQuittEin); 
-					//! \todo prüfen, ob der Start des FS nicht auch an das Ende der Authentifizierung am Email Server verschoben werden kann.
-					// Dann aber auch Testen, was bei voerzeitigem Abbruch der Verbindung passiert.
-				StartKurzTimer(&MachineStartupTimer);
+				//! \todo prüfen, ob der Start des FS nicht auch an das Ende der Authentifizierung am Email Server verschoben werden kann.
+				// Dann aber auch Testen, was bei voerzeitigem Abbruch der Verbindung passiert.
+				if (TWIHandshakeNeu)
+					{
+					BusSenden(BusKdoEin); 
+					WarteStartupQuitt = true;
+					}
+				else
+					{
+					BusSenden(BusQuittEin); 
+					StartKurzTimer(&MachineStartupTimer);
+					}
 				ModusWechsel(ModGehendVerbunden);
 				return 0; // gut
 				}
@@ -4063,14 +4329,22 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 	
 	if (td->AdrArt == AsciiHostname || td->AdrArt == AsciiIP)
 		{ // ID#226 *********************************************
-		BusSenden(BusQuittEin);
 		if (ProtokollLevel >= AblaufInfo)
 			{
 			ProtokollierenITelex();
-			ProtokollierenInt_P(PSTR("Client-Socket #%d Ascii erfolgreich geoeffnet -> Einschalt-Quittung an TWI\r\n"), iTelexSocketHandle);
+			ProtokollierenInt_P(PSTR("Client-Socket #%d Ascii erfolgreich geoeffnet -> Einschalt-Kdo/Quit an TWI\r\n"), iTelexSocketHandle);
 			}
-			
-		StartKurzTimer(&MachineStartupTimer);
+
+		if (TWIHandshakeNeu)
+			{
+			BusSenden(BusKdoEin);
+			WarteStartupQuitt = true;
+			}
+		else
+			{
+			BusSenden(BusQuittEin);
+			StartKurzTimer(&MachineStartupTimer);
+			}
 		ModusWechsel(ModGehendVerbunden);
 		iTelexSocketProtokoll = Ascii;
 		return 0;
@@ -4280,9 +4554,9 @@ void AsciiDruckPufferVerarbeiten()
 
 		if (ProtokollLevel >= DatenDetailliert)
 			{
-			ProtokollierenITelex(); // HACK
+			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Ascii-Verarbeitung: %u Zeichen aus AsciiHilfPuffer verarbeitet,"), ki);
-			ProtokollierenInt_P(PSTR("BaudotMode = %d"), BaudotMode);
+			ProtokollierenInt_P(PSTR("BaudotMode = %d\r\n"), BaudotMode);
 			}
 			
 		if (ki > 0)
@@ -4402,8 +4676,8 @@ bool CheckTCPServerConnect(long IP, unsigned int Port)
 	
 	
 	// Behelf: Port 11811 erstmal ausschließen TODO entfernen und durch "rückgängigmachen" im Erfolgsfall ersetzen.
-	if (Port == 11811)
-		return true;
+	// if (Port == 11811)
+		// return true;
 	
 	NeuI = ServSocketLogMaxEntries;
 	
@@ -4445,6 +4719,7 @@ bool CheckTCPServerConnect(long IP, unsigned int Port)
 //! Ausgabe der Einträge in der Zugriffs-Tabelle für kommende TCP-Verbindungen
 //----------------------------------------------------------------------------
 //! Macht den Puffer #DiagnosePuffer so voll es geht.
+
 static void PrintServSocketLogTabEntry()
 	{
 	uint8_t i; // Index in der ServSocketLogTab
@@ -4574,7 +4849,17 @@ void itelex_thread()
 					ModusWechsel(ModEmailPOPDruckend); 
 					}
 				
-				else
+				else if (WarteStartupQuitt)
+					{ 
+					if (ProtokollLevel >= AblaufInfo)
+						{
+						ProtokollierenITelex();
+						ProtokollierenInt_P(PSTR("TWI Einschaltquittung fuer gehend / Modus %d ueber TWI erhalten\r\n"), Modus);
+						}
+					WarteStartupQuitt = false;
+					}
+				
+				else 
 					FalschCodeEmpfangen(BusQuittEin);
 					
 				break;
@@ -4584,7 +4869,7 @@ void itelex_thread()
 				if (ProtokollLevel >= AblaufInfo)
 					ProtokollierenITelex_P(PSTR("TWI Wahlaufforderung intern / kommend\r\n" ));
 					
-				FalschCodeEmpfangen(BusQuittEin);
+				FalschCodeEmpfangen(BusKdoWahlFreigabe);
 				break;
 				
 			case BusKdoWahlziffer0 ... BusKdoWahlziffer9:
@@ -4615,11 +4900,19 @@ void itelex_thread()
 					if (Wahlziffern == 0 && Code == BusKdoWahlziffer0)
 						{ // Namenssuche starten.
 						if (ProtokollLevel >= AblaufInfo)
-							ProtokollierenITelex_P(PSTR("Namenssuche gestartet -> Einschalt-Quittung an TWI\r\n" ));
+							ProtokollierenITelex_P(PSTR("Namenssuche gestartet -> Einschalt-Kdo/Quit an TWI\r\n" ));
 						AsciiDruckPuffer[0] = '\0';
-						BusSenden(BusQuittEin);
+						if (TWIHandshakeNeu)
+							{
+							BusSenden(BusKdoEin);
+							WarteStartupQuitt = true;
+							}
+						else
+							{
+							BusSenden(BusQuittEin);
+							StartKurzTimer(&MachineStartupTimer);
+							}
 						ModusWechsel(ModNamensucheEingabe);
-						StartKurzTimer(&MachineStartupTimer);
 						}
 						
 					else // es war keine 0 als erster Stelle
@@ -4670,7 +4963,7 @@ void itelex_thread()
 					} // if Modus == ModGehendWaehlen
 					
 				else
-					FalschCodeEmpfangen(BusQuittEin);
+					FalschCodeEmpfangen(Code);
 					
 				break; // case BusKdoWahlziffer0 ... BusKdoWahlziffer9:
 				
@@ -4820,10 +5113,18 @@ void itelex_thread()
 		{ // es wurden Daten empfangen, also schnellstens Endgerät anschmeißen
 		// ID#227 Teil 2 *******************************************************
 		if (ProtokollLevel >= AblaufInfo)
-			ProtokollierenITelex_P(PSTR("Angerufener hat geantwortet -> Einschaltung intern\r\n" ));
+			ProtokollierenITelex_P(PSTR("Angerufener hat geantwortet -> Einschalt-Kdo/Quit an TWI\r\n" ));
 			
-		BusSenden(BusQuittEin);
-		StartKurzTimer(&MachineStartupTimer);
+		if (TWIHandshakeNeu)
+			{
+			BusSenden(BusKdoEin);
+			WarteStartupQuitt = true;
+			}
+		else
+			{
+			BusSenden(BusQuittEin);
+			StartKurzTimer(&MachineStartupTimer);
+			}
 		ModusWechsel(ModGehendVerbunden);
 		}
 		
@@ -6192,7 +6493,9 @@ void itelex_cgi_debug( void * pStruct )
 				 TeilnehmerServerAdresse[i], TeilnehmerServerFehlerZaehler[i], LangTimerVal(&TeilnehmerServerSperrTimer[i]));
 		}
 
-	/*
+	//*
+	PRINTVAL(BusVerbPartner);
+	PRINTVAL(SerUmTicksProBit);
 	PRINTVAL(BusEmpfMark);
 	PRINTVAL(SerUmTickZaehlerEmpf);
 	PRINTVAL(SerUmEmpfBitNr); 
@@ -6655,41 +6958,40 @@ const PROGMEM char FesteHst_P[] = "FESTEHPST";
 const PROGMEM char MeldungsdruckLevel_P[] = "MELDRUCK";
 const PROGMEM char AlternBeiBes_P[] = "ALTERNBEIBES";
 const PROGMEM char DurchwahlTabelle_P[] = "DURCHWAHLTAB";
+const PROGMEM char BaudrateListe_P[] = "BAUDTAB";
+const PROGMEM char TWIHandshakeNeu_P[] = "TWINEU";
 const PROGMEM char DatumDruckModus_P[] = "AUTODATUM";
+const PROGMEM char AsciiEmpfModus_P[] = "ASCIIEMPF";
 const PROGMEM char Druckzeilenlaenge_P[] = "ZEILENLAENGE";
 const PROGMEM char UhrzeitVerteilen_P[] = "ZEITRUNDSEND";
 
-#endif // ITELEX_ANSCHLUSS
+#endif //def ITELEX_ANSCHLUSS
 
 
-	
+
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface zum Ändern der Einstellungen des iTelex-Interface bezüglich der Einbindung
- * in das lokale iTelex-System
+ * in das lokale iTelex-System, Teil interne Systemzusammenstellung
  * \param 	pStruct	Struktur auf den HTTP_Request
  * \return	NONE
  */
 /*------------------------------------------------------------------------------------------------------------*/
  
-void itelex_cgi_config_intern(void *pStruct)
+#ifdef ITELEX_ANSCHLUSS
+
+void itelex_cgi_config_intern_konfiguration(void *pStruct)
 	{
 	static TSprache Sprache;
 	
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
-	char Buf[35];
+	char Buf[sizeof(BaudrateListe)];
 
 	PruefeSprache(pStruct, &Sprache);	
 	
 	if (!KonfigFreigabe(pStruct, Sprache, true))
 		return;
 
-	const char *AutoDatumSelList[4];
-	AutoDatumSelList[0] = ISTR(DatumDruckKein, Sprache);
-	AutoDatumSelList[1] = ISTR(DatumDruckLokal, Sprache);
-	AutoDatumSelList[2] = ISTR(DatumDruckAnrufer, Sprache);
-	AutoDatumSelList[3] = ISTR(DatumDruckBeide, Sprache);
-	
 	const char *AltSuchSelList[3];
 	AltSuchSelList[0] = ISTR(ASBB_Niemals, Sprache);
 	AltSuchSelList[1] = ISTR(ASBB_NurHauptstelle, Sprache);
@@ -6699,9 +7001,8 @@ void itelex_cgi_config_intern(void *pStruct)
 
 	if ( http_request->argc == 0 )
 		{
-		CgiFormStartTabbed_P(PSTR("itelexcfg-intern.cgi"));
+		CgiFormStartTabbed_P(PSTR("itelexcfg-intkonf.cgi"));
 
-		#ifdef ITELEX_ANSCHLUSS
 		AdresseZuWahlStr(BusEigenAdresse, Buf);
 		CgiFormInputFieldText_P(ISTR(EigeneAmtsnummer, Sprache), EigeneNummer_P, 2, Buf);
 
@@ -6715,30 +7016,10 @@ void itelex_cgi_config_intern(void *pStruct)
 		readConfig_P(DurchwahlTabelle_P, Buf);
 		CgiFormInputFieldText_P(ISTR(DurchwahlenListe, Sprache), DurchwahlTabelle_P, 31, Buf);
 
-		CgiFormDropdown_P(ISTR(DatumDruckModus, Sprache), DatumDruckModus_P, 4, AutoDatumSelList, DatumDruckModus);
+		CgiFormInputFieldText_P(ISTR(BaudrateListe, Sprache), BaudrateListe_P, sizeof(BaudrateListe)-1, BaudrateListe);
 
-		itoa(Druckzeilenlaenge, Buf, 10); // 10 ist die Basis für Dezimal!
-		CgiFormInputFieldText_P(ISTR(Druckzeilenlaenge, Sprache), Druckzeilenlaenge_P, 3, Buf);
+		CgiFormCheckbox_P(ISTR(NeuesTWIProtokoll, Sprache), TWIHandshakeNeu_P, TWIHandshakeNeu);
 		
-		#endif //def ITELEX_ANSCHLUSS
-		
-		CgiFormCheckbox_P(ISTR(UhrzeitVerteilen, Sprache), UhrzeitVerteilen_P, UhrzeitVerteilen);
-
-		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 2, ProtokollLevel + (SocketProtokollEin ? 10 : 0));
-		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
-
-		#ifdef ITELEX_ANSCHLUSS
-		CgiFormInputFieldULong_P(ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
-		#endif //def ITELEX_ANSCHLUSS
-		
-		CgiFormInputFieldText_P(ISTR(KonfigPasswort, Sprache), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
-		
-		CgiFormCheckbox_P(ISTR(TlnVerzeichnisOffen, Sprache), TlnBuchOffen_P, TlnBuchOffen);
-
-		#ifdef ITELEX_ANSCHLUSS
-		CgiFormCheckbox_P(ISTR(LangeDienstmeldungen, Sprache), LangeDienstmeldungen_P, LangeDienstmeldungen);
-		#endif //def ITELEX_ANSCHLUSS
-
 		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
 		}
 	else // argc > 0
@@ -6746,12 +7027,10 @@ void itelex_cgi_config_intern(void *pStruct)
 		uint8_t Neu;
 
 		printf_P(ISTR(NeueEinstellungen, Sprache));
-		printf_P(PSTR("<a href=\"itelexcfg-intern.cgi\">"));
+		printf_P(PSTR("<a href=\"itelexcfg-intkonf.cgi\">"));
 		printf_P(ISTR(Weiter, Sprache));
 		printf_P(PSTR("</a>"));
 
-		#ifdef ITELEX_ANSCHLUSS
-		
 		// Eigene Nummer
 		// -------------
 		if (PharseCheckName_P(http_request, EigeneNummer_P)) // CgiCheckULong_P geht nicht, da WahlZuAdresse() verwendet wird
@@ -6776,7 +7055,7 @@ void itelex_cgi_config_intern(void *pStruct)
 			else
 				printf_P(ISTR(KonnteNichtGeaendertWerden, Sprache));
 			}
-		
+
 		// Nummer Hauptstelle
 		// ------------------
 		if (PharseCheckName_P(http_request, Hauptstelle_P)) // CgiCheckULong_P geht nicht, da WahlZuAdresse() verwendet wird
@@ -6809,7 +7088,7 @@ void itelex_cgi_config_intern(void *pStruct)
 		// -------------------------
 		AlternativSucheBeiBesetzt = CgiCheckULong_P(http_request, ISTR(AlternativSucheBeiBesetzt, Sprache), AlternBeiBes_P,
 													AlternativSucheBeiBesetzt, AltSuch_Niemals, AltSuch_AuchDurchwahl, Sprache);
-		
+
 		// DurchwahlTabelle
 		// ----------------
 		// hier ist Neu nur ein Flag
@@ -6823,8 +7102,8 @@ void itelex_cgi_config_intern(void *pStruct)
 			if (Neu)
 				{
 				// Durchwahl-Liste aus CGI-Anfrage holen
-				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, DurchwahlTabelle_P)], 33);
-				Buf[33] = '\0';
+				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, DurchwahlTabelle_P)], sizeof(Buf) - 1);
+				Buf[sizeof(Buf) - 1] = '\0';
 				
 				// ...dekodieren... (in Liste speichern)
 				DurchwahlTabelleDekodieren(Buf);
@@ -6862,10 +7141,156 @@ void itelex_cgi_config_intern(void *pStruct)
 				}
 			}
 
+		// Baudraten-Liste
+		// ---------------
+		if (PharseCheckName_P(http_request, BaudrateListe_P))
+			{
+			printf_P(PSTR("<br>"));
+			printf_P(ISTR(BaudrateListe, Sprache));
+
+			if (readConfig_P(BaudrateListe_P, Buf) == 1)
+				Neu = strcmp(Buf, http_request->argvalue[PharseGetValue_P(http_request, BaudrateListe_P)]) != 0;
+			else
+				Neu = true;
+		
+			if (Neu)
+				{
+				// Baudrate-Liste aus CGI-Anfrage holen
+				strncpy(Buf, http_request->argvalue[PharseGetValue_P(http_request, BaudrateListe_P)], sizeof(Buf) - 1);
+				Buf[sizeof(Buf) - 1] = '\0';
+				
+				// ...probehalber dekodieren...
+				int16_t res;
+				res = BaudrateErmitteln(0, Buf); // 0 ist eine unerlaubte Nebenstellen-Nummer, 
+					// daher muss der "Code-String" Buf bis zum Ende überprüft werden.
+
+				if (res == 1)
+					{
+					printf_P(ISTR(GeaendertIn, Sprache));
+					printf_P(PSTR(": %s"), Buf);
+					strncpy(BaudrateListe, Buf, sizeof(BaudrateListe));
+					changeConfig_P(BaudrateListe_P, Buf);
+					}
+				else if (res <= 0)
+					{
+					printf_P(PSTR(": <b>"));
+					printf_P(ISTR(FehlerMitPos, Sprache));
+					char h = Buf[-res]; // zeichen an Fehlerposition retten
+					Buf[-res] = '\0';
+					printf_P(PSTR("%s&gt;&gt;&gt;%c%s</b>"), Buf, h, Buf + (-res) + 1);
+					}
+					
+				}
+			else
+				{
+				printf_P(ISTR(Unveraendert, Sprache));
+				printf_P(PSTR(": %s"), BaudrateListe);
+				}
+			}
+
+		// neues TWI-Protokoll
+		// -------------------
+		TWIHandshakeNeu = CgiCheckBool_P(http_request, ISTR(NeuesTWIProtokoll, Sprache), TWIHandshakeNeu_P, TWIHandshakeNeu, Sprache);
+		
+		SpeichereSpracheAlsLokal(Sprache);
+		
+		} // else argc > 0
+		
+	cgi_PrintHttpheaderEnd();
+
+	} // itelex_cgi_config_intern_konfiguration()
+
+#endif //def ITELEX_ANSCHLUSS
+	
+
+/*------------------------------------------------------------------------------------------------------------*/
+/*!\brief Das CGI-Interface zum Ändern der Einstellungen des iTelex-Interface bezüglich der Einbindung
+ * in das lokale iTelex-System, Systemverhalten allgemein
+ * \param 	pStruct	Struktur auf den HTTP_Request
+ * \return	NONE
+ */
+/*------------------------------------------------------------------------------------------------------------*/
+ 
+void itelex_cgi_config_intern_betrieb(void *pStruct)
+	{
+	static TSprache Sprache;
+	
+	struct HTTP_REQUEST * http_request;
+	http_request = (struct HTTP_REQUEST *) pStruct;
+	char Buf[35];
+
+	PruefeSprache(pStruct, &Sprache);	
+	
+	if (!KonfigFreigabe(pStruct, Sprache, true))
+		return;
+
+	const char *AutoDatumSelList[4];
+	AutoDatumSelList[0] = ISTR(DatumDruckKein, Sprache);
+	AutoDatumSelList[1] = ISTR(DatumDruckLokal, Sprache);
+	AutoDatumSelList[2] = ISTR(DatumDruckAnrufer, Sprache);
+	AutoDatumSelList[3] = ISTR(DatumDruckBeide, Sprache);
+	
+	const char *AsciiEmpfModusSelList[3];
+	AsciiEmpfModusSelList[AsciiModusAus] = ISTR(AsciiModus_Nie, Sprache);
+	AsciiEmpfModusSelList[AsciiModusNurMitDurchwahl] = ISTR(AsciiModus_NurBeiDurchwahl, Sprache);
+	AsciiEmpfModusSelList[AsciiModusEin] = ISTR(AsciiModus_Immer, Sprache);
+
+	cgi_PrintHttpheaderStart();
+
+	if ( http_request->argc == 0 )
+		{
+		CgiFormStartTabbed_P(PSTR("itelexcfg-intbetr.cgi"));
+
+		#ifdef ITELEX_ANSCHLUSS
+		CgiFormDropdown_P(ISTR(DatumDruckModus, Sprache), DatumDruckModus_P, 4, AutoDatumSelList, DatumDruckModus);
+		
+		CgiFormDropdown_P(ISTR(AsciiEmpfModus, Sprache), AsciiEmpfModus_P, 3, AsciiEmpfModusSelList, AsciiEmpfModus);
+
+		itoa(Druckzeilenlaenge, Buf, 10); // 10 ist die Basis für Dezimal!
+		CgiFormInputFieldText_P(ISTR(Druckzeilenlaenge, Sprache), Druckzeilenlaenge_P, 3, Buf);
+		
+		#endif //def ITELEX_ANSCHLUSS
+		
+		CgiFormCheckbox_P(ISTR(UhrzeitVerteilen, Sprache), UhrzeitVerteilen_P, UhrzeitVerteilen);
+
+		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 2, ProtokollLevel + (SocketProtokollEin ? 10 : 0));
+		
+		#ifdef ITELEX_TLNSERVER
+		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
+		#endif //def ITELEX_TLNSERVER
+
+		#ifdef ITELEX_ANSCHLUSS
+		CgiFormInputFieldULong_P(ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, 2, MeldungsdruckLevel);
+		#endif //def ITELEX_ANSCHLUSS
+		
+		CgiFormInputFieldText_P(ISTR(KonfigPasswort, Sprache), KonfigPasswort_P, KonfigPasswortLen, KonfigPasswort);
+		
+		CgiFormCheckbox_P(ISTR(TlnVerzeichnisOffen, Sprache), TlnBuchOffen_P, TlnBuchOffen);
+
+		#ifdef ITELEX_ANSCHLUSS
+		CgiFormCheckbox_P(ISTR(LangeDienstmeldungen, Sprache), LangeDienstmeldungen_P, LangeDienstmeldungen);
+		#endif //def ITELEX_ANSCHLUSS
+
+		CgiFormFinish_P(ISTR(EinstellungenUebernehmen, Sprache));
+		}
+	else // argc > 0
+		{
+		printf_P(ISTR(NeueEinstellungen, Sprache));
+		printf_P(PSTR("<a href=\"itelexcfg-intbetr.cgi\">"));
+		printf_P(ISTR(Weiter, Sprache));
+		printf_P(PSTR("</a>"));
+
+		#ifdef ITELEX_ANSCHLUSS
+		
 		// DatumDruckModus
 		// ----------------
 		DatumDruckModus = CgiCheckULong_P(http_request, ISTR(DatumDruckModus, Sprache), DatumDruckModus_P,
 										  DatumDruckModus, DatumDruckKein, DatumDruckBeide, Sprache);
+			
+		// AsciiEmpfModus
+		// --------------
+		AsciiEmpfModus = CgiCheckULong_P(http_request, ISTR(AsciiEmpfModus, Sprache), AsciiEmpfModus_P,
+										 AsciiEmpfModus, AsciiModusAus, AsciiModusEin, Sprache);
 			
 		// Druckzeilenlaenge
 		// -----------------
@@ -6884,8 +7309,10 @@ void itelex_cgi_config_intern(void *pStruct)
 		if (SocketProtokollEin)
 			ProtokollLevel -= 10;
 
+		#ifdef ITELEX_TLNSERVER
 		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 
 												ProtokollLevelTlnServ, 0, 9, Sprache);
+		#endif //def ITELEX_TLNSERVER
 
 		#ifdef ITELEX_ANSCHLUSS
 		MeldungsdruckLevel = CgiCheckULong_P(http_request, ISTR(DiagnoseLevel, Sprache), MeldungsdruckLevel_P, 
@@ -6914,7 +7341,7 @@ void itelex_cgi_config_intern(void *pStruct)
 		
 	cgi_PrintHttpheaderEnd();
 
-	} // itelex_cgi_config_intern()
+	} // itelex_cgi_config_intern_betrieb()
 	
 
 /*------------------------------------------------------------------------------------------------------------*/
@@ -7531,6 +7958,13 @@ extern void itelex_init1(void)
 	if (readConfig_P(DurchwahlTabelle_P, Buf) == 1)
 		DurchwahlTabelleDekodieren(Buf); // Ergebnis wird ignoriert
 
+	if (readConfig_P(BaudrateListe_P, BaudrateListe))
+		; // ok
+	else
+		strcpy_P(BaudrateListe, PSTR("*:50"));
+	
+	TWIHandshakeNeu = ReadConfigBool(TWIHandshakeNeu_P, false);
+	
 	if (readConfig_P(NetzRufnummer_P, Buf) == 1)
 		NetzRufnummer = atol(Buf);
 	else
@@ -7569,6 +8003,11 @@ extern void itelex_init1(void)
 	else
 		DatumDruckModus = DatumDruckBeide;
 	
+	if (readConfig_P(AsciiEmpfModus_P, Buf) == 1)
+		AsciiEmpfModus = atoi(Buf);
+	else
+		AsciiEmpfModus = AsciiModusEin;
+	
 	if (readConfig_P(Druckzeilenlaenge_P, Buf) == 1)
 		Druckzeilenlaenge = atoi(Buf);
 	else
@@ -7606,7 +8045,7 @@ extern void itelex_init1(void)
 	LangeDienstmeldungen = ReadConfigBool(LangeDienstmeldungen_P, false);
 	
 	UhrzeitVerteilen = ReadConfigBool(UhrzeitVerteilen_P, true);
-	
+
 	if (readConfig_P(MeldungsdruckLevel_P, Buf) == 1)
 		MeldungsdruckLevel = atoi(Buf);
 	else
@@ -7683,7 +8122,8 @@ extern void itelex_init1(void)
 		
 	Status = (1 << StatBit_Frei) | (1 << StatBit_LeitungKennung);
 
-	timer0_init(iTelexTimerFreq); 
+	timer0_init(iTelexTimerFreq); // TODO ggf. timer0_init() anpassen, indem der Prescaler besser ausgewählt wird.
+	
 	if (!timer0_RegisterCallbackFunction(itelex_timerEvent))
 		return;
 
@@ -7731,7 +8171,8 @@ void itelex_init2()
 	
 	#endif // ITELEX_ANSCHLUSS
 	
-	cgi_RegisterCGI( itelex_cgi_config_intern, PSTR("itelexcfg-intern.cgi"));
+	cgi_RegisterCGI( itelex_cgi_config_intern_konfiguration, PSTR("itelexcfg-intkonf.cgi"));
+	cgi_RegisterCGI( itelex_cgi_config_intern_betrieb, PSTR("itelexcfg-intbetr.cgi"));
 	cgi_RegisterCGI( itelex_cgi_config_extern, PSTR("itelexcfg-extern.cgi"));
 	cgi_RegisterCGI( itelex_cgi_config_sperren, PSTR("itelexcfg-sperren.cgi"));
 	cgi_RegisterCGI( itelex_cgi_debug, PSTR("itelex-debug.cgi"));
