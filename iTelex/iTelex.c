@@ -587,7 +587,7 @@ static uint8_t FalschGeheimzahlZaehler;
 typedef enum 
 	{
 	AsciiModusAus,
-	AsciiModusMitDurchwahl,
+	AsciiModusNurMitDurchwahl,
 	AsciiModusEin,
 	} TAsciiEmpfModus;
 	
@@ -3190,6 +3190,12 @@ static int16_t AnwahlNummerInAsciiPuffer(bool InPufferLoeschen)
 			else
 				return 0;
 			} // zweites Zeichen ist Ziffer
+		else if (AsciiDruckPuffer[1] == '-' && AsciiDruckPuffer[2] == '*') // *-* wird vom Wetterdienst benutzt -> Hauptstelle anrufen
+			{
+			if (InPufferLoeschen)
+				memmove(AsciiDruckPuffer, AsciiDruckPuffer + 3, strlen(AsciiDruckPuffer) + 1 - 3);
+			return Hauptstelle >> 1;
+			}
 		else if (AsciiDruckPuffer[1] == '\0')
 			return -1;
 		else
@@ -3479,22 +3485,42 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 				if (Modus == ModKommendVerbVorstufe)
 					// ID#311 *******************************************************
 					{
-					if (AnwahlNummerInAsciiPuffer(false) >= 0)
+					bool AnrufAbweisen = false; // with abhängig vom Modus jetzt gesetzt
+					
+					// TODO TEST:::
+					if (AsciiEmpfModus == AsciiModusAus)
+						AnrufAbweisen = true; // unabhängig davon ob mit Durchwahl oder nicht
+						
+					else if (AnwahlNummerInAsciiPuffer(false) >= 0)
 						{
 						Durchwahl = AnwahlNummerInAsciiPuffer(true);
-						if (ExternDurchwahlPruefen(&Durchwahl))
+						
+						if (AsciiEmpfModus == AsciiModusNurMitDurchwahl && Durchwahl == 0)
+							AnrufAbweisen = true;
+						else if (ExternDurchwahlPruefen(&Durchwahl))
 							{
 							ModusWechsel(ModKommendEinschalten); // entweder keine oder gültige Anwahl im Puffer
 							}
 						else
 							{ 
-							SendeStopkommando(PSTR("na")); //! \todo Test
-							iTelexSocketAbbauGeplant = true;
-							ModusWechsel(ModWarteGrundstellung);
+							SendeStopkommando(PSTR("na"));
+							AnrufAbweisen = true;
 							}
 							
 						}
 					// sonst auf weitere Zeichen warten.
+					
+					if (AnrufAbweisen)
+						{ // Ascii-Modus verboten
+						if (ProtokollLevel >= AblaufInfo)
+							{
+							ProtokollierenITelex();
+							ProtokollierenInt_P(PSTR("*Ascii-Anruf abgewiesen (AsciiEmpfModus=%u)\r\n"), AsciiEmpfModus);
+							}
+						iTelexSocketAbbauGeplant = true;
+						ModusWechsel(ModWarteGrundstellung);
+						}
+						
 					}
 
 				} // ASCII-Zeichen oder WR oder ZL
@@ -7199,7 +7225,7 @@ void itelex_cgi_config_intern_betrieb(void *pStruct)
 	
 	const char *AsciiEmpfModusSelList[3];
 	AsciiEmpfModusSelList[AsciiModusAus] = ISTR(AsciiModus_Nie, Sprache);
-	AsciiEmpfModusSelList[AsciiModusMitDurchwahl] = ISTR(AsciiModus_NurBeiDurchwahl, Sprache);
+	AsciiEmpfModusSelList[AsciiModusNurMitDurchwahl] = ISTR(AsciiModus_NurBeiDurchwahl, Sprache);
 	AsciiEmpfModusSelList[AsciiModusEin] = ISTR(AsciiModus_Immer, Sprache);
 
 	cgi_PrintHttpheaderStart();
