@@ -3190,13 +3190,20 @@ static int16_t AnwahlNummerInAsciiPuffer(bool InPufferLoeschen)
 			else
 				return 0;
 			} // zweites Zeichen ist Ziffer
-		else if (AsciiDruckPuffer[1] == '-' && AsciiDruckPuffer[2] == '*') // *-* wird vom Wetterdienst benutzt -> Hauptstelle anrufen
+		else if (AsciiDruckPuffer[1] == '-')
 			{
-			if (InPufferLoeschen)
-				memmove(AsciiDruckPuffer, AsciiDruckPuffer + 3, strlen(AsciiDruckPuffer) + 1 - 3);
-			return Hauptstelle >> 1;
+			if (AsciiDruckPuffer[2] == '*') // *-* wird vom Wetterdienst benutzt -> Hauptstelle anrufen
+				{
+				if (InPufferLoeschen)
+					memmove(AsciiDruckPuffer, AsciiDruckPuffer + 3, strlen(AsciiDruckPuffer) + 1 - 3);
+				return Hauptstelle >> 1;
+				}
+			else if (AsciiDruckPuffer[2] == '\0') // unvollständig
+				return -1;
+			else
+				return 0;
 			}
-		else if (AsciiDruckPuffer[1] == '\0')
+		else if (AsciiDruckPuffer[1] == '\0') // unvollständig
 			return -1;
 		else
 			return 0;

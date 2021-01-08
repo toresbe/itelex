@@ -610,7 +610,7 @@ program: all
 #	sleep 3
 #	avarice -2 -D -j com2 -x
 #	mode com1: BAUD=9600 PARITY=N DATA=8 STOP=1 to=off xon=off odsr=off octs=off dtr=on rts=on idsr=off
-	update/fboot.exe /C1 /B38400 /P$(TARGET).hex /V$(TARGET).hex
+	update/fboot.exe /C1 /B115200 /P$(TARGET).hex /V$(TARGET).hex
 
 	
 # Program the device via COM2
