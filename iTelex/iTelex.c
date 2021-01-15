@@ -2489,7 +2489,7 @@ static void RemoteServerBearbeiten()
 			return; // nichts mehr machbar hier.
 			}
 			
-		RemoteServerLinkSocketHandle = Connect2IP(RemoteServerIP, 49491); // HACK / TODO configurable Port
+		RemoteServerLinkSocketHandle = Connect2IP(RemoteServerIP, RemoteServerPort); 
 		
 		StartKurzTimer(&RemoteServerActionTimer); // erst nach dem Connect starten, damit der 5 sekunden-Timeout nicht mit gemessen wird.
 		
