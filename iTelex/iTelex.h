@@ -94,9 +94,8 @@ enum {
 	ITELEX_TLNSERV_PORT = 11811,
 	//!< Der TCP-Port für die Kommunikation mit den Teilnehmer-Servern.
 
-	RemoteServerPort = 49491;
+	RemoteServerPort = 49491,
 	//!< Der TCP-Port für die Kommunikation mit dem "RemoteServer" (= "Centralex" = "
-	
 	
 	TlnAdresseMax = 40,
 	//!< maximale Länge der Verbindungsadresse.
