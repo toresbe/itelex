@@ -1,3 +1,3 @@
-fboot.exe /C1 /B38400 /Pmain.hex /Vmain.hex
+fboot.exe /C1 /B57600 /Pmain.hex /Vmain.hex
 pause
 
