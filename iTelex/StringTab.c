@@ -43,7 +43,7 @@
 	// strde_Rufnummer, stren_Rufnummer, strit_Rufnummer, strnl_Rufnummer,
 	// strde_Name, stren_Name, strit_Name, strnl_Name, 
 
-const PROGMEM PGM_P IStrList[] = { 
+PROGMEM PGM_P const IStrList[] = { 
 
 #include "StringTab.h"
 	// hier stehen die "echten" _STRTABENTRY(xxx, "yyy", ...) drin.
