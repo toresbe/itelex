@@ -458,6 +458,8 @@ static TLangTimer RemoteServerErrorMessageDelay;
 static bool RemoteServerErrorMessageSent;
 	//!< if this flag is set the user shall already be informed about the failed remote servers
 	
+static uint16_t RemoteServerPort;
+
 	
 // =====================================================================
 	
@@ -7382,6 +7384,7 @@ const PROGMEM char NetzRufnummer_P[] = "NETZRUFNR";
 const PROGMEM char Geheimzahl_P[] = "PIN";
 const PROGMEM char DynIPAktiv_P[] = "DYNIPAKTIV";
 const PROGMEM char NetzPort_P[] = "NETZPORT";
+const PROGMEM char RemoteServerPort_P[] = "REMSERVPORT";
 const PROGMEM char SelbstAnrufPeriode_P[] = "SELBSTANPER";
 const PROGMEM char RemoteServerNutzen_P[] = "REMSERVAKTIV";
 
@@ -7981,6 +7984,11 @@ extern void itelex_init1(void)
 		NetzPort = atol(Buf);
 	else
 		NetzPort = ITELEX_PORT;
+
+	if (readConfig_P(RemoteServerPort_P, Buf) == 1)
+		RemoteServerPort = atol(Buf);
+	else
+		RemoteServerPort = RemoteServerPortDefault;
 
 	if (ReadConfigBool(DynIPAktiv_P, false))
 		DynIP_Phase = DynIP_Fehler; 
