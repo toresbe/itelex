@@ -7884,7 +7884,7 @@ END GROUP
 .debug_pubnames
  *(.debug_pubnames)
 
-.debug_info     0x00000000    0x39590
+.debug_info     0x00000000    0x39595
  *(.debug_info .gnu.linkonce.wi.*)
  .debug_info    0x00000000      0xa1a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6/crtatmega2561.o
  .debug_info    0x00000a1a       0xf2 apps/apps_init.o
@@ -7909,62 +7909,62 @@ END GROUP
  .debug_info    0x0000684e     0x1055 iTelex/CgiFormTools.o
  .debug_info    0x000078a3     0x1257 iTelex/ConfigNtp.o
  .debug_info    0x00008afa     0x299c iTelex/eMail.o
- .debug_info    0x0000b496      0x40d iTelex/Gemeinsam/BaudotCode.o
- .debug_info    0x0000b8a3      0x69f iTelex/Gemeinsam/BusKomm.o
- .debug_info    0x0000bf42      0x305 iTelex/Gemeinsam/FifoPuffer.o
- .debug_info    0x0000c247     0x308e iTelex/IspMaster.o
- .debug_info    0x0000f2d5     0x42b6 iTelex/StringTab.o
- .debug_info    0x0001358b      0x9b3 iTelex/SwTwi.o
- .debug_info    0x00013f3e      0x292 system/base64/base64.o
- .debug_info    0x000141d0      0x509 system/buffer/fifo.o
- .debug_info    0x000146d9      0xd0d system/config/eeconfig.o
- .debug_info    0x000153e6     0x2446 system/filesystem/fat.o
- .debug_info    0x0001782c      0x3b9 system/filesystem/filesystem.o
- .debug_info    0x00017be5      0x399 system/filesystem/partition.o
- .debug_info    0x00017f7e       0xcc system/math/checksum.o
- .debug_info    0x0001804a       0xf3 system/math/math.o
- .debug_info    0x0001813d      0x616 system/net/arp.o
- .debug_info    0x00018753      0xaab system/net/dhcpc.o
- .debug_info    0x000191fe      0x545 system/net/dns.o
- .debug_info    0x00019743       0x90 system/net/endian.o
- .debug_info    0x000197d3      0x58d system/net/ethernet.o
- .debug_info    0x00019d60      0x2ed system/net/icmp.o
- .debug_info    0x0001a04d      0x592 system/net/ip.o
- .debug_info    0x0001a5df      0x932 system/net/network.o
- .debug_info    0x0001af11      0x504 system/net/ntp.o
- .debug_info    0x0001b415      0xa12 system/net/udp.o
- .debug_info    0x0001be27      0x555 system/shell/shell.o
- .debug_info    0x0001c37c      0x47c system/stdout/stdout.o
- .debug_info    0x0001c7f8      0x11f system/string/string.o
- .debug_info    0x0001c917      0x19a system/thread/thread.o
- .debug_info    0x0001cab1     0x10f8 apps/httpd/files.o
- .debug_info    0x0001dba9      0x47d apps/httpd/httpd2_pharse.o
- .debug_info    0x0001e026      0x6e0 apps/httpd/httpd2.o
- .debug_info    0x0001e706      0x346 apps/httpd/cgibin/cgi-bin.o
- .debug_info    0x0001ea4c     0x1254 hardware/network/enc28j60.o
- .debug_info    0x0001fca0      0x16e hardware/spi/spi_0.o
- .debug_info    0x0001fe0e      0x179 hardware/spi/spi_1.o
- .debug_info    0x0001ff87      0x341 hardware/spi/spi_2.o
- .debug_info    0x000202c8      0x1a3 hardware/timer0/timer0.o
- .debug_info    0x0002046b      0x310 hardware/led/led_core.o
- .debug_info    0x0002077b      0x20c hardware/memory/xram.o
- .debug_info    0x00020987      0x35f hardware/spi/spi_core.o
- .debug_info    0x00020ce6      0x306 hardware/gpio/gpio_core.o
- .debug_info    0x00020fec      0xcde hardware/sd_raw/sd_raw.o
- .debug_info    0x00021cca      0x783 system/clock/clock.o
- .debug_info    0x0002244d     0x1f0b system/net/tcp.o
- .debug_info    0x00024358      0x8ee system/net/dyndns.o
- .debug_info    0x00024c46      0x2ed system/init.o
- .debug_info    0x00024f33      0x140 system/softreset/softreset.o
- .debug_info    0x00025073     0x11d6 iTelex/Protokoll.o
- .debug_info    0x00026249     0x36d2 iTelex/TlnBuch.o
- .debug_info    0x0002991b     0xf8d7 iTelex/iTelex.o
- .debug_info    0x000391f2      0x1cf main.o
- .debug_info    0x000393c1       0x9b C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6\libatmega2561.a(eerd_block.o)
- .debug_info    0x0003945c       0x9a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6\libatmega2561.a(eerd_byte.o)
- .debug_info    0x000394f6       0x9a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6\libatmega2561.a(eewr_byte.o)
+ .debug_info    0x0000b496      0x412 iTelex/Gemeinsam/BaudotCode.o
+ .debug_info    0x0000b8a8      0x69f iTelex/Gemeinsam/BusKomm.o
+ .debug_info    0x0000bf47      0x305 iTelex/Gemeinsam/FifoPuffer.o
+ .debug_info    0x0000c24c     0x308e iTelex/IspMaster.o
+ .debug_info    0x0000f2da     0x42b6 iTelex/StringTab.o
+ .debug_info    0x00013590      0x9b3 iTelex/SwTwi.o
+ .debug_info    0x00013f43      0x292 system/base64/base64.o
+ .debug_info    0x000141d5      0x509 system/buffer/fifo.o
+ .debug_info    0x000146de      0xd0d system/config/eeconfig.o
+ .debug_info    0x000153eb     0x2446 system/filesystem/fat.o
+ .debug_info    0x00017831      0x3b9 system/filesystem/filesystem.o
+ .debug_info    0x00017bea      0x399 system/filesystem/partition.o
+ .debug_info    0x00017f83       0xcc system/math/checksum.o
+ .debug_info    0x0001804f       0xf3 system/math/math.o
+ .debug_info    0x00018142      0x616 system/net/arp.o
+ .debug_info    0x00018758      0xaab system/net/dhcpc.o
+ .debug_info    0x00019203      0x545 system/net/dns.o
+ .debug_info    0x00019748       0x90 system/net/endian.o
+ .debug_info    0x000197d8      0x58d system/net/ethernet.o
+ .debug_info    0x00019d65      0x2ed system/net/icmp.o
+ .debug_info    0x0001a052      0x592 system/net/ip.o
+ .debug_info    0x0001a5e4      0x932 system/net/network.o
+ .debug_info    0x0001af16      0x504 system/net/ntp.o
+ .debug_info    0x0001b41a      0xa12 system/net/udp.o
+ .debug_info    0x0001be2c      0x555 system/shell/shell.o
+ .debug_info    0x0001c381      0x47c system/stdout/stdout.o
+ .debug_info    0x0001c7fd      0x11f system/string/string.o
+ .debug_info    0x0001c91c      0x19a system/thread/thread.o
+ .debug_info    0x0001cab6     0x10f8 apps/httpd/files.o
+ .debug_info    0x0001dbae      0x47d apps/httpd/httpd2_pharse.o
+ .debug_info    0x0001e02b      0x6e0 apps/httpd/httpd2.o
+ .debug_info    0x0001e70b      0x346 apps/httpd/cgibin/cgi-bin.o
+ .debug_info    0x0001ea51     0x1254 hardware/network/enc28j60.o
+ .debug_info    0x0001fca5      0x16e hardware/spi/spi_0.o
+ .debug_info    0x0001fe13      0x179 hardware/spi/spi_1.o
+ .debug_info    0x0001ff8c      0x341 hardware/spi/spi_2.o
+ .debug_info    0x000202cd      0x1a3 hardware/timer0/timer0.o
+ .debug_info    0x00020470      0x310 hardware/led/led_core.o
+ .debug_info    0x00020780      0x20c hardware/memory/xram.o
+ .debug_info    0x0002098c      0x35f hardware/spi/spi_core.o
+ .debug_info    0x00020ceb      0x306 hardware/gpio/gpio_core.o
+ .debug_info    0x00020ff1      0xcde hardware/sd_raw/sd_raw.o
+ .debug_info    0x00021ccf      0x783 system/clock/clock.o
+ .debug_info    0x00022452     0x1f0b system/net/tcp.o
+ .debug_info    0x0002435d      0x8ee system/net/dyndns.o
+ .debug_info    0x00024c4b      0x2ed system/init.o
+ .debug_info    0x00024f38      0x140 system/softreset/softreset.o
+ .debug_info    0x00025078     0x11d6 iTelex/Protokoll.o
+ .debug_info    0x0002624e     0x36d2 iTelex/TlnBuch.o
+ .debug_info    0x00029920     0xf8d7 iTelex/iTelex.o
+ .debug_info    0x000391f7      0x1cf main.o
+ .debug_info    0x000393c6       0x9b C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6\libatmega2561.a(eerd_block.o)
+ .debug_info    0x00039461       0x9a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6\libatmega2561.a(eerd_byte.o)
+ .debug_info    0x000394fb       0x9a C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6\libatmega2561.a(eewr_byte.o)
 
-.debug_abbrev   0x00000000     0x8a7b
+.debug_abbrev   0x00000000     0x8a41
  *(.debug_abbrev)
  .debug_abbrev  0x00000000      0x98e C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6/crtatmega2561.o
  .debug_abbrev  0x0000098e       0x71 apps/apps_init.o
@@ -7989,60 +7989,60 @@ END GROUP
  .debug_abbrev  0x00002559      0x235 iTelex/CgiFormTools.o
  .debug_abbrev  0x0000278e      0x247 iTelex/ConfigNtp.o
  .debug_abbrev  0x000029d5      0x3ba iTelex/eMail.o
- .debug_abbrev  0x00002d8f      0x1ab iTelex/Gemeinsam/BaudotCode.o
- .debug_abbrev  0x00002f3a      0x246 iTelex/Gemeinsam/BusKomm.o
- .debug_abbrev  0x00003180      0x1a9 iTelex/Gemeinsam/FifoPuffer.o
- .debug_abbrev  0x00003329      0x4e6 iTelex/IspMaster.o
- .debug_abbrev  0x0000380f      0x10c iTelex/StringTab.o
- .debug_abbrev  0x0000391b      0x234 iTelex/SwTwi.o
- .debug_abbrev  0x00003b4f       0xfb system/base64/base64.o
- .debug_abbrev  0x00003c4a      0x1aa system/buffer/fifo.o
- .debug_abbrev  0x00003df4      0x2eb system/config/eeconfig.o
- .debug_abbrev  0x000040df      0x381 system/filesystem/fat.o
- .debug_abbrev  0x00004460      0x129 system/filesystem/filesystem.o
- .debug_abbrev  0x00004589      0x139 system/filesystem/partition.o
- .debug_abbrev  0x000046c2       0x6f system/math/checksum.o
- .debug_abbrev  0x00004731       0x75 system/math/math.o
- .debug_abbrev  0x000047a6      0x19f system/net/arp.o
- .debug_abbrev  0x00004945      0x1d0 system/net/dhcpc.o
- .debug_abbrev  0x00004b15      0x15a system/net/dns.o
- .debug_abbrev  0x00004c6f       0x57 system/net/endian.o
- .debug_abbrev  0x00004cc6      0x222 system/net/ethernet.o
- .debug_abbrev  0x00004ee8      0x110 system/net/icmp.o
- .debug_abbrev  0x00004ff8      0x1c5 system/net/ip.o
- .debug_abbrev  0x000051bd      0x135 system/net/network.o
- .debug_abbrev  0x000052f2      0x13e system/net/ntp.o
- .debug_abbrev  0x00005430      0x22d system/net/udp.o
- .debug_abbrev  0x0000565d      0x22f system/shell/shell.o
- .debug_abbrev  0x0000588c      0x208 system/stdout/stdout.o
- .debug_abbrev  0x00005a94       0xee system/string/string.o
- .debug_abbrev  0x00005b82      0x133 system/thread/thread.o
- .debug_abbrev  0x00005cb5      0x1dd apps/httpd/files.o
- .debug_abbrev  0x00005e92      0x179 apps/httpd/httpd2_pharse.o
- .debug_abbrev  0x0000600b      0x1ba apps/httpd/httpd2.o
- .debug_abbrev  0x000061c5      0x1a7 apps/httpd/cgibin/cgi-bin.o
- .debug_abbrev  0x0000636c      0x238 hardware/network/enc28j60.o
- .debug_abbrev  0x000065a4       0xd5 hardware/spi/spi_0.o
- .debug_abbrev  0x00006679       0xd5 hardware/spi/spi_1.o
- .debug_abbrev  0x0000674e      0x14c hardware/spi/spi_2.o
- .debug_abbrev  0x0000689a      0x110 hardware/timer0/timer0.o
- .debug_abbrev  0x000069aa      0x181 hardware/led/led_core.o
- .debug_abbrev  0x00006b2b      0x13b hardware/memory/xram.o
- .debug_abbrev  0x00006c66      0x140 hardware/spi/spi_core.o
- .debug_abbrev  0x00006da6      0x154 hardware/gpio/gpio_core.o
- .debug_abbrev  0x00006efa      0x284 hardware/sd_raw/sd_raw.o
- .debug_abbrev  0x0000717e      0x26c system/clock/clock.o
- .debug_abbrev  0x000073ea      0x350 system/net/tcp.o
- .debug_abbrev  0x0000773a      0x183 system/net/dyndns.o
- .debug_abbrev  0x000078bd       0xc5 system/init.o
- .debug_abbrev  0x00007982       0xde system/softreset/softreset.o
- .debug_abbrev  0x00007a60      0x37f iTelex/Protokoll.o
- .debug_abbrev  0x00007ddf      0x518 iTelex/TlnBuch.o
- .debug_abbrev  0x000082f7      0x692 iTelex/iTelex.o
- .debug_abbrev  0x00008989       0xb6 main.o
- .debug_abbrev  0x00008a3f       0x14 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6\libatmega2561.a(eerd_block.o)
- .debug_abbrev  0x00008a53       0x14 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6\libatmega2561.a(eerd_byte.o)
- .debug_abbrev  0x00008a67       0x14 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6\libatmega2561.a(eewr_byte.o)
+ .debug_abbrev  0x00002d8f      0x171 iTelex/Gemeinsam/BaudotCode.o
+ .debug_abbrev  0x00002f00      0x246 iTelex/Gemeinsam/BusKomm.o
+ .debug_abbrev  0x00003146      0x1a9 iTelex/Gemeinsam/FifoPuffer.o
+ .debug_abbrev  0x000032ef      0x4e6 iTelex/IspMaster.o
+ .debug_abbrev  0x000037d5      0x10c iTelex/StringTab.o
+ .debug_abbrev  0x000038e1      0x234 iTelex/SwTwi.o
+ .debug_abbrev  0x00003b15       0xfb system/base64/base64.o
+ .debug_abbrev  0x00003c10      0x1aa system/buffer/fifo.o
+ .debug_abbrev  0x00003dba      0x2eb system/config/eeconfig.o
+ .debug_abbrev  0x000040a5      0x381 system/filesystem/fat.o
+ .debug_abbrev  0x00004426      0x129 system/filesystem/filesystem.o
+ .debug_abbrev  0x0000454f      0x139 system/filesystem/partition.o
+ .debug_abbrev  0x00004688       0x6f system/math/checksum.o
+ .debug_abbrev  0x000046f7       0x75 system/math/math.o
+ .debug_abbrev  0x0000476c      0x19f system/net/arp.o
+ .debug_abbrev  0x0000490b      0x1d0 system/net/dhcpc.o
+ .debug_abbrev  0x00004adb      0x15a system/net/dns.o
+ .debug_abbrev  0x00004c35       0x57 system/net/endian.o
+ .debug_abbrev  0x00004c8c      0x222 system/net/ethernet.o
+ .debug_abbrev  0x00004eae      0x110 system/net/icmp.o
+ .debug_abbrev  0x00004fbe      0x1c5 system/net/ip.o
+ .debug_abbrev  0x00005183      0x135 system/net/network.o
+ .debug_abbrev  0x000052b8      0x13e system/net/ntp.o
+ .debug_abbrev  0x000053f6      0x22d system/net/udp.o
+ .debug_abbrev  0x00005623      0x22f system/shell/shell.o
+ .debug_abbrev  0x00005852      0x208 system/stdout/stdout.o
+ .debug_abbrev  0x00005a5a       0xee system/string/string.o
+ .debug_abbrev  0x00005b48      0x133 system/thread/thread.o
+ .debug_abbrev  0x00005c7b      0x1dd apps/httpd/files.o
+ .debug_abbrev  0x00005e58      0x179 apps/httpd/httpd2_pharse.o
+ .debug_abbrev  0x00005fd1      0x1ba apps/httpd/httpd2.o
+ .debug_abbrev  0x0000618b      0x1a7 apps/httpd/cgibin/cgi-bin.o
+ .debug_abbrev  0x00006332      0x238 hardware/network/enc28j60.o
+ .debug_abbrev  0x0000656a       0xd5 hardware/spi/spi_0.o
+ .debug_abbrev  0x0000663f       0xd5 hardware/spi/spi_1.o
+ .debug_abbrev  0x00006714      0x14c hardware/spi/spi_2.o
+ .debug_abbrev  0x00006860      0x110 hardware/timer0/timer0.o
+ .debug_abbrev  0x00006970      0x181 hardware/led/led_core.o
+ .debug_abbrev  0x00006af1      0x13b hardware/memory/xram.o
+ .debug_abbrev  0x00006c2c      0x140 hardware/spi/spi_core.o
+ .debug_abbrev  0x00006d6c      0x154 hardware/gpio/gpio_core.o
+ .debug_abbrev  0x00006ec0      0x284 hardware/sd_raw/sd_raw.o
+ .debug_abbrev  0x00007144      0x26c system/clock/clock.o
+ .debug_abbrev  0x000073b0      0x350 system/net/tcp.o
+ .debug_abbrev  0x00007700      0x183 system/net/dyndns.o
+ .debug_abbrev  0x00007883       0xc5 system/init.o
+ .debug_abbrev  0x00007948       0xde system/softreset/softreset.o
+ .debug_abbrev  0x00007a26      0x37f iTelex/Protokoll.o
+ .debug_abbrev  0x00007da5      0x518 iTelex/TlnBuch.o
+ .debug_abbrev  0x000082bd      0x692 iTelex/iTelex.o
+ .debug_abbrev  0x0000894f       0xb6 main.o
+ .debug_abbrev  0x00008a05       0x14 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6\libatmega2561.a(eerd_block.o)
+ .debug_abbrev  0x00008a19       0x14 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6\libatmega2561.a(eerd_byte.o)
+ .debug_abbrev  0x00008a2d       0x14 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.6.364/gcc/dev/atmega2561/avr6\libatmega2561.a(eewr_byte.o)
 
 .debug_line     0x00000000    0x1695c
  *(.debug_line .debug_line.* .debug_line_end)
