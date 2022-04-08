@@ -1360,7 +1360,7 @@ void itelex_timerEvent(void)
 				} // Abtastung eines Bits abgeschlossen
 			StartKurzTimer(&SchreibPauseTimer);
 			} // if Empfang läuft
-		else // SerUmEmpfBitNr == 0 || SerUmEmpfBitNr == SerUmEmpfFertig
+		else // SerUmEmpfBitNr == SerUmEmpfWarte || SerUmEmpfBitNr == SerUmEmpfFertig
 			{ // Empfang ruht 
 			if (!BusEmpfMark) // Pausenschritt
 				{
@@ -5168,7 +5168,7 @@ void itelex_thread()
 			if (z == '\r' || z == '\n')
 				{
 				if (SuchTextLen == 0)
-					; // WR / ZL am Zeilenanfang ignorieren
+					; // WR / ZL am Zeilenanfang ignorieren 
 				else
 					{
 					ProtokollierenITelex_P(PSTR("Starte Namenssuche fuer <"));
