@@ -107,16 +107,16 @@ enum {
 	//!< Nicht ändern, da auch der Datenaustausch mit dem Teilnehmer-Server
 	//!< betroffen wäre (Kompatibilitätsprobleme) (siehe #TTlnDaten)
 
-	AsciiDruckPufferMax = 1000,
+	AsciiDruckPufferMax = 512,
 	//!< Puffergröße für Textpuffer bei Umsetzung ASCII -> Baudot.
 
 	HtmlSendeTextMax = 400,
 	//!< Puffergröße für Textpuffer bei HTML-Kommunikation (Druckspiegel)
 
-	SocketInBufMax = 2500,
+	SocketInBufMax = 512,
 	//!< Größe des TCP-Empfangspuffers
 
-	SocketOutBufMax = 2500,
+	SocketOutBufMax = 512,
 	//!< Größe des TCP-Sendepuffers
 
 	DiagnosePufferMax = 200,

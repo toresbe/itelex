@@ -15,9 +15,7 @@
 	// mit dem folgenden Makro _STRTABENTRY ...
 #define _STRTABENTRY(name, text_de, text_en, text_it, text_nl) \
 	const PROGMEM char strde_ ## name [] = text_de ; \
-	const PROGMEM char stren_ ## name [] = text_en ; \
-	const PROGMEM char strit_ ## name [] = text_it ; \
-	const PROGMEM char strnl_ ## name [] = text_nl ;
+	const PROGMEM char stren_ ## name [] = text_en ; 
 	
 	// wird aus 
 	// _STRTABENTRY(Rufnummer, "Rufnummer", "Number", "Numero", "Num")
@@ -35,7 +33,7 @@
 // hier wird die Tabelle aller Zeiger auf die Strings angelegt
 // ---------------------------------------------------------------
 	// mit dem folgenden Makro _STRTABENTRY ...
-#define _STRTABENTRY(name, text_de, text_en, text_it, text_nl) strde_ ## name , stren_ ## name , strit_ ## name , strnl_ ## name ,
+#define _STRTABENTRY(name, text_de, text_en, text_it, text_nl) strde_ ## name , stren_ ## name ,
 	// wird aus 
 	// _STRTABENTRY(Rufnummer, "Rufnummer", "Number", "Numero", "..")
 	// _STRTABENTRY(Name, "Name", "Name")
@@ -62,7 +60,7 @@ PROGMEM PGM_P const IStrList[] = {
 
 extern PGM_P GetIStr(uint16_t stri, TSprache Sprache)
 	{
-	return (PGM_P) pgm_read_word(&IStrList[4 * stri + Sprache]); // 4 = Anzahl der Sprachen
+	return (PGM_P) pgm_read_word(&IStrList[2 * stri + Sprache]); // 2 = Anzahl der Sprachen
 	}
 
 

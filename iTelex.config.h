@@ -29,7 +29,7 @@
 	#define DNSSERVER		IPDOT( 192l, 168l,   1l, 250l )
 
 	// enable the external SRAM-Interface
-	#define EXTMEM
+	// #define EXTMEM
 
 	// aktiviert den ADC
 	//#define ANALOG
@@ -38,7 +38,7 @@
 	// aktiviert PCint
 //	#define PC_INT
 	// aktiviert MMC
-	#define MMC
+	// #define MMC
 	// aktiviert LED
 	#define LED
 	// aktiviert TWI
@@ -78,16 +78,16 @@
 	// aktiviert iTelex und die entsprechenden Teilmodule
 	#define ITELEX_ANSCHLUSS
 	// #define ITELEX_TLNSERVER
-	#define ITELEX_EMAIL
-	#define ISP_MASTER	
+	// #define ITELEX_EMAIL
+	// #define ISP_MASTER	
 	
-	#define SHELL
+	// #define SHELL
 
 	#ifdef TCP
 
 		// aktiviert DynDNS
 		#ifdef DNS
-			#define DYNDNS
+			// #define DYNDNS
 		#endif
 
 		// aktiviert Twitter
@@ -131,7 +131,7 @@
 				#define HTTPSERVER_EEMEM
 				// aktiviert reset per Webinterface
 				#if defined(SHELL)
-					#define HTTPSERVER_CRON
+					// #define HTTPSERVER_CRON
 				#endif
 				// aktiviert reset per Webinterface
 				#define HTTPSERVER_RESET
