@@ -46,7 +46,8 @@
 
 #elif defined(AVRNETIO)
 
-	const char LED_DATA[] PROGMEM = { PORTD_2 , PORTD_4 , PORTD_6 };
+	// HACK für i-Telex auf AVR-NET-IO
+	const char LED_DATA[] PROGMEM = { PORTC_4 , PORTC_5 , PORTC_6, PORTC_7 }; // Pins 6 bis 9 auf SubD 25
 
 #elif defined(myAVR)
 
@@ -62,7 +63,7 @@
 
 #elif defined(iTelex)
 
-	const char LED_DATA[] PROGMEM = { PORTB_4 , PORTB_5 , PORTB_6, PORTB_7 };
+	const char LED_DATA[] PROGMEM = { PORTB_4 , PORTB_5 , PORTB_6, PORTB_7 }; //default 
 
 #else
 

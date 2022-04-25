@@ -65,13 +65,13 @@
 
 // TODO umstellen auf GPIO...???
 
-DEFPORTINPULL(Taste, B, 3);
+DEFPORTINPULL(Taste, A, 0);
 
-DEFPORTOUT(RTS, D, 4)
+DEFPORTOUT(RTS, D, 2)
 
-DEFPORTIN(CTS, D, 5)
+DEFPORTIN(CTS, D, 4)
 
-DEFPORTOUT(AnrufSignal, B, 1); // auf Prog-Stecker Pin 7. Die anderen Pins des Prog-Steckers mit mit dem SPI besetzt!
+DEFPORTOUT(AnrufSignal, A, 1); 
 
 
 // LEDs

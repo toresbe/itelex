@@ -28,6 +28,9 @@
 
 #define _ISPMASTER_H_
 	
+#ifdef ISP_MASTER
+// only if acivated
+
 
 // essentielle Includes
 // ================================================================
@@ -41,6 +44,9 @@
 DEFPORTTRI(IspResetOut, F, 5)
 
 extern void InitIspMaster();
+
+#endif //def ISP_MASTER
+
 	
 #endif /* _ISPMASTER_H_ */
 //@}

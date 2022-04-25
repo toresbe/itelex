@@ -6581,7 +6581,9 @@ void itelex_cgi_debug( void * pStruct )
 	
 	PRINTVALHEX(Debug_LowestSP);
 
+#ifdef EXTMEM
 	PRINTVALHEX(XMCRA);
+#endif //def EXTMEM
 	
 	CLOCK_decode_time(&SystemStartZeit);
 	printf_P(PSTR("<br>SystemStartZeit = %02u.%02u.%04u %02d:%02d:%02d, ResetFlag = %02X"), 
@@ -7895,6 +7897,7 @@ extern void itelex_init1(void)
 	ProtokollInit();
 	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);
 
+#ifdef EXTMEM
 	// Test: Speicherzugriffs-Geschwindigkeit setzen:
 	i = 1; // Default-Waitstates
 	if (readConfig_P(PSTR("XRAMWAIT"), Buf) == 1)
@@ -7907,6 +7910,7 @@ extern void itelex_init1(void)
 		// sicherheitshalber beide Wait-State-Konfigurationen auf den gleichen Wert setzen.
 
 	// RamCorrTestInit(); // TODO konfigurierbar.
+#endif //def EXTMEM
 
 	printf_P(PSTR("itelex_init1:\r\n"));
 	

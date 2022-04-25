@@ -29,7 +29,7 @@
 	#define DNSSERVER		IPDOT( 192l, 168l,   1l, 250l )
 
 	// enable the external SRAM-Interface
-	// #define EXTMEM
+	// #define EXTMEM   // TODO nur in Testversion für ATmega2561 ein
 
 	// aktiviert den ADC
 	//#define ANALOG
