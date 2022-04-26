@@ -40,7 +40,7 @@
 
 #include "config.h"
 
-#ifdef iTelex
+#ifdef ITELEX_BASIS
 
 // #include "defports.h"
 // #include "bits.h"
@@ -8252,7 +8252,7 @@ void itelex_init2()
 	}
 
 
-#endif //def iTelex
+#endif //def ITELEX_BASIS
 
 
 #if defined(MMC)

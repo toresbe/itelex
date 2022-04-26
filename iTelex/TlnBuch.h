@@ -4,7 +4,7 @@
 
 #include "config.h"
 
-#ifdef iTelex
+#ifdef ITELEX_BASIS
 
 #include <stdbool.h>
 #include <inttypes.h>
@@ -42,6 +42,6 @@ extern int TlnBuchSpeichereAufExternEeprom();
 
 extern void TlnBuchPruefsummeBerechnenSchritt();
 
-#endif //def iTelex
+#endif //def ITELEX_BASIS
 
 #endif //ndef __TLNBUCH_H__

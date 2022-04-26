@@ -30,7 +30,7 @@
 
 #include "config.h"
 
-#ifdef iTelex
+#ifdef ITELEX_BASIS
 
 #if !defined(ITELEX_TLNSERVER) && !defined(ITELEX_ANSCHLUSS)
 	#warning Kein iTelex-Modul aktiv!
@@ -588,7 +588,7 @@ static inline uint16_t KurzTimerVal(TKurzTimer *t)
 	}
 		
 	
-#endif //def iTelex
+#endif //def ITELEX_BASIS
 	
 #endif // def __ITELEX_H__
 

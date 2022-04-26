@@ -69,7 +69,7 @@ void cgi_cron( void * pStruct )
 	char string[32];
 	int HH, MM;
 	
-#ifdef iTelex
+#ifdef ITELEX_BASIS
 	extern uint8_t PruefeSpracheUndKonfigFreigabe(void *pStruct); 
 	if (!PruefeSpracheUndKonfigFreigabe(pStruct))
 		return;

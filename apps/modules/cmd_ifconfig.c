@@ -114,7 +114,7 @@ void cgi_network( void * pStruct )
 	struct HTTP_REQUEST * http_request;
 	http_request = (struct HTTP_REQUEST *) pStruct;
 	
-#ifdef iTelex
+#ifdef ITELEX_BASIS
 	extern uint8_t PruefeSpracheUndKonfigFreigabe(void *pStruct); 
 	if (!PruefeSpracheUndKonfigFreigabe(pStruct))
 		return;

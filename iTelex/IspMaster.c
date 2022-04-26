@@ -98,7 +98,9 @@
 // --> Das Kabel muss also an einem Ende Adern 2 und 4 drehen, am anderen Ende Adern 3 und 7
 
 
+#ifdef iTelex // hier ist die Hardware-Plattform gemeint
 #define IspSpiPort 2
+#endif //def iTelex
 
 
 // Funktionen für In System Programming (ISP) über den SPI-Bus.

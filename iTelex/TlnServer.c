@@ -108,7 +108,7 @@
 
 #include "config.h"
 
-#ifdef iTelex
+#ifdef ITELEX_BASIS
 
 #include "system/net/ip.h"
 #include "system/net/tcp.h"
@@ -1427,5 +1427,5 @@ void itelex_tlnserv_init()
 
 #endif //def ITELEX_TLNSERVER
 
-#endif //def iTelex
+#endif //def ITELEX_BASIS
 

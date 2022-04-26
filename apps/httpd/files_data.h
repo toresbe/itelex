@@ -155,13 +155,16 @@ const char data4[] PROGMEM = {
 	"</HEAD>"
 	"<BODY bgcolor=\"#C0FFC0\">" 
 	"<a href=\"info.html\" target=\"main\">Info</a>"
-	#if defined(iTelex)
+	#if defined(ITELEX_BASIS)
 	" / <a href=\"itelex-menu-de.html\">i-Telex (Deutsch)</a>"
 	" / <a href=\"itelex-menu-en.html\">i-Telex (English)</a>"
+	#ifndef ITELEX_LIGHT
 	" / <a href=\"itelex-menu-it.html\">i-Telex (Italiano)</a>"
 	" / <a href=\"itelex-menu-nl.html\">i-Telex (Nederlands)</a>"
+	#endif //ndef ITELEX_LIGHT
 	" / <a href=\"itelex-credits.cgi\" target=\"main\">Impressum / credits</a>"
-	#endif
+	#endif //def ITELEX_BASIS
+
 	#if defined(HTTPSERVER_STREAM)
 		" / <a href=\"stream.html\">Stream</a>"
 	#endif
@@ -246,7 +249,7 @@ const char SystemMenuDeText[] PROGMEM = {
 #if defined(HTTPSERVER_RESET)
 	"/ <a href=\"reset.cgi?spr=de\" target=\"main\">Reset</a>"
 #endif
-#if defined(HTTPSERVER_NTP) || defined(iTelex)
+#if defined(HTTPSERVER_NTP) || defined(ITELEX_BASIS)
 	" / <a href=\"ntp.cgi?spr=de\" target=\"main\">NTP</a>"
 #endif
 #if defined(HTTPSERVER_DYNDNS)
@@ -276,7 +279,7 @@ const char SystemMenuEnText[] PROGMEM = {
 #if defined(HTTPSERVER_RESET)
 	"/ <a href=\"reset.cgi?spr=en\" target=\"main\">Reset</a>"
 #endif
-#if defined(HTTPSERVER_NTP) || defined(iTelex)
+#if defined(HTTPSERVER_NTP) || defined(ITELEX_BASIS)
 	" / <a href=\"ntp.cgi?spr=en\" target=\"main\">NTP</a>"
 #endif
 #if defined(HTTPSERVER_DYNDNS)
@@ -296,6 +299,8 @@ const char SystemMenuEnText[] PROGMEM = {
 	"\r\n\r\n"	};
 
 
+#ifndef ITELEX_LIGHT
+
 const char SystemMenuItName[] PROGMEM = "system-it.html";
 const char SystemMenuItText[] PROGMEM = {
 	"<HTML>"
@@ -307,7 +312,7 @@ const char SystemMenuItText[] PROGMEM = {
 #if defined(HTTPSERVER_RESET)
 	"/ <a href=\"reset.cgi?spr=it\" target=\"main\">Ripristino</a>"
 #endif
-#if defined(HTTPSERVER_NTP) || defined(iTelex)
+#if defined(HTTPSERVER_NTP) || defined(ITELEX_BASIS)
 	" / <a href=\"ntp.cgi?spr=it\" target=\"main\">NTP</a>"
 #endif
 #if defined(HTTPSERVER_DYNDNS)
@@ -338,7 +343,7 @@ const char SystemMenuNlText[] PROGMEM = {
 #if defined(HTTPSERVER_RESET)
 	"/ <a href=\"reset.cgi?spr=nl\" target=\"main\">Reset</a>"
 #endif
-#if defined(HTTPSERVER_NTP) || defined(iTelex)
+#if defined(HTTPSERVER_NTP) || defined(ITELEX_BASIS)
 	" / <a href=\"ntp.cgi?spr=nl\" target=\"main\">NTP</a>"
 #endif
 #if defined(HTTPSERVER_DYNDNS)
@@ -357,7 +362,9 @@ const char SystemMenuNlText[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n"	};
 
-#endif
+#endif //ndef ITELEX_LIGHT
+
+#endif 
 
 
 const char files7[] PROGMEM = "info.html";
@@ -429,7 +436,8 @@ const char data10[] PROGMEM = {
 	"\r\n\r\n"	};
 #endif
 
-#if defined(iTelex)
+
+#if defined(ITELEX_BASIS)
 
 const char iTelexMainMenuDeName[] PROGMEM = "itelex-menu-de.html";
 const char iTelexMainMenuDeText[] PROGMEM = {
@@ -688,7 +696,7 @@ const char iTelexChatNlText[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n" } ;
 		
-#endif //def iTelex
+#endif //def ITELEX_BASIS
 
 
 const char RobotsTxtName[] PROGMEM = "robots.txt";
@@ -726,20 +734,28 @@ FILES files[] = {
 #if defined(TEMP_LOGGER)
 	{ files10, data10, TEXT, sizeof( data10 ) - 1 },
 #endif
-#if defined(iTelex)
+
+#if defined(ITELEX_BASIS)
 	{ iTelexMainMenuDeName, iTelexMainMenuDeText, TEXT, sizeof( iTelexMainMenuDeText ) - 1 },
 	{ iTelexMainMenuEnName, iTelexMainMenuEnText, TEXT, sizeof( iTelexMainMenuEnText ) - 1 },
+#ifndef ITELEX_LIGHT
 	{ iTelexMainMenuItName, iTelexMainMenuItText, TEXT, sizeof( iTelexMainMenuItText ) - 1 },
 	{ iTelexMainMenuNlName, iTelexMainMenuNlText, TEXT, sizeof( iTelexMainMenuNlText ) - 1 },
+#endif //ndef ITELEX_LIGHT
 	{ iTelexCfgMenuDeName, iTelexCfgMenuDeText, TEXT, sizeof( iTelexCfgMenuDeText ) - 1 },
 	{ iTelexCfgMenuEnName, iTelexCfgMenuEnText, TEXT, sizeof( iTelexCfgMenuEnText ) - 1 },
+#ifndef ITELEX_LIGHT
 	{ iTelexCfgMenuItName, iTelexCfgMenuItText, TEXT, sizeof( iTelexCfgMenuItText ) - 1 },
 	{ iTelexCfgMenuNlName, iTelexCfgMenuNlText, TEXT, sizeof( iTelexCfgMenuNlText ) - 1 },
+#endif //ndef ITELEX_LIGHT
 	{ iTelexChatDeName, iTelexChatDeText, TEXT, sizeof( iTelexChatDeText ) - 1 },
 	{ iTelexChatEnName, iTelexChatEnText, TEXT, sizeof( iTelexChatEnText ) - 1 },
+#ifndef ITELEX_LIGHT
 	{ iTelexChatItName, iTelexChatItText, TEXT, sizeof( iTelexChatItText ) - 1 },
 	{ iTelexChatNlName, iTelexChatNlText, TEXT, sizeof( iTelexChatNlText ) - 1 },
-#endif
+#endif //ndef ITELEX_LIGHT
+#endif //def ITELEX_BASIS
+
 	{ lochstr_hg_filename, lochstreifen_hg, PNG, sizeof( lochstreifen_hg ) },
 	{ RobotsTxtName, RobotsTxtData, TEXT, sizeof(RobotsTxtData) - 1 },
 	{ 0,0,0,0 }
