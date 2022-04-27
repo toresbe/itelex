@@ -102,6 +102,11 @@
 #define IspSpiPort 2
 #endif //def iTelex
 
+#ifdef AVRNETIO
+#define IspSpiPort 1
+#endif //def AVRNETIO
+
+
 
 // Funktionen für In System Programming (ISP) über den SPI-Bus.
 // ============================================================
