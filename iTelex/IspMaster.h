@@ -40,8 +40,14 @@
  
 // Port-Definitionen
 // ================================================================
-
+#ifdef iTelex 
 DEFPORTTRI(IspResetOut, F, 5)
+#endif //def iTelex
+
+#ifdef iTelex_Light
+DEFPORTTRI(IspResetOut, D, 3)
+#endif //def iTelex_Light
+
 
 extern void InitIspMaster();
 

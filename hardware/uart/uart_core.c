@@ -52,7 +52,7 @@
 	UART_NUM uart_num[ ] = {
 		{ UART_0_init , UART_0_SendByte , UART_0_GetByte , UART_0_GetBytesinRxBuffer , UART_0_GetBytesinRxBuffer } };
 
-#elif defined( AVRNETIO )
+#elif defined( AVRNETIO ) || defined( iTelex_Light )
 	#include "hardware/uart/mega/uart_0.h"
 
 	UART_NUM uart_num[ ] = {

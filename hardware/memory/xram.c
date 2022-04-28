@@ -164,8 +164,13 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 		*p = MemTestValue(address); // Prüfwert in den Speicher schreiben
 		}
 
+
+#ifdef ITELEX_BASIS
+
 #if defined(iTelex)
 	PORTB &= ~(1 << PB6); // LED grün aus.
+#endif
+
 #endif
 	
 	// Speicher testen und alten Inhalt wieder herstellen.

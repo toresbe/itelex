@@ -23,8 +23,11 @@
 
 #ifdef ITELEX_BASIS
 
+#ifdef EXTMEM
+enum { TlnBuchMemMax = 22000UL } ; //!< Größe des Teilnehmerverzeichnisses in Bytes
+#else
 enum { TlnBuchMemMax = 2048UL } ; //!< Größe des Teilnehmerverzeichnisses in Bytes
-
+#endif
 
 //! Speicher des Teilnehmerverzeichnisses.
 // ---------------------------------------

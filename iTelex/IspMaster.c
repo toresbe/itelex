@@ -102,9 +102,9 @@
 #define IspSpiPort 2
 #endif //def iTelex
 
-#ifdef AVRNETIO
+#if defined( AVRNETIO ) || defined( iTelex_Light )
 #define IspSpiPort 1
-#endif //def AVRNETIO
+#endif //def AVRNETIO || iTelex_Light
 
 
 
@@ -160,7 +160,7 @@ static bool IspEnable()
 		// einen Extra Taktimpuls zum Synchronisieren
 		_delay_us(100);
 		
-		#if (IspSpiPort == 2)
+		#if defined( _SPI_2_H )
 			// SCK auf High setzen
 			SPI2_PORT |= ( 1<<SCK2 );
 			_delay_us(100);

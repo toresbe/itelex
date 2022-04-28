@@ -65,13 +65,20 @@
 
 // TODO umstellen auf GPIO...???
 
+#ifdef iTelex
+DEFPORTINPULL(Taste, B, 3);
+DEFPORTOUT(RTS, D, 4)
+DEFPORTIN(CTS, D, 5)
+DEFPORTOUT(AnrufSignal, B, 1); // auf Prog-Stecker Pin 7. Die anderen Pins des Prog-Steckers mit mit dem SPI besetzt!
+#endif //def iTelex
+
+#ifdef iTelex_Light
 DEFPORTINPULL(Taste, A, 0);
-
 DEFPORTOUT(RTS, D, 2)
-
 DEFPORTIN(CTS, D, 4)
+DEFPORTOUT(AnrufSignal, A, 1); // auf ??? TODO
+#endif //def iTelex_Light
 
-DEFPORTOUT(AnrufSignal, A, 1); 
 
 
 // LEDs

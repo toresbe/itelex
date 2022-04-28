@@ -44,10 +44,11 @@
 
 void apps_init( void )
 {
+#ifdef CRON
 	// Cron-Dienst starten
 	CRON_init();
-
 	CRON_reloadcrontable();
+#endif //def CRON
 
 	// Dienste starten
 	#ifdef HTTPSERVER

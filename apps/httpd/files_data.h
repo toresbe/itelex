@@ -134,6 +134,7 @@ const char PROGMEM lochstr_hg_filename[] = "lochstreifen-hg.png";
 #endif
 
 #if defined(HTTPSERVER_STREAM)
+
 const char files9[] PROGMEM = "stream.html";
 const char data9[] PROGMEM = {
 	"<HTML>"
@@ -209,6 +210,9 @@ const char NetzwerkMenuEnText[] PROGMEM = {
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
+
+
+#ifndef ITELEX_LIGHT
 	
 const char NetzwerkMenuItName[] PROGMEM = "network-it.html";
 const char NetzwerkMenuItText[] PROGMEM = {
@@ -233,8 +237,11 @@ const char NetzwerkMenuNlText[] PROGMEM = {
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n"	};
+
+#endif //ndef ITELEX_LIGHT
 	
-#endif
+#endif //def ???
+
 
 #ifdef HTTPSERVER_SYSTEM
 
@@ -479,6 +486,9 @@ const char iTelexMainMenuEnText[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n" } ;
 
+
+#ifndef ITELEX_LIGHT
+
 const char iTelexMainMenuItName[] PROGMEM = "itelex-menu-it.html";
 const char iTelexMainMenuItText[] PROGMEM = {
 	"<HTML>"
@@ -518,6 +528,9 @@ const char iTelexMainMenuNlText[] PROGMEM = {
 	"</BODY>"
 	"</HTML>"
 	"\r\n\r\n" } ;
+
+#endif //ndef ITELEX_LIGHT
+
 
 const char iTelexCfgMenuDeName[] PROGMEM = "itelexcfg-menu-de.html";
 const char iTelexCfgMenuDeText[] PROGMEM = {
@@ -573,6 +586,8 @@ const char iTelexCfgMenuEnText[] PROGMEM = {
 	"\r\n\r\n" } ;
 
 	
+#ifndef ITELEX_LIGHT
+
 const char iTelexCfgMenuItName[] PROGMEM = "itelexcfg-menu-it.html";
 const char iTelexCfgMenuItText[] PROGMEM = {
 	"<HTML>"
@@ -626,6 +641,8 @@ const char iTelexCfgMenuNlText[] PROGMEM = {
 	"</HTML>"
 	"\r\n\r\n" } ;
 
+#endif //ndef ITELEX_LIGHT
+
 	
 const char iTelexChatDeName[] PROGMEM = "itelex-msg-de.html";
 const char iTelexChatDeText[] PROGMEM = {
@@ -661,7 +678,10 @@ const char iTelexChatEnText[] PROGMEM = {
 	"</frameset>"
 	"</HTML>"
 	"\r\n\r\n" } ;
+
 		
+#ifndef ITELEX_LIGHT
+
 const char iTelexChatItName[] PROGMEM = "itelex-msg-it.html";
 const char iTelexChatItText[] PROGMEM = {
 	"<HTML>"
@@ -695,6 +715,8 @@ const char iTelexChatNlText[] PROGMEM = {
 	"</frameset>"
 	"</HTML>"
 	"\r\n\r\n" } ;
+
+#endif //ndef ITELEX_LIGHT
 		
 #endif //def ITELEX_BASIS
 
@@ -717,14 +739,18 @@ FILES files[] = {
 #ifdef HTTPSERVER_NETCONFIG
 	{ NetzwerkMenuDeName, NetzwerkMenuDeText, TEXT, sizeof( NetzwerkMenuDeText ) - 1 },
 	{ NetzwerkMenuEnName, NetzwerkMenuEnText, TEXT, sizeof( NetzwerkMenuEnText ) - 1 },
+#ifndef ITELEX_LIGHT
 	{ NetzwerkMenuItName, NetzwerkMenuItText, TEXT, sizeof( NetzwerkMenuItText ) - 1 },
 	{ NetzwerkMenuNlName, NetzwerkMenuNlText, TEXT, sizeof( NetzwerkMenuNlText ) - 1 },
+#endif //ndef ITELEX_LIGHT
 #endif
 #ifdef HTTPSERVER_SYSTEM
 	{ SystemMenuDeName, SystemMenuDeText, TEXT, sizeof( SystemMenuDeText ) - 1 },
 	{ SystemMenuEnName, SystemMenuEnText, TEXT, sizeof( SystemMenuEnText ) - 1 },
+#ifndef ITELEX_LIGHT
 	{ SystemMenuItName, SystemMenuItText, TEXT, sizeof( SystemMenuItText ) - 1 },
 	{ SystemMenuNlName, SystemMenuNlText, TEXT, sizeof( SystemMenuNlText ) - 1 },
+#endif //ndef ITELEX_LIGHT
 #endif
 	{ files7, data7, TEXT, sizeof( data7 ) - 1 },
 	{ files8, data8, TEXT, sizeof( data8 ) - 1 },

@@ -29,7 +29,10 @@
 	#define DNSSERVER		IPDOT( 192l, 168l,   1l, 250l )
 
 	// enable the external SRAM-Interface
-	// #define EXTMEM   // TODO nur in Testversion für ATmega2561 ein
+	
+	#ifdef iTelex
+		#define EXTMEM   // nur bei "Vollversion" der iTelex-Hardware
+	#endif
 
 	// aktiviert den ADC
 	//#define ANALOG
@@ -37,8 +40,12 @@
 	#define EXTINT
 	// aktiviert PCint
 //	#define PC_INT
+
 	// aktiviert MMC
-	// #define MMC
+	#ifdef iTelex
+		#define MMC
+	#endif
+	
 	// aktiviert LED
 	#define LED
 	// aktiviert TWI
@@ -78,10 +85,15 @@
 	// aktiviert iTelex und die entsprechenden Teilmodule
 	#define ITELEX_BASIS
 	#define ITELEX_ANSCHLUSS
-	// #define ITELEX_TLNSERVER
-	// #define ITELEX_EMAIL
-	// #define ISP_MASTER	
-	
+	#ifdef iTelex
+		// #define ITELEX_TLNSERVER
+		#define ITELEX_EMAIL
+		#define ISP_MASTER	
+	#endif
+	#ifdef iTelex_Light // die Hardware-Platform
+		#define ITELEX_LIGHT // ... die Software-Teile
+		// #define ISP_MASTER	
+	#endif
 	// #define SHELL
 
 	#ifdef TCP

@@ -44,7 +44,7 @@
 	#define		LED_INVERT
 	const char LED_DATA[] PROGMEM = { PORTD_4 , PORTD_5 , PORTD_6 };
 
-#elif defined(AVRNETIO)
+#elif defined(AVRNETIO) || defined(iTelex_Light)
 
 	// HACK für i-Telex auf AVR-NET-IO
 	const char LED_DATA[] PROGMEM = { PORTC_4 , PORTC_5 , PORTC_6, PORTC_7 }; // Pins 6 bis 9 auf SubD 25

@@ -52,7 +52,7 @@
 // 	#define ENC28J60_CONTROL_DDR	DDRE
 // 	#define ENC28J60_CONTROL_CS		PE3
 
-#elif defined(AVRNETIO)
+#elif defined(AVRNETIO) || defined(iTelex_Light)
 
 	#define ENC28J60_INT			2
 	#define SPIBUS					0
