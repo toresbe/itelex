@@ -82,6 +82,8 @@
 		#define NTP
 	#endif
 
+	#define CRON_ACTIVE // TODO entfernen
+
 	// aktiviert iTelex und die entsprechenden Teilmodule
 	#define ITELEX_BASIS
 	#define ITELEX_ANSCHLUSS
@@ -94,13 +96,14 @@
 		#define ITELEX_LIGHT // ... die Software-Teile
 		// #define ISP_MASTER	
 	#endif
-	// #define SHELL
+	
+	#define SHELL // TODO entfernen
 
 	#ifdef TCP
 
 		// aktiviert DynDNS
 		#ifdef DNS
-			// #define DYNDNS
+			#define DYNDNS  // TODO entfernen
 		#endif
 
 		// aktiviert Twitter
@@ -144,7 +147,7 @@
 				#define HTTPSERVER_EEMEM
 				// aktiviert reset per Webinterface
 				#if defined(SHELL)
-					// #define HTTPSERVER_CRON
+					#define HTTPSERVER_CRON // TODO entfernen
 				#endif
 				// aktiviert reset per Webinterface
 				#define HTTPSERVER_RESET

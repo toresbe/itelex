@@ -37,7 +37,7 @@
 #include "system/stdout/stdout.h"
 #include "system/thread/thread.h"
 
-#ifdef CRON
+#ifdef CRON_ACTIVE
 
 #include "cron.h"
 
@@ -355,6 +355,6 @@ void CRON_reloadcrontable( void )
 }
 
 
-#endif //def CRON
+#endif //def CRON_ACTIVE
 
 //@}

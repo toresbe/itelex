@@ -7,11 +7,14 @@ Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "iTlx_Ethernet", "iTlx_Ether
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		default|AVR = default|AVR
+		Light|AVR = Light|AVR
+		Standard|AVR = Standard|AVR
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{326BB7B3-8EA5-4BBF-BEF7-005B2B5C0DD7}.default|AVR.ActiveCfg = default|AVR
-		{326BB7B3-8EA5-4BBF-BEF7-005B2B5C0DD7}.default|AVR.Build.0 = default|AVR
+		{326BB7B3-8EA5-4BBF-BEF7-005B2B5C0DD7}.Light|AVR.ActiveCfg = Light|AVR
+		{326BB7B3-8EA5-4BBF-BEF7-005B2B5C0DD7}.Light|AVR.Build.0 = Light|AVR
+		{326BB7B3-8EA5-4BBF-BEF7-005B2B5C0DD7}.Standard|AVR.ActiveCfg = Standard|AVR
+		{326BB7B3-8EA5-4BBF-BEF7-005B2B5C0DD7}.Standard|AVR.Build.0 = Standard|AVR
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
