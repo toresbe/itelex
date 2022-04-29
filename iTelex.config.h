@@ -82,7 +82,7 @@
 		#define NTP
 	#endif
 
-	#define CRON_ACTIVE // TODO entfernen
+	// #define CRON_ACTIVE
 
 	// aktiviert iTelex und die entsprechenden Teilmodule
 	#define ITELEX_BASIS
@@ -97,13 +97,15 @@
 		// #define ISP_MASTER	
 	#endif
 	
-	#define SHELL // TODO entfernen
+	#ifdef iTelex
+		#define SHELL
+	#endif //def iTelex
 
 	#ifdef TCP
 
 		// aktiviert DynDNS
 		#ifdef DNS
-			#define DYNDNS  // TODO entfernen
+			// #define DYNDNS
 		#endif
 
 		// aktiviert Twitter
