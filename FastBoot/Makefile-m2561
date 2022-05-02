@@ -38,7 +38,7 @@
 # MCU = attiny85
 # MCU = atmega2560
 # MCU = atmega1281
-MCU = atmega1284p
+MCU = atmega2561
 
 # Name of the Atmel defs file for the actual MCU.
 #
@@ -56,7 +56,7 @@ MCU = atmega1284p
 # ATMEL_INC=tn85def.inc
 # ATMEL_INC = m2560def.inc
 # ATMEL_INC = m1281def.inc
-ATMEL_INC = m1284Pdef.inc
+ATMEL_INC = m2561def.inc
 
 # Processor frequency.  The value is not critical:
 #F_CPU = 14745600
@@ -70,15 +70,16 @@ DEBUG = dwarf-2
 # Define the Tx and Rx lines here.  Set both groups to the same for
 # one wire mode:
 STX_PORT = PORTD
-STX = PD1
+STX = PD3
 
 SRX_PORT = PORTD
-SRX = PD0
+SRX = PD2
+
 # Son 02.05.2022
 # LED port
 
-LED_PORT = PORTC
-LED_DDR = DDRC
+LED_PORT = PORTB
+LED_DDR = DDRB
 LED_BIT = 7
 
 ####### End user presets ######################
