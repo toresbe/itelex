@@ -413,13 +413,20 @@ _STRTABENTRY(ZurueckZumTeilnehmerverzeichnis,
 
 _STRTABENTRY(ZusatzEepromFehler, "Fehler im Zusatz-EEPROM", "Error in directory EEPROM", "Errore EEPROM aggiuntivo","Fout in de toegevoegde EEPROM")
 
+_STRTABENTRY(TeilnehmerlisteVoll, "Rufnummern-Verzeichnis voll, nicht gespeichert", "directory out of space, not saved",
+		"Spazio elenco esaurito, non salvato","Abonnee lijst vol, niets is weggeschreven")
+
+#ifdef ITELEX_TLNSERVER
 
 // für TlnServer.c:
 _STRTABENTRY(NeuTeilnehmer, "Neuer Teilnehmer angemeldet", "new subscriber signed up","Nuovo abbonato sottoscritto","Nieuwe abonnee ingeschreven")
-_STRTABENTRY(TeilnehmerlisteVoll, "Rufnummern-Verzeichnis voll, nicht gespeichert", "directory out of space, not saved",
-		"Spazio elenco esaurito, non salvato","Abonnee lijst vol, niets is weggeschreven")
 _STRTABENTRY(ServerAnmeldungFalscheGeheimzahl, "Teilnehmer-Server Anmeldung mit falscher Geheimzahl", "Unauthorised access to directory server port",
 		"Accesso al server con PIN errato","Aanmelding bij server met verkeerde PIN")
+
+#endif //def ITELEX_TLNSERVER
+
+
+#ifdef ITELEX_EMAIL
 
 // für eMail.c:
 // ungeprüft:
@@ -451,6 +458,9 @@ _STRTABENTRY(MailFehlerNotConnected, " konnte nicht verbunden werden", " connect
 _STRTABENTRY(SMTPFehlerDirekt, "Meldung vom eMail-Ausgang-Server: ", "Message from the Server for outgoing email: ",
 		"Messaggio server-uscita-eMail: ", "Bericht von de mail-uitgangs-server: ")
 
+#endif //def ITELEX_EMAIL
+
+
 // für ConfigNtp.c:
 _STRTABENTRY(NtpOn, "Uhrzeit vom Server abfragen", "Use time server", "Utilizzare server del tempo", "Gebruik tijd server")
 _STRTABENTRY(NtpServerHostname, "Hostname des Zeitservers", "Time server host name", "Nome host server del tempo","Tijd host server naam")
@@ -479,7 +489,7 @@ typedef enum {
 	Deutsch,
 	Englisch,
 	Italienisch,
-	Niederlaendisch
+	Niederlaendisch,
 	} TSprache;
 	
 extern PGM_P GetIStr(uint16_t stri, TSprache Sprache);
