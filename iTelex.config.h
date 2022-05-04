@@ -82,8 +82,6 @@
 		#define NTP
 	#endif
 
-	// #define CRON_ACTIVE
-
 	// aktiviert iTelex und die entsprechenden Teilmodule
 	#define ITELEX_BASIS
 	#define ITELEX_ANSCHLUSS
@@ -100,6 +98,10 @@
 	#ifdef iTelex
 		#define SHELL
 	#endif //def iTelex
+
+	#ifdef SHELL
+		// #define CRON_ACTIVE // TODO entscheiden, ob doch sinnvoll...
+	#endif //def SHELL
 
 	#ifdef TCP
 
@@ -148,7 +150,7 @@
 				// aktiviert eemem per Webinterface
 				#define HTTPSERVER_EEMEM
 				// aktiviert reset per Webinterface
-				#if defined(SHELL)
+				#if defined(SHELL) && defined(CRON_ACTIVE)
 					#define HTTPSERVER_CRON // TODO entfernen
 				#endif
 				// aktiviert reset per Webinterface
