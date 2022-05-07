@@ -44,31 +44,31 @@
 	#include "hardware/uart/mega/uart_1.h"
 
 	UART_NUM uart_num[ ] = {
-		{ UART_1_init , UART_1_SendByte , UART_1_GetByte , UART_1_GetBytesinRxBuffer , UART_1_GetBytesinRxBuffer } };
+		{ UART_1_init , UART_1_SendByte , UART_1_GetByte , UART_1_GetBytesinRxBuffer , UART_1_GetBytesinTxBuffer } };
 
 #elif defined( EtherSense )
 	#include "hardware/uart/mega/uart_0.h"
 
 	UART_NUM uart_num[ ] = {
-		{ UART_0_init , UART_0_SendByte , UART_0_GetByte , UART_0_GetBytesinRxBuffer , UART_0_GetBytesinRxBuffer } };
+		{ UART_0_init , UART_0_SendByte , UART_0_GetByte , UART_0_GetBytesinRxBuffer , UART_0_GetBytesinTxBuffer } };
 
 #elif defined( AVRNETIO ) || defined( iTelex_Light )
 	#include "hardware/uart/mega/uart_0.h"
 
 	UART_NUM uart_num[ ] = {
-		{ UART_0_init , UART_0_SendByte , UART_0_GetByte , UART_0_GetBytesinRxBuffer , UART_0_GetBytesinRxBuffer } };
+		{ UART_0_init , UART_0_SendByte , UART_0_GetByte , UART_0_GetBytesinRxBuffer , UART_0_GetBytesinTxBuffer } };
 
 #elif defined( myAVR )
 	#include "hardware/uart/mega/uart_0.h"
 
 	UART_NUM uart_num[ ] = {
-		{ UART_0_init , UART_0_SendByte , UART_0_GetByte , UART_0_GetBytesinRxBuffer , UART_0_GetBytesinRxBuffer } };
+		{ UART_0_init , UART_0_SendByte , UART_0_GetByte , UART_0_GetBytesinRxBuffer , UART_0_GetBytesinTxBuffer } };
 
 #elif defined( UPP )
 	#include "hardware/uart/mega/uart_1.h"
 
 	UART_NUM uart_num[ ] = {
-		{ UART_1_init , UART_1_SendByte , UART_1_GetByte , UART_1_GetBytesinRxBuffer , UART_1_GetBytesinRxBuffer }, };
+		{ UART_1_init , UART_1_SendByte , UART_1_GetByte , UART_1_GetBytesinRxBuffer , UART_1_GetBytesinTxBuffer }, };
 
 #elif defined( ATXM2 )
 	#include "hardware/uart/xmega/uart_c1.h"
@@ -76,16 +76,16 @@
 	#include "hardware/uart/xmega/uart_e0.h"
 
 	UART_NUM uart_num[ ] = {
-		{ UART_C1_init , UART_C1_SendByte , UART_C1_GetByte , UART_C1_GetBytesinRxBuffer , UART_C1_GetBytesinRxBuffer } ,
-		{ UART_D0_init , UART_D0_SendByte , UART_D0_GetByte , UART_D0_GetBytesinRxBuffer , UART_D0_GetBytesinRxBuffer } ,
-		{ UART_E0_init , UART_E0_SendByte , UART_E0_GetByte , UART_E0_GetBytesinRxBuffer , UART_E0_GetBytesinRxBuffer } ,
+		{ UART_C1_init , UART_C1_SendByte , UART_C1_GetByte , UART_C1_GetBytesinRxBuffer , UART_C1_GetBytesinTxBuffer } ,
+		{ UART_D0_init , UART_D0_SendByte , UART_D0_GetByte , UART_D0_GetBytesinRxBuffer , UART_D0_GetBytesinTxBuffer } ,
+		{ UART_E0_init , UART_E0_SendByte , UART_E0_GetByte , UART_E0_GetBytesinRxBuffer , UART_E0_GetBytesinTxBuffer } ,
 		};
 
 #elif defined( XPLAIN )
 	#include "hardware/uart/xmega/uart_c0.h"
 	
 	UART_NUM uart_num[ ] = {
-		{ UART_C0_init , UART_C0_SendByte , UART_C0_GetByte , UART_C0_GetBytesinRxBuffer , UART_C0_GetBytesinRxBuffer } };
+		{ UART_C0_init , UART_C0_SendByte , UART_C0_GetByte , UART_C0_GetBytesinRxBuffer , UART_C0_GetBytesinTxBuffer } };
 
 #endif
 
