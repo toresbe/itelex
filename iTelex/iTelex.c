@@ -1084,7 +1084,7 @@ bool Diagnoseausgabe_P(const char *msg, uint8_t Level)
 	if (DiagnosePuffer[0] != '\0' && Level > DiagnosePufferLevel)
 		{
 		Protokollieren_P(PSTR(" ...ignoriert, vorherige Meldung noch nicht gedruckt\r\n"));
-		return false; // Neue Meldung ist weniger wichtig als aktuelle.
+		return false; // Neue Meldung ist weniger wichtig als aktuelle, noch nicht gedruckte Meldung.
 		}
 
 	if (msg == NULL)
@@ -4738,16 +4738,16 @@ static void PrintServSocketLogTabEntry()
 				ServSocketLogTab[i].UseCount, Time.time - ServSocketLogTab[i].FirstTime); // 2 + 5 + 6 + 5 + 2
 																					// Summe: 51
 
-			if (DiagnosePuffer[0] == '\0') // noch leer
-				Diagnoseausgabe_P(PSTR("Zugriffe per TCP:"), 5);
-																					
-			if (strlen(DiagnosePuffer) + strlen(Buf) < DiagnosePufferMax - 2)
-				{
-				strcat(DiagnosePuffer, Buf);
-				ServSocketLogTab[i].UseCount = 0;
-				}
-			else
+			if (DiagnosePuffer[0] != '\0') // nicht leer
 				break; // andere Meldungen bei nächster Runde
+
+			if (!Diagnoseausgabe_P(PSTR("Zugriffe per TCP:"), 5))
+				break; // kann eigentlich nicht sein (vorherige if-Abfrage), trotzdem Weigerung berücksichtigen
+
+			strncat(DiagnosePuffer, Buf, DiagnosePufferMax - 2 - strlen(DiagnosePuffer));
+			ProtokollierenPuffer(Buf, strlen(Buf));
+
+			ServSocketLogTab[i].UseCount = 0;
 			} // if UseCount > 0
 		} // for i 
 	}
