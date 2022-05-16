@@ -306,7 +306,7 @@ static bool TlnPlatzschaffen(uint16_t NoetigerPlatz)
 		while (SuchBuchP < TlnBuch + TlnBuchMemUsed)
 			{
 			TlnLesen(&TD, SuchBuchP);
-			if (!BIT_IS_SET(TD.Flags, TlnFlag_Lokal) && (AeltestBuchP == NULL || TD.Datum < AeltestDatum))
+			if ((TD.Flags & TlnFlag_Lokal) == 0 && (AeltestBuchP == NULL || TD.Datum < AeltestDatum))
 				{
 				AeltestBuchP = SuchBuchP;
 				AeltestDatum = TD.Datum;
@@ -316,6 +316,9 @@ static bool TlnPlatzschaffen(uint16_t NoetigerPlatz)
 
 		if (AeltestBuchP == NULL)
 			return false; // es gibt nichts zu loeschen
+
+		if (ProtokollLevel >= AblaufInfo)
+			ProtokollierenInt_P(PSTR("iTelex: Teilnehmer-Liste Platzmangel Eintrag %ul geloescht.\r\n"), *((uint32_t *)(AeltestBuchP)));
 
 		uint8_t AeltestLen = TlnEintragGroesseB(AeltestBuchP);
 		TlnBuchMemUsed -= AeltestLen;
@@ -574,6 +577,7 @@ static bool TlnBuchSortieren(SortierKritFunktion Vergleich, bool Rueckwaerts)
 	char *p1; // Suchzeiger
 	char *Kleinster; // Zeiger auf den kleinsten gefundenen.
 	
+NochmalVonVorne:
 	Kopf = TlnBuch;
 	while (Kopf < TlnBuch + TlnBuchMemUsed)
 		{ // solange noch Einträge kommen...
@@ -595,8 +599,13 @@ static bool TlnBuchSortieren(SortierKritFunktion Vergleich, bool Rueckwaerts)
 			{ // Kleinsten ganz nach vorne holen, dazu...
 			// Hilfs-Platz prüfen:
 			uint8_t KleinsterGroesse = TlnEintragGroesseB(Kleinster);
-			if (KleinsterGroesse + TlnBuchMemUsed >= TlnBuchMemMax)
+
+			if (!TlnPlatzschaffen(KleinsterGroesse))
 				return false; // Abbruch wegen Speichermangel.
+
+			if (TlnPlatzschaffenHatGeaendert)
+				goto NochmalVonVorne;
+
 			// Kleinsten auf Hilfs-Platz schieben:
 			memmove(TlnBuch + TlnBuchMemUsed, Kleinster, KleinsterGroesse);
 			// andere nach hinten schieben:
