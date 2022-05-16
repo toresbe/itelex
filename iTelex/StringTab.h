@@ -268,7 +268,11 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<th align=\"left\">Adresse</th>" // Adresse
 	"<th align=\"center\">Port</th>" // Port
 	"<th align=\"center\">Durchwahl</th>" // Durchwahl
+#ifdef ITELEX_TLNSERVER
 	"<th align=\"center\">letzte<br>Aktualisierung<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=datum\">auf</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">ab</a></th>" // Datum / Uhrzeit
+#else
+	"<th align=\"center\">letzte<br>Verwendung<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=datum\">auf</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">ab</a></th>" // Datum / Uhrzeit
+#endif
 	"<th align=\"left\">Aktion</th>" // in dieser Spalte sind die Buttons
 	"</tr>",
 	
@@ -281,7 +285,11 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<th align=\"left\">Address</th>" // Adresse
 	"<th align=\"center\">Port</th>" // Port
 	"<th align=\"center\">Direct dial</th>" // Durchwahl
+#ifdef ITELEX_TLNSERVER
 	"<th align=\"center\">Updated<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">asc.</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">desc.</a></th>" // Datum / Uhrzeit
+#else
+	"<th align=\"center\">Changed<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">asc.</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">desc.</a></th>" // Datum / Uhrzeit
+#endif
 	"<th align=\"left\">Action</th>" // in dieser Spalte sind die Buttons
 	"</tr>",
 	
@@ -294,7 +302,11 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<th align=\"left\">Indirizzo</th>" // Adresse
 	"<th align=\"center\">Porta</th>" // Port
 	"<th align=\"center\">Estensione</th>" // Durchwahl
+#ifdef ITELEX_TLNSERVER
 	"<th align=\"center\">Aggiornato<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">su</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">giu</a></th>" // Datum / Uhrzeit
+#else
+	"<th align=\"center\">Utilizzo<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">su</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">giu</a></th>" // Datum / Uhrzeit
+#endif
 	"<th align=\"left\">Azione</th>" // in dieser Spalte sind die Buttons
 	"</tr>",
 	
@@ -307,7 +319,11 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<th align=\"left\">Adres</th>" // Adresse
 	"<th align=\"center\">Poort</th>" // Port
 	"<th align=\"center\">Extensie</th>" // Durchwahl
+#ifdef ITELEX_TLNSERVER
 	"<th align=\"center\">Aktueel<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">op</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">neer</a></th>" // Datum / Uhrzeit
+#else
+	"<th align=\"center\">Gebruik<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">op</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">neer</a></th>" // Datum / Uhrzeit
+#endif
 	"<th align=\"left\">Actie</th>" // in dieser Spalte sind die Buttons
 	"</tr>")
 

@@ -803,7 +803,7 @@ extern struct TCP_SOCKET TCP_sockettable[];
 
 
 #define CREDITS_LINES 10
-#define CREDITS_LINE_LENGTH 120
+#define CREDITS_LINE_LENGTH 80
 // Impressum / credits itself are stored only in EEPROM
 
 	
@@ -1125,7 +1125,7 @@ typedef struct
 	long IP;
 	} TSocketLogEntry;
 	
-enum { SocketLogMaxEntries = 20 };
+enum { SocketLogMaxEntries = 10 };
 
 TSocketLogEntry SocketLog[SocketLogMaxEntries];
 
@@ -4746,6 +4746,7 @@ static void PrintServSocketLogTabEntry()
 
 			strncat(DiagnosePuffer, Buf, DiagnosePufferMax - 2 - strlen(DiagnosePuffer));
 			ProtokollierenPuffer(Buf, strlen(Buf));
+			Protokollieren_P(PSTR("\r\n"));
 
 			ServSocketLogTab[i].UseCount = 0;
 			} // if UseCount > 0
@@ -4929,6 +4930,10 @@ void itelex_thread()
 							// ID#222 ********************************************
 							bool RufnummerServerAbfrage = (Wahlziffern >= GlobRufnrMinZiffern && (GewaehlterTln.Flags & TlnFlag_Lokal) == 0);
 								// siehe Wahl-Schritt 1.
+
+							#ifndef ITELEX_TLNSERVER
+							TlnHinzufuegen(&GewaehlterTln, TlnHinzDatumAktualisieren); // in jedem Fall bereits jetzt das Datum
+							#endif
 							
 							if (ProtokollLevel >= AblaufInfo)
 								{
@@ -5865,7 +5870,11 @@ void itelex_thread()
 							if (GewaehlterTln.Datum < TSB.TlnAuskunft.Datum)
 								GewaehlterTln.Datum = TSB.TlnAuskunft.Datum;
 
-							Res = TlnHinzufuegen(&GewaehlterTln, TlnHinzKopieren);
+							#ifdef ITELEX_TLNSERVER
+								Res = TlnHinzufuegen(&GewaehlterTln, TlnHinzKopieren);
+							#else
+								Res = TlnHinzufuegen(&GewaehlterTln, TlnHinzDatumAktualisieren);
+							#endif
 							} // Aktualisieren ist sinnvoll
 						
 						if (iTelexSocketMode == SocketIdle && TSB.TlnAuskunft.Nummer == Wahlnummer)
@@ -5883,8 +5892,12 @@ void itelex_thread()
 					else if (Modus == ModNamensucheServerAbfrage)
 						{ 
 						// erhaltene Datensätze einfach speichern.
-						Res = TlnHinzufuegen(&TSB.TlnAuskunft, TlnHinzNurNeuereUebernehmen);
-						
+						#ifdef ITELEX_TLNSERVER
+							Res = TlnHinzufuegen(&TSB.TlnAuskunft, TlnHinzNurNeuereUebernehmen);
+						#else
+							Res = TlnHinzufuegen(&TSB.TlnAuskunft, TlnHinzDatumAktualisieren);
+						#endif
+
 						// und nächsten anfordern
 						TSB.Code = TLNSERV_SYNC_QUITTUNG;
 						TSB.DataLen = 0;

@@ -286,6 +286,47 @@ char *TlnMemSuche(uint32_t SucheNummer)
 	}
 
 
+static bool TlnPlatzschaffenHatGeaendert;
+//!< wird au ftrue gesetzt, wenn TlnPlatzschaffen() etwas verändert hat
+
+//! Löscht einen oder mehrere Einträge für einen neuen bzw. aktualisierten Eintrag
+static bool TlnPlatzschaffen(uint16_t NoetigerPlatz)
+//! \param[in] NoetigerPlatz Anzahl zusätzlich benoetigter Bytes
+	{
+	char *SuchBuchP;
+	char *AeltestBuchP;
+	uint32_t AeltestDatum;
+	TTlnDaten TD;
+
+	TlnPlatzschaffenHatGeaendert = false;
+	while (TlnBuchMemUsed >= TlnBuchMemMax - NoetigerPlatz)
+		{
+		SuchBuchP = TlnBuch;
+		AeltestBuchP = NULL;
+		while (SuchBuchP < TlnBuch + TlnBuchMemUsed)
+			{
+			TlnLesen(&TD, SuchBuchP);
+			if (!BIT_IS_SET(TD.Flags, TlnFlag_Lokal) && (AeltestBuchP == NULL || TD.Datum < AeltestDatum))
+				{
+				AeltestBuchP = SuchBuchP;
+				AeltestDatum = TD.Datum;
+				}
+			SuchBuchP += TlnEintragGroesseB(SuchBuchP);
+			}
+
+		if (AeltestBuchP == NULL)
+			return false; // es gibt nichts zu loeschen
+
+		uint8_t AeltestLen = TlnEintragGroesseB(AeltestBuchP);
+		TlnBuchMemUsed -= AeltestLen;
+		memmove(AeltestBuchP, AeltestBuchP + AeltestLen, TlnBuchMemUsed - (AeltestBuchP - TlnBuch));
+		TlnPlatzschaffenHatGeaendert = true;
+		}
+
+	return true;	
+	}
+
+
 //! Suche eines Adressbuch-Eintrags.
 // ---------------------------------
 //! \param[in] SucheNummer Die Teilnehmernummer des gesuchten Anschlusses.
@@ -324,11 +365,12 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus HinzModus)
 	{
 	char *p;
 	
+NochmalVonVorn:
 	p = TlnMemSuche(Tln->Nummer);
 	uint8_t NeuGr = TlnEintragGroesse(Tln);
 	if (p == NULL)
 		{
-		if (TlnBuchMemUsed + NeuGr >= TlnBuchMemMax)
+		if (!TlnPlatzschaffen(NeuGr))
 			return -1;
 		TlnEintragen(Tln, TlnBuch + TlnBuchMemUsed, HinzModus == TlnHinzDatumAktualisieren); 
 		TlnBuchMemUsed += NeuGr;
@@ -355,8 +397,10 @@ int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus HinzModus)
 	uint8_t AltGr = TlnEintragGroesseB(p);
 	if (NeuGr != AltGr)
 		{
-		if (TlnBuchMemUsed + NeuGr - AltGr >= TlnBuchMemMax)
+		if (!TlnPlatzschaffen(NeuGr - AltGr))
 			return -1;
+		if (TlnPlatzschaffenHatGeaendert)
+			goto NochmalVonVorn;
 		memmove(p + NeuGr, p + AltGr, TlnBuchMemUsed - (p - TlnBuch) - AltGr);
 		TlnBuchMemUsed += NeuGr - AltGr;
 		TlnEintragen(Tln, p, HinzModus == TlnHinzDatumAktualisieren); // muss klappen ;-)
