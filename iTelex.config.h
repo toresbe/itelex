@@ -181,6 +181,13 @@
 					#define HTTPSERVER_IMPULSECOUNTER
 				#endif
 			#endif
+
+			#ifdef ITELEX_LIGHT
+				#define DEFAULT_MAC 0x02, 0x03, 0x6f, 0x5A, 0x16, 0xc8
+			#else
+				#define DEFAULT_MAC 0x02, 0x03, 0x6f, 0x55, 0x1c, 0xc8
+			#endif
+
 		#endif
 	#endif
 

@@ -62,7 +62,14 @@
 	#endif
 #endif
 
-char mymac[6] = { ENC28J60_MAC0,ENC28J60_MAC1,ENC28J60_MAC2,ENC28J60_MAC3,ENC28J60_MAC4,ENC28J60_MAC5 };
+
+#ifndef DEFAULT_MAC
+#define DEFAULT_MAC 0x02, 0x03, 0x6f, 0x55, 0x1c, 0xc8
+#endif
+
+char mymac[6] = { DEFAULT_MAC };
+
+
 unsigned long PacketCounter;
 unsigned long ByteCounter;
 static char eth_state = ETH_NOTINIT;

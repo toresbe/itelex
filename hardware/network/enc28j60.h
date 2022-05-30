@@ -108,13 +108,6 @@
 	#error "Hardware Plattform wird nicht unterstützt."
 #endif
 
-// MAC address for this interface
-#define ENC28J60_MAC0 0x02	// Set flag for locally administered MAC address.
-#define ENC28J60_MAC1 0x03
-#define ENC28J60_MAC2 0x6f
-#define ENC28J60_MAC3 0x55
-#define ENC28J60_MAC4 0x1c
-#define ENC28J60_MAC5 0xc8
 
 // Define maximum receivelenght
 // Limit the maximum recivelenght without EXTMEM to preserve the stackspace and collisions with the heap.
