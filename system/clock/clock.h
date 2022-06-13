@@ -80,7 +80,7 @@
 		volatile unsigned char DD;			/*!< Tag des Monats */
 		volatile unsigned char MM;			/*!< Monat Januar = 0 */
 		volatile unsigned int YY;			/*!< Jahr */
-		volatile char timezone;				/*!< Zeitzone */
+		volatile int8_t timezone;			/*!< Zeitzone, mit Vorzeichen! */
 		volatile unsigned long uptime;		/*!< Laufzeit in Sekunden seid dem letzten Reset */
 		volatile unsigned long time;		/*!< UTC */
 		volatile unsigned char use_summertime; /*!< automatische Sommerzeit-Darstellung */

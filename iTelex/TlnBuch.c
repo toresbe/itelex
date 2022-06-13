@@ -253,7 +253,7 @@ static void TlnLesen(TTlnDaten *Tln, char *BuchP)
 			break;
 		}
 		
-	} // TlnEintragen
+	} // TlnLesen()
 	
 	
 //! Initialisieren eines Adressbuch-Datensatzes
