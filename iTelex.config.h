@@ -92,7 +92,7 @@
 	#endif
 	#ifdef iTelex_Light // die Hardware-Platform
 		#define ITELEX_LIGHT // ... die Software-Teile
-		// #define ISP_MASTER	
+		#define ISP_MASTER	
 	#endif
 	
 	#ifdef iTelex
