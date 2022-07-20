@@ -14,7 +14,8 @@
 */
 
 // Modification Son 09.08.2012: - LED on for ip-Telex Card
-// Modification Son 09.08.2012: - Disable of serial Port
+// Modification Son 09.08.2012: - Disable of serial Port -- not finished
+// Modification Son 02.05.2022: - LED on on variable port
 
 ;*************************************************************************
 ;*									 *
@@ -44,8 +45,8 @@ init:
 #endif
 
 ;Blue LED on, only for ip-Telex
-	sbi DDRB, 7
-	sbi PORTB, 7
+	sbi LED_DDR, LED_BIT
+	sbi LED_PORT, LED_BIT
 
 ;Disable serial Port
 ; TODO

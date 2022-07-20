@@ -1,0 +1,111 @@
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+text             0x0003fc00         0x00000400         xr
+bss              0x08000200         0x00002000         rw !x
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+
+.bss            0x08000200     0x1e00
+ *(.bss)
+ .bss           0x08000200     0x1e00 bootload.o
+                0x08002000                PROGBUFFEND
+                0x08000200                PROGBUFF
+ .bss           0x08002000        0x0 stub.o
+                0x0003fc00                . = 0x3fc00
+
+.text           0x0003fc00      0x400
+ bootload.o(.text)
+ .text          0x0003fc00      0x20e bootload.o
+                0x0003fdf8                api_call
+                0x0003fffe                . = 0x3fe
+ *fill*         0x0003fe0e      0x1f0 00
+ stub.o(.text)
+ .text          0x0003fffe        0x2 stub.o
+                0x0003fffe                stub
+
+.data           0x08002000        0x0 load address 0x00040000
+ .data          0x08002000        0x0 bootload.o
+ .data          0x08002000        0x0 stub.o
+
+.trampolines    0x00040000        0x0
+ .trampolines   0x00040000        0x0 linker stubs
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment
+ *(.comment)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges
+ *(.debug_aranges)
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info
+ *(.debug_info)
+ *(.gnu.linkonce.wi.*)
+
+.debug_abbrev
+ *(.debug_abbrev)
+
+.debug_line
+ *(.debug_line)
+
+.debug_frame
+ *(.debug_frame)
+
+.debug_str
+ *(.debug_str)
+
+.debug_loc
+ *(.debug_loc)
+
+.debug_macinfo
+ *(.debug_macinfo)
+LOAD bootload.o
+LOAD stub.o
+                0x00000000                Application = 0x0
+OUTPUT(bootload.elf elf32-avr)
+LOAD linker stubs
+
+Cross Reference Table
+
+Symbol                                            File
+Application                                       bootload.o
+PROGBUFF                                          bootload.o
+PROGBUFFEND                                       bootload.o
+api_call                                          bootload.o
+                                                  stub.o
+stub                                              stub.o
