@@ -1,0 +1,25 @@
+Installation i-Telex-Teilnehmerserver
+
+sudo apt install node.js
+sudo apt install npm
+sudo apt install git
+sudo apt install sqlite3
+npm install -g pm2
+git clone https://github.com/soruh/I-Telex-Teilnehmerserver/ TlnServer
+cd TlnServer
+npm install
+cp -r config_template config
+[settings editieren]
+node tools/init_sqlite3.js
+node tools/manage_servers.js add <host> <port> <version>
+Zertifikate kopieren
+npm start
+pm2 install pm2-logrotate
+pm2 startup
+--> gezeigte Zeile mit sudo von privelegiertem user ausführen
+pm2 save
+
+
+
+
+

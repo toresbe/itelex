@@ -52,7 +52,7 @@
 	#if defined(EXTMEM)
 		#define STDIO_BUFFER 512
 	#elif defined(__AVR_ATmega1284P__)
-		#define STDIO_BUFFER 512
+		#define STDIO_BUFFER 128
 	#elif defined(__AVR_ATxmega128A1__)
 		#define STDIO_BUFFER 512
 	#else

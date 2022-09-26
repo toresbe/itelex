@@ -1,0 +1,474 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>7.0</ProjectVersion>
+    <ToolchainName>com.Atmel.AVRGCC8.C</ToolchainName>
+    <ProjectGuid>326bb7b3-8ea5-4bbf-bef7-005b2b5c0dd7</ProjectGuid>
+    <Name>iTlx_Ethernet</Name>
+    <avrdevice>ATmega2561</avrdevice>
+    <avrdeviceseries>none</avrdeviceseries>
+    <AvrProjectType>Importer</AvrProjectType>
+    <OutputType>Executable</OutputType>
+    <Language>C</Language>
+    <OutputFileName>Main</OutputFileName>
+    <OutputFileExtension>.elf</OutputFileExtension>
+    <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
+    <ToolchainFlavour>Native</ToolchainFlavour>
+    <avrtool>
+    </avrtool>
+    <KeepTimersRunning>true</KeepTimersRunning>
+    <OverrideVtor>false</OverrideVtor>
+    <CacheFlash>true</CacheFlash>
+    <ProgFlashFromRam>true</ProgFlashFromRam>
+    <RamSnippetAddress>0x20000000</RamSnippetAddress>
+    <UncachedRange />
+    <preserveEEPROM>true</preserveEEPROM>
+    <OverrideVtorValue>exception_table</OverrideVtorValue>
+    <BootSegment>2</BootSegment>
+    <ResetRule>0</ResetRule>
+    <eraseonlaunchrule>0</eraseonlaunchrule>
+    <EraseKey />
+    <avrtoolinterface>
+    </avrtoolinterface>
+    <AsfFrameworkConfig>
+      <framework-data xmlns="">
+        <options />
+        <configurations />
+        <files />
+        <documentation help="" />
+        <offline-documentation help="" />
+        <dependencies>
+          <content-extension eid="atmel.asf" uuidref="Atmel.ASF" version="3.49.1" />
+        </dependencies>
+      </framework-data>
+    </AsfFrameworkConfig>
+    <avrtoolserialnumber>
+    </avrtoolserialnumber>
+    <avrdeviceexpectedsignature>0x1E9705</avrdeviceexpectedsignature>
+    <com_atmel_avrdbg_tool_simulator>
+      <ToolOptions xmlns="">
+        <InterfaceProperties>
+        </InterfaceProperties>
+        <InterfaceName>
+        </InterfaceName>
+      </ToolOptions>
+      <ToolType xmlns="">com.atmel.avrdbg.tool.simulator</ToolType>
+      <ToolNumber xmlns="">
+      </ToolNumber>
+      <ToolName xmlns="">Simulator</ToolName>
+    </com_atmel_avrdbg_tool_simulator>
+    <RamSnippetAddress>0x20000000</RamSnippetAddress>
+    <avrtoolinterfaceclock>125000</avrtoolinterfaceclock>
+    <com_atmel_avrdbg_tool_ispmk2>
+      <ToolOptions>
+        <InterfaceProperties>
+          <IspClock>125000</IspClock>
+        </InterfaceProperties>
+        <InterfaceName>ISP</InterfaceName>
+      </ToolOptions>
+      <ToolType>com.atmel.avrdbg.tool.ispmk2</ToolType>
+      <ToolNumber>000200090638</ToolNumber>
+      <ToolName>AVRISP mkII</ToolName>
+    </com_atmel_avrdbg_tool_ispmk2>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Standard' ">
+    <ToolchainSettings>
+      <AvrGcc>
+  <avrgcc.common.Device>-mmcu=atmega2561 -B "%24(PackRepoDir)\atmel\ATmega_DFP\1.6.364\gcc\dev\atmega2561"</avrgcc.common.Device>
+  <avrgcc.common.optimization.RelaxBranches>True</avrgcc.common.optimization.RelaxBranches>
+  <avrgcc.common.outputfiles.hex>True</avrgcc.common.outputfiles.hex>
+  <avrgcc.common.outputfiles.lss>True</avrgcc.common.outputfiles.lss>
+  <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
+  <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
+  <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
+  <avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>True</avrgcc.compiler.general.ChangeDefaultCharTypeUnsigned>
+  <avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>True</avrgcc.compiler.general.ChangeDefaultBitFieldUnsigned>
+  <avrgcc.compiler.symbols.DefSymbols>
+    <ListValues>
+      <Value>F_CPU=16000000UL</Value>
+      <Value>PROG_ID_ZUSATZ=\"ITA2\"</Value>
+      <Value>__heap_end=0x80ffff</Value>
+      <Value>__PROG_TYPES_COMPAT__</Value>
+      <Value>iTelex</Value>
+    </ListValues>
+  </avrgcc.compiler.symbols.DefSymbols>
+  <avrgcc.compiler.directories.IncludePaths>
+    <ListValues>
+      <Value>.</Value>
+      <Value>..</Value>
+      <Value>../iTelex/Gemeinsam</Value>
+      <Value>../../C-Libs</Value>
+      <Value>%24(PackRepoDir)\atmel\ATmega_DFP\1.6.364\include\</Value>
+    </ListValues>
+  </avrgcc.compiler.directories.IncludePaths>
+  <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
+  <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
+  <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+  <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
+  <avrgcc.compiler.miscellaneous.OtherFlags>-gdwarf-2 -std=gnu99</avrgcc.compiler.miscellaneous.OtherFlags>
+  <avrgcc.linker.memorysettings.InitialStack>0x2000</avrgcc.linker.memorysettings.InitialStack>
+  <avrgcc.linker.miscellaneous.LinkerFlags>-Wl,--section-start,.data=0x802200,--defsym=__heap_end=0x80ffff,--noinhibit-exec</avrgcc.linker.miscellaneous.LinkerFlags>
+  <avrgcc.assembler.general.AssemblerFlags>-Wall -gdwarf-2 -std=gnu99 -DF_CPU=16000000UL -Os -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums</avrgcc.assembler.general.AssemblerFlags>
+  <avrgcc.assembler.general.IncludePaths>
+    <ListValues>
+      <Value>%24(PackRepoDir)\atmel\ATmega_DFP\1.6.364\include\</Value>
+    </ListValues>
+  </avrgcc.assembler.general.IncludePaths>
+</AvrGcc>
+    </ToolchainSettings>
+    <UsesExternalMakeFile>False</UsesExternalMakeFile>
+    <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
+    <ExternalMakeFilePath>makefile</ExternalMakeFilePath>
+    <BuildTarget>program</BuildTarget>
+    <CleanTarget>clean</CleanTarget>
+    <PreBuildEvent>copy /Y  "$(MSBuildProjectDirectory)\iTelex.config.h" "$(MSBuildProjectDirectory)\config.h"
+</PreBuildEvent>
+    <PostBuildEvent />
+    <OutputPath>Standard\</OutputPath>
+  </PropertyGroup>
+  <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
+  <ItemGroup>
+    <Compile Include="apps\apps_init.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\cron\cron.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\httpd\lochstreifen-hg.h">
+      <SubType>compile</SubType>
+      <Link>system\net\lochstreifen-hg.h</Link>
+    </Compile>
+    <Compile Include="apps\modules\cmd_arp.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\modules\cmd_cron.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\modules\cmd_dns.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\modules\cmd_dyndns.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\modules\cmd_eemem.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\modules\cmd_foo.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\modules\cmd_ifconfig.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\modules\cmd_ntp.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\modules\cmd_reset.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\modules\cmd_stats.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\modules\cmd_twi.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\modul_init.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\telnet\telnet.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\ext_int\ext_int.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\timer1\timer1.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\uart\mega\uart_0.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\uart\mega\uart_1.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\uart\uart_core.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\CgiFormTools.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\ConfigNtp.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\eMail.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\Gemeinsam\BaudotCode.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\Gemeinsam\BaudotCode.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\Gemeinsam\BaudotCode_US.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\Gemeinsam\BusKomm.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\Gemeinsam\FifoPuffer.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\Gemeinsam\TxP2-Defs.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\IspMaster.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\IspMaster.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\RamCorrTest.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\RamCorrTest.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\StringTab.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\SwTwi.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="SvnVersion.h">
+      <SubType>compile</SubType>
+      <Link>apps\SvnVersion.h</Link>
+    </Compile>
+    <Compile Include="system\base64\base64.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\buffer\fifo.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\config\eeconfig.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\filesystem\byteordering.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\filesystem\fat.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\filesystem\filesystem.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\filesystem\partition.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\math\checksum.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\math\crc8.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\math\math.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\net\arp.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\net\dhcpc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\net\dns.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\net\endian.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\net\ethernet.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\net\icmp.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\net\ip.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\net\network.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\net\ntp.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\net\udp.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\shell\shell.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\stdout\stdout.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\string\string.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\thread\thread.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="apps" />
+    <Folder Include="apps\cron\" />
+    <Folder Include="apps\httpd" />
+    <Compile Include="apps\httpd\files_data.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\httpd\files.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\httpd\httpd2_pharse.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="apps\httpd\httpd2.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="apps\httpd\cgibin" />
+    <Compile Include="apps\httpd\cgibin\cgi-bin.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="apps\modules\" />
+    <Folder Include="apps\telnet\" />
+    <Folder Include="hardware" />
+    <Folder Include="hardware\ext_int\" />
+    <Folder Include="hardware\network\" />
+    <Folder Include="hardware\timer0" />
+    <Compile Include="hardware\network\enc28j60.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\spi\spi_0.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\spi\spi_1.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\spi\spi_2.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\timer0\timer0.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\timer0\timer0.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="hardware\led" />
+    <Compile Include="hardware\led\led_core.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\led\led_core.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="hardware\memory" />
+    <Compile Include="hardware\memory\xram.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="hardware\spi" />
+    <Compile Include="hardware\spi\spi_core.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="hardware\gpio" />
+    <Compile Include="hardware\gpio\gpio_core.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\gpio\gpio_out.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="hardware\gpio\gpio_in.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="hardware\sd_raw" />
+    <Compile Include="hardware\sd_raw\sd_raw.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="hardware\timer1\" />
+    <Folder Include="hardware\uart\" />
+    <Folder Include="hardware\uart\mega\" />
+    <Folder Include="iTelex\Gemeinsam\" />
+    <Folder Include="system" />
+    <Folder Include="system\base64\" />
+    <Folder Include="system\buffer\" />
+    <Folder Include="system\clock\" />
+    <Folder Include="system\config\" />
+    <Folder Include="system\filesystem\" />
+    <Folder Include="system\math\" />
+    <Folder Include="system\shell\" />
+    <Folder Include="system\stdout" />
+    <Compile Include="system\clock\clock.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\stdout\stdout.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="system\net" />
+    <Compile Include="system\net\tcp.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\net\dyndns.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="system\init.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="system\softreset" />
+    <Compile Include="system\softreset\softreset.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="iTelex" />
+    <Compile Include="iTelex\Protokoll.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\TlnBuch.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\iTelex.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\CgiFormTools.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\ConfigNtp.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\eMail.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\StringTab.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\SwTwi.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\TlnServer.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\UebersetzTab.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\Protokoll.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\TlnBuch.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\TlnServer.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\iTelex.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex.config.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="main.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Folder Include="system\string\" />
+    <Folder Include="system\thread\" />
+  </ItemGroup>
+</Project>

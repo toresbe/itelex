@@ -199,7 +199,7 @@ void network_init( void )
 	#endif
 		
 #if defined(NTP) && defined(UDP)
-	// Uhr einstellen
+	// Uhr einstellen, ip (String) als "Zwischenspeicher" missbraucht.
 	if( readConfig_P( PSTR("NTP"), ip ) != -1 )
 	{
 		if ( !strcmp_P( ip, PSTR("on") ) )

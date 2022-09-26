@@ -45,7 +45,7 @@
 		#define		MAX_EXT_INT				16
 	#elif defined(__AVR_ATmega2561__) || defined(__AVR_AT90CAN128__)
 		#define 	MAX_EXT_INT				8
-	#elif defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__)
+	#elif defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__) || defined(__AVR_ATmega1284__)
 		#define 	MAX_EXT_INT				3
 	#endif
 

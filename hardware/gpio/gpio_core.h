@@ -27,7 +27,7 @@
 #if defined(OpenMCP)
 	#define MAX_GPIO_PORTS	4
 	#define MAX_GPIO_PIN	32
-#elif defined(AVRNETIO) || defined(myAVR) || defined( EtherSense )
+#elif defined(AVRNETIO) || defined(myAVR) || defined(EtherSense) || defined(iTelex_Light)
 	#define MAX_GPIO_PORTS	4
 	#define MAX_GPIO_PIN	32
 #elif defined(XPLAIN) || defined(UPP)

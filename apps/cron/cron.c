@@ -37,6 +37,8 @@
 #include "system/stdout/stdout.h"
 #include "system/thread/thread.h"
 
+#ifdef CRON_ACTIVE
+
 #include "cron.h"
 
 const char entrystring[] PROGMEM = "CRON_ENTRY_%02d";
@@ -351,4 +353,8 @@ void CRON_reloadcrontable( void )
 		}		
 	}
 }
+
+
+#endif //def CRON_ACTIVE
+
 //@}

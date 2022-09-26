@@ -102,7 +102,7 @@
 const char config_ok[] PROGMEM = " Initialisiert\r\n";
 const char config_error[] PROGMEM = " Error\r\n";
 
-#if defined(LED) && !defined(iTelex)
+#if defined(LED) && !defined(ITELEX_BASIS)
 	// Timerinterrupt mit abstand 1 sekunde, dabei wird die LED 0 getoggelt
 	void blinkinglights( void )
 	{
@@ -171,9 +171,9 @@ void init( void )
 	printf_P( config_ok );
 	// LED_core starten
 	// Callbackfunktion für die blinkende LED eintragen
-#if !defined(iTelex)
+#if !defined(ITELEX_BASIS)
  	CLOCK_RegisterCallbackFunction ( blinkinglights, SECOUND );
-#endif // !defined(iTelex)
+#endif // !defined(ITELEX_BASIS)
 #endif
 
 	// Configmodul initialisieren

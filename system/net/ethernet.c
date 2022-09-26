@@ -62,7 +62,14 @@
 	#endif
 #endif
 
-char mymac[6] = { ENC28J60_MAC0,ENC28J60_MAC1,ENC28J60_MAC2,ENC28J60_MAC3,ENC28J60_MAC4,ENC28J60_MAC5 };
+
+#ifndef DEFAULT_MAC
+#define DEFAULT_MAC 0x02, 0x03, 0x6f, 0x55, 0x1c, 0xc8
+#endif
+
+char mymac[6] = { DEFAULT_MAC };
+
+
 unsigned long PacketCounter;
 unsigned long ByteCounter;
 static char eth_state = ETH_NOTINIT;
@@ -108,7 +115,7 @@ void ethernet(void)
 							ip( packet_lenght , ethernetbuffer );
 							break;
 		}
-#if defined(OpenMCP) || defined( AVRNETIO ) || defined(UPP) || defined(XPLAIN) || defined(ATXM2) || defined( EtherSense ) || defined(iTelex)
+#if defined(OpenMCP) || defined( AVRNETIO ) || defined(UPP) || defined(XPLAIN) || defined(ATXM2) || defined( EtherSense ) || defined(iTelex) || defined( iTelex_Light )
 		packet_lenght = 0;
 	}	
 #endif
@@ -183,7 +190,7 @@ void LockEthernet( void )
 		eth_state = ETH_LOCK;
 		LockTCP();
 
-#if defined(OpenMCP) || defined(UPP) || defined(iTelex)
+#if defined(OpenMCP) || defined(UPP) || defined(iTelex) || defined( iTelex_Light )
 		EXTINT_block( ENC28J60_INT );
 #endif
 
@@ -217,7 +224,7 @@ void FreeEthernet( void )
 
 		eth_state = ETH_FREE;
 
-#if defined(OpenMCP) || defined(UPP) || defined(iTelex)
+#if defined(OpenMCP) || defined(UPP) || defined(iTelex) || defined( iTelex_Light )
 		EXTINT_free ( ENC28J60_INT );
 #endif
 
@@ -257,7 +264,7 @@ void EthernetInit( void )
 		char ethernetbuffer[ MAX_FRAMELEN ];
 		while ( getEthernetframe( MAX_FRAMELEN, ethernetbuffer) != 0 ) { };
 		
-#if defined(OpenMCP) || defined(AVRNETIO) || defined(UPP) || defined( EtherSense ) || defined(iTelex)
+#if defined(OpenMCP) || defined(AVRNETIO) || defined(UPP) || defined( EtherSense ) || defined(iTelex) || defined(iTelex_Light)
 		EXTINT_set ( ENC28J60_INT , SENSE_LOW , ethernet );
 #endif
 

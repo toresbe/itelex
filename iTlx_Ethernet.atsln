@@ -1,0 +1,23 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Atmel Studio Solution File, Format Version 11.00
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "iTlx_Ethernet", "iTlx_Ethernet.cproj", "{326BB7B3-8EA5-4BBF-BEF7-005B2B5C0DD7}"
+EndProject
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "iTlx_Ethernet_Light", "iTlx_Ethernet_Light.cproj", "{EB3B910A-C6C1-47DE-BEB6-2C51F4A0F26A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Release|AVR = Release|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{326BB7B3-8EA5-4BBF-BEF7-005B2B5C0DD7}.Release|AVR.ActiveCfg = Standard|AVR
+		{326BB7B3-8EA5-4BBF-BEF7-005B2B5C0DD7}.Release|AVR.Build.0 = Standard|AVR
+		{EB3B910A-C6C1-47DE-BEB6-2C51F4A0F26A}.Release|AVR.ActiveCfg = Light|AVR
+		{EB3B910A-C6C1-47DE-BEB6-2C51F4A0F26A}.Release|AVR.Build.0 = Light|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

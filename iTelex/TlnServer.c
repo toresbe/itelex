@@ -108,7 +108,7 @@
 
 #include "config.h"
 
-#ifdef iTelex
+#ifdef ITELEX_TLNSERVER
 
 #include "system/net/ip.h"
 #include "system/net/tcp.h"
@@ -128,7 +128,6 @@
 #include "StringTab.h"
 
 
-#ifdef ITELEX_TLNSERVER
 
 #include "TlnBuch.h"
 #include "TlnServer.h"
@@ -1426,6 +1425,4 @@ void itelex_tlnserv_init()
 
 
 #endif //def ITELEX_TLNSERVER
-
-#endif //def iTelex
 

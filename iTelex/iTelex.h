@@ -30,7 +30,7 @@
 
 #include "config.h"
 
-#ifdef iTelex
+#ifdef ITELEX_BASIS
 
 #if !defined(ITELEX_TLNSERVER) && !defined(ITELEX_ANSCHLUSS)
 	#warning Kein iTelex-Modul aktiv!
@@ -65,13 +65,20 @@
 
 // TODO umstellen auf GPIO...???
 
+#ifdef iTelex
 DEFPORTINPULL(Taste, B, 3);
-
 DEFPORTOUT(RTS, D, 4)
-
 DEFPORTIN(CTS, D, 5)
-
 DEFPORTOUT(AnrufSignal, B, 1); // auf Prog-Stecker Pin 7. Die anderen Pins des Prog-Steckers mit mit dem SPI besetzt!
+#endif //def iTelex
+
+#ifdef iTelex_Light
+DEFPORTINPULL(Taste, A, 0);
+DEFPORTOUT(RTS, D, 2)
+DEFPORTIN(CTS, D, 4)
+DEFPORTOUT(AnrufSignal, A, 1); // auf ??? TODO
+#endif //def iTelex_Light
+
 
 
 // LEDs
@@ -95,8 +102,8 @@ enum {
 	//!< Der TCP-Port für die Kommunikation mit den Teilnehmer-Servern.
 
 	RemoteServerPortDefault = 49491,
-	//!< Der TCP-Port für die Kommunikation mit dem "RemoteServer" (= "Centralex" = "Verbindungsbrücken-Server")
-		
+	//!< Der TCP-Port für die Kommunikation mit dem "RemoteServer" (= "Centralex" = "
+	
 	TlnAdresseMax = 40,
 	//!< maximale Länge der Verbindungsadresse.
 	//!< Nicht ändern, da auch der Datenaustausch mit dem Teilnehmer-Server
@@ -107,16 +114,16 @@ enum {
 	//!< Nicht ändern, da auch der Datenaustausch mit dem Teilnehmer-Server
 	//!< betroffen wäre (Kompatibilitätsprobleme) (siehe #TTlnDaten)
 
-	AsciiDruckPufferMax = 1000,
+	AsciiDruckPufferMax = 512,
 	//!< Puffergröße für Textpuffer bei Umsetzung ASCII -> Baudot.
 
 	HtmlSendeTextMax = 400,
 	//!< Puffergröße für Textpuffer bei HTML-Kommunikation (Druckspiegel)
 
-	SocketInBufMax = 2500,
+	SocketInBufMax = 512,
 	//!< Größe des TCP-Empfangspuffers
 
-	SocketOutBufMax = 2500,
+	SocketOutBufMax = 512,
 	//!< Größe des TCP-Sendepuffers
 
 	DiagnosePufferMax = 200,
@@ -588,7 +595,7 @@ static inline uint16_t KurzTimerVal(TKurzTimer *t)
 	}
 		
 	
-#endif //def iTelex
+#endif //def ITELEX_BASIS
 	
 #endif // def __ITELEX_H__
 

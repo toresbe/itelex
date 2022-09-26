@@ -40,7 +40,7 @@
 
 #include "config.h"
 
-#ifdef iTelex
+#ifdef ITELEX_BASIS
 
 // #include "defports.h"
 // #include "bits.h"
@@ -805,7 +805,7 @@ extern struct TCP_SOCKET TCP_sockettable[];
 
 
 #define CREDITS_LINES 10
-#define CREDITS_LINE_LENGTH 120
+#define CREDITS_LINE_LENGTH 80
 // Impressum / credits itself are stored only in EEPROM
 
 	
@@ -1086,7 +1086,7 @@ bool Diagnoseausgabe_P(const char *msg, uint8_t Level)
 	if (DiagnosePuffer[0] != '\0' && Level > DiagnosePufferLevel)
 		{
 		Protokollieren_P(PSTR(" ...ignoriert, vorherige Meldung noch nicht gedruckt\r\n"));
-		return false; // Neue Meldung ist weniger wichtig als aktuelle.
+		return false; // Neue Meldung ist weniger wichtig als aktuelle, noch nicht gedruckte Meldung.
 		}
 
 	if (msg == NULL)
@@ -1127,7 +1127,7 @@ typedef struct
 	long IP;
 	} TSocketLogEntry;
 	
-enum { SocketLogMaxEntries = 20 };
+enum { SocketLogMaxEntries = 10 };
 
 TSocketLogEntry SocketLog[SocketLogMaxEntries];
 
@@ -1362,7 +1362,7 @@ void itelex_timerEvent(void)
 				} // Abtastung eines Bits abgeschlossen
 			StartKurzTimer(&SchreibPauseTimer);
 			} // if Empfang läuft
-		else // SerUmEmpfBitNr == 0 || SerUmEmpfBitNr == SerUmEmpfFertig
+		else // SerUmEmpfBitNr == SerUmEmpfWarte || SerUmEmpfBitNr == SerUmEmpfFertig
 			{ // Empfang ruht 
 			if (!BusEmpfMark) // Pausenschritt
 				{
@@ -3632,7 +3632,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						ProtokollierenITelex_P(PSTR("Abbaubefehl von Gegenstelle\r\n"));
 					}
 
-				if (len > 0)
+				if (len > 0 && (Modus == ModGehendWaehlen || Modus == ModGehendVerbunden || Modus == ModKommendVerbunden))
 					{
 					char Buf[11];
 					uint8_t msglen = (len < 10) ? len : 10;
@@ -4740,16 +4740,17 @@ static void PrintServSocketLogTabEntry()
 				ServSocketLogTab[i].UseCount, Time.time - ServSocketLogTab[i].FirstTime); // 2 + 5 + 6 + 5 + 2
 																					// Summe: 51
 
-			if (DiagnosePuffer[0] == '\0') // noch leer
-				Diagnoseausgabe_P(PSTR("Zugriffe per TCP:"), 5);
-																					
-			if (strlen(DiagnosePuffer) + strlen(Buf) < DiagnosePufferMax - 2)
-				{
-				strcat(DiagnosePuffer, Buf);
-				ServSocketLogTab[i].UseCount = 0;
-				}
-			else
+			if (DiagnosePuffer[0] != '\0') // nicht leer
 				break; // andere Meldungen bei nächster Runde
+
+			if (!Diagnoseausgabe_P(PSTR("Zugriffe per TCP:"), 5))
+				break; // kann eigentlich nicht sein (vorherige if-Abfrage), trotzdem Weigerung berücksichtigen
+
+			strncat(DiagnosePuffer, Buf, DiagnosePufferMax - 2 - strlen(DiagnosePuffer));
+			ProtokollierenPuffer(Buf, strlen(Buf));
+			Protokollieren_P(PSTR("\r\n"));
+
+			ServSocketLogTab[i].UseCount = 0;
 			} // if UseCount > 0
 		} // for i 
 	}
@@ -4931,6 +4932,10 @@ void itelex_thread()
 							// ID#222 ********************************************
 							bool RufnummerServerAbfrage = (Wahlziffern >= GlobRufnrMinZiffern && (GewaehlterTln.Flags & TlnFlag_Lokal) == 0);
 								// siehe Wahl-Schritt 1.
+
+							#ifndef ITELEX_TLNSERVER
+							TlnHinzufuegen(&GewaehlterTln, TlnHinzDatumAktualisieren); // in jedem Fall bereits jetzt das Datum
+							#endif
 							
 							if (ProtokollLevel >= AblaufInfo)
 								{
@@ -5170,7 +5175,7 @@ void itelex_thread()
 			if (z == '\r' || z == '\n')
 				{
 				if (SuchTextLen == 0)
-					; // WR / ZL am Zeilenanfang ignorieren
+					; // WR / ZL am Zeilenanfang ignorieren 
 				else
 					{
 					ProtokollierenITelex_P(PSTR("Starte Namenssuche fuer <"));
@@ -5867,7 +5872,11 @@ void itelex_thread()
 							if (GewaehlterTln.Datum < TSB.TlnAuskunft.Datum)
 								GewaehlterTln.Datum = TSB.TlnAuskunft.Datum;
 
-							Res = TlnHinzufuegen(&GewaehlterTln, TlnHinzKopieren);
+							#ifdef ITELEX_TLNSERVER
+								Res = TlnHinzufuegen(&GewaehlterTln, TlnHinzKopieren);
+							#else
+								Res = TlnHinzufuegen(&GewaehlterTln, TlnHinzDatumAktualisieren);
+							#endif
 							} // Aktualisieren ist sinnvoll
 						
 						if (iTelexSocketMode == SocketIdle && TSB.TlnAuskunft.Nummer == Wahlnummer)
@@ -5885,8 +5894,12 @@ void itelex_thread()
 					else if (Modus == ModNamensucheServerAbfrage)
 						{ 
 						// erhaltene Datensätze einfach speichern.
-						Res = TlnHinzufuegen(&TSB.TlnAuskunft, TlnHinzNurNeuereUebernehmen);
-						
+						#ifdef ITELEX_TLNSERVER
+							Res = TlnHinzufuegen(&TSB.TlnAuskunft, TlnHinzNurNeuereUebernehmen);
+						#else
+							Res = TlnHinzufuegen(&TSB.TlnAuskunft, TlnHinzDatumAktualisieren);
+						#endif
+
 						// und nächsten anfordern
 						TSB.Code = TLNSERV_SYNC_QUITTUNG;
 						TSB.DataLen = 0;
@@ -6583,7 +6596,9 @@ void itelex_cgi_debug( void * pStruct )
 	
 	PRINTVALHEX(Debug_LowestSP);
 
+#ifdef EXTMEM
 	PRINTVALHEX(XMCRA);
+#endif //def EXTMEM
 	
 	CLOCK_decode_time(&SystemStartZeit);
 	printf_P(PSTR("<br>SystemStartZeit = %02u.%02u.%04u %02d:%02d:%02d, ResetFlag = %02X"), 
@@ -7898,6 +7913,7 @@ extern void itelex_init1(void)
 	ProtokollInit();
 	ProtokollierenInt_P(PSTR("Neustart " SVNVERSION " Reset-Flags %02X\r\n"), ResetFlags);
 
+#ifdef EXTMEM
 	// Test: Speicherzugriffs-Geschwindigkeit setzen:
 	i = 1; // Default-Waitstates
 	if (readConfig_P(PSTR("XRAMWAIT"), Buf) == 1)
@@ -7910,6 +7926,7 @@ extern void itelex_init1(void)
 		// sicherheitshalber beide Wait-State-Konfigurationen auf den gleichen Wert setzen.
 
 	// RamCorrTestInit(); // TODO konfigurierbar.
+#endif //def EXTMEM
 
 	printf_P(PSTR("itelex_init1:\r\n"));
 	
@@ -8256,7 +8273,7 @@ void itelex_init2()
 	}
 
 
-#endif //def iTelex
+#endif //def ITELEX_BASIS
 
 
 #if defined(MMC)
