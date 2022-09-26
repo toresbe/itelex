@@ -3632,7 +3632,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						ProtokollierenITelex_P(PSTR("Abbaubefehl von Gegenstelle\r\n"));
 					}
 
-				if (len > 0)
+				if (len > 0 && (Modus == ModGehendWaehlen || Modus == ModGehendVerbunden || Modus == ModKommendVerbunden))
 					{
 					char Buf[11];
 					uint8_t msglen = (len < 10) ? len : 10;
