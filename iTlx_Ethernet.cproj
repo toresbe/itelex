@@ -226,6 +226,12 @@
     <Compile Include="iTelex\IspMaster.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="iTelex\MissbrauchSperre.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="iTelex\MissbrauchSperre.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="iTelex\RamCorrTest.c">
       <SubType>compile</SubType>
     </Compile>
