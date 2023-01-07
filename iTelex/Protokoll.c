@@ -42,12 +42,16 @@ bool Idle; //!< Speichert, ob es zu protokollierende Ereignisse gab.
 bool SdGestoert;
 	//!< Wenn die SD Karte zwar aktiv ist aber schreiben nicht möglich ist.
 	
-uint8_t ProtokollLevel;
+TProtokollLevel ProtokollLevel;
 	//!< "Tiefe" der Protokollierung für "normale" Abläufe: 0 = Aus, 1 = Normal, 2 = Intensiv, 3 = im Detail
 
 uint8_t ProtokollLevelTlnServ;
 	//!< "Tiefe" der Protokollierung für Teilnehmer-Server: 0 = Aus, 1 = Normal, 2 = Intensiv, 3 = im Detail
 	//!< Auch Protokollierung der Teilnehmer-Server-Abfragen
+
+
+TBaudotMode ProtokollBaudotMode;
+
 
 static bool DruckeUhrzeit;
 	//!< speichert, ob die letzte Zeile ein CR LF enthielt, wenn ja wird die 
@@ -64,7 +68,30 @@ static bool RegelblockAktiv;
 static bool InRegelblock;
 	//!< Merker ob die folgenden Meldungen regelmäßig vorkommende Meldungen sind.
 	
-	
+
+//! Prüft, ob die Protokollierung für den "Level" p stattfinden soll
+//! \retval true, wenn ja	
+bool ProtokollAktivFuer(TProtokollLevel p)
+{
+	if (ProtokollAktivFuerTCP())
+		return p >= TcpVerbindungen + ProtokollLevel && ProtokollLevel <= TcpVerbindungen + AblaeufeAlle;
+		
+	if (p <= AblaeufeAlle)
+		return p >= ProtokollLevel && ProtokollLevel <= AblaeufeAlle;
+
+	if (p >= TelexKommunikationPur && p <= TelexKommunikationAlles)
+		return p >= ProtokollLevel && ProtokollLevel <= TelexKommunikationAlles;
+
+	return false; // dies wirkt auch bei #UhrzeitImpulse
+}
+
+
+bool ProtokollAktivFuerTCP()
+{
+	return ProtokollLevel >= TcpVerbindungen + Keine && ProtokollLevel <= TcpVerbindungen + AblaeufeAlle;
+}
+
+
 //! Schreibt die zwischengespeicherten Daten auf die SD-Karte oder sendet diese an 
 //! die serielle Schnittstelle.
 //! \param flush Falls True, alle zwischengespeicherten Daten senden

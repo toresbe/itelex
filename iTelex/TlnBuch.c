@@ -317,7 +317,7 @@ static bool TlnPlatzschaffen(uint16_t NoetigerPlatz)
 		if (AeltestBuchP == NULL)
 			return false; // es gibt nichts zu loeschen
 
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			ProtokollierenInt_P(PSTR("iTelex: Teilnehmer-Liste Platzmangel Eintrag %ul geloescht.\r\n"), *((uint32_t *)(AeltestBuchP)));
 
 		uint8_t AeltestLen = TlnEintragGroesseB(AeltestBuchP);
@@ -685,7 +685,7 @@ void TlnBuchPruefsummeBerechnenSchritt()
 		if (PruefsummeSoll != PruefsummeIst)
 			{
 			PruefsummeSoll = PruefsummeIst;
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				ProtokollierenInt_P(PSTR("iTelex: Teilnehmer-Verzeichnis Pruefsumme aktualisiert auf %08lX.\r\n"), PruefsummeSoll);
 			}
 		PruefsummeBerechnungStart();
