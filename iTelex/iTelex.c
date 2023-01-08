@@ -3883,7 +3883,10 @@ static void ITelexDatenVerarbeiten()
 			SocketAnzahlZeichenGesendet += len;
 			while (len > 0)
 				{
-				SocketOutBuf[SocketOutBufUsed++] = PufferAusg(&EmpfPuffer);
+				uint8_t code = PufferAusg(&EmpfPuffer);
+				SocketOutBuf[SocketOutBufUsed++] = code;
+				if (ProtokollAktivFuer(TelexKommunikationPur))
+					ProtokollierenC(CodeZuZeichen(code, &ProtokollBaudotMode));
 				len--;
 				}
 			SocketSendeQuittung = true;
