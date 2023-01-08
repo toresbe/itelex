@@ -10,18 +10,18 @@
 //! Meldungs-Level für Ausgabe auf der Seriellen Schnittstelle: (Debug-Ausgaben, Protokollierung der Kommunikation oder Uhrenimpulse)
 typedef enum
 	{
-	Keine = 0,
-	NurFehler,
-	AblaufInfo,
-	DatenKurz,
-	DatenDetailliert,
-	AuchRegelmaessiges,
-	AblaeufeAlle,
-	TcpVerbindungen = 10, // wirkt als "Offset" auf Keine bis AblaeufeAlle
-	TelexKommunikationPur = 21,
-	TelexKommunikationMitVerbindungsdaten,
-	TelexKommunikationAlles,
-	UhrzeitImpulse = 100 // dies ist eine eigene Funktion, die die serielle Schnittstelle als Uhrenimpuls-Ausgabe missbraucht.
+	Keine						= 0,
+	NurFehler					= 1,
+	AblaufInfo					= 2,
+	DatenKurz					= 3,
+	DatenDetailliert			= 4,
+	AuchRegelmaessiges			= 5,
+	AblaeufeAlle				= 9,
+	TcpVerbindungen				= 10, // wirkt als "Offset" auf Keine bis AblaeufeAlle
+	TelexKommunikationPur		= 21,
+	TelexKommunikationMitVerbindungsdaten = 22,
+	TelexKommunikationAlles		= 29,
+	UhrzeitImpulse				= 99 // dies ist eine eigene Funktion, die die serielle Schnittstelle als Uhrenimpuls-Ausgabe missbraucht.
 	} TProtokollLevel;
 	
 

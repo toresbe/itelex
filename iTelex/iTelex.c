@@ -1690,7 +1690,7 @@ void ModusWechsel(TModus neu)
 			StartLangTimer(&BeideRuhigTimer);
 			if (ProtokollAktivFuer(TelexKommunikationPur))
 				{
-				Protokollieren_P(">>>>>\r\n");
+				Protokollieren_P(PSTR(">>>>>\r\n"));
 				ProtokollBaudotMode = BaudotMode_BuchstabenEmpfangen;
 				}
 			break;
@@ -1753,7 +1753,7 @@ void ModusWechsel(TModus neu)
 			StartLangTimer(&BeideRuhigTimer);
 			if (ProtokollAktivFuer(TelexKommunikationPur))
 				{
-				Protokollieren_P("<<<<<\r\n");
+				Protokollieren_P(PSTR("<<<<<\r\n"));
 				ProtokollBaudotMode = BaudotMode_BuchstabenEmpfangen;
 				}
 			break;
@@ -1808,7 +1808,7 @@ void ModusWechsel(TModus neu)
 			StartLangTimer(&BeideRuhigTimer);
 			if (ProtokollAktivFuer(TelexKommunikationPur))
 				{
-				Protokollieren_P("<<<<< (web)\r\n");
+				Protokollieren_P(PSTR("<<<<< (web)\r\n"));
 				ProtokollBaudotMode = BaudotMode_BuchstabenEmpfangen;
 				}
 			break;
@@ -1918,7 +1918,7 @@ void ModusWechsel(TModus neu)
 			SET_BIT_Status(StatBit_Verbunden);
 			if (ProtokollAktivFuer(TelexKommunikationPur))
 				{
-				Protokollieren_P("<<< @\r\n");
+				Protokollieren_P(PSTR("<<< @\r\n"));
 				ProtokollBaudotMode = BaudotMode_BuchstabenEmpfangen;
 				}
 
@@ -1954,7 +1954,7 @@ static bool SchreibeZeichenInSendePuffer(char c)
 		{ // Zeichen erfolgreich in Baudot-Code umgesetzt
 		return PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2));
 		if (ProtokollAktivFuer(TelexKommunikationPur))
-			Protokollieren(c);
+			ProtokollierenC(c);
 		}
 	else
 		// Zeichen ist nicht darstellbar, also löschen
@@ -3600,7 +3600,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						{
 						PufferSpeich(&SendePuffer, SocketInBuf[i]);
 						if (ProtokollAktivFuer(TelexKommunikationPur))
-							Protokollieren(CodeZuZeichen(SocketInBuf[i], &ProtokollBaudotMode));
+							ProtokollierenC(CodeZuZeichen(SocketInBuf[i], &ProtokollBaudotMode));
 						i++;
 						len--;
 						} // umkopieren
@@ -4647,7 +4647,7 @@ static void DatumUhrzeitDrucken()
 				{
 				PufferSpeich(&SendePuffer, Code);
 				if (ProtokollAktivFuer(TelexKommunikationPur))
-					Protokollieren(Text[i]);
+					ProtokollierenC(Text[i]);
 				}
 			}
 		// BaudotMode wird am Ende der Funktion korrekt gesetzt.

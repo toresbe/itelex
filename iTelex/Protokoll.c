@@ -73,22 +73,22 @@ static bool InRegelblock;
 //! \retval true, wenn ja	
 bool ProtokollAktivFuer(TProtokollLevel p)
 {
+	if (ProtokollLevel >= Keine && ProtokollLevel <= AblaeufeAlle)
+		return (p >= ProtokollLevel) && (p <= AblaeufeAlle);
+	
 	if (ProtokollAktivFuerTCP())
-		return p >= TcpVerbindungen + ProtokollLevel && ProtokollLevel <= TcpVerbindungen + AblaeufeAlle;
+		return (p >= ProtokollLevel - TcpVerbindungen) && (p <= AblaeufeAlle);
 		
-	if (p <= AblaeufeAlle)
-		return p >= ProtokollLevel && ProtokollLevel <= AblaeufeAlle;
-
-	if (p >= TelexKommunikationPur && p <= TelexKommunikationAlles)
-		return p >= ProtokollLevel && ProtokollLevel <= TelexKommunikationAlles;
-
+	if (ProtokollLevel >= TelexKommunikationPur && ProtokollLevel <= TelexKommunikationAlles)
+		return (p >= ProtokollLevel) && (p <= TelexKommunikationAlles);
+	
 	return false; // dies wirkt auch bei #UhrzeitImpulse
 }
 
 
 bool ProtokollAktivFuerTCP()
 {
-	return ProtokollLevel >= TcpVerbindungen + Keine && ProtokollLevel <= TcpVerbindungen + AblaeufeAlle;
+	return (ProtokollLevel >= Keine + TcpVerbindungen) && (ProtokollLevel <= AblaeufeAlle + TcpVerbindungen);
 }
 
 
