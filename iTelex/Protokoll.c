@@ -43,7 +43,7 @@ bool SdGestoert;
 	//!< Wenn die SD Karte zwar aktiv ist aber schreiben nicht möglich ist.
 	
 TProtokollLevel ProtokollLevel;
-	//!< "Tiefe" der Protokollierung für "normale" Abläufe: 0 = Aus, 1 = Normal, 2 = Intensiv, 3 = im Detail
+	//!< "Tiefe" der Protokollierung für "normale" Abläufe
 
 uint8_t ProtokollLevelTlnServ;
 	//!< "Tiefe" der Protokollierung für Teilnehmer-Server: 0 = Aus, 1 = Normal, 2 = Intensiv, 3 = im Detail
@@ -81,6 +81,9 @@ bool ProtokollAktivFuer(TProtokollLevel p)
 		
 	if (ProtokollLevel >= TelexKommunikationPur && ProtokollLevel <= TelexKommunikationAlles)
 		return (p >= ProtokollLevel) && (p <= TelexKommunikationAlles);
+
+	if (ProtokollLevel == UhrzeitImpulse && p == UhrzeitImpulse)
+		return true;
 	
 	return false; // dies wirkt auch bei #UhrzeitImpulse
 }
@@ -552,6 +555,17 @@ static void SpeichernBeiIdle()
 	}
 	
 
+//! Abhaengig von der Protokoll-Stufe wird ggf. die Weiterleitung von STDOUT an die serielle Schnittstelle abgeschaltet.
+void ProtokollRedirectStdout()
+	{
+	if (ProtokollAktivFuer(TelexKommunikationPur) || ProtokollAktivFuer(UhrzeitImpulse))
+		STDOUT_set(NONE, 0);
+	else
+		STDOUT_set(RS232, 0);
+	}
+
+
+
 //! Initialisiert die Protokollierung.
 void ProtokollInit()
 	{
@@ -570,4 +584,5 @@ void ProtokollInit()
 	InRegelblock = false;
 	}
 	
+
 

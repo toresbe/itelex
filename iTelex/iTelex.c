@@ -7355,6 +7355,8 @@ void itelex_cgi_config_intern_betrieb(void *pStruct)
 		
 		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, ProtokollLevel, 0, 255, Sprache);
 
+		ProtokollRedirectStdout();
+
 		#ifdef ITELEX_TLNSERVER
 		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 
 												ProtokollLevelTlnServ, 0, 9, Sprache);
@@ -8117,6 +8119,8 @@ extern void itelex_init1(void)
 	else
 		ProtokollLevel = NurFehler;
 		
+	ProtokollRedirectStdout();
+
 #ifdef ITELEX_TLNSERVER
 	// dies müsste eigentlich in Protokoll.c enthalten sein.
 	if (readConfig_P(ProtokollLevelTlnServ_P, Buf) == 1)

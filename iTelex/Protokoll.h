@@ -63,6 +63,8 @@ extern void ProtokollRegelblockAbbruch();
 
 extern void ProtokollRegelblockLoeschen();
 
+extern void ProtokollRedirectStdout();
+
 extern void ProtokollInit();
 
 #endif //ndef __PROTOKOLL_H__
