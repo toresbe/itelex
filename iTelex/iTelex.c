@@ -4773,12 +4773,15 @@ static void PrintServSocketLogTabEntry()
 			if (DiagnosePuffer[0] != '\0') // nicht leer
 				break; // andere Meldungen bei nächster Runde
 
-			if (!Diagnoseausgabe_P(PSTR("Zugriffe per TCP:"), 5))
-				break; // kann eigentlich nicht sein (vorherige if-Abfrage), trotzdem Weigerung berücksichtigen
+			if (ProtokollAktivFuerTCP())
+				{
+				if (!Diagnoseausgabe_P(PSTR("Zugriffe per TCP:"), 5))
+					break; // kann eigentlich nicht sein (vorherige if-Abfrage), trotzdem Weigerung berücksichtigen
 
-			strncat(DiagnosePuffer, Buf, DiagnosePufferMax - 2 - strlen(DiagnosePuffer));
-			ProtokollierenPuffer(Buf, strlen(Buf));
-			Protokollieren_P(PSTR("\r\n"));
+				strncat(DiagnosePuffer, Buf, DiagnosePufferMax - 2 - strlen(DiagnosePuffer));
+				ProtokollierenPuffer(Buf, strlen(Buf));
+				Protokollieren_P(PSTR("\r\n"));
+				}
 
 			ServSocketLogTab[i].UseCount = 0;
 			} // if UseCount > 0
