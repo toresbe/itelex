@@ -65,6 +65,8 @@ extern void ProtokollRegelblockLoeschen();
 
 extern void ProtokollRedirectStdout();
 
+extern bool UhrzeitImpulseAufSeriellerSchnittstelle();
+
 extern void ProtokollInit();
 
 #endif //ndef __PROTOKOLL_H__

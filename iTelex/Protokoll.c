@@ -82,17 +82,20 @@ bool ProtokollAktivFuer(TProtokollLevel p)
 	if (ProtokollLevel >= TelexKommunikationPur && ProtokollLevel <= TelexKommunikationAlles)
 		return (p >= ProtokollLevel) && (p <= TelexKommunikationAlles);
 
-	if (ProtokollLevel == UhrzeitImpulse && p == UhrzeitImpulse)
-		return true;
-	
 	return false; // dies wirkt auch bei #UhrzeitImpulse
 }
 
 
 bool ProtokollAktivFuerTCP()
-{
+	{
 	return (ProtokollLevel >= Keine + TcpVerbindungen) && (ProtokollLevel <= AblaeufeAlle + TcpVerbindungen);
-}
+	}
+
+
+bool UhrzeitImpulseAufSeriellerSchnittstelle()
+	{
+	return ProtokollLevel == UhrzeitImpulse;
+	}
 
 
 //! Schreibt die zwischengespeicherten Daten auf die SD-Karte oder sendet diese an 

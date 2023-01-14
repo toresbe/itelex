@@ -5478,7 +5478,7 @@ void itelex_thread()
 			strncat(AsciiDruckPuffer, DiagnosePuffer, AsciiDruckPufferMax-3-strlen(AsciiDruckPuffer));
 			AsciiDruckPuffer[AsciiDruckPufferMax-6] = '\0';
 			strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
-			if (ProtokollAktivFuer(AblaufInfo) && ProtokollLevel < DatenDetailliert)
+			if (ProtokollAktivFuer(AblaufInfo) && !ProtokollAktivFuer(DatenDetailliert))
 				{ // bei DatenDetailliert wird der Text eh ausgedruckt.
 				ProtokollierenITelex_P(PSTR("Diagnosedruck: "));
 				ProtokollierenPuffer(AsciiDruckPuffer, strlen(AsciiDruckPuffer));
@@ -5686,7 +5686,7 @@ void itelex_thread()
 							{
 							if (ProtokollAktivFuer(DatenKurz))
 								{
-								if (ProtokollLevel < AuchRegelmaessiges)
+								if (!ProtokollAktivFuer(AuchRegelmaessiges))
 									ProtokollRegelblockInit();
 								ProtokollRegelblockStart();
 								ProtokollierenITelex();
@@ -5721,7 +5721,7 @@ void itelex_thread()
 						ProtokollRegelblockStart();
 						ProtokollierenITelex_P(PSTR("* Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
 						ProtokollRegelblockEnde();
-						if (ProtokollLevel < AuchRegelmaessiges)
+						if (!ProtokollAktivFuer(AuchRegelmaessiges))
 							ProtokollRegelblockLoeschen();
 						}
 					
@@ -7355,8 +7355,6 @@ void itelex_cgi_config_intern_betrieb(void *pStruct)
 		
 		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, ProtokollLevel, 0, 255, Sprache);
 
-		ProtokollRedirectStdout();
-
 		#ifdef ITELEX_TLNSERVER
 		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 
 												ProtokollLevelTlnServ, 0, 9, Sprache);
@@ -7388,6 +7386,8 @@ void itelex_cgi_config_intern_betrieb(void *pStruct)
 		} // else argc > 0
 		
 	cgi_PrintHttpheaderEnd();
+
+	ProtokollRedirectStdout();
 
 	} // itelex_cgi_config_intern_betrieb()
 	
@@ -8119,8 +8119,6 @@ extern void itelex_init1(void)
 	else
 		ProtokollLevel = NurFehler;
 		
-	ProtokollRedirectStdout();
-
 #ifdef ITELEX_TLNSERVER
 	// dies müsste eigentlich in Protokoll.c enthalten sein.
 	if (readConfig_P(ProtokollLevelTlnServ_P, Buf) == 1)
@@ -8133,6 +8131,8 @@ extern void itelex_init1(void)
 	AktTlnServerTabI = 0;
 	
 	printf_P(PSTR("...Config ok\r\n"));
+
+	ProtokollRedirectStdout();
 
 	#ifdef ITELEX_ANSCHLUSS
 	
