@@ -1,3 +1,8 @@
+Ab Build 965:
+Fehler bei Nicht-Sommerzeit und negativen Zeitzonen behoben.
+Verändertes Verhalten der lokalen Teilnehmerliste
+Verbesserung bei "Port-Scans" und "Langen Dienstmeldungen"
+
 Ab Build 910:
 Baudrate je Endgerät konfigurierbar
 ASCII-Empfang abschaltbar

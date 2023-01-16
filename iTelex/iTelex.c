@@ -7930,7 +7930,7 @@ static void iTelexInit_BeiTasteGedrueckt()
  */
 /*------------------------------------------------------------------------------------------------------------*/
 
-extern void itelex_init1(void)
+void itelex_init1(void)
 	{
 	uint16_t i; // für mehrere Zwecke
 	char Buf[TlnNameMax]; // unversell verwendet, TlnNameMax ist auch der längste erlaubte Wert in der Konfig.
@@ -8193,6 +8193,8 @@ extern void itelex_init1(void)
 		iTelexInit_BeiTasteGedrueckt();
 		
 	Tastendruck = NichtGedr;
+
+	UpdateTimezone(); // liest die Einstellungen aus dem EEPROM für die Uhr
 	
 	} // itelex_init1()
 	
