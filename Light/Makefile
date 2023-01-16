@@ -97,6 +97,7 @@ C_SRCS +=  \
 ../iTelex/Gemeinsam/BusKomm.c \
 ../iTelex/Gemeinsam/FifoPuffer.c \
 ../iTelex/IspMaster.c \
+../iTelex/MissbrauchSperre.c \
 ../iTelex/RamCorrTest.c \
 ../iTelex/StringTab.c \
 ../iTelex/SwTwi.c \
@@ -186,6 +187,7 @@ iTelex/Gemeinsam/BaudotCode.o \
 iTelex/Gemeinsam/BusKomm.o \
 iTelex/Gemeinsam/FifoPuffer.o \
 iTelex/IspMaster.o \
+iTelex/MissbrauchSperre.o \
 iTelex/RamCorrTest.o \
 iTelex/StringTab.o \
 iTelex/SwTwi.o \
@@ -268,6 +270,7 @@ iTelex/Gemeinsam/BaudotCode.o \
 iTelex/Gemeinsam/BusKomm.o \
 iTelex/Gemeinsam/FifoPuffer.o \
 iTelex/IspMaster.o \
+iTelex/MissbrauchSperre.o \
 iTelex/RamCorrTest.o \
 iTelex/StringTab.o \
 iTelex/SwTwi.o \
@@ -350,6 +353,7 @@ iTelex/Gemeinsam/BaudotCode.d \
 iTelex/Gemeinsam/BusKomm.d \
 iTelex/Gemeinsam/FifoPuffer.d \
 iTelex/IspMaster.d \
+iTelex/MissbrauchSperre.d \
 iTelex/RamCorrTest.d \
 iTelex/StringTab.d \
 iTelex/SwTwi.d \
@@ -432,6 +436,7 @@ iTelex/Gemeinsam/BaudotCode.d \
 iTelex/Gemeinsam/BusKomm.d \
 iTelex/Gemeinsam/FifoPuffer.d \
 iTelex/IspMaster.d \
+iTelex/MissbrauchSperre.d \
 iTelex/RamCorrTest.d \
 iTelex/StringTab.d \
 iTelex/SwTwi.d \
@@ -683,6 +688,13 @@ iTelex/Gemeinsam/FifoPuffer.o: ../iTelex/Gemeinsam/FifoPuffer.c
 	
 
 iTelex/IspMaster.o: ../iTelex/IspMaster.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 5.4.0
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DF_CPU=16000000UL -DPROG_ID_ZUSATZ=\"LIGHT-ITA2\" -D__PROG_TYPES_COMPAT__ -DiTelex_Light  -I"." -I".." -I"../iTelex/Gemeinsam" -I"../../C-Libs" -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -Wall -mmcu=atmega1284P -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\gcc\dev\atmega1284P" -c -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
+
+iTelex/MissbrauchSperre.o: ../iTelex/MissbrauchSperre.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 5.4.0
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -funsigned-char -funsigned-bitfields -DF_CPU=16000000UL -DPROG_ID_ZUSATZ=\"LIGHT-ITA2\" -D__PROG_TYPES_COMPAT__ -DiTelex_Light  -I"." -I".." -I"../iTelex/Gemeinsam" -I"../../C-Libs" -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\include"  -Os -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -mrelax -Wall -mmcu=atmega1284P -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\ATmega_DFP\1.6.364\gcc\dev\atmega1284P" -c -gdwarf-2 -std=gnu99 -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
