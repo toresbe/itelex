@@ -159,8 +159,8 @@ _STRTABENTRY(AsciiModus_NurBeiDurchwahl, "nur mit Durchwahl", "only with direct 
 	"solo con chiamate dirette", "alleen met direkte oproep")
 _STRTABENTRY(AsciiModus_Nie, "nie", "never", "mai", "nooit")
 	
-_STRTABENTRY(ProtokollLevel, "Tiefe der Protokollierung an serieller Schnittstelle", "Logging level at serial port",
-	"Profondita' di protocollo alla porta seriale", "Protocol diepte aan de seriele poort.")
+_STRTABENTRY(ProtokollLevel, "Ausgabe-Modus an serieller Schnittstelle", "Output mode of serial port",
+	"???", "???") // TODO übersetzen
 _STRTABENTRY(ProtokollLevelTlnServer, "Tiefe der Protokollierung f&uuml;r Teiln-Server", "Logging level for directory server",
 	"Profondita' di protocollo del server abbonati", "Protocol diepte voor de abonnee server")
 _STRTABENTRY(DiagnoseLevel, "Level f&uuml;r Druckausgabe von Meldungen", "Message filtering level",

@@ -767,10 +767,6 @@ __attribute__ ((section (".noinit"))) uint8_t ResetFlags;
 	
 TTastendruck Tastendruck;
 	//!< Speichert, ob und wie lange letztens die Taste an der Platine gedrückt wurde.
-	
-bool SocketProtokollEin;
-	//!< true, wenn alle Änderungen des Socket-Status gespeichert werden sollen.
-	//!< \todo Konfigurierbar nicht nur über EEPROM-Variable.
 
 
 //! Struktur für die Speicherung von Ankommenden TCP-Verbindungen	
@@ -1138,7 +1134,7 @@ volatile uint8_t LastSocketConnectionState[MAX_TCP_CONNECTIONS];
 
 static void CheckSocketConnectionStateChanges()
 	{
-	if (!SocketProtokollEin)
+	if (!ProtokollAktivFuerTCP())
 		return;
 	
 	for (uint8_t i = 0 ; i < MAX_TCP_CONNECTIONS ; i++)
@@ -1211,7 +1207,7 @@ static void SeriellUmsetzInit(void)
 	SerUmTicksProBit = iTelexTimerFreq / Baud;
 	SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2*Baud);
 
-	if (ProtokollLevel >= AblaufInfo)
+	if (ProtokollAktivFuer(AblaufInfo))
 		{
 		ProtokollierenITelex();
 		ProtokollierenInt_P(PSTR("SeriellUmsetzInit: BusVerbPartner = %u"), BusVerbPartner >> 1);
@@ -1606,7 +1602,7 @@ void ModusWechsel(TModus neu)
 
 	TwiWatchdogCount = 0; // nicht in allen Modi erforderlich, schadet aber auch nicht.
 	
-	if (ProtokollLevel >= AblaufInfo)
+	if (ProtokollAktivFuer(AblaufInfo))
 		{
 		ProtokollRegelblockStart();
 		ProtokollierenITelex();
@@ -1692,6 +1688,11 @@ void ModusWechsel(TModus neu)
 			SeriellUmsetzInit();
 			StartKurzTimer(&SchreibPauseTimer);
 			StartLangTimer(&BeideRuhigTimer);
+			if (ProtokollAktivFuer(TelexKommunikationPur))
+				{
+				Protokollieren_P(PSTR(">>>>>\r\n"));
+				ProtokollBaudotMode = BaudotMode_BuchstabenEmpfangen;
+				}
 			break;
 	
 		// Kommend = vom Netz zum internen Anschluss
@@ -1750,6 +1751,11 @@ void ModusWechsel(TModus neu)
 			SendeMark = true;
 			StartKurzTimer(&SchreibPauseTimer);
 			StartLangTimer(&BeideRuhigTimer);
+			if (ProtokollAktivFuer(TelexKommunikationPur))
+				{
+				Protokollieren_P(PSTR("<<<<<\r\n"));
+				ProtokollBaudotMode = BaudotMode_BuchstabenEmpfangen;
+				}
 			break;
 			
 		case ModPufferDruckUndSchluss: 
@@ -1800,6 +1806,11 @@ void ModusWechsel(TModus neu)
 			SendeMark = true;
 			StartKurzTimer(&HtmlDruckspiegelAnzeigeTimer);
 			StartLangTimer(&BeideRuhigTimer);
+			if (ProtokollAktivFuer(TelexKommunikationPur))
+				{
+				Protokollieren_P(PSTR("<<<<< (web)\r\n"));
+				ProtokollBaudotMode = BaudotMode_BuchstabenEmpfangen;
+				}
 			break;
 
 		case ModDeaktiviert:
@@ -1905,6 +1916,12 @@ void ModusWechsel(TModus neu)
 		case ModEmailPOPDruckend:
 			SET_BIT_Status(StatBit_FsMeldBetrieb);
 			SET_BIT_Status(StatBit_Verbunden);
+			if (ProtokollAktivFuer(TelexKommunikationPur))
+				{
+				Protokollieren_P(PSTR("<<< @\r\n"));
+				ProtokollBaudotMode = BaudotMode_BuchstabenEmpfangen;
+				}
+
 			break;
 			
 		case ModInitialisierend:
@@ -1936,6 +1953,8 @@ static bool SchreibeZeichenInSendePuffer(char c)
 	if (ZeichenZuCode2(c, &BaudotMode, &Code1, &Code2))
 		{ // Zeichen erfolgreich in Baudot-Code umgesetzt
 		return PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2));
+		if (ProtokollAktivFuer(TelexKommunikationPur))
+			ProtokollierenC(c);
 		}
 	else
 		// Zeichen ist nicht darstellbar, also löschen
@@ -1953,7 +1972,7 @@ static bool SchreibeZeichenInSendePuffer(char c)
 //! \retval true Durchwahl war zugelassen.
 static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	{
-	if (ProtokollLevel >= AblaufInfo)
+	if (ProtokollAktivFuer(AblaufInfo))
 		{
 		ProtokollierenITelex();
 		ProtokollierenInt_P(PSTR("Durchwahl-Anfrage %u\r\n"), *aDurchwahl);
@@ -1969,7 +1988,7 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	if (!DurchwahlTabIstAusschluss && *aDurchwahl >= 101 && *aDurchwahl <= 109 && DurchwahlTabelle[*aDurchwahl - 101] > 0)
 		{ // Prüfung auf einstellige Durchwahl
 		*aDurchwahl = DurchwahlTabelle[*aDurchwahl - 101] >> 1;
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			{
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Durchwahl aus Tabelle umgesetzt %u\r\n"), *aDurchwahl);
@@ -1981,7 +2000,7 @@ static bool ExternDurchwahlPruefen(uint8_t * aDurchwahl)
 	for (uint8_t i = 0 ; i < 9 ; i++)
 		if (*aDurchwahl == DurchwahlTabelle[i] >> 1)
 			{
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Durchwahl in Tabelle gefunden %u\r\n"), *aDurchwahl);
@@ -2138,7 +2157,7 @@ static void RemoteServerUseAnotherOne()
 	else if (RemoteServerReconnectTimerEnd > 120 * KurzTimerFreq)
 		RemoteServerReconnectTimerEnd = 120 * KurzTimerFreq;
 	
-	if (ProtokollLevel >= NurFehler)
+	if (ProtokollAktivFuer(NurFehler))
 		{
 		ProtokollierenITelex_P(PSTR("* Remote Server Wechsel, neue Verzoegerung "));
 		ProtokollierenInt_P(PSTR("%d/100 sek\r\n"), RemoteServerReconnectTimerEnd);
@@ -2165,8 +2184,8 @@ static void RemoteServerSendBufferIfNotEmpty()
 			{
 			int Res = PutSocketData_RPE(RemoteServerLinkSocketHandle, RemoteServerSocketBufUsed, RemoteServerSocketBuf, RAM);
 
-			if (ProtokollLevel >= AuchRegelmaessiges
-				|| (ProtokollLevel >= DatenDetailliert && RemoteServerSocketBuf[0] != 0))
+			if (ProtokollAktivFuer(AuchRegelmaessiges)
+				|| (ProtokollAktivFuer(DatenDetailliert) && RemoteServerSocketBuf[0] != 0))
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("RemoteServer Sendung: (%u)" ), RemoteServerSocketBufUsed);
@@ -2186,7 +2205,7 @@ static void RemoteServerSendBufferIfNotEmpty()
 			}
 		else
 			{
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("RemoteServer verwerfe %u Bytes Daten aus Sende-Puffer bei geschlossenem Socket\r\n"), RemoteServerSocketBufUsed);
@@ -2217,7 +2236,7 @@ static void RemoteServerBearbeiten()
 		if (InCount > 0 && InCount >= SocketInBufMax - RemoteServerSocketBufUsed)
 			// InCount > 0 wirg geprüft, da zweiter Vergleich mit unsigned Werten arbeitet.
 			{
-			if (ProtokollLevel >= NurFehler) 
+			if (ProtokollAktivFuer(NurFehler)) 
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("* RemoteServer Empfang drohender Ueberlauf: Empfang von %d " ), InCount);
@@ -2231,8 +2250,8 @@ static void RemoteServerBearbeiten()
 			{
 			int Res = GetSocketData(RemoteServerLinkSocketHandle, InCount, RemoteServerSocketBuf + RemoteServerSocketBufUsed);
 			
-			if (ProtokollLevel >= AuchRegelmaessiges
-				|| (ProtokollLevel >= DatenDetailliert && RemoteServerSocketBuf[0] != 0))
+			if (ProtokollAktivFuer(AuchRegelmaessiges)
+				|| (ProtokollAktivFuer(DatenDetailliert) && RemoteServerSocketBuf[0] != 0))
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("RemoteServer Empfang: (%d/" ), InCount);
@@ -2278,7 +2297,7 @@ static void RemoteServerBearbeiten()
 			case ITELEXC_REMOTE_CALL:
 				if (iTelexSocketMode == SocketIdle && Modus == ModRuhe)
 					{ // alles in Ruhezustend, jetzt geht's richtig los... 
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						{
 						ProtokollierenITelex_P(PSTR("RemoteServer hat Verbindungswunsch geschickt, wird angenommen:\r\n"));
 						}
@@ -2301,7 +2320,7 @@ static void RemoteServerBearbeiten()
 					}
 				else
 					{ // besetzt o.ä. senden, da Verbindung nicht angenommen werden kann.
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						{
 						ProtokollierenITelex_P(PSTR("RemoteServer hat Verbindungswunsch geschickt, wird abgewiesen:\r\n"));
 						}
@@ -2331,7 +2350,7 @@ static void RemoteServerBearbeiten()
 				// kein break, weiter wie bei ENDE
 			
 			case ITELEXC_ENDE: // Remote Server will nicht mehr...
-				if (ProtokollLevel >= AblaufInfo)
+				if (ProtokollAktivFuer(AblaufInfo))
 					{
 					ProtokollierenITelex_P(PSTR("* RemoteServer hat Ende-Befehl geschickt\r\n"));
 					}
@@ -2344,7 +2363,7 @@ static void RemoteServerBearbeiten()
 				break;
 				
 			default:
-				if (ProtokollLevel >= NurFehler)
+				if (ProtokollAktivFuer(NurFehler))
 					{
 					ProtokollierenITelex_P(PSTR("! RemoteServer Ungueltiges Telegramm empfangen:" ));
 					ProtokollierenPuffer(RemoteServerSocketBuf, RemoteServerSocketBufUsed);
@@ -2370,7 +2389,7 @@ static void RemoteServerBearbeiten()
 	if (RemoteServerLinkSocketHandle != NO_SOCKET_USED 
 		&& CheckSocketState(RemoteServerLinkSocketHandle) == SOCKET_NOT_USE)
 		{
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			{
 			if (RemoteServerLinkStatus == RemServDisconnecting)
 				ProtokollierenITelex_P(PSTR("RemoteServer hat Socket korrekt geschlossen.\r\n"));
@@ -2403,7 +2422,7 @@ static void RemoteServerBearbeiten()
 		if (RemoteServerLinkStatus != RemServNotConnected && 
 		    RemoteServerLinkStatus != RemServDisconnecting)
 			{
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				{
 				ProtokollierenITelex_P(PSTR("RemoteServer sende Ende\r\n"));
 				}
@@ -2479,7 +2498,7 @@ static void RemoteServerBearbeiten()
 		
 		if (RemoteServerIP == -1)
 			{
-			if (ProtokollLevel >= NurFehler)
+			if (ProtokollAktivFuer(NurFehler))
 				{
 				ProtokollierenITelex_P(PSTR("! Remote Server Hostname "));
 				Protokollieren(TeilnehmerServerAdresse[RemoteServerAddressIndex]);
@@ -2497,7 +2516,7 @@ static void RemoteServerBearbeiten()
 		
 		if (RemoteServerLinkSocketHandle == SOCKET_ERROR)
 			{ // Verbindung konnte nicht aufgebaut werden
-			if (ProtokollLevel >= NurFehler)
+			if (ProtokollAktivFuer(NurFehler))
 				{
 				ProtokollierenITelex_P(PSTR("! Remote Server "));
 				Protokollieren(TeilnehmerServerAdresse[RemoteServerAddressIndex]);
@@ -2508,7 +2527,7 @@ static void RemoteServerBearbeiten()
 			return; // nichts mehr machbar hier.
 			}
 			
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			{
 			ProtokollierenITelex_P(PSTR("Remote Server "));
 			Protokollieren(TeilnehmerServerAdresse[RemoteServerAddressIndex]);
@@ -2576,7 +2595,7 @@ static void SocketBearbeiten()
 		{
 		bool Abweisen = true; // Bei berechtigter kommender Verbindung auf false setzen.
 
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			{
 			ProtokollRegelblockStart();
 			ProtokollierenITelex();
@@ -2592,7 +2611,7 @@ static void SocketBearbeiten()
 			if (Modus == ModRuhe)
 				{ // ID#102 *************************************************
 				// Wenn ja, Startmeldung ausgeben und startzustand herstellen für i2c
-				if (ProtokollLevel >= AblaufInfo)
+				if (ProtokollAktivFuer(AblaufInfo))
 					{
 					ProtokollRegelblockStart();
 					Protokollieren_P(PSTR(" ...neu ok\r\n"));
@@ -2605,7 +2624,7 @@ static void SocketBearbeiten()
 			else
 				{
 				Abweisen = true; // anderweitig belegt
-				if (ProtokollLevel >= NurFehler)
+				if (ProtokollAktivFuer(NurFehler))
 					Protokollieren_P(PSTR(", anderweitig belegt"));
 				}
 			#ifdef LEDROT_SOCKETERROR
@@ -2617,7 +2636,7 @@ static void SocketBearbeiten()
 			{ // Anrufer versucht offensichtlich einen wiederaufbau der Verbindung.
 			if (iTelexSocketIP == TCP_sockettable[NewServerSocket].SourceIP)
 				{ // kommender Wiederaufbau ist nur von gleicher IP erlaubt
-				if (ProtokollLevel >= NurFehler)
+				if (ProtokollAktivFuer(NurFehler))
 					Protokollieren_P(PSTR(" ...Wiederverbindung ok\r\n"));
 				iTelexSocketHandle = NewServerSocket;
 				StartKurzTimer(&iTelexSocketAbbauVerzoegerung);
@@ -2629,7 +2648,7 @@ static void SocketBearbeiten()
 			else
 				{
 				Abweisen = true; 
-				if (ProtokollLevel >= NurFehler)
+				if (ProtokollAktivFuer(NurFehler))
 					Protokollieren_P(PSTR(", andere kommende Verbindung besteht!"));
 				}
 			} // (iTelexSocketMode == SocketAnswer && iTelexSocketIP == NO_SOCKET_USED)
@@ -2637,18 +2656,18 @@ static void SocketBearbeiten()
 		else 
 			{ // iTelexSocketMode == SocketOriginate || iTelexSocketHandle bereits belegt
 			Abweisen = true; // anderweitig belegt
-			if (ProtokollLevel >= NurFehler)
+			if (ProtokollAktivFuer(NurFehler))
 				Protokollieren_P(PSTR(", Verbindung besteht"));
 			}
 		
 		if (Abweisen)
 			{ // ID#213 ID#225 ***************************************************
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				Protokollieren_P(PSTR(" * ...ABGEWIESEN, auf Blind-Socket gelegt\r\n" ));
 			if (iTelexBlindSocketHandle != NO_SOCKET_USED)
 				{
 				CloseTCPSocket(iTelexBlindSocketHandle);
-				if (ProtokollLevel >= NurFehler)
+				if (ProtokollAktivFuer(NurFehler))
 					Protokollieren_P(PSTR(" ! ...Abweisung auf bereits bestehendem Blind-Socket.\r\n" ));
 				}
 			iTelexBlindSocketHandle = NewServerSocket;
@@ -2678,7 +2697,7 @@ static void SocketBearbeiten()
 
 	if (Modus == ModWarteGrundstellung && SocketInBufUsed > 0)
 		{ // SocketInBuf löschen, wenn kein "Abnehmer" mehr da ist...
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			ProtokollierenITelex_P(PSTR("* SocketInBuf geloescht, da nur noch auf Grundstellung gewartet wird\r\n" ));
 		SocketInBufUsed = 0;
 		}
@@ -2694,7 +2713,7 @@ static void SocketBearbeiten()
 				case iTelexProt:
 					if (!iTelexSocketAbbauGeplant)
 						{
-						if (ProtokollLevel >= NurFehler)
+						if (ProtokollAktivFuer(NurFehler))
 							ProtokollierenITelex_P(PSTR("! Socket wurde von Gegenstelle UNERWARTET geschlossen\r\n" ));
 				
 						#ifdef LEDROT_SOCKETERROR
@@ -2707,7 +2726,7 @@ static void SocketBearbeiten()
 				case ProtUnknown:
 				case Ascii:
 					// oder iTelexProt und AbbauGeplant
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						{
 						ProtokollRegelblockStart();
 						ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
@@ -2728,7 +2747,7 @@ static void SocketBearbeiten()
 					if (!iTelexSocketAbbauGeplant)
 						ProtokollierenITelex_P(PSTR("! Socket wurde von Gegenstelle GETRENNT\r\n" ));
 						
-					else if (ProtokollLevel >= AblaufInfo)
+					else if (ProtokollAktivFuer(AblaufInfo))
 						ProtokollierenITelex_P(PSTR("Socket wurde von Gegenstelle erwartet geschlossen\r\n" ));
 						
 					if (Modus == ModEmailPOPVerbunden)
@@ -2758,7 +2777,7 @@ static void SocketBearbeiten()
 		&& SocketOutBufUsed == 0
 		&& SocketInBufUsed == 0)
 		{ 
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			ProtokollierenITelex_P(PSTR("Socket wird aktiv geschlossen\r\n" ));
 			
 		CloseTCPSocket(iTelexSocketHandle);
@@ -2782,7 +2801,7 @@ static void SocketBearbeiten()
 		
 		if (InCount > 0 && SocketInBufUsed + InCount > SocketInBufMax)
 			{
-			if (ProtokollLevel >= NurFehler) 
+			if (ProtokollAktivFuer(NurFehler)) 
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("* Socket Empfang drohender Ueberlauf: Empfang von %d " ), InCount);
@@ -2798,7 +2817,7 @@ static void SocketBearbeiten()
 			if (SocketInBuf[SocketInBufUsed] != ITELEXC_SELBSTANRUF)
 				ProtokollRegelblockAbbruch();
 				
-			if (ProtokollLevel >= DatenDetailliert) // Daten explizit
+			if (ProtokollAktivFuer(DatenDetailliert)) // Daten explizit
 				{
 				ProtokollRegelblockStart();
 				ProtokollierenITelex();
@@ -2848,7 +2867,7 @@ static void SocketBearbeiten()
 		if (iTelexSocketHandle == SOCKET_ERROR)
 			{ 
 			// Verbindung konnte nicht aufgebaut werden
-			if (ProtokollLevel >= NurFehler)
+			if (ProtokollAktivFuer(NurFehler))
 				ProtokollierenITelex_P(PSTR("! Wieder-Oeffnung des Socket VERSAGT.\r\n"));
 
 			iTelexSocketHandle = NO_SOCKET_USED;
@@ -2856,7 +2875,7 @@ static void SocketBearbeiten()
 			return;
 			}
 
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			{
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Wieder-Oeffnung des Socket #%d erfolgreich.\r\n"), iTelexSocketHandle);
@@ -2886,7 +2905,7 @@ static void SocketBearbeiten()
 			
 		int Res = PutSocketData_RPE(iTelexSocketHandle, SendSize, SocketOutBuf, RAM);
 
-		if (ProtokollLevel >= DatenDetailliert)
+		if (ProtokollAktivFuer(DatenDetailliert))
 			{
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Socket Sendung: (%u)" ), SendSize);
@@ -2905,7 +2924,7 @@ static void SocketBearbeiten()
 				{
 				if (iTelexSocketAbbauGeplant)
 					{
-					if (ProtokollLevel >= NurFehler)
+					if (ProtokollAktivFuer(NurFehler))
 						ProtokollierenITelex_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz aber Verbindungsabbau geplant\r\n"));
 					CloseTCPSocket(iTelexSocketHandle);
 					iTelexSocketHandle = NO_SOCKET_USED;
@@ -2917,7 +2936,7 @@ static void SocketBearbeiten()
 					}
 				else
 					{
-					if (ProtokollLevel >= NurFehler)
+					if (ProtokollAktivFuer(NurFehler))
 						ProtokollierenITelex_P(PSTR("! Mehrfache FEHLER beim Senden ins Netz, Socket wird voruebergehend geschlossen\r\n"));
 					Diagnoseausgabe_P(ISTR(MehrfacheSendeFehler, LokaleSprache), 2);
 		
@@ -2971,7 +2990,7 @@ static void SocketBearbeiten()
 		&& iTelexSocketHandle == NO_SOCKET_USED
 		&& KurzTimerVal(&iTelexSocketAbbruchTimer) >= 30 * KurzTimerFreq) // 30 Sekunden.
 		{
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			ProtokollierenITelex_P(PSTR("! ZEITUEBERSCHREITUNG bei Wiederaufnahme der Verbindung\r\n" ));
 		Diagnoseausgabe_P(ISTR(ZeitueberschreitungWiederaufnahme, LokaleSprache), 2);
 		iTelexSocketMode = SocketIdle;
@@ -2990,7 +3009,7 @@ static void SocketBearbeiten()
 	if (iTelexBlindSocketHandle != NO_SOCKET_USED 
 		&& CheckSocketState(iTelexBlindSocketHandle) == SOCKET_NOT_USE)
 		{
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			ProtokollierenITelex_P(PSTR("* iTelex-Blindsocket wurde von Gegenstelle getrennt\r\n" ));
 		CloseTCPSocket(iTelexBlindSocketHandle);
 		iTelexBlindSocketHandle = NO_SOCKET_USED;
@@ -3000,7 +3019,7 @@ static void SocketBearbeiten()
 	if (iTelexBlindSocketHandle != NO_SOCKET_USED
 		&& KurzTimerVal(&iTelexBlindSocketAbbauVerzoegerung) >= 3 * KurzTimerFreq)
 		{
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			ProtokollierenITelex_P(PSTR("* iTelex-Blindsocket selbst getrennt\r\n" ));
 		CloseTCPSocket(iTelexBlindSocketHandle);
 		iTelexBlindSocketHandle = NO_SOCKET_USED;
@@ -3037,7 +3056,7 @@ static void SendeBusKdoSchluss()
 //! \param Force alle schwebenden Zustände (z.B. Wahlzustand) auch zum Abschluss bringen.
 void InterneVerbindungBeenden(bool Force)
 	{
-	if (ProtokollLevel >= AblaufInfo)
+	if (ProtokollAktivFuer(AblaufInfo))
 		{
 		ProtokollierenITelex();
 		ProtokollierenInt_P(PSTR("InterneVerbindungBeenden ausgehend von Modus %d\r\n"), Modus);
@@ -3082,7 +3101,7 @@ void InterneVerbindungBeenden(bool Force)
 		case ModKommendVerbVorstufe:
 		case ModKommendEinschalten:
 		case ModKommendWarteEinQuitt:
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				{
 				ProtokollRegelblockStart();
 				ProtokollierenITelex();
@@ -3099,7 +3118,7 @@ void InterneVerbindungBeenden(bool Force)
 		case ModKommendVerbunden:
 		case ModGehendVerbunden:
 		case ModEmailPOPDruckend:
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Wechsel nach Modus PufferDruckUndSchluss (von %d)\r\n"), Modus);
@@ -3327,7 +3346,7 @@ yapog	können Teilnehmer nicht erreichen, bitte prüfen Sie nach
 //-----------------------------------------------------------------------------------
 static void WahlAbbruchMeldung(char *msg)
 	{
-	if (ProtokollLevel >= AblaufInfo)
+	if (ProtokollAktivFuer(AblaufInfo))
 		{
 		ProtokollierenITelex();
 		Protokollieren_P(PSTR("WahlAbbruchMeldung"));
@@ -3521,7 +3540,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					
 					if (AnrufAbweisen)
 						{ // Ascii-Modus verboten
-						if (ProtokollLevel >= AblaufInfo)
+						if (ProtokollAktivFuer(AblaufInfo))
 							{
 							ProtokollierenITelex();
 							ProtokollierenInt_P(PSTR("*Ascii-Anruf abgewiesen (AsciiEmpfModus=%u)\r\n"), AsciiEmpfModus);
@@ -3580,13 +3599,15 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					while (len > 0)
 						{
 						PufferSpeich(&SendePuffer, SocketInBuf[i]);
+						if (ProtokollAktivFuer(TelexKommunikationPur))
+							ProtokollierenC(CodeZuZeichen(SocketInBuf[i], &ProtokollBaudotMode));
 						i++;
 						len--;
 						} // umkopieren
 						
 					if (SendenBeschleunigen && PufferAnzahl(&SendePuffer) < MaxPuffer / 2)
 						{
-						if (ProtokollLevel >= AblaufInfo)
+						if (ProtokollAktivFuer(AblaufInfo))
 							ProtokollierenITelex_P(PSTR("SendenBeschleunigen AUS\r\n"));
 							
 						SendenBeschleunigen = false;
@@ -3601,7 +3622,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					}
 				else // Baudot-Code-Block ist noch nicht vollständig ODER kein Platz im Sendepuffer
 					{
-					if (!SendenBeschleunigen && (ProtokollLevel >= AblaufInfo))
+					if (!SendenBeschleunigen && (ProtokollAktivFuer(AblaufInfo)))
 						ProtokollierenITelex_P(PSTR("SendenBeschleunigen EIN\r\n"));
 						
 					SendenBeschleunigen = true;
@@ -3619,7 +3640,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 
 				if (len > 0)
 					{
-					if (ProtokollLevel >= NurFehler)
+					if (ProtokollAktivFuer(NurFehler))
 						{
 						ProtokollierenITelex_P(PSTR("* Abbaubefehl von Gegenstelle:"));
 						ProtokollierenPuffer(SocketInBuf + i, 2 + len);
@@ -3628,7 +3649,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					}
 				else
 					{
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						ProtokollierenITelex_P(PSTR("Abbaubefehl von Gegenstelle\r\n"));
 					}
 
@@ -3659,7 +3680,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						{ 
 						BusSenden(BusKdoEin);
 						ModusWechsel(ModKommendWarteEinQuitt);
-						if (ProtokollLevel >= AblaufInfo)
+						if (ProtokollAktivFuer(AblaufInfo))
 							{ //! \todo Test
 							ProtokollierenITelex();
 							ProtokollierenInt_P(PSTR("! spontane ??? Anwahl intern %u "), Durchwahl);
@@ -3674,7 +3695,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					} // if Modus == ModKommendVerbVorstufe
 				else if (Modus == ModGehendWaehlen)
 					{ // ID#227 **************************************************
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						ProtokollierenITelex_P(PSTR("Quittungstelegramm erhalten -> Einschalt-Kdo/Quit an TWI\r\n" ));
 				
 					if (TWIHandshakeNeu)
@@ -3702,7 +3723,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					{
 					uint8_t ProtVorschlag = SocketInBuf[i+2]; 
 
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						{
 						ProtokollierenITelex();
 						ProtokollierenInt_P(PSTR("Protokollversion-Vorschlag %u empfangen\r\n"), ProtVorschlag);
@@ -3730,7 +3751,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						strcpy_P(SocketOutBuf + SocketOutBufUsed, SvnVersion_P);
 						SocketOutBufUsed += strlen_P(SvnVersion_P) + 1;
 						
-						if (ProtokollLevel >= AblaufInfo)
+						if (ProtokollAktivFuer(AblaufInfo))
 							{
 							ProtokollierenITelex();
 							ProtokollierenInt_P(PSTR("Sende Protokollversion-Vorschlag %u\r\n"), iTelexSocketProtVersionVorschlag);
@@ -3862,7 +3883,10 @@ static void ITelexDatenVerarbeiten()
 			SocketAnzahlZeichenGesendet += len;
 			while (len > 0)
 				{
-				SocketOutBuf[SocketOutBufUsed++] = PufferAusg(&EmpfPuffer);
+				uint8_t code = PufferAusg(&EmpfPuffer);
+				SocketOutBuf[SocketOutBufUsed++] = code;
+				if (ProtokollAktivFuer(TelexKommunikationPur))
+					ProtokollierenC(CodeZuZeichen(code, &ProtokollBaudotMode));
 				len--;
 				}
 			SocketSendeQuittung = true;
@@ -3985,7 +4009,7 @@ bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund)
 			// außer wenn alle Server nicht erreichbar, dann alle 20 Minuten probieren
 			{
 			/* Müllt total den Speicher zu...
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				{
 				ProtokollierenITelex_P(PSTR("* Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
@@ -4004,7 +4028,7 @@ bool TeilnehmerServerVerfuegbar(int ServerI, PGM_P Grund)
 			// Wenn dich Fehlerzähler des Servers kritischer Grenze nähert, nur noch seltener probieren
 			{
 			/* Müllt total den Speicher zu...
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				{
 				ProtokollierenITelex_P(PSTR("* Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
@@ -4048,7 +4072,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 		Res = Connect2IP(TeilnehmerServerIP[ServerI], ITELEX_TLNSERV_PORT);
 		if (Res != SOCKET_ERROR)
 			{
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				{
 				ProtokollierenITelex_P(PSTR("Verbindung an Teilnehmer-Server "));
 				Protokollieren(TeilnehmerServerAdresse[ServerI]); 
@@ -4067,7 +4091,7 @@ int TeilnehmerServerSocketOeffnen1(int ServerI, PGM_P Grund)
 			return Res;
 			}
 			
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			{
 			ProtokollierenITelex_P(PSTR("! Verbindungsversuch an Teilnehmer-Server "));
 			Protokollieren(TeilnehmerServerAdresse[ServerI]); 
@@ -4190,7 +4214,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 				return 1;
 				}
 				
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				{
 				ProtokollierenITelex_P(PSTR("Verbindungsaufbau zu IP "));
 				ProtokollierenIPAdr(td->IPAdr);
@@ -4215,7 +4239,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 				// IPAdr wird 'missbraucht' aber nicht gespeichert
 			if (td->IPAdr != -1)
 				{
-				if (ProtokollLevel >= AblaufInfo)
+				if (ProtokollAktivFuer(AblaufInfo))
 					{
 					ProtokollierenITelex_P(PSTR("Verbindungsaufbau zu Hostname "));
 					Protokollieren(td->Adresse);
@@ -4229,7 +4253,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 				}
 			else
 				{
-				if (ProtokollLevel >= NurFehler)
+				if (ProtokollAktivFuer(NurFehler))
 					{
 					ProtokollierenITelex_P(PSTR("! IP zu Hostname "));
 					Protokollieren(td->Adresse);
@@ -4247,7 +4271,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 #ifdef ITELEX_EMAIL
 			if (SMTPOeffnen(td->Adresse))
 				{
-				if (ProtokollLevel >= AblaufInfo)
+				if (ProtokollAktivFuer(AblaufInfo))
 					{
 					ProtokollierenITelex();
 					ProtokollierenInt_P(PSTR("Client-Socket #%d SMTP erfolgreich geoeffnet -> Einschalt-Kdo/Quit an TWI\r\n"), iTelexSocketHandle);
@@ -4285,7 +4309,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 #endif //ndef ITELEX_EMAIL		
 			
 		default:
-			if (ProtokollLevel >= NurFehler)
+			if (ProtokollAktivFuer(NurFehler))
 				ProtokollierenITelex_P(PSTR("* Teilnehmer ist GELOESCHT\r\n" ));
 
 			if (MeldungAusgeben)
@@ -4301,7 +4325,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 	if (iTelexSocketHandle == SOCKET_ERROR)
 		{ // ID#223 ********************************************
 		// Verbindung konnte nicht aufgebaut werden
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			ProtokollierenITelex_P(PSTR("! Client-Socket konnte nicht erstmalig geoeffnet werden\r\n"));
 			
 		iTelexSocketHandle = NO_SOCKET_USED;
@@ -4331,7 +4355,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 	
 	if (td->AdrArt == AsciiHostname || td->AdrArt == AsciiIP)
 		{ // ID#226 *********************************************
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			{
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Client-Socket #%d Ascii erfolgreich geoeffnet -> Einschalt-Kdo/Quit an TWI\r\n"), iTelexSocketHandle);
@@ -4353,7 +4377,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 		}
 	else // iTelexHostname oder iTelexIP
 		{ // ID#222 ********************************************
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			{
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Client-Socket #%d iTelex erfolgreich geoeffnet "), iTelexSocketHandle);
@@ -4384,7 +4408,7 @@ static void RufnummerBeiTlnServerAbfragen()
 	{
 	TlnServerAbfrageWiederholungssperre = true;
 	
-	if (ProtokollLevel >= AblaufInfo)
+	if (ProtokollAktivFuer(AblaufInfo))
 		ProtokollierenITelex_P(PSTR("Abfrage bei Teilnehmer-Servern\r\n" ));
 
 	if (TeilnehmerServerSocketOeffnen(PSTR("Rufnummer-Abfrage")))
@@ -4502,7 +4526,7 @@ void AsciiDruckPufferVerarbeiten()
 			
 		AsciiHilfPuffer[hpi] = '\0';
 
-		if (ProtokollLevel >= DatenDetailliert)
+		if (ProtokollAktivFuer(DatenDetailliert))
 			{
 			ProtokollierenITelex_P(PSTR("Ascii-Verarbeitung: " ));
 			ProtokollierenPuffer(AsciiDruckPuffer, dpi);
@@ -4554,7 +4578,7 @@ void AsciiDruckPufferVerarbeiten()
 			ki++;
 			}
 
-		if (ProtokollLevel >= DatenDetailliert)
+		if (ProtokollAktivFuer(DatenDetailliert))
 			{
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("Ascii-Verarbeitung: %u Zeichen aus AsciiHilfPuffer verarbeitet,"), ki);
@@ -4575,14 +4599,14 @@ bool SonstigeAnwahl(uint8_t aDurchwahl, bool OhneMeldung)
 	{
 	if (KommendInternAnwaehlen(aDurchwahl))
 		{ 
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			ProtokollierenInt_P(PSTR("Einschaltung %u intern\r\n"), aDurchwahl);
 		BusSenden(BusKdoEin);
 		return true;
 		}
 	else
 		{ 
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			ProtokollierenInt_P(PSTR("! Einschaltung %u intern VERSAGT\r\n"), aDurchwahl);
 			
 		if (!OhneMeldung)
@@ -4617,11 +4641,17 @@ static void DatumUhrzeitDrucken()
 		PufferSpeich(&SendePuffer, TtyCodeWR);
 		PufferSpeich(&SendePuffer, TtyCodeZL);
 		PufferSpeich(&SendePuffer, TtyCodeZiUm);
+		if (ProtokollAktivFuer(TelexKommunikationPur))
+			Protokollieren_P(PSTR("\r\n"));
 		for (uint8_t i = 0 ; i < strlen(Text) ; i++)
 			{
 			uint8_t Code = ZeichenZuCode(Text[i], BaudotMode_ZiffernGesendet);
 			if (Code != 255)
+				{
 				PufferSpeich(&SendePuffer, Code);
+				if (ProtokollAktivFuer(TelexKommunikationPur))
+					ProtokollierenC(Text[i]);
+				}
 			}
 		// BaudotMode wird am Ende der Funktion korrekt gesetzt.
 		}
@@ -4743,12 +4773,15 @@ static void PrintServSocketLogTabEntry()
 			if (DiagnosePuffer[0] != '\0') // nicht leer
 				break; // andere Meldungen bei nächster Runde
 
-			if (!Diagnoseausgabe_P(PSTR("Zugriffe per TCP:"), 5))
-				break; // kann eigentlich nicht sein (vorherige if-Abfrage), trotzdem Weigerung berücksichtigen
+			if (ProtokollAktivFuerTCP())
+				{
+				if (!Diagnoseausgabe_P(PSTR("Zugriffe per TCP:"), 5))
+					break; // kann eigentlich nicht sein (vorherige if-Abfrage), trotzdem Weigerung berücksichtigen
 
-			strncat(DiagnosePuffer, Buf, DiagnosePufferMax - 2 - strlen(DiagnosePuffer));
-			ProtokollierenPuffer(Buf, strlen(Buf));
-			Protokollieren_P(PSTR("\r\n"));
+				strncat(DiagnosePuffer, Buf, DiagnosePufferMax - 2 - strlen(DiagnosePuffer));
+				ProtokollierenPuffer(Buf, strlen(Buf));
+				Protokollieren_P(PSTR("\r\n"));
+				}
 
 			ServSocketLogTab[i].UseCount = 0;
 			} // if UseCount > 0
@@ -4791,7 +4824,7 @@ void itelex_thread()
 		switch (Code)
 			{
 			case 1 ... BusKdoVerbAufnahme:
-				if (ProtokollLevel >= AblaufInfo)
+				if (ProtokollAktivFuer(AblaufInfo))
 					{
 					ProtokollierenITelex();
 					ProtokollierenInt_P(PSTR("TWI Reservierung intern / gehend von %u\r\n" ), Code);
@@ -4808,7 +4841,7 @@ void itelex_thread()
 				break;
 				
 			case BusKdoEin:
-				if (ProtokollLevel >= AblaufInfo)
+				if (ProtokollAktivFuer(AblaufInfo))
 					ProtokollierenITelex_P(PSTR("TWI Einschaltkommando intern / gehend\r\n" ));
 					
 				if (Modus == ModGehendReserv)
@@ -4823,7 +4856,7 @@ void itelex_thread()
 			case BusQuittEin:
 				if (Modus == ModKommendWarteEinQuitt)
 					{ // ID#331 ********************************************
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung intern / kommend\r\n" ));
 					ModusWechsel(ModKommendVerbunden);
 					SocketSendeQuittung = true;
@@ -4832,7 +4865,7 @@ void itelex_thread()
 
 				else if (Modus == ModHtmlChatWarteEinQuitt)
 					{ 
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung nach Beginn HTML-Chat\r\n" ));
 					CLOCK_GetTime(&LetzterAnrufZeit);
 					ModusWechsel(ModHtmlChatVerbunden);
@@ -4840,21 +4873,21 @@ void itelex_thread()
 
 				else if (Modus == ModMeldungsdruckWarteEinQuitt)
 					{ 
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung fuer Meldungsdruck\r\n" ));
 					ModusWechsel(ModPufferDruckUndSchluss);
 					}
 
 				else if (Modus == ModEmailPOPWarteEinQuitt)
 					{ 
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						ProtokollierenITelex_P(PSTR("TWI Einschaltquittung fuer e-Mail-Druck\r\n" ));
 					ModusWechsel(ModEmailPOPDruckend); 
 					}
 				
 				else if (WarteStartupQuitt)
 					{ 
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						{
 						ProtokollierenITelex();
 						ProtokollierenInt_P(PSTR("TWI Einschaltquittung fuer gehend / Modus %d ueber TWI erhalten\r\n"), Modus);
@@ -4869,14 +4902,14 @@ void itelex_thread()
 
 			case BusKdoWahlFreigabe:
 				// dies ist eine Leitungsschnittstelle, die kann nicht wählen.
-				if (ProtokollLevel >= AblaufInfo)
+				if (ProtokollAktivFuer(AblaufInfo))
 					ProtokollierenITelex_P(PSTR("TWI Wahlaufforderung intern / kommend\r\n" ));
 					
 				FalschCodeEmpfangen(BusKdoWahlFreigabe);
 				break;
 				
 			case BusKdoWahlziffer0 ... BusKdoWahlziffer9:
-				if (ProtokollLevel >= AblaufInfo)
+				if (ProtokollAktivFuer(AblaufInfo))
 					{
 					ProtokollierenITelex();
 					ProtokollierenInt_P(PSTR("TWI Wahlziffer %u intern / gehend\r\n" ), Code - BusKdoWahlziffer0);
@@ -4902,7 +4935,7 @@ void itelex_thread()
 
 					if (Wahlziffern == 0 && Code == BusKdoWahlziffer0)
 						{ // Namenssuche starten.
-						if (ProtokollLevel >= AblaufInfo)
+						if (ProtokollAktivFuer(AblaufInfo))
 							ProtokollierenITelex_P(PSTR("Namenssuche gestartet -> Einschalt-Kdo/Quit an TWI\r\n" ));
 						AsciiDruckPuffer[0] = '\0';
 						if (TWIHandshakeNeu)
@@ -4937,7 +4970,7 @@ void itelex_thread()
 							TlnHinzufuegen(&GewaehlterTln, TlnHinzDatumAktualisieren); // in jedem Fall bereits jetzt das Datum
 							#endif
 							
-							if (ProtokollLevel >= AblaufInfo)
+							if (ProtokollAktivFuer(AblaufInfo))
 								{
 								ProtokollierenITelex();
 								ProtokollierenInt_P(PSTR("Teilnehmer %lu im eigenen Telefonbuch gefunden.\r\n"), GewaehlterTln.Nummer);
@@ -4976,12 +5009,12 @@ void itelex_thread()
 				
 			case BusQuittSchluss:
 
-				if (ProtokollLevel >= AblaufInfo)
+				if (ProtokollAktivFuer(AblaufInfo))
 					ProtokollierenITelex_P(PSTR("TWI Ausschaltung quittiert\r\n" ));
 					
 				if (Modus != ModWarteSchlussQuitt)
 					{
-					if (ProtokollLevel >= NurFehler)
+					if (ProtokollAktivFuer(NurFehler))
 						ProtokollierenITelex_P(PSTR("! Schlussquittung ohne Aufforderung\r\n"));
 						
 					FalschCodeEmpfangen(Code);
@@ -4998,7 +5031,7 @@ void itelex_thread()
 			
 			case BusKdoSchluss:
 
-				if (ProtokollLevel >= AblaufInfo)
+				if (ProtokollAktivFuer(AblaufInfo))
 					ProtokollierenITelex_P(PSTR("TWI Ausschaltung intern\r\n"));
 
 				// TODO müsste hier nicht "der" gesendet werden, wenn im Anwahl-Status (also Modus == ModKommendWarteEinQuitt)
@@ -5033,7 +5066,7 @@ void itelex_thread()
 		{
 		if (TwiWatchdogCount > 4 * iTelexTimerFreq) // nach 4 Sekunden ohne TWI-Kommunikation
 			{
-			if (ProtokollLevel >= NurFehler)	
+			if (ProtokollAktivFuer(NurFehler))	
 				ProtokollierenITelex_P(PSTR("! TWI-Timeout -> Abschaltung\r\n"));
 			Diagnoseausgabe_P(ISTR(TWITimeout, LokaleSprache), 1);
 			
@@ -5057,7 +5090,7 @@ void itelex_thread()
 	// -----------------------------------------
 	if (Modus == ModKommendVerbVorstufe && IstAnwahlDurchFremdprogramm())
 		{	
-		if (ProtokollLevel >= AblaufInfo) // Datenmengen protokollieren
+		if (ProtokollAktivFuer(AblaufInfo)) // Datenmengen protokollieren
 			{
 			ProtokollierenITelex();
 			Protokollieren_P(PSTR("* Fremdprotokoll erkannt:"));
@@ -5119,7 +5152,7 @@ void itelex_thread()
 	if (Modus == ModGehendWaehlen && !PufferLeer(&SendePuffer))
 		{ // es wurden Daten empfangen, also schnellstens Endgerät anschmeißen
 		// ID#227 Teil 2 *******************************************************
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			ProtokollierenITelex_P(PSTR("Angerufener hat geantwortet -> Einschalt-Kdo/Quit an TWI\r\n" ));
 			
 		if (TWIHandshakeNeu)
@@ -5141,7 +5174,7 @@ void itelex_thread()
 			{ // ID#321 ********************************************
 			BusSenden(BusKdoEin);
 			ModusWechsel(ModKommendWarteEinQuitt);
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Anwahl intern %u "), Durchwahl);
@@ -5151,7 +5184,7 @@ void itelex_thread()
 			}
 		else
 			{ // ID#322 ********************************************
-			if (ProtokollLevel >= NurFehler)
+			if (ProtokollAktivFuer(NurFehler))
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("! Anwahl intern an %u VERSAGT\r\n"), Durchwahl);
@@ -5326,7 +5359,7 @@ void itelex_thread()
 		&& KurzTimerVal(&WahlPauseTimer) >= 15 * KurzTimerFreq
 		&& iTelexSocketMode == SocketIdle)
 		{ // 15 Sekunden Wahlpause --> Wahl-Schritt 4b)
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			ProtokollierenITelex_P(PSTR("* 15 Sekunden nicht gewaehlt, Abbruch\r\n" ));
 		WahlAbbruchMeldung("bk");
 		InterneVerbindungBeenden(true);
@@ -5335,7 +5368,7 @@ void itelex_thread()
 	if (Modus == ModWarteSchlussQuitt && KurzTimerVal(&BusQuittTimer) > 3 * KurzTimerFreq)
 		{ // 3 Sekunden keine Schlussquittung empfangen
 		// ID#412 ****************************************************************
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			ProtokollierenITelex_P(PSTR("* Timeout beim Warten auf die Schlussquittung\r\n" ));
 			
 		ModusWechsel(ModWarteGrundstellung);
@@ -5344,7 +5377,7 @@ void itelex_thread()
 	if (Modus == ModKommendWarteEinQuitt && KurzTimerVal(&BusQuittTimer) > 30 * KurzTimerFreq) // TODO Konfigurierbar?
 		{ // 30 Sekunden keine Einschalt-Quittung empfangen
 		// ID#332 ***************************************************************
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			ProtokollierenITelex_P(PSTR("! Timeout beim Warten auf die Einschaltquittung\r\n" ));
 			
 		InterneVerbindungBeenden(true);
@@ -5355,7 +5388,7 @@ void itelex_thread()
 		
 	if (ModusTwiVerbunden() && LangTimerVal(&BeideRuhigTimer) > 10 * LangTimerMinuteFaktor)
 		{
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			ProtokollierenITelex_P(PSTR("* Abbau wegen 10 Minuten Funkstille.\r\n"));
 
 		InterneVerbindungBeenden(true);
@@ -5412,7 +5445,7 @@ void itelex_thread()
 
 			case ModPufferDruckUndSchluss:
 				// ID#422 *************************************************************
-				if (ProtokollLevel >= AblaufInfo)
+				if (ProtokollAktivFuer(AblaufInfo))
 					ProtokollierenITelex_P(PSTR("* Taste gedruckt --> Reste-Druck abgebrochen\r\n" ));
 					
 				SendeBusKdoSchluss();
@@ -5448,7 +5481,7 @@ void itelex_thread()
 			strncat(AsciiDruckPuffer, DiagnosePuffer, AsciiDruckPufferMax-3-strlen(AsciiDruckPuffer));
 			AsciiDruckPuffer[AsciiDruckPufferMax-6] = '\0';
 			strcat_P(AsciiDruckPuffer, PSTR("\r\n\n\n"));
-			if (ProtokollLevel >= AblaufInfo && ProtokollLevel < DatenDetailliert)
+			if (ProtokollAktivFuer(AblaufInfo) && !ProtokollAktivFuer(DatenDetailliert))
 				{ // bei DatenDetailliert wird der Text eh ausgedruckt.
 				ProtokollierenITelex_P(PSTR("Diagnosedruck: "));
 				ProtokollierenPuffer(AsciiDruckPuffer, strlen(AsciiDruckPuffer));
@@ -5472,7 +5505,7 @@ void itelex_thread()
 
 	if ((Modus == ModRuhe) && AsciiDruckPuffer[0] != '\0')
 		{
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			{
 			ProtokollierenITelex_P(PSTR("Meldungsdruck -> "));
 			ProtokollierenPuffer(AsciiDruckPuffer, strlen(AsciiDruckPuffer));
@@ -5508,7 +5541,7 @@ void itelex_thread()
 			&& (KurzTimerVal(&HtmlDruckspiegelAnzeigeTimer) >= 30 * KurzTimerFreq // 30 Sekunden keine Anzeige-Abfrage
 				|| LangTimerVal(&BeideRuhigTimer) >= 5 * LangTimerMinuteFaktor)) // 5 Minuten nichts eingegeben
 			{
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				ProtokollierenITelex_P(PSTR("HTML-Chat-Ruhe --> Ausschaltung intern\r\n" ));
 				
 			InterneVerbindungBeenden(true);
@@ -5526,7 +5559,7 @@ void itelex_thread()
 		&& SerUmSendBitNr == SerUmSendWarte
 		&& PufferLeer(&SendePuffer))
 		{ // ID#421 *************************************************************
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			ProtokollierenITelex_P(PSTR("Reste gedruckt --> Ausschaltung intern\r\n" ));
 			
 		SendeBusKdoSchluss();
@@ -5541,7 +5574,7 @@ void itelex_thread()
 		&& iTelexSocketHandle == NO_SOCKET_USED
 		&& iTelexSocketMode == SocketIdle)
 		{
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			{
 			ProtokollRegelblockStart();
 			ProtokollierenITelex_P(PSTR("Grundstellung erreicht (Socket geschlossen, TWI geschlossen)\r\n" ));
@@ -5637,7 +5670,7 @@ void itelex_thread()
 					if (SelbstAnrufSocketHandle == SOCKET_ERROR)
 						{ 
 						// Verbindung konnte nicht aufgebaut werden
-						if (ProtokollLevel >= NurFehler)
+						if (ProtokollAktivFuer(NurFehler))
 							ProtokollierenITelex_P(PSTR("! Selbst-Anruf oeffnen des Socket VERSAGT.\r\n"));
 
 						SelbstAnrufSocketHandle = NO_SOCKET_USED;
@@ -5654,16 +5687,19 @@ void itelex_thread()
 						SelbstAnrufPhase = SelbstAnrufWarteEmpfang;
 						if (PutSocketData_RPE(SelbstAnrufSocketHandle, 4, Buf, RAM) == 4)
 							{
-							if (ProtokollLevel < AuchRegelmaessiges)
-								ProtokollRegelblockInit();
-							ProtokollRegelblockStart();
-							ProtokollierenITelex();
-							ProtokollierenInt_P(PSTR("Selbst-Anruf Daten ueber Socket #%d gesendet.\r\n"), SelbstAnrufSocketHandle);
-							ProtokollRegelblockEnde();
+							if (ProtokollAktivFuer(DatenKurz))
+								{
+								if (!ProtokollAktivFuer(AuchRegelmaessiges))
+									ProtokollRegelblockInit();
+								ProtokollRegelblockStart();
+								ProtokollierenITelex();
+								ProtokollierenInt_P(PSTR("Selbst-Anruf Daten ueber Socket #%d gesendet.\r\n"), SelbstAnrufSocketHandle);
+								ProtokollRegelblockEnde();
+								}
 							}
 						else
 							{
-							if (ProtokollLevel >= NurFehler)
+							if (ProtokollAktivFuer(NurFehler))
 								ProtokollierenITelex_P(PSTR("! Selbst-Anruf Daten-Sendung VERSAGT.\r\n"));
 							SelbstAnrufFehlerZaehler++;
 							SelbstAnrufPhase = SelbstAnrufSchliessen;
@@ -5683,14 +5719,14 @@ void itelex_thread()
 				{ // Echo ist angekommen
 				if (SelbstAnrufEmpfangPruefwert == SelbstAnrufSendePruefwert)
 					{ // Richtiges Echo angekommen
-					if (ProtokollLevel >= DatenKurz)
+					if (ProtokollAktivFuer(DatenKurz))
 						{
 						ProtokollRegelblockStart();
 						ProtokollierenITelex_P(PSTR("* Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
 						ProtokollRegelblockEnde();
+						if (!ProtokollAktivFuer(AuchRegelmaessiges))
+							ProtokollRegelblockLoeschen();
 						}
-					if (ProtokollLevel < AuchRegelmaessiges)
-						ProtokollRegelblockLoeschen();
 					
 					SelbstAnrufFehlerZaehler = 0;
 					SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
@@ -5702,7 +5738,7 @@ void itelex_thread()
 					} // Richtiges Echo angekommen
 				else
 					{ // Falsches Echo angekommen
-					if (ProtokollLevel >= NurFehler)
+					if (ProtokollAktivFuer(NurFehler))
 						ProtokollierenITelex_P(PSTR("! Selbst-Anruf FALSCHE Daten empfangen.\r\n"));
 					SelbstAnrufFehlerZaehler++;
 					SelbstAnrufEndzeit = 5 * KurzTimerFreq + Zufallswert(0x37);					
@@ -5713,7 +5749,7 @@ void itelex_thread()
 				
 			else if (Modus != ModRuhe && Modus != ModDeaktiviert && Modus != ModKommendVerbVorstufe)
 				{ // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
-				if (ProtokollLevel >= NurFehler)
+				if (ProtokollAktivFuer(NurFehler))
 					ProtokollierenITelex_P(PSTR("! Selbst-Anruf ABGEBROCHEN wegen Modus-Wechsel.\r\n"));
 				StartKurzTimer(&SelbstAnrufTimer);
 				SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
@@ -5723,7 +5759,7 @@ void itelex_thread()
 				
 			else if (KurzTimerVal(&SelbstAnrufTimer) > 5 * KurzTimerFreq) 
 				{ // Timeout nach 5 Sekunden
-				if (ProtokollLevel >= NurFehler)
+				if (ProtokollAktivFuer(NurFehler))
 					ProtokollierenITelex_P(PSTR("! Selbst-Anruf KEIN Echo empfangen.\r\n"));
 				SelbstAnrufFehlerZaehler++;
 				StartKurzTimer(&SelbstAnrufTimer);
@@ -5762,7 +5798,7 @@ void itelex_thread()
 		
 	if (SelbstAnrufSocketHandle != NO_SOCKET_USED && CheckSocketState(SelbstAnrufSocketHandle) == SOCKET_NOT_USE)
 		{
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			ProtokollierenITelex_P(PSTR("* Selbst-Anruf-Socket durch Timeout geschlossen!\r\n" ));
 		CloseTCPSocket(SelbstAnrufSocketHandle);
 		SelbstAnrufSocketHandle = NO_SOCKET_USED;
@@ -5784,7 +5820,7 @@ void itelex_thread()
 		if (InCount > sizeof(TSB))
 			{
 			int Res = GetSocketData(TeilnehmerServerSocket, sizeof(TSB), TSB.Buf);
-			if (ProtokollLevel >= NurFehler)
+			if (ProtokollAktivFuer(NurFehler))
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("! Teilnehmer-Server Empfang UEBERLAUF zu viele Daten (%d byte)"), InCount);
@@ -5800,7 +5836,7 @@ void itelex_thread()
 			{ // Daten verarbeiten
 			int Res = GetSocketData(TeilnehmerServerSocket, InCount, TSB.Buf);
 			
-			if (ProtokollLevel >= DatenDetailliert) // Daten explizit
+			if (ProtokollAktivFuer(DatenDetailliert)) // Daten explizit
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Teilnehmer-Server Empfang: (%d/" ), InCount);
@@ -5816,7 +5852,7 @@ void itelex_thread()
 			switch (TSB.Code)
 				{
 				case TLNSERV_AUSKUNFT_NICHTVERG:
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						ProtokollierenITelex_P(PSTR("Teilnehmer-Server meldet 'nicht gefunden'\r\n" ));
 						
 					if (LangeDienstmeldungen)
@@ -5833,7 +5869,7 @@ void itelex_thread()
 					
 				case TLNSERV_AUSKUNFT_VERSION1:
 					Res = 0; // vorsorglich
-					if (ProtokollLevel >= AblaufInfo)
+					if (ProtokollAktivFuer(AblaufInfo))
 						{
 						ProtokollierenITelex_P(PSTR("Teilnehmer-Server meldet Eintrag gefunden: " ));
 						ProtokollierenIPAdr(TSB.TlnAuskunft.IPAdr);
@@ -5934,13 +5970,13 @@ void itelex_thread()
 				case TLNSERV_IPRUECKMELD:
 					if (TSB.IpRueckm.EmpfIP == NetzEigeneIP)
 						{ // keine Änderung
-						if (ProtokollLevel >= AblaufInfo)
+						if (ProtokollAktivFuer(AblaufInfo))
 							ProtokollierenITelex_P(PSTR("Dynamische IP-Aktualisierung: bestehende IP gilt weiter\r\n" ));
 						}
 					else
 						{
 						NetzEigeneIP = TSB.IpRueckm.EmpfIP;
-						if (ProtokollLevel >= NurFehler) // ausnahmsweise
+						if (ProtokollAktivFuer(NurFehler)) // ausnahmsweise
 							{
 							ProtokollierenITelex_P(PSTR("Dynamische IP-Aktualisierung: neue IP "));
 							ProtokollierenIPAdr(NetzEigeneIP);
@@ -6026,7 +6062,7 @@ void itelex_thread()
 		// Schließanforderung vom Teilnehmer-Server?
 		if (TeilnehmerServerSocket != NO_SOCKET_USED && CheckSocketState(TeilnehmerServerSocket) == SOCKET_NOT_USE)
 			{
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				ProtokollierenITelex_P(PSTR("Socket zum Teilnehmer-Server wurde von Gegenstelle geschlossen\r\n" ));
 			CloseTCPSocket(TeilnehmerServerSocket);
 			TeilnehmerServerSocket = NO_SOCKET_USED;
@@ -6038,7 +6074,7 @@ void itelex_thread()
 
 	if (TeilnehmerServerSocket == NO_SOCKET_USED && DynIP_Phase == DynIP_LaeuftGerade)
 		{
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			ProtokollierenITelex_P(PSTR("!Socket zum Teilnehmer-Server geschlossen, DynIP_Phase war noch 'aktiv'.\r\n" ));
 			
 		DynIP_Phase = DynIP_Unbestaetigt;
@@ -6330,7 +6366,7 @@ bool PruefeSprache(void *pStruct, TSprache *Sprache)
 	
 	// Eigentlich hat das folgende gar nix mit dem Sprachprüfen zu tun, hier ist aber eine geeignete Stelle
 	// für eine Protokollierung der CGI-Aufrufe.
-	if (ProtokollLevel >= AblaufInfo)
+	if (ProtokollAktivFuer(AblaufInfo))
 		{
 		char *Ende;
 		
@@ -6776,7 +6812,7 @@ void itelex_cgi_msg_Out( void * pStruct )
 		printf_P(ISTR(Druckspiegel, Sprache));
 		printf_P(PSTR("<br><pre>%s&lt;&lt;&lt;%s%s</pre>"), HtmlSendeText, AsciiHilfPuffer, AsciiDruckPuffer);
 
-		if (ProtokollLevel >= DatenKurz)
+		if (ProtokollAktivFuer(DatenKurz))
 			{
 			ProtokollierenITelex_P(PSTR("Direktdruck Abruf Druckspiegel:"));
 			char *p = HtmlSendeText + strlen(HtmlSendeText) - 40;
@@ -6792,7 +6828,7 @@ void itelex_cgi_msg_Out( void * pStruct )
 		{
 		printf_P(ISTR(TexteingabeStartetFernschreiber, Sprache));
 		HtmlSendeText[0] = '\0';
-		if (ProtokollLevel >= DatenKurz)
+		if (ProtokollAktivFuer(DatenKurz))
 			ProtokollierenITelex_P(PSTR("Direktdruck Abruf Druckspiegel (aus)\r\n"));
 		}
 		
@@ -6803,7 +6839,7 @@ void itelex_cgi_msg_Out( void * pStruct )
 		else
 			printf_P(ISTR(AndereVerbindungBesteht, Sprache)); 
 		
-		if (ProtokollLevel >= DatenKurz)
+		if (ProtokollAktivFuer(DatenKurz))
 			ProtokollierenITelex_P(PSTR("Direktdruck Abruf Druckspiegel (belegt)\r\n"));
 		}
 	
@@ -6852,7 +6888,7 @@ void itelex_cgi_msg_In( void * pStruct )
 		// TODO AsciiProtZeichenKlingel ersetzen?
 			
 		// Ergebnis protokollieren
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			{
 			ProtokollierenITelex_P(PSTR("HTML-Chat Eingabe: "));
 			Protokollieren(EingabeText); 
@@ -6876,7 +6912,7 @@ void itelex_cgi_msg_In( void * pStruct )
 			if (!ExternDurchwahlPruefen(&Anwahl))
 				Anwahl = 0;
 				
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("HTML-Chat begonnen (Anwahl %u) -> "), Anwahl);
@@ -6890,7 +6926,7 @@ void itelex_cgi_msg_In( void * pStruct )
 			
 		else if (strcmp_P(EingabeText, PSTR("&")) == 0 && Modus == ModHtmlChatVerbunden)
 			{ // Bewirkt Abschaltung des HTML-Chat 'direkt'
-			if (ProtokollLevel >= AblaufInfo)
+			if (ProtokollAktivFuer(AblaufInfo))
 				ProtokollierenITelex_P(PSTR("HTML-Chat-Abbruch --> Ausschaltung intern\r\n" ));
 			InterneVerbindungBeenden(true);
 			}
@@ -7270,7 +7306,7 @@ void itelex_cgi_config_intern_betrieb(void *pStruct)
 		
 		CgiFormCheckbox_P(ISTR(UhrzeitVerteilen, Sprache), UhrzeitVerteilen_P, UhrzeitVerteilen);
 
-		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 2, ProtokollLevel + (SocketProtokollEin ? 10 : 0));
+		CgiFormInputFieldULong_P(ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 4, ProtokollLevel);
 		
 		#ifdef ITELEX_TLNSERVER
 		CgiFormInputFieldULong_P(ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 2, ProtokollLevelTlnServ);
@@ -7320,11 +7356,7 @@ void itelex_cgi_config_intern_betrieb(void *pStruct)
 		// ------------------
 		UhrzeitVerteilen = CgiCheckBool_P(http_request, ISTR(UhrzeitVerteilen, Sprache), UhrzeitVerteilen_P, UhrzeitVerteilen, Sprache);
 		
-		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, 
-										 ProtokollLevel + (SocketProtokollEin ? 10 : 0), 0, 19, Sprache);
-		SocketProtokollEin = ProtokollLevel >= 10;
-		if (SocketProtokollEin)
-			ProtokollLevel -= 10;
+		ProtokollLevel = CgiCheckULong_P(http_request, ISTR(ProtokollLevel, Sprache), ProtokollLevel_P, ProtokollLevel, 0, 255, Sprache);
 
 		#ifdef ITELEX_TLNSERVER
 		ProtokollLevelTlnServ = CgiCheckULong_P(http_request, ISTR(ProtokollLevelTlnServer, Sprache), ProtokollLevelTlnServ_P, 
@@ -7357,6 +7389,8 @@ void itelex_cgi_config_intern_betrieb(void *pStruct)
 		} // else argc > 0
 		
 	cgi_PrintHttpheaderEnd();
+
+	ProtokollRedirectStdout();
 
 	} // itelex_cgi_config_intern_betrieb()
 	
@@ -8087,20 +8121,21 @@ void itelex_init1(void)
 		ProtokollLevel = atoi(Buf);
 	else
 		ProtokollLevel = NurFehler;
-	SocketProtokollEin = ProtokollLevel >= 10;
-	if (SocketProtokollEin)
-		ProtokollLevel -= 10;
 		
+#ifdef ITELEX_TLNSERVER
 	// dies müsste eigentlich in Protokoll.c enthalten sein.
 	if (readConfig_P(ProtokollLevelTlnServ_P, Buf) == 1)
 		ProtokollLevelTlnServ = atoi(Buf);
 	else
 		ProtokollLevelTlnServ = NurFehler;
+#endif //def ITELEX_TLNSERVER
 		
 	TeilnehmerServerSocket = NO_SOCKET_USED;
 	AktTlnServerTabI = 0;
 	
 	printf_P(PSTR("...Config ok\r\n"));
+
+	ProtokollRedirectStdout();
 
 	#ifdef ITELEX_ANSCHLUSS
 	

@@ -526,7 +526,7 @@ int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 				StartKurzTimer(&AbbruchTimer);
 				if (GetSocketData(SocketID, 1, LineBuf + i) != 1)
 					{
-					if (ProtokollLevel >= NurFehler) // Daten explizit
+					if (ProtokollAktivFuer(NurFehler)) // Daten explizit
 						Protokollieren_P(PSTR("HttpReadHeader: GetSocketData() Fehler\r\n"));
 					return -2;
 					}
@@ -537,7 +537,7 @@ int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 				}
 			else if (KurzTimerVal(&AbbruchTimer) > 10 * KurzTimerFreq)
 				{
-				if (ProtokollLevel >= NurFehler) // Daten explizit
+				if (ProtokollAktivFuer(NurFehler)) // Daten explizit
 					Protokollieren_P(PSTR("HttpReadHeader: Timeout\r\n"));
 				return -1;
 				}
@@ -545,7 +545,7 @@ int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 		LineBuf[i] = '\0';
 
 		// Für Debugging:
-		if (ProtokollLevel >= DatenDetailliert) // Daten explizit
+		if (ProtokollAktivFuer(DatenDetailliert)) // Daten explizit
 			{
 			Protokollieren_P(PSTR("HttpReadHeader: Zeile >>"));
 			ProtokollierenPuffer(LineBuf, i); // i enthält immer noch Zeilenlänge
@@ -580,7 +580,7 @@ int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 		
 		} // while (true) ... Schleife über alle Zeilen des Header
 
-	if (ProtokollLevel >= AblaufInfo) // Daten explizit
+	if (ProtokollAktivFuer(AblaufInfo)) // Daten explizit
 		ProtokollierenInt_P(PSTR("HttpReadHeader: Res = %d\r\n"), Res);
 
 	return Res;
