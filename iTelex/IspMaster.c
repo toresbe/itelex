@@ -98,7 +98,14 @@
 // --> Das Kabel muss also an einem Ende Adern 2 und 4 drehen, am anderen Ende Adern 3 und 7
 
 
+#ifdef iTelex // hier ist die Hardware-Plattform gemeint
 #define IspSpiPort 2
+#endif //def iTelex
+
+#if defined( AVRNETIO ) || defined( iTelex_Light )
+#define IspSpiPort 1
+#endif //def AVRNETIO || iTelex_Light
+
 
 
 // Funktionen für In System Programming (ISP) über den SPI-Bus.
@@ -153,7 +160,7 @@ static bool IspEnable()
 		// einen Extra Taktimpuls zum Synchronisieren
 		_delay_us(100);
 		
-		#if (IspSpiPort == 2)
+		#if defined( _SPI_2_H )
 			// SCK auf High setzen
 			SPI2_PORT |= ( 1<<SCK2 );
 			_delay_us(100);
@@ -519,7 +526,7 @@ int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 				StartKurzTimer(&AbbruchTimer);
 				if (GetSocketData(SocketID, 1, LineBuf + i) != 1)
 					{
-					if (ProtokollLevel >= NurFehler) // Daten explizit
+					if (ProtokollAktivFuer(NurFehler)) // Daten explizit
 						Protokollieren_P(PSTR("HttpReadHeader: GetSocketData() Fehler\r\n"));
 					return -2;
 					}
@@ -530,7 +537,7 @@ int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 				}
 			else if (KurzTimerVal(&AbbruchTimer) > 10 * KurzTimerFreq)
 				{
-				if (ProtokollLevel >= NurFehler) // Daten explizit
+				if (ProtokollAktivFuer(NurFehler)) // Daten explizit
 					Protokollieren_P(PSTR("HttpReadHeader: Timeout\r\n"));
 				return -1;
 				}
@@ -538,7 +545,7 @@ int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 		LineBuf[i] = '\0';
 
 		// Für Debugging:
-		if (ProtokollLevel >= DatenDetailliert) // Daten explizit
+		if (ProtokollAktivFuer(DatenDetailliert)) // Daten explizit
 			{
 			Protokollieren_P(PSTR("HttpReadHeader: Zeile >>"));
 			ProtokollierenPuffer(LineBuf, i); // i enthält immer noch Zeilenlänge
@@ -573,7 +580,7 @@ int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 		
 		} // while (true) ... Schleife über alle Zeilen des Header
 
-	if (ProtokollLevel >= AblaufInfo) // Daten explizit
+	if (ProtokollAktivFuer(AblaufInfo)) // Daten explizit
 		ProtokollierenInt_P(PSTR("HttpReadHeader: Res = %d\r\n"), Res);
 
 	return Res;

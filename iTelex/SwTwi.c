@@ -29,6 +29,8 @@ TSwTwiFehler SwTwiLetzterFehler;
 static uint8_t LongTimer; 
 
 
+#ifdef iTelex
+
 // Ports: SDA auf PORTG3, SCL auf PORTG4
 
 inline void SDAset0() {	SET_BIT(DDRG, 3); }
@@ -40,6 +42,25 @@ inline void SCLset0() {	SET_BIT(DDRG, 4); }
 inline void SCLset1() {	CLR_BIT(DDRG, 4); }
 inline bool SCLget() { return BIT_IS_SET(PING, 4); }
 inline void SCLinit() { CLR_BIT(PORTG, 4); CLR_BIT(DDRG, 4); } // SCL in (normal)
+
+#endif //def iTelex
+
+
+#ifdef iTelex_Light
+
+// Ports: SDA auf PORTA2, SCL auf PORTA3
+
+inline void SDAset0() {	SET_BIT(DDRA, 2); }
+inline void SDAset1() {	CLR_BIT(DDRA, 2); }
+inline bool SDAget() { return BIT_IS_SET(PINA, 2); }
+inline void SDAinit() { CLR_BIT(PORTA, 2); CLR_BIT(DDRA, 2); } // SDA in (normal)
+
+inline void SCLset0() {	SET_BIT(DDRA, 3); }
+inline void SCLset1() {	CLR_BIT(DDRA, 3); }
+inline bool SCLget() { return BIT_IS_SET(PINA, 3); }
+inline void SCLinit() { CLR_BIT(PORTA, 3); CLR_BIT(DDRA, 3); } // SCL in (normal)
+
+#endif //def iTelex_Light
 
 
 static uint8_t CheckLongTimer()

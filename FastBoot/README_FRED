@@ -1,0 +1,3 @@
+Bootloader start address:
+ATmega1284: 0xFE00 (word address)
+ATmega2561: 0x1FE00 (word address)

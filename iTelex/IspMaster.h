@@ -28,6 +28,9 @@
 
 #define _ISPMASTER_H_
 	
+#ifdef ISP_MASTER
+// only if acivated
+
 
 // essentielle Includes
 // ================================================================
@@ -37,10 +40,19 @@
  
 // Port-Definitionen
 // ================================================================
-
+#ifdef iTelex 
 DEFPORTTRI(IspResetOut, F, 5)
+#endif //def iTelex
+
+#ifdef iTelex_Light
+DEFPORTTRI(IspResetOut, D, 3)
+#endif //def iTelex_Light
+
 
 extern void InitIspMaster();
+
+#endif //def ISP_MASTER
+
 	
 #endif /* _ISPMASTER_H_ */
 //@}

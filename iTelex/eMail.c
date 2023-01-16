@@ -224,7 +224,7 @@ bool MailZeileVerarbeiten(char *Zeile)
 		}
 
 	// Erst wenn kein Überlauf droht Protokoll drucken.
-	if (ProtokollLevel >= DatenKurz)
+	if (ProtokollAktivFuer(DatenKurz))
 		{
 		Protokollieren_P(PSTR("iTelex POP: ZeileVerarbeiten: "));
 		ProtokollierenPuffer(Zeile, strlen(Zeile));
@@ -318,7 +318,7 @@ void POP3Einleiten()
 		return;
 		}
 
-	if (ProtokollLevel >= AblaufInfo)
+	if (ProtokollAktivFuer(AblaufInfo))
 		ProtokollierenInt_P(PSTR("iTelex POP: Client-Socket #%d zum Server erfolgreich geoeffnet\r\n"), iTelexSocketHandle);
 		
 	POPOeffnenFehlerZaehler = 0;
@@ -423,7 +423,7 @@ void POP3DatenVerarbeiten()
 		
 	if (!POPOkEmpfangen)
 		{
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			{
 			Protokollieren_P(PSTR("iTelex POP: ! Fehlermeldung: "));
 			Protokollieren(SocketInBuf);
@@ -621,7 +621,7 @@ void POP3Abbrechen()
 
 	strcpy_P(SocketOutBuf, PSTR("DELE 1\r\n"));
 	
-	if (ProtokollLevel >= NurFehler)
+	if (ProtokollAktivFuer(NurFehler))
 		Protokollieren_P(PSTR("iTelex POP: ! Abbruch\r\n"));
 	
 	ProtokollPhase = Abmelden;
@@ -754,7 +754,7 @@ void SMTPDatenVerarbeiten()
 			{
 			SocketInBuf[SocketInBufUsed] = '\0';
 			
-			if (ProtokollLevel >= NurFehler)
+			if (ProtokollAktivFuer(NurFehler))
 				{
 				Protokollieren_P(PSTR("iTelex SMTP: ! Fehlermeldung: "));
 				Protokollieren(SocketInBuf);

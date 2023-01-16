@@ -57,6 +57,9 @@ void init_cmd_cron( void )
 #endif
 }
 
+
+#if defined(HTTPSERVER_CRON)
+
 /*------------------------------------------------------------------------------------------------------------*/
 /*!\brief Das CGI-Interface für zum Anzeigen der Konfigurationsdaten im EEProm. 
  * \param 	pStruct	Struktur auf den HTTP_Request
@@ -69,7 +72,7 @@ void cgi_cron( void * pStruct )
 	char string[32];
 	int HH, MM;
 	
-#ifdef iTelex
+#ifdef ITELEX_BASIS
 	extern uint8_t PruefeSpracheUndKonfigFreigabe(void *pStruct); 
 	if (!PruefeSpracheUndKonfigFreigabe(pStruct))
 		return;
@@ -146,6 +149,9 @@ void cgi_cron( void * pStruct )
 
 	cgi_PrintHttpheaderEnd();
 }
+
+#endif //defined(HTTPSERVER_CRON)
+
 
 /**
  * @}

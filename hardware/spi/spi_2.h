@@ -50,7 +50,7 @@
 	#define MOSI2			PF4
 	#define SCK2			PF6
 
-#elif defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284P__) 
+#elif defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__) || defined(__AVR_ATmega1284__) || defined(__AVR_ATmega1284P__) 
 
 	#define SPI2_PORT		PORTD
 	#define SPI2_DDR		DDRD

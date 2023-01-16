@@ -42,12 +42,16 @@ bool Idle; //!< Speichert, ob es zu protokollierende Ereignisse gab.
 bool SdGestoert;
 	//!< Wenn die SD Karte zwar aktiv ist aber schreiben nicht möglich ist.
 	
-uint8_t ProtokollLevel;
-	//!< "Tiefe" der Protokollierung für "normale" Abläufe: 0 = Aus, 1 = Normal, 2 = Intensiv, 3 = im Detail
+TProtokollLevel ProtokollLevel;
+	//!< "Tiefe" der Protokollierung für "normale" Abläufe
 
 uint8_t ProtokollLevelTlnServ;
 	//!< "Tiefe" der Protokollierung für Teilnehmer-Server: 0 = Aus, 1 = Normal, 2 = Intensiv, 3 = im Detail
 	//!< Auch Protokollierung der Teilnehmer-Server-Abfragen
+
+
+TBaudotMode ProtokollBaudotMode;
+
 
 static bool DruckeUhrzeit;
 	//!< speichert, ob die letzte Zeile ein CR LF enthielt, wenn ja wird die 
@@ -64,7 +68,36 @@ static bool RegelblockAktiv;
 static bool InRegelblock;
 	//!< Merker ob die folgenden Meldungen regelmäßig vorkommende Meldungen sind.
 	
+
+//! Prüft, ob die Protokollierung für den "Level" p stattfinden soll
+//! \retval true, wenn ja	
+bool ProtokollAktivFuer(TProtokollLevel p)
+{
+	if (ProtokollLevel >= Keine && ProtokollLevel <= AblaeufeAlle)
+		return (p >= ProtokollLevel) && (p <= AblaeufeAlle);
 	
+	if (ProtokollAktivFuerTCP())
+		return (p >= ProtokollLevel - TcpVerbindungen) && (p <= AblaeufeAlle);
+		
+	if (ProtokollLevel >= TelexKommunikationPur && ProtokollLevel <= TelexKommunikationAlles)
+		return (p >= ProtokollLevel) && (p <= TelexKommunikationAlles);
+
+	return false; // dies wirkt auch bei #UhrzeitImpulse
+}
+
+
+bool ProtokollAktivFuerTCP()
+	{
+	return (ProtokollLevel >= Keine + TcpVerbindungen) && (ProtokollLevel <= AblaeufeAlle + TcpVerbindungen);
+	}
+
+
+bool UhrzeitImpulseAufSeriellerSchnittstelle()
+	{
+	return ProtokollLevel == UhrzeitImpulse;
+	}
+
+
 //! Schreibt die zwischengespeicherten Daten auf die SD-Karte oder sendet diese an 
 //! die serielle Schnittstelle.
 //! \param flush Falls True, alle zwischengespeicherten Daten senden
@@ -525,6 +558,17 @@ static void SpeichernBeiIdle()
 	}
 	
 
+//! Abhaengig von der Protokoll-Stufe wird ggf. die Weiterleitung von STDOUT an die serielle Schnittstelle abgeschaltet.
+void ProtokollRedirectStdout()
+	{
+	if (ProtokollAktivFuer(TelexKommunikationPur) || ProtokollAktivFuer(UhrzeitImpulse))
+		STDOUT_set(NONE, 0);
+	else
+		STDOUT_set(RS232, 0);
+	}
+
+
+
 //! Initialisiert die Protokollierung.
 void ProtokollInit()
 	{
@@ -543,4 +587,5 @@ void ProtokollInit()
 	InRegelblock = false;
 	}
 	
+
 

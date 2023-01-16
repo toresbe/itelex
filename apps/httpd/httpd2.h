@@ -29,7 +29,7 @@
 	#if defined(EXTMEM)
 		#define REQUEST_BUFFERLEN		4096
 	#else
-		#define REQUEST_BUFFERLEN		162
+		#define REQUEST_BUFFERLEN		512
 	#endif
 
 	// Son 04.12.2012: von 8 auf 12 erhöht.

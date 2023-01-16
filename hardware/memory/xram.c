@@ -39,7 +39,7 @@
 
 #include "config.h"
 
-#if defined EXTMEM
+#if defined(EXTMEM)
 
 #include "xram.h"
 
@@ -121,13 +121,17 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 	while(!(EBI.CS3.CTRLB & EBI_CS_SDINITDONE_bm)); // warten bis fertig
 	
 #endif
+
+#ifdef ITELEX_BASIS
 	
-#if defined(iTelex)
+#if defined(iTelex) // hier ist die Hardware-Platform gemeint
 	// Fixe Port-Manipulation umd den Stack zu schützen.
 	DDRB |= 0xF0; // die vier LED von Bit 4 (rot) bis Bit 7 (blau)
 	PORTB |= 0x70; // und LED rot, gelb, und grün ein
 	PORTB &= ~(1 << PB7); // LED blau aus.
 #endif
+
+#endif //def ITELEX_BASIS
 
 	extern uint16_t DebugSP2; // Rettung so früh wie möglich
 	extern uint8_t ResetFlags; // Rettung so früh wie möglich
@@ -160,8 +164,13 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 		*p = MemTestValue(address); // Prüfwert in den Speicher schreiben
 		}
 
+
+#ifdef ITELEX_BASIS
+
 #if defined(iTelex)
 	PORTB &= ~(1 << PB6); // LED grün aus.
+#endif
+
 #endif
 	
 	// Speicher testen und alten Inhalt wieder herstellen.

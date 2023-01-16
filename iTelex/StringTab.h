@@ -159,8 +159,8 @@ _STRTABENTRY(AsciiModus_NurBeiDurchwahl, "nur mit Durchwahl", "only with direct 
 	"solo con chiamate dirette", "alleen met direkte oproep")
 _STRTABENTRY(AsciiModus_Nie, "nie", "never", "mai", "nooit")
 	
-_STRTABENTRY(ProtokollLevel, "Tiefe der Protokollierung an serieller Schnittstelle", "Logging level at serial port",
-	"Profondita' di protocollo alla porta seriale", "Protocol diepte aan de seriele poort.")
+_STRTABENTRY(ProtokollLevel, "Ausgabe-Modus an serieller Schnittstelle", "Output mode of serial port",
+	"???", "???") // TODO übersetzen
 _STRTABENTRY(ProtokollLevelTlnServer, "Tiefe der Protokollierung f&uuml;r Teiln-Server", "Logging level for directory server",
 	"Profondita' di protocollo del server abbonati", "Protocol diepte voor de abonnee server")
 _STRTABENTRY(DiagnoseLevel, "Level f&uuml;r Druckausgabe von Meldungen", "Message filtering level",
@@ -268,7 +268,11 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<th align=\"left\">Adresse</th>" // Adresse
 	"<th align=\"center\">Port</th>" // Port
 	"<th align=\"center\">Durchwahl</th>" // Durchwahl
+#ifdef ITELEX_TLNSERVER
 	"<th align=\"center\">letzte<br>Aktualisierung<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=datum\">auf</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">ab</a></th>" // Datum / Uhrzeit
+#else
+	"<th align=\"center\">letzte<br>Verwendung<br>sortiere <a href=\"itelex-tlnverz.cgi?sort=datum\">auf</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">ab</a></th>" // Datum / Uhrzeit
+#endif
 	"<th align=\"left\">Aktion</th>" // in dieser Spalte sind die Buttons
 	"</tr>",
 	
@@ -281,7 +285,11 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<th align=\"left\">Address</th>" // Adresse
 	"<th align=\"center\">Port</th>" // Port
 	"<th align=\"center\">Direct dial</th>" // Durchwahl
+#ifdef ITELEX_TLNSERVER
 	"<th align=\"center\">Updated<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">asc.</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">desc.</a></th>" // Datum / Uhrzeit
+#else
+	"<th align=\"center\">Changed<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">asc.</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">desc.</a></th>" // Datum / Uhrzeit
+#endif
 	"<th align=\"left\">Action</th>" // in dieser Spalte sind die Buttons
 	"</tr>",
 	
@@ -294,7 +302,11 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<th align=\"left\">Indirizzo</th>" // Adresse
 	"<th align=\"center\">Porta</th>" // Port
 	"<th align=\"center\">Estensione</th>" // Durchwahl
+#ifdef ITELEX_TLNSERVER
 	"<th align=\"center\">Aggiornato<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">su</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">giu</a></th>" // Datum / Uhrzeit
+#else
+	"<th align=\"center\">Utilizzo<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">su</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">giu</a></th>" // Datum / Uhrzeit
+#endif
 	"<th align=\"left\">Azione</th>" // in dieser Spalte sind die Buttons
 	"</tr>",
 	
@@ -307,7 +319,11 @@ _STRTABENTRY(TeilnehmerverzeichnisHtmlKopf,
 	"<th align=\"left\">Adres</th>" // Adresse
 	"<th align=\"center\">Poort</th>" // Port
 	"<th align=\"center\">Extensie</th>" // Durchwahl
+#ifdef ITELEX_TLNSERVER
 	"<th align=\"center\">Aktueel<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">op</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">neer</a></th>" // Datum / Uhrzeit
+#else
+	"<th align=\"center\">Gebruik<br>sort <a href=\"itelex-tlnverz.cgi?sort=datum\">op</a> <a href=\"itelex-tlnverz.cgi?sort=datum&ab\">neer</a></th>" // Datum / Uhrzeit
+#endif
 	"<th align=\"left\">Actie</th>" // in dieser Spalte sind die Buttons
 	"</tr>")
 
@@ -413,13 +429,20 @@ _STRTABENTRY(ZurueckZumTeilnehmerverzeichnis,
 
 _STRTABENTRY(ZusatzEepromFehler, "Fehler im Zusatz-EEPROM", "Error in directory EEPROM", "Errore EEPROM aggiuntivo","Fout in de toegevoegde EEPROM")
 
+_STRTABENTRY(TeilnehmerlisteVoll, "Rufnummern-Verzeichnis voll, nicht gespeichert", "directory out of space, not saved",
+		"Spazio elenco esaurito, non salvato","Abonnee lijst vol, niets is weggeschreven")
+
+#ifdef ITELEX_TLNSERVER
 
 // für TlnServer.c:
 _STRTABENTRY(NeuTeilnehmer, "Neuer Teilnehmer angemeldet", "new subscriber signed up","Nuovo abbonato sottoscritto","Nieuwe abonnee ingeschreven")
-_STRTABENTRY(TeilnehmerlisteVoll, "Rufnummern-Verzeichnis voll, nicht gespeichert", "directory out of space, not saved",
-		"Spazio elenco esaurito, non salvato","Abonnee lijst vol, niets is weggeschreven")
 _STRTABENTRY(ServerAnmeldungFalscheGeheimzahl, "Teilnehmer-Server Anmeldung mit falscher Geheimzahl", "Unauthorised access to directory server port",
 		"Accesso al server con PIN errato","Aanmelding bij server met verkeerde PIN")
+
+#endif //def ITELEX_TLNSERVER
+
+
+#ifdef ITELEX_EMAIL
 
 // für eMail.c:
 // ungeprüft:
@@ -451,6 +474,9 @@ _STRTABENTRY(MailFehlerNotConnected, " konnte nicht verbunden werden", " connect
 _STRTABENTRY(SMTPFehlerDirekt, "Meldung vom eMail-Ausgang-Server: ", "Message from the Server for outgoing email: ",
 		"Messaggio server-uscita-eMail: ", "Bericht von de mail-uitgangs-server: ")
 
+#endif //def ITELEX_EMAIL
+
+
 // für ConfigNtp.c:
 _STRTABENTRY(NtpOn, "Uhrzeit vom Server abfragen", "Use time server", "Utilizzare server del tempo", "Gebruik tijd server")
 _STRTABENTRY(NtpServerHostname, "Hostname des Zeitservers", "Time server host name", "Nome host server del tempo","Tijd host server naam")
@@ -479,7 +505,7 @@ typedef enum {
 	Deutsch,
 	Englisch,
 	Italienisch,
-	Niederlaendisch
+	Niederlaendisch,
 	} TSprache;
 	
 extern PGM_P GetIStr(uint16_t stri, TSprache Sprache);

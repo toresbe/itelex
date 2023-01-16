@@ -183,7 +183,7 @@ bool UpdateTimeFromNTP()
 	if (NTP_GetTime(strtoip(Buf), Buf, Time.timezone) != NTP_ERROR )
 		{
 		CLOCK_GetTime(&Time);
-		if (ProtokollLevel >= AblaufInfo)
+		if (ProtokollAktivFuer(AblaufInfo))
 			{
 			Protokollieren_P(PSTR("NTP-Server "));
 			Protokollieren(Buf); 
@@ -194,7 +194,7 @@ bool UpdateTimeFromNTP()
 		}
 	else
 		{
-		if (ProtokollLevel >= NurFehler)
+		if (ProtokollAktivFuer(NurFehler))
 			{
 			Protokollieren_P(PSTR("! NTP-Server "));
 			Protokollieren(Buf); 

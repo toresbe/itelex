@@ -105,7 +105,7 @@
 	#if defined(EXTMEM)
 		#define MAX_TCP_CONNECTIONS			6	// maximale gleichzeitige verbindungen
 	#elif defined(__AVR_ATmega1284P__)
-		#define MAX_TCP_CONNECTIONS			6	// maximale gleichzeitige verbindungen
+		#define MAX_TCP_CONNECTIONS			3	// maximale gleichzeitige verbindungen
 	#else
 		#define MAX_TCP_CONNECTIONS			3	// maximale gleichzeitige verbindungen
 	#endif
@@ -121,7 +121,7 @@
 			#define MAX_RECIVEBUFFER_LENGHT 	1024*4
 		#endif
 	#elif defined(__AVR_ATmega1284P__)
-		#define MAX_RECIVEBUFFER_LENGHT 	1024
+		#define MAX_RECIVEBUFFER_LENGHT 	512
 	#elif defined(__AVR_ATmega644__) || defined(__AVR_ATmega644P__)
 		#define MAX_RECIVEBUFFER_LENGHT 	128
 	#else

@@ -153,7 +153,12 @@ unsigned int NTP_GetTime( unsigned long IP, char * dnsbuffer, int timedif )
 					CLOCK_GetTime( &time );
 
 					time.time = secsSince1900;
-					time.timezone = timedif;
+
+					// check for "bad" values:
+					if (timedif <= 12 && timedif >= -12)
+						time.timezone = timedif;
+					else
+						time.timezone = 0;
 					
 					CLOCK_decode_time( &time );
 

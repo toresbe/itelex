@@ -15,11 +15,11 @@
 
 
 OUTPUT_FORMAT("elf32-avr","elf32-avr","elf32-avr")
-OUTPUT_ARCH(avr6)
+OUTPUT_ARCH(avr5)
 MEMORY
 {
-  text      (rx)   : ORIGIN = 0x3fc00, LENGTH = 0x3fe + 2
-  bss       (rw!x) : ORIGIN = 0x8000000 + 0x0200, LENGTH = 8192
+  text      (rx)   : ORIGIN = 0x1fc00, LENGTH = 0x3fe + 2
+  bss       (rw!x) : ORIGIN = 0x8000000 + 0x0100, LENGTH = 16384
 }
 
 
@@ -27,7 +27,7 @@ MEMORY
 SECTIONS
 {
   .bss : { *(.bss) } > bss 
-  . = 0x3fc00 ;
+  . = 0x1fc00 ;
   .text : { 
     bootload.o(.text) 
     /* place a jump to api_call at the very end: */

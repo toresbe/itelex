@@ -29,7 +29,10 @@
 	#define DNSSERVER		IPDOT( 192l, 168l,   1l, 250l )
 
 	// enable the external SRAM-Interface
-	#define EXTMEM
+	
+	#ifdef iTelex
+		#define EXTMEM   // nur bei "Vollversion" der iTelex-Hardware
+	#endif
 
 	// aktiviert den ADC
 	//#define ANALOG
@@ -37,8 +40,12 @@
 	#define EXTINT
 	// aktiviert PCint
 //	#define PC_INT
+
 	// aktiviert MMC
-	#define MMC
+	#ifdef iTelex
+		#define MMC
+	#endif
+	
 	// aktiviert LED
 	#define LED
 	// aktiviert TWI
@@ -76,18 +83,31 @@
 	#endif
 
 	// aktiviert iTelex und die entsprechenden Teilmodule
+	#define ITELEX_BASIS
 	#define ITELEX_ANSCHLUSS
-	// #define ITELEX_TLNSERVER
-	#define ITELEX_EMAIL
-	#define ISP_MASTER	
+	#ifdef iTelex
+		// #define ITELEX_TLNSERVER
+		#define ITELEX_EMAIL
+		#define ISP_MASTER	
+	#endif
+	#ifdef iTelex_Light // die Hardware-Platform
+		#define ITELEX_LIGHT // ... die Software-Teile
+		#define ISP_MASTER	
+	#endif
 	
-	#define SHELL
+	#ifdef iTelex
+		#define SHELL
+	#endif //def iTelex
+
+	#ifdef SHELL
+		// #define CRON_ACTIVE // TODO entscheiden, ob doch sinnvoll...
+	#endif //def SHELL
 
 	#ifdef TCP
 
 		// aktiviert DynDNS
 		#ifdef DNS
-			#define DYNDNS
+			// #define DYNDNS
 		#endif
 
 		// aktiviert Twitter
@@ -130,8 +150,8 @@
 				// aktiviert eemem per Webinterface
 				#define HTTPSERVER_EEMEM
 				// aktiviert reset per Webinterface
-				#if defined(SHELL)
-					#define HTTPSERVER_CRON
+				#if defined(SHELL) && defined(CRON_ACTIVE)
+					#define HTTPSERVER_CRON // TODO entfernen
 				#endif
 				// aktiviert reset per Webinterface
 				#define HTTPSERVER_RESET
@@ -161,6 +181,13 @@
 					#define HTTPSERVER_IMPULSECOUNTER
 				#endif
 			#endif
+
+			#ifdef ITELEX_LIGHT
+				#define DEFAULT_MAC 0x02, 0x03, 0x6f, 0x5A, 0x16, 0xc8
+			#else
+				#define DEFAULT_MAC 0x02, 0x03, 0x6f, 0x55, 0x1c, 0xc8
+			#endif
+
 		#endif
 	#endif
 
@@ -169,11 +196,10 @@
 
 //#define DYNDNS_DEBUG 1
 //#define CRON_DEBUG 1
-#define HTTP_DEBUG 1
-#define NTP_DEBUG 1
+//#define HTTP_DEBUG 1
+//#define NTP_DEBUG 1
 //#define DEBUG 1 // wirkt an verschiedenen Stellen: Logger.c, 
 //#define _DEBUG_ 1 // wirkt an verschiedenen Stellen: Dhcpc.c, ethernet.c, tcp.c, udp.c
-#define TXP_DEBUG 1
 
 
 #endif /* ITELEX_CONFIG_H */
