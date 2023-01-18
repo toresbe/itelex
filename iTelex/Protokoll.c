@@ -73,14 +73,15 @@ static bool InRegelblock;
 //! \retval true, wenn ja	
 bool ProtokollAktivFuer(TProtokollLevel p)
 {
-	if (ProtokollLevel >= Keine && ProtokollLevel <= AblaeufeAlle)
-		return (p >= ProtokollLevel) && (p <= AblaeufeAlle);
+	if (ProtokollLevel > Keine && ProtokollLevel <= AblaeufeAlle)
+		return (p > Keine && p <= ProtokollLevel);
 	
 	if (ProtokollAktivFuerTCP())
-		return (p >= ProtokollLevel - TcpVerbindungen) && (p <= AblaeufeAlle);
+		return (p > Keine && p <= ProtokollLevel - TcpVerbindungen);
 		
 	if (ProtokollLevel >= TelexKommunikationPur && ProtokollLevel <= TelexKommunikationAlles)
-		return (p >= ProtokollLevel) && (p <= TelexKommunikationAlles);
+		return (p >= TelexKommunikationPur && p <= ProtokollLevel);
+		// Beispiel: Bei #ProtokollLevel 22 wird p = 21 und p = 22 gedruckt, aber p = 23 (noch detaillierter) nicht.
 
 	return false; // dies wirkt auch bei #UhrzeitImpulse
 }
