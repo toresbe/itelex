@@ -18,12 +18,17 @@ typedef enum
 	AuchRegelmaessiges			= 5,
 	AblaeufeAlle				= 9,
 	TcpVerbindungen				= 10, // wirkt als "Offset" auf Keine bis AblaeufeAlle
-	TelexKommunikationPur		= 21,
-	TelexKommunikationMitVerbindungsdaten = 22,
+	TelexKommunikationText		= 21,
+	TelexKommunikationAblaeufe  = 22,
+	TelexKommunikationMitVerbindungsdaten = 23,
+	TelexKommunikationMitDatum  = 24,
 	TelexKommunikationAlles		= 29,
 	UhrzeitImpulse				= 99 // dies ist eine eigene Funktion, die die serielle Schnittstelle als Uhrenimpuls-Ausgabe missbraucht.
 	} TProtokollLevel;
-	
+// TelexKommunikation wird aufgezeichnet parallel zur Bearbeitung der Fernschreiber-Schnittstelle (seriell-Umsetzung).
+// bei Netz -> Endgerät also beim Auslesen von #SendePuffer
+// bei Endgerät -> Netz also beim Speichern in #EmpfPuffer
+
 
 extern TBaudotMode ProtokollBaudotMode;
 

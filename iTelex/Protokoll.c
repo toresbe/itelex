@@ -79,8 +79,8 @@ bool ProtokollAktivFuer(TProtokollLevel p)
 	if (ProtokollAktivFuerTCP())
 		return (p > Keine && p <= ProtokollLevel - TcpVerbindungen);
 		
-	if (ProtokollLevel >= TelexKommunikationPur && ProtokollLevel <= TelexKommunikationAlles)
-		return (p >= TelexKommunikationPur && p <= ProtokollLevel);
+	if (ProtokollLevel >= TelexKommunikationText && ProtokollLevel <= TelexKommunikationAlles)
+		return (p >= TelexKommunikationText && p <= ProtokollLevel);
 		// Beispiel: Bei #ProtokollLevel 22 wird p = 21 und p = 22 gedruckt, aber p = 23 (noch detaillierter) nicht.
 
 	return false; // dies wirkt auch bei #UhrzeitImpulse
@@ -325,8 +325,8 @@ static bool ProtPraeparieren(int len)
 			return false; // kein Platz mehr.
 		}
 
-	if (DruckeUhrzeit || ZeilenEnde)
-		{
+	if ((DruckeUhrzeit || ZeilenEnde) && (ProtokollAktivFuer(NurFehler) || ProtokollAktivFuer(TelexKommunikationMitDatum)))
+		{ // Hinweis: NurFehler ist die niedrigste Stufe der "Ablauf"-Protokollierung, somit werden alle relevanten Ablauf-Infos mit Datum versehen.
 		CLOCK_GetTime(&Time);
 
 		uint8_t SregTemp = SREG;
@@ -334,6 +334,7 @@ static bool ProtPraeparieren(int len)
 
 		sprintf_P(Puffer + strlen(Puffer), PSTR("%02d:%02d:%02d,%02d: "), Time.hh, Time.mm, Time.ss, Time.ms);
 		DruckeUhrzeit = false;
+		ZeilenEnde = false;
 		
 		SREG = SregTemp;
 		}
@@ -453,7 +454,7 @@ void ProtokollierenPuffer(char buf[], uint16_t Len)
 		if (buf[i] >= ' ' && buf[i] <= '~')
 			AnzAscii++;
 			
-	DruckAscii = AnzAscii > Len / 2;
+	DruckAscii = AnzAscii > (Len / 2);
 	InHochkomma = false;
 
 	if (DruckAscii)
@@ -562,7 +563,7 @@ static void SpeichernBeiIdle()
 //! Abhaengig von der Protokoll-Stufe wird ggf. die Weiterleitung von STDOUT an die serielle Schnittstelle abgeschaltet.
 void ProtokollRedirectStdout()
 	{
-	if (ProtokollAktivFuer(TelexKommunikationPur) || ProtokollAktivFuer(UhrzeitImpulse))
+	if (ProtokollAktivFuer(TelexKommunikationText) || ProtokollAktivFuer(UhrzeitImpulse))
 		STDOUT_set(NONE, 0);
 	else
 		STDOUT_set(RS232, 0);

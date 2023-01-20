@@ -63,6 +63,10 @@
 	#endif
 #endif
 
+
+#include "iTelex/Protokoll.h"
+
+
 /**
  * \brief Liefert ein File aus per HTTP.
  * \param 	pStruct		Pointer auf die HTTP Struktur.
@@ -78,6 +82,15 @@ int check_files( void * pStruct )
 	int i, returnvalue = -1;
 	long filesize = 0;
 
+	if (ProtokollAktivFuer(AblaeufeAlle))
+		{
+		Protokollieren_P(PSTR("http-request: "));
+		Protokollieren(http_request->GET_FILE);
+		Protokollieren_P(PSTR(" from "));
+		ProtokollierenIPAdr(http_request->CLIENT_IP);
+		Protokollieren_P(PSTR("\r\n"));
+		}
+
 #ifdef HTTP_DEBUG
 	struct STDOUT oldstream;
 
@@ -89,16 +102,6 @@ int check_files( void * pStruct )
 	STDOUT_Flush();
 	STDOUT_restore( &oldstream );
 #endif
-
-	extern void Protokollieren(char *s);
-	extern void Protokollieren_P(const char *s);
-	extern void ProtokollierenIPAdr(long aip);
-	
-	Protokollieren_P(PSTR("http-request: "));
-	Protokollieren(http_request->GET_FILE);
-	Protokollieren_P(PSTR(" from "));
-	ProtokollierenIPAdr(http_request->CLIENT_IP);
-	Protokollieren_P(PSTR("\r\n"));
 
 #if !defined(HTTP_FILES_FROM_MMC)
 	for( i = 0 ; i < MAX_FILES_ENTRYS ; i++ )

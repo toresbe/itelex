@@ -1342,6 +1342,8 @@ void itelex_timerEvent(void)
 						{
 						PufferSpeich(&EmpfPuffer, SerUmEmpfDaten);
 						SerUmEmpfBitNr = SerUmEmpfWarte;
+						if (ProtokollAktivFuer(TelexKommunikationText))
+							ProtokollierenC(CodeZuZeichen(SerUmEmpfDaten, &ProtokollBaudotMode));
 						}
 					}
 				else // im Datenbit
@@ -1384,6 +1386,8 @@ void itelex_timerEvent(void)
 					SerUmSendBitNr = SerUmSendStart;
 					if (PufferLeer(&SendePuffer))
 						SocketSendeQuittung = true;
+					if (ProtokollAktivFuer(TelexKommunikationText))
+						ProtokollierenC(CodeZuZeichen(SerUmSendDaten, &ProtokollBaudotMode));
 					}
 				}
 			} // else Empfang ruht
@@ -1688,7 +1692,7 @@ void ModusWechsel(TModus neu)
 			SeriellUmsetzInit();
 			StartKurzTimer(&SchreibPauseTimer);
 			StartLangTimer(&BeideRuhigTimer);
-			if (ProtokollAktivFuer(TelexKommunikationPur))
+			if (ProtokollAktivFuer(TelexKommunikationAblaeufe))
 				{
 				Protokollieren_P(PSTR(">>>>>\r\n"));
 				ProtokollBaudotMode = BaudotMode_BuchstabenEmpfangen;
@@ -1751,7 +1755,7 @@ void ModusWechsel(TModus neu)
 			SendeMark = true;
 			StartKurzTimer(&SchreibPauseTimer);
 			StartLangTimer(&BeideRuhigTimer);
-			if (ProtokollAktivFuer(TelexKommunikationPur))
+			if (ProtokollAktivFuer(TelexKommunikationAblaeufe))
 				{
 				Protokollieren_P(PSTR("<<<<<\r\n"));
 				ProtokollBaudotMode = BaudotMode_BuchstabenEmpfangen;
@@ -1806,7 +1810,7 @@ void ModusWechsel(TModus neu)
 			SendeMark = true;
 			StartKurzTimer(&HtmlDruckspiegelAnzeigeTimer);
 			StartLangTimer(&BeideRuhigTimer);
-			if (ProtokollAktivFuer(TelexKommunikationPur))
+			if (ProtokollAktivFuer(TelexKommunikationAblaeufe))
 				{
 				Protokollieren_P(PSTR("<<<<< (web)\r\n"));
 				ProtokollBaudotMode = BaudotMode_BuchstabenEmpfangen;
@@ -1916,9 +1920,9 @@ void ModusWechsel(TModus neu)
 		case ModEmailPOPDruckend:
 			SET_BIT_Status(StatBit_FsMeldBetrieb);
 			SET_BIT_Status(StatBit_Verbunden);
-			if (ProtokollAktivFuer(TelexKommunikationPur))
+			if (ProtokollAktivFuer(TelexKommunikationAblaeufe))
 				{
-				Protokollieren_P(PSTR("<<< @\r\n"));
+				Protokollieren_P(PSTR("<<<<< @\r\n"));
 				ProtokollBaudotMode = BaudotMode_BuchstabenEmpfangen;
 				}
 
@@ -1953,8 +1957,6 @@ static bool SchreibeZeichenInSendePuffer(char c)
 	if (ZeichenZuCode2(c, &BaudotMode, &Code1, &Code2))
 		{ // Zeichen erfolgreich in Baudot-Code umgesetzt
 		return PufferSpeich(&SendePuffer, Code1) && (Code2 == 255 || PufferSpeich(&SendePuffer, Code2));
-		if (ProtokollAktivFuer(TelexKommunikationPur))
-			ProtokollierenC(c);
 		}
 	else
 		// Zeichen ist nicht darstellbar, also löschen
@@ -3123,6 +3125,11 @@ void InterneVerbindungBeenden(bool Force)
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("Wechsel nach Modus PufferDruckUndSchluss (von %d)\r\n"), Modus);
 				}
+
+			if (ProtokollAktivFuer(TelexKommunikationAblaeufe))
+				{
+				Protokollieren_P(PSTR("*****\r\n"));
+				}
 			ModusWechsel(ModPufferDruckUndSchluss);
 			break;
 		}
@@ -3599,8 +3606,6 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					while (len > 0)
 						{
 						PufferSpeich(&SendePuffer, SocketInBuf[i]);
-						if (ProtokollAktivFuer(TelexKommunikationPur))
-							ProtokollierenC(CodeZuZeichen(SocketInBuf[i], &ProtokollBaudotMode));
 						i++;
 						len--;
 						} // umkopieren
@@ -3693,6 +3698,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						ModusWechsel(ModWarteGrundstellung);
 						}
 					} // if Modus == ModKommendVerbVorstufe
+
 				else if (Modus == ModGehendWaehlen)
 					{ // ID#227 **************************************************
 					if (ProtokollAktivFuer(AblaufInfo))
@@ -3836,9 +3842,9 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 	} // ITelexOderAsciiEmpfangVerarbeiten()
 
 	
-//! Wandelt Daten aus dem SendePuffer um im Protokoll "i-Telex"
+//! Wandelt Daten aus dem #EmpfPuffer um im Protokoll "i-Telex"
 //-------------------------------------------------------------
-//! Bearbeitet auch Statusänderungen.
+//! Bearbeitet auch Statusänderungen. EmpfPuffer bezieht sich auf den EMpfang vom Endgerät
 static void ITelexDatenVerarbeiten()
 	{
 	ITelexOderAsciiEmpfangVerarbeiten();
@@ -3885,8 +3891,6 @@ static void ITelexDatenVerarbeiten()
 				{
 				uint8_t code = PufferAusg(&EmpfPuffer);
 				SocketOutBuf[SocketOutBufUsed++] = code;
-				if (ProtokollAktivFuer(TelexKommunikationPur))
-					ProtokollierenC(CodeZuZeichen(code, &ProtokollBaudotMode));
 				len--;
 				}
 			SocketSendeQuittung = true;
@@ -3914,8 +3918,8 @@ static void ITelexDatenVerarbeiten()
 	} // ITelexDatenVerarbeiten()
 	
 
-//! Wandelt Daten aus dem SendePuffer um im ASCII-Protokoll
-//---------------------------------------------------------
+//! Wandelt Daten aus dem Socket-Empfamgspuffer um im ASCII-Protokoll
+//-------------------------------------------------------------------
 //! Bearbeitet auch Statusänderungen.
 static void AsciiDatenVerarbeiten()
 	{
@@ -3943,14 +3947,13 @@ static void AsciiDatenVerarbeiten()
 			
 			char c = CodeZuZeichen(code, &BaudotMode);
 			if (c == CodeChrKlingel)
-				SocketOutBuf[SocketOutBufUsed] = AsciiProtZeichenKlingel;
+				c = AsciiProtZeichenKlingel;
 			else if (c == CodeChrWerDa)
-				SocketOutBuf[SocketOutBufUsed] = AsciiProtZeichenWerDa;
-			else
-				SocketOutBuf[SocketOutBufUsed] = c;
+				c = AsciiProtZeichenWerDa;
 			
-			if (SocketOutBuf[SocketOutBufUsed] != '\0')
+			if (c != '\0')
 				{
+				SocketOutBuf[SocketOutBufUsed] = c;
 				SocketOutBufUsed++;
 				SocketAnzahlZeichenGesendet++;
 				ProtAnz++;
@@ -4641,17 +4644,11 @@ static void DatumUhrzeitDrucken()
 		PufferSpeich(&SendePuffer, TtyCodeWR);
 		PufferSpeich(&SendePuffer, TtyCodeZL);
 		PufferSpeich(&SendePuffer, TtyCodeZiUm);
-		if (ProtokollAktivFuer(TelexKommunikationPur))
-			Protokollieren_P(PSTR("\r\n"));
 		for (uint8_t i = 0 ; i < strlen(Text) ; i++)
 			{
 			uint8_t Code = ZeichenZuCode(Text[i], BaudotMode_ZiffernGesendet);
 			if (Code != 255)
-				{
 				PufferSpeich(&SendePuffer, Code);
-				if (ProtokollAktivFuer(TelexKommunikationPur))
-					ProtokollierenC(Text[i]);
-				}
 			}
 		// BaudotMode wird am Ende der Funktion korrekt gesetzt.
 		}
@@ -4668,7 +4665,11 @@ static void DatumUhrzeitDrucken()
 			{
 			uint8_t Code = ZeichenZuCode(Text[i], BaudotMode_ZiffernGesendet);
 			if (Code != 255)
+				{
 				PufferSpeich(&EmpfPuffer, Code);
+				if (ProtokollAktivFuer(TelexKommunikationText))
+					ProtokollierenC(Text[i]);
+				}
 			}
 		}
 		
