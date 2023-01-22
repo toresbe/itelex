@@ -1072,6 +1072,8 @@ static void ProtokollierenITelex_P(const char *s)
 //! \retval true wenn die neue Meldung gespeichert wurde.
 bool Diagnoseausgabe_P(const char *msg, uint8_t Level)
 	{
+TODO Level berücksichtigen!
+
 	ProtokollierenITelex();
 	ProtokollierenInt_P(PSTR("Diagnoseausgabe Level %d: "), Level);
 	if (msg == NULL)
@@ -3157,6 +3159,8 @@ static void ExterneVerbindungBeenden()
 					SocketOutBuf[SocketOutBufUsed++] = 0;
 					}
 				break;
+				
+TODO Ende protokollieren wenn eigener Abbau-Befehl. Hier richtig?
 				
 #ifdef ITELEX_EMAIL
 			case SMTP:
