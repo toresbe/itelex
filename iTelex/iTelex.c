@@ -1072,8 +1072,6 @@ static void ProtokollierenITelex_P(const char *s)
 //! \retval true wenn die neue Meldung gespeichert wurde.
 bool Diagnoseausgabe_P(const char *msg, uint8_t Level)
 	{
-TODO Level berücksichtigen!
-
 	ProtokollierenITelex();
 	ProtokollierenInt_P(PSTR("Diagnoseausgabe Level %d: "), Level);
 	if (msg == NULL)
@@ -1318,7 +1316,7 @@ void itelex_timerEvent(void)
 		if (SerUmEmpfBitNr != SerUmEmpfWarte && SerUmEmpfBitNr != SerUmEmpfFertig)
 			{ // Empfang läuft
 			if (--SerUmTickZaehlerEmpf <= 2)
-				{ // 3 Abtast-Zeitpunkte (Zaehler = 2,1,0) im Bit  TODO ggf mehr?
+				{ // 3 Abtast-Zeitpunkte (Zaehler = 2,1,0) im Bit
 				if (BusEmpfMark)
 					SerUmEmpfMarkZaehl++;
 				}
@@ -3160,8 +3158,6 @@ static void ExterneVerbindungBeenden()
 					}
 				break;
 				
-TODO Ende protokollieren wenn eigener Abbau-Befehl. Hier richtig?
-				
 #ifdef ITELEX_EMAIL
 			case SMTP:
 				SMTPSchliessen();
@@ -3449,7 +3445,7 @@ static uint8_t FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 			
 		case FKK_DYNAMISCHEIPAKT:
 			{
-			//! \todo Prio 1 Einschalten und speichern.
+			//! \todo Prio 1 Einschalten und speichern. oder auch ausschalten...
 			}
 			
 		default:
