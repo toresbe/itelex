@@ -237,7 +237,6 @@ CFLAGS += -fmerge-constants
 CFLAGS += -mno-tablejump
 CFLAGS += -ffreestanding
 CFLAGS += -fno-move-loop-invariants
-CFLAGS += --param inline-call-cost=2
 CFLAGS += -finline-limit=10
 # Some settings to make smaller code with avr-gcc 4.3.x
 # CFLAGS += -fno-inline-small-functions
