@@ -34,7 +34,7 @@ LOCAL_SOURCES := \
 	hardware/gpio/gpio_out.c hardware/gpio/gpio_in.c hardware/sd_raw/sd_raw.c \
 	iTelex/CgiFormTools.c iTelex/ConfigNtp.c iTelex/eMail.c iTelex/IspMaster.c \
 	iTelex/MissbrauchSperre.c iTelex/RamCorrTest.c iTelex/StringTab.c iTelex/SwTwi.c \
-	iTelex/Protokoll.c iTelex/TlnBuch.c iTelex/TlnServer.c iTelex/iTelex.c \
+	iTelex/Parsing.c iTelex/Protokoll.c iTelex/TlnBuch.c iTelex/TlnServer.c iTelex/iTelex.c \
 	system/base64/base64.c system/buffer/fifo.c system/config/eeconfig.c \
 	system/filesystem/byteordering.c system/filesystem/fat.c system/filesystem/filesystem.c \
 	system/filesystem/partition.c system/math/checksum.c system/math/crc8.c system/math/math.c \
