@@ -1,0 +1,15 @@
+# CI-only overrides for the historical Doxygen configuration.
+@INCLUDE = Doxyfile
+
+OUTPUT_DIRECTORY = build/docs
+HTML_OUTPUT = .
+INPUT = . dependencies/itelex-misc
+EXCLUDE += build dependencies/avr-clibs
+
+# The base configuration points to a Windows Graphviz installation. In CI,
+# allow Doxygen to find Debian's dot executable on PATH instead.
+DOT_PATH =
+DOT_FONTNAME =
+
+# GitHub Pages only needs the self-contained HTML site.
+GENERATE_LATEX = NO

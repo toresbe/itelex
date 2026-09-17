@@ -104,7 +104,10 @@ intact.
 
 GitHub Actions builds all firmware variants in a Debian 13 container using the
 same `make bootstrap` and `make clean all` commands documented above. Successful
-runs publish the complete `build/` directory as a workflow artifact.
+runs publish the complete `build/` directory as a workflow artifact. The
+workflow also renders the Doxygen HTML on pushes and pull requests, uploads it
+as the `itelex-documentation` artifact, and publishes the version from `main`
+at [toresbe.github.io/itelex](https://toresbe.github.io/itelex/).
 
 ## Repository layout
 

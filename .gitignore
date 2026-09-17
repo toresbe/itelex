@@ -2,6 +2,7 @@
 /config.h
 /SvnVersion.h
 /dependencies/avr-clibs/
+/Doxygen/
 *.o
 *.d
 *.elf
