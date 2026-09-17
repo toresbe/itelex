@@ -13,10 +13,10 @@
 #include "iTelex.h"
 
 
-//! Z‰hlwert f¸r Timer1: Wenn TCNT1 > 4 * TaktViertel, dann ist ein Bit gesendet
+//! Z√§hlwert f√ºr Timer1: Wenn TCNT1 > 4 * TaktViertel, dann ist ein Bit gesendet
 static uint8_t TaktViertel;
 
-//! Z‰hlwert f¸r Timer1.
+//! Z√§hlwert f√ºr Timer1.
 static uint8_t Mikrosek;
 
 
@@ -67,7 +67,7 @@ static uint8_t CheckLongTimer()
 	{
 	static int LastTimer1Val;
 	int Timer1Akt = timer1_getcounter();
-	if (Timer1Akt < LastTimer1Val) // es war ein ‹berlauf eingetreten
+	if (Timer1Akt < LastTimer1Val) // es war ein √úberlauf eingetreten
 		LongTimer++;
 	LastTimer1Val = Timer1Akt;
 	return LongTimer;
@@ -75,10 +75,10 @@ static uint8_t CheckLongTimer()
 	
 
 static bool SendBit(bool val, bool ExitWhenWaitstate)
-// R¸ckgabe: true, wenn nicht verf‰lscht...
+// R√ºckgabe: true, wenn nicht verf√§lscht...
 // Ablauf: SDA setzen, Vierteltakt, SCL 1, 2 Vierteltakte, SCL 0, Vierteltakt
 	{
-	// SDA setzen und pr¸fen
+	// SDA setzen und pr√ºfen
 	if (!InWaitstate)
 		{
 		if (val)
@@ -163,7 +163,7 @@ static bool SendBit(bool val, bool ExitWhenWaitstate)
 
 
 static bool ReadBit(bool* val, bool ExitWhenWaitstate)
-// R¸ckgabe: true, wenn bit Empfangen
+// R√ºckgabe: true, wenn bit Empfangen
 // Ablauf: SDA auf 1, Vierteltakt, SCL 1, Vierteltakt, SDA testen, Vierteltakt, SCL 0, Vierteltakt
 	{
 	if (!InWaitstate)
@@ -209,10 +209,10 @@ static bool ReadBit(bool* val, bool ExitWhenWaitstate)
 	// Vierteltakt
 	timer1_wait(TaktViertel);
 
-	// Pegelfeststellung von SDA durch mehrfaches Pr¸fen
-	// mindestens 5 von 6 Pr¸fungen m¸ssen gleiches Ergebnis haben
+	// Pegelfeststellung von SDA durch mehrfaches Pr√ºfen
+	// mindestens 5 von 6 Pr√ºfungen m√ºssen gleiches Ergebnis haben
 	// also muss 'Pegel' mindestens AnzSamples * 4/6 haben, da falsches Sample den Pegel in andere Richtung
-	// ‰ndert
+	// √§ndert
 	// damit mindestens 4 Messungen gemacht werden, startet AnzSamples bei 2
 
 	int8_t Pegel = 0;
@@ -258,9 +258,9 @@ static bool ReadBit(bool* val, bool ExitWhenWaitstate)
 
 
 bool SwTwiStart()
-// R¸ckgabe: true, wenn erfolgreich
-// Ablauf: SDA auf 0, Vierteltakt, SDA pr¸fen, 3 Vierteltakte, SCL 0, 2 Vierteltakte, SCL pr¸fen
-// TODO: Busfreiheit pr¸fen
+// R√ºckgabe: true, wenn erfolgreich
+// Ablauf: SDA auf 0, Vierteltakt, SDA pr√ºfen, 3 Vierteltakte, SCL 0, 2 Vierteltakte, SCL pr√ºfen
+// TODO: Busfreiheit pr√ºfen
 	{
 	// ist SCL schon auf 1?
 	InWaitstate = false;
@@ -288,7 +288,7 @@ bool SwTwiStart()
 
 	timer1_wait(TaktViertel);
 
-	// SDA pr¸fen
+	// SDA pr√ºfen
 	if (SDAget())
 		{
 		SwTwiLetzterFehler = StoerungSDA;
@@ -304,7 +304,7 @@ bool SwTwiStart()
 
 	timer1_wait(2 * TaktViertel);
 	
-	// SCL pr¸fen
+	// SCL pr√ºfen
 	if (SCLget())
 		{
 		SwTwiLetzterFehler = StoerungSCL;
@@ -318,12 +318,12 @@ bool SwTwiStart()
 
 
 bool SwTwiStop(bool ExitWhenWaitstate)
-// R¸ckgabe: true, wenn erfolgreich
-// Ablauf: SDA 0, SDA pr¸fen, Vierteltakt, SCL 1, SCL pr¸fen, 2 Vierteltakte, SDA 1, SDA pr¸fen, Vierteltakt
+// R√ºckgabe: true, wenn erfolgreich
+// Ablauf: SDA 0, SDA pr√ºfen, Vierteltakt, SCL 1, SCL pr√ºfen, 2 Vierteltakte, SDA 1, SDA pr√ºfen, Vierteltakt
 	{
 	if (!InWaitstate)
 		{
-		// SDA setzen und pr¸fen
+		// SDA setzen und pr√ºfen
 		if (SDAget())
 			{
 			SDAset0();
@@ -380,7 +380,7 @@ bool SwTwiStop(bool ExitWhenWaitstate)
 	// Vierteltakt
 	timer1_wait(TaktViertel);
 
-	// SDA pr¸fen
+	// SDA pr√ºfen
 	while (!SDAget())
 		{
 		if (CheckLongTimer() > 100) // 1 Sekunde
@@ -397,7 +397,7 @@ bool SwTwiStop(bool ExitWhenWaitstate)
 	}
 
 
-//! Gibt im Falle einer Stˆrung alles wieder frei.
+//! Gibt im Falle einer St√∂rung alles wieder frei.
 void SwTwiForceStop()
 	{
 	SCLset0();
@@ -454,7 +454,7 @@ bool SwTwiSendByte(uint8_t x, bool* Ack, bool ExitWhenWaitstate)
 	if (!ReadBit(Ack, false))
 		return false;
 		
-	*Ack = !*Ack; // 0 heiﬂt ja, alles gut...
+	*Ack = !*Ack; // 0 hei√üt ja, alles gut...
 	
 	return true;
 	}
@@ -474,7 +474,7 @@ bool SwTwiReadByte(uint8_t* x, bool Ack, bool ExitWhenWaitstate)
 			*x |= Mask;
 		}
 	
-	if (!SendBit(!Ack, false)) // !Ack da: 0 heiﬂt JA
+	if (!SendBit(!Ack, false)) // !Ack da: 0 hei√üt JA
 		return false;
 		
 	return true;
@@ -580,7 +580,7 @@ void SwTwiMain()
 							SwTwiModus = Beendet;
 							return;
 							}
-						QuittBuf[QuittBufInPos + 2] = AktByte; // Anzahl tats‰chlich geschriebene Byte
+						QuittBuf[QuittBufInPos + 2] = AktByte; // Anzahl tats√§chlich geschriebene Byte
 						AktByte = 0;
 						TransferTyp = LesenNachSchreiben;
 						SET_BIT(SwTwiAdresse, 0); // ansonsten noch die alte SwTwiAdresse
@@ -596,11 +596,11 @@ void SwTwiMain()
 						if (!Ack)
 							{
 							Stop(false);
-							SwTwiLetzterFehler = SlaveOhneAntwort; // h‰... sollte eigentlich nicht sein
+							SwTwiLetzterFehler = SlaveOhneAntwort; // h√§... sollte eigentlich nicht sein
 							SwTwiModus = Beendet;
 							return;
 							}
-						// TODO pr¸fen, ob Zwischenergebnis richtig abgelegt...
+						// TODO pr√ºfen, ob Zwischenergebnis richtig abgelegt...
 						} // else TransferTyp == SchreibLesen
 					} // else AktByte >= SwTwiAnzahlDaten */
 				} // else TransferTyp == Schreiben oder SchreibLesen
@@ -620,15 +620,15 @@ void SwTwiMain()
 
 				/* wird voraussichtlich nie gebraucht...
 				case SchreibenVorLesen:
-					// kann nur bei Abbruch w‰hrend des Schreibens auftreten...
-					QuittBuf[QuittBufInPos + 2] = AktByte; // Anzahl tats‰chlich geschriebene Byte
+					// kann nur bei Abbruch w√§hrend des Schreibens auftreten...
+					QuittBuf[QuittBufInPos + 2] = AktByte; // Anzahl tats√§chlich geschriebene Byte
 					QuittBuf[QuittBufInPos + 3] = 0; // Anzahl gelesene Byte = 0
 					FertigVerarbeitet(3); // SwTwiAdresse, Anzahl geschrieben, Anzahl gelesen (=0)
 					break;
 					
 				case LesenNachSchreiben:
 					// QuittBuf[QuittBufPosNorm(QuittBufInPos+2)] wurde schon oben beschrieben
-					QuittBuf[QuittBufInPos + 3] = AktByte; // Anzahl tats‰chlich geschriebene Byte
+					QuittBuf[QuittBufInPos + 3] = AktByte; // Anzahl tats√§chlich geschriebene Byte
 					FertigVerarbeitet(3 + AktByte); // SwTwiAdresse, Anzahl geschrieben, Anzahl gelesen (=0)
 					break;
 				*/

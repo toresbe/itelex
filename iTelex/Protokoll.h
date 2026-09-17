@@ -7,7 +7,7 @@
 #include "BaudotCode.h"
 
 
-//! Meldungs-Level für Ausgabe auf der Seriellen Schnittstelle: (Debug-Ausgaben, Protokollierung der Kommunikation oder Uhrenimpulse)
+//! Meldungs-Level fÃ¼r Ausgabe auf der Seriellen Schnittstelle: (Debug-Ausgaben, Protokollierung der Kommunikation oder Uhrenimpulse)
 typedef enum
 	{
 	Keine						= 0,
@@ -26,8 +26,8 @@ typedef enum
 	UhrzeitImpulse				= 99 // dies ist eine eigene Funktion, die die serielle Schnittstelle als Uhrenimpuls-Ausgabe missbraucht.
 	} TProtokollLevel;
 // TelexKommunikation wird aufgezeichnet parallel zur Bearbeitung der Fernschreiber-Schnittstelle (seriell-Umsetzung).
-// bei Netz -> Endgerät also beim Auslesen von #SendePuffer
-// bei Endgerät -> Netz also beim Speichern in #EmpfPuffer
+// bei Netz -> EndgerÃ¤t also beim Auslesen von #SendePuffer
+// bei EndgerÃ¤t -> Netz also beim Speichern in #EmpfPuffer
 
 
 extern TBaudotMode ProtokollBaudotMode;

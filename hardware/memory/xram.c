@@ -12,9 +12,9 @@
 ///	\par Uebersicht
 /// Aktiviert das externe RAM-Interface. Wenn die xram.h eingebunden wird, wird
 /// automatisch die Aktivierung in .init eingetragen und steht somit sofort zur
-/// Verfügung.
-/// \date 30-03-2011: Fred Sonnenrein: Speichertest verbessert: Vollständiges 
-///       Füllen mit Pseudo-Zufallsmuster und Wieder-Auslesen.
+/// VerfÃ¼gung.
+/// \date 30-03-2011: Fred Sonnenrein: Speichertest verbessert: VollstÃ¤ndiges 
+///       FÃ¼llen mit Pseudo-Zufallsmuster und Wieder-Auslesen.
 //****************************************************************************/
 /*
  *  This program is free software; you can redistribute it and/or modify
@@ -45,10 +45,10 @@
 
 
 /*------------------------------------------------------------------------------------------------------------*/
-/*!\brief Generiert aus Adresse ein Sollwert für den Speichertest
+/*!\brief Generiert aus Adresse ein Sollwert fÃ¼r den Speichertest
  * \param 	Addr Adresse der zu testenden Speicherstelle
- * \return	Wert, der zunächst im Speicher abgelegt wird und danach der Sollwert
- *			fur das Rücklesen ist
+ * \return	Wert, der zunÃ¤chst im Speicher abgelegt wird und danach der Sollwert
+ *			fur das RÃ¼cklesen ist
  */
 /*------------------------------------------------------------------------------------------------------------*/
 
@@ -92,7 +92,7 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 	XMCRB = (1 << XMBK) | (0 << XMM0);
 		// Mal sehen, was der Bus-Keeper bringt
 
-	// A16 freigeben, hängt an PD7, damit der RAM funktioniert, wenn dies nicht gemacht wird, ist A16 
+	// A16 freigeben, hÃ¤ngt an PD7, damit der RAM funktioniert, wenn dies nicht gemacht wird, ist A16 
 	// tristate und der RAM macht komische sachen :-)
 	DDRD |= ( 1<<PD7 );
 	PORTD &= ~( 1<<PD7 );
@@ -125,16 +125,16 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 #ifdef ITELEX_BASIS
 	
 #if defined(iTelex) // hier ist die Hardware-Platform gemeint
-	// Fixe Port-Manipulation umd den Stack zu schützen.
+	// Fixe Port-Manipulation umd den Stack zu schÃ¼tzen.
 	DDRB |= 0xF0; // die vier LED von Bit 4 (rot) bis Bit 7 (blau)
-	PORTB |= 0x70; // und LED rot, gelb, und grün ein
+	PORTB |= 0x70; // und LED rot, gelb, und grÃ¼n ein
 	PORTB &= ~(1 << PB7); // LED blau aus.
 #endif
 
 #endif //def ITELEX_BASIS
 
-	extern uint16_t DebugSP2; // Rettung so früh wie möglich
-	extern uint8_t ResetFlags; // Rettung so früh wie möglich
+	extern uint16_t DebugSP2; // Rettung so frÃ¼h wie mÃ¶glich
+	extern uint8_t ResetFlags; // Rettung so frÃ¼h wie mÃ¶glich
 	
 	volatile uint8_t* p;
 	uint8_t h;
@@ -161,14 +161,14 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 		*p = h; // auf zweiter "Seite" des RAM speichern.
 		PORTD &= ~( 1<<PD7 );
 		
-		*p = MemTestValue(address); // Prüfwert in den Speicher schreiben
+		*p = MemTestValue(address); // PrÃ¼fwert in den Speicher schreiben
 		}
 
 
 #ifdef ITELEX_BASIS
 
 #if defined(iTelex)
-	PORTB &= ~(1 << PB6); // LED grün aus.
+	PORTB &= ~(1 << PB6); // LED grÃ¼n aus.
 #endif
 
 #endif
@@ -178,7 +178,7 @@ void __attribute__ ((naked, section(".init3"))) init_xram (void)
 	for (address = 0x2200 ; address < 0xffff ; address++)
 		{
 		p = (uint8_t*) address;
-		if (*p != MemTestValue(address)) // Prüfung
+		if (*p != MemTestValue(address)) // PrÃ¼fung
 			fehler++;
 		PORTD |= ( 1<<PD7 );
 		h = *p; // geretteten Wert von zweiter Seite holen.
