@@ -9,6 +9,12 @@ reference and is not maintained.
 Build instructions, firmware variants, and dependency notes live in the
 [top-level README](../README.md), not here.
 
+The one exception to all of the above is
+[`splitting-itelex-c.md`](splitting-itelex-c.md), which is new maintained
+material rather than inherited: handoff notes for breaking up
+`iTelex/iTelex.c`, recording what the file's state coupling and the Light
+card's flash budget allow.
+
 ## `notes/` — project notes and release material
 
 | File | Contents |
