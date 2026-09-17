@@ -1,12 +1,13 @@
 # Splitting `iTelex/iTelex.c`
 
 Handoff notes for the work of breaking up the firmware's largest file. Written
-against commit `f019e7e`; every line number and measurement below is from that
-commit, so re-check them before acting if the file has moved on.
+against commit `f019e7e`; every line number below is from that commit, so
+re-check them before acting. Step 0 has since taken 146 lines out of
+`iTelex.c`, which shifts every line number after 863 down by that much.
 
-Nothing in this plan has been implemented yet. The host unit tests
+Step 0 is done; steps 1 to 3 are not. The host unit tests
 ([`tests/`](../tests/README.md)) are in place and are the safety net for part
-of it.
+of the rest.
 
 ## Standing conventions for this work
 
@@ -30,8 +31,10 @@ These apply to every step below.
 - **Doxygen stays neat and complete.** Every new file gets a `\file` comment,
   every function a brief and its parameters, and each new module its own
   `\defgroup` so the generated documentation gains a page rather than a pile of
-  loose symbols. The tree currently has 81 Doxygen warnings; a step should
-  never add to them.
+  loose symbols. The tree already warns plentifully — 244 warnings from
+  `doxygen Doxyfile.github` with Doxygen 1.9.8, and the count moves with the
+  Doxygen version, so compare before and after rather than trusting the
+  number. A step should never add to it.
 
 ## The hard constraint: flash on the Light card
 
@@ -51,18 +54,66 @@ at `-Os`, GCC inlines and clones `static` functions within a translation unit,
 and it cannot do either across the boundary. `-ffunction-sections` with
 `--gc-sections` is already on, which limits the damage but does not remove it.
 
-So every step is measured, and a step that grows the Light image is not
-committed as it stands. `avr-size` output before and after belongs in the
-commit message. If a step is worth keeping but costs flash, the honest options
-are to mark the new module's entry points so the compiler can still see them
-together, to compile the module out of the Light build entirely where the
+So every step is measured, and `avr-size` output before and after belongs in
+the commit message. **Measure clean builds.** An incremental `make` after
+editing a header reported half the true cost of step 0; the numbers here are
+all from `make clean` first.
+
+### What step 0 cost, and why it generalises badly
+
+Step 0 was the cheapest cut available — four functions, no file-scope state,
+one entry point, two call sites — and it still grew the Light image:
+
+| Variant | Before | After | Change |
+| --- | --- | --- | --- |
+| `standard` | 171,084 B | 171,112 B | +28 |
+| `light` | 128,820 B | 128,856 B | **+36** |
+
+Light free space went from about 1,228 to about 1,192 bytes.
+
+The cost is not in the moved code. `avr-nm` across the two builds shows the
+moved functions byte-identical and the growth confined to the two
+`DetermineBaudRate` call sites left behind in `iTelex.c`: `ExternEepromOeffnen`
++2 and `cgi_Isp` +16 on Light. What GCC loses at a translation-unit boundary is
+not only inlining but interprocedural register allocation — it can no longer
+see which registers the callee clobbers, so every call site pays to save more
+of them.
+
+That is a per-call-site cost, which means **the price of an extraction scales
+with how often the rest of the file calls into it**, not with how much code
+moves. Step 0 has two call sites. RemoteServer has seven. Neither of the
+obvious mitigations helps: making a module's internal helpers `static` changes
+nothing, and `__attribute__((pure))` on the entry point made it 36 bytes worse
+still.
+
+### `-flto` is worth more than every extraction costs
+
+Adding `-flto` to `COMMON_CFLAGS` builds this tree and produces a Light image
+of **128,116 B** — 740 bytes below the post-step-0 build and 704 below the
+original baseline. That is roughly twenty times what step 0 cost, from one
+flag, and it is exactly the optimisation whose absence this refactor keeps
+paying for: LTO restores cross-module inlining and register allocation.
+
+It is not committed and not validated. LTO changes code generation everywhere,
+AVR LTO has known sharp edges around interrupt handlers and `PROGMEM`, and
+nothing about it can be trusted without running
+[`docs/notes/Testumfang.txt`](notes/Testumfang.txt) on real hardware. But if it
+survives a bench test, the flash gate stops being the binding constraint on
+this work, and the third open decision below largely dissolves.
+
+Until then, a step that grows the Light image is a judgement call rather than
+an automatic refusal. If a step is worth keeping but costs flash, the honest
+options are to compile the module out of the Light build entirely where the
 feature is already absent, or to abandon that particular cut — not to spend the
 last kilobyte on tidiness.
 
 ## What the file actually is
 
-8,386 lines, 87 function definitions, 131 file-scope variables (91 `static`, 40
-externally visible through `iTelex.h`).
+8,386 lines at `f019e7e`, 87 function definitions, 131 file-scope variables
+(91 `static`, 40 externally visible through `iTelex.h`). Step 0 took it to
+8,240 lines and 83 functions; the state count is untouched, which is the point
+— the file is large because of its state, and step 0 deliberately moved the
+only code that had none.
 
 The ten largest functions account for roughly half the file:
 
@@ -142,31 +193,80 @@ Doing both at once produces a diff nobody can check.
 
 ## Work plan, in order
 
-### Step 0 — extract the pure helpers, and test them
+### Step 0 — extract the pure helpers, and test them — **done**
 
-The cheapest useful step, and the only one the host tests can cover directly.
-These functions touch no file-scope state at all:
+`iTelex/Parsing.c` / `.h` now holds four functions, moved and translated in
+the two-commit pattern, with a `parsing` suite of 17 cases under
+`tests/suites/`:
 
-| Function | Line | Lines |
-| --- | --- | --- |
-| `ParseInt16` | 863 | 44 |
-| `ParseNstAddresse` | 907 | 26 |
-| `BaudrateErmitteln` | 946 | 68 |
-| `IntelHexWriteLine` | 7722 | 21 |
-| `low` / `high` | 808 / 813 | 5 / 6 |
+| Was | Is now |
+| --- | --- |
+| `ParseInt16` | `ParseInt16` |
+| `ParseSkipSpace` | `ParseSkipSpace` |
+| `ParseNstAddresse` | `ParseExtensionAddress` |
+| `BaudrateErmitteln` | `DetermineBaudRate` |
 
-`ParseSkipSpace` (933), `IsCommonAsciiControl` (3469) and `AdresseZuWahlStr`
-(6958) are nearly pure — each appears to touch one variable — and should be
-checked individually before being included.
+The module came out cleaner than the candidate list suggested. Only
+`DetermineBaudRate` is called from the rest of `iTelex.c`, from two sites; the
+other three are used solely by it and by each other. `ParseSkipSpace` had to
+come along — leaving a dependency of `DetermineBaudRate` behind would have
+been three more cross-module calls for nothing — and it is fully pure, not
+nearly so.
 
-Move them to `iTelex/Parsing.c` / `.h` (name open to preference), translated,
-then add a `parsing` suite under `tests/suites/` following
-`tests/README.md`. `BaudrateErmitteln` is worth testing on its own: it parses
-the operator-facing baud-rate list (`70-79:75,*:50`), a small string format
-that users get wrong and that nothing currently checks.
+`Parsing.h` is deliberately not wrapped in `ITELEX_BASIS`. That guard is an
+artefact of `iTelex.c` being one 8,000-line conditional; nothing in the module
+depends on the firmware configuration, and staying clear of `config.h` — which
+is generated per variant into `build/<variant>/generated/` — is what lets the
+host tests compile the module at all. Any future module that wants host tests
+needs the same restraint.
 
-This step is small, is verified by tests rather than by inspection, and
-establishes the two-commit pattern on low-risk code.
+Three candidates from the original list stayed in `iTelex.c`:
+
+- **`IntelHexWriteLine`** (7722) is `printf_P` output formatting belonging to
+  the hexdump feature, not parsing. Its checksum is worth testing, but it
+  should move with the hexdump code or into an output module, not into a file
+  named for parsing.
+- **`low` / `high`** (808/813) are `static inline`, cost nothing where they
+  are, and are not parsing either.
+- **`IsCommonAsciiControl`** (3469) is pure, but it classifies Baudot and
+  ASCII control codes and sits in the receive path; it belongs with the data
+  path if anywhere.
+
+`AdresseZuWahlStr` (6958) is pure and is the formatting counterpart to
+`ParseExtensionAddress`, so the two probably belong together eventually. It is
+inside the `ITELEX_ANSCHLUSS` guard and already published in `iTelex.h`, which
+is why it was left for a step that can deal with both.
+
+**What the tests found.** `DetermineBaudRate` reads the operator-facing
+baud-rate list (`70-79:75,*:50`), a format with no specification outside the
+code and no check on it anywhere else. Four behaviours were undocumented:
+
+- `1` is not a baud rate. It means the table was read to its end without a
+  match, which is why `SeriellUmsetzInit` treats everything `<= 1` as failure.
+- A negative answer is the offset of the offending character, negated — so an
+  error at the first character comes back as `0` and carries no position.
+- The scan returns at the first matching entry, so a malformed table validates
+  clean if the error sits after the match. This is precisely what the CGI
+  handler's lookup for extension `0` is for: no entry can match extension `0`,
+  so the whole string has to be read. The comment at that call site says as
+  much; the behaviour it relies on was written down nowhere.
+- A reversed range (`79-70`) parses without complaint and matches nothing, so
+  an operator who inverts one gets the fallback rate and no error at all.
+
+`ParseExtensionAddress` also accepts `+4` as the two-digit number 4, because
+the sign counts toward its two-character limit. Almost certainly not intended;
+recorded rather than fixed, since step 0 was not to change behaviour.
+
+**The one stub.** `Parsing.c` calls `WahlZuAdresse`, which lives in
+`BusKomm.c` alongside the TWI interrupt handler and will not compile on a
+host. The suite defines it, recording its arguments — which is what the
+`ParseExtensionAddress` cases assert on — and reproducing the documented
+mapping so the baud-rate cases can use real addresses. `tests/README.md`
+explains the trade. Linking the real thing would mean shimming the TWI
+peripheral, and is worth doing if a second suite ever needs `BusKomm.c`.
+
+**Cost:** +36 bytes on Light, diagnosed above. See that section before
+planning step 1.
 
 ### Step 1 — extract RemoteServer (Centralex)
 
@@ -253,12 +353,19 @@ that needs a bench test rather than a green CI run.
 
 1. `make test` — the host suites still pass (and cover the new module, if it is
    pure logic).
-2. `make standard light` — both variants build with no new warnings.
-3. `avr-size` on both `.elf` files, compared against the numbers above; the
-   Light figure must not grow. Record both in the commit message.
+2. `make clean && make standard light` — both variants build with no new
+   warnings. Clean, because an incremental build after a header change
+   under-reports size.
+3. `avr-size` on both `.elf` files, compared against the numbers above. Record
+   both in the commit message, and if Light grew, say by how much and where —
+   `avr-nm` names the functions that changed.
 4. For a verbatim move, diff the moved text against the original and confirm
-   only whitespace and includes changed.
-5. `doxygen Doxyfile.github` — no new warnings, and the new `\defgroup` appears.
+   only whitespace and includes changed. For a rename-only commit, `avr-objdump
+   -d` on the module's `.o` before and after should be byte-identical.
+5. `doxygen Doxyfile.github` — no new warnings, and the new `\defgroup`
+   appears. The count to beat is 244 on this tree with Doxygen 1.9; count
+   before and after rather than trusting an absolute number, since it moves
+   with the Doxygen version.
 6. State plainly in the commit message what is *not* verified: anything
    touching sockets, timers or the serial line is unverified until someone runs
    the manual test plan in `docs/notes/Testumfang.txt` on real hardware.
@@ -269,24 +376,38 @@ that needs a bench test rather than a green CI run.
   documentation use for the RemoteServer feature; `RemoteServer` is the name the
   code uses. Picking the user-facing name is the better documentation but makes
   the `ehem.` comments carry more weight.
-- **How far to translate in one step.** A module's own identifiers are
-  straightforward. Its *callers* elsewhere in `iTelex.c` have to be updated in
-  the same commit for the build to work, which spreads a rename across the big
-  file. An alternative is to keep the old names as thin macros for one release
-  so the rename lands separately — more churn, smaller diffs.
-- **Whether flash headroom forces a Light-only decision.** If extraction
-  reliably costs flash, one clean answer is to compile whole features out of
-  the Light build. That is a product decision about which cards get which
-  features, not a refactoring one, and it needs Fred's view as much as anyone's.
+- **How far to translate in one step.** Settled for step 0 and worth keeping:
+  renaming the module's own identifiers and its callers in one commit was two
+  call sites, and the rename produced byte-identical machine code, which is
+  cheap to verify and cheap to review. A module with more callers may still
+  want the thin-macro alternative — old names kept as macros for one release —
+  but nothing so far has needed it.
+- **Whether flash headroom forces a Light-only decision.** Step 0 confirms
+  extraction reliably costs flash, and shows the cost scales with call sites
+  rather than with code moved. But `-flto` is worth more than all of it (see
+  above), so the first question is now whether LTO survives a bench test, not
+  which features to cut from Light. Compiling features out of the Light build
+  remains the fallback, and stays a product decision needing Fred's view.
 
 ## Reproducing the measurements
 
 ```sh
 make bootstrap
+make clean          # incremental builds under-report the cost of a change
 make standard light
 avr-size --format=avr --mcu=atmega2561  build/standard/Main.elf
 avr-size --format=avr --mcu=atmega1284p build/light/Main_Light.elf
 ```
+
+To find out *where* a change spent its bytes rather than only how many,
+compare per-symbol sizes across the two builds:
+
+```sh
+avr-nm --print-size --size-sort --radix=d build/light/Main_Light.elf
+```
+
+The anonymous `__c.NNNN` string literals renumber whenever line numbers move,
+so ignore them; what matters is which named functions changed size.
 
 The cluster and state tables above were produced by scripted analysis of
 `iTelex/iTelex.c`: function spans by brace matching from each definition,
