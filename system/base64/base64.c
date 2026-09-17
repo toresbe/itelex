@@ -129,5 +129,5 @@ char * base64_encode(char *out, int out_size, const char *in, int in_size)
     return ret;
 }
 
-//}@
+//@}
 
