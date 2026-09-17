@@ -138,8 +138,8 @@ bootload.hex: bootload.elf
 
 bootload.elf : bootload.o stub.o
 ifndef BOOTRST
-	vars="$$(./get_text_addrs.sh $(FLASHEND))"; \
-	arch="$$(./get_avr_arch.sh -mmcu=$(MCU) bootload.o)"; \
+	vars="$$(bash ./get_text_addrs.sh $(FLASHEND))"; \
+	arch="$$(bash ./get_avr_arch.sh -mmcu=$(MCU) bootload.o)"; \
 	echo "arch=$$arch";\
 	echo "$$vars"; \
 	eval "$$vars"; \
@@ -152,9 +152,9 @@ ifndef BOOTRST
 	avr-ld -N -E -T bootload.x -Map=$(patsubst %.elf,%,$@).map \
 	  --cref $+ -o $@ --defsym Application="$$LOADER_START-2"
 else
-	vars="$$(./get_bootsection_addrs.sh $(FLASHEND) $(FIRSTBOOTSTART) \
+	vars="$$(bash ./get_bootsection_addrs.sh $(FLASHEND) $(FIRSTBOOTSTART) \
                 $(SECONDBOOTSTART) $(THIRDBOOTSTART) $(FORTHBOOTSTART))"; \
-	arch="$$(./get_avr_arch.sh -mmcu=$(MCU) bootload.o)"; \
+	arch="$$(bash ./get_avr_arch.sh -mmcu=$(MCU) bootload.o)"; \
 	echo "arch=$$arch";\
 	echo "$$vars"; \
 	eval "$$vars"; \
@@ -171,7 +171,7 @@ endif
 atmel_def.h: $(ATMEL_INC) Makefile
 #        We use gawk instead of egrep here due to problems with
 #        WinAVR's egrep (which I didn't dive into):
-	./_conv.awk $< | gawk '/PAGESIZE|SIGNATURE_|SRAM_|FLASHEND|BOOT/' > $@
+	gawk -f _conv.awk $< | gawk '/PAGESIZE|SIGNATURE_|SRAM_|FLASHEND|BOOT/' > $@
 
 atmel_def.mak: atmel_def.h
 	gawk '{ printf "%s = %s\n", $$2, $$3 }' $< > $@
@@ -272,4 +272,3 @@ checkdist:
 	cd fastboot.test; \
 	cp ../m168def.inc .; \
 	make
-
