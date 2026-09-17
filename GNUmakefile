@@ -32,7 +32,7 @@ LOCAL_SOURCES := \
 	hardware/spi/spi_2.c hardware/timer0/timer0.c hardware/led/led_core.c \
 	hardware/memory/xram.c hardware/spi/spi_core.c hardware/gpio/gpio_core.c \
 	hardware/gpio/gpio_out.c hardware/gpio/gpio_in.c hardware/sd_raw/sd_raw.c \
-	iTelex/CgiFormTools.c iTelex/ConfigNtp.c iTelex/eMail.c iTelex/IspMaster.c \
+	iTelex/Centralex.c iTelex/CgiFormTools.c iTelex/ConfigNtp.c iTelex/eMail.c iTelex/IspMaster.c \
 	iTelex/MissbrauchSperre.c iTelex/RamCorrTest.c iTelex/StringTab.c iTelex/SwTwi.c \
 	iTelex/Parsing.c iTelex/Protokoll.c iTelex/TlnBuch.c iTelex/TlnServer.c iTelex/iTelex.c \
 	system/base64/base64.c system/buffer/fifo.c system/config/eeconfig.c \

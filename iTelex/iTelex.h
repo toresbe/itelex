@@ -481,6 +481,12 @@ extern uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
 
 extern uint8_t ProtokollPhase;
 
+extern uint32_t NetzRufnummer;
+
+extern uint16_t Geheimzahl;
+
+extern uint8_t FalschGeheimzahlZaehler;
+
 extern bool TlnBuchOffen;
 
 extern char SocketInBuf[SocketInBufMax+4]; //!< TCP-Empfangspuffer
@@ -502,6 +508,14 @@ extern struct TIME SystemStartZeit;
 // ================================================================
 
 extern void ModusWechsel(TModus neu);
+
+extern void ProtokollierenITelex();
+
+extern void ProtokollierenITelex_P(const char *s);
+
+extern void KommendeVerbindungInitialisieren();
+
+extern void FalschGeheimzahlWurdeGemeldet();
 
 extern void itelex_init1( void );
 
