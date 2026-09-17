@@ -4,7 +4,9 @@
 OUTPUT_DIRECTORY = build/docs
 HTML_OUTPUT = .
 INPUT = . dependencies/itelex-misc
-EXCLUDE += build dependencies/avr-clibs
+# tests/build holds host build products, including the .d files that Doxygen
+# would otherwise try to read as D sources.
+EXCLUDE += build tests/build dependencies/avr-clibs
 
 # The base configuration points to a Windows Graphviz installation. In CI,
 # allow Doxygen to find Debian's dot executable on PATH instead.
