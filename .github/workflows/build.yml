@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,3 +31,50 @@ jobs:
         with:
           name: itelex-firmware
           path: build/
+
+  documentation:
+    runs-on: ubuntu-latest
+    container: debian:13
+    steps:
+      - name: Install documentation tools
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends \
+            doxygen graphviz git ca-certificates
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Render Doxygen HTML
+        run: |
+          mkdir -p build/docs
+          doxygen Doxyfile.github
+      - name: Upload documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: itelex-documentation
+          path: build/docs/
+      - name: Package documentation for GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: build/docs/
+
+  deploy-documentation:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: documentation
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Publish documentation
+        id: deployment
+        uses: actions/deploy-pages@v5
