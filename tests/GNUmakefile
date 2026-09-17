@@ -13,6 +13,7 @@ BIN_DIR := $(BUILD_DIR)/bin
 
 REPO_ROOT := ..
 COMMON_DIR := $(REPO_ROOT)/dependencies/itelex-misc/Gemeinsam
+AVR_CLIBS_DIR := $(REPO_ROOT)/dependencies/avr-clibs
 
 # Flags that have to match the firmware build, because they change what the
 # code under test means:
@@ -23,7 +24,9 @@ COMMON_DIR := $(REPO_ROOT)/dependencies/itelex-misc/Gemeinsam
 #   -std=gnu99              as in the firmware's COMMON_CFLAGS.
 ABI_CFLAGS := -std=gnu99 -funsigned-char -D__PROG_TYPES_COMPAT__
 
-INCLUDES := -Ishim -Iframework -I$(REPO_ROOT) -I$(COMMON_DIR)
+# AVR-Clibs is on the list because BusKomm.h, which Parsing.c needs for the
+# extension-to-address conversion, includes bits.h from there.
+INCLUDES := -Ishim -Iframework -I$(REPO_ROOT) -I$(COMMON_DIR) -I$(AVR_CLIBS_DIR)
 
 # New code — the framework and the suites — is held to a strict warning level.
 TEST_CFLAGS := $(ABI_CFLAGS) $(INCLUDES) -g -O1 -Wall -Wextra -Wshadow -Werror
@@ -35,7 +38,7 @@ UNIT_CFLAGS := $(ABI_CFLAGS) $(INCLUDES) -g -O1 -Wall
 
 # One entry per suite: <name>_UNITS lists the firmware sources the suite links
 # against, and the suite body itself is suites/test_<name>.c.
-SUITES := baudot_code fifo_buffer crc8 math base64 string_utils
+SUITES := baudot_code fifo_buffer crc8 math base64 string_utils parsing
 
 baudot_code_UNITS  := $(COMMON_DIR)/BaudotCode.c
 fifo_buffer_UNITS  := $(COMMON_DIR)/FifoPuffer.c shim/avr_shim.c
@@ -43,6 +46,7 @@ crc8_UNITS         := $(REPO_ROOT)/system/math/crc8.c
 math_UNITS         := $(REPO_ROOT)/system/math/math.c
 base64_UNITS       := $(REPO_ROOT)/system/base64/base64.c
 string_utils_UNITS := $(REPO_ROOT)/system/string/string.c
+parsing_UNITS      := $(REPO_ROOT)/iTelex/Parsing.c
 
 BINARIES := $(addprefix $(BIN_DIR)/,$(SUITES))
 
@@ -60,6 +64,9 @@ list:
 check-dependencies:
 	@test -f "$(COMMON_DIR)/BaudotCode.c" || { \
 		echo "error: missing itelex-misc submodule; run 'make bootstrap' in the repository root" >&2; \
+		exit 1; }
+	@test -f "$(AVR_CLIBS_DIR)/bits.h" || { \
+		echo "error: missing avr-clibs submodule; run 'make bootstrap' in the repository root" >&2; \
 		exit 1; }
 
 # Runs every suite even when an earlier one fails, so that one run reports the

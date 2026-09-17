@@ -3,7 +3,6 @@
  *            Parsing.c
  *
  ****************************************************************************/
-///	\ingroup software
 ///	\ingroup Parsing
 //****************************************************************************/
 /*
@@ -108,13 +107,13 @@ void ParseSkipSpace(char **pp)
 	}
 
 
-//! Picks the baud rate to use for an extension out of a table.
-//---------------------------------------------------------------
-//! The table is the one the operator edits as #BaudrateListe, for example
-//! "70-78:75,19:100,*:50": extensions 70 to 78 run at 75 baud, number 19 at
-//! 100 baud, everything else at 50 baud.
-//! \retval >0 baud rate
-//! \retval <=0 position of the error within the string
+// The contract is documented in Parsing.h. The table is the one the operator
+// edits as BaudrateListe, for example "70-78:75,19:100,*:50": extensions 70 to
+// 78 run at 75 baud, number 19 at 100 baud, everything else at 50 baud.
+//
+// Note that the scan returns as soon as an entry matches, so anything after
+// the matching entry is never checked. That is why the CGI handler validates
+// a new table by looking it up for extension 0, which no entry can match.
 
 int16_t DetermineBaudRate(uint8_t extension, char *aBaudTable) // ehem. BaudrateErmitteln
 	{
