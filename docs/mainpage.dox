@@ -1,0 +1,63 @@
+/*! \mainpage i-Telex firmware
+ *
+ * This is the generated source documentation for the i-Telex **module
+ * firmware**: the code that runs on the Ethernet card of an i-Telex system and
+ * carries teleprinter traffic over IP.
+ *
+ * The firmware is Fred Sonnenrein's work. This repository is a clone of his
+ * SourceForge SVN project, kept so that the work is preserved and stays
+ * buildable with current tools; the portable build, the tests and this
+ * documentation are maintenance around it and do not change its provenance.
+ * Most of the source comments are in German, as written by their authors.
+ *
+ * \section mainpage_what What the firmware does
+ *
+ * An i-Telex system connects a teleprinter to the i-Telex network over the
+ * Internet. The module firmware documented here answers and places calls,
+ * converts between the teleprinter's Baudot/ITA2 characters and the network
+ * protocol, queries the subscriber directory server, serves the card's own web
+ * configuration pages, and drives the other cards of the system over the
+ * backplane.
+ *
+ * Two variants are built from these sources:
+ *
+ * - **Standard**, an ATmega2561 with external SRAM and an optional SD card;
+ * - **Light**, an ATmega1284P without external memory, which compiles out the
+ *   SD card, the shell and Telnet server, e-mail, and two of the four
+ *   interface languages.
+ *
+ * The i-Telex functions themselves are identical on both.
+ *
+ * \section mainpage_layout Finding your way around
+ *
+ * - \b iTelex/ is the i-Telex application itself, and is where to start
+ *   reading. `iTelex.c` holds the call state machine, `TlnBuch.c` and
+ *   `TlnServer.c` the local subscriber book and the directory server client,
+ *   `Protokoll.c` the i-Telex network protocol, `StringTab.h` the
+ *   multilingual interface strings, and `IspMaster.c` the ISP programming of
+ *   the system's other cards.
+ * - \b system/, \b hardware/ and \b apps/ are the supporting embedded stack —
+ *   the IP stack, the ENC28J60 driver, timers, the HTTP server and the shell.
+ *   They come from Dirk Broßwick's AVR mini webserver project, whose original
+ *   introduction is kept at \subpage mikrowebserver.
+ * - \b Gemeinsam/ holds the sources shared with the other i-Telex cards,
+ *   including the Baudot code tables, the backplane communication and the ring
+ *   buffer. They live in the separate `itelex-misc` repository and are
+ *   documented here because the module firmware compiles them in.
+ * - \b FastBoot/ is Peter Dannegger's bootloader, which allows the card to be
+ *   reprogrammed over its serial port.
+ *
+ * The line interface cards — TW39, ED1000, the analogue modem and the rest —
+ * run their own firmware from `itelex-misc` rather than this code. The module
+ * programs them over the backplane by ISP.
+ *
+ * \section mainpage_more Beyond the source
+ *
+ * Build instructions, the firmware variants, the host unit tests and the
+ * dependency notes are in the repository's `README.md`. The project's
+ * inherited German notes, the manual test plan, the per-build changelog and
+ * the protocol captures are under `docs/`.
+ *
+ * The hardware itself is described on the
+ * <a href="https://www.i-telex.net/hardware/">i-Telex hardware page</a>.
+ */

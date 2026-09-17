@@ -1,4 +1,9 @@
-/*! \mainpage Willkommen zum Mikrowebserver Projekt
+/*! \page mikrowebserver Willkommen zum Mikrowebserver Projekt
+ *
+ * \note This is the introduction to Dirk Broßwick's AVR mini webserver, the
+ * project that the supporting stack under `system/`, `hardware/` and `apps/`
+ * comes from. It is kept as it was received and describes that project, not
+ * i-Telex.
  *
  * \section intro_sec Übersicht
  *

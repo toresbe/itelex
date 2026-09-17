@@ -9,6 +9,14 @@ reference and is not maintained.
 Build instructions, firmware variants, and dependency notes live in the
 [top-level README](../README.md), not here.
 
+## `mainpage.dox` — landing page of the generated documentation
+
+The one file here that is maintained. Doxygen reads it as the `\mainpage` of
+the [published documentation](https://toresbe.github.io/itelex/): what the
+firmware is, which parts of the tree do what, and where to go next. The
+inherited introduction to Dirk Broßwick's AVR mini webserver, which the
+supporting stack comes from, stays in `main.c` as a subordinate page.
+
 ## `notes/` — project notes and release material
 
 | File | Contents |
