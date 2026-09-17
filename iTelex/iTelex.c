@@ -1054,7 +1054,7 @@ static void SeriellUmsetzInit(void)
 	SerUmEmpfBitNr = SerUmEmpfWarte;
 	SerUmSendBitNr = SerUmSendWarte;
 	
-	Baud = BaudrateErmitteln(BusVerbPartner, BaudrateListe);
+	Baud = DetermineBaudRate(BusVerbPartner, BaudrateListe);
 	if (Baud <= 1) // 1 ist auch ein Fehlerwert, nämlich "nicht gefunden"
 		Baud = 50;
 		
@@ -7069,7 +7069,7 @@ void itelex_cgi_config_intern_konfiguration(void *pStruct)
 				
 				// ...probehalber dekodieren...
 				int16_t res;
-				res = BaudrateErmitteln(0, Buf); // 0 ist eine unerlaubte Nebenstellen-Nummer, 
+				res = DetermineBaudRate(0, Buf); // 0 ist eine unerlaubte Nebenstellen-Nummer, 
 					// daher muss der "Code-String" Buf bis zum Ende überprüft werden.
 
 				if (res == 1)

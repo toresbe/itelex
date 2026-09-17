@@ -34,31 +34,31 @@
 bool ParseInt16(char **pp, int16_t *val)
 	{
 	char *p;
-	int8_t Vorz;
-	int16_t Wert;
+	int8_t Sign;		// ehem. Vorz
+	int16_t Value;		// ehem. Wert
 	bool Res;
 
 	p = *pp;
 	Res = false;
-	Wert = 0;
-	Vorz = 0;
+	Value = 0;
+	Sign = 0;
 	while (true)
 		{
 		if (*p == '-')
-			if (Vorz == 0) // noch nicht gesetzt
-				Vorz = -1;
-			else // schon eine Ziffer oder ein Vorzeichen gehabt
+			if (Sign == 0) // not set yet
+				Sign = -1;
+			else // already had a digit or a sign
 				break;
 		else if (*p == '+')
-			if (Vorz == 0) // noch nicht gesetzt
-				Vorz = 1;
-			else // schon eine Ziffer oder ein Vorzeichen gehabt
+			if (Sign == 0) // not set yet
+				Sign = 1;
+			else // already had a digit or a sign
 				break;
 		else if (*p >= '0' && *p <= '9')
 			{
-			Wert = 10 * Wert + (*p) - '0';
-			if (Vorz == 0)
-				Vorz = 1;
+			Value = 10 * Value + (*p) - '0';
+			if (Sign == 0)
+				Sign = 1;
 			Res = true;
 			}
 		else 
@@ -70,12 +70,12 @@ bool ParseInt16(char **pp, int16_t *val)
 		return false;
 	
 	*pp = p;	
-	*val = Vorz * Wert;
+	*val = Sign * Value;
 	return true;
 	}
 			
 	
-bool ParseNstAddresse(char **pp, uint8_t *nst)
+bool ParseExtensionAddress(char **pp, uint8_t *address) // ehem. ParseNstAddresse
 	{
 	char *p2;
 	int16_t nr;
@@ -83,7 +83,7 @@ bool ParseNstAddresse(char **pp, uint8_t *nst)
 	p2 = *pp;
 	if (p2[0] == '-')
 		{
-		*nst = 0;
+		*address = 0;
 		(*pp)++;
 		return true;
 		}
@@ -92,10 +92,10 @@ bool ParseNstAddresse(char **pp, uint8_t *nst)
 		return false;
 	
 	if (nr < 0 || nr > 99 || p2 - (*pp) > 2)
-						//   ^^^^^^^^^^^^^^ mehr als 2 Ziffern
+						//   ^^^^^^^^^^^^^^ more than 2 digits
 		return false;
 	
-	*nst = WahlZuAdresse(nr, p2 - (*pp));
+	*address = WahlZuAdresse(nr, p2 - (*pp));
 	*pp = p2;
 	return true;
 	}
@@ -108,73 +108,75 @@ void ParseSkipSpace(char **pp)
 	}
 
 
-//! Sucht aus der Tabelle die zu verwendende Baudrate aus.
-//--------------------------------------------------------
-//! Verwendet die globale Tabelle #BaudrateListe
-//! \retval >0 Baudrate
-//! \retval <=0 Position des Fehlers in der Zeichenkette #BaudrateListe
-	
-int16_t BaudrateErmitteln(uint8_t nst, char *aBaudTab)
+//! Picks the baud rate to use for an extension out of a table.
+//---------------------------------------------------------------
+//! The table is the one the operator edits as #BaudrateListe, for example
+//! "70-78:75,19:100,*:50": extensions 70 to 78 run at 75 baud, number 19 at
+//! 100 baud, everything else at 50 baud.
+//! \retval >0 baud rate
+//! \retval <=0 position of the error within the string
+
+int16_t DetermineBaudRate(uint8_t extension, char *aBaudTable) // ehem. BaudrateErmitteln
 	{
 	char *p;
-	bool BereichJa;
-	uint8_t nst2;
+	bool InRange;		// ehem. BereichJa
+	uint8_t address2;	// ehem. nst2
 	int16_t baud;
 	
-	p = aBaudTab;
+	p = aBaudTable;
 	while (true)
 		{
 		ParseSkipSpace(&p);
 		if (*p == '*')
 			{
-			BereichJa = (nst != 0);
+			InRange = (extension != 0);
 			p++;
 			}
 		else 
 			{
-			if (!ParseNstAddresse(&p, &nst2))
-				return -(p - aBaudTab);
+			if (!ParseExtensionAddress(&p, &address2))
+				return -(p - aBaudTable);
 
 			ParseSkipSpace(&p);
 			if (*p == '-')
 				{
-				BereichJa = (nst >= nst2);
+				InRange = (extension >= address2);
 				p++;
 				ParseSkipSpace(&p);
-				if (!ParseNstAddresse(&p, &nst2))
-					return -(p - aBaudTab);
+				if (!ParseExtensionAddress(&p, &address2))
+					return -(p - aBaudTable);
 					
-				BereichJa &= (nst <= nst2);
+				InRange &= (extension <= address2);
 				}
 			else
-				BereichJa = (nst == nst2);
+				InRange = (extension == address2);
 			}
 		
 		ParseSkipSpace(&p);
 		
 		if (*p != ':')
-			return -(p - aBaudTab);
+			return -(p - aBaudTable);
 
 		p++;
 		ParseSkipSpace(&p);
 		
 		if (!ParseInt16(&p, &baud))
-			return -(p - aBaudTab);
+			return -(p - aBaudTable);
 		
-		if (BereichJa)
+		if (InRange)
 			return baud;
 		
 		ParseSkipSpace(&p);
 		
 		if (*p == '\0')
-			return 1; // Ende des String korrekt erreicht
+			return 1; // reached the end of the string cleanly
 		
 		if (*p != ',')
-			// nur Komma als Aufzählungs-Trenner erlaubt
-			return -(p - aBaudTab);
+			// only a comma is allowed as the list separator
+			return -(p - aBaudTable);
 			
 		p++;
 		}
-	} // BaudrateErmitteln(uint8_t nst, char *aBaudTab)
+	} // DetermineBaudRate(uint8_t extension, char *aBaudTable)
 
 //@}
