@@ -11,6 +11,7 @@ OBJDUMP := $(AVR_PREFIX)objdump
 SIZE    := $(AVR_PREFIX)size
 
 BUILD_ROOT ?= build
+TESTS_DIR ?= tests
 ITELEX_MISC_DIR ?= dependencies/itelex-misc
 COMMON_DIR ?= $(ITELEX_MISC_DIR)/Gemeinsam
 AVR_CLIBS_DIR ?= dependencies/avr-clibs
@@ -54,13 +55,18 @@ COMMON_CFLAGS := -Os -gdwarf-2 -std=gnu99 -fgnu89-inline -Wall \
 	-I. -I$(COMMON_DIR) -I$(AVR_CLIBS_DIR)
 
 .PHONY: all standard light fastboot bootstrap check-dependencies clean \
-	clean-standard clean-light clean-fastboot help
+	clean-standard clean-light clean-fastboot clean-test test help
 
 all: standard light fastboot
 
 help:
-	@echo "Targets: bootstrap, standard, light, fastboot, all, clean"
+	@echo "Targets: bootstrap, standard, light, fastboot, all, test, clean"
 	@echo "Override AVR_TOOLCHAIN_ROOT to use a non-PATH AVR GCC toolchain."
+
+# Host unit tests for the firmware's pure logic. Built by the host compiler,
+# not by avr-gcc, so this target needs no AVR toolchain. See tests/README.md.
+test:
+	$(MAKE) -C $(TESTS_DIR) test
 
 bootstrap:
 	@git submodule update --init --recursive
@@ -130,4 +136,7 @@ clean-fastboot:
 		FastBoot/bootload.map FastBoot/bootload.lst FastBoot/stub.lst
 	$(RM) -r $(BUILD_ROOT)/fastboot
 
-clean: clean-standard clean-light clean-fastboot
+clean-test:
+	$(MAKE) -C $(TESTS_DIR) clean
+
+clean: clean-standard clean-light clean-fastboot clean-test

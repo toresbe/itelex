@@ -88,6 +88,7 @@ make standard       # full ATmega2561 firmware
 make light          # light ATmega1284P firmware
 make fastboot       # bootloader
 make all            # all three targets
+make test           # host unit tests; needs no AVR toolchain
 make clean          # remove generated build products
 ```
 
@@ -100,6 +101,23 @@ To use an AVR GCC toolchain that is not on `PATH`, set its installation root:
 ```sh
 make AVR_TOOLCHAIN_ROOT='/opt/microchip/avr8-gnu-toolchain' all
 ```
+
+## Tests
+
+`make test` builds and runs the host unit tests in [`tests/`](tests/README.md).
+They cover the parts of the firmware that are pure logic — the Baudot/ITA2
+character conversion, the shared ring buffer, the backplane CRC, and the
+byte-order, Base64 and hex-parsing helpers — and they are compiled by the host
+compiler rather than avr-gcc, so they need neither the AVR toolchain nor an
+i-Telex card and they run in under a second.
+
+They are not a substitute for the manual test plan in
+[`docs/notes/Testumfang.txt`](docs/README.md), which exercises the call cases
+and service messages on real hardware. What they add is a check that runs on
+every commit.
+
+`tests/README.md` describes what is covered, what is deliberately left out,
+and how to add a suite.
 
 ## Microchip Studio / Atmel Studio
 
@@ -137,8 +155,9 @@ intact.
 
 ## Continuous integration
 
-GitHub Actions builds all firmware variants in a Debian 13 container using the
-same `make bootstrap` and `make clean all` commands documented above. Successful
+GitHub Actions runs the host unit tests with `make test` and builds all firmware
+variants in a Debian 13 container using the same `make bootstrap` and
+`make clean all` commands documented above. Successful
 runs publish the complete `build/` directory as a workflow artifact. The
 workflow also renders the Doxygen HTML on pushes and pull requests, uploads it
 as the `itelex-documentation` artifact, and deploys the version from `main` to
@@ -152,6 +171,8 @@ GitHub Pages at the address given under [Documentation](#documentation) above.
 - `dependencies/itelex-misc/` supplies the shared i-Telex sources as a
   submodule.
 - `update/` and `update_light/` contain historical end-user update material.
+- `tests/` contains the host unit tests; nothing in it is linked into the
+  firmware.
 - `docs/` collects the project's non-source material: German project notes,
   the manual test plan, the changelog, protocol captures, the author's Excel
   helper workbooks, and the SVN-era version-stamping helpers. See
