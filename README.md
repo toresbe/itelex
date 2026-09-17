@@ -17,14 +17,39 @@ maintenance around Fred's firmware. They do not change its provenance.
 
 ## Firmware variants
 
-| Target | Device | Output |
-| --- | --- | --- |
-| `standard` | ATmega2561 | `build/standard/Main.*` |
-| `light` | ATmega1284P | `build/light/Main_Light.*` |
-| `fastboot` | ATmega1284P bootloader | `build/fastboot/bootload.*` |
+| Target | i-Telex module | Device | Output |
+| --- | --- | --- | --- |
+| `standard` | i-Telex "Standard" | ATmega2561 | `build/standard/Main.*` |
+| `light` | i-Telex "Light" | ATmega1284P | `build/light/Main_Light.*` |
+| `fastboot` | bootloader for both | ATmega1284P | `build/fastboot/bootload.*` |
 
 The generated files include Intel HEX firmware, EEPROM data, ELF binaries,
 linker maps, and annotated disassembly where applicable.
+
+`standard` and `light` are the two versions of the i-Telex module, the card that
+carries teleprinter traffic over the Internet. Both are listed on the
+[i-Telex hardware page](https://www.i-telex.net/hardware/) and correspond to the
+`Ethernet` and `Ethernet-Light` board layouts in the project's hardware
+repository. The Standard card combines an ATmega2561 with 128 KiB of external
+SRAM and accepts an SD card add-on. The Light card is an ATmega1284P without
+external memory, so its build compiles out external RAM, the SD card, the shell
+and Telnet server, e-mail, and two of the four interface languages; the i-Telex
+functions themselves are identical on both cards. The firmware also differs in
+which USART it uses: `USART1` on the Standard card and `USART0` on the Light
+card.
+
+`fastboot` builds Peter Dannegger's FastBoot bootloader. It occupies the top
+1 KiB of flash on either card and is what allows `fboot` to reprogram the
+firmware over the serial port, as described in `update/` and `update_light/`.
+The `fastboot` target builds the ATmega1284P image for the Light card only.
+`FastBoot/Makefile-m2561` builds the corresponding ATmega2561 image for the
+Standard card, but is not wired into the portable build; a prebuilt copy is
+kept in `FastBoot/bin_2561/`.
+
+The remaining cards of an i-Telex system, such as the power supply and the
+TW39, ED1000 and analogue modem line interfaces, run their own firmware from
+the `itelex-misc` repository rather than this one. The i-Telex module programs
+them over the backplane by ISP.
 
 ## Quick start on Debian 13
 
@@ -122,12 +147,17 @@ at [toresbe.github.io/itelex](https://toresbe.github.io/itelex/).
 
 ## Configuration and flashing
 
-The default builds use `iTelex.config.h`. Other historical board configuration
-headers are retained at the repository root. Firmware flashing and hardware
-configuration are device-specific. These firmware update files work only with
-the AVR-based i-Telex board; consult the instructions in `update/`,
-`update_light/`, and the wider i-Telex documentation before programming one.
-Verify the selected firmware variant and target MCU before flashing.
+The default builds use `iTelex.config.h`; the `iTelex` and `iTelex_Light`
+defines set by the build select the Standard or Light card within it. The other
+board configuration headers at the repository root belong to the development
+boards of the upstream microwebserver project, not to i-Telex cards, and are
+retained for reference only.
+
+Firmware flashing and hardware configuration are device-specific. These firmware
+update files work only with the AVR-based i-Telex module; consult the
+instructions in `update/` for the Standard card, `update_light/` for the Light
+card, and the wider i-Telex documentation before programming one. Verify the
+selected firmware variant and target MCU before flashing.
 
 ## License
 
