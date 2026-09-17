@@ -1,3 +1,6 @@
 [submodule "dependencies/itelex-misc"]
 	path = dependencies/itelex-misc
 	url = https://github.com/toresbe/itelex-misc.git
+[submodule "dependencies/avr-clibs"]
+	path = dependencies/avr-clibs
+	url = https://github.com/toresbe/avr-clibs.git
