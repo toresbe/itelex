@@ -1,0 +1,133 @@
+# i-Telex firmware
+
+> **This repository is a clone of Fred Sonnenrein's excellent i-Telex
+> firmware.** Fred is the author and long-time maintainer of the firmware; the
+> project history preserved here comes from his original SourceForge SVN
+> repository. This GitHub repository is intended to preserve that work and make
+> it straightforward to build with current tools. It should not be mistaken for
+> a separately authored firmware project.
+
+i-Telex connects teleprinters over IP using AVR-based i-Telex hardware. This
+repository contains the embedded Ethernet firmware, its light variant, the
+FastBoot bootloader, configuration files, update material, and historical
+project documentation.
+
+The portable build and GitHub Actions workflow added in this clone are
+maintenance around Fred's firmware. They do not change its provenance.
+
+## Firmware variants
+
+| Target | Device | Output |
+| --- | --- | --- |
+| `standard` | ATmega2561 | `build/standard/Main.*` |
+| `light` | ATmega1284P | `build/light/Main_Light.*` |
+| `fastboot` | ATmega1284P bootloader | `build/fastboot/bootload.*` |
+
+The generated files include Intel HEX firmware, EEPROM data, ELF binaries,
+linker maps, and annotated disassembly where applicable.
+
+## Quick start on Debian 13
+
+Install the AVR toolchain and build dependencies:
+
+```sh
+sudo apt install make gcc-avr binutils-avr avr-libc gawk subversion git
+```
+
+Clone recursively, fetch the remaining pinned dependency, and build everything:
+
+```sh
+git clone --recurse-submodules https://github.com/toresbe/itelex.git
+cd itelex
+make bootstrap
+make all
+```
+
+For an existing non-recursive clone, `make bootstrap` initializes the Git
+submodule as well.
+
+## Build targets
+
+```sh
+make standard       # full ATmega2561 firmware
+make light          # light ATmega1284P firmware
+make fastboot       # bootloader
+make all            # all three targets
+make clean          # remove generated build products
+```
+
+GNU Make automatically uses `GNUmakefile`; the historical `makefile` is kept
+for reference. Build products are written below `build/` so source and output
+remain separate.
+
+To use an AVR GCC toolchain that is not on `PATH`, set its installation root:
+
+```sh
+make AVR_TOOLCHAIN_ROOT='/opt/microchip/avr8-gnu-toolchain' all
+```
+
+## Microchip Studio / Atmel Studio
+
+The checked-in `.cproj` files delegate builds to the portable GNU Make build.
+Open either solution in Microchip Studio and build normally. If configuring a
+project manually, use these settings under **Project Properties → Build**:
+
+- enable **Use External Makefile**;
+- select `GNUmakefile`;
+- use `standard` or `light` as the build target; and
+- use `clean-standard` or `clean-light` as the clean target.
+
+The ELF output includes DWARF-2 debug information for source-level debugging.
+On Windows, ensure GNU Make and the AVR GNU toolchain are available, or set
+`AVR_TOOLCHAIN_ROOT` to the toolchain directory.
+
+## Dependencies and provenance
+
+The build deliberately pins its external source dependencies:
+
+- `dependencies/itelex-misc` is a Git submodule containing Fred Sonnenrein's
+  shared i-Telex sources, including `BaudotCode`, `BusKomm`, and `FifoPuffer`.
+- `make bootstrap` exports revision 13 of Fred Sonnenrein's AVR-Clibs from
+  `https://svn.code.sf.net/p/fredslibraries/avr-clibs/` into
+  `dependencies/avr-clibs`.
+
+AVR-Clibs is downloaded rather than copied into this repository because its
+upstream project does not declare a license. The exact URL and revision are
+pinned in `GNUmakefile` for reproducibility.
+
+The repository history records the original i-Telex SVN source as
+`svn://svn.code.sf.net/p/itelex/code-0/trunk`. Retaining that history is part of
+the purpose of this clone and keeps Fred's authorship and development record
+intact.
+
+## Continuous integration
+
+GitHub Actions builds all firmware variants in a Debian 13 container using the
+same `make bootstrap` and `make clean all` commands documented above. Successful
+runs publish the complete `build/` directory as a workflow artifact.
+
+## Repository layout
+
+- `iTelex/` contains the i-Telex application-specific firmware.
+- `apps/`, `hardware/`, and `system/` contain the supporting embedded stack.
+- `FastBoot/` contains the bootloader sources and its subordinate build.
+- `dependencies/itelex-misc/` supplies the shared i-Telex sources as a
+  submodule.
+- `update/` and `update_light/` contain historical end-user update material.
+- `GNUmakefile` is the portable command-line and CI build entry point.
+- `.github/workflows/build.yml` defines the Debian 13 CI build.
+
+## Configuration and flashing
+
+The default builds use `iTelex.config.h`. Other historical board configuration
+headers are retained at the repository root. Firmware flashing and hardware
+configuration are device-specific. These firmware update files work only with
+the AVR-based i-Telex board; consult the instructions in `update/`,
+`update_light/`, and the wider i-Telex documentation before programming one.
+Verify the selected firmware variant and target MCU before flashing.
+
+## License
+
+The repository includes the GNU General Public License version 2 in `gpl.txt`.
+Individual imported components may carry their own notices or licensing terms;
+in particular, see the dependency note above for AVR-Clibs.
