@@ -2,6 +2,8 @@ name: AVR firmware
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 permissions:
