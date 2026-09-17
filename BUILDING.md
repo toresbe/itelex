@@ -8,7 +8,7 @@ Light firmware, and bootloader. Build output is kept below `build/`.
 On Debian 13:
 
 ```sh
-sudo apt install make gcc-avr binutils-avr avr-libc subversion git
+sudo apt install make gcc-avr binutils-avr avr-libc gawk subversion git
 make bootstrap
 ```
 
