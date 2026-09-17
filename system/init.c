@@ -112,19 +112,19 @@ const char config_error[] PROGMEM = " Error\r\n";
 
 void init( void )
 {
-	// alle Interrupt-Enables sperren, vorerst nur für ATmegaXXX
+	// alle Interrupt-Enables sperren, vorerst nur fÃ¼r ATmegaXXX
 	PCICR = 0; // Pin Change Interrupt
-	PCIFR = PCIFR; // alle Int-Flags löschen
+	PCIFR = PCIFR; // alle Int-Flags lÃ¶schen
 	TIMSK0 = 0; // Timer 0
-	TIFR0 = TIFR0; // alle Int-Flags löschen
+	TIFR0 = TIFR0; // alle Int-Flags lÃ¶schen
 	TIMSK1 = 0; // Timer 1
-	TIFR1 = TIFR1; // alle Int-Flags löschen
+	TIFR1 = TIFR1; // alle Int-Flags lÃ¶schen
 	TIMSK2 = 0; // Timer 2
-	TIFR2 = TIFR2; // alle Int-Flags löschen
+	TIFR2 = TIFR2; // alle Int-Flags lÃ¶schen
 	UCSR0B = 0; // USART0
-	UCSR0A = UCSR0A; // alle Int-Flags löschen
+	UCSR0A = UCSR0A; // alle Int-Flags lÃ¶schen
 	UCSR1B = 0; // USART1
-	UCSR1A = UCSR1A; // alle Int-Flags löschen
+	UCSR1A = UCSR1A; // alle Int-Flags lÃ¶schen
 	TWCR = (1 << TWINT); // TWI
 	SPCR = 0; // SPI
 	

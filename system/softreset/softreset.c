@@ -22,7 +22,7 @@ void softreset( void )
 {
 	do                          
 	{            
-		// möglicherweise gesetzte Interrupt-Freigaben löschen statt cli() da der WDTIE aktiv bleibt.
+		// mÃ¶glicherweise gesetzte Interrupt-Freigaben lÃ¶schen statt cli() da der WDTIE aktiv bleibt.
 		TIMSK0 &= ~((1<<OCIE0A)|(1<<OCIE0B)|(1<<TOIE0));
 		TIMSK1 &= ~((1<<OCIE1A)|(1<<OCIE1B));
 		UCSR0B &= ~((1<<UDRIE0)|(1<<TXCIE0)|(1<<RXCIE0));
@@ -44,13 +44,13 @@ void wdt_init(void)
 	wdt_reset();
 #else
 	asm("CLR R1"); 
-		// da der Compiler permanent R1 für 0 verwendet, dies aber erst nach .init1 initialisiert, 
+		// da der Compiler permanent R1 fÃ¼r 0 verwendet, dies aber erst nach .init1 initialisiert, 
 		// wird dies hier vorsorglich gemacht, damit MCUSR = 0 funktioniert.
 
 	GPIOR2 = MCUSR;
 	GPIOR0 = SPL;
 	GPIOR1 = SPH;
-		// kann dann später dort ausgelesen werden.
+		// kann dann spÃ¤ter dort ausgelesen werden.
 
 	MCUSR = 0;
     wdt_disable();

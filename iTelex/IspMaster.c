@@ -1,4 +1,4 @@
-/*! \file IspMaster.c \brief Funktionen für In-System-Programming von anderen Modulen */
+/*! \file IspMaster.c \brief Funktionen fÃ¼r In-System-Programming von anderen Modulen */
 //***************************************************************************
 //*            IspMaster.c
 //*
@@ -83,7 +83,7 @@
 #ifdef ISP_MASTER
 
 //! Erste realisierte Funktion: Ein Block des Flash-Rom auslesen und Protokollieren.
-//! Anschluss über SPI 2, dieser ist auf Port F (eigentlich JTAG) geschaltet.
+//! Anschluss Ã¼ber SPI 2, dieser ist auf Port F (eigentlich JTAG) geschaltet.
 // Atmel - JTAG - ISP - Slave
 //  PF5  -   5  -  5  - Reset
 //  PF6  -   3  -  7  - SCK
@@ -108,7 +108,7 @@
 
 
 
-// Funktionen für In System Programming (ISP) über den SPI-Bus.
+// Funktionen fÃ¼r In System Programming (ISP) Ã¼ber den SPI-Bus.
 // ============================================================
 
 typedef enum {
@@ -284,8 +284,8 @@ enum { MaxIdentLen = 40 };
 //! Text eingebettet zwischen je mindestens drei aufeinanderfolgenden 
 //! Unterstrichen ( _ ) .
 //! \return Lesevorgang erfolgreich. Auch bei nicht gefundener 
-//! Identifikation wird true zurückgegeben.
-//! \param Ident: Rückgabe der gefundenen Identifikation.
+//! Identifikation wird true zurÃ¼ckgegeben.
+//! \param Ident: RÃ¼ckgabe der gefundenen Identifikation.
 
 static bool ReadFlashIdentity(char *Ident)
 	{
@@ -317,11 +317,11 @@ static bool ReadFlashIdentity(char *Ident)
 			{
 			if (IdentI == 1)
 				IdentI = 0; 
-				// dies entfernt überschüssige _ , falls der Ident-String mit mehr als 
+				// dies entfernt Ã¼berschÃ¼ssige _ , falls der Ident-String mit mehr als 
 				// drei _ merkiert ist.
 			else
 				UnterstrichZaehl++; 
-				// nur Zählen, wenn nicht weiterhin die Einleitung des Ident-String
+				// nur ZÃ¤hlen, wenn nicht weiterhin die Einleitung des Ident-String
 				
 			if (UnterstrichZaehl >= 3)
 				{
@@ -331,7 +331,7 @@ static bool ReadFlashIdentity(char *Ident)
 					UnterstrichZaehl = 0;
 					}
 				else
-					{ // jetzt wurde der abschließende 3x _ gefunden
+					{ // jetzt wurde der abschlieÃŸende 3x _ gefunden
 					if (IdentI > UnterstrichZaehl)
 						IdentI -= UnterstrichZaehl;
 					Ident[IdentI] = '\0'; // Abschluss speichern
@@ -439,7 +439,7 @@ static void DebugTestReadFlashIdentity()
 
 //! Startet eine HTTP-Get-Anfrage
 //-------------------------------
-//! \return Nummer des Socket oder -1 für IP nicht gefunden oder -2 für Verbindungsfehler oder -3 für fehlenden / im Pfad.
+//! \return Nummer des Socket oder -1 fÃ¼r IP nicht gefunden oder -2 fÃ¼r Verbindungsfehler oder -3 fÃ¼r fehlenden / im Pfad.
 
 int HttpGet(char *Pfad)
 	{
@@ -492,7 +492,7 @@ int HttpGet(char *Pfad)
 	
 	return SocketID;
 	
-	// als nächstes sollte HttpReadHeader aufgerufen werden.
+	// als nÃ¤chstes sollte HttpReadHeader aufgerufen werden.
 	
 	} // HttpGet()
 	
@@ -500,7 +500,7 @@ int HttpGet(char *Pfad)
 //! Liest den HTTP Header komplett ein
 //------------------------------------
 //! \retval Code der Statusmeldung, meist 200 = OK, oder -1 bei Timeout oder -2 bei Kommunikationsfehler
-//! \param[Out] Size Dateigröße laut Header.
+//! \param[Out] Size DateigrÃ¶ÃŸe laut Header.
 int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 	{
 	char LineBuf[64];
@@ -544,11 +544,11 @@ int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 			}
 		LineBuf[i] = '\0';
 
-		// Für Debugging:
+		// FÃ¼r Debugging:
 		if (ProtokollAktivFuer(DatenDetailliert)) // Daten explizit
 			{
 			Protokollieren_P(PSTR("HttpReadHeader: Zeile >>"));
-			ProtokollierenPuffer(LineBuf, i); // i enthält immer noch Zeilenlänge
+			ProtokollierenPuffer(LineBuf, i); // i enthÃ¤lt immer noch ZeilenlÃ¤nge
 			Protokollieren_P(PSTR("<< verarbeitet.\r\n"));
 			}
 		
@@ -566,7 +566,7 @@ int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 		if (Pos == 0)
 			break; // das war eine Leerzeile, die beendet den Header
 		
-		// abhängig vom Zeilenanfang eine Auswertung durchführen
+		// abhÃ¤ngig vom Zeilenanfang eine Auswertung durchfÃ¼hren
 		if (strncmp_P(LineBuf, PSTR("HTTP/"), 5) == 0)
 			Res = atoi(LineBuf + Pos); // der Ergebniscode
 			
@@ -576,9 +576,9 @@ int16_t HttpReadHeader(int SocketID, uint16_t *Size)
 				*Size = atoi(LineBuf + Pos);
 			}
 		
-		// else... jetzt könnte man noch andere Rückmeldungen auswerten
+		// else... jetzt kÃ¶nnte man noch andere RÃ¼ckmeldungen auswerten
 		
-		} // while (true) ... Schleife über alle Zeilen des Header
+		} // while (true) ... Schleife Ã¼ber alle Zeilen des Header
 
 	if (ProtokollAktivFuer(AblaufInfo)) // Daten explizit
 		ProtokollierenInt_P(PSTR("HttpReadHeader: Res = %d\r\n"), Res);
@@ -631,7 +631,7 @@ static int DebugTestGetFilePerHttp(char *Filename)
 
 			GesamtBytes += Res;
 			
-			// Todo hier eine künstliche Bremse...
+			// Todo hier eine kÃ¼nstliche Bremse...
 				
 			StartKurzTimer(&AbbruchTimer);
 			}		
@@ -666,7 +666,7 @@ const PROGMEM char ProgID_P[] = "progid";
 const PROGMEM char ClickToContinue_P[] = "<p>Click <a href=\"isp.cgi\">here</a> to continue.";
 
 
-//! Programmiert und prüft eine Fuse
+//! Programmiert und prÃ¼ft eine Fuse
 //----------------------------------
 
 static bool FuseProgAndVerify(uint8_t id, uint8_t val)
@@ -725,7 +725,7 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 	char FullPath[200];
 	int SocketID;
 	int Res;
-	char Buf[64]; // TODO erhöhen
+	char Buf[64]; // TODO erhÃ¶hen
 	char Rett;
 	uint8_t BufUsed;
 	uint8_t SignaturSoll[3];
@@ -784,7 +784,7 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 		return;
 		}
 	
-	// Download-Pfad erfolgreich geöffnet, also ggf. abspeichern
+	// Download-Pfad erfolgreich geÃ¶ffnet, also ggf. abspeichern
 	if (DownloadPfadGeaendert) 
 		{
 		changeConfig_P(BinServerPath_P, http_request->argvalue[PharseGetValue_P(http_request, BinServerPath_P)]);
@@ -792,12 +792,12 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 
 	BufUsed = 0;
 	
-	// Datei enthält paarweise eine Chip-Signatur und die zugehörigen Fuse-Bytes.
-	// In der Schleife wird die Signatur des angeschlossenen Chips mit der "gewünschten" Signatur verglichen.
+	// Datei enthÃ¤lt paarweise eine Chip-Signatur und die zugehÃ¶rigen Fuse-Bytes.
+	// In der Schleife wird die Signatur des angeschlossenen Chips mit der "gewÃ¼nschten" Signatur verglichen.
 	i = 0;
 	do
 		{
-		// Puffer füllen
+		// Puffer fÃ¼llen
 		Res = GetSocketData(SocketID, sizeof(Buf) - 1 - BufUsed, Buf + BufUsed);
 
 		ProtokollierenInt_P(PSTR("Read start at pos %d"), BufUsed);
@@ -822,9 +822,9 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 		Protokollieren(Buf);
 		Protokollieren_P(PSTR("<<<\r\n"));
 		
-		// Leerzeichen am Anfang überspringen
+		// Leerzeichen am Anfang Ã¼berspringen
 		while (Buf[i] != '\0' && Buf[i] <= ' ')
-			i++; //Steuerzeichen und Spaces überspringen
+			i++; //Steuerzeichen und Spaces Ã¼berspringen
 		Start = i; // erstes Wort ist erwartete Signatur
 		while (Buf[i] > ' ')
 			i++; // erstes Trennzeichen finden
@@ -841,7 +841,7 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 			{ // Umwandlung der Signatur erfolgreich. Jetzt zweites Wort suchen
 			i = i + 1;
 			while (Buf[i] != '\0' && Buf[i] <= ' ')
-				i++; //Steuerzeichen und Spaces überspringen
+				i++; //Steuerzeichen und Spaces Ã¼berspringen
 			Start = i;
 			while (Buf[i] > ' ')
 				i++; // erstes druckbares Zeichen finden
@@ -1018,7 +1018,7 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 			|| (beenden && BlockFill > 0) 
 						// oder Programmierdaten sind teilweise vorhanden aber Dateiende (Timeout) ist erreicht
 			|| ((BlockStart + BlockFill) >= FileSize && FileSize > 0))
-						// oder Programmierdaten wurden vollständig empfangen (nominelle Dateigröße erreicht) 
+						// oder Programmierdaten wurden vollstÃ¤ndig empfangen (nominelle DateigrÃ¶ÃŸe erreicht) 
 			{
 			LED_on(GELB);
 			if (!FlashWriteBlock64(BlockStart, (uint8_t *) Buf))
@@ -1044,7 +1044,7 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 				}
 			LED_off(GELB);
 				
-			BlockStart += BlockFill; // BlockFill ist meistens 64, außer beim Beenden.
+			BlockStart += BlockFill; // BlockFill ist meistens 64, auÃŸer beim Beenden.
 			BlockFill = 0;
 
 			if (BlockStart == FileSize)
@@ -1074,7 +1074,7 @@ static void ProgrammiereVomNetz(char *Ident, uint8_t *SignaturIst, struct HTTP_R
 	
 void ProgrammiereDupliziertenBootloader()
 	{
-	// Kennung des angeschlossenen Atmel prüfen
+	// Kennung des angeschlossenen Atmel prÃ¼fen
 	
 	// Fuses brennen
 	
@@ -1084,7 +1084,7 @@ void ProgrammiereDupliziertenBootloader()
 	}
 	
 	
-//! Benutzerschnittstelle für das Brennen
+//! Benutzerschnittstelle fÃ¼r das Brennen
 // ===========================================
 
 void cgi_Isp(void *pStruct)
@@ -1128,13 +1128,13 @@ void cgi_Isp(void *pStruct)
 		} // if (http_request->argc == 0)
 		
 	else if (PharseCheckName_P(http_request, ProgID_P))
-		{ // kann nur durch Drücken der Taste "Start" erreicht werden
+		{ // kann nur durch DrÃ¼cken der Taste "Start" erreicht werden
 		IspDiagnoseText[0] = '\0';
 		LED_on(BLAU);
 		strncpy(Ident, http_request->argvalue[PharseGetValue_P(http_request, ProgID_P)], sizeof(Ident)-1);
 		Ident[sizeof(Ident)-1] = '\0';
 		if (Ident[0] == '\0')
-			{ // Automatische Erkennung wurde gewählt
+			{ // Automatische Erkennung wurde gewÃ¤hlt
 			if (!ReadFlashIdentity(Ident))
 				{ // Identifikation konnte nicht geladen werden.
 				cgi_PrintHttpheaderStart();
@@ -1167,7 +1167,7 @@ void cgi_Isp(void *pStruct)
 		LED_off(BLAU);
 
 		if (Ident[0] != '\0')
-			{ // Identifikation scheint gültig (entweder automatisch ermittelt oder von Hand eingegeben)
+			{ // Identifikation scheint gÃ¼ltig (entweder automatisch ermittelt oder von Hand eingegeben)
 			ProgrammiereVomNetz(Ident, SignaturIst, http_request); 
 			}
 				
@@ -1238,7 +1238,7 @@ void cgi_Isp(void *pStruct)
 	// bis hier Test-Programmteile */
 	
 	
-	else // ungültiger cgi-Aufruf
+	else // ungÃ¼ltiger cgi-Aufruf
 		{
 		cgi_PrintHttpheaderStart();
 		printf_P(PSTR("internal Error: invalid parameter. Click <a href=\"isp.cgi\">here</a> to continue."));
@@ -1247,7 +1247,7 @@ void cgi_Isp(void *pStruct)
 	} // cgi_Isp()
 
 
-//! Initialisiert und registriert die CGI-Funktion für das Brennen
+//! Initialisiert und registriert die CGI-Funktion fÃ¼r das Brennen
 //----------------------------------------------------------------
 void InitIspMaster()
 	{
