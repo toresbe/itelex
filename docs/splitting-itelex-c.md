@@ -2,10 +2,10 @@
 
 Handoff notes for the work of breaking up the firmware's largest file. Written
 against commit `f019e7e`; every line number below is from that commit, so
-re-check them before acting. Step 0 has since taken 146 lines out of
-`iTelex.c`, which shifts every line number after 863 down by that much.
+re-check them before acting. Steps 0 and 1 have since reduced `iTelex.c` by
+708 lines in total, so the recorded line numbers are now only landmarks.
 
-Step 0 is done; steps 1 to 3 are not. The host unit tests
+Steps 0 and 1 are done; steps 2 and 3 are not. The host unit tests
 ([`tests/`](../tests/README.md)) are in place and are the safety net for part
 of the rest.
 
@@ -268,7 +268,7 @@ peripheral, and is worth doing if a second suite ever needs `BusKomm.c`.
 **Cost:** +36 bytes on Light, diagnosed above. See that section before
 planning step 1.
 
-### Step 1 — extract RemoteServer (Centralex)
+### Step 1 — extract RemoteServer (Centralex) — **done**
 
 The cleanest real module in the file. `RemoteServer` is the relay that lets an
 i-Telex behind a non-public IP receive calls — `iTelex.h:104` records that it is
@@ -314,6 +314,24 @@ mostly read, and the first five are already declared in `iTelex.h`.
 verification is the build, the size check, and reading the moved diff. The
 feature is also exercised by the manual test plan, which is the real check
 before a release.
+
+**Result:** `Centralex.c` and `Centralex.h` now own the 11 private state
+variables and the three state-machine functions. The public interface is
+`CentralexInitialize`, `CentralexProcess`, `CentralexIsEnabled`,
+`CentralexSetEnabled`, `CentralexSetPort`, and `CentralexPrintDiagnostics`;
+the last function keeps the debug-page access inside the module instead of
+exposing its state. The module's identifiers and comments are English, with
+the former names retained in `ehem.` comments. Configuration keys, protocol
+bytes, and user-visible diagnostic strings were deliberately left unchanged.
+
+The move and terminology pass were separate commits. With avr-gcc 9.5.0, the
+clean final images are 26 bytes larger for `standard` and 42 bytes larger for
+`light` than the untouched pre-step-1 commit. The compiler differs from the
+avr-gcc 7.3.0 used for the measurements above, so only same-toolchain deltas
+are comparable. All 87 host tests pass, neither the firmware build nor Doxygen
+gains warnings, and the Centralex object has byte-identical instructions
+before and after the rename. Socket and timer behaviour still needs the manual
+test plan on hardware.
 
 ### Step 2 — extract the self-call check (`SelbstAnruf*`)
 
@@ -372,16 +390,16 @@ that needs a bench test rather than a green CI run.
 
 ## Open decisions
 
-- **Module naming.** `Centralex` is the name users and the i-Telex
-  documentation use for the RemoteServer feature; `RemoteServer` is the name the
-  code uses. Picking the user-facing name is the better documentation but makes
-  the `ehem.` comments carry more weight.
-- **How far to translate in one step.** Settled for step 0 and worth keeping:
-  renaming the module's own identifiers and its callers in one commit was two
-  call sites, and the rename produced byte-identical machine code, which is
-  cheap to verify and cheap to review. A module with more callers may still
-  want the thin-macro alternative — old names kept as macros for one release —
-  but nothing so far has needed it.
+- **Module naming.** Settled for step 1: the module and its public API use the
+  user-facing name `Centralex`; the former `RemoteServer` names remain
+  searchable in `ehem.` comments.
+- **How far to translate in one step.** Settled for steps 0 and 1 and worth
+  keeping: rename the module's own identifiers and its callers in a separate
+  commit after the verbatim move. In both steps the renamed module produced
+  byte-identical machine instructions, making the result cheap to verify and
+  review. A future module with more callers may still want the thin-macro
+  alternative — old names kept as macros for one release — but nothing so far
+  has needed it.
 - **Whether flash headroom forces a Light-only decision.** Step 0 confirms
   extraction reliably costs flash, and shows the cost scales with call sites
   rather than with code moved. But `-flto` is worth more than all of it (see

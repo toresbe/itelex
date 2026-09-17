@@ -1878,7 +1878,7 @@ void FalschGeheimzahlWurdeGemeldet()
 		{
 		Diagnoseausgabe_P(ISTR(FalscheGeheimzahlBewirktAbschaltung, LokaleSprache), 1);
 		DynIP_Phase = DynIP_Inaktiv;
-		RemoteServerSetActive(false);
+		CentralexSetEnabled(false);
 		}
 	}
 
@@ -4900,7 +4900,7 @@ void itelex_thread()
 	// Verbindung zu einem abgesetzten Server bearbeiten
 	// ======================================================================
 	
-	RemoteServerBearbeiten();
+	CentralexProcess();
 	
 	// ======================================================================
 	// Dynamische IP-Aktualisierung / Selbstanruf starten
@@ -5804,7 +5804,7 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(SocketAnzahlZeichenQuittiert);
 	PRINTVAL(SocketAnzahlZeichenEmpfangen);
 	
-	RemoteServerPrintDebug();
+	CentralexPrintDiagnostics();
 	
 	PRINTVAL(DynIP_Phase);
 	PRINTVAL(LangTimerVal(&DynIPAktualisierungTimer));
@@ -6733,9 +6733,9 @@ const PROGMEM char NetzRufnummer_P[] = "NETZRUFNR";
 const PROGMEM char Geheimzahl_P[] = "PIN";
 const PROGMEM char DynIPAktiv_P[] = "DYNIPAKTIV";
 const PROGMEM char NetzPort_P[] = "NETZPORT";
-const PROGMEM char RemoteServerPort_P[] = "REMSERVPORT";
+const PROGMEM char CentralexPortConfigKey_P[] = "REMSERVPORT"; // ehem. RemoteServerPort_P
 const PROGMEM char SelbstAnrufPeriode_P[] = "SELBSTANPER";
-const PROGMEM char RemoteServerNutzen_P[] = "REMSERVAKTIV";
+const PROGMEM char CentralexEnabledConfigKey_P[] = "REMSERVAKTIV"; // ehem. RemoteServerNutzen_P
 
 #endif // ITELEX_ANSCHLUSS
 
@@ -6790,7 +6790,7 @@ void itelex_cgi_config_extern(void *pStruct)
 		CgiFormInputFieldULong_P(ISTR(OeffentlichePortNr, Sprache), NetzPort_P, 6, NetzPort);
 		CgiFormCheckbox_P(ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIP_Phase != DynIP_Inaktiv);
 		CgiFormInputFieldULong_P(ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, 3, SelbstAnrufPeriode);
-		CgiFormCheckbox_P(ISTR(RemoteServerNutzen, Sprache), RemoteServerNutzen_P, RemoteServerIsActive());
+		CgiFormCheckbox_P(ISTR(RemoteServerNutzen, Sprache), CentralexEnabledConfigKey_P, CentralexIsEnabled());
 		#endif // ITELEX_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
@@ -6827,15 +6827,15 @@ void itelex_cgi_config_extern(void *pStruct)
 		SelbstAnrufPeriode = CgiCheckULong_P(http_request, ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, 
 											 SelbstAnrufPeriode, 0, UINT16_MAX, Sprache);
 											
-		if (CgiCheckBool_P(http_request, ISTR(RemoteServerNutzen, Sprache), RemoteServerNutzen_P, RemoteServerIsActive(), Sprache))
+		if (CgiCheckBool_P(http_request, ISTR(RemoteServerNutzen, Sprache), CentralexEnabledConfigKey_P, CentralexIsEnabled(), Sprache))
 			{
 			if (DynIP_Phase == DynIP_Inaktiv) 
-				RemoteServerSetActive(true);
+				CentralexSetEnabled(true);
 			else
 				printf_P(ISTR(RemoteServerAusschlussDynIP, Sprache));
 			}
 		else
-			RemoteServerSetActive(false);
+			CentralexSetEnabled(false);
 					
 		#endif //def ITELEX_ANSCHLUSS
 		
@@ -7336,10 +7336,10 @@ void itelex_init1(void)
 	else
 		NetzPort = ITELEX_PORT;
 
-	if (readConfig_P(RemoteServerPort_P, Buf) == 1)
-		RemoteServerSetPort(atol(Buf));
+	if (readConfig_P(CentralexPortConfigKey_P, Buf) == 1)
+		CentralexSetPort(atol(Buf));
 	else
-		RemoteServerSetPort(RemoteServerPortDefault);
+		CentralexSetPort(CentralexDefaultPort);
 
 	if (ReadConfigBool(DynIPAktiv_P, false))
 		DynIP_Phase = DynIP_Fehler; 
@@ -7347,10 +7347,10 @@ void itelex_init1(void)
 	else
 		DynIP_Phase = DynIP_Inaktiv;
 	
-	if (ReadConfigBool(RemoteServerNutzen_P, false) && DynIP_Phase == DynIP_Inaktiv) // Ausschluss von DynIP und RemoteServer!
-		RemoteServerSetActive(true);
+	if (ReadConfigBool(CentralexEnabledConfigKey_P, false) && DynIP_Phase == DynIP_Inaktiv) // Ausschluss von DynIP und RemoteServer!
+		CentralexSetEnabled(true);
 	else
-		RemoteServerSetActive(false);
+		CentralexSetEnabled(false);
 	
 	if (readConfig_P(SelbstAnrufPeriode_P, Buf) == 1)
 		SelbstAnrufPeriode = atoi(Buf);
@@ -7460,7 +7460,7 @@ void itelex_init1(void)
 
 	ZeitUeberwachungInit(&SelbstAnrufZeitUeberwachung, 1 * KurzTimerFreq);
 
-	RemoteServerInitialize();
+	CentralexInitialize();
 	
 	InitServSocketLog();
 	

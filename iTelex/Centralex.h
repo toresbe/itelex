@@ -20,27 +20,31 @@
 /** \addtogroup centralex
  *  @{ */
 
-/** Reset all private RemoteServer connection state. */
-void RemoteServerInitialize(void);
+enum {
+	CentralexDefaultPort = 49491, //!< Default Centralex TCP port. ehem. RemoteServerPortDefault
+	};
 
-/** Process one cycle of RemoteServer network activity. */
-void RemoteServerBearbeiten(void);
+/** Reset all private Centralex connection state. */
+void CentralexInitialize(void); // ehem. RemoteServerInitialize
 
-/** Return whether RemoteServer use is enabled. */
-bool RemoteServerIsActive(void);
+/** Process one cycle of Centralex network activity. */
+void CentralexProcess(void); // ehem. RemoteServerBearbeiten
 
-/** Enable or disable RemoteServer use.
- *  \param active True to maintain the relay connection while idle.
+/** Return whether Centralex use is enabled. */
+bool CentralexIsEnabled(void); // ehem. RemoteServerIsActive
+
+/** Enable or disable Centralex use.
+ *  \param enabled True to maintain the relay connection while idle.
  */
-void RemoteServerSetActive(bool active);
+void CentralexSetEnabled(bool enabled); // ehem. RemoteServerSetActive
 
-/** Set the TCP port used to reach the RemoteServer.
- *  \param port RemoteServer TCP port in host byte order.
+/** Set the TCP port used to reach Centralex.
+ *  \param port Centralex TCP port in host byte order.
  */
-void RemoteServerSetPort(uint16_t port);
+void CentralexSetPort(uint16_t port); // ehem. RemoteServerSetPort
 
 /** Print the module's diagnostic rows to the current standard output. */
-void RemoteServerPrintDebug(void);
+void CentralexPrintDiagnostics(void); // ehem. RemoteServerPrintDebug
 
 /** @} */
 
