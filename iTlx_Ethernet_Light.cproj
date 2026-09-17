@@ -116,13 +116,12 @@
         </avrgcc.assembler.general.IncludePaths>
       </AvrGcc>
     </ToolchainSettings>
-    <UsesExternalMakeFile>False</UsesExternalMakeFile>
+    <UsesExternalMakeFile>True</UsesExternalMakeFile>
     <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
-    <ExternalMakeFilePath>makefile</ExternalMakeFilePath>
-    <BuildTarget>program</BuildTarget>
-    <CleanTarget>clean</CleanTarget>
-    <PreBuildEvent>copy /Y  "$(MSBuildProjectDirectory)\iTelex.config.h" "$(MSBuildProjectDirectory)\config.h"
-</PreBuildEvent>
+    <ExternalMakeFilePath>GNUmakefile</ExternalMakeFilePath>
+    <BuildTarget>light</BuildTarget>
+    <CleanTarget>clean-light</CleanTarget>
+    <PreBuildEvent />
     <PostBuildEvent />
     <OutputPath>Light\</OutputPath>
     <OutputFileName>Main_Light</OutputFileName>

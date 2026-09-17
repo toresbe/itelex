@@ -36,11 +36,12 @@ case "$#" in
     *) echo >&2 "$pname: Too many arguments: $*"; exit 1;;
 esac
 
-magic=";#magic1295671ghkl-."
-# call gcc, asking it for the command line which it would use for
-# linking:
+magic="magic1295671ghkl-."
+# Call gcc, asking it for the command line which it would use for linking.
+# Modern GCC uses collect2 and passes the architecture as -mavr51; older
+# releases called ld directly and used separate "-m" "avr51" arguments.
 set -- $(avr-gcc -m"$mcu" -### "$1" -o "$magic" 2>&1 \
-         | gawk '/^avr-gcc:/||/ld.*'"$magic"'.*"-lgcc"/')
+         | gawk '/collect2|ld.*'"$magic"'/ { print; exit }')
 
 if [ "$1" = "avr-gcc:" ]; then
     # we have an error message from gcc:
@@ -55,6 +56,10 @@ while [ -n "$2" ]; do
 	eval echo $2		# eval: remove quotes
 	exit 0
     fi
+    case "$1" in
+	-mavr*) echo "${1#-m}"; exit 0;;
+	'"-mavr'*'"') arch="${1#\"-m}"; echo "${arch%\"}"; exit 0;;
+    esac
     shift
 done
 echo >&2 "\

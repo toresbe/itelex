@@ -1,0 +1,28 @@
+name: AVR firmware
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: debian:13
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install AVR toolchain
+        run: |
+          apt-get update
+          apt-get install --yes --no-install-recommends \
+            make gcc-avr binutils-avr avr-libc subversion git ca-certificates
+      - name: Fetch pinned dependencies
+        run: make bootstrap
+      - name: Build firmware
+        run: make clean all
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: itelex-firmware
+          path: build/

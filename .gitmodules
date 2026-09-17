@@ -1,0 +1,3 @@
+[submodule "dependencies/itelex-misc"]
+	path = dependencies/itelex-misc
+	url = https://github.com/toresbe/itelex-misc.git

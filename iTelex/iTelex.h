@@ -41,7 +41,7 @@
 #include "system/shell/shell.h"
 #include "config.h"
 
-#include "Defports.h"
+#include "defports.h"
 #include "FifoPuffer.h"
 #include "BaudotCode.h"
 

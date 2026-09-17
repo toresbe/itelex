@@ -1,0 +1,14 @@
+/build/
+/config.h
+/SvnVersion.h
+/dependencies/avr-clibs/
+*.o
+*.d
+*.elf
+*.eep
+*.lss
+*.srec
+*.sym
+*.lst
+.dep/
+/FastBoot/bootload.map
