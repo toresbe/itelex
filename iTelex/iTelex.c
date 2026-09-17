@@ -4799,7 +4799,7 @@ static void PrintServSocketLogTabEntry()
 //! - Wenn eine Verbindung zustande gekommen ist wird diese wiederrum zyklisch nach neuen Daten abgefragt und entsprechend
 //!   reagiert.
 //! .
-//! Eine Übersicht der Gesamtfunktion ist in der Datei AblaeufeVerbindung.xls dargestellt.
+//! Eine Übersicht der Gesamtfunktion ist in der Datei docs/workbooks/AblaeufeVerbindung.xls dargestellt.
 //! Die dort enthaltenen ID sind hier mit ID#xxx referenziert.
 //! \param 	NONE
 //! \return	NONE
