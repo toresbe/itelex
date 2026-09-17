@@ -32,7 +32,7 @@ static enum { Wartend, Startbereit, Laeuft, Beendet } SwTwiModus;
 extern uint8_t SwTwiAdresse;
 extern uint8_t SwTwiDaten[MAXDATEN];
 extern uint8_t SwTwiAnzahlDaten; 
-extern uint8_t SwTwiResultat; // = Anzahl erfolgreich übertragener SwTwiDaten
+extern uint8_t SwTwiResultat; // = Anzahl erfolgreich Ã¼bertragener SwTwiDaten
 
 */
 

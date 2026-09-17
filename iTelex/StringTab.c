@@ -67,8 +67,8 @@ PROGMEM PGM_P const IStrList[] = {
 	// hier stehen die "echten" _STRTABENTRY(xxx, "yyy", ...) drin.
 	
 	// da bereits Enum-Konstanten der Form stridx_xxx bereits in der gleichen Reihenfolge 
-	// definiert sind, ist nun sichergestellt, dass IStrList[4*stridx_xxx] nun ein Zeiger auf "yyy" enth‰lt
-	// und IStrList[4*stridx_xxx+1] nun ein Zeiger auf "zzz" enth‰lt
+	// definiert sind, ist nun sichergestellt, dass IStrList[4*stridx_xxx] nun ein Zeiger auf "yyy" enth√§lt
+	// und IStrList[4*stridx_xxx+1] nun ein Zeiger auf "zzz" enth√§lt
 
 } ; // Ende von IStrList[]
 

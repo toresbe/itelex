@@ -9,11 +9,22 @@ reference and is not maintained.
 Build instructions, firmware variants, and dependency notes live in the
 [top-level README](../README.md), not here.
 
-The one exception to all of the above is
-[`splitting-itelex-c.md`](splitting-itelex-c.md), which is new maintained
-material rather than inherited: handoff notes for breaking up
-`iTelex/iTelex.c`, recording what the file's state coupling and the Light
-card's flash budget allow.
+Two files here are exceptions to all of the above: they are maintained as part
+of this clone rather than inherited from SVN.
+
+## `mainpage.dox` — landing page of the generated documentation
+
+Doxygen reads it as the `\mainpage` of the [published
+documentation](https://toresbe.github.io/itelex/): what the firmware is, which
+parts of the tree do what, and where to go next. The inherited introduction to
+Dirk Broßwick's AVR mini webserver, which the supporting stack comes from,
+stays in `main.c` as a subordinate page.
+
+## `splitting-itelex-c.md` — notes on breaking up the largest source file
+
+Handoff notes for the work of splitting `iTelex/iTelex.c`: what the file's
+state coupling and the Light card's flash budget allow, the plan that follows
+from it, and what each step has measured so far.
 
 ## `notes/` — project notes and release material
 

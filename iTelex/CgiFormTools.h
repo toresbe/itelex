@@ -2,7 +2,7 @@
 
 #define __CGIFORMTOOLS_H__
 
-#include "iTelex/StringTab.h" // nur für TSprache
+#include "iTelex/StringTab.h" // nur fÃ¼r TSprache
 
 extern bool ReadConfigBool(const char *Label, bool Default);
 

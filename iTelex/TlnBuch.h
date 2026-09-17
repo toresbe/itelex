@@ -16,14 +16,14 @@ extern void TlnDatenInit(TTlnDaten *Tln);
 extern bool TlnSuche(uint32_t SucheNummer, bool AuchGeloescht, TTlnDaten *Tln);
 
 typedef enum { 
-	TlnHinzDatumAktualisieren, //!< Datensatz wird in jedem Fall übernommen und mit aktuellem Datum versehen.
-	TlnHinzNurNeuereUebernehmen, //!< Datensatz wird nur dann übernommen, wenn Daten neuer sind als alte und wenn vorhandener Eintrag nicht lokal ist
-	TlnHinzKopieren, //!< alle Daten werden so übernommen wie sie sind.
+	TlnHinzDatumAktualisieren, //!< Datensatz wird in jedem Fall Ã¼bernommen und mit aktuellem Datum versehen.
+	TlnHinzNurNeuereUebernehmen, //!< Datensatz wird nur dann Ã¼bernommen, wenn Daten neuer sind als alte und wenn vorhandener Eintrag nicht lokal ist
+	TlnHinzKopieren, //!< alle Daten werden so Ã¼bernommen wie sie sind.
 	} TTlnHinzufuegenModus;
 	
 extern int8_t TlnHinzufuegen(TTlnDaten *Tln, TTlnHinzufuegenModus HinzModus);	
 
-//! Datentyp für die Speicherung der aktuellen Lister-Position
+//! Datentyp fÃ¼r die Speicherung der aktuellen Lister-Position
 typedef struct
 	{
 	char* Pos; //!< Position in Puffer

@@ -1,6 +1,6 @@
 #if !defined(__STRINGTAB_H__) || defined(_STRTABENTRY)
 	// diesen Inhalt nur ein Mal aufnehmen, es sei denn _STRTABENTRY ist bereits definiert,
-	// dann wird dieser Inhalt (in StringTab.c) genutzt, um die Strings tatsächlich im 
+	// dann wird dieser Inhalt (in StringTab.c) genutzt, um die Strings tatsÃ¤chlich im 
 	// Programmspeicher anzulegen
 
 #ifndef _STRTABENTRY
@@ -34,7 +34,7 @@ enum {
 // Hier werden die Strings definiert:
 // ==================================
 
-// für iTelex.c:
+// fÃ¼r iTelex.c:
 _STRTABENTRY(AnrufAbgewiesenWegenBesetzt, "kommender Anruf abgewiesen wegen besetzt", "incoming call cancelled because busy", 
 	"Chiamata in entrata cencellata perche' occupato", 
 	"Inkomende verbinding geannuleerd wegens bezet")
@@ -160,7 +160,7 @@ _STRTABENTRY(AsciiModus_NurBeiDurchwahl, "nur mit Durchwahl", "only with direct 
 _STRTABENTRY(AsciiModus_Nie, "nie", "never", "mai", "nooit")
 	
 _STRTABENTRY(ProtokollLevel, "Ausgabe-Modus an serieller Schnittstelle", "Output mode of serial port",
-	"???", "???") // TODO übersetzen
+	"???", "???") // TODO Ã¼bersetzen
 _STRTABENTRY(ProtokollLevelTlnServer, "Tiefe der Protokollierung f&uuml;r Teiln-Server", "Logging level for directory server",
 	"Profondita' di protocollo del server abbonati", "Protocol diepte voor de abonnee server")
 _STRTABENTRY(DiagnoseLevel, "Level f&uuml;r Druckausgabe von Meldungen", "Message filtering level",
@@ -196,7 +196,7 @@ _STRTABENTRY(GesperrtBestaetigung,
 	
 _STRTABENTRY(ITelexRufnummer, "eigene Rufnummer im i-telex-Netz", "Subscriber's number", "Proprio numero nella rete i-telex", "eigen nummer in het i-telex net")
 
-_STRTABENTRY(ITelexRufnummerZuKurz, "<big><b>&lt;=== muss fünf bis neun Ziffern haben!</b></big>", "<big><b>&lt;=== must have five to nine digits!</b></big>",
+_STRTABENTRY(ITelexRufnummerZuKurz, "<big><b>&lt;=== muss f\xFCnf bis neun Ziffern haben!</b></big>", "<big><b>&lt;=== must have five to nine digits!</b></big>",
 	"<big><b>&lt;=== deve avere almeno 5 fino a 9 cifre!</b></big>", "<big><b>&lt;=== moet tenminste 5 to 9 cijfers zijn!</b></big>")
 
 _STRTABENTRY(RufnrServerAnmeldGeheimzahl, "Geheimzahl zur Anmeldung beim Rufnummern-Server", "PIN for sign in at subscriber directory server",
@@ -232,7 +232,7 @@ _STRTABENTRY(TwiTlnListeAnfang, "Status der angeschlossenen Module:<p>", "Status
 _STRTABENTRY(TwiTlnListeEintrag, "Nummer %s Status %02X<br>", "Number %s status %02X<br>", "Numero %s stato %02X<br>", "Nummer %s status %02X<br>")
 _STRTABENTRY(TwiTlnListeEnde, "+++fertig","+++end","+++fine","+++einde")
 
-// für CgiFormTools.c und sonst häufig verwendet:
+// fÃ¼r CgiFormTools.c und sonst hÃ¤ufig verwendet:
 _STRTABENTRY(NeueEinstellungen, "Die neuen Einstellungen sind: ", "The new settings are: ","Parametri nuovi sono: ","De nieuwe parameters zijn: ")
 _STRTABENTRY(Weiter, "weiter", "continue","continuare","volgende")
 _STRTABENTRY(Unveraendert, " unver&auml;ndert", " unchanged"," invariato"," geen verandering")
@@ -245,7 +245,7 @@ _STRTABENTRY(FehlerMitPos,
 	" &gt;&gt;&gt; ): ")
 
 
-// für TlnBuch.c:
+// fÃ¼r TlnBuch.c:
 _STRTABENTRY(UeberschriftTeilnehmerverzeichnis, 
 	"<h3>Teilnehmerverzeichnis</h3><br>", 
 	"<h3>Subscriber directory</h3><br>", 
@@ -434,7 +434,7 @@ _STRTABENTRY(TeilnehmerlisteVoll, "Rufnummern-Verzeichnis voll, nicht gespeicher
 
 #ifdef ITELEX_TLNSERVER
 
-// für TlnServer.c:
+// fÃ¼r TlnServer.c:
 _STRTABENTRY(NeuTeilnehmer, "Neuer Teilnehmer angemeldet", "new subscriber signed up","Nuovo abbonato sottoscritto","Nieuwe abonnee ingeschreven")
 _STRTABENTRY(ServerAnmeldungFalscheGeheimzahl, "Teilnehmer-Server Anmeldung mit falscher Geheimzahl", "Unauthorised access to directory server port",
 		"Accesso al server con PIN errato","Aanmelding bij server met verkeerde PIN")
@@ -444,8 +444,8 @@ _STRTABENTRY(ServerAnmeldungFalscheGeheimzahl, "Teilnehmer-Server Anmeldung mit 
 
 #ifdef ITELEX_EMAIL
 
-// für eMail.c:
-// ungeprüft:
+// fÃ¼r eMail.c:
+// ungeprÃ¼ft:
 _STRTABENTRY(EmailEmpfangStartzeile, "\r\n///email empfangen:\r\n", "\r\n///email received:\r\n","\r\n///email ricevuto:\r\n","\r\n///email ontvangen:\r\n")
 _STRTABENTRY(EmailEingabeEmpfaenger, "\r\nemail an:      ", "\r\nemail to:      ", "\r\nemail a:      ", "\r\nemail aan:      ")
 _STRTABENTRY(EmailEingabeBetreff, "\r\nbetreff:      ", "\r\nsubject:      ","\r\noggetto:      ", "\r\nonderwerp:      ")
@@ -477,7 +477,7 @@ _STRTABENTRY(SMTPFehlerDirekt, "Meldung vom eMail-Ausgang-Server: ", "Message fr
 #endif //def ITELEX_EMAIL
 
 
-// für ConfigNtp.c:
+// fÃ¼r ConfigNtp.c:
 _STRTABENTRY(NtpOn, "Uhrzeit vom Server abfragen", "Use time server", "Utilizzare server del tempo", "Gebruik tijd server")
 _STRTABENTRY(NtpServerHostname, "Hostname des Zeitservers", "Time server host name", "Nome host server del tempo","Tijd host server naam")
 _STRTABENTRY(Zeitzone, "Zeitzone", "Timezone","Zona orario","Tijdzone")
@@ -496,10 +496,10 @@ _STRTABENTRY(AutoSommerzeit, "Sommerzeit automatisch umstellen", "Use daylight s
 	// Ende von enum { zur Konstantendefinition
 
 #undef STRINGTAB_H_PUR
-	// Merker löschen
+	// Merker lÃ¶schen
 
 #undef _STRTABENTRY
-	// Hilfsmakro löschen
+	// Hilfsmakro lÃ¶schen
 
 typedef enum {
 	Deutsch,
@@ -509,7 +509,7 @@ typedef enum {
 	} TSprache;
 	
 extern PGM_P GetIStr(uint16_t stri, TSprache Sprache);
-	// Funktion für die Ermittlung eines Strings aus dem Index
+	// Funktion fÃ¼r die Ermittlung eines Strings aus dem Index
 
 #define ISTR(name, Sprache) GetIStr(stridx_ ## name, Sprache)
 	// Vereinfachendes Hilfsmakro

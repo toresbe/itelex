@@ -1,6 +1,6 @@
 // Die Datei SvnVersion.h wird durch SVN beim Aktualisieren aus dem Projektarchiv
 // generiert, indem die Batch-Datei SvnAfterUpdate.bat aufgerufen wird. Dies muss
-// ¸ber SVN -> Einstellungen -> Aktionsskripte -> Hinzuf¸gen geschehen:
+// √ºber SVN -> Einstellungen -> Aktionsskripte -> Hinzuf√ºgen geschehen:
 //		Aktionstyp: Nach Aktualisierung
 //		Pfad der Arbeitskopie: Pfad dieser Datei hier
 //		Befehlszeile: dieser Pfad + SvnAfterUpdate.bat
