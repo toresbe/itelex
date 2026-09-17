@@ -3,9 +3,9 @@ Zu Testen:
 - Auskunftsfunktion
 
 - Lange und kurze Dienstmeldungen bei Anrufen an:
-  - nicht gültigen IP
-  - deaktivierten i-Telex geräten
-  - belegten i-telex geräten (vorher über html oder telnet zugreifen)
+  - nicht gÃ¼ltigen IP
+  - deaktivierten i-Telex gerÃ¤ten
+  - belegten i-telex gerÃ¤ten (vorher Ã¼ber html oder telnet zugreifen)
   - nicht erlaubten durchwahlen
   
   

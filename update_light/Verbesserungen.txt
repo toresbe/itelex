@@ -1,17 +1,17 @@
 Ab Build 965:
 Fehler bei Nicht-Sommerzeit und negativen Zeitzonen behoben.
-Verändertes Verhalten der lokalen Teilnehmerliste
+VerÃ¤ndertes Verhalten der lokalen Teilnehmerliste
 Verbesserung bei "Port-Scans" und "Langen Dienstmeldungen"
 
 Ab Build 910:
-Baudrate je Endgerät konfigurierbar
+Baudrate je EndgerÃ¤t konfigurierbar
 ASCII-Empfang abschaltbar
 
 Ab Build 863:
-Sprachen Italienisch und Niederländisch
+Sprachen Italienisch und NiederlÃ¤ndisch
 Bei Datensatz mit Port = 0 wird "abs" gemeldet
 HTTP-Requestst werden ignoriert und nicht mehr gedruckt.
-ATmega328 können auch beim Spezial-Kabel-Update verwendet werden.
+ATmega328 kÃ¶nnen auch beim Spezial-Kabel-Update verwendet werden.
 
 Ab Build 845:
 Namenssuche: Bei "nicht gefunden" wird keine Uberschrift gedruckt und erneut nach dem Namen gefragt.
@@ -25,13 +25,13 @@ Anrufsignalisierung
 RemoteServer fertiggestellt
 
 Ab Build 811: 
-für Zeitserver-Abfrage wird nun tatsächlich NTP verwendet
+fÃ¼r Zeitserver-Abfrage wird nun tatsÃ¤chlich NTP verwendet
 
 Ab Build 807:
 NTP-Einstellungen sollten auf Anhieb funktionieren
 
 Ab Build 804:
-Bugfix: Namenssuche bei Geräten mit Tastaturwahl
+Bugfix: Namenssuche bei GerÃ¤ten mit Tastaturwahl
 
 Ab Build 781:
 Impressum auf der HTML-Seite
@@ -40,7 +40,7 @@ Ab Build 763:
 BugFix: Konfig-Reset mit Tastendruck
 
 Ab Build 757:
-Weiterleitung bei besetzt nun auch bei "Durchwahl" an Nebenstelle möglich.
+Weiterleitung bei besetzt nun auch bei "Durchwahl" an Nebenstelle mÃ¶glich.
 
 Ab Build 751:
 TlnServer: Automatisches Backup alle 3 Tage
@@ -48,7 +48,7 @@ WerDa vereinheitlicht.
 
 Ab Build 748:
 HTML-Chat kann mit einem einzelnen & beendet werden.
-BugFix: Namens-Auskunft listet keine gelöschten Einträge mehr.
+BugFix: Namens-Auskunft listet keine gelÃ¶schten EintrÃ¤ge mehr.
 BugFix: Trennung bei nicht leerem SocketInBuf / Schlusstaste
 
 Ab Build 731:
@@ -58,10 +58,10 @@ Ab Build 724:
 Teilnehmerserver mit Abruf-Statistik
 
 Ab Build 711:
-Protokollierung der Verbindungs-Eingänge aller TCP-Sockets
+Protokollierung der Verbindungs-EingÃ¤nge aller TCP-Sockets
 
 Ab Build 706:
-In-System-Programmierung für andere Module fertiggestellt
+In-System-Programmierung fÃ¼r andere Module fertiggestellt
 
 Ab Build 693:
 E-Mail kann auf eine spezielle Nebenstelle gelenkt werden
@@ -69,13 +69,13 @@ E-Mails gehen nicht mehr verloren, wenn der Drucker nicht
 funktioniert.
 
 Ab Build 684:
-Zeilenlänge einstellbar
+ZeilenlÃ¤nge einstellbar
 Uhrzeit-Verteilung abschaltbar
-In-System-Programmierung für andere Module umstrukturiert
+In-System-Programmierung fÃ¼r andere Module umstrukturiert
 Konfigurations-Reset jetzt vor der Netzwerk-Initialisierung
 
 Ab Build 621:
-In-System-Programmierung für andere Module möglich
+In-System-Programmierung fÃ¼r andere Module mÃ¶glich
 
 Ab Build 619:
 Datums-Druck lokal bei kommenden Verbindungen verbessert
@@ -86,7 +86,7 @@ Uhrzeit wird an andere Module verteilt
 Ab Build 573:
 eMail-Server nun auch per IP-Adresse erreichbar
 eMail-Abfrage an LED erkennbar
-eMail-Fehlerbehandlung verbessert (kein Aufhängen mehr)
+eMail-Fehlerbehandlung verbessert (kein AufhÃ¤ngen mehr)
 DynIP Fehler behoben
 Falsche Fehlermeldungen bei langsamer Verbindung behoben
 Fehlermeldungen bei eMail-Abfrage erst beim dritten Fehlversuch
@@ -97,9 +97,9 @@ Zeilenumbruch bei ASCII-Verbindung erst nach 68 Zeichen
 Ab Build 520:
 Bessere Behandlung von Fehlern beim Selbst-Anruf
 Fehlerkorrektur von Verbindungsproblemen: 
-    Zeitbeschränkung beim Schließen von TCP-Sockets
+    ZeitbeschrÃ¤nkung beim SchlieÃŸen von TCP-Sockets
 Teilnehmerverzeichnis bleibt nach Reset erhalten
-Möglichkeit des Konfigurations-Reset durch Tastendruck	
+MÃ¶glichkeit des Konfigurations-Reset durch Tastendruck	
 
 Ab Build 479:
 Dienstmeldungen bei nicht erfolgreichem Verbindungsaufbau (occ, na, der, abs)

@@ -1,6 +1,6 @@
 # Hey Emacs, this is a -*- makefile -*-
 #----------------------------------------------------------------------------
-# WinAVR Makefile Template written by Eric B. Weddington, Jörg Wunsch, et al.
+# WinAVR Makefile Template written by Eric B. Weddington, JÃ¶rg Wunsch, et al.
 #
 # Released to the Public Domain
 #
@@ -182,7 +182,7 @@ CSTANDARD = -std=gnu99
 # Place -D or -U options here for C sources
 CDEFS = -DF_CPU=$(F_CPU)UL
 
-# für EU Version
+# fÃ¼r EU Version
 CDEFS += "-DPROG_ID_ZUSATZ=\"ITA2\""
 #!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -237,7 +237,6 @@ CFLAGS += -fmerge-constants
 CFLAGS += -mno-tablejump
 CFLAGS += -ffreestanding
 CFLAGS += -fno-move-loop-invariants
-CFLAGS += --param inline-call-cost=2
 CFLAGS += -finline-limit=10
 # Some settings to make smaller code with avr-gcc 4.3.x
 # CFLAGS += -fno-inline-small-functions
