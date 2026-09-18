@@ -15,7 +15,7 @@ LIBELF_ROOT ?= $(shell command -v brew >/dev/null 2>&1 && brew --prefix libelf 2
 AVR_CFLAGS := -mmcu=atmega1284p -DF_CPU=16000000UL -Os -gdwarf-2 \
 	-std=gnu99 -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums \
 	-fgnu89-inline -ffunction-sections -fdata-sections -mrelax \
-	-D__PROG_TYPES_COMPAT__ -I../.. -I../../dependencies/itelex-misc/Gemeinsam \
+	-I../.. -I../../dependencies/itelex-misc/Gemeinsam \
 	-I../../dependencies/avr-clibs
 AVR_LDFLAGS := -mmcu=atmega1284p -Wl,--gc-sections -mrelax
 

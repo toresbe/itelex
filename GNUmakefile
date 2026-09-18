@@ -52,7 +52,7 @@ VPATH := $(sort $(dir $(SOURCES)))
 COMMON_CFLAGS := -Os -gdwarf-2 -std=gnu99 -fgnu89-inline -Wall \
 	-funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums \
 	-ffunction-sections -fdata-sections -mrelax \
-	-D__PROG_TYPES_COMPAT__ -DF_CPU=16000000UL -DITELEX_TRACE_LEVEL=$(ITELEX_TRACE_LEVEL) \
+	-DF_CPU=16000000UL -DITELEX_TRACE_LEVEL=$(ITELEX_TRACE_LEVEL) \
 	-I. -I$(COMMON_DIR) -I$(AVR_CLIBS_DIR)
 
 .PHONY: all standard light fastboot bootstrap check-dependencies clean \

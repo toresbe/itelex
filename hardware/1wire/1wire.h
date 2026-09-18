@@ -96,8 +96,8 @@
 	const char * ONEWIRE_getfamilycode2string( char id );
 
 	typedef struct {
-		const prog_char	  id;
-		const prog_char * familystring;
+		const char	  id;
+		const char * familystring;
 	} const FAMILY ;
 
 #endif /* 1WIRE_H */

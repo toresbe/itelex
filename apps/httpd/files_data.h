@@ -39,9 +39,9 @@
 #if !defined(HTTP_FILES_FROM_MMC)
 
 	typedef struct {
-		const prog_char	*filesname;
-		const prog_char	*files;
-		const prog_char	filestype;
+		const char	*filesname;
+		const char	*files;
+		const char	filestype;
 		const int	len;
 	} const FILES ;
 

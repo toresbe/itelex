@@ -17,14 +17,9 @@
 
 #include "Centralex.h"
 
-/* These legacy interfaces still declare avr-libc's deprecated prog_char.
- * The declarations are outside this module's scope to modernize. */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include "iTelex.h"
 #include "Protokoll.h"
 #include "StringTab.h"
-#pragma GCC diagnostic pop
 
 /** \ingroup centralex
  *  @{ */
