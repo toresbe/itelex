@@ -9,8 +9,8 @@ reference and is not maintained.
 Build instructions, firmware variants, and dependency notes live in the
 [top-level README](../README.md), not here.
 
-Two files here are exceptions to all of the above: they are maintained as part
-of this clone rather than inherited from SVN.
+Three files here are exceptions to all of the above: they are maintained as
+part of this clone rather than inherited from SVN.
 
 ## `mainpage.dox` — landing page of the generated documentation
 
@@ -25,6 +25,12 @@ stays in `main.c` as a subordinate page.
 Handoff notes for the work of splitting `iTelex/iTelex.c`: what the file's
 state coupling and the Light card's flash budget allow, the plan that follows
 from it, and what each step has measured so far.
+
+## `refactor-optimization.md` — notes on the second pass over that file
+
+Working notes for the steps that make the big functions in `iTelex/iTelex.c`
+readable and, where tests allow it, smaller, without moving state into new
+modules. Records what each step measured and what its tests found.
 
 ## `notes/` — project notes and release material
 
