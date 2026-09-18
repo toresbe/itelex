@@ -33,42 +33,68 @@
 #include "BaudotCode.h"
 
 
-// Die Datem auf dem iTelex-Port haben folgende Struktur:
-// - ASCII-Zeichen einschl. WR (CR) und ZL (LF) werden "pur" übertragen.
-// - Ansonsten werden Datenblöcke übertragen, die stets aus folgenden Teilen bestehen:
-//   * ein Byte Kommandocode (siehe die folgenden Konstanten mit ITELEXC_*)
-//   * ein Byte Länge _folgender_ Daten (kann 0 sein).
-//   * zugehörige Daten
-
-//! Nur Konstanten-Definitionen.
+//! \name Frame grammar of the i-Telex socket protocol
+//!
+//! ASCII characters, carriage return and line feed included, travel as
+//! themselves. Everything else travels in a block of three parts:
+//!   - one byte of command code, one of the ITELEXC_* constants below,
+//!   - one byte giving the length of the payload that *follows*, which may
+//!     be zero,
+//!   - that many bytes of payload.
+//@{
 enum { 
-	ITELEXC_NULL = 0x00, //!< Füllzeichen
-	ITELEXC_DURCHWAHL = 0x01, //!< Startzeichen, Datenblock enthält ein Byte Durchwahl 
-	ITELEXC_BAUDOT_DATA = 0x02, //!< Datenblock mit puren Baudot-Codes
-	ITELEXC_ENDE = 0x03, //!< Beabsichtigter Verbindungsabbau.
-	ITELEXC_STOP = 0x04, //!< Es können noch Daten angehängt werden. Ursache: Besetzt oder Störung
-	// \005 freigehalten für ^E = WerDa.
-	ITELEXC_QUITT = 0x06, //!< Meldet Empfangsbereitschaft und Anzahl bereits verarbeiteter Zeichen.
+	ITELEXC_NULL = 0x00,
+		//!< Filler. Carries no block at all, not even a length byte.
+
+	ITELEXC_EXTENSION = 0x01, // ehem. ITELEXC_DURCHWAHL
+		//!< Opens a call. The payload is one byte of extension number.
+
+	ITELEXC_BAUDOT_DATA = 0x02,
+		//!< A block of plain Baudot codes for the printer.
+
+	ITELEXC_END = 0x03, // ehem. ITELEXC_ENDE
+		//!< Deliberate disconnection.
+
+	ITELEXC_STOP = 0x04,
+		//!< Disconnection with a reason, such as busy or out of order. More
+		//!< data may still follow.
+
+	// \005 is kept clear for ^E = WerDa (who are you).
+
+	ITELEXC_ACK = 0x06, // ehem. ITELEXC_QUITT
+		//!< Reports readiness to receive, and how many characters have been
+		//!< processed so far.
+
 	ITELEXC_VERSION = 0x07, 
-		//!< Version der Kommunikation. Originate schlägt vor, Answer bestätigt.
-		//!< Erst wenn andere Seite mit gleicher Nummer antwortet, ist Protokollversion abgestimmt.
-	ITELEXC_SELBSTANRUF = 0x08, //!< Kennung für einen testweisen Selbst-Anruf.
-	ITELEXC_FERNKONFIG = 0x09, 
-		//!< Telegramm für Änderungen an Teilnehmer-Einstellungen aus der Ferne.
-		//!< Inhalt: 1 Byte Länge (PIN, Kennung, Daten), 2 Byte PIN der Gegenstelle, 1 Byte Kennung ITELEXC_FKK_xxx, x Byte Daten.
-		//!< Wenn Daten ein String ist, wird dieser mit abschließendem \\0 übertragen.
+		//!< Protocol version. The originating end proposes, the answering end
+		//!< confirms. The version is only agreed once the other end answers
+		//!< with the same number.
+
+	ITELEXC_SELFCALL = 0x08, // ehem. ITELEXC_SELBSTANRUF
+		//!< Marks a call the interface places to itself as a reachability
+		//!< test.
+
+	ITELEXC_REMOTECONFIG = 0x09, // ehem. ITELEXC_FERNKONFIG
+		//!< Changes a subscriber setting from afar. The payload is two bytes
+		//!< of the other end's PIN, one byte of ITELEXC_FKK_xxx identifier,
+		//!< and the data for it. A string is sent with its closing \\0.
 	} ;
+//@}
 
 
-//! Substitute characters the ASCII (telnet) protocol uses for the two
-//! telex control codes that have no printable ASCII equivalent.
+//! \name Substitutions the ASCII protocol makes
+//!
+//! Two telex control codes have no printable ASCII equivalent, so on an ASCII
+//! connection they travel as a punctuation mark instead.
+//@{
 enum {
-	AsciiProtZeichenWerDa = '@',
-	//!< Ersatz-Zeichen für Werda im Socket-ASCII-Modus.
+	AsciiSubstituteWhoAreYou = '@', // ehem. AsciiProtZeichenWerDa
+		//!< Stands in for #CodeChrWerDa on an ASCII socket.
 
-	AsciiProtZeichenKlingel = '%',
-	//!< Ersatz-Zeichen für Klingel im Socket-ASCII-Modus.
+	AsciiSubstituteBell = '%', // ehem. AsciiProtZeichenKlingel
+		//!< Stands in for #CodeChrKlingel on an ASCII socket.
 	} ;
+//@}
 
 
 //! \brief What the socket is currently understood to be carrying.
@@ -94,13 +120,13 @@ typedef enum {
 typedef enum {
 	FrameText = 0,		//!< A character for the printer.
 	FrameFiller,		//!< #ITELEXC_NULL, which carries no block.
-	FrameExtension,		//!< #ITELEXC_DURCHWAHL
+	FrameExtension,		//!< #ITELEXC_EXTENSION
 	FrameBaudotData,	//!< #ITELEXC_BAUDOT_DATA
-	FrameDisconnect,	//!< #ITELEXC_STOP or #ITELEXC_ENDE
-	FrameAcknowledge,	//!< #ITELEXC_QUITT
+	FrameDisconnect,	//!< #ITELEXC_STOP or #ITELEXC_END
+	FrameAcknowledge,	//!< #ITELEXC_ACK
 	FrameVersion,		//!< #ITELEXC_VERSION
-	FrameSelfCall,		//!< #ITELEXC_SELBSTANRUF
-	FrameRemoteConfig,	//!< #ITELEXC_FERNKONFIG
+	FrameSelfCall,		//!< #ITELEXC_SELFCALL
+	FrameRemoteConfig,	//!< #ITELEXC_REMOTECONFIG
 	FrameUnknown,		//!< A command code this firmware does not know.
 	} TFrameKind;
 
@@ -195,7 +221,7 @@ static inline void ScanFrame(const char *Buffer, uint16_t Used, uint16_t Cursor,
 	// carrying. Any other code the ASCII protocol uses is text only once the
 	// socket is known to carry ASCII, and only where the next code is text
 	// as well — otherwise it is read as the start of a block. That is what
-	// keeps a lone \\010 from being mistaken for #ITELEXC_SELBSTANRUF, and it
+	// keeps a lone \\010 from being mistaken for #ITELEXC_SELFCALL, and it
 	// is also why, on an ASCII connection, the command codes that share a
 	// value with one of those control codes cannot be received at all.
 	// ID#246 ID#344
@@ -204,9 +230,9 @@ static inline void ScanFrame(const char *Buffer, uint16_t Used, uint16_t Cursor,
 			&& (Cursor == Used-1 || IsCommonAsciiControl(Buffer[Cursor+1]))))
 		{
 		Frame->Protocol = FrameProtocolAscii;
-		if (c == AsciiProtZeichenKlingel)
+		if (c == AsciiSubstituteBell)
 			Frame->Text = CodeChrKlingel;
-		else if (c == AsciiProtZeichenWerDa) 
+		else if (c == AsciiSubstituteWhoAreYou) 
 			Frame->Text = CodeChrWerDa;
 		return;
 		}
@@ -218,7 +244,7 @@ static inline void ScanFrame(const char *Buffer, uint16_t Used, uint16_t Cursor,
 		Frame->Kind = FrameFiller;
 		return;
 		}
-	else if (c == ITELEXC_DURCHWAHL)
+	else if (c == ITELEXC_EXTENSION)
 		{
 		Frame->Kind = FrameExtension;
 		Frame->Protocol = FrameProtocolITelex;
@@ -228,12 +254,12 @@ static inline void ScanFrame(const char *Buffer, uint16_t Used, uint16_t Cursor,
 		Frame->Kind = FrameBaudotData;
 		Frame->Protocol = FrameProtocolITelex;
 		}
-	else if (c == ITELEXC_STOP || c == ITELEXC_ENDE)
+	else if (c == ITELEXC_STOP || c == ITELEXC_END)
 		{
 		Frame->Kind = FrameDisconnect;
 		Frame->Protocol = FrameProtocolITelex;
 		}
-	else if (c == ITELEXC_QUITT)
+	else if (c == ITELEXC_ACK)
 		{
 		Frame->Kind = FrameAcknowledge;
 		Frame->Protocol = FrameProtocolITelex;
@@ -243,12 +269,12 @@ static inline void ScanFrame(const char *Buffer, uint16_t Used, uint16_t Cursor,
 		Frame->Kind = FrameVersion;
 		Frame->Protocol = FrameProtocolITelex;
 		}
-	else if (c == ITELEXC_SELBSTANRUF)
+	else if (c == ITELEXC_SELFCALL)
 		{
 		Frame->Kind = FrameSelfCall;
 		Frame->Protocol = FrameProtocolITelex;
 		}
-	else if (c == ITELEXC_FERNKONFIG)
+	else if (c == ITELEXC_REMOTECONFIG)
 		{
 		Frame->Kind = FrameRemoteConfig;
 		// Leaves the protocol state alone, unlike every other block:
@@ -274,7 +300,9 @@ static inline void ScanFrame(const char *Buffer, uint16_t Used, uint16_t Cursor,
 	Frame->Complete = Cursor + 2 + Declared <= Used;
 
 	if (Frame->Kind == FrameDisconnect && !Frame->Complete)
-		{ // dies ist implementiert, weil alte i-Telex-Versionen einen zu kurzen Datenblock sendeten.
+		{ // Old i-Telex versions sent a data block shorter than the length
+		// they declared, which is why the length is cut down here rather
+		// than waited out.
 		// Note the wrap: where not even the length byte has arrived, the
 		// subtraction is one short of zero and the payload length becomes
 		// 255, which sends the cursor far past the received data. Recorded

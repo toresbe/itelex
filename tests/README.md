@@ -93,7 +93,7 @@ the rest of the stream — the cursor runs past the received data and the
 buffer is discarded. A disconnect block with not even its length byte received
 wraps to a payload of 255. And on a connection carrying ASCII, the command
 codes that share a value with an ASCII control code (`ITELEXC_VERSION`,
-`ITELEXC_SELBSTANRUF`, `ITELEXC_FERNKONFIG`) cannot be received at all. Each is
+`ITELEXC_SELFCALL`, `ITELEXC_REMOTECONFIG`) cannot be received at all. Each is
 a change to what goes over the wire, so each belongs in its own commit with its
 own reasoning, not in a refactoring step.
 

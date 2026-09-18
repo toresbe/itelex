@@ -213,7 +213,8 @@ enum {
 	//!< Ziffernzahl muss #GlobRufnrMinZiffern entsprechen.
 	
 	} ; // Ende Konstanten
-// Hinweis: AsciiProtZeichenWerDa und AsciiProtZeichenKlingel stehen jetzt in
+// Hinweis: AsciiProtZeichenWerDa und AsciiProtZeichenKlingel heißen jetzt
+// AsciiSubstituteWhoAreYou und AsciiSubstituteBell und stehen in
 // iTelex/FrameScanner.h, zusammen mit den ITELEXC_*-Kommandocodes.
 	
 

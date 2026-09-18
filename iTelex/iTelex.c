@@ -94,7 +94,8 @@ TModus Modus;
 
 	
 // Die Struktur der Daten auf dem iTelex-Port und die Kommandocodes ITELEXC_*
-// stehen jetzt in iTelex/FrameScanner.h.
+// stehen jetzt in iTelex/FrameScanner.h; die deutschen Namen sind dort als
+// ehem.-Kommentare vermerkt.
 
 
 /* Mustertelegramme zur Übernahme in FsTelnet (MFC-Programm)
@@ -2137,7 +2138,7 @@ static void SocketBearbeiten()
 			{
 			int Res = GetSocketData(iTelexSocketHandle, InCount, SocketInBuf + SocketInBufUsed);
 			
-			if (SocketInBuf[SocketInBufUsed] != ITELEXC_SELBSTANRUF)
+			if (SocketInBuf[SocketInBufUsed] != ITELEXC_SELFCALL)
 				ProtokollRegelblockAbbruch();
 				
 			if (ProtokollAktivFuer(DatenDetailliert)) // Daten explizit
@@ -2474,7 +2475,7 @@ static void ExterneVerbindungBeenden()
 				iTelexSocketAbbauGeplant = true;
 				if (SocketOutBufUsed < SocketOutBufMax - 2)
 					{
-					SocketOutBuf[SocketOutBufUsed++] = ITELEXC_ENDE;
+					SocketOutBuf[SocketOutBufUsed++] = ITELEXC_END;
 					SocketOutBuf[SocketOutBufUsed++] = 0;
 					}
 				break;
@@ -2774,7 +2775,7 @@ static uint8_t FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 		}
 
 	// hier darf man nur bei Erfolg ankommen.
-	SocketOutBuf[SocketOutBufUsed++] = ITELEXC_QUITT;
+	SocketOutBuf[SocketOutBufUsed++] = ITELEXC_ACK;
 	SocketOutBuf[SocketOutBufUsed++] = 2;
 	SocketOutBuf[SocketOutBufUsed++] = 0;
 	SocketOutBuf[SocketOutBufUsed++] = FKKennung;
@@ -3220,7 +3221,7 @@ static void ITelexDatenVerarbeiten()
 		&& SocketOutBufUsed < SocketOutBufMax - 4 - 10 // - 10 = Reserve für wichtige Daten
 		&& iTelexSocketHandle != NO_SOCKET_USED)
 		{
-		SocketOutBuf[SocketOutBufUsed++] = ITELEXC_QUITT;
+		SocketOutBuf[SocketOutBufUsed++] = ITELEXC_ACK;
 		SocketOutBuf[SocketOutBufUsed++] = 1;
 		SocketOutBuf[SocketOutBufUsed++] = 
 			(uint8_t) (low(SocketAnzahlZeichenEmpfangen) - PufferAnzahl(&SendePuffer));
@@ -3260,9 +3261,9 @@ static void AsciiDatenVerarbeiten()
 			
 			char c = CodeZuZeichen(code, &BaudotMode);
 			if (c == CodeChrKlingel)
-				c = AsciiProtZeichenKlingel;
+				c = AsciiSubstituteBell;
 			else if (c == CodeChrWerDa)
-				c = AsciiProtZeichenWerDa;
+				c = AsciiSubstituteWhoAreYou;
 			
 			if (c != '\0')
 				{
@@ -3708,7 +3709,7 @@ uint8_t Verbindungsaufbau(TTlnDaten* td, bool MeldungAusgeben)
 		SocketOutBuf[SocketOutBufUsed++] = iTelexSocketProtVersionVorschlag;
 		strcpy_P(SocketOutBuf + SocketOutBufUsed, SvnVersion_P);
 		SocketOutBufUsed += strlen_P(SvnVersion_P) + 1;
-		SocketOutBuf[SocketOutBufUsed++] = ITELEXC_DURCHWAHL;
+		SocketOutBuf[SocketOutBufUsed++] = ITELEXC_EXTENSION;
 		SocketOutBuf[SocketOutBufUsed++] = 1;
 		SocketOutBuf[SocketOutBufUsed++] = td->Durchwahl;
 		
@@ -4151,7 +4152,7 @@ static inline __attribute__((always_inline)) void ProcessSelfCall(void)
 				else
 					{ // Öffnen erfolgreich.
 					char Buf[10];
-					Buf[0] = ITELEXC_SELBSTANRUF;
+					Buf[0] = ITELEXC_SELFCALL;
 					Buf[1] = 2; // 16 Bit-Wert
 					Buf[2] = high(SelbstAnrufSendePruefwert);
 					Buf[3] = low(SelbstAnrufSendePruefwert);
@@ -4565,7 +4566,7 @@ void itelex_thread()
 			iTelexSocketAbbauGeplant = true;
 			if (SocketOutBufUsed < SocketOutBufMax - 2)
 				{
-				SocketOutBuf[SocketOutBufUsed++] = ITELEXC_ENDE;
+				SocketOutBuf[SocketOutBufUsed++] = ITELEXC_END;
 				SocketOutBuf[SocketOutBufUsed++] = 0;
 				}
 			}
@@ -6206,12 +6207,12 @@ void itelex_cgi_msg_In( void * pStruct )
 		AsciiDruckPuffer[AsciiDruckPufferMax-3] = '\0'; // sicherheitshalber
 		
 		// falls letztes Zeichen ein @ war, ändern in Werda, falls nicht WR und ZL anfügen.
-		if (AsciiDruckPuffer[strlen(AsciiDruckPuffer)-1] == AsciiProtZeichenWerDa)
+		if (AsciiDruckPuffer[strlen(AsciiDruckPuffer)-1] == AsciiSubstituteWhoAreYou)
 			AsciiDruckPuffer[strlen(AsciiDruckPuffer)-1] = CodeChrWerDa;
 		else
 			strcat_P(AsciiDruckPuffer, PSTR("\r\n"));
 		
-		// TODO AsciiProtZeichenKlingel ersetzen?
+		// TODO AsciiSubstituteBell ersetzen?
 			
 		// Ergebnis protokollieren
 		if (ProtokollAktivFuer(AblaufInfo))

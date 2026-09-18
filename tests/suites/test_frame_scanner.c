@@ -113,7 +113,7 @@ TEST_CASE(text_settles_the_protocol_on_ascii)
 
 TEST_CASE(the_percent_sign_arrives_as_a_bell)
 {
-	static const char stream[] = { AsciiProtZeichenKlingel };
+	static const char stream[] = { AsciiSubstituteBell };
 	const TFrame frame = scan(stream, 1, FrameProtocolAscii);
 
 	TEST_ASSERT_EQ_UINT(FrameText, frame.Kind);
@@ -122,7 +122,7 @@ TEST_CASE(the_percent_sign_arrives_as_a_bell)
 
 TEST_CASE(the_at_sign_arrives_as_a_who_are_you)
 {
-	static const char stream[] = { AsciiProtZeichenWerDa };
+	static const char stream[] = { AsciiSubstituteWhoAreYou };
 	const TFrame frame = scan(stream, 1, FrameProtocolAscii);
 
 	TEST_ASSERT_EQ_UINT(FrameText, frame.Kind);
@@ -138,7 +138,7 @@ TEST_CASE(a_control_code_is_text_only_once_the_socket_is_known_to_carry_ascii)
 
 	/*
 	 * The same two bytes on a connection that has not settled on ASCII are
-	 * read as the start of a block: 0x08 is #ITELEXC_SELBSTANRUF.
+	 * read as the start of a block: 0x08 is #ITELEXC_SELFCALL.
 	 */
 	TEST_ASSERT_EQ_UINT(FrameSelfCall, scan(stream, 2, FrameProtocolUnknown).Kind);
 	TEST_ASSERT_EQ_UINT(FrameSelfCall, scan(stream, 2, FrameProtocolITelex).Kind);
@@ -169,8 +169,8 @@ TEST_CASE(ascii_mode_hides_the_self_call_and_remote_config_commands)
 	 * not corrected.
 	 */
 	static const char version[] = { ITELEXC_VERSION, ' ' };
-	static const char self_call[] = { ITELEXC_SELBSTANRUF, ' ' };
-	static const char remote_config[] = { ITELEXC_FERNKONFIG, ' ' };
+	static const char self_call[] = { ITELEXC_SELFCALL, ' ' };
+	static const char remote_config[] = { ITELEXC_REMOTECONFIG, ' ' };
 
 	TEST_ASSERT_EQ_UINT(FrameText, scan(version, 2, FrameProtocolAscii).Kind);
 	TEST_ASSERT_EQ_UINT(FrameText, scan(self_call, 2, FrameProtocolAscii).Kind);
@@ -218,7 +218,7 @@ TEST_CASE(a_null_byte_is_a_one_byte_filler_and_settles_nothing)
 
 TEST_CASE(an_extension_block_reports_its_payload)
 {
-	static const char stream[] = { ITELEXC_DURCHWAHL, 1, 11 };
+	static const char stream[] = { ITELEXC_EXTENSION, 1, 11 };
 	const TFrame frame = scan(stream, 3, FrameProtocolUnknown);
 
 	TEST_ASSERT_EQ_UINT(FrameExtension, frame.Kind);
@@ -241,7 +241,7 @@ TEST_CASE(a_baudot_block_reports_its_payload)
 TEST_CASE(a_disconnect_block_reports_its_reason)
 {
 	static const char stop[] = { ITELEXC_STOP, 3, 'o', 'c', 'c' };
-	static const char end[] = { ITELEXC_ENDE, 0 };
+	static const char end[] = { ITELEXC_END, 0 };
 
 	TEST_ASSERT_EQ_UINT(FrameDisconnect, scan(stop, 5, FrameProtocolITelex).Kind);
 	TEST_ASSERT_EQ_UINT(3, scan(stop, 5, FrameProtocolITelex).PayloadLength);
@@ -251,7 +251,7 @@ TEST_CASE(a_disconnect_block_reports_its_reason)
 
 TEST_CASE(an_acknowledge_block_reports_its_payload)
 {
-	static const char stream[] = { ITELEXC_QUITT, 1, 42 };
+	static const char stream[] = { ITELEXC_ACK, 1, 42 };
 	const TFrame frame = scan(stream, 3, FrameProtocolITelex);
 
 	TEST_ASSERT_EQ_UINT(FrameAcknowledge, frame.Kind);
@@ -271,7 +271,7 @@ TEST_CASE(a_version_block_reports_its_payload)
 
 TEST_CASE(a_self_call_block_reports_its_payload)
 {
-	static const char stream[] = { ITELEXC_SELBSTANRUF, 2, 0x12, 0x34 };
+	static const char stream[] = { ITELEXC_SELFCALL, 2, 0x12, 0x34 };
 	const TFrame frame = scan(stream, 4, FrameProtocolITelex);
 
 	TEST_ASSERT_EQ_UINT(FrameSelfCall, frame.Kind);
@@ -281,7 +281,7 @@ TEST_CASE(a_self_call_block_reports_its_payload)
 
 TEST_CASE(a_remote_config_block_leaves_the_protocol_state_alone)
 {
-	static const char stream[] = { ITELEXC_FERNKONFIG, 3, 0x34, 0x12, 0x11 };
+	static const char stream[] = { ITELEXC_REMOTECONFIG, 3, 0x34, 0x12, 0x11 };
 
 	TEST_ASSERT_EQ_UINT(FrameRemoteConfig, scan(stream, 5, FrameProtocolUnknown).Kind);
 	/* The one block that does not settle the protocol. */
@@ -294,8 +294,8 @@ TEST_CASE(a_remote_config_block_leaves_the_protocol_state_alone)
 TEST_CASE(every_block_but_remote_config_settles_the_protocol_on_itelex)
 {
 	static const char codes[] = {
-		ITELEXC_DURCHWAHL, ITELEXC_BAUDOT_DATA, ITELEXC_ENDE, ITELEXC_STOP,
-		ITELEXC_QUITT, ITELEXC_VERSION, ITELEXC_SELBSTANRUF,
+		ITELEXC_EXTENSION, ITELEXC_BAUDOT_DATA, ITELEXC_END, ITELEXC_STOP,
+		ITELEXC_ACK, ITELEXC_VERSION, ITELEXC_SELFCALL,
 	};
 	size_t n;
 
@@ -309,7 +309,7 @@ TEST_CASE(every_block_but_remote_config_settles_the_protocol_on_itelex)
 
 TEST_CASE(a_zero_length_block_is_two_bytes_long)
 {
-	static const char stream[] = { ITELEXC_ENDE, 0 };
+	static const char stream[] = { ITELEXC_END, 0 };
 	const TFrame frame = scan(stream, 2, FrameProtocolITelex);
 
 	TEST_ASSERT_EQ_UINT(2, frame.Length);
@@ -342,7 +342,7 @@ TEST_CASE(an_incomplete_block_still_reports_the_length_it_would_consume)
 	 * fragmented extension or acknowledge block is therefore lost rather than
 	 * waited for. Recorded, not corrected.
 	 */
-	static const char stream[] = { ITELEXC_DURCHWAHL, 1 };
+	static const char stream[] = { ITELEXC_EXTENSION, 1 };
 	const TFrame frame = scan(stream, 2, FrameProtocolITelex);
 
 	TEST_ASSERT_EQ_UINT(FrameExtension, frame.Kind);
@@ -371,7 +371,7 @@ TEST_CASE(a_disconnect_command_byte_on_its_own_wraps_its_length_to_255)
 	 * reads 255 bytes of "reason" from beyond the data and advances the
 	 * cursor by 257. Recorded, not corrected.
 	 */
-	static const char stream[] = { 'A', ITELEXC_ENDE };
+	static const char stream[] = { 'A', ITELEXC_END };
 	const TFrame frame = scan_at(stream, 2, 1, FrameProtocolITelex);
 
 	TEST_ASSERT_EQ_UINT(FrameDisconnect, frame.Kind);
@@ -387,7 +387,7 @@ TEST_CASE(a_block_code_as_the_last_byte_received_reads_the_length_from_beyond_th
 	 * four bytes of slack past the receive buffer are what keeps that read
 	 * inside the array.
 	 */
-	static const char stream[] = { ITELEXC_QUITT };
+	static const char stream[] = { ITELEXC_ACK };
 	const TFrame frame = scan(stream, 1, FrameProtocolITelex);
 
 	TEST_ASSERT_EQ_UINT(FrameAcknowledge, frame.Kind);
@@ -403,11 +403,11 @@ TEST_CASE(concatenated_frames_are_scanned_one_after_another)
 {
 	static const char stream[] = {
 		ITELEXC_VERSION, 1, 1,
-		ITELEXC_DURCHWAHL, 1, 0,
+		ITELEXC_EXTENSION, 1, 0,
 		ITELEXC_BAUDOT_DATA, 2, 0x1f, 0x02,
 		'H', 'i',
 		ITELEXC_NULL,
-		ITELEXC_ENDE, 0,
+		ITELEXC_END, 0,
 	};
 	static const TFrameKind expected_kinds[] = {
 		FrameVersion, FrameExtension, FrameBaudotData,
