@@ -1,8 +1,14 @@
-# Host unit tests
+# Firmware tests
+
+The default suite contains fast host unit tests. Register-level integration
+tests run separately under simavr; see [AVR emulator tests](avr/README.md).
+
+## Host unit tests
 
 These suites test the parts of the firmware that are pure logic: the
 Baudot/ITA2 character conversion, the shared ring buffer, the backplane CRC,
-and the small byte-order, Base64 and hex-parsing helpers. They are compiled by
+the parsers for the text an operator types into the web interface, and the
+small byte-order, Base64 and hex-parsing helpers. They are compiled by
 the **host** compiler and run on the build machine, so they need no AVR
 toolchain and no i-Telex hardware, and they finish in well under a second.
 
@@ -48,12 +54,14 @@ not ok 8 - decoding_handles_the_whole_alphabet
 | `math` | `system/math/math.c` | The 16- and 32-bit byte swaps and the packed-BCD conversions over their whole range |
 | `base64` | `system/base64/base64.c` | The RFC 4648 vectors in both directions, the output-size refusal, and a round trip over non-text bytes |
 | `string_utils` | `system/string/string.c` | Hex digit and MAC address parsing, separator handling, and the length check |
+| `parsing` | `iTelex/Parsing.c` | Signed-number and extension-number scanning, and the baud-rate table format — which entry wins, where a malformed table is reported, and the two answers that are not baud rates |
 
 ## What is deliberately not covered
 
 Anything that touches a register, a timer or the network is not pure logic and
-does not belong here; testing it needs a simulator or the real card, which is a
-separate piece of work.
+does not belong in the host suite. Timer0 and the software serial converter are
+covered by the simavr suite; network behaviour and electrical characteristics
+still need a real card.
 
 Two units that look like candidates are left out for a specific reason, and
 both reasons are worth fixing:
@@ -72,6 +80,22 @@ reverse lookup table with `character - 43` without a range check, so any byte
 below `'+'` or above `'z'` reads outside the table. The suite stays inside the
 valid alphabet; feeding the decoder hostile input is a defect to fix, not a
 behaviour to pin down.
+
+## The one stubbed dependency
+
+`parsing` is the only suite that supplies a firmware function itself rather
+than linking the real one. `Parsing.c` calls `WahlZuAdresse` to turn an
+extension number into a bus address, and that function lives in `BusKomm.c`
+alongside the TWI interrupt handler, which reaches for ATmega registers the
+shims do not model. `test_parsing.c` therefore defines it, recording the
+arguments it was handed and reproducing the mapping documented in `BusKomm.c`.
+
+The recorded arguments are what the `ParseExtensionAddress` cases assert on,
+because choosing the number and the digit count is the whole of what that
+function decides; the reproduced return value only exists so the baud-rate
+cases can use the addresses the firmware really uses. Linking the real
+function instead would mean shimming the TWI peripheral, which is worth doing
+if a second suite ever needs `BusKomm.c`.
 
 ## Adding a suite
 

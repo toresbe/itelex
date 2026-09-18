@@ -29,6 +29,10 @@ typedef enum
 // bei Netz -> Endgerät also beim Auslesen von #SendePuffer
 // bei Endgerät -> Netz also beim Speichern in #EmpfPuffer
 
+#ifndef ITELEX_TRACE_LEVEL
+#define ITELEX_TRACE_LEVEL 255
+#endif
+
 
 extern TBaudotMode ProtokollBaudotMode;
 
@@ -38,9 +42,29 @@ extern TProtokollLevel ProtokollLevel;
 extern TProtokollLevel ProtokollLevelTlnServ;
 #endif //def ITELEX_TLNSERVER
 
-extern bool ProtokollAktivFuer(TProtokollLevel p);
+extern bool ProtokollAktivFuerRuntime(TProtokollLevel p);
 
-extern bool ProtokollAktivFuerTCP();
+extern bool ProtokollAktivFuerTCPRuntime(void);
+
+extern bool UhrzeitImpulseAufSeriellerSchnittstelleRuntime(void);
+
+/** Return whether a trace category is enabled at run time and compiled in. */
+static inline bool ProtokollAktivFuer(TProtokollLevel p)
+	{
+	return p <= ITELEX_TRACE_LEVEL && ProtokollAktivFuerRuntime(p);
+	}
+
+/** Return whether exactly one trace category is selected and compiled in. */
+static inline bool ProtokollAktivGenauFuer(TProtokollLevel p)
+	{
+	return p <= ITELEX_TRACE_LEVEL && ProtokollLevel == p;
+	}
+
+/** Return whether TCP tracing is enabled and compiled in. */
+static inline bool ProtokollAktivFuerTCP(void)
+	{
+	return ITELEX_TRACE_LEVEL >= TcpVerbindungen && ProtokollAktivFuerTCPRuntime();
+	}
 
 extern bool ProtokollSpeichern(bool flush);
 
@@ -70,7 +94,11 @@ extern void ProtokollRegelblockLoeschen();
 
 extern void ProtokollRedirectStdout();
 
-extern bool UhrzeitImpulseAufSeriellerSchnittstelle();
+/** Return whether the serial output is configured for clock pulses. */
+static inline bool UhrzeitImpulseAufSeriellerSchnittstelle(void)
+	{
+	return ITELEX_TRACE_LEVEL >= UhrzeitImpulse && UhrzeitImpulseAufSeriellerSchnittstelleRuntime();
+	}
 
 extern void ProtokollInit();
 

@@ -65,12 +65,14 @@
 #include "hardware/timer0/timer0.h"
 
 #include "CgiFormTools.h"
+#include "Centralex.h"
 #include "iTelex.h"
 #include "TlnBuch.h"
 #include "BusKomm.h"
 #include "TxP2-Defs.h"
 #include "FifoPuffer.h"
 #include "BaudotCode.h"
+#include "Parsing.h"
 #include "Protokoll.h"
 #include "TlnServer.h"
 #include "eMail.h"
@@ -114,10 +116,6 @@ enum {
 		//!< Telegramm für Änderungen an Teilnehmer-Einstellungen aus der Ferne.
 		//!< Inhalt: 1 Byte Länge (PIN, Kennung, Daten), 2 Byte PIN der Gegenstelle, 1 Byte Kennung ITELEXC_FKK_xxx, x Byte Daten.
 		//!< Wenn Daten ein String ist, wird dieser mit abschließendem \\0 übertragen.
-	ITELEXC_REMOTE_CONNECT = 0x81, //!< Station an Server: erste Anmeldung. 
-	ITELEXC_REMOTE_CONFIRM = 0x82, //!< Server an Station: Anmeldung angenommen. Abweisung mit ITELEXC_STOP
-	ITELEXC_REMOTE_CALL = 0x83, //!< Server an Station: Anruf eingetroffen.
-	ITELEXC_REMOTE_CALLACCEPT = 0x84, //!< Station an Server: ITELEXC_REMOTE_CALL wird angenommen. Abweisung mit ITELEXC_STOP
 	} ;
 	
 	
@@ -351,119 +349,6 @@ uint8_t ProtokollPhase;
 	//!< für POP3 und SMTP ein Speicher für den aktuellen Kommunikationsschritt
 
 
-//*** RemoteServer ****:
-
-/*
-Diese Funktion erlaubt die Verwendung des i-Telex an IP-Anschlüssen mit nicht öffentlicher 
-IP-Adresse. 
-Dazu baut das i-Telex im Ruhezustand eine Verbindung zum "Remote Server" auf.
-Sobald dann ein anderer Teilnehmer eine Verbindung zum Remote Server herstellt, wird
-diese auf das i-Telex hier durchverbunden.
-
-Ablauf: 
-
-Anrufer     Tln-Server      Remote Server       Anschluss (dieser)
-
-                                        RemConnect       X
-                                X      <----------       X
-                                X                        X
-                        (waehlt freien Port)             X
-                                X                        X
-                    SELSBTAKT   X       Heartbeat        X
-                X   <--------   X      ----------->      X
-                X               X                        X
-                X               X       Heartbeat        X
-                X   IPRUECKMELD X      <-----------      X
-                X   ----------> X                        X
-                                X       RemConfirm       X
-                                X      ----------->      X
-                                X       Heartbeat        X
-                                X      <-----------      X
-                                X       Heartbeat        X
-                                X      ----------->      X
-                                X                        X
-       ABFRAGE                  X                        X
-    X --------> X               X                        X
-    X  AUSKUNFT X               X                        X
-    X <-------- X               X                        X
-    X                           X                        X
-    X       normaler Anruf      X                        X
-    X        ----------->       X                        X
-    X                           X       RemCall          X
-    X                           X      ----------->      X
-    X                           X (keine Heartbeat mehr) X
-    X                           X             (Anrufbehandlung wie bei) 
-    X        ggf. Daten         X               (Öffnen eines Socket) 
-    X        ----------->       X                        X
-    X              (Daten zwischenspeichern)             X
-    X                           X                        X
-    X                           X       RemAck           X
-    X                           X      <-----------      X
-    X                           X                        X
-    X                   (Durchverbindung)                X
-    X                           X   gespeicherte Daten   X
-    X                           X      ----------->      X
-    X                           X                        X
-    X       i-Telex-Daten       X     i-Telex-Daten      X
-    X       <----------->       X     <----------->      X
-    X                           X                        X
-    
-RemoteServer beendet Durchverbindung sobald eine der 
-beteiligten Nachbarn die Verbindung trennt.
-    
-*/
-
-static bool RemoteServerActive;
-	//! Generelle Aktivierung der Verbindung über den RemoteServer
-	//! Schließt sich mit DynIPAktiv aus!
-
-
-static enum { 
-	RemServNotConnected, // Remote server not connected, but may be needed
-	RemServStarting,  // Remote server connected, but no confirmation received yet
-	RemServConnected, // Remote server is connected
-	RemServSendStop,  // Remote server is connected but Stop signal shall be sent
-	RemServDisconnecting, // Hangup sent to remote server, waiting for disconnection
-} RemoteServerLinkStatus;
-
-
-static int RemoteServerLinkSocketHandle;
-	//!< Über diesen Socket wird eine Verbindung zum "Remote Server" gehalten.
-
-
-static char RemoteServerSocketBuf[SocketInBufMax+4]; 
-	//!< Buffer for sending and receiving on RemoteServer
-
-static uint16_t RemoteServerSocketBufUsed;
-	//!< Amount of used Buffer in RemoteServerSocketBuf
-	
-static TKurzTimer RemoteServerActionTimer;
-	//!< Timer for several purposes regarding actions with RemoteServerLink: 
-	//!< Periodic sending of heartbeat, delay for closing the socket after sending "END",
-	//!< delay for re-opening the connection.
-
-static uint16_t RemoteServerReconnectTimerEnd;
-	//!< Handles increasing (each failed attempt) delay times for reconnection.
-
-static TKurzTimer RemoteServerCheckTimer;
-	//!< Timer for several purposes regarding checking of RemoteServerLink: 
-	//!< Periodic receiption of heartbeat, Maximum delay of confirmation
-
-static uint8_t RemoteServerAddressIndex; 
-	//!< Which remote server shall be used next time?
-	
-static TLangTimer RemoteServerErrorMessageDelay;
-	//!< in case of temporary failures of the remote server this time delays the warning message for some minutes
-	
-static bool RemoteServerErrorMessageSent;
-	//!< if this flag is set the user shall already be informed about the failed remote servers
-	
-static uint16_t RemoteServerPort;
-
-	
-// =====================================================================
-	
-	
 bool TlnBuchOffen;	
 	//!< Soll das Teilnehmer-Verzeichnis offen sein oder nicht?
 	
@@ -569,10 +454,10 @@ static TTlnListerDat NamenssucheLister;
 	//!< Datensatz für das Absuchen des Teilnehmer-Verzeichnisses nach Namensteil.
 	//!< Nur gültig bei #Modus == #ModNamensucheAusgabeAnfang oder #ModNamensucheAusgabeWeiter.
 	
-static uint32_t NetzRufnummer;
+uint32_t NetzRufnummer;
 	//!< Rufnummer des eigenen Anschlusses im ip-telex-Netz
 	
-static uint16_t Geheimzahl;
+uint16_t Geheimzahl;
 	//!< Um unberechtigte Fremd-Aktualisierungen zu vermeiden.
 
 static uint16_t NetzPort;
@@ -581,7 +466,7 @@ static uint16_t NetzPort;
 static long NetzEigeneIP;
 	//!< Zurückgemeldete IP-Adresse im globalen Netz.
 
-static uint8_t FalschGeheimzahlZaehler;
+uint8_t FalschGeheimzahlZaehler;
 	//!< Zählt wie oft eine Rückmeldung "falsche Geheimzahl" empfangen wurde.
 	
 
@@ -860,153 +745,6 @@ void ZeitUeberwachungAbbruch(TZeitUeberwachung *zue)
 	}
 	
 
-bool ParseInt16(char **pp, int16_t *val)
-	{
-	char *p;
-	int8_t Vorz;
-	int16_t Wert;
-	bool Res;
-
-	p = *pp;
-	Res = false;
-	Wert = 0;
-	Vorz = 0;
-	while (true)
-		{
-		if (*p == '-')
-			if (Vorz == 0) // noch nicht gesetzt
-				Vorz = -1;
-			else // schon eine Ziffer oder ein Vorzeichen gehabt
-				break;
-		else if (*p == '+')
-			if (Vorz == 0) // noch nicht gesetzt
-				Vorz = 1;
-			else // schon eine Ziffer oder ein Vorzeichen gehabt
-				break;
-		else if (*p >= '0' && *p <= '9')
-			{
-			Wert = 10 * Wert + (*p) - '0';
-			if (Vorz == 0)
-				Vorz = 1;
-			Res = true;
-			}
-		else 
-			break;
-		p++;
-		}
-		
-	if (!Res)
-		return false;
-	
-	*pp = p;	
-	*val = Vorz * Wert;
-	return true;
-	}
-			
-	
-bool ParseNstAddresse(char **pp, uint8_t *nst)
-	{
-	char *p2;
-	int16_t nr;
-	
-	p2 = *pp;
-	if (p2[0] == '-')
-		{
-		*nst = 0;
-		(*pp)++;
-		return true;
-		}
-		
-	if (!ParseInt16(&p2, &nr))
-		return false;
-	
-	if (nr < 0 || nr > 99 || p2 - (*pp) > 2)
-						//   ^^^^^^^^^^^^^^ mehr als 2 Ziffern
-		return false;
-	
-	*nst = WahlZuAdresse(nr, p2 - (*pp));
-	*pp = p2;
-	return true;
-	}
-
-
-void ParseSkipSpace(char **pp)
-	{
-	while (**pp == ' ')
-		(*pp)++;
-	}
-
-
-//! Sucht aus der Tabelle die zu verwendende Baudrate aus.
-//--------------------------------------------------------
-//! Verwendet die globale Tabelle #BaudrateListe
-//! \retval >0 Baudrate
-//! \retval <=0 Position des Fehlers in der Zeichenkette #BaudrateListe
-	
-int16_t BaudrateErmitteln(uint8_t nst, char *aBaudTab)
-	{
-	char *p;
-	bool BereichJa;
-	uint8_t nst2;
-	int16_t baud;
-	
-	p = aBaudTab;
-	while (true)
-		{
-		ParseSkipSpace(&p);
-		if (*p == '*')
-			{
-			BereichJa = (nst != 0);
-			p++;
-			}
-		else 
-			{
-			if (!ParseNstAddresse(&p, &nst2))
-				return -(p - aBaudTab);
-
-			ParseSkipSpace(&p);
-			if (*p == '-')
-				{
-				BereichJa = (nst >= nst2);
-				p++;
-				ParseSkipSpace(&p);
-				if (!ParseNstAddresse(&p, &nst2))
-					return -(p - aBaudTab);
-					
-				BereichJa &= (nst <= nst2);
-				}
-			else
-				BereichJa = (nst == nst2);
-			}
-		
-		ParseSkipSpace(&p);
-		
-		if (*p != ':')
-			return -(p - aBaudTab);
-
-		p++;
-		ParseSkipSpace(&p);
-		
-		if (!ParseInt16(&p, &baud))
-			return -(p - aBaudTab);
-		
-		if (BereichJa)
-			return baud;
-		
-		ParseSkipSpace(&p);
-		
-		if (*p == '\0')
-			return 1; // Ende des String korrekt erreicht
-		
-		if (*p != ',')
-			// nur Komma als Aufzählungs-Trenner erlaubt
-			return -(p - aBaudTab);
-			
-		p++;
-		}
-	} // BaudrateErmitteln(uint8_t nst, char *aBaudTab)
-			
-	
 //! Gibt des aktuellen Stand der Zeitueberwachung aus.
 //----------------------------------------------------	
 //! Ausgabe erfolgt in den #ZeitUeberwachungAusgabePuffer.
@@ -1046,7 +784,7 @@ uint16_t Zufallswert(uint16_t Maske)
 // ---------------------------
 //! Schreibt "iTelex (xxx):" in den Puffer mit xxx = Zykluszaehler von itelex_thread.
 
-static void ProtokollierenITelex()
+void ProtokollierenITelex()
 	{
 	ProtokollierenInt_P(PSTR("iTelex(%5u): "), ITelexThreadCount);
 	}
@@ -1057,7 +795,7 @@ static void ProtokollierenITelex()
 //! Schreibt "iTelex (xxx): ttt" in den Puffer mit xxx = Zykluszaehler von itelex_thread und
 //! ttt Text aus Programmspeicher.
 
-static void ProtokollierenITelex_P(const char *s)
+void ProtokollierenITelex_P(const char *s)
 	{
 	ProtokollierenITelex();
 	Protokollieren_P(s);
@@ -1200,7 +938,7 @@ static void SeriellUmsetzInit(void)
 	SerUmEmpfBitNr = SerUmEmpfWarte;
 	SerUmSendBitNr = SerUmSendWarte;
 	
-	Baud = BaudrateErmitteln(BusVerbPartner, BaudrateListe);
+	Baud = DetermineBaudRate(BusVerbPartner, BaudrateListe);
 	if (Baud <= 1) // 1 ist auch ein Fehlerwert, nämlich "nicht gefunden"
 		Baud = 50;
 		
@@ -1218,6 +956,43 @@ static void SeriellUmsetzInit(void)
 	SerUmTickZaehlerSend = 0;
 	SendeMark = true;
 	}
+
+
+#ifdef ITELEX_SIM_TEST
+/** Put the software serial converter into a deterministic connected state.
+ *
+ *  This entry point is only present in the simavr fixture.  It deliberately
+ *  leaves the timer callback itself untouched, while avoiding the network and
+ *  TWI setup which normally establishes these preconditions on a board.
+ */
+void ITelexSimTestSerialInit(uint16_t Baud)
+	{
+	PufferInit(&SendePuffer);
+	PufferInit(&EmpfPuffer);
+	Modus = ModGehendVerbunden;
+	BusEmpfMark = true;
+	BusFrei = true;
+	BusAuftrag = Nichts;
+	WarteStartupQuitt = false;
+	SendenBeschleunigen = false;
+	KurzTimerCnt = 200;
+	MachineStartupTimer.x = 0;
+	iTelexThreadCheckTimer.x = KurzTimerCnt;
+
+	SerUmEmpfBitNr = SerUmEmpfWarte;
+	SerUmEmpfDaten = 0;
+	SerUmEmpfFehler = false;
+	SerUmEmpfMarkZaehl = 0;
+	SerUmSendBitNr = SerUmSendWarte;
+	SerUmSendDaten = 0;
+	SerUmTicksProBit = iTelexTimerFreq / Baud;
+	SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2 * Baud);
+	SerUmTickZaehlerEmpf = SerUmTicksProBit;
+	SerUmTickZaehlerSend = 0;
+	SendeMark = true;
+	TwiLebenszeichenZaehler = UINT16_MAX;
+	}
+#endif
 
 
 //! Prüft, ob im aktuellen Modus ein TWI-Partner verbunden sein müsste.
@@ -2113,7 +1888,7 @@ static bool KommendInternAnwaehlen(uint8_t aDurchwahl)
 // ------------------------------
 //! entweder über geöffneten Server socket oder über Meldung vom RemoteServer
 
-static void KommendeVerbindungInitialisieren()
+void KommendeVerbindungInitialisieren()
 	{
 	BusVerbPartner = Hauptstelle; // vorbereitet...
 	iTelexSocketIP = TCP_sockettable[iTelexSocketHandle].SourceIP; 
@@ -2132,7 +1907,7 @@ static void KommendeVerbindungInitialisieren()
 //! Reaktion auf durch falsche Geheimzahl bedingte Abweisung
 // ---------------------------------------------------------
 
-static void FalschGeheimzahlWurdeGemeldet()
+void FalschGeheimzahlWurdeGemeldet()
 	{
 	if (FalschGeheimzahlZaehler < 3)
 		FalschGeheimzahlZaehler++;
@@ -2140,442 +1915,10 @@ static void FalschGeheimzahlWurdeGemeldet()
 		{
 		Diagnoseausgabe_P(ISTR(FalscheGeheimzahlBewirktAbschaltung, LokaleSprache), 1);
 		DynIP_Phase = DynIP_Inaktiv;
-		RemoteServerActive = false;
+		CentralexSetEnabled(false);
 		}
 	}
 
-
-
-//! Unterfunktionen von RemoteServerBearbeiten()
-
-static void RemoteServerUseAnotherOne()
-	{
-	uint8_t i; // counts the changes...
-	
-	RemoteServerReconnectTimerEnd += RemoteServerReconnectTimerEnd / 2;
-	
-	if (RemoteServerReconnectTimerEnd < 4 * KurzTimerFreq)
-		RemoteServerReconnectTimerEnd = 4 * KurzTimerFreq;
-	else if (RemoteServerReconnectTimerEnd > 120 * KurzTimerFreq)
-		RemoteServerReconnectTimerEnd = 120 * KurzTimerFreq;
-	
-	if (ProtokollAktivFuer(NurFehler))
-		{
-		ProtokollierenITelex_P(PSTR("* Remote Server Wechsel, neue Verzoegerung "));
-		ProtokollierenInt_P(PSTR("%d/100 sek\r\n"), RemoteServerReconnectTimerEnd);
-		}
-	
-	for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
-		{
-		RemoteServerAddressIndex++;
-		if (RemoteServerAddressIndex >= ANZ_TEILNEHMER_SERVER)
-			RemoteServerAddressIndex = 0;
-		
-		if (TeilnehmerServerAdresse[RemoteServerAddressIndex][0] != '\0')
-			return;
-		
-		}
-	}
-
-	
-static void RemoteServerSendBufferIfNotEmpty()
-	{
-	if (RemoteServerSocketBufUsed > 0)
-		{
-		if (RemoteServerLinkSocketHandle != NO_SOCKET_USED)
-			{
-			int Res = PutSocketData_RPE(RemoteServerLinkSocketHandle, RemoteServerSocketBufUsed, RemoteServerSocketBuf, RAM);
-
-			if (ProtokollAktivFuer(AuchRegelmaessiges)
-				|| (ProtokollAktivFuer(DatenDetailliert) && RemoteServerSocketBuf[0] != 0))
-				{
-				ProtokollierenITelex();
-				ProtokollierenInt_P(PSTR("RemoteServer Sendung: (%u)" ), RemoteServerSocketBufUsed);
-				ProtokollierenPuffer(RemoteServerSocketBuf, RemoteServerSocketBufUsed);
-				ProtokollierenInt_P(PSTR(" --> Res %d\r\n"), Res);
-				}
-				
-			if (Res != RemoteServerSocketBufUsed)
-				{
-				ProtokollierenITelex_P(PSTR("! RemoteServer wird wegen Sendefehler getrennt.\r\n"));
-				CloseTCPSocket(RemoteServerLinkSocketHandle);
-				RemoteServerLinkSocketHandle = NO_SOCKET_USED;
-				RemoteServerLinkStatus = RemServNotConnected;
-				RemoteServerUseAnotherOne();
-				}
-
-			}
-		else
-			{
-			if (ProtokollAktivFuer(AblaufInfo))
-				{
-				ProtokollierenITelex();
-				ProtokollierenInt_P(PSTR("RemoteServer verwerfe %u Bytes Daten aus Sende-Puffer bei geschlossenem Socket\r\n"), RemoteServerSocketBufUsed);
-				}
-			}
-		RemoteServerSocketBufUsed = 0;
-		StartKurzTimer(&RemoteServerActionTimer);
-		} // 
-	} // RemoteServerSendBufferIfNotEmpty()
-	
-
-//! RemoteServer bearbeiten.
-//---------------------------------------------------------------------------
-//! Aufgaben:
-//!  - Verbindung zum RemoteServer herstellen wenn aktiv und Verbindungszustand "Leerlauf"
-//!  - Verbindung zum RemoteServer trennen wenn nicht mehr benötigt
-//!  - Bei bestehender Verbindung Daten senden und empfangen
-
-
-static void RemoteServerBearbeiten()
-	{
-	// Daten empfangen bei bestehender Verbindung
-	// ------------------------------------------
-	if (RemoteServerLinkSocketHandle != NO_SOCKET_USED)
-		{
-		int InCount = GetBytesInSocketData(RemoteServerLinkSocketHandle);
-		
-		if (InCount > 0 && InCount >= SocketInBufMax - RemoteServerSocketBufUsed)
-			// InCount > 0 wirg geprüft, da zweiter Vergleich mit unsigned Werten arbeitet.
-			{
-			if (ProtokollAktivFuer(NurFehler)) 
-				{
-				ProtokollierenITelex();
-				ProtokollierenInt_P(PSTR("* RemoteServer Empfang drohender Ueberlauf: Empfang von %d " ), InCount);
-				ProtokollierenInt_P(PSTR("limitiert auf %d\r\n" ), SocketInBufMax - RemoteServerSocketBufUsed);
-				}
-				
-			InCount = SocketInBufMax - RemoteServerSocketBufUsed;
-			}
-		
-		if (InCount > 0)
-			{
-			int Res = GetSocketData(RemoteServerLinkSocketHandle, InCount, RemoteServerSocketBuf + RemoteServerSocketBufUsed);
-			
-			if (ProtokollAktivFuer(AuchRegelmaessiges)
-				|| (ProtokollAktivFuer(DatenDetailliert) && RemoteServerSocketBuf[0] != 0))
-				{
-				ProtokollierenITelex();
-				ProtokollierenInt_P(PSTR("RemoteServer Empfang: (%d/" ), InCount);
-				ProtokollierenInt_P(PSTR("%d)"), Res);
-				if (Res > 0)
-					ProtokollierenPuffer(RemoteServerSocketBuf + RemoteServerSocketBufUsed, Res);
-				ProtokollierenInt_P(PSTR(" --> BufUsed %u\r\n"), RemoteServerSocketBufUsed + Res);
-				}		
-				
-			if (Res > 0)
-				{
-				RemoteServerSocketBufUsed += Res;
-				}
-			}
-		}
-
-	// Empfangene Daten auswerten
-	// --------------------------
-	if (RemoteServerSocketBufUsed > 0)
-		{
-		int BytesProcessed = 0;
-
-		switch (RemoteServerSocketBuf[0])
-			{
-			case ITELEXC_REMOTE_CONFIRM:
-				if (RemoteServerLinkStatus == RemServStarting)
-					RemoteServerLinkStatus = RemServConnected;
-				StartKurzTimer(&RemoteServerCheckTimer);
-				if (RemoteServerSocketBufUsed > 1)
-					BytesProcessed = RemoteServerSocketBuf[1] + 2;
-				else
-					BytesProcessed = 1;
-				// TODO? process additional data?
-				FalschGeheimzahlZaehler = 0;
-				if (RemoteServerErrorMessageSent)
-					{
-					Diagnoseausgabe_P(ISTR(TeilnehmerServerWiederErreichbar, LokaleSprache), 1);	
-					RemoteServerErrorMessageSent = false;
-					}
-				StartLangTimer(&RemoteServerErrorMessageDelay);
-				break;
-				
-			case ITELEXC_REMOTE_CALL:
-				if (iTelexSocketMode == SocketIdle && Modus == ModRuhe)
-					{ // alles in Ruhezustend, jetzt geht's richtig los... 
-					if (ProtokollAktivFuer(AblaufInfo))
-						{
-						ProtokollierenITelex_P(PSTR("RemoteServer hat Verbindungswunsch geschickt, wird angenommen:\r\n"));
-						}
-				
-					// Bestätigung senden:
-					RemoteServerSocketBuf[0] = ITELEXC_REMOTE_CALLACCEPT;
-					RemoteServerSocketBuf[1] = 0; // keine Daten
-					RemoteServerSocketBufUsed = 2;
-					RemoteServerSendBufferIfNotEmpty();
-					
-					// Socket 'übergeben':
-					iTelexSocketHandle = RemoteServerLinkSocketHandle;
-					RemoteServerLinkSocketHandle = NO_SOCKET_USED;
-					RemoteServerLinkStatus = RemServNotConnected; // da der Socket 'übergeben' wurde
-
-					KommendeVerbindungInitialisieren(); 
-						// alles initialisieren, was mit der ankommenden Verbindung zu tun hat.
-						
-					return; // Fertig!
-					}
-				else
-					{ // besetzt o.ä. senden, da Verbindung nicht angenommen werden kann.
-					if (ProtokollAktivFuer(AblaufInfo))
-						{
-						ProtokollierenITelex_P(PSTR("RemoteServer hat Verbindungswunsch geschickt, wird abgewiesen:\r\n"));
-						}
-				
-					// Abweisund senden.
-					RemoteServerSocketBuf[0] = ITELEXC_STOP;
-					RemoteServerSocketBuf[1] = 3; // für occ
-					RemoteServerSocketBuf[2] = 'o'; 
-					RemoteServerSocketBuf[3] = 'c'; 
-					RemoteServerSocketBuf[4] = 'c'; 
-					RemoteServerSocketBufUsed = 5;
-					}
-					
-				break;
-				
-			case ITELEXC_NULL:
-				StartKurzTimer(&RemoteServerCheckTimer);
-				StartLangTimer(&RemoteServerErrorMessageDelay);
-				if (RemoteServerSocketBufUsed > 1)
-					BytesProcessed = RemoteServerSocketBuf[1] + 2;
-				else
-					BytesProcessed = 1;
-				break;
-				
-			case ITELEXC_STOP:
-				FalschGeheimzahlWurdeGemeldet();
-				// kein break, weiter wie bei ENDE
-			
-			case ITELEXC_ENDE: // Remote Server will nicht mehr...
-				if (ProtokollAktivFuer(AblaufInfo))
-					{
-					ProtokollierenITelex_P(PSTR("* RemoteServer hat Ende-Befehl geschickt\r\n"));
-					}
-				BytesProcessed = RemoteServerSocketBufUsed;
-				CloseTCPSocket(RemoteServerLinkSocketHandle);
-				RemoteServerLinkSocketHandle = NO_SOCKET_USED;
-				StartKurzTimer(&RemoteServerActionTimer); // damit Wiederaufbau verzögert wird.
-				RemoteServerLinkStatus = RemServNotConnected;
-				RemoteServerUseAnotherOne();
-				break;
-				
-			default:
-				if (ProtokollAktivFuer(NurFehler))
-					{
-					ProtokollierenITelex_P(PSTR("! RemoteServer Ungueltiges Telegramm empfangen:" ));
-					ProtokollierenPuffer(RemoteServerSocketBuf, RemoteServerSocketBufUsed);
-					Protokollieren_P(PSTR(" --> wird verworfen\r\n"));
-					}
-				BytesProcessed = RemoteServerSocketBufUsed;
-				break;
-				
-			} // switch (RemoteServerSocketBuf[0])
-			
-		if (BytesProcessed >= RemoteServerSocketBufUsed)
-			RemoteServerSocketBufUsed = 0; // Puffer ist komplett bearbeitet
-		else if (BytesProcessed > 0)
-			{ // Puffer ist nur TEILWEISE bearbeitet
-			RemoteServerSocketBufUsed -= BytesProcessed;
-			memmove(RemoteServerSocketBuf, RemoteServerSocketBuf + BytesProcessed, RemoteServerSocketBufUsed);
-			}
-		
-		} // if (RemoteServerSocketBufUsed > 0) <-- das sind die empfangenen Daten
-
-	// Verbindungsabbau des Servers detektieren
-	// ----------------------------------------
-	if (RemoteServerLinkSocketHandle != NO_SOCKET_USED 
-		&& CheckSocketState(RemoteServerLinkSocketHandle) == SOCKET_NOT_USE)
-		{
-		if (ProtokollAktivFuer(AblaufInfo))
-			{
-			if (RemoteServerLinkStatus == RemServDisconnecting)
-				ProtokollierenITelex_P(PSTR("RemoteServer hat Socket korrekt geschlossen.\r\n"));
-			else
-				{
-				ProtokollierenITelex_P(PSTR("* RemoteServer hat Socket UNGEPLANT geschlossen.\r\n"));
-				RemoteServerUseAnotherOne();
-				}
-			}
-		RemoteServerLinkSocketHandle = NO_SOCKET_USED;
-		RemoteServerLinkStatus = RemServNotConnected;
-		StartKurzTimer(&RemoteServerActionTimer);
-		RemoteServerSocketBufUsed = 0; // ggf. noch vorhandener Pufferinhalt verwerfen.
-		}
-
-	// Timeout prüfen
-	// --------------
-	if ((RemoteServerLinkStatus == RemServConnected && KurzTimerVal(&RemoteServerCheckTimer) >= 35 * KurzTimerFreq)
-		|| (RemoteServerLinkStatus == RemServStarting && KurzTimerVal(&RemoteServerCheckTimer) >= 25 * KurzTimerFreq))
-		{
-		RemoteServerLinkStatus = RemServSendStop; // Ende und dann trennen.
-		}
-	else if (RemoteServerSocketBufUsed > 0)
-		return; // auf weitere Daten warten, da ein unvollständiges Telegramm empfangen wurde. Aber nur, wenn es keinen Timeout gegeben hat.
-		
-	// Verbindung abbauen wenn nicht (mehr) benötigt
-	// ---------------------------------------------
-	if (Modus != ModRuhe || !RemoteServerActive || RemoteServerLinkStatus == RemServSendStop)
-		{
-		if (RemoteServerLinkStatus != RemServNotConnected && 
-		    RemoteServerLinkStatus != RemServDisconnecting)
-			{
-			if (ProtokollAktivFuer(AblaufInfo))
-				{
-				ProtokollierenITelex_P(PSTR("RemoteServer sende Ende\r\n"));
-				}
-				
-			if (Modus == ModRuhe || !RemoteServerActive)
-				{ // Nicht mehr über den Remote-Server verbunden -> nc
-				RemoteServerSocketBuf[0] = ITELEXC_ENDE;
-				RemoteServerSocketBuf[1] = 0x02;
-				RemoteServerSocketBuf[2] = 'n';
-				RemoteServerSocketBuf[3] = 'c';
-				RemoteServerSocketBufUsed = 4;
-				}
-			else if (Modus == ModDeaktiviert)
-				{ // Abgeschaltet --> abc
-				RemoteServerSocketBuf[0] = ITELEXC_ENDE;
-				RemoteServerSocketBuf[1] = 0x03;
-				RemoteServerSocketBuf[2] = 'a';
-				RemoteServerSocketBuf[3] = 'b';
-				RemoteServerSocketBuf[4] = 's';
-				RemoteServerSocketBufUsed = 5;
-				}
-			else
-				{ // Besetzt --> occ
-				RemoteServerSocketBuf[0] = ITELEXC_ENDE;
-				RemoteServerSocketBuf[1] = 0x03;
-				RemoteServerSocketBuf[2] = 'o';
-				RemoteServerSocketBuf[3] = 'c';
-				RemoteServerSocketBuf[4] = 'c';
-				RemoteServerSocketBufUsed = 5;
-				}
-				
-			RemoteServerLinkStatus = RemServDisconnecting;
-			// KEIN Wechsel des Servers!
-
-			StartKurzTimer(&RemoteServerActionTimer);
-			StartKurzTimer(&RemoteServerCheckTimer);
-			
-			RemoteServerReconnectTimerEnd = 3 * KurzTimerFreq; // 3 seconds
-			}
-		
-		if (RemoteServerLinkStatus == RemServNotConnected)
-			{ // wenn die Verbindung gewollt nicht genutzt wird, alle Timer rücksetzen
-			StartKurzTimer(&RemoteServerActionTimer);
-			StartKurzTimer(&RemoteServerCheckTimer);
-			StartLangTimer(&RemoteServerErrorMessageDelay);
-			}
-			
-		} // if Modus != ModRuhe || !RemoteServerActive || Status == RemServSendStop
-		
-	// Verbindung aufbauen wenn sinnvoll
-	// ---------------------------------
-	if (Modus == ModRuhe 
-		&& RemoteServerActive 
-		&& RemoteServerLinkStatus == RemServNotConnected 
-		&& KurzTimerVal(&RemoteServerActionTimer) >= RemoteServerReconnectTimerEnd)
-		{
-		// because of two return statements below handling errors the printout of the 
-		// diagnostic message is done here.
-		if (!RemoteServerErrorMessageSent && LangTimerVal(&RemoteServerErrorMessageDelay) >= 10 * LangTimerMinuteFaktor)
-			{
-			Diagnoseausgabe_P(ISTR(KeinTeilnehmerServerErreichbar, LokaleSprache), 1);	
-			RemoteServerErrorMessageSent = true;
-			}
-		
-		long RemoteServerIP;
-	
-		// TODO umstellen auf eine allgemeinere "Server-Verbinden-Funktion"
-		
-		RemoteServerIP = strtoip(TeilnehmerServerAdresse[RemoteServerAddressIndex]);	// Annahme: eine IP-Adresse angegeben
-
-		if (RemoteServerIP == 0) // ist es doch eine Hostname?
-			RemoteServerIP = DNS_ResolveName(TeilnehmerServerAdresse[RemoteServerAddressIndex]); 
-		
-		if (RemoteServerIP == -1)
-			{
-			if (ProtokollAktivFuer(NurFehler))
-				{
-				ProtokollierenITelex_P(PSTR("! Remote Server Hostname "));
-				Protokollieren(TeilnehmerServerAdresse[RemoteServerAddressIndex]);
-				Protokollieren_P(PSTR(" unbekannt\r\n"));
-				}
-			RemoteServerLinkSocketHandle = NO_SOCKET_USED;
-			RemoteServerUseAnotherOne();
-			StartKurzTimer(&RemoteServerActionTimer); 
-			return; // nichts mehr machbar hier.
-			}
-			
-		RemoteServerLinkSocketHandle = Connect2IP(RemoteServerIP, RemoteServerPort); 
-		
-		StartKurzTimer(&RemoteServerActionTimer); // erst nach dem Connect starten, damit der 5 sekunden-Timeout nicht mit gemessen wird.
-		
-		if (RemoteServerLinkSocketHandle == SOCKET_ERROR)
-			{ // Verbindung konnte nicht aufgebaut werden
-			if (ProtokollAktivFuer(NurFehler))
-				{
-				ProtokollierenITelex_P(PSTR("! Remote Server "));
-				Protokollieren(TeilnehmerServerAdresse[RemoteServerAddressIndex]);
-				Protokollieren_P(PSTR(" konnte nicht geoeffnet werden\r\n"));
-				}
-			RemoteServerLinkSocketHandle = NO_SOCKET_USED;
-			RemoteServerUseAnotherOne();
-			return; // nichts mehr machbar hier.
-			}
-			
-		if (ProtokollAktivFuer(AblaufInfo))
-			{
-			ProtokollierenITelex_P(PSTR("Remote Server "));
-			Protokollieren(TeilnehmerServerAdresse[RemoteServerAddressIndex]);
-			Protokollieren_P(PSTR(" erfolgreich geoeffnet\r\n"));
-			}
-		
-		RemoteServerSocketBuf[0] = ITELEXC_REMOTE_CONNECT;
-		RemoteServerSocketBuf[1] = 0x06; // 4 Byte eigene Nummer und 2 Byte Geheimzahl
-		*((uint32_t *)(RemoteServerSocketBuf+2)) = NetzRufnummer; 
-		*((uint16_t *)(RemoteServerSocketBuf+6)) = Geheimzahl;
-		RemoteServerSocketBufUsed = 8;
-
-		RemoteServerLinkStatus = RemServStarting;
-
-		StartKurzTimer(&RemoteServerCheckTimer);
-		RemoteServerReconnectTimerEnd = 3 * KurzTimerFreq; 
-			// bei erfolgreichem Verbinden sollte der nächste Wiederaufbau nicht so schnell nötig sein.
-		
-		} // if (ModRuhe && RemoteServerActive && RemServNotConnected && RemoteServerActionTimer >= RemoteServerReconnectTimerEnd)
-	
-	// Lebenszeichen
-	// -------------
-	if (RemoteServerLinkStatus == RemServConnected 
-		&& RemoteServerSocketBufUsed == 0 
-		&& KurzTimerVal(&RemoteServerActionTimer) >= 15 * KurzTimerFreq)
-		{
-		RemoteServerSocketBuf[0] = ITELEXC_NULL;
-		RemoteServerSocketBuf[1] = 0; // keine Daten
-		RemoteServerSocketBufUsed = 2;
-		}
-	
-	// Daten senden bei Bedarf
-	// -----------------------
-	RemoteServerSendBufferIfNotEmpty();
-	
-	// Socket aktiv schließen wenn Ruhe eingekehrt
-	// -------------------------------------------
-	if (RemoteServerLinkStatus == RemServDisconnecting && KurzTimerVal(&RemoteServerActionTimer) > 3 * KurzTimerFreq)
-		{
-		CloseTCPSocket(RemoteServerLinkSocketHandle);
-		RemoteServerLinkSocketHandle = NO_SOCKET_USED;
-		RemoteServerLinkStatus = RemServNotConnected;
-		StartKurzTimer(&RemoteServerActionTimer);
-		}
-
-	} // RemoteServerBearbeiten()
 
 
 //! i-Telex Socket bearbeiten.
@@ -3592,7 +2935,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 				
 				if (i + 2 + len <= SocketInBufUsed && PufferAnzahl(&SendePuffer) + len < MaxPuffer)
 					{ // Baudot-Code-Block ist vollständig UND noch entsprechend Platz im Sendepuffer
-					if (ProtokollLevel == DatenKurz) // Datenmengen protokollieren
+					if (ProtokollAktivGenauFuer(DatenKurz)) // Datenmengen protokollieren
 						{
 						ProtokollierenITelex();
 						ProtokollierenInt_P(PSTR("EmpfB %16d" ), PufferAnzahl(&SendePuffer));
@@ -3828,7 +3171,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 		else
 			SocketInBufUsed = 0;
 			
-		if (ProtokollLevel == DatenKurz && AnzAsciiEmpf > 0) // Datenmengen protokollieren
+		if (ProtokollAktivGenauFuer(DatenKurz) && AnzAsciiEmpf > 0) // Datenmengen protokollieren
 			{
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("EmpfA %16d" ), 
@@ -3876,7 +3219,7 @@ static void ITelexDatenVerarbeiten()
 			if (len > 50)
 				len = 50; // für alte i-Telex Versionen mit 50 Byte Puffer in "SendePuffer"
 				
-			if (ProtokollLevel == DatenKurz) // Datenmengen
+			if (ProtokollAktivGenauFuer(DatenKurz)) // Datenmengen
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("SendB %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
@@ -3960,7 +3303,7 @@ static void AsciiDatenVerarbeiten()
 				}
 			}
 
-		if (ProtokollLevel == DatenKurz && ProtAnz > 0) // Datenmengen
+		if (ProtokollAktivGenauFuer(DatenKurz) && ProtAnz > 0) // Datenmengen
 			{
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("SendA %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
@@ -4790,6 +4133,183 @@ static void PrintServSocketLogTabEntry()
 	}
 					
 
+/** Process one cycle of the self-call reachability check.
+ *
+ *  The caller must only invoke this while dynamic IP registration is active
+ *  and the configured subscriber number is valid. Keeping that policy in the
+ *  caller preserves the existing ordering relative to dynamic IP updates.
+ */
+static inline __attribute__((always_inline)) void ProcessSelfCall(void)
+	{
+	if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufSocketHandle == NO_SOCKET_USED && SelbstAnrufPeriode > 0)
+		{
+		if (DynIP_Phase != DynIP_Bestaetigt && DynIP_Phase != DynIP_Unbestaetigt)
+			StartKurzTimer(&SelbstAnrufTimer);
+
+		if (Modus != ModRuhe && Modus != ModDeaktiviert)
+			StartKurzTimer(&SelbstAnrufTimer);
+
+		if (iTelexSocketHandle != NO_SOCKET_USED
+			|| TeilnehmerServerSocket != NO_SOCKET_USED
+			|| DiagnosePuffer[0] != '\0')
+			StartKurzTimer(&SelbstAnrufTimer);
+
+		if (KurzTimerVal(&SelbstAnrufTimer) > SelbstAnrufEndzeit)
+			{ // Selbst-Anruf starten
+			if (NetzEigeneIP == 0)
+				SelbstAnrufPhase = SelbstAnrufSperre;
+			else
+				{ // NetzEigeneIP gültig
+				SelbstAnrufSendePruefwert = ITelexThreadCount ^ Timer0CallbackCount;
+				if (SelbstAnrufSendePruefwert == 0)
+					SelbstAnrufSendePruefwert = 1;
+				SelbstAnrufEmpfangPruefwert = 0; // als Zeichen, dass noch nichts empfangen wurde.
+
+				ZeitUeberwachungStart(&SelbstAnrufZeitUeberwachung);
+
+				SelbstAnrufSocketHandle = Connect2IP(NetzEigeneIP, NetzPort);
+				if (SelbstAnrufSocketHandle == SOCKET_ERROR)
+					{
+					// Verbindung konnte nicht aufgebaut werden
+					if (ProtokollAktivFuer(NurFehler))
+						ProtokollierenITelex_P(PSTR("! Selbst-Anruf oeffnen des Socket VERSAGT.\r\n"));
+
+					SelbstAnrufSocketHandle = NO_SOCKET_USED;
+					SelbstAnrufFehlerZaehler++;
+					ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
+					}
+				else
+					{ // Öffnen erfolgreich.
+					char Buf[10];
+					Buf[0] = ITELEXC_SELBSTANRUF;
+					Buf[1] = 2; // 16 Bit-Wert
+					Buf[2] = high(SelbstAnrufSendePruefwert);
+					Buf[3] = low(SelbstAnrufSendePruefwert);
+					SelbstAnrufPhase = SelbstAnrufWarteEmpfang;
+					if (PutSocketData_RPE(SelbstAnrufSocketHandle, 4, Buf, RAM) == 4)
+						{
+						if (ProtokollAktivFuer(DatenKurz))
+							{
+							if (!ProtokollAktivFuer(AuchRegelmaessiges))
+								ProtokollRegelblockInit();
+							ProtokollRegelblockStart();
+							ProtokollierenITelex();
+							ProtokollierenInt_P(PSTR("Selbst-Anruf Daten ueber Socket #%d gesendet.\r\n"), SelbstAnrufSocketHandle);
+							ProtokollRegelblockEnde();
+							}
+						}
+					else
+						{
+						if (ProtokollAktivFuer(NurFehler))
+							ProtokollierenITelex_P(PSTR("! Selbst-Anruf Daten-Sendung VERSAGT.\r\n"));
+						SelbstAnrufFehlerZaehler++;
+						SelbstAnrufPhase = SelbstAnrufSchliessen;
+						ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
+						}
+					} // Öffnen von NetzEigeneIP erfolgreich.
+
+				StartKurzTimer(&SelbstAnrufTimer);
+				SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x7);
+				} // NetzEigeneIP gültig
+			} // Selbst-Anruf starten
+		} // Selbst-Anruf-Funktion ist aktiv, aber ggf. schlafend
+
+	if (SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
+		{
+		if (SelbstAnrufEmpfangPruefwert != 0)
+			{ // Echo ist angekommen
+			if (SelbstAnrufEmpfangPruefwert == SelbstAnrufSendePruefwert)
+				{ // Richtiges Echo angekommen
+				if (ProtokollAktivFuer(DatenKurz))
+					{
+					ProtokollRegelblockStart();
+					ProtokollierenITelex_P(PSTR("* Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
+					ProtokollRegelblockEnde();
+					if (!ProtokollAktivFuer(AuchRegelmaessiges))
+						ProtokollRegelblockLoeschen();
+					}
+
+				SelbstAnrufFehlerZaehler = 0;
+				SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
+				if (DynIP_Phase == DynIP_Unbestaetigt)
+					{
+					ProtokollierenITelex_P(PSTR("Selbst-Anruf bestaetigt IP Adresse.\r\n"));
+					DynIP_Phase = DynIP_Bestaetigt;
+					}
+				} // Richtiges Echo angekommen
+			else
+				{ // Falsches Echo angekommen
+				if (ProtokollAktivFuer(NurFehler))
+					ProtokollierenITelex_P(PSTR("! Selbst-Anruf FALSCHE Daten empfangen.\r\n"));
+				SelbstAnrufFehlerZaehler++;
+				SelbstAnrufEndzeit = 5 * KurzTimerFreq + Zufallswert(0x37);
+				} // Falsches Echo angekommen
+			StartKurzTimer(&SelbstAnrufTimer);
+			SelbstAnrufPhase = SelbstAnrufSchliessen;
+			} // Echo ist angekommen
+
+		else if (Modus != ModRuhe && Modus != ModDeaktiviert && Modus != ModKommendVerbVorstufe)
+			{ // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
+			if (ProtokollAktivFuer(NurFehler))
+				ProtokollierenITelex_P(PSTR("! Selbst-Anruf ABGEBROCHEN wegen Modus-Wechsel.\r\n"));
+			StartKurzTimer(&SelbstAnrufTimer);
+			SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
+			SelbstAnrufPhase = SelbstAnrufSchliessen;
+			ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
+			} // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
+
+		else if (KurzTimerVal(&SelbstAnrufTimer) > 5 * KurzTimerFreq)
+			{ // Timeout nach 5 Sekunden
+			if (ProtokollAktivFuer(NurFehler))
+				ProtokollierenITelex_P(PSTR("! Selbst-Anruf KEIN Echo empfangen.\r\n"));
+			SelbstAnrufFehlerZaehler++;
+			StartKurzTimer(&SelbstAnrufTimer);
+			SelbstAnrufEndzeit = 10 * KurzTimerFreq + Zufallswert(0x37);
+			SelbstAnrufPhase = SelbstAnrufSchliessen;
+			ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
+			} // Timeout nach 5 Sekunden
+
+		} // if (SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
+
+	if (SelbstAnrufPhase == SelbstAnrufSchliessen)
+		{
+		CloseTCPSocket(SelbstAnrufSocketHandle);
+		SelbstAnrufSocketHandle = NO_SOCKET_USED;
+		SelbstAnrufPhase = SelbstAnrufRuhe;
+		StartKurzTimer(&SelbstAnrufTimer);
+		}
+
+	if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufFehlerZaehler >= 3 && DynIP_Phase == DynIP_Bestaetigt)
+		{ // nach drei Fehlversuchen Server-Aktulisierung starten
+		DynIP_Phase = DynIP_Erneuern; // sofort erneuern.
+		SelbstAnrufPhase = SelbstAnrufSperre;
+		}
+
+	else if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufFehlerZaehler >= 8 && DynIP_Phase == DynIP_Unbestaetigt)
+		{ // nach acht Fehlversuchen Selbst-Anruf nicht mehr durchführen.
+		SelbstAnrufPeriode = 0;
+		Diagnoseausgabe_P(ISTR(SelbstAnrufMehrfachVersagt, LokaleSprache), 1);
+		SelbstAnrufPhase = SelbstAnrufSperre;
+		}
+	}
+
+
+/** Recover if the outgoing self-call socket was closed by the TCP layer. */
+static inline __attribute__((always_inline)) void ProcessSelfCallSocketTimeout(void)
+	{
+	if (SelbstAnrufSocketHandle != NO_SOCKET_USED && CheckSocketState(SelbstAnrufSocketHandle) == SOCKET_NOT_USE)
+		{
+		if (ProtokollAktivFuer(NurFehler))
+			ProtokollierenITelex_P(PSTR("* Selbst-Anruf-Socket durch Timeout geschlossen!\r\n" ));
+		CloseTCPSocket(SelbstAnrufSocketHandle);
+		SelbstAnrufSocketHandle = NO_SOCKET_USED;
+		SelbstAnrufPhase = SelbstAnrufRuhe;
+		StartKurzTimer(&SelbstAnrufTimer);
+		SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq + Zufallswert(0x7);
+		}
+	}
+
+
 //! Der iTelex-client an sich.
 //------------------------------------------------------------------------------------------------------------
 //! Diese Funktion wird zyklisch aufgerufen und hat folgende Aufgaben:
@@ -5594,7 +5114,7 @@ void itelex_thread()
 	// Verbindung zu einem abgesetzten Server bearbeiten
 	// ======================================================================
 	
-	RemoteServerBearbeiten();
+	CentralexProcess();
 	
 	// ======================================================================
 	// Dynamische IP-Aktualisierung / Selbstanruf starten
@@ -5641,172 +5161,14 @@ void itelex_thread()
 			StartLangTimer(&DynIPAktualisierungTimer);
 			} // Zeit für Aktualsierung UND keine Verbindung laufend
 		
-		if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufSocketHandle == NO_SOCKET_USED && SelbstAnrufPeriode > 0)
-			{
-			if (DynIP_Phase != DynIP_Bestaetigt && DynIP_Phase != DynIP_Unbestaetigt)
-				StartKurzTimer(&SelbstAnrufTimer);
-
-			if (Modus != ModRuhe && Modus != ModDeaktiviert)
-				StartKurzTimer(&SelbstAnrufTimer);
-
-			if (iTelexSocketHandle != NO_SOCKET_USED 
-				|| TeilnehmerServerSocket != NO_SOCKET_USED
-				|| DiagnosePuffer[0] != '\0')
-				StartKurzTimer(&SelbstAnrufTimer);
-				
-			if (KurzTimerVal(&SelbstAnrufTimer) > SelbstAnrufEndzeit)
-				{ // Selbst-Anruf starten
-				if (NetzEigeneIP == 0)
-					SelbstAnrufPhase = SelbstAnrufSperre;
-				else
-					{ // NetzEigeneIP gültig
-					SelbstAnrufSendePruefwert = ITelexThreadCount ^ Timer0CallbackCount;
-					if (SelbstAnrufSendePruefwert == 0)
-						SelbstAnrufSendePruefwert = 1;
-					SelbstAnrufEmpfangPruefwert = 0; // als Zeichen, dass noch nichts empfangen wurde.
-					
-					ZeitUeberwachungStart(&SelbstAnrufZeitUeberwachung);
-					
-					SelbstAnrufSocketHandle = Connect2IP(NetzEigeneIP, NetzPort); 
-					if (SelbstAnrufSocketHandle == SOCKET_ERROR)
-						{ 
-						// Verbindung konnte nicht aufgebaut werden
-						if (ProtokollAktivFuer(NurFehler))
-							ProtokollierenITelex_P(PSTR("! Selbst-Anruf oeffnen des Socket VERSAGT.\r\n"));
-
-						SelbstAnrufSocketHandle = NO_SOCKET_USED;
-						SelbstAnrufFehlerZaehler++;
-						ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
-						}
-					else
-						{ // Öffnen erfolgreich.
-						char Buf[10];
-						Buf[0] = ITELEXC_SELBSTANRUF;
-						Buf[1] = 2; // 16 Bit-Wert
-						Buf[2] = high(SelbstAnrufSendePruefwert);
-						Buf[3] = low(SelbstAnrufSendePruefwert);
-						SelbstAnrufPhase = SelbstAnrufWarteEmpfang;
-						if (PutSocketData_RPE(SelbstAnrufSocketHandle, 4, Buf, RAM) == 4)
-							{
-							if (ProtokollAktivFuer(DatenKurz))
-								{
-								if (!ProtokollAktivFuer(AuchRegelmaessiges))
-									ProtokollRegelblockInit();
-								ProtokollRegelblockStart();
-								ProtokollierenITelex();
-								ProtokollierenInt_P(PSTR("Selbst-Anruf Daten ueber Socket #%d gesendet.\r\n"), SelbstAnrufSocketHandle);
-								ProtokollRegelblockEnde();
-								}
-							}
-						else
-							{
-							if (ProtokollAktivFuer(NurFehler))
-								ProtokollierenITelex_P(PSTR("! Selbst-Anruf Daten-Sendung VERSAGT.\r\n"));
-							SelbstAnrufFehlerZaehler++;
-							SelbstAnrufPhase = SelbstAnrufSchliessen;
-							ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
-							}
-						} // Öffnen von NetzEigeneIP erfolgreich.
-						
-					StartKurzTimer(&SelbstAnrufTimer);
-					SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x7);
-					} // NetzEigeneIP gültig
-				} // Selbst-Anruf starten
-			} // Selbst-Anruf-Funktion ist aktiv, aber ggf. schlafend
-				
-		if (SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
-			{
-			if (SelbstAnrufEmpfangPruefwert != 0)
-				{ // Echo ist angekommen
-				if (SelbstAnrufEmpfangPruefwert == SelbstAnrufSendePruefwert)
-					{ // Richtiges Echo angekommen
-					if (ProtokollAktivFuer(DatenKurz))
-						{
-						ProtokollRegelblockStart();
-						ProtokollierenITelex_P(PSTR("* Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
-						ProtokollRegelblockEnde();
-						if (!ProtokollAktivFuer(AuchRegelmaessiges))
-							ProtokollRegelblockLoeschen();
-						}
-					
-					SelbstAnrufFehlerZaehler = 0;
-					SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
-					if (DynIP_Phase == DynIP_Unbestaetigt)
-						{
-						ProtokollierenITelex_P(PSTR("Selbst-Anruf bestaetigt IP Adresse.\r\n"));
-						DynIP_Phase = DynIP_Bestaetigt;
-						}
-					} // Richtiges Echo angekommen
-				else
-					{ // Falsches Echo angekommen
-					if (ProtokollAktivFuer(NurFehler))
-						ProtokollierenITelex_P(PSTR("! Selbst-Anruf FALSCHE Daten empfangen.\r\n"));
-					SelbstAnrufFehlerZaehler++;
-					SelbstAnrufEndzeit = 5 * KurzTimerFreq + Zufallswert(0x37);					
-					} // Falsches Echo angekommen
-				StartKurzTimer(&SelbstAnrufTimer);
-				SelbstAnrufPhase = SelbstAnrufSchliessen;
-				} // Echo ist angekommen
-				
-			else if (Modus != ModRuhe && Modus != ModDeaktiviert && Modus != ModKommendVerbVorstufe)
-				{ // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
-				if (ProtokollAktivFuer(NurFehler))
-					ProtokollierenITelex_P(PSTR("! Selbst-Anruf ABGEBROCHEN wegen Modus-Wechsel.\r\n"));
-				StartKurzTimer(&SelbstAnrufTimer);
-				SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
-				SelbstAnrufPhase = SelbstAnrufSchliessen;
-				ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
-				} // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
-				
-			else if (KurzTimerVal(&SelbstAnrufTimer) > 5 * KurzTimerFreq) 
-				{ // Timeout nach 5 Sekunden
-				if (ProtokollAktivFuer(NurFehler))
-					ProtokollierenITelex_P(PSTR("! Selbst-Anruf KEIN Echo empfangen.\r\n"));
-				SelbstAnrufFehlerZaehler++;
-				StartKurzTimer(&SelbstAnrufTimer);
-				SelbstAnrufEndzeit = 10 * KurzTimerFreq + Zufallswert(0x37);					
-				SelbstAnrufPhase = SelbstAnrufSchliessen;
-				ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
-				} // Timeout nach 5 Sekunden
-				
-			} // if (SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
-
-		if (SelbstAnrufPhase == SelbstAnrufSchliessen) 
-			{
-			CloseTCPSocket(SelbstAnrufSocketHandle);
-			SelbstAnrufSocketHandle = NO_SOCKET_USED;
-			SelbstAnrufPhase = SelbstAnrufRuhe;
-			StartKurzTimer(&SelbstAnrufTimer);
-			}
-			
-		if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufFehlerZaehler >= 3 && DynIP_Phase == DynIP_Bestaetigt)
-			{ // nach drei Fehlversuchen Server-Aktulisierung starten
-			DynIP_Phase = DynIP_Erneuern; // sofort erneuern.
-			SelbstAnrufPhase = SelbstAnrufSperre;
-			}
-			
-		else if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufFehlerZaehler >= 8 && DynIP_Phase == DynIP_Unbestaetigt)
-			{ // nach acht Fehlversuchen Selbst-Anruf nicht mehr durchführen.
-			SelbstAnrufPeriode = 0;
-			Diagnoseausgabe_P(ISTR(SelbstAnrufMehrfachVersagt, LokaleSprache), 1);
-			SelbstAnrufPhase = SelbstAnrufSperre;
-			}
+		ProcessSelfCall();
 			
 		if (LangTimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit && DynIP_Phase != DynIP_LaeuftGerade)
 			DynIP_Phase = DynIP_Erneuern;
 
 		} // if (DynIP_Phase != DynIP_Inaktiv && NetzRufnummer >= GlobRufnrMinWert)
 		
-	if (SelbstAnrufSocketHandle != NO_SOCKET_USED && CheckSocketState(SelbstAnrufSocketHandle) == SOCKET_NOT_USE)
-		{
-		if (ProtokollAktivFuer(NurFehler))
-			ProtokollierenITelex_P(PSTR("* Selbst-Anruf-Socket durch Timeout geschlossen!\r\n" ));
-		CloseTCPSocket(SelbstAnrufSocketHandle);
-		SelbstAnrufSocketHandle = NO_SOCKET_USED;
-		SelbstAnrufPhase = SelbstAnrufRuhe;
-		StartKurzTimer(&SelbstAnrufTimer);
-		SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq + Zufallswert(0x7);
-		}
+	ProcessSelfCallSocketTimeout();
 			
 	// ======================================================================
 	// Antworten vom Teilnehmer-Server auswerten
@@ -6498,14 +5860,7 @@ void itelex_cgi_debug( void * pStruct )
 	PRINTVAL(SocketAnzahlZeichenQuittiert);
 	PRINTVAL(SocketAnzahlZeichenEmpfangen);
 	
-	PRINTVAL(RemoteServerActive);
-	PRINTVAL(RemoteServerLinkStatus);
-	PRINTVAL(RemoteServerLinkSocketHandle);
-	PRINTVAL(RemoteServerSocketBufUsed); // sollte immer 0 sein
-	PRINTVAL(KurzTimerVal(&RemoteServerActionTimer));
-	PRINTVAL(RemoteServerReconnectTimerEnd);
-	PRINTVAL(KurzTimerVal(&RemoteServerCheckTimer));
-	PRINTVAL(RemoteServerAddressIndex);
+	CentralexPrintDiagnostics();
 	
 	PRINTVAL(DynIP_Phase);
 	PRINTVAL(LangTimerVal(&DynIPAktualisierungTimer));
@@ -7215,7 +6570,7 @@ void itelex_cgi_config_intern_konfiguration(void *pStruct)
 				
 				// ...probehalber dekodieren...
 				int16_t res;
-				res = BaudrateErmitteln(0, Buf); // 0 ist eine unerlaubte Nebenstellen-Nummer, 
+				res = DetermineBaudRate(0, Buf); // 0 ist eine unerlaubte Nebenstellen-Nummer, 
 					// daher muss der "Code-String" Buf bis zum Ende überprüft werden.
 
 				if (res == 1)
@@ -7434,9 +6789,9 @@ const PROGMEM char NetzRufnummer_P[] = "NETZRUFNR";
 const PROGMEM char Geheimzahl_P[] = "PIN";
 const PROGMEM char DynIPAktiv_P[] = "DYNIPAKTIV";
 const PROGMEM char NetzPort_P[] = "NETZPORT";
-const PROGMEM char RemoteServerPort_P[] = "REMSERVPORT";
+const PROGMEM char CentralexPortConfigKey_P[] = "REMSERVPORT"; // ehem. RemoteServerPort_P
 const PROGMEM char SelbstAnrufPeriode_P[] = "SELBSTANPER";
-const PROGMEM char RemoteServerNutzen_P[] = "REMSERVAKTIV";
+const PROGMEM char CentralexEnabledConfigKey_P[] = "REMSERVAKTIV"; // ehem. RemoteServerNutzen_P
 
 #endif // ITELEX_ANSCHLUSS
 
@@ -7491,7 +6846,7 @@ void itelex_cgi_config_extern(void *pStruct)
 		CgiFormInputFieldULong_P(ISTR(OeffentlichePortNr, Sprache), NetzPort_P, 6, NetzPort);
 		CgiFormCheckbox_P(ISTR(DynIPAktiv, Sprache), DynIPAktiv_P, DynIP_Phase != DynIP_Inaktiv);
 		CgiFormInputFieldULong_P(ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, 3, SelbstAnrufPeriode);
-		CgiFormCheckbox_P(ISTR(RemoteServerNutzen, Sprache), RemoteServerNutzen_P, RemoteServerActive);
+		CgiFormCheckbox_P(ISTR(RemoteServerNutzen, Sprache), CentralexEnabledConfigKey_P, CentralexIsEnabled());
 		#endif // ITELEX_ANSCHLUSS
 		
 		for (i = 0 ; i < ANZ_TEILNEHMER_SERVER ; i++)
@@ -7528,15 +6883,15 @@ void itelex_cgi_config_extern(void *pStruct)
 		SelbstAnrufPeriode = CgiCheckULong_P(http_request, ISTR(VerbindungstestPeriode, Sprache), SelbstAnrufPeriode_P, 
 											 SelbstAnrufPeriode, 0, UINT16_MAX, Sprache);
 											
-		if (CgiCheckBool_P(http_request, ISTR(RemoteServerNutzen, Sprache), RemoteServerNutzen_P, RemoteServerActive, Sprache))
+		if (CgiCheckBool_P(http_request, ISTR(RemoteServerNutzen, Sprache), CentralexEnabledConfigKey_P, CentralexIsEnabled(), Sprache))
 			{
 			if (DynIP_Phase == DynIP_Inaktiv) 
-				RemoteServerActive = true;
+				CentralexSetEnabled(true);
 			else
 				printf_P(ISTR(RemoteServerAusschlussDynIP, Sprache));
 			}
 		else
-			RemoteServerActive = false;
+			CentralexSetEnabled(false);
 					
 		#endif //def ITELEX_ANSCHLUSS
 		
@@ -8037,10 +7392,10 @@ void itelex_init1(void)
 	else
 		NetzPort = ITELEX_PORT;
 
-	if (readConfig_P(RemoteServerPort_P, Buf) == 1)
-		RemoteServerPort = atol(Buf);
+	if (readConfig_P(CentralexPortConfigKey_P, Buf) == 1)
+		CentralexSetPort(atol(Buf));
 	else
-		RemoteServerPort = RemoteServerPortDefault;
+		CentralexSetPort(CentralexDefaultPort);
 
 	if (ReadConfigBool(DynIPAktiv_P, false))
 		DynIP_Phase = DynIP_Fehler; 
@@ -8048,10 +7403,10 @@ void itelex_init1(void)
 	else
 		DynIP_Phase = DynIP_Inaktiv;
 	
-	if (ReadConfigBool(RemoteServerNutzen_P, false) && DynIP_Phase == DynIP_Inaktiv) // Ausschluss von DynIP und RemoteServer!
-		RemoteServerActive = true;
+	if (ReadConfigBool(CentralexEnabledConfigKey_P, false) && DynIP_Phase == DynIP_Inaktiv) // Ausschluss von DynIP und RemoteServer!
+		CentralexSetEnabled(true);
 	else
-		RemoteServerActive = false;
+		CentralexSetEnabled(false);
 	
 	if (readConfig_P(SelbstAnrufPeriode_P, Buf) == 1)
 		SelbstAnrufPeriode = atoi(Buf);
@@ -8161,13 +7516,7 @@ void itelex_init1(void)
 
 	ZeitUeberwachungInit(&SelbstAnrufZeitUeberwachung, 1 * KurzTimerFreq);
 
-	RemoteServerLinkSocketHandle = NO_SOCKET_USED;
-	RemoteServerLinkStatus = RemServNotConnected;
-	RemoteServerSocketBufUsed = 0;
-	RemoteServerAddressIndex = 0;
-	RemoteServerReconnectTimerEnd = 0;
-	StartLangTimer(&RemoteServerErrorMessageDelay);
-	RemoteServerErrorMessageSent = false;
+	CentralexInitialize();
 	
 	InitServSocketLog();
 	
@@ -8383,4 +7732,3 @@ void UseEEConfig()
 	
 
 //@}
-

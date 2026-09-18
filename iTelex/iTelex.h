@@ -101,9 +101,6 @@ enum {
 	ITELEX_TLNSERV_PORT = 11811,
 	//!< Der TCP-Port für die Kommunikation mit den Teilnehmer-Servern.
 
-	RemoteServerPortDefault = 49491,
-	//!< Der TCP-Port für die Kommunikation mit dem "RemoteServer" (= "Centralex" = "
-	
 	TlnAdresseMax = 40,
 	//!< maximale Länge der Verbindungsadresse.
 	//!< Nicht ändern, da auch der Datenaustausch mit dem Teilnehmer-Server
@@ -481,6 +478,12 @@ extern uint16_t SocketOutBufUsed; //!< Benutzter Teil des TCP-Sendepuffers
 
 extern uint8_t ProtokollPhase;
 
+extern uint32_t NetzRufnummer;
+
+extern uint16_t Geheimzahl;
+
+extern uint8_t FalschGeheimzahlZaehler;
+
 extern bool TlnBuchOffen;
 
 extern char SocketInBuf[SocketInBufMax+4]; //!< TCP-Empfangspuffer
@@ -502,6 +505,14 @@ extern struct TIME SystemStartZeit;
 // ================================================================
 
 extern void ModusWechsel(TModus neu);
+
+extern void ProtokollierenITelex();
+
+extern void ProtokollierenITelex_P(const char *s);
+
+extern void KommendeVerbindungInitialisieren();
+
+extern void FalschGeheimzahlWurdeGemeldet();
 
 extern void itelex_init1( void );
 

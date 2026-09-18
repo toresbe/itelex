@@ -15,6 +15,7 @@ TESTS_DIR ?= tests
 ITELEX_MISC_DIR ?= dependencies/itelex-misc
 COMMON_DIR ?= $(ITELEX_MISC_DIR)/Gemeinsam
 AVR_CLIBS_DIR ?= dependencies/avr-clibs
+ITELEX_TRACE_LEVEL ?= 255
 AVR_CLIBS_URL := https://svn.code.sf.net/p/fredslibraries/avr-clibs/
 AVR_CLIBS_REV := 13
 VERSION ?= $(shell git describe --always --dirty --tags 2>/dev/null || echo unknown)
@@ -32,9 +33,9 @@ LOCAL_SOURCES := \
 	hardware/spi/spi_2.c hardware/timer0/timer0.c hardware/led/led_core.c \
 	hardware/memory/xram.c hardware/spi/spi_core.c hardware/gpio/gpio_core.c \
 	hardware/gpio/gpio_out.c hardware/gpio/gpio_in.c hardware/sd_raw/sd_raw.c \
-	iTelex/CgiFormTools.c iTelex/ConfigNtp.c iTelex/eMail.c iTelex/IspMaster.c \
+	iTelex/Centralex.c iTelex/CgiFormTools.c iTelex/ConfigNtp.c iTelex/eMail.c iTelex/IspMaster.c \
 	iTelex/MissbrauchSperre.c iTelex/RamCorrTest.c iTelex/StringTab.c iTelex/SwTwi.c \
-	iTelex/Protokoll.c iTelex/TlnBuch.c iTelex/TlnServer.c iTelex/iTelex.c \
+	iTelex/Parsing.c iTelex/Protokoll.c iTelex/TlnBuch.c iTelex/TlnServer.c iTelex/iTelex.c \
 	system/base64/base64.c system/buffer/fifo.c system/config/eeconfig.c \
 	system/filesystem/byteordering.c system/filesystem/fat.c system/filesystem/filesystem.c \
 	system/filesystem/partition.c system/math/checksum.c system/math/crc8.c system/math/math.c \
@@ -51,22 +52,29 @@ VPATH := $(sort $(dir $(SOURCES)))
 COMMON_CFLAGS := -Os -gdwarf-2 -std=gnu99 -fgnu89-inline -Wall \
 	-funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums \
 	-ffunction-sections -fdata-sections -mrelax \
-	-D__PROG_TYPES_COMPAT__ -DF_CPU=16000000UL \
+	-D__PROG_TYPES_COMPAT__ -DF_CPU=16000000UL -DITELEX_TRACE_LEVEL=$(ITELEX_TRACE_LEVEL) \
 	-I. -I$(COMMON_DIR) -I$(AVR_CLIBS_DIR)
 
 .PHONY: all standard light fastboot bootstrap check-dependencies clean \
-	clean-standard clean-light clean-fastboot clean-test test help
+	clean-standard clean-light clean-fastboot clean-test clean-test-avr \
+	test test-avr help
 
 all: standard light fastboot
 
 help:
-	@echo "Targets: bootstrap, standard, light, fastboot, all, test, clean"
+	@echo "Targets: bootstrap, standard, light, fastboot, all, test, test-avr, clean"
 	@echo "Override AVR_TOOLCHAIN_ROOT to use a non-PATH AVR GCC toolchain."
+	@echo "Override ITELEX_TRACE_LEVEL (default 255) to compile out higher trace levels."
 
 # Host unit tests for the firmware's pure logic. Built by the host compiler,
 # not by avr-gcc, so this target needs no AVR toolchain. See tests/README.md.
 test:
 	$(MAKE) -C $(TESTS_DIR) test
+
+# Integration tests for register-level timing and the software serial path.
+# These need avr-gcc, simavr, libsimavr headers and libelf.
+test-avr: check-dependencies
+	$(MAKE) -C $(TESTS_DIR)/avr test
 
 bootstrap:
 	@git submodule update --init --recursive
@@ -139,4 +147,7 @@ clean-fastboot:
 clean-test:
 	$(MAKE) -C $(TESTS_DIR) clean
 
-clean: clean-standard clean-light clean-fastboot clean-test
+clean-test-avr:
+	$(MAKE) -C $(TESTS_DIR)/avr clean
+
+clean: clean-standard clean-light clean-fastboot clean-test clean-test-avr
