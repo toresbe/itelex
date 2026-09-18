@@ -4096,6 +4096,183 @@ static void PrintServSocketLogTabEntry()
 	}
 					
 
+/** Process one cycle of the self-call reachability check.
+ *
+ *  The caller must only invoke this while dynamic IP registration is active
+ *  and the configured subscriber number is valid. Keeping that policy in the
+ *  caller preserves the existing ordering relative to dynamic IP updates.
+ */
+static inline __attribute__((always_inline)) void ProcessSelfCall(void)
+	{
+	if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufSocketHandle == NO_SOCKET_USED && SelbstAnrufPeriode > 0)
+		{
+		if (DynIP_Phase != DynIP_Bestaetigt && DynIP_Phase != DynIP_Unbestaetigt)
+			StartKurzTimer(&SelbstAnrufTimer);
+
+		if (Modus != ModRuhe && Modus != ModDeaktiviert)
+			StartKurzTimer(&SelbstAnrufTimer);
+
+		if (iTelexSocketHandle != NO_SOCKET_USED
+			|| TeilnehmerServerSocket != NO_SOCKET_USED
+			|| DiagnosePuffer[0] != '\0')
+			StartKurzTimer(&SelbstAnrufTimer);
+
+		if (KurzTimerVal(&SelbstAnrufTimer) > SelbstAnrufEndzeit)
+			{ // Selbst-Anruf starten
+			if (NetzEigeneIP == 0)
+				SelbstAnrufPhase = SelbstAnrufSperre;
+			else
+				{ // NetzEigeneIP gültig
+				SelbstAnrufSendePruefwert = ITelexThreadCount ^ Timer0CallbackCount;
+				if (SelbstAnrufSendePruefwert == 0)
+					SelbstAnrufSendePruefwert = 1;
+				SelbstAnrufEmpfangPruefwert = 0; // als Zeichen, dass noch nichts empfangen wurde.
+
+				ZeitUeberwachungStart(&SelbstAnrufZeitUeberwachung);
+
+				SelbstAnrufSocketHandle = Connect2IP(NetzEigeneIP, NetzPort);
+				if (SelbstAnrufSocketHandle == SOCKET_ERROR)
+					{
+					// Verbindung konnte nicht aufgebaut werden
+					if (ProtokollAktivFuer(NurFehler))
+						ProtokollierenITelex_P(PSTR("! Selbst-Anruf oeffnen des Socket VERSAGT.\r\n"));
+
+					SelbstAnrufSocketHandle = NO_SOCKET_USED;
+					SelbstAnrufFehlerZaehler++;
+					ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
+					}
+				else
+					{ // Öffnen erfolgreich.
+					char Buf[10];
+					Buf[0] = ITELEXC_SELBSTANRUF;
+					Buf[1] = 2; // 16 Bit-Wert
+					Buf[2] = high(SelbstAnrufSendePruefwert);
+					Buf[3] = low(SelbstAnrufSendePruefwert);
+					SelbstAnrufPhase = SelbstAnrufWarteEmpfang;
+					if (PutSocketData_RPE(SelbstAnrufSocketHandle, 4, Buf, RAM) == 4)
+						{
+						if (ProtokollAktivFuer(DatenKurz))
+							{
+							if (!ProtokollAktivFuer(AuchRegelmaessiges))
+								ProtokollRegelblockInit();
+							ProtokollRegelblockStart();
+							ProtokollierenITelex();
+							ProtokollierenInt_P(PSTR("Selbst-Anruf Daten ueber Socket #%d gesendet.\r\n"), SelbstAnrufSocketHandle);
+							ProtokollRegelblockEnde();
+							}
+						}
+					else
+						{
+						if (ProtokollAktivFuer(NurFehler))
+							ProtokollierenITelex_P(PSTR("! Selbst-Anruf Daten-Sendung VERSAGT.\r\n"));
+						SelbstAnrufFehlerZaehler++;
+						SelbstAnrufPhase = SelbstAnrufSchliessen;
+						ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
+						}
+					} // Öffnen von NetzEigeneIP erfolgreich.
+
+				StartKurzTimer(&SelbstAnrufTimer);
+				SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x7);
+				} // NetzEigeneIP gültig
+			} // Selbst-Anruf starten
+		} // Selbst-Anruf-Funktion ist aktiv, aber ggf. schlafend
+
+	if (SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
+		{
+		if (SelbstAnrufEmpfangPruefwert != 0)
+			{ // Echo ist angekommen
+			if (SelbstAnrufEmpfangPruefwert == SelbstAnrufSendePruefwert)
+				{ // Richtiges Echo angekommen
+				if (ProtokollAktivFuer(DatenKurz))
+					{
+					ProtokollRegelblockStart();
+					ProtokollierenITelex_P(PSTR("* Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
+					ProtokollRegelblockEnde();
+					if (!ProtokollAktivFuer(AuchRegelmaessiges))
+						ProtokollRegelblockLoeschen();
+					}
+
+				SelbstAnrufFehlerZaehler = 0;
+				SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
+				if (DynIP_Phase == DynIP_Unbestaetigt)
+					{
+					ProtokollierenITelex_P(PSTR("Selbst-Anruf bestaetigt IP Adresse.\r\n"));
+					DynIP_Phase = DynIP_Bestaetigt;
+					}
+				} // Richtiges Echo angekommen
+			else
+				{ // Falsches Echo angekommen
+				if (ProtokollAktivFuer(NurFehler))
+					ProtokollierenITelex_P(PSTR("! Selbst-Anruf FALSCHE Daten empfangen.\r\n"));
+				SelbstAnrufFehlerZaehler++;
+				SelbstAnrufEndzeit = 5 * KurzTimerFreq + Zufallswert(0x37);
+				} // Falsches Echo angekommen
+			StartKurzTimer(&SelbstAnrufTimer);
+			SelbstAnrufPhase = SelbstAnrufSchliessen;
+			} // Echo ist angekommen
+
+		else if (Modus != ModRuhe && Modus != ModDeaktiviert && Modus != ModKommendVerbVorstufe)
+			{ // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
+			if (ProtokollAktivFuer(NurFehler))
+				ProtokollierenITelex_P(PSTR("! Selbst-Anruf ABGEBROCHEN wegen Modus-Wechsel.\r\n"));
+			StartKurzTimer(&SelbstAnrufTimer);
+			SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
+			SelbstAnrufPhase = SelbstAnrufSchliessen;
+			ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
+			} // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
+
+		else if (KurzTimerVal(&SelbstAnrufTimer) > 5 * KurzTimerFreq)
+			{ // Timeout nach 5 Sekunden
+			if (ProtokollAktivFuer(NurFehler))
+				ProtokollierenITelex_P(PSTR("! Selbst-Anruf KEIN Echo empfangen.\r\n"));
+			SelbstAnrufFehlerZaehler++;
+			StartKurzTimer(&SelbstAnrufTimer);
+			SelbstAnrufEndzeit = 10 * KurzTimerFreq + Zufallswert(0x37);
+			SelbstAnrufPhase = SelbstAnrufSchliessen;
+			ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
+			} // Timeout nach 5 Sekunden
+
+		} // if (SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
+
+	if (SelbstAnrufPhase == SelbstAnrufSchliessen)
+		{
+		CloseTCPSocket(SelbstAnrufSocketHandle);
+		SelbstAnrufSocketHandle = NO_SOCKET_USED;
+		SelbstAnrufPhase = SelbstAnrufRuhe;
+		StartKurzTimer(&SelbstAnrufTimer);
+		}
+
+	if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufFehlerZaehler >= 3 && DynIP_Phase == DynIP_Bestaetigt)
+		{ // nach drei Fehlversuchen Server-Aktulisierung starten
+		DynIP_Phase = DynIP_Erneuern; // sofort erneuern.
+		SelbstAnrufPhase = SelbstAnrufSperre;
+		}
+
+	else if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufFehlerZaehler >= 8 && DynIP_Phase == DynIP_Unbestaetigt)
+		{ // nach acht Fehlversuchen Selbst-Anruf nicht mehr durchführen.
+		SelbstAnrufPeriode = 0;
+		Diagnoseausgabe_P(ISTR(SelbstAnrufMehrfachVersagt, LokaleSprache), 1);
+		SelbstAnrufPhase = SelbstAnrufSperre;
+		}
+	}
+
+
+/** Recover if the outgoing self-call socket was closed by the TCP layer. */
+static inline __attribute__((always_inline)) void ProcessSelfCallSocketTimeout(void)
+	{
+	if (SelbstAnrufSocketHandle != NO_SOCKET_USED && CheckSocketState(SelbstAnrufSocketHandle) == SOCKET_NOT_USE)
+		{
+		if (ProtokollAktivFuer(NurFehler))
+			ProtokollierenITelex_P(PSTR("* Selbst-Anruf-Socket durch Timeout geschlossen!\r\n" ));
+		CloseTCPSocket(SelbstAnrufSocketHandle);
+		SelbstAnrufSocketHandle = NO_SOCKET_USED;
+		SelbstAnrufPhase = SelbstAnrufRuhe;
+		StartKurzTimer(&SelbstAnrufTimer);
+		SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq + Zufallswert(0x7);
+		}
+	}
+
+
 //! Der iTelex-client an sich.
 //------------------------------------------------------------------------------------------------------------
 //! Diese Funktion wird zyklisch aufgerufen und hat folgende Aufgaben:
@@ -4947,172 +5124,14 @@ void itelex_thread()
 			StartLangTimer(&DynIPAktualisierungTimer);
 			} // Zeit für Aktualsierung UND keine Verbindung laufend
 		
-		if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufSocketHandle == NO_SOCKET_USED && SelbstAnrufPeriode > 0)
-			{
-			if (DynIP_Phase != DynIP_Bestaetigt && DynIP_Phase != DynIP_Unbestaetigt)
-				StartKurzTimer(&SelbstAnrufTimer);
-
-			if (Modus != ModRuhe && Modus != ModDeaktiviert)
-				StartKurzTimer(&SelbstAnrufTimer);
-
-			if (iTelexSocketHandle != NO_SOCKET_USED 
-				|| TeilnehmerServerSocket != NO_SOCKET_USED
-				|| DiagnosePuffer[0] != '\0')
-				StartKurzTimer(&SelbstAnrufTimer);
-				
-			if (KurzTimerVal(&SelbstAnrufTimer) > SelbstAnrufEndzeit)
-				{ // Selbst-Anruf starten
-				if (NetzEigeneIP == 0)
-					SelbstAnrufPhase = SelbstAnrufSperre;
-				else
-					{ // NetzEigeneIP gültig
-					SelbstAnrufSendePruefwert = ITelexThreadCount ^ Timer0CallbackCount;
-					if (SelbstAnrufSendePruefwert == 0)
-						SelbstAnrufSendePruefwert = 1;
-					SelbstAnrufEmpfangPruefwert = 0; // als Zeichen, dass noch nichts empfangen wurde.
-					
-					ZeitUeberwachungStart(&SelbstAnrufZeitUeberwachung);
-					
-					SelbstAnrufSocketHandle = Connect2IP(NetzEigeneIP, NetzPort); 
-					if (SelbstAnrufSocketHandle == SOCKET_ERROR)
-						{ 
-						// Verbindung konnte nicht aufgebaut werden
-						if (ProtokollAktivFuer(NurFehler))
-							ProtokollierenITelex_P(PSTR("! Selbst-Anruf oeffnen des Socket VERSAGT.\r\n"));
-
-						SelbstAnrufSocketHandle = NO_SOCKET_USED;
-						SelbstAnrufFehlerZaehler++;
-						ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
-						}
-					else
-						{ // Öffnen erfolgreich.
-						char Buf[10];
-						Buf[0] = ITELEXC_SELBSTANRUF;
-						Buf[1] = 2; // 16 Bit-Wert
-						Buf[2] = high(SelbstAnrufSendePruefwert);
-						Buf[3] = low(SelbstAnrufSendePruefwert);
-						SelbstAnrufPhase = SelbstAnrufWarteEmpfang;
-						if (PutSocketData_RPE(SelbstAnrufSocketHandle, 4, Buf, RAM) == 4)
-							{
-							if (ProtokollAktivFuer(DatenKurz))
-								{
-								if (!ProtokollAktivFuer(AuchRegelmaessiges))
-									ProtokollRegelblockInit();
-								ProtokollRegelblockStart();
-								ProtokollierenITelex();
-								ProtokollierenInt_P(PSTR("Selbst-Anruf Daten ueber Socket #%d gesendet.\r\n"), SelbstAnrufSocketHandle);
-								ProtokollRegelblockEnde();
-								}
-							}
-						else
-							{
-							if (ProtokollAktivFuer(NurFehler))
-								ProtokollierenITelex_P(PSTR("! Selbst-Anruf Daten-Sendung VERSAGT.\r\n"));
-							SelbstAnrufFehlerZaehler++;
-							SelbstAnrufPhase = SelbstAnrufSchliessen;
-							ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
-							}
-						} // Öffnen von NetzEigeneIP erfolgreich.
-						
-					StartKurzTimer(&SelbstAnrufTimer);
-					SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x7);
-					} // NetzEigeneIP gültig
-				} // Selbst-Anruf starten
-			} // Selbst-Anruf-Funktion ist aktiv, aber ggf. schlafend
-				
-		if (SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
-			{
-			if (SelbstAnrufEmpfangPruefwert != 0)
-				{ // Echo ist angekommen
-				if (SelbstAnrufEmpfangPruefwert == SelbstAnrufSendePruefwert)
-					{ // Richtiges Echo angekommen
-					if (ProtokollAktivFuer(DatenKurz))
-						{
-						ProtokollRegelblockStart();
-						ProtokollierenITelex_P(PSTR("* Selbst-Anruf erfolgreich abgeschlossen.\r\n"));
-						ProtokollRegelblockEnde();
-						if (!ProtokollAktivFuer(AuchRegelmaessiges))
-							ProtokollRegelblockLoeschen();
-						}
-					
-					SelbstAnrufFehlerZaehler = 0;
-					SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
-					if (DynIP_Phase == DynIP_Unbestaetigt)
-						{
-						ProtokollierenITelex_P(PSTR("Selbst-Anruf bestaetigt IP Adresse.\r\n"));
-						DynIP_Phase = DynIP_Bestaetigt;
-						}
-					} // Richtiges Echo angekommen
-				else
-					{ // Falsches Echo angekommen
-					if (ProtokollAktivFuer(NurFehler))
-						ProtokollierenITelex_P(PSTR("! Selbst-Anruf FALSCHE Daten empfangen.\r\n"));
-					SelbstAnrufFehlerZaehler++;
-					SelbstAnrufEndzeit = 5 * KurzTimerFreq + Zufallswert(0x37);					
-					} // Falsches Echo angekommen
-				StartKurzTimer(&SelbstAnrufTimer);
-				SelbstAnrufPhase = SelbstAnrufSchliessen;
-				} // Echo ist angekommen
-				
-			else if (Modus != ModRuhe && Modus != ModDeaktiviert && Modus != ModKommendVerbVorstufe)
-				{ // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
-				if (ProtokollAktivFuer(NurFehler))
-					ProtokollierenITelex_P(PSTR("! Selbst-Anruf ABGEBROCHEN wegen Modus-Wechsel.\r\n"));
-				StartKurzTimer(&SelbstAnrufTimer);
-				SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq - Zufallswert(0x3F);
-				SelbstAnrufPhase = SelbstAnrufSchliessen;
-				ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
-				} // irgend ein Modus-Wechsel genau in der Phase des Selbst-Anruf
-				
-			else if (KurzTimerVal(&SelbstAnrufTimer) > 5 * KurzTimerFreq) 
-				{ // Timeout nach 5 Sekunden
-				if (ProtokollAktivFuer(NurFehler))
-					ProtokollierenITelex_P(PSTR("! Selbst-Anruf KEIN Echo empfangen.\r\n"));
-				SelbstAnrufFehlerZaehler++;
-				StartKurzTimer(&SelbstAnrufTimer);
-				SelbstAnrufEndzeit = 10 * KurzTimerFreq + Zufallswert(0x37);					
-				SelbstAnrufPhase = SelbstAnrufSchliessen;
-				ZeitUeberwachungAbbruch(&SelbstAnrufZeitUeberwachung);
-				} // Timeout nach 5 Sekunden
-				
-			} // if (SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
-
-		if (SelbstAnrufPhase == SelbstAnrufSchliessen) 
-			{
-			CloseTCPSocket(SelbstAnrufSocketHandle);
-			SelbstAnrufSocketHandle = NO_SOCKET_USED;
-			SelbstAnrufPhase = SelbstAnrufRuhe;
-			StartKurzTimer(&SelbstAnrufTimer);
-			}
-			
-		if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufFehlerZaehler >= 3 && DynIP_Phase == DynIP_Bestaetigt)
-			{ // nach drei Fehlversuchen Server-Aktulisierung starten
-			DynIP_Phase = DynIP_Erneuern; // sofort erneuern.
-			SelbstAnrufPhase = SelbstAnrufSperre;
-			}
-			
-		else if (SelbstAnrufPhase == SelbstAnrufRuhe && SelbstAnrufFehlerZaehler >= 8 && DynIP_Phase == DynIP_Unbestaetigt)
-			{ // nach acht Fehlversuchen Selbst-Anruf nicht mehr durchführen.
-			SelbstAnrufPeriode = 0;
-			Diagnoseausgabe_P(ISTR(SelbstAnrufMehrfachVersagt, LokaleSprache), 1);
-			SelbstAnrufPhase = SelbstAnrufSperre;
-			}
+		ProcessSelfCall();
 			
 		if (LangTimerVal(&DynIPAktualisierungTimer) >= DynIPAktualisierungEndzeit && DynIP_Phase != DynIP_LaeuftGerade)
 			DynIP_Phase = DynIP_Erneuern;
 
 		} // if (DynIP_Phase != DynIP_Inaktiv && NetzRufnummer >= GlobRufnrMinWert)
 		
-	if (SelbstAnrufSocketHandle != NO_SOCKET_USED && CheckSocketState(SelbstAnrufSocketHandle) == SOCKET_NOT_USE)
-		{
-		if (ProtokollAktivFuer(NurFehler))
-			ProtokollierenITelex_P(PSTR("* Selbst-Anruf-Socket durch Timeout geschlossen!\r\n" ));
-		CloseTCPSocket(SelbstAnrufSocketHandle);
-		SelbstAnrufSocketHandle = NO_SOCKET_USED;
-		SelbstAnrufPhase = SelbstAnrufRuhe;
-		StartKurzTimer(&SelbstAnrufTimer);
-		SelbstAnrufEndzeit = SelbstAnrufPeriode * KurzTimerFreq + Zufallswert(0x7);
-		}
+	ProcessSelfCallSocketTimeout();
 			
 	// ======================================================================
 	// Antworten vom Teilnehmer-Server auswerten

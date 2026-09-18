@@ -333,7 +333,7 @@ gains warnings, and the Centralex object has byte-identical instructions
 before and after the rename. Socket and timer behaviour still needs the manual
 test plan on hardware.
 
-### Step 2 — extract the self-call check (`SelbstAnruf*`)
+### Step 2 — extract the self-call check (`SelbstAnruf*`) — **started**
 
 A self-contained watchdog: the interface periodically calls itself through the
 network to prove it is still reachable, and reports a fault if it cannot.
@@ -341,6 +341,23 @@ About 8 variables and 113 references, but they live *inside* `itelex_thread`,
 so this step means carving a coherent block out of a 1,397-line function
 before it can move. Worth doing, and the natural way to start shrinking the
 thread, but it is a genuine refactor rather than a relocation.
+
+**First slice:** the state machine and its socket-timeout recovery are now
+carved into `ProcessSelfCall` and `ProcessSelfCallSocketTimeout`, private
+helpers which remain in `iTelex.c`. Their calls occupy the exact positions of
+the former inline blocks, preserving the ordering around dynamic-IP updates.
+Both helpers are forced inline: allowing avr-gcc 9.5.0 to outline them cost 14
+bytes on Light, while forced-inline clean builds with `VERSION=969be1c` are
+exactly the same size as the pre-carve builds (`standard` 173,490 B; `light`
+130,908 B).
+
+This is intentionally not called an extraction yet. The private state still
+lives in `iTelex.c`, and receive handling, configuration, diagnostics and
+subscriber-server responses still touch it directly. The next slice must turn
+those sites into a small semantic interface before the state and helpers can
+move without publishing the eight variables. With only 164 bytes between the
+current Light image and the raw 128 KiB device limit, that interface must be
+measured before committing to a separate translation unit.
 
 ### Step 3 — the software serial converter (`SerUm*`), with care
 
