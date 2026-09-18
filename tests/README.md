@@ -7,10 +7,11 @@ tests run separately under simavr; see [AVR emulator tests](avr/README.md).
 
 These suites test the parts of the firmware that are pure logic: the
 Baudot/ITA2 character conversion, the shared ring buffer, the backplane CRC,
-the parsers for the text an operator types into the web interface, and the
-small byte-order, Base64 and hex-parsing helpers. They are compiled by
-the **host** compiler and run on the build machine, so they need no AVR
-toolchain and no i-Telex hardware, and they finish in well under a second.
+the parsers for the text an operator types into the web interface, the framing
+of the data received on the i-Telex socket, and the small byte-order, Base64
+and hex-parsing helpers. They are compiled by the **host** compiler and run on
+the build machine, so they need no AVR toolchain and no i-Telex hardware, and
+they finish in well under a second.
 
 Nothing here is linked into the firmware.
 
@@ -55,6 +56,7 @@ not ok 8 - decoding_handles_the_whole_alphabet
 | `base64` | `system/base64/base64.c` | The RFC 4648 vectors in both directions, the output-size refusal, and a round trip over non-text bytes |
 | `string_utils` | `system/string/string.c` | Hex digit and MAC address parsing, separator handling, and the length check |
 | `parsing` | `iTelex/Parsing.c` | Signed-number and extension-number scanning, and the baud-rate table format — which entry wins, where a malformed table is reported, and the two answers that are not baud rates |
+| `frame_scanner` | `iTelex/FrameScanner.h` | How the bytes arriving on the i-Telex socket are cut into frames: ASCII against blocks, the two ASCII substitutions, what settles the protocol, and what happens to a fragmented, a short, an unknown or a malformed block |
 
 ## What is deliberately not covered
 
@@ -81,6 +83,20 @@ below `'+'` or above `'z'` reads outside the table. The suite stays inside the
 valid alphabet; feeding the decoder hostile input is a defect to fix, not a
 behaviour to pin down.
 
+## What the tests record rather than fix
+
+`frame_scanner` is a characterization suite: it describes what the receive
+path does today so that it can be changed without changing behaviour, and
+three of its cases pin down answers that look like defects. A block other than
+`ITELEXC_BAUDOT_DATA` whose payload has not all arrived is not held back for
+the rest of the stream — the cursor runs past the received data and the
+buffer is discarded. A disconnect block with not even its length byte received
+wraps to a payload of 255. And on a connection carrying ASCII, the command
+codes that share a value with an ASCII control code (`ITELEXC_VERSION`,
+`ITELEXC_SELBSTANRUF`, `ITELEXC_FERNKONFIG`) cannot be received at all. Each is
+a change to what goes over the wire, so each belongs in its own commit with its
+own reasoning, not in a refactoring step.
+
 ## The one stubbed dependency
 
 `parsing` is the only suite that supplies a firmware function itself rather
@@ -103,7 +119,10 @@ if a second suite ever needs `BusKomm.c`.
    table built from `TEST_ENTRY`, and hand the table to `test_run_suite` from
    `main`. See `framework/test_framework.h` for the assertions.
 2. Add `<name>` to `SUITES` in `GNUmakefile` and set `<name>_UNITS` to the
-   firmware sources the suite links against.
+   firmware sources the suite links against. A header-only module — such as
+   `FrameScanner.h`, whose one function is force-inlined into its single call
+   site to keep it off the Light card's flash budget — has no source to link,
+   so its `_UNITS` is left empty and the suite simply includes the header.
 
 Two things to keep in mind when writing a case:
 

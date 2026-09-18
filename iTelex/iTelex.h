@@ -212,13 +212,9 @@ enum {
 	//!< Mindestwert der Nummer von global gültigen Rufnummern
 	//!< Ziffernzahl muss #GlobRufnrMinZiffern entsprechen.
 	
-	AsciiProtZeichenWerDa = '@',
-	//!< Ersatz-Zeichen für Werda im Socket-ASCII-Modus.
-	
-	AsciiProtZeichenKlingel = '%',
-	//!< Ersatz-Zeichen für Klingel im Socket-ASCII-Modus.
-	
 	} ; // Ende Konstanten
+// Hinweis: AsciiProtZeichenWerDa und AsciiProtZeichenKlingel stehen jetzt in
+// iTelex/FrameScanner.h, zusammen mit den ITELEXC_*-Kommandocodes.
 	
 
 // Typdefinitionen

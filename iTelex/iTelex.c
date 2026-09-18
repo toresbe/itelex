@@ -72,6 +72,7 @@
 #include "TxP2-Defs.h"
 #include "FifoPuffer.h"
 #include "BaudotCode.h"
+#include "FrameScanner.h"
 #include "Parsing.h"
 #include "Protokoll.h"
 #include "TlnServer.h"
@@ -92,33 +93,10 @@ const PROGMEM char SvnVersion_P[] = SVNVERSION;
 TModus Modus;
 
 	
-// Die Datem auf dem iTelex-Port haben folgende Struktur:
-// - ASCII-Zeichen einschl. WR (CR) und ZL (LF) werden "pur" übertragen.
-// - Ansonsten werden Datenblöcke übertragen, die stets aus folgenden Teilen bestehen:
-//   * ein Byte Kommandocode (siehe die folgenden Konstanten mit ITELEXC_*)
-//   * ein Byte Länge _folgender_ Daten (kann 0 sein).
-//   * zugehörige Daten
+// Die Struktur der Daten auf dem iTelex-Port und die Kommandocodes ITELEXC_*
+// stehen jetzt in iTelex/FrameScanner.h.
 
-//! Nur Konstanten-Definitionen.
-enum { 
-	ITELEXC_NULL = 0x00, //!< Füllzeichen
-	ITELEXC_DURCHWAHL = 0x01, //!< Startzeichen, Datenblock enthält ein Byte Durchwahl 
-	ITELEXC_BAUDOT_DATA = 0x02, //!< Datenblock mit puren Baudot-Codes
-	ITELEXC_ENDE = 0x03, //!< Beabsichtigter Verbindungsabbau.
-	ITELEXC_STOP = 0x04, //!< Es können noch Daten angehängt werden. Ursache: Besetzt oder Störung
-	// \005 freigehalten für ^E = WerDa.
-	ITELEXC_QUITT = 0x06, //!< Meldet Empfangsbereitschaft und Anzahl bereits verarbeiteter Zeichen.
-	ITELEXC_VERSION = 0x07, 
-		//!< Version der Kommunikation. Originate schlägt vor, Answer bestätigt.
-		//!< Erst wenn andere Seite mit gleicher Nummer antwortet, ist Protokollversion abgestimmt.
-	ITELEXC_SELBSTANRUF = 0x08, //!< Kennung für einen testweisen Selbst-Anruf.
-	ITELEXC_FERNKONFIG = 0x09, 
-		//!< Telegramm für Änderungen an Teilnehmer-Einstellungen aus der Ferne.
-		//!< Inhalt: 1 Byte Länge (PIN, Kennung, Daten), 2 Byte PIN der Gegenstelle, 1 Byte Kennung ITELEXC_FKK_xxx, x Byte Daten.
-		//!< Wenn Daten ein String ist, wird dieser mit abschließendem \\0 übertragen.
-	} ;
-	
-	
+
 /* Mustertelegramme zur Übernahme in FsTelnet (MFC-Programm)
 
 	Text1 = _T("07 01 02 01 01 00");                       // Protokoll und Durchwahl (zwei Datensätze)
@@ -2808,18 +2786,23 @@ static uint8_t FernKonfigTelegrammBearbeiten(uint16_t i, uint8_t len)
 	}
 	
 	
-static bool IsCommonAsciiControl(char c)
-	{
-	return c == '\r' || c == '\n' || c == CodeChrKlingel || c == CodeChrWerDa 
-		|| c == '\005' /*ENQ = Werda*/
-		|| c == '\010' /*Backspace*/ || c == '\011' /*Tab*/
-		|| c == '\033' /*ESC*/
-		|| c == CodeChrBuUm || c == CodeChrZiUm || (c >= ' ' && c <= '~') || c >= 0xa0;
-	}
+//! Compile-time check that the receive path can hand its protocol state to
+//! ScanFrame unchanged. FrameScanner.h keeps its own three-state enum so that
+//! it stays clear of config.h and can be built by a host compiler; the values
+//! have to stay in step with the three members of TiTelexSocketProtokoll that
+//! reach the i-Telex socket.
+typedef char ScanFrameProtocolValuesAgree[
+	(ProtUnknown == (int) FrameProtocolUnknown
+		&& iTelexProt == (int) FrameProtocolITelex
+		&& Ascii == (int) FrameProtocolAscii) ? 1 : -1];
 
 
 //! Interpretiert empfangene Daten vom Socket und schiebt diese in den 
 //! EmpfPuffer.
+//!
+//! Das Zerlegen des Empfangspuffers in Rahmen erledigt ScanFrame() in
+//! iTelex/FrameScanner.h; hier bleiben die Wirkungen auf Socket, Modus und
+//! Puffer.
 static void ITelexOderAsciiEmpfangVerarbeiten()
 	{
 	// Daten des Socket-Empfangspuffer interpretieren
@@ -2831,27 +2814,28 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 		
 		while (i < SocketInBufUsed)
 			{
-			char c = SocketInBuf[i];
+			TFrame Frame;
+			ScanFrame(SocketInBuf, SocketInBufUsed, i, (TFrameProtocol) iTelexSocketProtokoll, &Frame);
+			
 			// Achtung: In dieser Schleife entweder i weiterbringen oder break!
 			// ****************************************************************
 			
+			// ScanFrame lässt den Protokollzustand stehen, wo der Rahmen ihn
+			// nicht festlegt, also ist dies dieselbe Zuweisung wie zuvor in
+			// den einzelnen Zweigen -- auch für die beiden Zweige, die vor
+			// dem break noch umschalten.
+			iTelexSocketProtokoll = (TiTelexSocketProtokoll) Frame.Protocol;
+			
 			// im Folgenden KEIN switch verwenden wegen break!
-			if (c == '\r' || c == '\n' || (c >= ' ' && c <= '~')
-				|| (IsCommonAsciiControl(c) && iTelexSocketProtokoll == Ascii && (i == SocketInBufUsed-1 || IsCommonAsciiControl(SocketInBuf[i+1]))))
+			if (Frame.Kind == FrameText)
 				{ // ein ASCII-Zeichen ODER ein "übliches" Ascii-Steuerzeichen im Ascii-Modus an letzter Stelle oder gefolgt von einem weiteren Ascii-Zeichen
 				// ID#246 ID#344 *****************************************************
-				iTelexSocketProtokoll = Ascii;
 				int alen = strlen(AsciiDruckPuffer);
 				if (alen < AsciiDruckPufferMax-2)
 					{
-					if (c == AsciiProtZeichenKlingel)
-						AsciiDruckPuffer[alen] = CodeChrKlingel;
-					else if (c == AsciiProtZeichenWerDa) 
-						AsciiDruckPuffer[alen] = CodeChrWerDa;
-					else
-						AsciiDruckPuffer[alen] = c;
+					AsciiDruckPuffer[alen] = Frame.Text;
 					AsciiDruckPuffer[alen+1] = '\0';
-					i++;
+					i += Frame.Length;
 					SocketAnzahlZeichenEmpfangen++;
 					AnzAsciiEmpf++;
 					}
@@ -2903,14 +2887,13 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 
 				} // ASCII-Zeichen oder WR oder ZL
 				
-			else if (c == ITELEXC_NULL)
+			else if (Frame.Kind == FrameFiller)
 				{ // ignorieren
-				i++;
+				i += Frame.Length;
 				}
 				
-			else if (c == ITELEXC_DURCHWAHL)
+			else if (Frame.Kind == FrameExtension)
 				{ // ID#312 **************************************************************
-				iTelexSocketProtokoll = iTelexProt;
 				iTelexSocketAbbauGeplant = false;
 				if (Modus == ModKommendVerbVorstufe)
 					{
@@ -2925,15 +2908,14 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						ModusWechsel(ModWarteGrundstellung);
 						}
 					}
-				i += 2 + (uint8_t) SocketInBuf[i+1];
+				i += Frame.Length;
 				}
 				
-			else if (c == ITELEXC_BAUDOT_DATA)
+			else if (Frame.Kind == FrameBaudotData)
 				{ // ID#243 ID#343 ***********************************************************
-				iTelexSocketProtokoll = iTelexProt;
-				uint8_t len = SocketInBuf[i+1];
+				uint8_t len = Frame.PayloadLength;
 				
-				if (i + 2 + len <= SocketInBufUsed && PufferAnzahl(&SendePuffer) + len < MaxPuffer)
+				if (Frame.Complete && PufferAnzahl(&SendePuffer) + len < MaxPuffer)
 					{ // Baudot-Code-Block ist vollständig UND noch entsprechend Platz im Sendepuffer
 					if (ProtokollAktivGenauFuer(DatenKurz)) // Datenmengen protokollieren
 						{
@@ -2976,15 +2958,13 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					SendenBeschleunigen = true;
 					break; // Daten können momentan nicht verarbeitet werden.
 					}
-				} // else if (c == ITELEXC_BAUDOT_DATA)
+				} // else if (Frame.Kind == FrameBaudotData)
 
-			else if (c == ITELEXC_STOP || c == ITELEXC_ENDE)
+			else if (Frame.Kind == FrameDisconnect)
 				{
-				iTelexSocketProtokoll = iTelexProt;
-				uint8_t len = SocketInBuf[i+1];
-				if (i + 2 + len > SocketInBufUsed)
-					len = SocketInBufUsed - i - 2;
-					// dies ist implementiert, weil alte i-Telex-Versionen einen zu kurzen Datenblock sendeten.
+				uint8_t len = Frame.PayloadLength;
+					// ScanFrame kürzt die Länge auf das Empfangene, weil alte
+					// i-Telex-Versionen einen zu kurzen Datenblock sendeten.
 
 				if (len > 0)
 					{
@@ -3010,18 +2990,16 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					WahlAbbruchMeldung(Buf);
 					}
 					
-				i += 2 + len;
+				i += Frame.Length;
 					
 				InterneVerbindungBeenden(true);
 				
 				iTelexSocketAbbauGeplant = true;
 				
-				} // c == ITELEXC_STOP oder ITELEXC_ENDE
+				} // Frame.Kind == FrameDisconnect
 				
-			else if (c == ITELEXC_QUITT)
+			else if (Frame.Kind == FrameAcknowledge)
 				{ 
-				iTelexSocketProtokoll = iTelexProt;
-				uint8_t len = SocketInBuf[i+1];
 				if (Modus == ModKommendVerbVorstufe)
 					{ // ID#312 **************************************************
 					if (KommendInternAnwaehlen(0)) 
@@ -3059,16 +3037,14 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 						}
 					ModusWechsel(ModGehendVerbunden);
 					}
-				if (len >= 1)
+				if (Frame.PayloadLength >= 1)
 					SocketAnzahlZeichenQuittiert = (uint8_t) SocketInBuf[i+2];
-				i += 2 + len;
-				} // c == ITELEXC_QUITT
+				i += Frame.Length;
+				} // Frame.Kind == FrameAcknowledge
 				
-			else if (c == ITELEXC_VERSION)
+			else if (Frame.Kind == FrameVersion)
 				{ 
-				iTelexSocketProtokoll = iTelexProt;
-				uint8_t len = SocketInBuf[i+1];
-				if (len >= 1)
+				if (Frame.PayloadLength >= 1)
 					{
 					uint8_t ProtVorschlag = SocketInBuf[i+2]; 
 
@@ -3110,14 +3086,12 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					
 				// Hinweis: Die Bytes 2 bis x enthalten noch den SVN-Versionsnummer-String.
 					
-				i += 2 + len;
-				} // c == ITELEXC_VERSION
+				i += Frame.Length;
+				} // Frame.Kind == FrameVersion
 
-			else if (c == ITELEXC_SELBSTANRUF)
+			else if (Frame.Kind == FrameSelfCall)
 				{
-				iTelexSocketProtokoll = iTelexProt;
-				uint8_t len = SocketInBuf[i+1];
-				if (len >= 2 && SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
+				if (Frame.PayloadLength >= 2 && SelbstAnrufPhase == SelbstAnrufWarteEmpfang)
 					{
 					SelbstAnrufEmpfangPruefwert = (SocketInBuf[i+2] << 8) + SocketInBuf[i+3]; // erst high, dann low
 					// Zur Beschleunigung baut ausnahmsweise der Empfänger die Verbindung ab.
@@ -3130,13 +3104,12 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					SocketInBufUsed = 0;
 					ModusWechsel(ModWarteGrundstellung);
 					}
-				i += 2 + len;
+				i += Frame.Length;
 				}
 				
-			else if (c == ITELEXC_FERNKONFIG)
+			else if (Frame.Kind == FrameRemoteConfig)
 				{ 
-				uint8_t len = SocketInBuf[i+1];
-				uint8_t Res = FernKonfigTelegrammBearbeiten(i, len);
+				uint8_t Res = FernKonfigTelegrammBearbeiten(i, Frame.PayloadLength);
 					// 0 = ok, anderes = Fehlercode
 
 				if (Res != 0)
@@ -3144,20 +3117,17 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 					SendeStopkommando(PSTR("fernkonferr"));
 					ProtokollierenITelex();
 					ProtokollierenInt_P(PSTR("Fernkonfig !Fehler Code=%d"), Res);
-					ProtokollierenInt_P(PSTR(" Len=%d"), len);
-					ProtokollierenInt_P(PSTR(" Kenn=%02X\r\n"), (len >= 4) ? SocketInBuf[i+4] : 0);
+					ProtokollierenInt_P(PSTR(" Len=%d"), Frame.PayloadLength);
+					ProtokollierenInt_P(PSTR(" Kenn=%02X\r\n"), (Frame.PayloadLength >= 4) ? SocketInBuf[i+4] : 0);
 					}
 					
-				i += 2 + len;
+				i += Frame.Length;
 				}
 				
 			else 
 				{ // unbekannter Code --> ignorieren EINSCHLIEßLICH Daten
 				// ID#245 ID#313 ID#346 ********************************************************
-				if (iTelexSocketProtokoll == iTelexProt)
-					i += 2 + (uint8_t) SocketInBuf[i+1];
-				else
-					i++;
+				i += Frame.Length;
 				}
 				
 			} // while (i < SocketInBufUsed)

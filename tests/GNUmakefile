@@ -37,7 +37,7 @@ UNIT_CFLAGS := $(ABI_CFLAGS) $(INCLUDES) -g -O1 -Wall
 
 # One entry per suite: <name>_UNITS lists the firmware sources the suite links
 # against, and the suite body itself is suites/test_<name>.c.
-SUITES := baudot_code fifo_buffer crc8 math base64 string_utils parsing
+SUITES := baudot_code fifo_buffer crc8 math base64 string_utils parsing frame_scanner
 
 baudot_code_UNITS  := $(COMMON_DIR)/BaudotCode.c
 fifo_buffer_UNITS  := $(COMMON_DIR)/FifoPuffer.c shim/avr_shim.c
@@ -46,6 +46,9 @@ math_UNITS         := $(REPO_ROOT)/system/math/math.c
 base64_UNITS       := $(REPO_ROOT)/system/base64/base64.c
 string_utils_UNITS := $(REPO_ROOT)/system/string/string.c
 parsing_UNITS      := $(REPO_ROOT)/iTelex/Parsing.c
+# FrameScanner is a header-only module: ScanFrame is force-inlined into its
+# one call site in iTelex.c, so there is no translation unit to link.
+frame_scanner_UNITS :=
 
 BINARIES := $(addprefix $(BIN_DIR)/,$(SUITES))
 
