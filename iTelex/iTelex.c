@@ -2898,7 +2898,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 				
 				if (i + 2 + len <= SocketInBufUsed && PufferAnzahl(&SendePuffer) + len < MaxPuffer)
 					{ // Baudot-Code-Block ist vollständig UND noch entsprechend Platz im Sendepuffer
-					if (ProtokollLevel == DatenKurz) // Datenmengen protokollieren
+					if (ProtokollAktivGenauFuer(DatenKurz)) // Datenmengen protokollieren
 						{
 						ProtokollierenITelex();
 						ProtokollierenInt_P(PSTR("EmpfB %16d" ), PufferAnzahl(&SendePuffer));
@@ -3134,7 +3134,7 @@ static void ITelexOderAsciiEmpfangVerarbeiten()
 		else
 			SocketInBufUsed = 0;
 			
-		if (ProtokollLevel == DatenKurz && AnzAsciiEmpf > 0) // Datenmengen protokollieren
+		if (ProtokollAktivGenauFuer(DatenKurz) && AnzAsciiEmpf > 0) // Datenmengen protokollieren
 			{
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("EmpfA %16d" ), 
@@ -3182,7 +3182,7 @@ static void ITelexDatenVerarbeiten()
 			if (len > 50)
 				len = 50; // für alte i-Telex Versionen mit 50 Byte Puffer in "SendePuffer"
 				
-			if (ProtokollLevel == DatenKurz) // Datenmengen
+			if (ProtokollAktivGenauFuer(DatenKurz)) // Datenmengen
 				{
 				ProtokollierenITelex();
 				ProtokollierenInt_P(PSTR("SendB %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));
@@ -3266,7 +3266,7 @@ static void AsciiDatenVerarbeiten()
 				}
 			}
 
-		if (ProtokollLevel == DatenKurz && ProtAnz > 0) // Datenmengen
+		if (ProtokollAktivGenauFuer(DatenKurz) && ProtAnz > 0) // Datenmengen
 			{
 			ProtokollierenITelex();
 			ProtokollierenInt_P(PSTR("SendA %4d" ), (uint8_t)(low(SocketAnzahlZeichenGesendet) - SocketAnzahlZeichenQuittiert));

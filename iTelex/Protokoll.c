@@ -71,7 +71,7 @@ static bool InRegelblock;
 
 //! Prüft, ob die Protokollierung für den "Level" p stattfinden soll
 //! \retval true, wenn ja	
-bool ProtokollAktivFuer(TProtokollLevel p)
+bool ProtokollAktivFuerRuntime(TProtokollLevel p)
 {
 	if (ProtokollLevel > Keine && ProtokollLevel <= AblaeufeAlle)
 		return (p > Keine && p <= ProtokollLevel);
@@ -87,13 +87,13 @@ bool ProtokollAktivFuer(TProtokollLevel p)
 }
 
 
-bool ProtokollAktivFuerTCP()
+bool ProtokollAktivFuerTCPRuntime(void)
 	{
 	return (ProtokollLevel >= Keine + TcpVerbindungen) && (ProtokollLevel <= AblaeufeAlle + TcpVerbindungen);
 	}
 
 
-bool UhrzeitImpulseAufSeriellerSchnittstelle()
+bool UhrzeitImpulseAufSeriellerSchnittstelleRuntime(void)
 	{
 	return ProtokollLevel == UhrzeitImpulse;
 	}

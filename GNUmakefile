@@ -15,6 +15,7 @@ TESTS_DIR ?= tests
 ITELEX_MISC_DIR ?= dependencies/itelex-misc
 COMMON_DIR ?= $(ITELEX_MISC_DIR)/Gemeinsam
 AVR_CLIBS_DIR ?= dependencies/avr-clibs
+ITELEX_TRACE_LEVEL ?= 255
 AVR_CLIBS_URL := https://svn.code.sf.net/p/fredslibraries/avr-clibs/
 AVR_CLIBS_REV := 13
 VERSION ?= $(shell git describe --always --dirty --tags 2>/dev/null || echo unknown)
@@ -51,7 +52,7 @@ VPATH := $(sort $(dir $(SOURCES)))
 COMMON_CFLAGS := -Os -gdwarf-2 -std=gnu99 -fgnu89-inline -Wall \
 	-funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums \
 	-ffunction-sections -fdata-sections -mrelax \
-	-D__PROG_TYPES_COMPAT__ -DF_CPU=16000000UL \
+	-D__PROG_TYPES_COMPAT__ -DF_CPU=16000000UL -DITELEX_TRACE_LEVEL=$(ITELEX_TRACE_LEVEL) \
 	-I. -I$(COMMON_DIR) -I$(AVR_CLIBS_DIR)
 
 .PHONY: all standard light fastboot bootstrap check-dependencies clean \
@@ -62,6 +63,7 @@ all: standard light fastboot
 help:
 	@echo "Targets: bootstrap, standard, light, fastboot, all, test, clean"
 	@echo "Override AVR_TOOLCHAIN_ROOT to use a non-PATH AVR GCC toolchain."
+	@echo "Override ITELEX_TRACE_LEVEL (default 255) to compile out higher trace levels."
 
 # Host unit tests for the firmware's pure logic. Built by the host compiler,
 # not by avr-gcc, so this target needs no AVR toolchain. See tests/README.md.
