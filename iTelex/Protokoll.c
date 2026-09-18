@@ -376,7 +376,7 @@ void ProtokollierenC(char c)
 	
 
 //! Protokolliert einen beliebigen Text.
-void Protokollieren_P(const prog_char *s)
+void Protokollieren_P(const char *s)
 	{
 	if (s != NULL && ProtPraeparieren(strlen_P(s)))
 		{
@@ -391,7 +391,7 @@ void Protokollieren_P(const prog_char *s)
 	
 
 //! Protokolliert einen Text mit einer Zahl (Printf-Format verwenden).
-void ProtokollierenInt_P(const prog_char *s, long i)
+void ProtokollierenInt_P(const char *s, long i)
 	{
 	if (s != NULL && ProtPraeparieren(strlen_P(s) + 10))
 		{

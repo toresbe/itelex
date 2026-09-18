@@ -86,7 +86,6 @@
             <Value>F_CPU=16000000UL</Value>
             <Value>PROG_ID_ZUSATZ=\"ITA2\"</Value>
             <Value>__heap_end=0x80ffff</Value>
-            <Value>__PROG_TYPES_COMPAT__</Value>
             <Value>iTelex</Value>
           </ListValues>
         </avrgcc.compiler.symbols.DefSymbols>

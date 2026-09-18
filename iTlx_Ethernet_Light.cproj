@@ -89,7 +89,6 @@
           <ListValues>
             <Value>F_CPU=16000000UL</Value>
             <Value>PROG_ID_ZUSATZ=\"LIGHT-ITA2\"</Value>
-            <Value>__PROG_TYPES_COMPAT__</Value>
             <Value>iTelex_Light</Value>
           </ListValues>
         </avrgcc.compiler.symbols.DefSymbols>

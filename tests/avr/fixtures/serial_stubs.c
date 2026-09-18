@@ -81,12 +81,12 @@ void ProtokollierenC(char Zeichen)
 	(void)Zeichen;
 }
 
-void Protokollieren_P(const prog_char *Text)
+void Protokollieren_P(const char *Text)
 {
 	(void)Text;
 }
 
-void ProtokollierenInt_P(const prog_char *Text, long Wert)
+void ProtokollierenInt_P(const char *Text, long Wert)
 {
 	(void)Text;
 	(void)Wert;

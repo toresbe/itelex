@@ -20,9 +20,8 @@ AVR_CLIBS_DIR := $(REPO_ROOT)/dependencies/avr-clibs
 #   -funsigned-char         avr-gcc's default, and the firmware relies on it.
 #                           A host `char` is signed, which would make the tests
 #                           exercise different code than the one that ships.
-#   -D__PROG_TYPES_COMPAT__ as in the firmware's COMMON_CFLAGS.
 #   -std=gnu99              as in the firmware's COMMON_CFLAGS.
-ABI_CFLAGS := -std=gnu99 -funsigned-char -D__PROG_TYPES_COMPAT__
+ABI_CFLAGS := -std=gnu99 -funsigned-char
 
 # AVR-Clibs is on the list because BusKomm.h, which Parsing.c needs for the
 # extension-to-address conversion, includes bits.h from there.

@@ -74,17 +74,6 @@ typedef const void *PGM_VOID_P;
 /** \brief Program-memory \c puts. */
 #define puts_P(s)                puts(s)
 
-#ifdef __PROG_TYPES_COMPAT__
-/* The firmware builds with -D__PROG_TYPES_COMPAT__, which makes avr-libc
- * expose these deprecated aliases. Mirror them so shimmed sources see the
- * same type names they see on the AVR. */
-typedef char     prog_char;    /**< \brief Deprecated avr-libc alias for a flash-resident \c char. */
-typedef uint8_t  prog_uint8_t; /**< \brief Deprecated avr-libc alias for a flash-resident \c uint8_t. */
-typedef int8_t   prog_int8_t;  /**< \brief Deprecated avr-libc alias for a flash-resident \c int8_t. */
-typedef uint16_t prog_uint16_t;/**< \brief Deprecated avr-libc alias for a flash-resident \c uint16_t. */
-typedef int16_t  prog_int16_t; /**< \brief Deprecated avr-libc alias for a flash-resident \c int16_t. */
-#endif
-
 /** @} */
 
 #endif /* TEST_SHIM_AVR_PGMSPACE_H */
