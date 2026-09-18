@@ -44,7 +44,7 @@
 	typedef void ( * DYN_CGI_CALLBACK ) ( void * pStruct );
 
 	void cgi_init( void );
-	int cgi_RegisterCGI( DYN_CGI_CALLBACK dyncgi_function, const prog_char * funktionname );
+	int cgi_RegisterCGI( DYN_CGI_CALLBACK dyncgi_function, const char * funktionname );
 	int check_cgibin( void * pStruct );
 	void cgi_PrintHttpheaderStart( void );
 	void cgi_PrintHttpheaderEnd( void );
@@ -54,7 +54,7 @@
 	 */
 	struct DYN_CGIBIN {
 		volatile	DYN_CGI_CALLBACK	dyncgi_function;	/*!< Pointer auf die CGI-Funktion */
-		const 		prog_char 			* funktionname;		/*!< Pointer in Flash auf die Beschreibung zur CGI-Funktion */
+		const 		char 			* funktionname;		/*!< Pointer in Flash auf die Beschreibung zur CGI-Funktion */
 	};
 
 #endif /* CGI_BIN_H */

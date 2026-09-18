@@ -78,7 +78,7 @@ void cgi_init( void )
  * \returns	-1 Failed, 1 CGI eingtragen
  */
 /*------------------------------------------------------------------------------------------------------------*/
-int cgi_RegisterCGI( DYN_CGI_CALLBACK dyncgi_function, const prog_char * funktionname )
+int cgi_RegisterCGI( DYN_CGI_CALLBACK dyncgi_function, const char * funktionname )
 {
 	int i,retval;
 
