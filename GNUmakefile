@@ -56,12 +56,13 @@ COMMON_CFLAGS := -Os -gdwarf-2 -std=gnu99 -fgnu89-inline -Wall \
 	-I. -I$(COMMON_DIR) -I$(AVR_CLIBS_DIR)
 
 .PHONY: all standard light fastboot bootstrap check-dependencies clean \
-	clean-standard clean-light clean-fastboot clean-test test help
+	clean-standard clean-light clean-fastboot clean-test clean-test-avr \
+	test test-avr help
 
 all: standard light fastboot
 
 help:
-	@echo "Targets: bootstrap, standard, light, fastboot, all, test, clean"
+	@echo "Targets: bootstrap, standard, light, fastboot, all, test, test-avr, clean"
 	@echo "Override AVR_TOOLCHAIN_ROOT to use a non-PATH AVR GCC toolchain."
 	@echo "Override ITELEX_TRACE_LEVEL (default 255) to compile out higher trace levels."
 
@@ -69,6 +70,11 @@ help:
 # not by avr-gcc, so this target needs no AVR toolchain. See tests/README.md.
 test:
 	$(MAKE) -C $(TESTS_DIR) test
+
+# Integration tests for register-level timing and the software serial path.
+# These need avr-gcc, simavr, libsimavr headers and libelf.
+test-avr: check-dependencies
+	$(MAKE) -C $(TESTS_DIR)/avr test
 
 bootstrap:
 	@git submodule update --init --recursive
@@ -141,4 +147,7 @@ clean-fastboot:
 clean-test:
 	$(MAKE) -C $(TESTS_DIR) clean
 
-clean: clean-standard clean-light clean-fastboot clean-test
+clean-test-avr:
+	$(MAKE) -C $(TESTS_DIR)/avr clean
+
+clean: clean-standard clean-light clean-fastboot clean-test clean-test-avr

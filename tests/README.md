@@ -1,4 +1,9 @@
-# Host unit tests
+# Firmware tests
+
+The default suite contains fast host unit tests. Register-level integration
+tests run separately under simavr; see [AVR emulator tests](avr/README.md).
+
+## Host unit tests
 
 These suites test the parts of the firmware that are pure logic: the
 Baudot/ITA2 character conversion, the shared ring buffer, the backplane CRC,
@@ -54,8 +59,9 @@ not ok 8 - decoding_handles_the_whole_alphabet
 ## What is deliberately not covered
 
 Anything that touches a register, a timer or the network is not pure logic and
-does not belong here; testing it needs a simulator or the real card, which is a
-separate piece of work.
+does not belong in the host suite. Timer0 and the software serial converter are
+covered by the simavr suite; network behaviour and electrical characteristics
+still need a real card.
 
 Two units that look like candidates are left out for a specific reason, and
 both reasons are worth fixing:

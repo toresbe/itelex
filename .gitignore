@@ -1,5 +1,6 @@
 /build/
 /tests/build/
+/tests/avr/build/
 /config.h
 /SvnVersion.h
 /Doxygen/

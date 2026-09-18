@@ -958,6 +958,43 @@ static void SeriellUmsetzInit(void)
 	}
 
 
+#ifdef ITELEX_SIM_TEST
+/** Put the software serial converter into a deterministic connected state.
+ *
+ *  This entry point is only present in the simavr fixture.  It deliberately
+ *  leaves the timer callback itself untouched, while avoiding the network and
+ *  TWI setup which normally establishes these preconditions on a board.
+ */
+void ITelexSimTestSerialInit(uint16_t Baud)
+	{
+	PufferInit(&SendePuffer);
+	PufferInit(&EmpfPuffer);
+	Modus = ModGehendVerbunden;
+	BusEmpfMark = true;
+	BusFrei = true;
+	BusAuftrag = Nichts;
+	WarteStartupQuitt = false;
+	SendenBeschleunigen = false;
+	KurzTimerCnt = 200;
+	MachineStartupTimer.x = 0;
+	iTelexThreadCheckTimer.x = KurzTimerCnt;
+
+	SerUmEmpfBitNr = SerUmEmpfWarte;
+	SerUmEmpfDaten = 0;
+	SerUmEmpfFehler = false;
+	SerUmEmpfMarkZaehl = 0;
+	SerUmSendBitNr = SerUmSendWarte;
+	SerUmSendDaten = 0;
+	SerUmTicksProBit = iTelexTimerFreq / Baud;
+	SerUmTicksProStopBit = iTelexTimerFreq * 3 / (2 * Baud);
+	SerUmTickZaehlerEmpf = SerUmTicksProBit;
+	SerUmTickZaehlerSend = 0;
+	SendeMark = true;
+	TwiLebenszeichenZaehler = UINT16_MAX;
+	}
+#endif
+
+
 //! Prüft, ob im aktuellen Modus ein TWI-Partner verbunden sein müsste.
 static bool ModusTwiVerbunden()
 	{

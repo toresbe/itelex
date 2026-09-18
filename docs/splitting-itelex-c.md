@@ -368,10 +368,14 @@ so there may be an opportunity to converge on it rather than keep a private
 copy.
 
 But 74 of its 108 references are inside `itelex_timerEvent`, the most
-timing-sensitive code in the firmware, and none of it can be verified without
-hardware: a regression here is a garbled character on a real teleprinter. Leave
-it until the earlier steps have proved the pattern, and treat it as the step
-that needs a bench test rather than a green CI run.
+timing-sensitive code in the firmware, where a regression is a garbled
+character on a real teleprinter. The simavr integration suite now gives this
+step a useful CI gate: it executes the production callback and Timer0 driver on
+an emulated ATmega1284P, checking the 900 Hz period, 50-baud transmit framing,
+one receive waveform, and callback cycle headroom. That makes state-machine and
+gross timing regressions visible before a bench test. It does not model the
+current-loop electronics, oscillator tolerance, all competing interrupts, or
+the ATmega2561 target, so this step still needs the real-hardware test plan.
 
 ### What to leave alone
 
@@ -388,22 +392,25 @@ that needs a bench test rather than a green CI run.
 
 1. `make test` — the host suites still pass (and cover the new module, if it is
    pure logic).
-2. `make clean && make standard light` — both variants build with no new
+2. `make test-avr` — the emulated Timer0 and serial integration tests pass for
+   any change touching the callback, its state, or the surrounding timer code.
+3. `make clean && make standard light` — both variants build with no new
    warnings. Clean, because an incremental build after a header change
    under-reports size.
-3. `avr-size` on both `.elf` files, compared against the numbers above. Record
+4. `avr-size` on both `.elf` files, compared against the numbers above. Record
    both in the commit message, and if Light grew, say by how much and where —
    `avr-nm` names the functions that changed.
-4. For a verbatim move, diff the moved text against the original and confirm
+5. For a verbatim move, diff the moved text against the original and confirm
    only whitespace and includes changed. For a rename-only commit, `avr-objdump
    -d` on the module's `.o` before and after should be byte-identical.
-5. `doxygen Doxyfile.github` — no new warnings, and the new `\defgroup`
+6. `doxygen Doxyfile.github` — no new warnings, and the new `\defgroup`
    appears. The count to beat is 244 on this tree with Doxygen 1.9; count
    before and after rather than trusting an absolute number, since it moves
    with the Doxygen version.
-6. State plainly in the commit message what is *not* verified: anything
-   touching sockets, timers or the serial line is unverified until someone runs
-   the manual test plan in `docs/notes/Testumfang.txt` on real hardware.
+7. State plainly in the commit message what is *not* verified. Socket behavior,
+   electrical timing, peripheral-interrupt interactions, and ATmega2561 timing
+   remain unverified until someone runs the manual test plan in
+   `docs/notes/Testumfang.txt` on real hardware.
 
 ## Open decisions
 
